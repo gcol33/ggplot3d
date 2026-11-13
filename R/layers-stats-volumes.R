@@ -128,11 +128,21 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #' Level surfaces of a trivariate function
 #'
 #' Evaluates fun on transformed x/y/z scale ranges and passes the scalar field
-#' to the same extraction used by stat_isosurface_3d.
+#' to the same extraction used by stat_isosurface_3d. Since fun is known
+#' everywhere, each vertex on a grid edge is then moved onto fun = level by
+#' `refine` Illinois regula falsi steps inside the edge whose endpoints bracket
+#' the level, and vertex normals (nx, ny, nz) are central differences of fun at
+#' the final vertices, with steps of 1e-5 times each axis range. Vertices that
+#' lie on no grid edge (merged `"tetra"` clusters, centre vertices of
+#' `"cubes"`) keep their position and take the normal from fun.
 #' @inheritParams stat_isosurface_3d
 #' @param fun Vectorised scalar function of x, y and z.
 #' @param args Additional named arguments passed to fun.
 #' @param n Grid resolution, scalar or three integers.
+#' @param refine Number of regula falsi steps per edge vertex; 0 keeps the
+#'   linear interpolation of the gridded values.
+#' @references Dowell and Jarratt (1971). A modified regula falsi method for
+#'   computing the root of an equation. BIT 11, 168-174. \doi{10.1007/BF01934364}
 #' @export
 #' @examples
 #' ggplot2::ggplot() +
@@ -143,10 +153,10 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #'                      n = 8, levels = 0.5) + coord_3d()
 stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                  position = "identity", ..., fun, n = 24L, args = list(),
-                                 levels = NULL, caps = FALSE, method = "cubes", na.rm = FALSE,
-                                 show.legend = NA, inherit.aes = TRUE) {
+                                 levels = NULL, caps = FALSE, method = "cubes", refine = 2L,
+                                 na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsofunction3D, position,
-    stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = isosurface_method_3d(method),
+    stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = isosurface_method_3d(method), refine = refine,
       na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 

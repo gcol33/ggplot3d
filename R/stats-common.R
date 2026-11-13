@@ -95,7 +95,7 @@ isosurface_method_3d <- function(method) {
   match.arg(method[1L], methods)
 }
 
-stats_field_3d <- function(data, levels, caps, method = "cubes") {
+stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, args = list(), refine = 0L) {
   if (!is.logical(caps) || length(caps) != 1L || is.na(caps)) stop("caps must be TRUE or FALSE.", call. = FALSE)
   method <- isosurface_method_3d(method)
   axes <- lapply(data[c("x", "y", "z")], function(x) sort(unique(x)))
@@ -105,8 +105,65 @@ stats_field_3d <- function(data, levels, caps, method = "cubes") {
   if (anyDuplicated(key)) stop("Scalar grid coordinates must be unique.", call. = FALSE)
   value <- data$value[order(key)]
   out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps, method)
+  if (!is.null(fun)) out <- isosurface_polish_3d(out, axes, value, function(p) {
+    v <- do.call(fun, c(list(x = p[, 1L], y = p[, 2L], z = p[, 3L]), args))
+    rep_len(as.double(v), nrow(p))
+  }, refine)
   out$.edge_a <- out$.edge_b <- NULL
   out$z_mean <- rep(colMeans(matrix(out$z, nrow = 3L)), each = 3L)
+  out
+}
+
+# Moves every vertex that lies on a grid edge onto f = level with `refine`
+# Illinois regula falsi steps inside its bracketing edge (each step evaluates f
+# at the current iterate and moves to the next one), then takes vertex
+# normals from central differences of f at the final positions. Cap faces keep
+# their box normals.
+isosurface_polish_3d <- function(out, axes, value, f, refine) {
+  if (!length(out$x)) return(out)
+  ids <- unique(out$.vertex); first <- match(ids, out$.vertex)
+  p <- cbind(out$x[first], out$y[first], out$z[first])
+  level <- out$level[first]
+  ea <- out$.edge_a[first]; eb <- out$.edge_b[first]
+  edge <- !is.na(ea) & !is.na(eb) & ea != eb
+  if (refine > 0L && any(edge)) {
+    n <- lengths(axes)
+    grid_point <- function(id) cbind(axes$x[(id - 1L) %% n[1L] + 1L],
+      axes$y[((id - 1L) %/% n[1L]) %% n[2L] + 1L], axes$z[(id - 1L) %/% (n[1L] * n[2L]) + 1L])
+    a <- grid_point(ea[edge]); b <- grid_point(eb[edge]); target <- level[edge]
+    fa <- value[ea[edge]] - target; fb <- value[eb[edge]] - target
+    ta <- numeric(length(fa)); tb <- rep(1, length(fa)); last <- integer(length(fa))
+    secant <- function() ifelse(fb != fa, (ta * fb - tb * fa) / (fb - fa), (ta + tb) / 2)
+    t <- secant()
+    for (step in seq_len(refine)) {
+      ft <- f(a + (b - a) * t) - target
+      ok <- is.finite(ft)
+      low <- ok & sign(ft) == sign(fa)
+      high <- ok & !low
+      # Illinois: halve the value at an endpoint kept for a second step.
+      fb[low & last == 1L] <- fb[low & last == 1L] / 2
+      fa[high & last == -1L] <- fa[high & last == -1L] / 2
+      ta[low] <- t[low]; fa[low] <- ft[low]
+      tb[high] <- t[high]; fb[high] <- ft[high]
+      last[low] <- 1L; last[high] <- -1L
+      t <- secant()
+    }
+    p[edge, ] <- a + (b - a) * pmin(pmax(t, 0), 1)
+  }
+  h <- vapply(axes, function(a) diff(range(a)), numeric(1)) * 1e-5
+  offsets <- rbind(diag(h), -diag(h))
+  probe <- f(do.call(rbind, lapply(seq_len(6L), function(k) sweep(p, 2L, offsets[k, ], `+`))))
+  probe <- matrix(probe, nrow = nrow(p))
+  gradient <- (probe[, 1:3, drop = FALSE] - probe[, 4:6, drop = FALSE]) / rep(2 * h, each = nrow(p))
+  size <- sqrt(rowSums(gradient^2))
+  good <- is.finite(size) & size > 0
+  normal <- gradient / ifelse(good, size, 1)
+  row <- match(out$.vertex, ids)
+  out$x <- p[row, 1L]; out$y <- p[row, 2L]; out$z <- p[row, 3L]
+  surface <- out$cap == 0L & good[row]
+  out$nx[surface] <- normal[row[surface], 1L]
+  out$ny[surface] <- normal[row[surface], 2L]
+  out$nz[surface] <- normal[row[surface], 3L]
   out
 }
 

@@ -42,12 +42,14 @@ StatDensity3D <- ggplot2::ggproto("StatDensity3D", StatGeometry3D,
 StatIsofunction3D <- ggplot2::ggproto("StatIsofunction3D", StatGeometry3D,
   required_aes = character(),
   optional_aes = c("x", "y", "z"),
-  compute_group = function(data, scales, fun, n = 24L, args = list(), levels = NULL, caps = FALSE, method = "cubes") {
+  compute_group = function(data, scales, fun, n = 24L, args = list(), levels = NULL, caps = FALSE, method = "cubes", refine = 2L) {
+    if (!is.numeric(refine) || length(refine) != 1L || !is.finite(refine) || refine < 0 || refine != trunc(refine))
+      stop("refine must be a non-negative integer.", call. = FALSE)
     grid <- expand.grid(stats_grid_3d(scales, n, c("x", "y", "z")))
     value <- do.call(fun, c(grid, args))
     if (!is.numeric(value) || !(length(value) %in% c(1L, nrow(grid)))) stop("fun must return one numeric value per grid point.", call. = FALSE)
     grid$value <- rep_len(value, nrow(grid))
-    stats_field_3d(grid, levels, caps, method)
+    stats_field_3d(grid, levels, caps, method, fun, args, as.integer(refine))
   }
 )
 
