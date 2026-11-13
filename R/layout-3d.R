@@ -59,15 +59,15 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
       out$panel_id <- as.integer(as.character(row$PANEL))
       out$scale_ids <- c(x = row$SCALE_X, y = row$SCALE_Y, z = row$SCALE_Z)
       out$ranges <- list(x = out$x.range, y = out$y.range, z = out$z.range)
-      out$camera <- coord$camera
+      out$camera <- coord$panel_camera(i, nrow(self$layout))
       if (identical(coord$model_aspect, "data")) out$camera$aspect <- as.double(vapply(out$ranges, diff, numeric(1)))
       out$coord_params <- coord$config
       out$frame <- bind_frame_3d(coord$frame %or3d% FrameBox, out)
       out$axis_titles <- lapply(c("x", "y", "z"), function(axis) {
         name <- scales[[axis]]$name
         if (!inherits(name, "waiver")) return(name)
-        label <- self$context$labels[[axis]]
-        if (!is.null(label)) return(label)
+        # labs(z = NULL) stores an explicit NULL, which removes the title.
+        if (axis %in% names(self$context$labels)) return(self$context$labels[[axis]])
         mapping <- self$context$mapping[[axis]]
         if (!is.null(mapping)) return(axis_mapping_label_3d(mapping))
         NULL

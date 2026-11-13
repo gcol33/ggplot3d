@@ -81,9 +81,7 @@ raster_text_3d <- function(result, packet) {
   lapply(seq_along(text$row), function(i) {
     row <- text$row[i]; tab <- packet$text
     styles <- packet$styles[match(tab$style_id[row], packet$styles$style_id), , drop = FALSE]
-    grid::textGrob(text_label_3d(styles), text$x[i], text$y[i],
-      hjust = tab$hjust[row], vjust = tab$vjust[row], rot = tab$angle[row],
-      gp = material_gp_3d(styles, tab$opacity[row], 4L))
+    text_grob_3d(styles, text$x[i], text$y[i], tab$hjust[row], tab$vjust[row], tab$angle[row], tab$opacity[row])
   })
 }
 

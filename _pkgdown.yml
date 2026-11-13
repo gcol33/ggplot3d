@@ -108,6 +108,7 @@ reference:
   - geom_polygon_3d
   - geom_band_3d
   - geom_dropline_3d
+  - annotate_3d
 - title: Surface and solid layers
   contents:
   - geom_surface_3d

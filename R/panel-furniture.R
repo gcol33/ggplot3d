@@ -433,22 +433,32 @@ select_axis_path_3d <- function(points, paths, position = "auto", secondary = FA
   scores[chosen, ]
 }
 
-axis_label_positions_3d <- function(major, normal, metrics, dodge) {
-  if (is.matrix(normal)) {
-    support <- rowSums(metrics$label * abs(normal)) / 2
-    offset <- metrics$tick_length + metrics$gap + support +
-      ((seq_len(nrow(major)) - 1L) %% dodge) * metrics$label_extent
-    return(major + offset * normal)
-  }
-  support <- drop(metrics$label %*% abs(normal)) / 2
-  offset <- metrics$tick_length + metrics$gap + support +
-    ((seq_len(nrow(major)) - 1L) %% dodge) * metrics$label_extent
-  major + outer(offset, normal)
+# Depth of each label rectangle measured along the outward normal at its tick.
+label_depths_3d <- function(label, normal) {
+  if (!nrow(label)) return(numeric())
+  if (!is.matrix(normal)) normal <- matrix(normal, nrow(label), 2L, byrow = TRUE)
+  rowSums(label * abs(normal))
 }
 
-axis_title_geometry_3d <- function(a, b, normal, metrics, dodge) {
+# Labels stand in n.dodge rows. Every row is as deep as the deepest label along
+# the normal, and the inner edge of each label touches the inner edge of its row.
+axis_label_rows_3d <- function(label, normal, metrics, dodge) {
+  depth <- label_depths_3d(label, normal)
+  row_depth <- if (length(depth)) max(depth) else 0
+  step <- row_depth + metrics$gap / 2
+  list(depth = depth, step = step, band = if (length(depth)) dodge * step - metrics$gap / 2 else 0)
+}
+
+axis_label_positions_3d <- function(major, normal, metrics, dodge) {
+  rows <- axis_label_rows_3d(metrics$label, normal, metrics, dodge)
+  offset <- metrics$tick_length + metrics$gap + rows$depth / 2 +
+    ((seq_len(nrow(major)) - 1L) %% dodge) * rows$step
+  if (is.matrix(normal)) major + offset * normal else major + outer(offset, normal)
+}
+
+axis_title_geometry_3d <- function(a, b, normal, metrics, band) {
   size <- metrics$title_size[1L, ]
-  offset <- metrics$tick_length + metrics$gap + dodge * metrics$label_extent + metrics$title_gap + size[2L] / 2
+  offset <- metrics$tick_length + metrics$gap + band + metrics$title_gap + size[2L] / 2
   location <- (a + b) / 2 + normal * offset
   angle <- atan2(b[2L] - a[2L], b[1L] - a[1L]) * 180 / pi
   if (angle > 90) angle <- angle - 180
@@ -533,6 +543,7 @@ view_guide_reserve_3d <- function(params, measured, viewport) {
     m <- measured$metrics[[name]]
     layout <- axis_layout_3d(frame, guide, project, centre)
     if (is.null(layout)) next
+    band <- 0
     if (length(guide$position)) {
       major <- layout$at(guide$position)[, 1:2, drop = FALSE]
       normal <- layout$normals_at(guide$position)
@@ -541,10 +552,11 @@ view_guide_reserve_3d <- function(params, measured, viewport) {
       if (visible_element_3d(m$text)) {
         labels <- axis_label_positions_3d(major, normal, m, guide$params$n.dodge)
         boxes <- rbind(boxes, cbind(labels - m$label / 2, labels + m$label / 2))
+        band <- axis_label_rows_3d(m$label, normal, m, guide$params$n.dodge)$band
       }
     }
     if (length(guide$title) && visible_element_3d(m$title)) {
-      boxes <- rbind(boxes, axis_title_geometry_3d(layout$title$a, layout$title$b, layout$title$normal, m, guide$params$n.dodge)$bounds)
+      boxes <- rbind(boxes, axis_title_geometry_3d(layout$title$a, layout$title$b, layout$title$normal, m, band)$bounds)
     }
   }
   measured$reserve + c(max(0, max(boxes[, 4L]) - viewport$height_mm),
@@ -553,42 +565,46 @@ view_guide_reserve_3d <- function(params, measured, viewport) {
 
 guide_visible_3d <- function(guide, params) (guide$part %or3d% guide$axis) %in% params$coord_params$axes
 
-thin_axis_labels_3d <- function(locations, size, tangent, rows, occupied, viewport, gap = 0.5) {
-  if (is.null(tangent)) {
-    intervals <- cbind(seq_len(nrow(locations)), seq_len(nrow(locations)))
-  } else {
-    along <- drop(locations %*% tangent)
-    half <- drop(size %*% abs(tangent)) / 2
-    intervals <- cbind(along - half - gap / 2, along + half + gap / 2)
-  }
+# Labels are visited in order along the axis; a label is kept when its
+# rectangle lies on the device and clears every rectangle kept before it by
+# gap. Without thinning (discrete axes) every finite label is kept, as in
+# ggplot2 with check.overlap = FALSE.
+thin_axis_labels_3d <- function(locations, size, tangent, occupied, viewport, gap = 0.5, thin = TRUE) {
   boxes <- cbind(locations - size / 2, locations + size / 2)
+  along <- if (is.null(tangent)) seq_len(nrow(locations)) else drop(locations %*% tangent)
   keep <- rep(FALSE, nrow(locations))
-  for (row in unique(rows)) {
-    candidates <- which(rows == row)
-    candidates <- candidates[order(intervals[candidates, 2L], candidates)]
-    end <- -Inf
-    for (i in candidates) {
-      box <- boxes[i, ]
-      if (intervals[i, 1L] < end || any(!is.finite(box)) || any(box[1:2] < 0) ||
-          box[3L] > viewport$width_mm || box[4L] > viewport$height_mm) next
+  for (i in order(along, seq_along(along))) {
+    box <- boxes[i, ]
+    if (any(!is.finite(box))) next
+    if (thin) {
+      if (any(box[1:2] < 0) || box[3L] > viewport$width_mm || box[4L] > viewport$height_mm) next
       if (nrow(occupied) && any(occupied[, 1L] < box[3L] + gap & occupied[, 3L] > box[1L] - gap &
           occupied[, 2L] < box[4L] + gap & occupied[, 4L] > box[2L] - gap)) next
-      keep[i] <- TRUE; end <- intervals[i, 2L]
-      occupied <- rbind(occupied, box)
     }
+    keep[i] <- TRUE
+    occupied <- rbind(occupied, box)
   }
-  list(keep = keep, boxes = boxes, intervals = intervals, rows = rows, occupied = occupied)
+  list(keep = keep, boxes = boxes, occupied = occupied)
+}
+
+# Discrete axes keep every label unless check.overlap asks for thinning.
+thin_labels_of_3d <- function(guide) !isTRUE(guide$discrete) || isTRUE(guide$params$check.overlap)
+
+# Model points to millimetres in the outer panel viewport, and depth.
+furniture_projector_3d <- function(furniture) {
+  fit <- furniture$overlay$fit
+  basis <- frame_basis_3d(furniture$camera, fit$viewport)
+  function(xyz) {
+    points <- frame_positions_3d(xyz, furniture$camera, basis)
+    cbind(points[, 1L] * fit$viewport$width_mm + fit$origin[1L],
+          points[, 2L] * fit$viewport$height_mm + fit$origin[2L], points[, 3L])
+  }
 }
 
 furniture_overlay_3d <- function(furniture, scene, theme) {
   meta <- furniture$overlay; fit <- meta$fit; params <- meta$params
   frame <- meta$frame %or3d% FrameBox
-  basis <- frame_basis_3d(furniture$camera, fit$viewport)
-  project <- function(xyz) {
-    points <- frame_positions_3d(xyz, furniture$camera, basis)
-    cbind(points[, 1L] * fit$viewport$width_mm + fit$origin[1L],
-          points[, 2L] * fit$viewport$height_mm + fit$origin[2L], points[, 3L])
-  }
+  project <- furniture_projector_3d(furniture)
   corners <- project(frame$map(cube_edges_3d()$corners))
   if (any(!is.finite(corners)) && (length(params$coord_params$axes) || params$coord_params$box == "all")) {
     stop("3D axis and front-frame placement requires unclipped cube projection queries for this camera; schema 1 does not retain these anchors outside the scene rectangle.", call. = FALSE)
@@ -622,20 +638,22 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
       minor <- layout$at(guide$minor)[, 1:2, drop = FALSE]
       line(minor, tick_ends_3d(minor, layout$normals_at(guide$minor), m$tick_length / 2), element_3d(paste0("axis.minor.ticks.", guide$axis), guide$theme) %or3d% element_3d(paste0("axis.ticks.", guide$axis), guide$theme))
     }
+    band <- 0
     if (n && visible_element_3d(m$text)) {
       locations <- axis_label_positions_3d(major, normal, m, guide$params$n.dodge)
-      thinned <- thin_axis_labels_3d(locations, m$label, layout$tangent,
-        (seq_len(n) - 1L) %% guide$params$n.dodge, occupied,
+      band <- axis_label_rows_3d(m$label, normal, m, guide$params$n.dodge)$band
+      thinned <- thin_axis_labels_3d(locations, m$label, layout$tangent, occupied,
         new_scene_viewport(fit$viewport$width_mm + sum(fit$reserve[c(2L, 4L)]),
           fit$viewport$height_mm + sum(fit$reserve[c(1L, 3L)]), fit$viewport$dpi),
-        gap = if (isTRUE(guide$params$check.overlap)) 1 else 0.5)
+        gap = if (isTRUE(guide$params$check.overlap)) 1 else 0.5, thin = thin_labels_of_3d(guide))
       keep <- thinned$keep; occupied <- thinned$occupied
+      thinned$rows <- (seq_len(n) - 1L) %% guide$params$n.dodge
       label_layout[[name]] <- thinned
       bounds <- c(bounds, lapply(which(keep), function(i) thinned$boxes[i, ]))
       if (any(keep)) add(grid::textGrob(guide$labels[keep], locations[keep, 1L], locations[keep, 2L], default.units = "mm", rot = m$angle, gp = text_gp_3d(m$text)))
     }
     if (length(guide$title) && visible_element_3d(m$title)) {
-      title <- axis_title_geometry_3d(layout$title$a, layout$title$b, layout$title$normal, m, guide$params$n.dodge)
+      title <- axis_title_geometry_3d(layout$title$a, layout$title$b, layout$title$normal, m, band)
       bounds[[length(bounds) + 1L]] <- title$bounds
       add(grid::textGrob(guide$title, title$location[1L], title$location[2L], default.units = "mm", rot = title$angle, gp = text_gp_3d(m$title)))
     }

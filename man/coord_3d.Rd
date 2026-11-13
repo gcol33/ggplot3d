@@ -50,7 +50,10 @@ length of one unit of depth.}
 \item{up}{Vertical axis, \code{"x"}, \code{"y"} or \code{"z"}. Azimuth turns about it and
 elevation rises toward it.}
 
-\item{distance, fov, zoom}{Camera distance, field of view and magnification.}
+\item{distance, fov, zoom}{Camera distance, field of view and magnification.
+Each camera argument from \code{azimuth} to \code{zoom} takes one value, shared by
+all panels, or one value per panel in layout order, so facets can show
+the scene from different views.}
 
 \item{target}{Target fractions within the expanded box.}
 
@@ -103,4 +106,7 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 d$site <- c("a", "a", "b")
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
   ggplot2::facet_wrap(~site) + coord_3d(z_scales = "free")
+views <- rbind(transform(d, view = "front"), transform(d, view = "side"))
+ggplot2::ggplot(views, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
+  ggplot2::facet_wrap(~view) + coord_3d(azimuth = c(-60, 30))
 }

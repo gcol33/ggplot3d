@@ -13,7 +13,9 @@ register_geom_3d(
   position_check = NULL,
   replace = FALSE,
   prepare_data = NULL,
-  prepare_aesthetics = NULL
+  prepare_aesthetics = NULL,
+  parameters = list(),
+  default_z = 0
 )
 }
 \arguments{
@@ -32,6 +34,12 @@ register_geom_3d(
 \item{replace}{Whether to replace an existing registration.}
 
 \item{prepare_data, prepare_aesthetics}{Optional input and aesthetic preparation functions.}
+
+\item{parameters}{Named list of further drawing parameters the geom accepts,
+with their defaults. They reach the emitter in \code{params}.}
+
+\item{default_z}{Height of a layer without a z mapping. The default 0
+trains the z scale; \code{-Inf} places the layer on the floor without training it.}
 }
 \value{
 NULL invisibly. Registers the emitter for subsequent layers.

@@ -44,20 +44,22 @@ makeContent.scene_panel_grob <- function(x) {
   decorations <- furniture_overlay_3d(furniture, scene, x$theme)
   background <- ggplot2::element_render(x$theme, "panel.background")
   border <- ggplot2::element_render(x$theme, "panel.border", fill = NA)
-  children <- c(list(background), x$underlay, list(rendered, decorations, border), x$overlay)
+  project <- furniture_projector_3d(furniture)
+  overlay <- lapply(x$overlay, place_annotation_3d, project)
+  children <- c(list(background), x$underlay, list(rendered, decorations, border), overlay)
   x$scene <- scene; x$furniture <- decorations; x$inner_viewport <- furniture$viewport; x$outer_viewport <- outer
   grid::setChildren(x, do.call(grid::gList, children))
 }
 
 # Device text metrics are authoritative at the physical-size boundary.
 device_text_metrics_3d <- function(packet) {
-  for (i in seq_along(packet$text$style_id)) {
-    row <- match(packet$text$style_id[i], packet$styles$style_id)
-    if (isTRUE(packet$styles$.anchor[row])) next
-    s <- packet$styles[row, , drop = FALSE]
-    g <- grid::textGrob(text_label_3d(s), gp = material_gp_3d(s, 1, 4L))
-    packet$text$width_mm[i] <- grid::convertWidth(grid::grobWidth(g), "mm", TRUE)
-    packet$text$height_mm[i] <- grid::convertHeight(grid::grobHeight(g), "mm", TRUE)
+  if (!length(packet$text$style_id)) return(packet)
+  rows <- match(packet$text$style_id, packet$styles$style_id)
+  measured <- which(!(packet$styles$.anchor[rows] %in% TRUE))
+  if (length(measured)) {
+    extent <- text_extent_mm_3d(packet$styles[rows[measured], , drop = FALSE])
+    packet$text$width_mm[measured] <- extent[, 1L]
+    packet$text$height_mm[measured] <- extent[, 2L]
   }
   packet
 }
@@ -92,6 +94,53 @@ text_label_3d <- function(styles) {
   label <- style_value_3d(styles, "label", "")
   if (is.list(label)) label <- as.expression(lapply(label, function(x) if (is.expression(x)) x[[1L]] else x))
   label
+}
+
+label_padding_3d <- function(styles) {
+  padding <- style_value_3d(styles, "label_padding", NA_real_)
+  ifelse(is.finite(padding), padding, 0)
+}
+
+# Measured width and height in mm of each text style, label box included.
+text_extent_mm_3d <- function(styles) {
+  if (!nrow(styles)) return(matrix(numeric(), 0L, 2L))
+  padding <- label_padding_3d(styles)
+  t(vapply(seq_len(nrow(styles)), function(i) {
+    s <- styles[i, , drop = FALSE]
+    g <- grid::textGrob(text_label_3d(s), gp = material_gp_3d(s, 1, 4L))
+    c(grid::convertWidth(grid::grobWidth(g), "mm", TRUE), grid::convertHeight(grid::grobHeight(g), "mm", TRUE)) + 2 * padding[i]
+  }, numeric(2)))
+}
+
+# Text at npc anchors. A label is a viewport of the measured box, turned by the
+# text angle about its justified anchor, holding a rounded rectangle and the
+# text inset by the padding.
+text_grob_3d <- function(styles, x, y, hjust, vjust, rot, opacity) {
+  gp <- material_gp_3d(styles, opacity, 4L)
+  label <- text_label_3d(styles)
+  boxed <- is.finite(style_value_3d(styles, "label_padding", NA_real_))
+  if (!any(boxed)) return(grid::textGrob(label, x, y, hjust = hjust, vjust = vjust, rot = rot, gp = gp))
+  n <- length(x)
+  hjust <- rep_len(hjust, n); vjust <- rep_len(vjust, n); rot <- rep_len(rot, n); opacity <- rep_len(opacity, n)
+  extent <- text_extent_mm_3d(styles)
+  padding <- label_padding_3d(styles)
+  radius <- style_value_3d(styles, "label_r", 0)
+  border <- style_value_3d(styles, "border_colour", NA_character_)
+  linewidth <- style_value_3d(styles, "linewidth", 0)
+  children <- lapply(seq_len(n), function(i) {
+    s <- styles[i, , drop = FALSE]
+    text_gp <- material_gp_3d(s, opacity[i], 4L)
+    if (!boxed[i]) return(grid::textGrob(label[i], x[i], y[i], hjust = hjust[i], vjust = vjust[i], rot = rot[i], gp = text_gp))
+    box <- grid::roundrectGrob(r = grid::unit(radius[i], "mm"), gp = grid::gpar(fill = s$fill, col = if (linewidth[i] > 0) border[i] else NA,
+      lwd = linewidth[i] * 72.27 / 25.4, lty = text_gp$lty, alpha = opacity[i]))
+    inner <- extent[i, ] - 2 * padding[i]
+    text <- grid::textGrob(label[i], grid::unit(padding[i] + hjust[i] * inner[1L], "mm"),
+      grid::unit(padding[i] + vjust[i] * inner[2L], "mm"), hjust = hjust[i], vjust = vjust[i], gp = text_gp)
+    grid::gTree(children = grid::gList(box, text), vp = grid::viewport(x[i], y[i],
+      width = grid::unit(extent[i, 1L], "mm"), height = grid::unit(extent[i, 2L], "mm"),
+      just = c(hjust[i], vjust[i]), angle = rot[i]))
+  })
+  grid::gTree(children = do.call(grid::gList, children))
 }
 
 material_gp_3d <- function(styles, opacity, kind, fill = NULL) {
@@ -361,8 +410,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
       g <- grid::pointsGrob(x, y, default.units = "npc", pch = style_value_3d(s, "shape", 19), gp = gp)
     } else {
       tab <- scene$source$text; source <- f$source_index[rows]
-      label <- text_label_3d(s)
-      g <- grid::textGrob(label, x, y, hjust = tab$hjust[source], vjust = tab$vjust[source], rot = tab$angle[source[1L]], gp = gp)
+      g <- text_grob_3d(s, x, y, tab$hjust[source], tab$vjust[source], tab$angle[source[1L]], f$opacity[rows])
     }
     region <- if (region_id[rows[1L]] > 0L) regions$grobs[[region_id[rows[1L]]]] else NULL
     g <- clip_grob_3d(g, clip, region)

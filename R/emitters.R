@@ -69,6 +69,10 @@ marker_footprints_3d <- function(styles) {
 #' @param position_check Optional position validation function.
 #' @param replace Whether to replace an existing registration.
 #' @param prepare_data,prepare_aesthetics Optional input and aesthetic preparation functions.
+#' @param parameters Named list of further drawing parameters the geom accepts,
+#'   with their defaults. They reach the emitter in `params`.
+#' @param default_z Height of a layer without a z mapping. The default 0
+#'   trains the z scale; `-Inf` places the layer on the floor without training it.
 #' @return NULL invisibly. Registers the emitter for subsequent layers.
 #' @details
 #' The emitter receives scale-transformed positions normalised to the panel box.
@@ -102,14 +106,30 @@ marker_footprints_3d <- function(styles) {
 #' @export
 register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = NULL,
                              stat_adapter = NULL, position_check = NULL, replace = FALSE,
-                             prepare_data = NULL, prepare_aesthetics = NULL) {
-  stopifnot(inherits(geom, "Geom"), is.function(emit))
+                             prepare_data = NULL, prepare_aesthetics = NULL, parameters = list(),
+                             default_z = 0) {
+  stopifnot(inherits(geom, "Geom"), is.function(emit), is.list(parameters),
+            !length(parameters) || !is.null(names(parameters)),
+            is.numeric(default_z), length(default_z) == 1L, !is.na(default_z))
   name <- class(geom)[1L]
   if (exists(name, .emitters_3d, inherits = FALSE) && !replace) stop("Emitter already registered for ", name, ".", call. = FALSE)
   .emitters_3d[[name]] <- list(name = name, emit = emit, aesthetics = aesthetics,
                               setup_data = setup_data, stat_adapter = stat_adapter, position_check = position_check,
-                              prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics)
+                              prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics,
+                              parameters = parameters, default_z = default_z)
   invisible(NULL)
+}
+
+# Drawing parameters every 3D geom accepts, with their defaults.
+scene_draw_formals_3d <- function() {
+  alist(data = , panel_params = , coord = , .emitter = , .layer_id = 1L,
+    na.rm = FALSE, occlusion = "depth", shade = FALSE, hidden = "hide",
+    method = "grid", max_edge = Inf, wireframe = FALSE,
+    lineend = "butt", linejoin = "round", linemitre = 10,
+    arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
+    size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
+    width = NULL, depth = NULL, face = "zmin", plane = "surface",
+    render = "marker", edl = 1, raster = FALSE)
 }
 
 find_emitter_3d <- function(geom) {
@@ -137,27 +157,28 @@ scene_geom_3d <- function(parent, entry) {
       else if (entry$name != "GeomSegment") data <- parent$setup_data(data, params)
       data
     },
-    draw_panel = function(data, panel_params, coord, .emitter = entry$name, .layer_id = 1L,
-                           na.rm = FALSE, occlusion = "depth", shade = FALSE, hidden = "hide",
-                           method = "grid", max_edge = Inf, wireframe = FALSE,
-                           lineend = "butt", linejoin = "round", linemitre = 10,
-                           arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
-                           size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
-                           width = NULL, depth = NULL, face = "zmin", plane = "surface",
-                           render = "marker", edl = 1, raster = FALSE) {
-      if (!inherits(coord, "Coord3D")) stop("3D layers require coord_3d().", call. = FALSE)
-      params <- list(.emitter = .emitter, na.rm = na.rm, occlusion = occlusion,
-                     shade = shade, hidden = hidden, method = method, max_edge = max_edge,
-                     wireframe = wireframe, lineend = lineend, linejoin = linejoin,
-                     linemitre = linemitre, arrow = arrow, arrow.fill = arrow.fill,
-                     parse = parse, check_overlap = check_overlap, size.unit = size.unit, rule = rule,
-                     base = base, cap = cap, width = width, depth = depth, face = face, plane = plane,
-                     render = render, edl = edl, raster = raster)
-      scene_layer_grob(emit_scene_3d(data, params, panel_params, .layer_id))
-    }
+    draw_panel = scene_draw_panel_3d(entry)
   )
 }
 
+# The formals of draw_panel are the parameters ggplot2 passes to the geom: the
+# common set and the parameters registered with the emitter.
+scene_draw_panel_3d <- function(entry) {
+  draw <- function() {
+    params <- as.list(environment(), all.names = TRUE)
+    if (!inherits(params$coord, "Coord3D")) stop("3D layers require coord_3d().", call. = FALSE)
+    drawn <- emit_scene_3d(params$data, params[setdiff(names(params), c("data", "panel_params", "coord", ".layer_id"))],
+      params$panel_params, params$.layer_id)
+    if (inherits(drawn, "grob")) drawn else scene_layer_grob(drawn)
+  }
+  arguments <- scene_draw_formals_3d()
+  arguments$.emitter <- entry$name
+  arguments[names(entry$parameters)] <- entry$parameters
+  formals(draw) <- arguments
+  draw
+}
+
+# An emitter returns a scene packet, or an annotation grob drawn over the scene.
 emit_scene_3d <- function(data, params, panel_params, layer_id) {
   entry <- .emitters_3d[[params$.emitter]]
   if (is.null(entry)) stop("Unknown 3D emitter: ", params$.emitter, call. = FALSE)
@@ -174,6 +195,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   raster <- params$raster %or3d% FALSE
   if (!is.logical(raster) || length(raster) != 1L || is.na(raster)) stop("raster must be TRUE or FALSE.", call. = FALSE)
   packet <- entry$emit(normalise_positions_3d(data, panel_params), params, panel_params)
+  if (inherits(packet, "grob")) return(packet)
   validate_scene_packet(packet)
   if (raster && nrow(packet$styles)) packet$styles$raster <- TRUE
   frame_packet_3d(frame_of_3d(panel_params), packet, panel_params$camera$clip_data)
@@ -187,6 +209,8 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL) {
                    hjust = 0.5, vjust = 0.5, angle = 0, stroke = 0.5)
   styles <- data.frame(style_id = seq_along(rows))
   for (name in names(defaults)) styles[[name]] <- if (name %in% names(data)) data[[name]][rows] else rep(defaults[[name]], length(rows))
+  # Label boxes behind text: padding and corner radius in mm, border colour.
+  for (name in intersect(c("label_padding", "label_r", "border_colour"), names(data))) styles[[name]] <- data[[name]][rows]
   styles$colour[kinds == "faces"] <- NA_character_
   styles$alpha[is.na(styles$alpha)] <- 1
   if (!is.null(normals)) styles[c("normal_x", "normal_y", "normal_z")] <- as.data.frame(normals)
@@ -208,7 +232,7 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL) {
   chosen[filled] <- styles$fill[index[filled]]
   rgba <- colour_channels_3d(chosen, alpha = TRUE)
   opacity <- as.double(styles$alpha[index] * rgba[4L, ] / 255)
-  for (name in c("colour", "fill")) {
+  for (name in intersect(c("colour", "fill", "border_colour"), names(styles))) {
     rgb <- grDevices::col2rgb(styles[[name]], alpha = TRUE)
     styles[[name]] <- ifelse(is.na(styles[[name]]), NA_character_, grDevices::rgb(rgb[1, ], rgb[2, ], rgb[3, ], maxColorValue = 255))
   }
@@ -220,7 +244,7 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL) {
   }
   styles$arrow <- I(rep(list(params$arrow), nrow(styles)))
   styles$arrow_fill <- params$arrow.fill %or3d% styles$colour
-  styles$fontsize <- styles$size * switch(params$size.unit %or3d% "mm", mm = 72.27 / 25.4, pt = 1, cm = 72.27 / 2.54, "in" = 72.27, pc = 12, stop("Unsupported text size unit.", call. = FALSE))
+  styles$fontsize <- styles$size * text_size_pt_3d(params$size.unit)
   if (isTRUE(params$parse)) styles$label <- I(lapply(as.character(styles$label), function(x) parse(text = x)))
   list(styles = styles, opacity = opacity, index = index)
 }
@@ -267,9 +291,9 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     if (kind == "text") {
       for (key in c("hjust", "vjust", "angle")) tables[[kind]][[key]] <- material$styles[[key]][style]
       measured <- unique(style)
-      metrics <- lapply(measured, function(j) grid::textGrob(material$styles$label[j], gp = grid::gpar(fontsize = material$styles$fontsize[j], fontfamily = material$styles$family[j], fontface = material$styles$fontface[j])))
-      tables[[kind]]$width_mm <- vapply(metrics, function(g) grid::convertWidth(grid::grobWidth(g), "mm", TRUE), numeric(1))[match(style, measured)]
-      tables[[kind]]$height_mm <- vapply(metrics, function(g) grid::convertHeight(grid::grobHeight(g), "mm", TRUE), numeric(1))[match(style, measured)]
+      extent <- text_extent_mm_3d(material$styles[measured, , drop = FALSE])
+      tables[[kind]]$width_mm <- extent[match(style, measured), 1L]
+      tables[[kind]]$height_mm <- extent[match(style, measured), 2L]
     }
   }
   if ("markers" %in% kinds) {

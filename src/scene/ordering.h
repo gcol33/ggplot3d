@@ -1,5 +1,6 @@
 #pragma once
 #include "coverage.h"
+#include "parallel.h"
 #include <map>
 #include <queue>
 #include <tuple>
@@ -132,6 +133,22 @@ static inline Ring2 projected_overlap(const ProjectedPiece& a,const ProjectedPie
   return result;
 }
 
+// Two counter-clockwise convex rings whose interiors are disjoint have an edge
+// of one with every vertex of the other on or outside its line. Their overlap
+// then has zero area.
+static inline bool separated_convex(const Ring2& x,const Ring2& y) {
+  for(const Ring2* ring:{&x,&y}) {
+    const Ring2& other=ring==&x ? y:x;
+    for(std::size_t k=0;k<ring->size();++k) {
+      const Point2& a=(*ring)[k];const Point2& b=(*ring)[(k+1)%ring->size()];
+      bool outside=true;
+      for(const auto& q:other) if(orient2(a,b,q)>0) {outside=false;break;}
+      if(outside) return true;
+    }
+  }
+  return false;
+}
+
 static inline bool inside_convex(const Ring2& ring,const Point2& q) {
   for(std::size_t i=0;i<ring.size();++i)
     if(orient2(ring[i],ring[(i+1)%ring.size()],q)<0) return false;
@@ -238,23 +255,14 @@ static inline int occlusion_relation(const Piece& a,const Piece& b,const Project
     return 3;
   }
   if(a.kind==Kind::face && b.kind==Kind::face && x.area && y.area) {
+    if(separated_convex(x.ring,y.ring)) return 0;
     int sign=0;
     for(double u:{std::max(x.bounds[0],y.bounds[0]),std::min(x.bounds[2],y.bounds[2])})
       for(double v:{std::max(x.bounds[1],y.bounds[1]),std::min(x.bounds[3],y.bounds[3])}) {
         double d=projected_depth(x,{u,v},p.camera.perspective)-projected_depth(y,{u,v},p.camera.perspective);
         sign|=d>p.resolved.tolerance ? 1 : (d<-p.resolved.tolerance ? 2:3);
       }
-    if(sign==1 || sign==2) {
-      for(const auto* ring:{&x.ring,&y.ring}) {
-        const auto& other=ring==&x.ring ? y.ring:x.ring;
-        for(std::size_t k=0;k<ring->size();++k) {
-          bool outside=true;
-          for(const auto& q:other) if(orient2((*ring)[k],(*ring)[(k+1)%ring->size()],q)>0) {outside=false;break;}
-          if(outside) return 0;
-        }
-      }
-      return sign;
-    }
+    if(sign==1 || sign==2) return sign;
   }
   Ring2 overlap=projected_overlap(x,y,p);
   if(overlap.empty()) return 0;
@@ -348,16 +356,36 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   auto edge=[&](std::size_t a,std::size_t b) {
     budget.add(32);edges.emplace_back(a,b);++stats.edges;
   };
-  for(std::size_t i=0;i<n;++i) {
-    if(i%1024==0) Rcpp::checkUserInterrupt();
-    index.query(projected[i].bounds,i+1,[&](std::size_t j) {
-      ++stats.pairs;
-      int relation=occlusion_relation(pieces[i],pieces[j],projected[i],projected[j],packet,p);
-      if(relation==3) ++budget.intersections;
-      if(relation&1) edge(i,j);
-      if(relation&2) edge(j,i);
+  // Pairs are classified in parallel blocks of pieces and merged in piece
+  // order, so edges, statistics and budget failures match a serial sweep. A
+  // wave of blocks bounds the work done before the budget sees its edges.
+  struct Relation {Index a,b;int relation;};
+  const std::size_t block_size=256,wave_blocks=std::max<std::size_t>(16,4*budget.threads);
+  const std::size_t blocks=(n+block_size-1)/block_size;
+  std::vector<std::vector<Relation>> found(std::min(blocks,wave_blocks));
+  std::vector<std::size_t> pairs(found.size());
+  for(std::size_t first=0;first<blocks;first+=wave_blocks) {
+    Rcpp::checkUserInterrupt();
+    const std::size_t count=std::min(wave_blocks,blocks-first);
+    parallel_blocks(count,budget.threads,[&](std::size_t slot) {
+      auto& out=found[slot];out.clear();pairs[slot]=0;
+      const std::size_t begin=(first+slot)*block_size,end=std::min(n,begin+block_size);
+      for(std::size_t i=begin;i<end;++i) index.query(projected[i].bounds,i+1,[&](std::size_t j) {
+        ++pairs[slot];
+        int relation=occlusion_relation(pieces[i],pieces[j],projected[i],projected[j],packet,p);
+        if(relation) out.push_back({static_cast<Index>(i),static_cast<Index>(j),relation});
+      });
     });
+    for(std::size_t slot=0;slot<count;++slot) {
+      stats.pairs+=pairs[slot];
+      for(const auto& r:found[slot]) {
+        if(r.relation==3) ++budget.intersections;
+        if(r.relation&1) edge(r.a,r.b);
+        if(r.relation&2) edge(r.b,r.a);
+      }
+    }
   }
+  found.clear();found.shrink_to_fit();
   std::vector<std::size_t> offsets(n+1,0);
   for(const auto& e:edges) ++offsets[e.first+1];
   std::partial_sum(offsets.begin(),offsets.end(),offsets.begin());

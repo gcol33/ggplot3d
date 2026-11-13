@@ -54,7 +54,7 @@ h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
   coord_3d()
 ```
 
-The accepted ggplot2 geoms are points, paths, lines, segments, text, polygons and `geom_blank()`; `geom_contour()` and `geom_density_2d()` draw each line at the height of its level. A layer without a z mapping is drawn at z = 0, and the z scale extends to include 0. Here the path is drawn a second time with `inherit.aes = FALSE`, so it lies flat at height 0 below the helix.
+The accepted ggplot2 geoms are points, paths, lines, segments, text, labels, polygons, rectangles, tiles, `geom_hline()`, `geom_vline()`, `annotation_custom()`, `annotation_raster()` and `geom_blank()`; `geom_contour()` and `geom_density_2d()` draw each line at the height of its level. A layer without a z mapping is drawn at z = 0, and the z scale extends to include 0. Here the path is drawn a second time with `inherit.aes = FALSE`, so it lies flat at height 0 below the helix.
 
 ```{r z-zero, fig.alt="The blue helix above a grey circle drawn at height zero; the z axis now starts at zero."}
 h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
@@ -86,6 +86,22 @@ k + geom_point_3d(aes(z = -Inf), colour = PAL["grey"], size = 1.5) +
 
 Shadows and wall projections use the same x, y and z scales as the points, so each projection lies on the box grid at the coordinates it shares with its point. The scales are trained on the finite positions only, so the box keeps the range of the data.
 
+## Reference lines and annotations
+
+`geom_hline()` and `geom_vline()` draw a line across the box at height 0, here the two zero lines of x and y. `annotate()` has no z position; `annotate_3d()` takes the same arguments as `annotate()` together with `z`, `zmin`, `zmax` and `zend`. Here it labels the highest point of the cloud.
+
+```{r annotations, fig.alt="Forty dark points in a box, two grey lines crossing at x = 0 and y = 0 at height zero, and a white label reading highest next to the top point."}
+top <- cloud[which.max(cloud$z), ]
+k + geom_hline(yintercept = 0, colour = PAL["grey"]) +
+  geom_vline(xintercept = 0, colour = PAL["grey"]) +
+  geom_point_3d(size = 2.5) +
+  annotate_3d("label", x = top$x, y = top$y, z = top$z, label = "highest",
+              hjust = -0.15) +
+  coord_3d()
+```
+
+The label is a box drawn at the projected position of its point; points and faces in front of that position cover it.
+
 ## Contours and densities on the floor
 
 The surface below has a peak and a hollow. `surface` contains one row for each of 25 by 25 grid positions with the height `z`.
@@ -116,6 +132,16 @@ A density surface can stand over the observations it was estimated from. `faithf
 ggplot(faithful, aes(eruptions, waiting)) +
   stat_density_2d_3d(n = 24, alpha = 0.5) +
   geom_point_3d(aes(z = -Inf), size = 1) +
+  labs(z = "density") +
+  coord_3d(elevation = 50)
+```
+
+With `plane = "floor"`, `stat_density_2d_3d()` lays the same density grid flat on the floor and fills it by density, a heat map under the surface.
+
+```{r density-heat, fig.alt="The half-transparent grey density surface over a floor coloured from dark blue where the density is low to light blue under the two peaks."}
+ggplot(faithful, aes(eruptions, waiting)) +
+  stat_density_2d_3d(n = 24, alpha = 0.5) +
+  stat_density_2d_3d(n = 48, plane = "floor") +
   labs(z = "density") +
   coord_3d(elevation = 50)
 ```
@@ -153,9 +179,19 @@ The x axis has the same range in both panels, so the hollow near x = -1 and the 
 
 ## Two camera views of one plot
 
-Facets in one plot share one `coord_3d()` and therefore one camera. To show the same data from two directions, give each plot its own `coord_3d()` and arrange them with patchwork.
+The camera arguments of `coord_3d()` take one value per panel. To show the same data from two directions, repeat the data once per view, facet by the view, and give each panel its own angles.
 
-```{r two-views, fig.height=8, fig.alt="The grey surface from the default view above the same surface seen from a higher camera on the opposite side."}
+```{r two-views, fig.width=9, fig.height=4.5, fig.alt="Two panels: the grey surface from the default view, and the same surface seen from a higher camera on the opposite side."}
+views <- rbind(transform(surface, view = "default view"),
+               transform(surface, view = "from the opposite side"))
+ggplot(views, aes(x, y, z = z)) + geom_surface_3d(fill = "grey85") +
+  facet_wrap(~view) +
+  coord_3d(azimuth = c(-60, 120), elevation = c(30, 55))
+```
+
+Both panels keep one magnification, so the surface has the same size in each. Separate plots with their own `coord_3d()`, arranged with patchwork, do the same for plots with different data.
+
+```{r two-plots, fig.height=8, fig.alt="The grey surface from the default view above the same surface seen from a higher camera on the opposite side."}
 base <- s + geom_surface_3d(fill = "grey85")
 (base + coord_3d()) /
   (base + coord_3d(azimuth = 120, elevation = 55))
