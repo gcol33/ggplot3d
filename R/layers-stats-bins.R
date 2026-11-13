@@ -241,8 +241,16 @@ emit_hexagons_3d <- function(data, params, panel_params) {
   emit_extrusions_3d(corners, params, panel_params)
 }
 
+# Hexagons stack along z only: stacking along x or y would stretch the bounding
+# box that carries the hexagon's shape.
 register_geom_3d(GeomHex3D, emit_hexagons_3d, prepare_aesthetics = prepare_solid_3d,
-  position_check = function(position, scales) check_position_3d(position, scales, stack = TRUE))
+  positions = c("nudge", "stack"),
+  extents = list(x = extent_3d("xmin", "xmax", "x"), y = extent_3d("ymin", "ymax", "y"),
+                 z = extent_3d("zmin", "z")),
+  position_check = function(position, scales) {
+    if (identical(position_kind_3d(position), "stack") && !identical(position$axis, "z"))
+      stop("Hexagonal prisms stack along z only.", call. = FALSE)
+  })
 
 # Constructors -------------------------------------------------------------------
 

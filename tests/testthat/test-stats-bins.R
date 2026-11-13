@@ -117,3 +117,15 @@ test_that("hexagonal prisms are extruded hexagons that tile the plane", {
   expect_silent(validate_scene_packet(hexes$packet))
   expect_error(geom_hex_3d(cap = "sides"))
 })
+
+test_that("grouped hexagons stack along z on a shared lattice", {
+  set.seed(5)
+  d <- data.frame(x = rnorm(200), y = rnorm(200), g = rep(c("a", "b"), 100))
+  b <- bins_data(ggplot2::ggplot(d, ggplot2::aes(x, y, fill = g)) +
+    geom_hex_3d(bins = 5, position = position_stack_3d()) + coord_3d())
+  cell <- interaction(b$x, b$y, drop = TRUE)
+  expect_equal(as.vector(tapply(b$z, cell, max)), as.vector(tapply(b$count, cell, sum)))
+  expect_equal(b$z - b$zmin, b$count)
+  expect_error(ggplot2::ggplot_build(ggplot2::ggplot(d, ggplot2::aes(x, y)) +
+    geom_hex_3d(bins = 5, position = position_stack_3d(axis = "x")) + coord_3d()), "along z only")
+})

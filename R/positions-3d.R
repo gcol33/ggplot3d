@@ -8,12 +8,6 @@ shift_axis_3d <- function(data, axis, offset) {
   data
 }
 
-# Smallest positive gap between distinct finite values; 1 for a single value.
-lattice_spacing_3d <- function(v) {
-  d <- diff(sort(unique(v[is.finite(v)])))
-  if (length(d)) min(d[d > 0]) else 1
-}
-
 default_extents_3d <- function() {
   list(x = extent_3d(upper = "x", centre = "x"), y = extent_3d(upper = "y", centre = "y"),
        z = extent_3d(upper = "z", centre = "z"))
