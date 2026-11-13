@@ -10,8 +10,7 @@ emit_stats_surface_3d <- function(data, params, panel_params) {
   emit_surface_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
 }
 
-register_geom_3d(GeomStatsSurface3D, emit_stats_surface_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+register_geom_3d(GeomStatsSurface3D, emit_stats_surface_3d)
 
 stats_seed_data_3d <- function(data) {
   if (is.null(data)) function(d) if (is.data.frame(d) && nrow(d) > 0L) d else data.frame(.grid = 1) else data

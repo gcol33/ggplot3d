@@ -89,21 +89,12 @@ The curve touches the polygon only at its two end points, and it leaves each end
 
 ## Bivariate histograms
 
-`geom_bin_2d()` counts observations in rectangular cells of two continuous variables and shows each count as a fill colour. In three dimensions the count becomes the height of a column. The `faithful` data record the duration of 272 eruptions of the Old Faithful geyser and the waiting time before each, both in minutes. Assign each eruption to a cell 0.5 minutes wide in duration and 5 minutes wide in waiting time, then count the eruptions in each cell.
-
-```{r hist-data}
-duration <- 0.5 * floor(faithful$eruptions / 0.5) + 0.25
-waiting <- 5 * floor(faithful$waiting / 5) + 2.5
-bins <- aggregate(list(count = duration),
-                  list(duration = duration, waiting = waiting), length)
-head(bins, 3)
-```
-
-Each row of `bins` holds a cell centre and its count; empty cells have no row. `geom_col_3d()` draws one column per row, and setting `width` and `depth` to the bin widths makes neighbouring columns touch, as histogram bars do.
+`geom_bin_2d()` counts observations in rectangular cells of two continuous variables and shows each count as a fill colour. In three dimensions the count becomes the height of a column. The `faithful` data record the duration of 272 eruptions of the Old Faithful geyser and the waiting time before each, both in minutes. `geom_histogram_3d()` assigns each eruption to a cell 0.5 minutes wide in duration and 5 minutes wide in waiting time, counts the eruptions in each cell and draws one column per occupied cell; neighbouring columns touch, as histogram bars do.
 
 ```{r hist, fig.alt="Columns counting Old Faithful eruptions by duration and waiting time, forming two clusters: short eruptions after short waits and long eruptions after long waits."}
-ggplot(bins, aes(duration, waiting, z = count)) +
-  geom_col_3d(width = 0.5, depth = 5, fill = PAL["blue"]) +
+ggplot(faithful, aes(eruptions, waiting)) +
+  geom_histogram_3d(binwidth = c(0.5, 5), fill = PAL["blue"]) +
+  labs(x = "duration", z = "count") +
   coord_3d()
 ```
 

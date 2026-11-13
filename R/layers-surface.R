@@ -144,5 +144,4 @@ delaunay_triangles_3d <- function(xy) {
   triangles
 }
 
-register_geom_3d(GeomSurface3D, emit_surface_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+register_geom_3d(GeomSurface3D, emit_surface_3d)

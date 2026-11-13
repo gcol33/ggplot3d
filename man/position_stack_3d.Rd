@@ -2,23 +2,56 @@
 % Please edit documentation in R/positions-3d.R
 \name{position_stack_3d}
 \alias{position_stack_3d}
-\title{Stack column heights along z}
+\alias{position_fill_3d}
+\title{Stack or fill intervals along an axis}
 \usage{
-position_stack_3d(vjust = 1, reverse = FALSE)
+position_stack_3d(axis = "z", vjust = 1, reverse = FALSE)
+
+position_fill_3d(axis = "z", vjust = 1, reverse = FALSE)
 }
 \arguments{
-\item{vjust}{Fraction of each stacked interval used for z.}
+\item{axis}{Axis to stack along: \code{"z"}, \code{"x"} or \code{"y"}.}
 
-\item{reverse}{Reverse group order.}
+\item{vjust}{Fraction of each interval at which the anchor (\code{z} for
+columns, the coordinate of points and text) is placed.}
+
+\item{reverse}{Reverse the stacking order of the groups. By default the
+first group ends on top, as in \code{\link[ggplot2:position_stack]{ggplot2::position_stack()}}.}
 }
 \value{
 A ggplot2 position adjustment.
 }
 \description{
-Stack column heights along z
+\code{position_stack_3d()} places the intervals of groups that share a cell end
+to end along \code{axis}; \code{position_fill_3d()} also rescales each stack to span
+0 to 1. Positive and negative values stack separately. A cell is the set of
+rows with the same position on the two other axes.
+}
+\details{
+Columns stack along z from a zero baseline. They stack along x or y when
+\code{xmin = 0} and \code{xmax} (or \code{ymin}, \code{ymax}) give each column's length. Bands
+and walls stack along the axis on which they span from \code{x}, \code{y} or \code{z} to
+the matching \verb{*end}; groups stack where they share vertices. Points, paths,
+text and drop lines take their coordinate on \code{axis} as the length, so
+labels can follow stacked columns. Stacking happens on the transformed
+scale and needs a linear continuous scale on \code{axis}.
 }
 \examples{
-d <- data.frame(x = 1, y = 1, z = c(2, 3), part = c("a", "b"))
+d <- expand.grid(x = 1:3, y = 1:2, part = c("a", "b", "c"))
+d$z <- c(1:6, 6:1, rep(2, 6))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = part)) +
   geom_col_3d(position = position_stack_3d()) + coord_3d()
+
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = part)) +
+  geom_col_3d(position = position_fill_3d()) + coord_3d()
+
+# Stacked walls: one stacked area per y slice
+w <- expand.grid(x = seq(0, 6, by = 0.25), y = 1:2, part = c("a", "b"))
+w$h <- 1 + sin(w$x + as.integer(w$part)) / 2
+ggplot2::ggplot(w, ggplot2::aes(x, y, zmin = 0, zmax = h, fill = part,
+                                group = interaction(part, y))) +
+  geom_band_3d(position = position_stack_3d()) + coord_3d()
+}
+\seealso{
+\code{\link[ggplot2:position_stack]{ggplot2::position_stack()}}, \code{\link[=position_dodge_3d]{position_dodge_3d()}}.
 }

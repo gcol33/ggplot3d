@@ -13,40 +13,55 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
   out.camera = projection.resolved;
   std::vector<Piece> pieces;
   auto emit = [&](const PrimitiveTable& source, Index row, Kind kind,
-                  const Polygon& polygon, bool clipped,
+                  Polygon polygon, bool clipped,
                   Vec3 normal = Vec3{0,0,0}, double start = 0, double end = 0,
                   bool arrow_start = false, bool arrow_end = false) {
     budget.piece(polygon.size());
-    pieces.push_back({&source, row, kind, polygon, {}, normal, start, end,
+    pieces.push_back({&source, row, kind, std::move(polygon), {}, normal, start, end,
                       clipped, arrow_start, arrow_end, pieces.size()});
   };
   const auto planes = clipping_planes(projection);
   std::vector<Index> solid_components;
   std::vector<Vec3> face_normals;
-  const auto backfaces=solid_backfaces(packet,projection,solid_components,face_normals);
+  const auto backfaces=solid_backfaces(packet,projection,solid_components,face_normals,budget.threads);
+  auto corner_polygon=[&](const PrimitiveTable& table,std::size_t row) {
+    Polygon polygon;
+    for (Index j = 0; j < table.count[row]; ++j) {
+      Index corner = table.offset[row]+j, v = packet.corners.vertex[corner];
+      polygon.push_back({{packet.vertices.x[v], packet.vertices.y[v], packet.vertices.z[v]}, {{corner, 1}}});
+    }
+    return polygon;
+  };
+  // Faces are clipped in parallel and emitted in row order.
+  struct ClippedFace {Index row;Polygon polygon;bool clipped;};
+  const auto& faces=packet.faces;
+  parallel_ordered<std::vector<ClippedFace>>(faces.count.size(),1024,budget.threads,
+    [&](std::size_t begin,std::size_t end,std::vector<ClippedFace>& out) {
+      out.clear();
+      for(std::size_t row=begin;row<end;++row) {
+        if(backfaces[row] || faces.opacity[row]<=0) continue;
+        bool clipped=false;
+        Polygon polygon=clip_polygon(corner_polygon(faces,row),planes,clipped);
+        if(polygon.size()<3) continue;
+        Vec3 area=area_vector(polygon,projection);
+        if(std::sqrt(dot(area,area))>projection.resolved.tolerance*projection.resolved.tolerance)
+          out.push_back({static_cast<Index>(row),std::move(polygon),clipped});
+      }
+    },
+    [&](std::vector<ClippedFace>& out) {
+      for(auto& face:out) {
+        emit(faces,face.row,Kind::face,std::move(face.polygon),face.clipped,face_normals[face.row]);
+        pieces.back().solid=solid_components[face.row];
+      }
+      out.clear();
+    });
   const PrimitiveTable* tables[] = {&packet.faces, &packet.polylines, &packet.markers, &packet.text};
-  for (int kind = 1; kind <= 4; ++kind) {
+  for (int kind = 2; kind <= 4; ++kind) {
     const auto& table = *tables[kind-1];
     for (std::size_t row = 0; row < table.count.size(); ++row) {
       if (row % 4096 == 0) Rcpp::checkUserInterrupt();
-      if(kind==1 && backfaces[row]) continue;
-      Polygon polygon;
-      for (Index j = 0; j < table.count[row]; ++j) {
-        Index corner = table.offset[row]+j, v = packet.corners.vertex[corner];
-        polygon.push_back({{packet.vertices.x[v], packet.vertices.y[v], packet.vertices.z[v]}, {{corner, 1}}});
-      }
-      if (kind == 1) {
-        Vec3 normal = face_normals[row];
-        bool clipped = false;
-        polygon = clip_polygon(std::move(polygon), planes, clipped);
-        if (polygon.size() >= 3 && table.opacity[row] > 0) {
-          Vec3 area = area_vector(polygon, projection);
-          if (std::sqrt(dot(area, area)) > projection.resolved.tolerance*projection.resolved.tolerance) {
-            emit(table, row, Kind::face, polygon, clipped, normal);
-            pieces.back().solid=solid_components[row];
-          }
-        }
-      } else if (kind == 2) {
+      Polygon polygon = corner_polygon(table, row);
+      if (kind == 2) {
         bool area_path=polygon.size()>2 && packet.polylines.width_mm[row]>0 && table.partition[row]==1;
         const std::size_t centre_planes=planes.size()-(projection.camera.clip ? 4:0);
         const std::size_t slab_begin=projection.camera.clip_data ? 6:0;

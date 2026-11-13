@@ -14,6 +14,8 @@ coverage](https://codecov.io/gh/gcol33/ggplot3d/graph/badge.svg)](https://app.co
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- badges: end -->
 
+<p align="center"><img src="man/figures/ggplot3d-hero.svg" alt="Height bands of the Maunga Whau volcano every 10 metres, from blue at 90 metres through beige to red at 200 metres, drawn as a flat ggplot2 contour map on the left and, with coord_3d(), draped over the shaded volcano surface on the right." width="100%"></p>
+
 ggplot3d draws three-dimensional points, paths, surfaces and solids with
 [ggplot2](https://ggplot2.tidyverse.org/).
 

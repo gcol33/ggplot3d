@@ -15,7 +15,9 @@ register_geom_3d(
   prepare_data = NULL,
   prepare_aesthetics = NULL,
   parameters = list(),
-  default_z = 0
+  default_z = 0,
+  positions = "nudge",
+  extents = list()
 )
 }
 \arguments{
@@ -29,7 +31,8 @@ register_geom_3d(
 
 \item{stat_adapter}{Optional stat prototype.}
 
-\item{position_check}{Optional position validation function.}
+\item{position_check}{Optional extra position validation, a function of
+the position and the panel's scales that signals an error.}
 
 \item{replace}{Whether to replace an existing registration.}
 
@@ -40,6 +43,18 @@ with their defaults. They reach the emitter in \code{params}.}
 
 \item{default_z}{Height of a layer without a z mapping. The default 0
 trains the z scale; \code{-Inf} places the layer on the floor without training it.}
+
+\item{positions}{Position adjustments the geometry accepts besides
+identity: any of \code{"nudge"} (\code{\link[=position_nudge_3d]{position_nudge_3d()}}), \code{"jitter"}
+(\code{\link[=position_jitter_3d]{position_jitter_3d()}}), \code{"dodge"} (\code{\link[=position_dodge_3d]{position_dodge_3d()}}), \code{"stack"}
+(\code{\link[=position_stack_3d]{position_stack_3d()}}, \code{\link[=position_fill_3d]{position_fill_3d()}}) and \code{"planar"} (ggplot2's
+own nudge, jitter and dodge, which move x and y only).}
+
+\item{extents}{Named list, by axis \code{"x"}, \code{"y"}, \code{"z"}, of the columns
+holding the geometry's interval along that axis, as character vectors
+\code{c(lower = , upper = , centre = )}; \code{lower} or \code{centre} may be \code{NA}.
+Stacking and dodging read and rewrite these columns. An axis not listed
+takes its own coordinate as both the interval end and the anchor.}
 }
 \value{
 NULL invisibly. Registers the emitter for subsequent layers.

@@ -120,7 +120,7 @@ register_geom_3d(ggplot2::GeomHline, reference_line_emitter_3d("y"))
 register_geom_3d(ggplot2::GeomVline, reference_line_emitter_3d("x"))
 register_geom_3d(ggplot2::GeomLabel, emit_labels_3d,
   parameters = list(label.padding = grid::unit(0.25, "lines"), label.r = grid::unit(0.15, "lines"),
-    border.colour = NULL, text.colour = NULL))
+    border.colour = NULL, text.colour = NULL), positions = mark_positions_3d)
 register_geom_3d(ggplot2::GeomCustomAnn,
   annotation_emitter_3d(function(params) params$grob),
   parameters = list(grob = NULL, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),

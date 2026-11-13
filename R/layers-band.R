@@ -48,7 +48,8 @@ emit_bands_3d <- function(data, params, panel_params) {
 }
 
 register_geom_3d(GeomBand3D, emit_bands_3d, prepare_aesthetics = prepare_band_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+  positions = c("nudge", "stack"),
+  extents = list(x = extent_3d("x", "xend"), y = extent_3d("y", "yend"), z = extent_3d("z", "zend")))
 
 GeomDropline3D <- ggplot2::ggproto("GeomDropline3D", ggplot2::GeomSegment,
   required_aes = c("x", "y", "z")
@@ -76,5 +77,4 @@ emit_droplines_3d <- function(data, params, panel_params) {
   emit_segments_3d(data, params, panel_params)
 }
 
-register_geom_3d(GeomDropline3D, emit_droplines_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+register_geom_3d(GeomDropline3D, emit_droplines_3d, positions = c("nudge", "jitter", "dodge", "stack"))
