@@ -1,4 +1,4 @@
-utils::globalVariables(c("raster_prepare_cpp", "raster_draw_cpp"))
+utils::globalVariables(c("raster_prepare_cpp", "raster_draw_cpp", "raster_canvas_cpp"))
 
 raster_colours_3d <- function(packet, prepared, light) {
   lapply(c("faces", "polylines", "markers", "text"), function(kind) {
@@ -54,8 +54,53 @@ raster_threads_3d <- function() {
   as.integer(threads)
 }
 
+# Traced layers of a panel: the ray-march specs that layers attach to their
+# (empty) packets, in layer order.
+raster_traced_specs_3d <- function(packets) {
+  Filter(Negate(is.null), lapply(packets, attr, "raymarch"))
+}
+
+# Per-sample traced input of a raster draw on `canvas`. Opaque traced
+# surfaces (SDF layers, MIP and isosurface volumes) are found here, the
+# nearest per sample, and shaded in linear light; absorption volumes travel
+# with the sample rays and are integrated inside the compositing walk. Traced
+# layer j has primitive id `first_id + j`, after the packet's primitives.
+raster_traced_input_3d <- function(specs, camera, viewport, canvas, resolved, light, first_id) {
+  grid <- list(width = canvas$width * canvas$antialias, height = canvas$height * canvas$antialias,
+               extent = canvas$extent)
+  rays <- raymarch_rays_3d(camera, viewport, grid, specs[[1L]]$ranges)
+  n <- nrow(rays$origin)
+  far <- (rays$far - rays$near) * rays$length
+  depth <- rep(NA_real_, n); layer <- integer(n)
+  colour <- matrix(0, n, 3L); normal <- matrix(NA_real_, n, 3L)
+  absorption <- vapply(specs, function(s) identical(s$kind, "volume") && s$mode == 0L, logical(1))
+  for (j in which(!absorption)) {
+    spec <- specs[[j]]
+    hit <- raymarch_surface_handlers_3d[[spec$kind %or3d% "sdf"]](spec, rays, far)
+    z <- rays$near + hit$distance / rays$length
+    take <- which(is.finite(z) & z <= rays$far & (is.na(depth) | z < depth))
+    if (!length(take)) next
+    span <- vapply(spec$ranges, diff, numeric(1))
+    unit <- sweep(hit$normal[take, , drop = FALSE], 2L, span / resolved$model_scale, "*")
+    unit <- unit / pmax(sqrt(rowSums(unit^2)), .Machine$double.eps)
+    base <- if (is.null(hit$colour)) {
+      matrix(srgb_decode_3d(colour_channels_3d(spec$fill) / 255), length(take), 3L, byrow = TRUE)
+    } else hit$colour[take, , drop = FALSE]
+    if (!identical(spec$mode, 1L) && !is.null(light))
+      base <- brighten_linear_3d(base, light_brightness_3d(unit, resolved, light), light$mode)
+    depth[take] <- z[take]; layer[take] <- j
+    colour[take, ] <- pmin(pmax(base, 0), 1); normal[take, ] <- unit
+  }
+  volumes <- specs[absorption]
+  input <- list(depth = depth, colour = colour, normal = normal, layer = layer,
+    ids = as.integer(first_id + seq_along(specs)), near = rays$near, far = rays$far,
+    volumes = volumes, volume_layer = which(absorption))
+  if (length(volumes)) input[c("origin", "direction", "length")] <- rays[c("origin", "direction", "length")]
+  input
+}
+
 raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NULL,
-                           id_pass = FALSE, buffers = FALSE, blend = "linear") {
+                           id_pass = FALSE, buffers = FALSE, blend = "linear", traced = list()) {
   blend <- match.arg(blend, c("linear", "srgb"))
   validate_camera_3d(camera)
   prepared <- raster_prepare_cpp(packet[names(packet) != "styles"], camera, viewport)
@@ -67,9 +112,19 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
   attr(dashes, "hidden") <- lapply(line$width_mm, function(width) dash_pattern_3d("dashed", width))
   pixels <- ceiling(c(viewport$width_mm, viewport$height_mm) * viewport$dpi / 25.4)
   scene_assert(all(is.finite(pixels)) && all(pixels <= .Machine$integer.max), "Unrepresentable raster dimensions.")
+  input <- list()
+  if (length(traced)) {
+    canvas <- raster_canvas_cpp(prepared$pointer, colours, dashes,
+      as.integer(pixels[1L]), as.integer(pixels[2L]), as.integer(antialias))
+    ids <- unlist(lapply(packet[c("faces", "polylines", "markers", "text")], `[[`, "primitive_id"), use.names = FALSE)
+    input <- raster_traced_input_3d(traced, camera, viewport, canvas, prepared$camera, light, max(c(0L, ids)))
+  }
   result <- raster_draw_cpp(prepared$pointer, colours, dashes,
     as.integer(pixels[1L]), as.integer(pixels[2L]), as.integer(antialias), id_pass,
-    raster_threads_3d(), buffers, blend == "linear")
+    raster_threads_3d(), buffers, blend == "linear", input)
+  if (length(traced)) result$traced <- data.frame(primitive_id = input$ids,
+    layer_id = vapply(traced, function(s) as.integer(s$layer_id %or3d% NA_integer_), integer(1)),
+    kind = vapply(traced, function(s) s$kind %or3d% "sdf", character(1)))
   result$engine_seconds <- prepared$engine_seconds
   result$camera <- prepared$camera
   result$viewport <- viewport
@@ -92,9 +147,17 @@ raster_image_grob_3d <- function(result) {
     height = grid::unit(extent[4L] - extent[2L], "npc"), interpolate = FALSE, name = "scene-raster-image-3d")
 }
 
-render_raster_panel_3d <- function(x, furniture, backend) {
+# The image of a raster result and the text labels it leaves visible.
+raster_layer_children_3d <- function(result, packet) {
+  c(list(raster_image_grob_3d(result)), raster_text_3d(result, packet))
+}
+
+# Panel assembly of every image-producing path (raster, ray-marched, path
+# traced): the furniture underlay, the image with its text, the furniture
+# overlay. The two furniture parts carry distinct names: a gTree draws its
+# children by name.
+raster_panel_grob_3d <- function(result, packet, furniture, name) {
   scene <- scene_compile(furniture$packet, furniture$camera, furniture$viewport)
-  # The two parts carry distinct names: a gTree draws its children by name.
   part <- function(partition, name) {
     selected <- scene
     selected$draw_order <- scene$draw_order[scene$fragments$partition[scene$draw_order] %in% partition]
@@ -102,12 +165,17 @@ render_raster_panel_3d <- function(x, furniture, backend) {
     g$name <- name
     g
   }
+  children <- c(list(part(c(0L, 1L), "scene-raster-underlay-3d")), raster_layer_children_3d(result, packet),
+    list(part(2L, "scene-raster-overlay-3d")))
+  list(scene = scene, grob = grid::gTree(children = do.call(grid::gList, children),
+    raster_result = result, name = name))
+}
+
+render_raster_panel_3d <- function(x, furniture, backend) {
+  traced <- raster_traced_specs_3d(x$packets)
   packet <- merge_scene_packets(x$packets, x$panel_params$panel_id)
   result <- raster_scene_3d(packet, furniture$camera, furniture$viewport,
-    backend$antialias, x$panel_params$coord_params$light, blend = backend$blend)
-  children <- c(list(part(c(0L, 1L), "scene-raster-underlay-3d"), raster_image_grob_3d(result)),
-    raster_text_3d(result, packet), list(part(2L, "scene-raster-overlay-3d")))
-  grob <- grid::gTree(children = do.call(grid::gList, children), raster_result = result,
-    name = "scene-raster-3d")
-  list(scene = scene, grob = grob)
+    backend$antialias, x$panel_params$coord_params$light, buffers = length(traced) > 0L,
+    blend = backend$blend, traced = traced)
+  raster_panel_grob_3d(result, packet, furniture, if (length(traced)) "scene-raymarch-3d" else "scene-raster-3d")
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry.h"
+#include "../raymarch/volume.h"
 #include <numeric>
 #include <atomic>
 #include <mutex>
@@ -283,6 +284,7 @@ static inline void add_arrowheads(Scene& scene,std::vector<Paint>& paint,Rcpp::N
 // averaged pixel is sRGB-encoded.
 struct Canvas {
   double origin_x=0,origin_y=0,dx=1,dy=1;
+  double pixel_x=1,pixel_y=1;
   int width=0,height=0,aa=1,w=0,h=0;
   bool linear=false;
   int tile=64,tiles_x=0,tiles_y=0;
@@ -320,11 +322,41 @@ struct Occluder {
   }
 };
 
+// `first` is the nearest painting item, or -1 when nothing or a traced layer
+// (`traced`, 1-based) paints first. `coverage` is the depth at which the
+// accumulated alpha reaches half its final value.
 struct SampleResult {
   Colour colour;
   Index first=-1;
-  double depth=R_PosInf,opaque_depth=R_PosInf;
+  int traced=0;
+  double depth=R_PosInf,opaque_depth=R_PosInf,coverage=R_PosInf;
   int peels=0;
+};
+
+// One compositing step of a sample: a fragment or a traced surface at depth
+// z, or a medium segment [a, b] of alpha `segment` composited over `before`.
+struct Step { double z,alpha,a,b,before,segment; bool medium; };
+
+// Ray-traced content per canvas sample, rays in the order of
+// raymarch_rays_cpp (rows from the top, column-major): the nearest opaque
+// traced surface (camera depth, straight colour in the compositing space,
+// traced layer, model-space normal) and the absorption volumes, integrated
+// along each sample's data-space ray. Camera depth z maps to the ray
+// parameter (z - near) * length.
+struct Traced {
+  bool active=false;
+  int h=0;
+  std::vector<double> depth;
+  std::vector<Colour> colour;
+  std::vector<int> layer,ids,volume_layer;
+  std::vector<Vec3> normal,origin,direction;
+  std::vector<double> length;
+  std::vector<raymarch::Volume> volumes;
+  double near=0,far=0;
+  std::size_t ray(int sx,int sy) const {return static_cast<std::size_t>(h-1-sy)+static_cast<std::size_t>(h)*sx;}
+  raymarch::Ray segment(std::size_t i,double a,double b) const {
+    return {origin[i],direction[i],(a-near)*length[i],(b-near)*length[i]};
+  }
 };
 
 // Front-to-back compositing order of the fragments of one sample: compositing
@@ -358,13 +390,90 @@ static inline void order_fragments(const Scene& scene,Fragment* f,std::size_t k,
   if(from!=f) std::copy(from,from+k,f);
 }
 
+// IEC 61966-2-1 sRGB transfer function and its inverse.
+static inline double srgb_decode(double v) {return v<=0.04045 ? v/12.92:std::pow((v+0.055)/1.055,2.4);}
+static inline double srgb_encode(double v) {return v<=0.0031308 ? 12.92*v:1.055*std::pow(v,1/2.4)-0.055;}
+static inline Colour linear_colour(const Colour& c) {return {srgb_decode(c.r),srgb_decode(c.g),srgb_decode(c.b),c.a};}
+
+// Composites the absorption volumes between camera depths a and b of ray i.
+// The integral is premultiplied linear light; an sRGB compositing space
+// receives its encoded straight colour, premultiplied again.
+static inline void traced_medium(const Traced& t,std::size_t i,double a,double b,bool linear,
+                                 SampleResult& out,std::vector<Step>* steps) {
+  if(t.volumes.empty() || !(b>a)) return;
+  raymarch::Medium m=raymarch::absorb(t.volumes,t.segment(i,a,b));
+  if(!(m.alpha>0)) return;
+  Colour c{m.colour[0],m.colour[1],m.colour[2],m.alpha};
+  if(!linear) {c.r=srgb_encode(c.r/c.a)*c.a;c.g=srgb_encode(c.g/c.a)*c.a;c.b=srgb_encode(c.b/c.a)*c.a;}
+  double before=out.colour.a,weight=1-before;
+  out.colour.r+=weight*c.r; out.colour.g+=weight*c.g; out.colour.b+=weight*c.b; out.colour.a+=weight*c.a;
+  if(++out.peels==1) {
+    out.depth=t.near+m.entry/t.length[i];
+    Vec3 entry=raymarch::point(t.origin[i],t.direction[i],m.entry);
+    out.traced=t.volume_layer[0];
+    for(std::size_t v=0;v<t.volumes.size();++v) if(t.volumes[v].contains(entry)) {out.traced=t.volume_layer[v];break;}
+  }
+  if(steps) steps->push_back({b,out.colour.a,a,b,before,m.alpha,true});
+}
+
+// Composites the opaque traced surface of ray i.
+static inline void traced_surface(const Traced& t,std::size_t i,SampleResult& out,std::vector<Step>* steps) {
+  const Colour& c=t.colour[i];
+  double weight=1-out.colour.a;
+  out.colour.r+=weight*c.r; out.colour.g+=weight*c.g; out.colour.b+=weight*c.b; out.colour.a+=weight;
+  if(++out.peels==1) {out.traced=t.layer[i];out.depth=t.depth[i];}
+  out.opaque_depth=t.depth[i];
+  if(steps) steps->push_back({t.depth[i],out.colour.a,0,0,0,0,false});
+}
+
+// Depth inside a medium segment at which the accumulated alpha reaches
+// `target`: regula falsi (Illinois) on the optical depth of the partial
+// segment, which is linear in depth for a homogeneous medium.
+static inline double medium_coverage(const Traced& t,std::size_t i,const Step& s,double target) {
+  auto optical=[](double alpha){return -std::log1p(-std::min(alpha,1-1e-12));};
+  double goal=optical((target-s.before)/(1-s.before));
+  double lo=s.a,hi=s.b,flo=-goal,fhi=optical(s.segment)-goal;
+  int side=0;
+  double best=hi,error=std::abs(fhi);
+  for(int iteration=0;iteration<16 && fhi>flo && error>1e-12*goal;++iteration) {
+    double z=hi-fhi*(hi-lo)/(fhi-flo);
+    if(!(z>lo && z<hi)) z=.5*(lo+hi);
+    double fz=optical(raymarch::absorb(t.volumes,t.segment(i,s.a,z)).alpha)-goal;
+    if(std::abs(fz)<error) {best=z;error=std::abs(fz);}
+    if(fz>0) {hi=z;fhi=fz;if(side==1) flo*=.5;side=1;}
+    else {lo=z;flo=fz;if(side==-1) fhi*=.5;side=-1;}
+  }
+  return best;
+}
+
+static inline void coverage_of(const Traced* t,std::size_t i,const std::vector<Step>& steps,SampleResult& out) {
+  if(!(out.colour.a>0)) return;
+  double target=.5*out.colour.a;
+  for(const Step& s:steps) if(s.alpha>=target) {
+    out.coverage=s.medium ? medium_coverage(*t,i,s,target):s.z;
+    return;
+  }
+}
+
 // Walks one sample's fragments in compositing order. A primitive paints a
 // sample once in succession and a translucent stroke once in total; the walk
-// stops when the accumulated coverage is opaque.
+// stops when the accumulated coverage is opaque. With traced content, the
+// absorption volumes are integrated between consecutive depth-partition
+// fragments, front to back, and the traced surface is composited at its
+// depth; overlay fragments precede and underlay fragments follow both. A
+// fragment within the depth tolerance of the traced surface precedes it.
 static inline SampleResult composite_sample(const Shapes& shapes,const Fragment* f,std::size_t k,
-                                            bool translucent_strokes,std::vector<Index>& painted) {
+                                            bool translucent_strokes,std::vector<Index>& painted,
+                                            const Traced* traced,std::size_t ray,bool linear,
+                                            std::vector<Step>* steps) {
   const Scene& scene=shapes.scene;
   SampleResult out; painted.clear();
+  if(steps) steps->clear();
+  const bool trace=traced && traced->active;
+  const double tolerance=scene.projection.resolved.tolerance;
+  const double surface=trace ? traced->depth[ray]:R_PosInf;
+  double cursor=trace ? traced->near:R_PosInf;
+  bool opaque=false;
   Index previous=-1; double previous_z=R_NegInf;
   for(std::size_t j=0;j<k;++j) {
     const Item& item=scene.items[f[j].item];
@@ -374,25 +483,47 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
       if(prev.kind==item.kind && prev.row==item.row) continue;
       if(!before(scene,previous,previous_z,f[j].item,f[j].z)) continue;
     }
+    if(trace) {
+      int partition=scene.table(item.kind).partition[item.row];
+      if(partition<=1) {
+        double z=partition==1 ? f[j].z:R_PosInf;
+        if(surface+tolerance<z) {
+          traced_medium(*traced,ray,cursor,surface,linear,out,steps);
+          traced_surface(*traced,ray,out,steps);
+          opaque=true;
+          break;
+        }
+        double until=partition==1 ? z:traced->far;
+        traced_medium(*traced,ray,cursor,until,linear,out,steps);
+        cursor=std::max(cursor,until);
+      }
+    }
     const Paint& p=shapes.paint[f[j].item];
     const Colour& c=f[j].border ? p.outline:p.colour;
     if(translucent_strokes && item.kind==2) painted.push_back(item.row);
     double weight=(1-out.colour.a)*c.a;
     out.colour.r+=weight*c.r; out.colour.g+=weight*c.g; out.colour.b+=weight*c.b; out.colour.a+=weight;
     if(++out.peels==1) {out.first=f[j].item;out.depth=f[j].z;}
-    if(c.a==1) {out.opaque_depth=f[j].z;break;}
+    if(steps) steps->push_back({f[j].z,out.colour.a,0,0,0,0,false});
+    if(c.a==1) {out.opaque_depth=f[j].z;opaque=true;break;}
     previous=f[j].item; previous_z=f[j].z;
   }
+  if(trace && !opaque) {
+    traced_medium(*traced,ray,cursor,std::min(surface,traced->far),linear,out,steps);
+    if(std::isfinite(surface)) traced_surface(*traced,ray,out,steps);
+  }
+  if(steps) coverage_of(traced,ray,*steps,out);
   return out;
 }
 
 // Per device pixel, rows from the top: the sum of premultiplied sample
-// colours, and the centre sample's primitive id, nearest item and depths.
+// colours, and the centre sample's primitive id, nearest item or traced
+// layer and depths.
 struct Buffers {
   std::vector<Colour> colour;
-  std::vector<int> id;
+  std::vector<int> id,traced;
   std::vector<Index> item;
-  std::vector<double> depth,opaque_depth;
+  std::vector<double> depth,opaque_depth,coverage;
   int passes=0;
 };
 
@@ -403,12 +534,8 @@ struct TileScratch {
   std::vector<int> start;
   std::vector<SampleResult> results;
   std::vector<Index> order,painted;
+  std::vector<Step> steps;
 };
-
-// IEC 61966-2-1 sRGB transfer function and its inverse.
-static inline double srgb_decode(double v) {return v<=0.04045 ? v/12.92:std::pow((v+0.055)/1.055,2.4);}
-static inline double srgb_encode(double v) {return v<=0.0031308 ? 12.92*v:1.055*std::pow(v,1/2.4)-0.055;}
-static inline Colour linear_colour(const Colour& c) {return {srgb_decode(c.r),srgb_decode(c.g),srgb_decode(c.b),c.a};}
 
 static inline std::uint32_t channel_byte(double value) {
   return static_cast<std::uint32_t>(std::round(std::max(0.0,std::min(1.0,value))*255));
@@ -416,7 +543,7 @@ static inline std::uint32_t channel_byte(double value) {
 
 static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const std::vector<Span>& spans,
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
-                               bool retained,bool translucent_strokes,
+                               bool retained,bool translucent_strokes,const Traced& traced,bool keep_buffers,
                                TileScratch& s,Buffers& out,int& passes) {
   const Scene& scene=shapes.scene;
   const auto& line=scene.packet.polylines;
@@ -472,7 +599,10 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
     for(std::size_t j=0;j<count;++j)
       if(!s.occluders[k].hides(spans[f[j].item].partition,f[j].z,tolerance)) f[kept++]=f[j];
     order_fragments(scene,f,kept,s.merge);
-    s.results[k]=composite_sample(shapes,f,kept,translucent_strokes,s.painted);
+    const int sx=sx0+static_cast<int>(k%tw),sy=sy0+static_cast<int>(k/tw);
+    const bool centre=keep_buffers && sx%canvas.aa==canvas.aa/2 && sy%canvas.aa==canvas.aa/2;
+    s.results[k]=composite_sample(shapes,f,kept,translucent_strokes,s.painted,
+      &traced,traced.active ? traced.ray(sx,sy):0,canvas.linear,centre ? &s.steps:nullptr);
     passes=std::max(passes,s.results[k].peels);
   }
   const int aa=canvas.aa;
@@ -485,8 +615,10 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
     std::size_t pixel=static_cast<std::size_t>(canvas.height-1-py)*canvas.width+px;
     const SampleResult& centre=s.results[static_cast<std::size_t>(py*aa+aa/2-sy0)*tw+px*aa+aa/2-sx0];
     out.colour[pixel]=sum;
-    out.id[pixel]=centre.first<0 ? 0:scene.table(scene.items[centre.first].kind).primitive_id[scene.items[centre.first].row];
-    out.item[pixel]=centre.first;out.depth[pixel]=centre.depth;out.opaque_depth[pixel]=centre.opaque_depth;
+    out.id[pixel]=centre.first>=0 ? scene.table(scene.items[centre.first].kind).primitive_id[scene.items[centre.first].row]:
+      centre.traced>0 ? traced.ids[centre.traced-1]:0;
+    out.item[pixel]=centre.first;out.traced[pixel]=centre.traced;
+    out.depth[pixel]=centre.depth;out.opaque_depth[pixel]=centre.opaque_depth;out.coverage[pixel]=centre.coverage;
   }
 }
 
@@ -568,18 +700,17 @@ static inline int thread_count(int requested,int tiles) {
   return std::max(1,std::min(threads,tiles));
 }
 
-static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
-                              int width,int height,int aa,bool id_pass,int threads,bool keep_buffers,bool linear) {
-  auto start=Clock::now();
-  Rcpp::XPtr<Scene> holder(pointer); Scene& scene=*holder;
-  struct Restore {
-    Scene& scene;std::size_t items,vertices;
-    ~Restore() {scene.items.resize(items);scene.vertices.resize(vertices);}
-  } restore{scene,scene.items.size(),scene.vertices.size()};
+// Undoes the items and vertices a draw appends to the prepared scene.
+struct ItemRestore {
+  Scene& scene;std::size_t items,vertices;
+  explicit ItemRestore(Scene& s):scene(s),items(s.items.size()),vertices(s.vertices.size()) {}
+  ~ItemRestore() {scene.items.resize(items);scene.vertices.resize(vertices);}
+};
+
+// The canvas of a width x height pixel request. An unclipped camera grows
+// it, on the same pixel grid, to the bounds of every paint.
+static inline Canvas canvas_of(const Scene& scene,const std::vector<Paint>& paint,int width,int height,int aa,bool linear) {
   require(width>0 && height>0 && aa>0,"raster dimensions and antialias must be positive");
-  auto paint=paints(scene,colours,dashes,id_pass);
-  add_arrowheads(scene,paint,colours[1],restore.items);
-  if(linear) for(auto& p:paint) {p.colour=linear_colour(p.colour);p.outline=linear_colour(p.outline);}
   Canvas canvas; canvas.linear=linear;
   double pixel_x=scene.projection.viewport.width_mm/width,pixel_y=scene.projection.viewport.height_mm/height;
   if(!scene.projection.camera.clip) {
@@ -593,9 +724,86 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   require(static_cast<double>(width)*aa<=std::numeric_limits<int>::max() &&
           static_cast<double>(height)*aa<=std::numeric_limits<int>::max() &&
           static_cast<double>(width)*height<=std::numeric_limits<int>::max(),"unrepresentable raster canvas");
+  canvas.pixel_x=pixel_x;canvas.pixel_y=pixel_y;
   canvas.width=width;canvas.height=height;canvas.aa=aa;canvas.w=width*aa;canvas.h=height*aa;
   canvas.dx=pixel_x/aa;canvas.dy=pixel_y/aa;
   canvas.tiles_x=(width+canvas.tile-1)/canvas.tile;canvas.tiles_y=(height+canvas.tile-1)/canvas.tile;
+  return canvas;
+}
+
+// Canvas extent in panel npc: left, bottom, right, top.
+static inline Rcpp::NumericVector canvas_extent(const Scene& scene,const Canvas& canvas) {
+  const auto& viewport=scene.projection.viewport;
+  return Rcpp::NumericVector::create(canvas.origin_x/viewport.width_mm,canvas.origin_y/viewport.height_mm,
+    (canvas.origin_x+canvas.width*canvas.pixel_x)/viewport.width_mm,(canvas.origin_y+canvas.height*canvas.pixel_y)/viewport.height_mm);
+}
+
+static inline Rcpp::List canvas_info(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,int width,int height,int aa) {
+  Rcpp::XPtr<Scene> holder(pointer); Scene& scene=*holder;
+  ItemRestore restore(scene);
+  auto paint=paints(scene,colours,dashes,false);
+  add_arrowheads(scene,paint,colours[1],restore.items);
+  Canvas c=canvas_of(scene,paint,width,height,aa,false);
+  return Rcpp::List::create(Rcpp::Named("width")=c.width,Rcpp::Named("height")=c.height,
+    Rcpp::Named("antialias")=aa,Rcpp::Named("extent")=canvas_extent(scene,c));
+}
+
+// Reads the traced input of a draw: per-sample vectors over the canvas
+// samples and, with absorption volumes, the data-space rays. Colours arrive
+// in linear light and are encoded for an sRGB compositing space.
+static inline Traced traced_of(Rcpp::List input,const Canvas& canvas) {
+  Traced t;
+  if(input.size()==0) return t;
+  t.active=true; t.h=canvas.h;
+  const std::size_t n=static_cast<std::size_t>(canvas.w)*canvas.h;
+  Rcpp::NumericVector depth=input["depth"];
+  Rcpp::NumericMatrix colour=input["colour"],normal=input["normal"];
+  Rcpp::IntegerVector layer=input["layer"];
+  require(static_cast<std::size_t>(depth.size())==n && static_cast<std::size_t>(layer.size())==n &&
+          static_cast<std::size_t>(colour.nrow())==n && colour.ncol()==3 &&
+          static_cast<std::size_t>(normal.nrow())==n && normal.ncol()==3,"traced samples do not match the raster canvas");
+  t.ids=Rcpp::as<std::vector<int>>(input["ids"]);
+  t.depth.resize(n);t.colour.resize(n);t.layer.resize(n);t.normal.resize(n);
+  for(std::size_t i=0;i<n;++i) {
+    t.depth[i]=Rcpp::NumericVector::is_na(depth[i]) ? R_PosInf:depth[i];
+    t.layer[i]=layer[i];
+    require(layer[i]>=0 && layer[i]<=static_cast<int>(t.ids.size()),"invalid traced layer");
+    Colour c{colour(i,0),colour(i,1),colour(i,2),1};
+    if(!canvas.linear) c={srgb_encode(c.r),srgb_encode(c.g),srgb_encode(c.b),1};
+    t.colour[i]=c;
+    t.normal[i]={normal(i,0),normal(i,1),normal(i,2)};
+  }
+  t.near=Rcpp::as<double>(input["near"]);t.far=Rcpp::as<double>(input["far"]);
+  Rcpp::List volumes=input["volumes"];
+  if(volumes.size()) {
+    for(SEXP v:volumes) t.volumes.emplace_back(Rcpp::as<Rcpp::List>(v));
+    t.volume_layer=Rcpp::as<std::vector<int>>(input["volume_layer"]);
+    Rcpp::NumericMatrix origin=input["origin"],direction=input["direction"];
+    Rcpp::NumericVector length=input["length"];
+    require(t.volume_layer.size()==t.volumes.size() && static_cast<std::size_t>(origin.nrow())==n &&
+            static_cast<std::size_t>(direction.nrow())==n && static_cast<std::size_t>(length.size())==n,"invalid traced rays");
+    t.origin.resize(n);t.direction.resize(n);t.length.assign(length.begin(),length.end());
+    for(std::size_t i=0;i<n;++i) {
+      t.origin[i]={origin(i,0),origin(i,1),origin(i,2)};
+      t.direction[i]={direction(i,0),direction(i,1),direction(i,2)};
+    }
+  }
+  return t;
+}
+
+static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
+                              int width,int height,int aa,bool id_pass,int threads,bool keep_buffers,bool linear,
+                              Rcpp::List traced_input) {
+  auto start=Clock::now();
+  Rcpp::XPtr<Scene> holder(pointer); Scene& scene=*holder;
+  ItemRestore restore(scene);
+  require(width>0 && height>0 && aa>0,"raster dimensions and antialias must be positive");
+  auto paint=paints(scene,colours,dashes,id_pass);
+  add_arrowheads(scene,paint,colours[1],restore.items);
+  if(linear) for(auto& p:paint) {p.colour=linear_colour(p.colour);p.outline=linear_colour(p.outline);}
+  Canvas canvas=canvas_of(scene,paint,width,height,aa,linear);
+  width=canvas.width;height=canvas.height;
+  const Traced traced=traced_of(traced_input,canvas);
   Shapes shapes=shapes_of(scene,paint);
   const auto& line=scene.packet.polylines;
   bool retained=std::any_of(line.hidden.begin(),line.hidden.end(),[](Index x){return x!=0;});
@@ -635,6 +843,7 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   std::size_t pixels=static_cast<std::size_t>(width)*height;
   buffers.colour.assign(pixels,Colour()); buffers.id.assign(pixels,0);
   buffers.item.assign(pixels,-1);buffers.depth.assign(pixels,R_PosInf);buffers.opaque_depth.assign(pixels,R_PosInf);
+  buffers.traced.assign(pixels,0);buffers.coverage.assign(pixels,R_PosInf);
   int tiles=canvas.tiles_x*canvas.tiles_y;
   threads=thread_count(threads,tiles);
   std::vector<TileScratch> scratch(threads);
@@ -643,7 +852,7 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   parallel_tiles(tiles,threads,[&](int worker,int tile) {
     int tx=tile%canvas.tiles_x,ty=tile/canvas.tiles_x;
     render_tile(shapes,canvas,spans,tile_items.data()+tile_start[tile],tile_start[tile+1]-tile_start[tile],
-      tx,ty,retained,translucent_strokes,scratch[worker],buffers,worker_passes[worker]);
+      tx,ty,retained,translucent_strokes,traced,keep_buffers,scratch[worker],buffers,worker_passes[worker]);
   });
   scratch.clear();
   buffers.passes=*std::max_element(worker_passes.begin(),worker_passes.end());
@@ -693,6 +902,10 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
           double z=sample(shapes,scene.items[j],paint[j],anchor.x,anchor.y);
           hidden=std::isfinite(z) && before(scene,j,z,i,anchor.depth);
         }
+        int sx=static_cast<int>(std::floor((anchor.x-canvas.origin_x)/canvas.dx));
+        int sy=static_cast<int>(std::floor((anchor.y-canvas.origin_y)/canvas.dy));
+        if(!hidden && traced.active && sx>=0 && sy>=0 && sx<canvas.w && sy<canvas.h)
+          hidden=traced.depth[traced.ray(sx,sy)]<anchor.depth-scene.projection.resolved.tolerance;
       }
       if(!hidden) {text_rows.push_back(item.row+1);text_x.push_back(anchor.x/scene.projection.viewport.width_mm);text_y.push_back(anchor.y/scene.projection.viewport.height_mm);}
     }
@@ -700,32 +913,41 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   Rcpp::List result=Rcpp::List::create(Rcpp::Named("image")=raster,Rcpp::Named("id")=ids,
     Rcpp::Named("text")=Rcpp::List::create(Rcpp::Named("row")=text_rows,Rcpp::Named("x")=text_x,Rcpp::Named("y")=text_y),
     Rcpp::Named("passes")=buffers.passes,Rcpp::Named("raster_seconds")=seconds(start),
-    Rcpp::Named("extent")=Rcpp::NumericVector::create(canvas.origin_x/scene.projection.viewport.width_mm,canvas.origin_y/scene.projection.viewport.height_mm,
-      (canvas.origin_x+width*pixel_x)/scene.projection.viewport.width_mm,(canvas.origin_y+height*pixel_y)/scene.projection.viewport.height_mm),
+    Rcpp::Named("extent")=canvas_extent(scene,canvas),
     Rcpp::Named("width")=width,Rcpp::Named("height")=height,Rcpp::Named("antialias")=aa,Rcpp::Named("threads")=threads);
   result["timing"]=Rcpp::NumericVector::create(Rcpp::Named("setup")=setup_seconds,Rcpp::Named("tiles")=tile_seconds);
   if(keep_buffers) {
     // Buffers at device pixel resolution, rows from the top, read at each
     // pixel's centre sample: depth of the nearest painted fragment, depth at
-    // which coverage becomes opaque, its kind and 1-based table row, and the
-    // model-space normal of a face.
-    Rcpp::NumericMatrix depth(height,width),opaque(height,width),normal_x(height,width),normal_y(height,width),normal_z(height,width);
+    // which coverage becomes opaque, its kind (5 for a traced layer) and
+    // 1-based row (table row, or traced layer), the model-space normal of a
+    // face or traced surface, and the depth at which the accumulated alpha
+    // reaches half its final value.
+    Rcpp::NumericMatrix depth(height,width),opaque(height,width),coverage(height,width),
+      normal_x(height,width),normal_y(height,width),normal_z(height,width);
     Rcpp::IntegerMatrix kind(height,width),row(height,width);
+    auto finite=[](double z){return std::isfinite(z) ? z:NA_REAL;};
     for(int y=0;y<height;++y) for(int x=0;x<width;++x) {
       std::size_t pixel=static_cast<std::size_t>(y)*width+x;
       Index i=buffers.item[pixel];
-      depth(y,x)=std::isfinite(buffers.depth[pixel]) ? buffers.depth[pixel]:NA_REAL;
-      opaque(y,x)=std::isfinite(buffers.opaque_depth[pixel]) ? buffers.opaque_depth[pixel]:NA_REAL;
-      kind(y,x)=i<0 ? 0:scene.items[i].kind;
-      row(y,x)=i<0 ? NA_INTEGER:scene.items[i].row+1;
-      bool face=i>=0 && scene.items[i].kind==1;
-      normal_x(y,x)=face ? scene.normals[scene.items[i].row][0]:NA_REAL;
-      normal_y(y,x)=face ? scene.normals[scene.items[i].row][1]:NA_REAL;
-      normal_z(y,x)=face ? scene.normals[scene.items[i].row][2]:NA_REAL;
+      int layer=buffers.traced[pixel];
+      depth(y,x)=finite(buffers.depth[pixel]);
+      opaque(y,x)=finite(buffers.opaque_depth[pixel]);
+      coverage(y,x)=finite(buffers.coverage[pixel]);
+      kind(y,x)=i>=0 ? scene.items[i].kind:layer>0 ? 5:0;
+      row(y,x)=i>=0 ? scene.items[i].row+1:layer>0 ? layer:NA_INTEGER;
+      std::array<double,3> n{NA_REAL,NA_REAL,NA_REAL};
+      if(i>=0 && scene.items[i].kind==1) n={scene.normals[scene.items[i].row][0],scene.normals[scene.items[i].row][1],scene.normals[scene.items[i].row][2]};
+      if(i<0 && layer>0) {
+        std::size_t r=traced.ray(x*aa+aa/2,(height-1-y)*aa+aa/2);
+        if(traced.layer[r]==layer) n={traced.normal[r][0],traced.normal[r][1],traced.normal[r][2]};
+      }
+      normal_x(y,x)=n[0];normal_y(y,x)=n[1];normal_z(y,x)=n[2];
     }
     result["buffers"]=Rcpp::List::create(Rcpp::Named("depth")=depth,Rcpp::Named("opaque_depth")=opaque,
       Rcpp::Named("kind")=kind,Rcpp::Named("row")=row,
-      Rcpp::Named("normal")=Rcpp::List::create(Rcpp::Named("x")=normal_x,Rcpp::Named("y")=normal_y,Rcpp::Named("z")=normal_z));
+      Rcpp::Named("normal")=Rcpp::List::create(Rcpp::Named("x")=normal_x,Rcpp::Named("y")=normal_y,Rcpp::Named("z")=normal_z),
+      Rcpp::Named("coverage_depth")=coverage);
   }
   return result;
 }
@@ -783,10 +1005,7 @@ static inline void trace_cells(const std::vector<std::int64_t>& cells,std::int64
 static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
                                    Rcpp::NumericVector extent,int width,int height,int aa,Rcpp::NumericMatrix depth) {
   Rcpp::XPtr<Scene> holder(pointer); Scene& scene=*holder;
-  struct Restore {
-    Scene& scene;std::size_t items,vertices;
-    ~Restore() {scene.items.resize(items);scene.vertices.resize(vertices);}
-  } restore{scene,scene.items.size(),scene.vertices.size()};
+  ItemRestore restore(scene);
   require(width>0 && height>0 && depth.nrow()==height && depth.ncol()==width,"invalid raster depth buffer");
   auto paint=paints(scene,colours,dashes,false);
   add_arrowheads(scene,paint,colours[1],restore.items);

@@ -25,23 +25,32 @@ shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL) {
     valid <- is.finite(lengths) & lengths > 0
     normal[valid, ] <- supplied[valid, , drop = FALSE] / lengths[valid]
   }
+  apply_brightness_3d(fill, light_brightness_3d(normal, camera, light), light$mode)
+}
+
+# Lambert brightness of unit model-space normals (one per row), each turned
+# toward the viewer.
+light_brightness_3d <- function(normal, camera, light) {
   direction <- light$direction
   if (light$space == "camera") direction <- camera$right * direction[1L] + camera$up * direction[2L] - camera$forward * direction[3L]
   if (light$space == "data") direction <- direction * camera$model_scale
   direction <- direction / sqrt(sum(direction^2))
   toward <- -(camera$ray %or3d% camera$forward)
   normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, ] <- -normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, , drop = FALSE]
-  brightness <- light$ambient + light$diffuse * pmax(0, drop(normal %*% direction))
-  apply_brightness_3d(fill, brightness, light$mode)
+  light$ambient + light$diffuse * pmax(0, drop(normal %*% direction))
+}
+
+# Linear-light colours (one per row) scaled by brightness: multiplied, or
+# their distance from white scaled.
+brighten_linear_3d <- function(linear, brightness, mode) {
+  if (mode == "multiply") linear * brightness else 1 - (1 - linear) * brightness
 }
 
 apply_brightness_3d <- function(fill, brightness, mode) {
   rgb <- t(colour_channels_3d(fill)) / 255
-  linear <- srgb_decode_3d(rgb)
-  linear <- if (mode == "multiply") linear * brightness else 1 - (1 - linear) * brightness
+  linear <- brighten_linear_3d(srgb_decode_3d(rgb), brightness, mode)
   rgb <- srgb_encode_3d(linear)
   result <- grDevices::rgb(pmin(1, pmax(0, rgb[, 1L])), pmin(1, pmax(0, rgb[, 2L])), pmin(1, pmax(0, rgb[, 3L])))
   result[is.na(fill)] <- NA_character_
   result
 }
-

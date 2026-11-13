@@ -57,7 +57,7 @@ test_that("ray layers render and retain raster depth buffer layout", {
   grid::grid.force()
   tree <- grid::grid.get("scene-raymarch-3d")
   expect_true(any(is.finite(tree$raster_result$buffers$depth)))
-  expect_named(tree$raster_result$buffers,c("depth","opaque_depth","kind","row","normal"))
+  expect_named(tree$raster_result$buffers,c("depth","opaque_depth","kind","row","normal","coverage_depth"))
 })
 
 source(testthat::test_path("..", "fixtures", "scenes", "builders.R"), local=TRUE)

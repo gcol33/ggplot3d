@@ -272,8 +272,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // raster_draw_cpp
-Rcpp::List raster_draw_cpp(SEXP scene, Rcpp::List colours, Rcpp::List dashes, int width, int height, int antialias, bool id_pass, int threads, bool buffers, bool linear);
-RcppExport SEXP _ggplot3d_raster_draw_cpp(SEXP sceneSEXP, SEXP coloursSEXP, SEXP dashesSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP antialiasSEXP, SEXP id_passSEXP, SEXP threadsSEXP, SEXP buffersSEXP, SEXP linearSEXP) {
+Rcpp::List raster_draw_cpp(SEXP scene, Rcpp::List colours, Rcpp::List dashes, int width, int height, int antialias, bool id_pass, int threads, bool buffers, bool linear, Rcpp::List traced);
+RcppExport SEXP _ggplot3d_raster_draw_cpp(SEXP sceneSEXP, SEXP coloursSEXP, SEXP dashesSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP antialiasSEXP, SEXP id_passSEXP, SEXP threadsSEXP, SEXP buffersSEXP, SEXP linearSEXP, SEXP tracedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type scene(sceneSEXP);
@@ -286,7 +286,23 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
     Rcpp::traits::input_parameter< bool >::type buffers(buffersSEXP);
     Rcpp::traits::input_parameter< bool >::type linear(linearSEXP);
-    rcpp_result_gen = Rcpp::wrap(raster_draw_cpp(scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear));
+    Rcpp::traits::input_parameter< Rcpp::List >::type traced(tracedSEXP);
+    rcpp_result_gen = Rcpp::wrap(raster_draw_cpp(scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear, traced));
+    return rcpp_result_gen;
+END_RCPP
+}
+// raster_canvas_cpp
+Rcpp::List raster_canvas_cpp(SEXP scene, Rcpp::List colours, Rcpp::List dashes, int width, int height, int antialias);
+RcppExport SEXP _ggplot3d_raster_canvas_cpp(SEXP sceneSEXP, SEXP coloursSEXP, SEXP dashesSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP antialiasSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type scene(sceneSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type colours(coloursSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type dashes(dashesSEXP);
+    Rcpp::traits::input_parameter< int >::type width(widthSEXP);
+    Rcpp::traits::input_parameter< int >::type height(heightSEXP);
+    Rcpp::traits::input_parameter< int >::type antialias(antialiasSEXP);
+    rcpp_result_gen = Rcpp::wrap(raster_canvas_cpp(scene, colours, dashes, width, height, antialias));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -537,7 +553,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_parametric_face_normals_cpp", (DL_FUNC) &_ggplot3d_parametric_face_normals_cpp, 2},
     {"_ggplot3d_png_crc32_cpp", (DL_FUNC) &_ggplot3d_png_crc32_cpp, 1},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
-    {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 10},
+    {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 11},
+    {"_ggplot3d_raster_canvas_cpp", (DL_FUNC) &_ggplot3d_raster_canvas_cpp, 6},
     {"_ggplot3d_raster_occlusion_cpp", (DL_FUNC) &_ggplot3d_raster_occlusion_cpp, 8},
     {"_ggplot3d_raymarch_ops_cpp", (DL_FUNC) &_ggplot3d_raymarch_ops_cpp, 0},
     {"_ggplot3d_raymarch_eval_cpp", (DL_FUNC) &_ggplot3d_raymarch_eval_cpp, 2},

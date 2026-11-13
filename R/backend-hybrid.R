@@ -1,7 +1,11 @@
 utils::globalVariables("raster_occlusion_cpp")
 
-# Visibility of the primitives of a vector packet against the opaque depth of
-# a raster result, on the raster's pixel grid. Every primitive is widened by
+# Visibility of the primitives of a vector packet against a raster result, on
+# the raster's pixel grid. A primitive is behind the image where it lies
+# behind the coverage depth, the depth at which the image's accumulated alpha
+# reaches half its final value: drawn under the image it is then misplaced
+# by less of the image's coverage than drawn over it. Over opaque paint this
+# is the opaque depth. Every primitive is widened by
 # one pixel on each side for the test (strokes, marker footprints, and faces
 # through an outline), so the pixels its antialiased edge touches are
 # classified with it.
@@ -23,11 +27,12 @@ raster_occlusion_3d <- function(packet, camera, viewport, result) {
   }
   dashes <- rep(list(Inf), length(packet$polylines$width_mm))
   raster_occlusion_cpp(prepared$pointer, colours, dashes, result$extent,
-    as.integer(result$width), as.integer(result$height), as.integer(result$antialias), result$buffers$opaque_depth)
+    as.integer(result$width), as.integer(result$height), as.integer(result$antialias), result$buffers$coverage_depth)
 }
 
-# Hybrid panels rasterise the layers drawn with `raster = TRUE` and compile the
-# rest, with the panel furniture, into vector fragments. A vector primitive
+# Hybrid panels rasterise the layers drawn with `raster = TRUE` and the traced
+# layers, and compile the rest, with the panel furniture, into vector
+# fragments. Vector panels place their traced layers the same way. A vector primitive
 # lies in front of the raster image, behind it, or partly behind; the image is
 # drawn between two vector passes. The behind pass holds the primitives behind
 # the image and the hidden part of the partial ones, so the image's
@@ -38,7 +43,11 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   panel <- x$panel_params$panel_id
   camera <- furniture$camera; viewport <- furniture$viewport
   light <- x$panel_params$coord_params$light
-  rasterised <- vapply(x$packets, function(p) any(p$styles$raster %in% TRUE), logical(1))
+  traced <- vapply(x$packets, function(p) !is.null(attr(p, "raymarch")), logical(1))
+  styled <- identical(backend$type, "hybrid") &
+    vapply(x$packets, function(p) any(p$styles$raster %in% TRUE), logical(1))
+  rasterised <- traced | styled
+  specs <- raster_traced_specs_3d(x$packets[rasterised])
   raster_packet <- merge_scene_packets(x$packets[rasterised], panel)
   partitions <- unlist(lapply(c("faces", "polylines", "markers", "text"), function(k) raster_packet[[k]]$partition))
   scene_assert(all(partitions == 1L), "Rasterised layers of a hybrid panel need occlusion = \"depth\".")
@@ -46,7 +55,7 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   vector_marker_limit_3d(vector_packet)
   scene <- scene_compile(vector_packet, camera, viewport)
   result <- raster_scene_3d(raster_packet, camera, viewport, backend$antialias, light,
-    buffers = TRUE, blend = backend$blend)
+    buffers = TRUE, blend = backend$blend, traced = specs)
   occlusion <- raster_occlusion_3d(vector_packet, camera, viewport, result)
   f <- scene$fragments
   kinds <- c("faces", "polylines", "markers", "text")
@@ -81,8 +90,11 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   }
   behind <- pass(c(1L, 2L), FALSE, "scene-hybrid-behind-3d")
   front <- pass(c(0L, 2L), TRUE, "scene-hybrid-front-3d")
-  children <- c(list(behind, raster_image_grob_3d(result)), raster_text_3d(result, raster_packet), list(front))
+  children <- c(list(behind), raster_layer_children_3d(result, raster_packet), list(front))
+  layers <- unlist(lapply(x$packets[rasterised], function(p)
+    attr(p, "raymarch")$layer_id %or3d% unique(unlist(lapply(p[c("faces", "polylines", "markers", "text")], `[[`, "layer_id")))))
+  capabilities <- utils::modifyList(grid_capabilities_3d(), list(raster = TRUE, image_layers = sort(unique(as.integer(layers)))))
   grob <- grid::gTree(children = do.call(grid::gList, children), raster_result = result,
-    occlusion = occlusion, name = "scene-hybrid-3d")
+    occlusion = occlusion, capabilities = capabilities, name = "scene-hybrid-3d")
   list(scene = scene, grob = grob)
 }

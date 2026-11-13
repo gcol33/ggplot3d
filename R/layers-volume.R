@@ -31,6 +31,7 @@ emit_volume_3d <- function(data, params, panel_params) {
   spec <- c(list(kind = "volume", mode = match(params$mode, c("absorption", "mip", "iso")) - 1L,
     samples = params$samples, level = params$level %or3d% mean(range(field$value))), field,
     volume_transfer_3d(field, params$opacity, params$colours))
+  spec$layer_id <- data$.layer[1L]
   if (length(spec$level) != 1L || !is.finite(spec$level)) stop("level must be one finite number.", call. = FALSE)
   raymarch_payload_3d(spec, params, panel_params)
 }
@@ -40,11 +41,15 @@ register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
 
 #' Ray-marched scalar volumes
 #'
-#' Renders a complete rectilinear grid in the raster backend. Coordinates are
+#' Renders a complete rectilinear grid per raster sample. Coordinates are
 #' interpreted in transformed scale units. Samples are trilinearly interpolated.
 #' Absorption uses front-to-back emission-absorption integration in linear light
-#' and stops at the nearest opaque mesh or traced surface. Overlapping volumes
-#' combine their extinction and emission at each sample.
+#' and stops at the nearest opaque mesh or traced surface. Translucent raster
+#' geometry inside the volume composites at its depth: the integral is split
+#' at each fragment. Overlapping volumes combine their extinction and emission
+#' at each sample. Vector and hybrid panels place the volume as an image;
+#' a vector primitive is drawn under it where it lies behind the depth at
+#' which the image reaches half its opacity.
 #'
 #' MIP finds the maximum of the interpolated field along each ray. Isosurfaces
 #' find the first root of the cubic field along each crossed grid cell, including

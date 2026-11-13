@@ -38,11 +38,15 @@ Grid-cell boundaries also split integration intervals.}
 A ggplot2 layer.
 }
 \description{
-Renders a complete rectilinear grid in the raster backend. Coordinates are
+Renders a complete rectilinear grid per raster sample. Coordinates are
 interpreted in transformed scale units. Samples are trilinearly interpolated.
 Absorption uses front-to-back emission-absorption integration in linear light
-and stops at the nearest opaque mesh or traced surface. Overlapping volumes
-combine their extinction and emission at each sample.
+and stops at the nearest opaque mesh or traced surface. Translucent raster
+geometry inside the volume composites at its depth: the integral is split
+at each fragment. Overlapping volumes combine their extinction and emission
+at each sample. Vector and hybrid panels place the volume as an image;
+a vector primitive is drawn under it where it lies behind the depth at
+which the image reaches half its opacity.
 }
 \details{
 MIP finds the maximum of the interpolated field along each ray. Isosurfaces

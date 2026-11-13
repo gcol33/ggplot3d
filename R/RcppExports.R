@@ -77,8 +77,12 @@ raster_prepare_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_raster_prepare_cpp`, packet, camera, viewport)
 }
 
-raster_draw_cpp <- function(scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear) {
-    .Call(`_ggplot3d_raster_draw_cpp`, scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear)
+raster_draw_cpp <- function(scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear, traced) {
+    .Call(`_ggplot3d_raster_draw_cpp`, scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear, traced)
+}
+
+raster_canvas_cpp <- function(scene, colours, dashes, width, height, antialias) {
+    .Call(`_ggplot3d_raster_canvas_cpp`, scene, colours, dashes, width, height, antialias)
 }
 
 raster_occlusion_cpp <- function(scene, colours, dashes, extent, width, height, antialias, depth) {

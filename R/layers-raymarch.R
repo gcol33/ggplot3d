@@ -6,8 +6,6 @@ GeomRaymarch3D <- ggplot2::ggproto("GeomRaymarch3D", ggplot2::Geom,
 raymarch_payload_3d <- function(spec, params, panel_params) {
   if (!identical(frame_of_3d(panel_params)$identity, TRUE))
     stop("Ray-marched Euclidean layers require an identity coordinate frame.", call. = FALSE)
-  if (!(panel_params$coord_params$backend$type %in% c("raster", "pathtrace")))
-    stop("Ray-marched layers require a raster or pathtrace backend.", call. = FALSE)
   if (params$occlusion != "depth" || length(params$clip_planes))
     stop("Ray-marched layers require depth occlusion and the panel clipping box.", call. = FALSE)
   spec$ranges <- panel_params$ranges[c("x", "y", "z")]

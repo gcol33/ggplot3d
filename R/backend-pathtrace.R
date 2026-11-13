@@ -71,5 +71,5 @@ render_pathtrace_panel_3d <- function(x, furniture, backend) {
   packet <- merge_scene_packets(x$packets, x$panel_params$panel_id)
   result <- pathtrace_scene_3d(packet, specs, furniture$camera, furniture$viewport, backend,
     x$panel_params$coord_params$light)
-  raymarch_panel_grob_3d(result, packet, furniture, "scene-pathtrace-3d")
+  raster_panel_grob_3d(result, packet, furniture, "scene-pathtrace-3d")
 }

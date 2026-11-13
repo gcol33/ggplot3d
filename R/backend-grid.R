@@ -34,11 +34,10 @@ makeContent.scene_panel_grob <- function(x) {
       x$packets <- c(x$packets, list(device_text_metrics_3d(furniture$split$scene)))
       furniture$packet <- furniture$split$fixed
     }
-    traced <- any(vapply(x$packets, function(p) !is.null(attr(p, "raymarch")), logical(1)))
-    result <- if (traced) render_raymarch_panel_3d(x, furniture, backend) else render_raster_panel_3d(x, furniture, backend)
+    result <- render_raster_panel_3d(x, furniture, backend)
     scene <- result$scene
     rendered <- result$grob
-  } else if (identical(backend$type, "hybrid")) {
+  } else if (identical(backend$type, "hybrid") || length(raster_traced_specs_3d(x$packets))) {
     result <- render_hybrid_panel_3d(x, furniture, backend)
     scene <- result$scene
     rendered <- result$grob
