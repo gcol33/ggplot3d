@@ -1,5 +1,6 @@
 #pragma once
 #include "coverage.h"
+#include "parallel.h"
 #include <map>
 #include <queue>
 #include <tuple>
@@ -355,16 +356,36 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   auto edge=[&](std::size_t a,std::size_t b) {
     budget.add(32);edges.emplace_back(a,b);++stats.edges;
   };
-  for(std::size_t i=0;i<n;++i) {
-    if(i%1024==0) Rcpp::checkUserInterrupt();
-    index.query(projected[i].bounds,i+1,[&](std::size_t j) {
-      ++stats.pairs;
-      int relation=occlusion_relation(pieces[i],pieces[j],projected[i],projected[j],packet,p);
-      if(relation==3) ++budget.intersections;
-      if(relation&1) edge(i,j);
-      if(relation&2) edge(j,i);
+  // Pairs are classified in parallel blocks of pieces and merged in piece
+  // order, so edges, statistics and budget failures match a serial sweep. A
+  // wave of blocks bounds the work done before the budget sees its edges.
+  struct Relation {Index a,b;int relation;};
+  const std::size_t block_size=256,wave_blocks=std::max<std::size_t>(16,4*budget.threads);
+  const std::size_t blocks=(n+block_size-1)/block_size;
+  std::vector<std::vector<Relation>> found(std::min(blocks,wave_blocks));
+  std::vector<std::size_t> pairs(found.size());
+  for(std::size_t first=0;first<blocks;first+=wave_blocks) {
+    Rcpp::checkUserInterrupt();
+    const std::size_t count=std::min(wave_blocks,blocks-first);
+    parallel_blocks(count,budget.threads,[&](std::size_t slot) {
+      auto& out=found[slot];out.clear();pairs[slot]=0;
+      const std::size_t begin=(first+slot)*block_size,end=std::min(n,begin+block_size);
+      for(std::size_t i=begin;i<end;++i) index.query(projected[i].bounds,i+1,[&](std::size_t j) {
+        ++pairs[slot];
+        int relation=occlusion_relation(pieces[i],pieces[j],projected[i],projected[j],packet,p);
+        if(relation) out.push_back({static_cast<Index>(i),static_cast<Index>(j),relation});
+      });
     });
+    for(std::size_t slot=0;slot<count;++slot) {
+      stats.pairs+=pairs[slot];
+      for(const auto& r:found[slot]) {
+        if(r.relation==3) ++budget.intersections;
+        if(r.relation&1) edge(r.a,r.b);
+        if(r.relation&2) edge(r.b,r.a);
+      }
+    }
   }
+  found.clear();found.shrink_to_fit();
   std::vector<std::size_t> offsets(n+1,0);
   for(const auto& e:edges) ++offsets[e.first+1];
   std::partial_sum(offsets.begin(),offsets.end(),offsets.begin());

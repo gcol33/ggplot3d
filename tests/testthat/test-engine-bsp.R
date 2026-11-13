@@ -351,6 +351,21 @@ test_that("the resource budget rejects growth with actionable scene counts", {
   expect_error(native(),"positive finite")
 })
 
+test_that("the compiled scene does not depend on the thread count", {
+  packet <- engine_grid(1500L)
+  camera <- ggplot3d:::new_camera_3d(azimuth = 30, elevation = 20)
+  old <- options(ggplot3d.threads = 1L); on.exit(options(old))
+  serial <- engine_compile(packet, camera)
+  options(ggplot3d.threads = 3L)
+  expect_identical(engine_compile(packet, camera), serial)
+  options(ggplot3d.threads = 0)
+  expect_error(engine_compile(packet, camera), "positive whole number")
+  view <- ggplot3d:::new_scene_viewport(100,100)
+  attr(view,"engine_threads") <- 1.5
+  expect_error(ggplot3d:::scene_compile_cpp(packet[names(packet)!="styles"], camera, view),
+               "positive whole number")
+})
+
 test_that("ellipse and holed polygon footprints reject empty carrier intersections", {
   for(kind in 1:2) {
     packet <- ggplot3d:::new_scene_packet(
