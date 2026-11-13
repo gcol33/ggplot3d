@@ -32,6 +32,9 @@ static inline std::vector<Plane> clipping_planes(const Projection& p) {
 static inline Polygon clip_polygon(Polygon polygon, const std::vector<Plane>& planes, bool& clipped) {
   for (const Plane& plane : planes) {
     if (polygon.empty()) break;
+    bool inside = true;
+    for (const Vertex& v : polygon) inside = inside && signed_distance(plane, v.xyz) >= 0;
+    if (inside) continue;
     Polygon out;
     Vertex previous = polygon.back();
     double dp = signed_distance(plane, previous.xyz);

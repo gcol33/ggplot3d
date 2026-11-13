@@ -132,6 +132,22 @@ static inline Ring2 projected_overlap(const ProjectedPiece& a,const ProjectedPie
   return result;
 }
 
+// Two counter-clockwise convex rings whose interiors are disjoint have an edge
+// of one with every vertex of the other on or outside its line. Their overlap
+// then has zero area.
+static inline bool separated_convex(const Ring2& x,const Ring2& y) {
+  for(const Ring2* ring:{&x,&y}) {
+    const Ring2& other=ring==&x ? y:x;
+    for(std::size_t k=0;k<ring->size();++k) {
+      const Point2& a=(*ring)[k];const Point2& b=(*ring)[(k+1)%ring->size()];
+      bool outside=true;
+      for(const auto& q:other) if(orient2(a,b,q)>0) {outside=false;break;}
+      if(outside) return true;
+    }
+  }
+  return false;
+}
+
 static inline bool inside_convex(const Ring2& ring,const Point2& q) {
   for(std::size_t i=0;i<ring.size();++i)
     if(orient2(ring[i],ring[(i+1)%ring.size()],q)<0) return false;
@@ -238,23 +254,14 @@ static inline int occlusion_relation(const Piece& a,const Piece& b,const Project
     return 3;
   }
   if(a.kind==Kind::face && b.kind==Kind::face && x.area && y.area) {
+    if(separated_convex(x.ring,y.ring)) return 0;
     int sign=0;
     for(double u:{std::max(x.bounds[0],y.bounds[0]),std::min(x.bounds[2],y.bounds[2])})
       for(double v:{std::max(x.bounds[1],y.bounds[1]),std::min(x.bounds[3],y.bounds[3])}) {
         double d=projected_depth(x,{u,v},p.camera.perspective)-projected_depth(y,{u,v},p.camera.perspective);
         sign|=d>p.resolved.tolerance ? 1 : (d<-p.resolved.tolerance ? 2:3);
       }
-    if(sign==1 || sign==2) {
-      for(const auto* ring:{&x.ring,&y.ring}) {
-        const auto& other=ring==&x.ring ? y.ring:x.ring;
-        for(std::size_t k=0;k<ring->size();++k) {
-          bool outside=true;
-          for(const auto& q:other) if(orient2((*ring)[k],(*ring)[(k+1)%ring->size()],q)>0) {outside=false;break;}
-          if(outside) return 0;
-        }
-      }
-      return sign;
-    }
+    if(sign==1 || sign==2) return sign;
   }
   Ring2 overlap=projected_overlap(x,y,p);
   if(overlap.empty()) return 0;
