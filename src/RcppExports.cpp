@@ -187,6 +187,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sweep_frames_cpp
+Rcpp::List sweep_frames_cpp(Rcpp::NumericMatrix xyz, bool closed, Rcpp::NumericVector hint);
+RcppExport SEXP _ggplot3d_sweep_frames_cpp(SEXP xyzSEXP, SEXP closedSEXP, SEXP hintSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< bool >::type closed(closedSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type hint(hintSEXP);
+    rcpp_result_gen = Rcpp::wrap(sweep_frames_cpp(xyz, closed, hint));
+    return rcpp_result_gen;
+END_RCPP
+}
 // voxel_faces_cpp
 Rcpp::IntegerMatrix voxel_faces_cpp(Rcpp::IntegerVector n, Rcpp::IntegerVector material, Rcpp::LogicalVector translucent, bool greedy);
 RcppExport SEXP _ggplot3d_voxel_faces_cpp(SEXP nSEXP, SEXP materialSEXP, SEXP translucentSEXP, SEXP greedySEXP) {
@@ -215,6 +227,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 10},
     {"_ggplot3d_raster_occlusion_cpp", (DL_FUNC) &_ggplot3d_raster_occlusion_cpp, 8},
+    {"_ggplot3d_sweep_frames_cpp", (DL_FUNC) &_ggplot3d_sweep_frames_cpp, 3},
     {"_ggplot3d_voxel_faces_cpp", (DL_FUNC) &_ggplot3d_voxel_faces_cpp, 4},
     {NULL, NULL, 0}
 };

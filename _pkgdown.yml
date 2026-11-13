@@ -119,6 +119,8 @@ reference:
   - geom_bar_3d
   - geom_extrude_3d
   - geom_voxel_3d
+  - geom_tube_3d
+  - geom_ribbon_3d
 - title: Statistical layers
   contents:
   - geom_function_3d
@@ -129,6 +131,8 @@ reference:
   - geom_isodensity_3d
   - geom_hull_3d
   - geom_parametric_3d
+  - geom_sweep_3d
+  - geom_revolve_3d
 - title: Statistical computations
   contents:
   - stat_surface_3d
@@ -143,6 +147,9 @@ reference:
   - stat_density_3d
   - stat_hull_3d
   - stat_parametric_3d
+  - stat_sweep_3d
+  - stat_revolve_3d
+  - stat_spline_3d
   - probs
 - title: Positions
   contents:

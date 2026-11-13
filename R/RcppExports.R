@@ -53,6 +53,10 @@ raster_occlusion_cpp <- function(scene, colours, dashes, extent, width, height, 
     .Call(`_ggplot3d_raster_occlusion_cpp`, scene, colours, dashes, extent, width, height, antialias, depth)
 }
 
+sweep_frames_cpp <- function(xyz, closed, hint) {
+    .Call(`_ggplot3d_sweep_frames_cpp`, xyz, closed, hint)
+}
+
 voxel_faces_cpp <- function(n, material, translucent, greedy) {
     .Call(`_ggplot3d_voxel_faces_cpp`, n, material, translucent, greedy)
 }
