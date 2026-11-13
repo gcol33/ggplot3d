@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* `geom_quiver_3d()` draws vectors with solid cone heads and line or tube shafts; `geom_cone_3d()` draws magnitude-scaled cones. `stat_streamline_3d()` integrates trilinear vector fields with RK4 or adaptive RK45, accepts point/rake/plane seeds and Jobard-Lefer slice placement, and sweeps streamtubes through the shared tube machinery.
+
 * `geom_boxplot_3d()` draws box prisms, median faces, whiskers and outliers on x/y cells. `geom_violin_3d()` draws mirrored density walls or revolved solids. `geom_waterfall_3d()` draws curtains and `geom_area_3d()` stacks area walls through `position_stack_3d()`.
 * `backend_3d("pathtrace")` adds diffuse global illumination, distant-disk soft shadows, thin-lens depth of field and seeded progressive accumulation. Native BVH traversal shares the SDF ray kernel; batches and worker counts produce identical samples.
 

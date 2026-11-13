@@ -133,6 +133,10 @@ repel_labels_cpp <- function(anchors, radius, owner, start, half, bounds, force,
     .Call(`_ggplot3d_repel_labels_cpp`, anchors, radius, owner, start, half, bounds, force, force_pull, max_iter, max_time, max_overlaps, direction, seed, jitter)
 }
 
+streamlines_cpp <- function(axes, values, seeds, step, max_steps, method, direction, tolerance, separation, dtest, slice_axis, max_lines) {
+    .Call(`_ggplot3d_streamlines_cpp`, axes, values, seeds, step, max_steps, method, direction, tolerance, separation, dtest, slice_axis, max_lines)
+}
+
 sweep_frames_cpp <- function(xyz, closed, hint) {
     .Call(`_ggplot3d_sweep_frames_cpp`, xyz, closed, hint)
 }

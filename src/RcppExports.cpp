@@ -470,6 +470,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// streamlines_cpp
+Rcpp::DataFrame streamlines_cpp(Rcpp::List axes, Rcpp::NumericMatrix values, Rcpp::NumericMatrix seeds, double step, int max_steps, std::string method, std::string direction, double tolerance, double separation, double dtest, int slice_axis, int max_lines);
+RcppExport SEXP _ggplot3d_streamlines_cpp(SEXP axesSEXP, SEXP valuesSEXP, SEXP seedsSEXP, SEXP stepSEXP, SEXP max_stepsSEXP, SEXP methodSEXP, SEXP directionSEXP, SEXP toleranceSEXP, SEXP separationSEXP, SEXP dtestSEXP, SEXP slice_axisSEXP, SEXP max_linesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type axes(axesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type values(valuesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type seeds(seedsSEXP);
+    Rcpp::traits::input_parameter< double >::type step(stepSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< std::string >::type direction(directionSEXP);
+    Rcpp::traits::input_parameter< double >::type tolerance(toleranceSEXP);
+    Rcpp::traits::input_parameter< double >::type separation(separationSEXP);
+    Rcpp::traits::input_parameter< double >::type dtest(dtestSEXP);
+    Rcpp::traits::input_parameter< int >::type slice_axis(slice_axisSEXP);
+    Rcpp::traits::input_parameter< int >::type max_lines(max_linesSEXP);
+    rcpp_result_gen = Rcpp::wrap(streamlines_cpp(axes, values, seeds, step, max_steps, method, direction, tolerance, separation, dtest, slice_axis, max_lines));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sweep_frames_cpp
 Rcpp::List sweep_frames_cpp(Rcpp::NumericMatrix xyz, bool closed, Rcpp::NumericVector hint);
 RcppExport SEXP _ggplot3d_sweep_frames_cpp(SEXP xyzSEXP, SEXP closedSEXP, SEXP hintSEXP) {
@@ -530,6 +551,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_alpha_shape_cpp", (DL_FUNC) &_ggplot3d_geometry_alpha_shape_cpp, 2},
     {"_ggplot3d_geometry_rbf_cpp", (DL_FUNC) &_ggplot3d_geometry_rbf_cpp, 4},
     {"_ggplot3d_repel_labels_cpp", (DL_FUNC) &_ggplot3d_repel_labels_cpp, 14},
+    {"_ggplot3d_streamlines_cpp", (DL_FUNC) &_ggplot3d_streamlines_cpp, 12},
     {"_ggplot3d_sweep_frames_cpp", (DL_FUNC) &_ggplot3d_sweep_frames_cpp, 3},
     {"_ggplot3d_voxel_faces_cpp", (DL_FUNC) &_ggplot3d_voxel_faces_cpp, 4},
     {NULL, NULL, 0}

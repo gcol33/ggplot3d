@@ -114,6 +114,7 @@ reference:
   - geom_boxplot_3d
   - geom_area_3d
   - geom_dropline_3d
+  - geom_quiver_3d
   - geom_rug_3d
   - geom_plane_3d
   - annotate_3d
@@ -210,6 +211,7 @@ reference:
   - stat_parametric_geodesic_3d
   - stat_geodesic_distance_3d
   - stat_sweep_3d
+  - stat_streamline_3d
   - stat_revolve_3d
   - stat_spline_3d
   - probs
