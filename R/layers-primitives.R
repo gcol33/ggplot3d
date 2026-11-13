@@ -1,8 +1,26 @@
 make_layer_3d <- function(geom, mapping, data, stat, position, params, show.legend, inherit.aes) {
   entry <- find_emitter_3d(geom)
-  ggplot2::layer(geom = scene_geom_3d(geom, entry), mapping = mapping, data = data,
+  known <- c(scene_geom_3d(geom, entry)$aesthetics(), scene_geom_3d(geom, entry)$parameters(TRUE),
+             scene_geom_3d(geom, entry)$extra_params,
+             if (inherits(stat, "Stat")) stat$parameters(TRUE))
+  unknown <- setdiff(names(params), known)
+  if (length(unknown)) stop("Unknown 3D layer arguments: ", paste(unknown, collapse = ", "), call. = FALSE)
+  result <- ggplot2::layer(geom = scene_geom_3d(geom, entry), mapping = mapping, data = data,
                 stat = stat, position = position, params = params,
                 show.legend = show.legend, inherit.aes = inherit.aes)
+  parent <- result
+  ggplot2::ggproto(NULL, result,
+    layer_data = function(self, plot_data) {
+      data <- ggplot2::ggproto_parent(parent, self)$layer_data(plot_data)
+      if (!is.null(entry$prepare_data)) data <- entry$prepare_data(data)
+      data
+    },
+    compute_aesthetics = function(self, data, plot) {
+      out <- ggplot2::ggproto_parent(parent, self)$compute_aesthetics(data, plot)
+      if (!is.null(entry$prepare_aesthetics)) out <- entry$prepare_aesthetics(out, data, plot, params)
+      out
+    }
+  )
 }
 
 #' Point, path, segment, text and polygon layers in three dimensions

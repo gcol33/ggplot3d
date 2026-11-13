@@ -109,16 +109,12 @@ emit_surface_3d <- function(data, params, panel_params) {
   for (name in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
     if (!constant_corners_3d(data[[name]], faces)) stop("Surface materials must be constant per face; use fill = after_stat(z_mean).", call. = FALSE)
   }
-  kind <- "faces"
-  if (isTRUE(params$wireframe)) {
+  edges <- matrix(integer(), ncol = 2L)
+  if (isTRUE(params$wireframe) || any(!is.na(data$colour))) {
     edges <- matrix(as.vector(t(faces[, c(1L, 2L, 2L, 3L, 3L, 1L), drop = FALSE])), ncol = 2L, byrow = TRUE)
-    a <- data$.source[edges[, 1L]]; b <- data$.source[edges[, 2L]]
-    faces <- edges[!duplicated(data.frame(a = pmin(a, b), b = pmax(a, b))), , drop = FALSE]
-    kind <- "polylines"
-    if (all(is.na(data$colour))) data$colour <- "grey30"
+    edges <- unique_edges_3d(edges, data$.source, data$group)
   }
-  packet_from_primitives_3d(data, as.vector(t(faces)), rep(kind, nrow(faces)), params, panel_params$panel_id,
-                            counts = rep.int(ncol(faces), nrow(faces)))
+  packet_from_faces_edges_3d(data, faces, edges, params, panel_params)
 }
 
 constant_corners_3d <- function(value, corners) {
@@ -163,4 +159,5 @@ delaunay_triangles_3d <- function(xy) {
   lapply(triangles, function(t) as.integer(index[t]))
 }
 
-register_geom_3d(GeomSurface3D, emit_surface_3d)
+register_geom_3d(GeomSurface3D, emit_surface_3d,
+  position_check = function(position, scales) check_position_3d(position, scales))

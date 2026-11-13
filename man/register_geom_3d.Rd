@@ -11,7 +11,9 @@ register_geom_3d(
   setup_data = NULL,
   stat_adapter = NULL,
   position_check = NULL,
-  replace = FALSE
+  replace = FALSE,
+  prepare_data = NULL,
+  prepare_aesthetics = NULL
 )
 }
 \arguments{
@@ -28,6 +30,8 @@ register_geom_3d(
 \item{position_check}{Optional position validation function.}
 
 \item{replace}{Whether to replace an existing registration.}
+
+\item{prepare_data, prepare_aesthetics}{Optional input and aesthetic preparation functions.}
 }
 \description{
 Register a geometry emitter

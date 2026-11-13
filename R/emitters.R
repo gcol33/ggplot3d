@@ -1,5 +1,7 @@
 .emitters_3d <- new.env(parent = emptyenv())
 
+solid_defaults_3d <- function() ggplot2::aes(colour = NA, fill = "grey70", linewidth = 0.3, linetype = 1, alpha = 1)
+
 #' Register a geometry emitter
 #' @param geom A ggplot2 geom prototype.
 #' @param emit Function accepting data, params and panel_params.
@@ -8,14 +10,17 @@
 #' @param stat_adapter Optional stat prototype.
 #' @param position_check Optional position validation function.
 #' @param replace Whether to replace an existing registration.
+#' @param prepare_data,prepare_aesthetics Optional input and aesthetic preparation functions.
 #' @export
 register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = NULL,
-                             stat_adapter = NULL, position_check = NULL, replace = FALSE) {
+                             stat_adapter = NULL, position_check = NULL, replace = FALSE,
+                             prepare_data = NULL, prepare_aesthetics = NULL) {
   stopifnot(inherits(geom, "Geom"), is.function(emit))
   name <- class(geom)[1L]
   if (exists(name, .emitters_3d, inherits = FALSE) && !replace) stop("Emitter already registered for ", name, ".", call. = FALSE)
   .emitters_3d[[name]] <- list(name = name, emit = emit, aesthetics = aesthetics,
-                              setup_data = setup_data, stat_adapter = stat_adapter, position_check = position_check)
+                              setup_data = setup_data, stat_adapter = stat_adapter, position_check = position_check,
+                              prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics)
   invisible(NULL)
 }
 
@@ -48,13 +53,15 @@ scene_geom_3d <- function(parent, entry) {
                            method = "grid", max_edge = Inf, wireframe = FALSE,
                            lineend = "butt", linejoin = "round", linemitre = 10,
                            arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
-                           size.unit = "mm", rule = "evenodd") {
+                           size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
+                           width = NULL, depth = NULL, face = "zmin", plane = "surface") {
       if (!inherits(coord, "Coord3D")) stop("3D layers require coord_3d().", call. = FALSE)
       params <- list(.emitter = .emitter, na.rm = na.rm, occlusion = occlusion,
                      shade = shade, hidden = hidden, method = method, max_edge = max_edge,
                      wireframe = wireframe, lineend = lineend, linejoin = linejoin,
                      linemitre = linemitre, arrow = arrow, arrow.fill = arrow.fill,
-                     parse = parse, check_overlap = check_overlap, size.unit = size.unit, rule = rule)
+                     parse = parse, check_overlap = check_overlap, size.unit = size.unit, rule = rule,
+                     base = base, cap = cap, width = width, depth = depth, face = face, plane = plane)
       scene_layer_grob(emit_scene_3d(data, params, panel_params, .layer_id))
     }
   )
@@ -64,6 +71,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   entry <- .emitters_3d[[params$.emitter]]
   if (is.null(entry)) stop("Unknown 3D emitter: ", params$.emitter, call. = FALSE)
   if (is.null(data$.source)) data$.source <- seq_len(nrow(data))
+  if (!is.null(data$.origin)) data$.source <- data$.origin
   data$.layer <- rep.int(as.integer(layer_id), nrow(data))
   params$occlusion <- match.arg(params$occlusion %or3d% "depth", c("depth", "overlay"))
   params$hidden <- match.arg(params$hidden %or3d% "hide", c("hide", "dashed", "show"))
@@ -81,6 +89,7 @@ styles_3d <- function(data, rows, kinds, params) {
                    hjust = 0.5, vjust = 0.5, angle = 0, stroke = 0.5)
   styles <- data.frame(style_id = seq_along(rows))
   for (name in names(defaults)) styles[[name]] <- if (name %in% names(data)) data[[name]][rows] else rep(defaults[[name]], length(rows))
+  styles$colour[kinds == "faces"] <- NA_character_
   styles$alpha[is.na(styles$alpha)] <- 1
   keys <- lapply(styles[names(defaults)], function(x) match(x, unique(x)))
   order <- do.call(order, c(keys, list(method = "radix")))
@@ -164,6 +173,32 @@ valid_rows_3d <- function(data, params, columns = c("x", "y", "z")) {
   valid <- Reduce(`&`, lapply(data[columns], is.finite))
   if (any(!valid) && !isTRUE(params$na.rm)) warning("Removed ", sum(!valid), " rows with missing 3D positions.", call. = FALSE)
   valid
+}
+
+nondegenerate_triangles_3d <- function(data, faces) {
+  a <- as.matrix(data[faces[, 2L], c("x", "y", "z")]) - as.matrix(data[faces[, 1L], c("x", "y", "z")])
+  b <- as.matrix(data[faces[, 3L], c("x", "y", "z")]) - as.matrix(data[faces[, 1L], c("x", "y", "z")])
+  normal <- a[, c(2L, 3L, 1L), drop = FALSE] * b[, c(3L, 1L, 2L), drop = FALSE] -
+    a[, c(3L, 1L, 2L), drop = FALSE] * b[, c(2L, 3L, 1L), drop = FALSE]
+  sqrt(rowSums(normal^2)) > 256 * .Machine$double.eps * pmax(rowSums(a^2), rowSums(b^2))
+}
+
+unique_edges_3d <- function(edges, vertex, mesh = rep.int(1L, length(vertex))) {
+  a <- edges[, 1L]; b <- edges[, 2L]
+  edges[!duplicated(data.frame(mesh = mesh[a], a = pmin(vertex[a], vertex[b]),
+                              b = pmax(vertex[a], vertex[b]))), , drop = FALSE]
+}
+
+packet_from_faces_edges_3d <- function(data, faces, edges, params, panel_params) {
+  if (isTRUE(params$wireframe)) {
+    faces <- matrix(integer(), ncol = 3L)
+    if (all(is.na(data$colour))) data$colour <- "grey30"
+  }
+  faces <- faces[!is.na(data$fill[faces[, 1L]]), , drop = FALSE]
+  edges <- edges[!is.na(data$colour[edges[, 1L]]), , drop = FALSE]
+  packet_from_primitives_3d(data, c(as.vector(t(faces)), as.vector(t(edges))),
+    c(rep("faces", nrow(faces)), rep("polylines", nrow(edges))), params, panel_params$panel_id,
+    c(rep.int(3L, nrow(faces)), rep.int(2L, nrow(edges))))
 }
 
 emit_points_3d <- function(data, params, panel_params) {
@@ -289,5 +324,6 @@ collect_scene_layers <- function(panel, panel_params, theme) {
 register_geom_3d(ggplot2::GeomPoint, emit_points_3d)
 register_geom_3d(ggplot2::GeomPath, emit_paths_3d)
 register_geom_3d(ggplot2::GeomLine, emit_paths_3d)
-register_geom_3d(ggplot2::GeomSegment, emit_segments_3d)
+register_geom_3d(ggplot2::GeomSegment, emit_segments_3d,
+  position_check = function(position, scales) check_position_3d(position, scales))
 register_geom_3d(ggplot2::GeomText, emit_text_3d)

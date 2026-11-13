@@ -16,6 +16,7 @@ Imports:
     ggplot2,
     grDevices,
     grid,
+    isoband,
     Rcpp,
     S7,
     stats,
@@ -23,6 +24,8 @@ Imports:
 LinkingTo: Rcpp
 Suggests:
     ragg,
+    rgl,
+    sf,
     svglite,
     testthat (>= 3.0.0)
 SystemRequirements: C++17
