@@ -4,6 +4,7 @@
 * Draw points, paths, segments, text, polygons, surfaces, contours, meshes, bands, columns and extrusions in three dimensions.
 * Train continuous, discrete and date/time z scales, with fixed or free z ranges across facets.
 * Control camera angles, projection, lighting and framing with `coord_3d()`.
+* `coord_3d(axis_lines = "origin", origin = )` and `guide_axis_3d(position = "origin")` draw axes through a data point as part of the scene, with ticks, tick labels and titles that data can hide; `axis_lines = "none"` drops the box axis lines. `panes = "front"` adds translucent foreground panes (`panel.pane.front`). Theme elements `panel.grid.major.x.xy` and the like style or remove the grid of one axis on one plane, `panel.zero.x`, `.y`, `.z` draw a plane at transformed value 0 that depth-sorts with the data, and `panel.zero.line` marks 0 on the panes.
 * Panel frames: `coord_cylindrical_3d()` and `coord_spherical_3d()` bend paths and faces along angle, radius and height, with rear wall or shell panes and curved axes; `coord_ternary_3d()` and `coord_simplex_3d()` place three- or four-part compositions (aesthetics `a`, `b`, `c`, `d`) in a triangular prism or a regular tetrahedron.
 * `coord_3d(transform = )` applies coordinate transformations after statistics, with expansion in transformed space.
 * `stat_density_3d()` and `stat_hull_3d()` gain `space = "ilr"` for compositions.

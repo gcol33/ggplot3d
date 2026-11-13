@@ -49,7 +49,7 @@ measure_guides_3d <- function(params, theme, viewport) {
       label_extent = label_extent, title_extent = title_extent,
       extent = max(max(tick_length, minor_length) + gap + guide$params$n.dodge * label_extent, title_extent))
   })
-  active <- names(guides)[vapply(guides, guide_visible_3d, logical(1), params)]
+  active <- names(guides)[vapply(guides, guide_on_box_3d, logical(1), params)]
   extent <- if (length(active)) max(vapply(metrics[active], `[[`, numeric(1), "extent")) else 0
   margin <- element_3d("panel.margin.3d", theme) %or3d% ggplot2::margin(8, 8, 8, 8, unit = "pt")
   margin <- grid::convertUnit(margin, "mm", valueOnly = TRUE)
@@ -202,8 +202,10 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
   chunks <- list(frame$map(cube$corners)); n_vertices <- 8L
   primitives <- list(); kinds <- character(); materials <- list(); anchor_rows <- integer(); tags <- list()
   # A tag records which panes a primitive belongs to and a scale-space point on
-  # it, so a viewer can re-decide visibility for another camera.
-  add <- function(xyz, kind, element = NULL, partition = 0L, anchor = FALSE, tag = NULL) {
+  # it, so a viewer can re-decide visibility for another camera. Scene
+  # primitives (zero planes, origin axes) lie inside the box and depth-sort
+  # with the data.
+  add <- function(xyz, kind, element = NULL, partition = 0L, anchor = FALSE, tag = NULL, text = NULL, scene = FALSE) {
     if (kind == "polylines") {
       projected <- frame_positions_3d(xyz, camera, basis)[, 1:2, drop = FALSE]
       # A line parallel to the sight ray has no projected stroke length.
@@ -214,7 +216,8 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
     n_vertices <<- n_vertices + nrow(xyz)
     primitives[[length(primitives) + 1L]] <<- rows
     kinds <<- c(kinds, kind)
-    materials[[length(materials) + 1L]] <<- list(element = element, partition = partition, anchor = anchor)
+    materials[[length(materials) + 1L]] <<- list(element = element, partition = as.integer(partition), anchor = anchor,
+      text = text, scene = scene)
     tags[length(primitives)] <<- list(tag)
     if (anchor) anchor_rows <<- c(anchor_rows, length(primitives))
     length(primitives)
@@ -233,9 +236,11 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
   all_panes <- frame$panes()
   pane_names <- vapply(all_panes, `[[`, character(1), "name")
   partitions <- furniture_partitions_3d(camera, fit$viewport, frame)
-  explicit <- intersect(setdiff(cfg$panes, c("back", "floor")), pane_names)
+  explicit <- intersect(setdiff(cfg$panes, c("back", "floor", "front")), pane_names)
   back <- if ("back" %in% cfg$panes) frame$back_panes(partitions) else character()
   panes <- unique(c(explicit, back, if ("floor" %in% cfg$panes) frame$floor_panes()))
+  front <- if ("front" %in% cfg$panes) setdiff(pane_names, panes) else character()
+  if (frame$linear) front <- front[partitions[front] == 2L]
   rear_only <- stats::setNames(!(panes %in% explicit) & vapply(panes, frame$rear_only, logical(1)), panes)
   pane_facing <- function(pane, points) facing_3d(pane_normals_3d(frame, pane, points, camera), frame$map(points), camera, basis)
   # A stroke on a curved pane splits into runs of constant visibility class.
@@ -253,6 +258,42 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
     n <- nrow(path$scale)
     (path$scale[-1L, , drop = FALSE] + path$scale[-n, , drop = FALSE]) / 2
   }
+  # Fill of a scale-space pane; classify gives the partition of points on it,
+  # NA where the pane is not drawn.
+  fill_pane <- function(pane, element, classify, tagged = TRUE, scene = FALSE) {
+    if (!visible_element_3d(element) || is.na(element$fill %or3d% NA) || isFALSE(pane$fill)) return(invisible())
+    pane_tag <- function(at) if (tagged) list(type = "pane", panes = pane$name, at = unname(at))
+    if (frame$linear) {
+      centre <- colMeans(pane$xyz)
+      class <- classify(matrix(centre, 1L))
+      if (!is.na(class)) add(frame$map(pane$xyz), "faces", element, class, tag = pane_tag(centre), scene = scene)
+      return(invisible())
+    }
+    polygon <- new_scene_packet(vertices = list(x = pane$xyz[, 1L], y = pane$xyz[, 2L], z = pane$xyz[, 3L]),
+      corners = list(vertex = seq_len(nrow(pane$xyz)), source_row = rep.int(0L, nrow(pane$xyz))),
+      faces = list(offset = 1L, count = nrow(pane$xyz)), styles = data.frame(style_id = 1L))
+    munched <- munch_packet_3d(frame, polygon, clip = FALSE)
+    tri <- matrix(munched$corners$vertex, nrow = 3L)
+    if (!ncol(tri)) return(invisible())
+    model <- do.call(cbind, munched$vertices); scale <- attr(munched, "scale")
+    centres <- (scale[tri[1L, ], , drop = FALSE] + scale[tri[2L, ], , drop = FALSE] + scale[tri[3L, ], , drop = FALSE]) / 3
+    class <- classify(centres)
+    for (k in which(!is.na(class))) add(model[tri[, k], , drop = FALSE], "faces", element, class[k], tag = pane_tag(centres[k, ]), scene = scene)
+    invisible()
+  }
+  # The level line of one grid family on a pane.
+  pane_line <- function(pane, family, value, element, classify) {
+    line <- pane_isoline_3d(pane$xyz, family, value)
+    if (is.null(line)) return(invisible())
+    if (frame$linear) {
+      at <- colMeans(line)
+      add(frame$map(line), "polylines", element, classify(matrix(at, 1L)), tag = list(type = "pane", panes = pane$name, at = unname(at)))
+    } else {
+      path <- polyline_model_3d(frame, line)
+      add_runs(path, element, classify(segment_midpoints(path)), list(type = "pane", panes = pane$name, at = NULL))
+    }
+    invisible()
+  }
   for (pane_name in panes) {
     pane <- all_panes[[match(pane_name, pane_names)]]
     classify <- function(points) {
@@ -262,39 +303,56 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
       if (rear_only[[pane_name]]) class[class != 0L] <- NA_integer_
       class
     }
-    element <- element_3d(paste0("panel.pane.", pane$element), theme)
-    pane_tag <- function(at) list(type = "pane", panes = pane_name, at = unname(at))
-    if (visible_element_3d(element) && !is.na(element$fill) && !isFALSE(pane$fill)) {
-      if (frame$linear) add(frame$map(pane$xyz), "faces", element, classify(matrix(colMeans(pane$xyz), 1L)), tag = pane_tag(colMeans(pane$xyz)))
-      else {
-        polygon <- new_scene_packet(vertices = list(x = pane$xyz[, 1L], y = pane$xyz[, 2L], z = pane$xyz[, 3L]),
-          corners = list(vertex = seq_len(nrow(pane$xyz)), source_row = rep.int(0L, nrow(pane$xyz))),
-          faces = list(offset = 1L, count = nrow(pane$xyz)), styles = data.frame(style_id = 1L))
-        munched <- munch_packet_3d(frame, polygon, clip = FALSE)
-        tri <- matrix(munched$corners$vertex, nrow = 3L)
-        if (ncol(tri)) {
-          model <- do.call(cbind, munched$vertices); scale <- attr(munched, "scale")
-          centres <- (scale[tri[1L, ], , drop = FALSE] + scale[tri[2L, ], , drop = FALSE] + scale[tri[3L, ], , drop = FALSE]) / 3
-          class <- classify(centres)
-          for (k in which(!is.na(class))) add(model[tri[, k], , drop = FALSE], "faces", element, class[k], tag = pane_tag(centres[k, ]))
-        }
+    fill_pane(pane, element_3d(paste0("panel.pane.", pane$element), theme), classify)
+    plane <- pane_plane_3d(pane)
+    for (family in pane$families) {
+      view <- panel_params[[family$scale]]
+      for (level in c("minor", "major")) {
+        values <- if (level == "major") view$break_positions() else view$break_positions_minor()
+        values <- values[is.finite(values) & values >= 0 & values <= 1]
+        element <- element_3d(paste0("panel.grid.", level, ".", family$element, ".", plane), theme)
+        if (!visible_element_3d(element)) next
+        for (value in values) pane_line(pane, family, value, element, classify)
+      }
+      element <- element_3d(paste0("panel.zero.line.", family$element), theme)
+      if (visible_element_3d(element)) {
+        zero <- range_position_3d(panel_params, family$scale, 0)
+        if (zero >= 0 && zero <= 1) pane_line(pane, family, zero, element, classify)
       }
     }
-    for (family in pane$families) for (level in c("minor", "major")) {
-      view <- panel_params[[family$scale]]
-      values <- if (level == "major") view$break_positions() else view$break_positions_minor()
-      values <- values[is.finite(values) & values >= 0 & values <= 1]
-      element <- element_3d(paste0("panel.grid.", level, ".", family$element), theme)
-      if (!visible_element_3d(element)) next
-      for (value in values) {
-        line <- pane_isoline_3d(pane$xyz, family, value)
-        if (is.null(line)) next
-        if (frame$linear) add(frame$map(line), "polylines", element, classify(matrix(colMeans(line), 1L)), tag = pane_tag(colMeans(line)))
-        else {
-          path <- polyline_model_3d(frame, line)
-          add_runs(path, element, classify(segment_midpoints(path)), pane_tag(NULL))
-        }
-      }
+  }
+  for (pane_name in front) {
+    pane <- all_panes[[match(pane_name, pane_names)]]
+    classify <- function(points) {
+      facing <- if (frame$linear) rep(unname(partitions[pane_name]), nrow(points)) else pane_facing(pane, points)
+      ifelse(facing == 2L, if (camera$clip_data) 2L else 1L, NA_integer_)
+    }
+    fill_pane(pane, element_3d("panel.pane.front", theme), classify, tagged = FALSE)
+  }
+  for (k in seq_len(3L)) {
+    element <- element_3d(paste0("panel.zero.", c("x", "y", "z")[k]), theme)
+    if (!visible_element_3d(element)) next
+    value <- range_position_3d(panel_params, c("x", "y", "z")[k], 0)
+    section <- if (value >= 0 && value <= 1) frame$section(k, value)
+    if (is.null(section)) next
+    # Pieces cut from the plane by data carry no outline; the boundary is one ring.
+    fill_pane(section, list(fill = element$fill), function(points) rep(1L, nrow(points)), tagged = FALSE, scene = TRUE)
+    if (!is.na(element$colour %or3d% NA)) {
+      ring <- section$xyz[c(seq_len(nrow(section$xyz)), 1L), , drop = FALSE]
+      add(if (frame$linear) frame$map(ring) else polyline_model_3d(frame, ring)$model, "polylines", element, 1L, scene = TRUE)
+    }
+  }
+  origin_guides <- Filter(function(guide) guide_at_origin_3d(guide, panel_params), panel_params$axis_guides)
+  if (length(origin_guides)) {
+    origin <- origin_position_3d(panel_params)
+    project <- function(xyz) {
+      xy <- frame_positions_3d(xyz, camera, basis)[, 1:2, drop = FALSE]
+      sweep(xy, 2L, c(fit$viewport$width_mm, fit$viewport$height_mm), "*")
+    }
+    for (name in names(origin_guides)) {
+      items <- origin_axis_primitives_3d(frame, origin_guides[[name]], fit$metrics[[name]], origin, project,
+        line = !identical(cfg$axis_lines, "none"), crossing = length(origin_guides) > 1L)
+      for (item in items) add(item$xyz, item$kind, item$element, 1L, text = item$text, scene = TRUE)
     }
   }
   if (cfg$box != "none") {
@@ -322,44 +380,189 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
       }
     }
   }
-  styles <- data.frame(style_id = seq_along(primitives), colour = NA_character_, fill = NA_character_,
-    linewidth = 0, linetype = "solid", label = "", fontsize = 0, .anchor = FALSE)
-  opacity <- rep(1, nrow(styles))
-  for (i in seq_along(materials)) {
+  styles <- furniture_styles_3d(kinds, materials)
+  vertices <- do.call(rbind, chunks)
+  assemble <- function(selected) furniture_packet_3d(vertices, primitives, kinds, materials, styles, panel_params$panel_id, selected)
+  packet <- assemble(seq_along(primitives))
+  # The raster backend draws furniture outside its depth buffer, so scene
+  # primitives travel to it as their own packet.
+  scene_rows <- which(vapply(materials, function(m) isTRUE(m$scene), logical(1)))
+  split <- if (length(scene_rows)) list(fixed = assemble(setdiff(seq_along(primitives), scene_rows)), scene = assemble(scene_rows))
+  tags[length(primitives) + 1L] <- list(NULL)
+  list(packet = packet, split = split, camera = camera, overlay = list(frame = frame, corners = corner_queries, guides = guide_queries,
+    params = panel_params, fit = fit), viewport = fit$viewport, tags = tags[seq_along(primitives)])
+}
+
+# Style rows of furniture primitives, one per primitive, with the opacity of
+# the colour that paints each kind as attribute.
+furniture_styles_3d <- function(kinds, materials) {
+  n <- length(kinds)
+  styles <- data.frame(style_id = seq_len(n), colour = rep(NA_character_, n), fill = rep(NA_character_, n),
+    linewidth = rep(0, n), linetype = rep("solid", n), label = rep("", n), fontsize = rep(0, n),
+    family = rep("", n), fontface = rep(1, n), .anchor = rep(FALSE, n))
+  opacity <- rep(1, n)
+  for (i in seq_len(n)) {
     m <- materials[[i]]; el <- m$element
     styles$.anchor[i] <- m$anchor
-    if (!is.null(el)) {
-      styles$colour[i] <- el$colour %or3d% NA_character_
-      styles$fill[i] <- el$fill %or3d% NA_character_
-      styles$linewidth[i] <- el$linewidth %or3d% 0
-      styles$linetype[i] <- as.character(el$linetype %or3d% 1)
-      chosen <- if (kinds[i] == "faces") styles$fill[i] else styles$colour[i]
-      rgba <- grDevices::col2rgb(chosen, alpha = TRUE)
-      opacity[i] <- rgba[4L, 1L] / 255
-      for (key in c("colour", "fill")) if (!is.na(styles[[key]][i])) {
-        rgb <- grDevices::col2rgb(styles[[key]][i])
-        styles[[key]][i] <- grDevices::rgb(rgb[1L], rgb[2L], rgb[3L], maxColorValue = 255)
-      }
+    if (is.null(el)) next
+    styles$colour[i] <- el$colour %or3d% NA_character_
+    styles$fill[i] <- el$fill %or3d% NA_character_
+    styles$linewidth[i] <- el$linewidth %or3d% 0
+    styles$linetype[i] <- as.character(el$linetype %or3d% 1)
+    if (!is.null(m$text)) {
+      styles$label[i] <- m$text$label
+      styles$fontsize[i] <- el$size %or3d% 11
+      styles$family[i] <- el$family %or3d% ""
+      face <- el$face %or3d% 1
+      styles$fontface[i] <- if (is.numeric(face)) face else match(face, c("plain", "bold", "italic", "bold.italic"), nomatch = 1L)
+    }
+    chosen <- if (kinds[i] == "faces") styles$fill[i] else styles$colour[i]
+    rgba <- grDevices::col2rgb(chosen, alpha = TRUE)
+    opacity[i] <- rgba[4L, 1L] / 255
+    for (key in c("colour", "fill")) if (!is.na(styles[[key]][i])) {
+      rgb <- grDevices::col2rgb(styles[[key]][i])
+      styles[[key]][i] <- grDevices::rgb(rgb[1L], rgb[2L], rgb[3L], maxColorValue = 255)
     }
   }
-  counts <- lengths(primitives); offsets <- cumsum(c(1L, head(counts, -1L)))
+  attr(styles, "opacity") <- opacity
+  styles
+}
+
+# Layer of the scene furniture, distinct from every plot layer, so that the
+# pieces of a zero plane cut by data form seam groups of their own.
+scene_furniture_layer_3d <- .Machine$integer.max
+
+# A scene packet of the selected furniture primitives. Primitive, style and
+# source row identifiers stay those of the whole furniture.
+furniture_packet_3d <- function(vertices, primitives, kinds, materials, styles, panel_id, selected) {
+  opacity <- attr(styles, "opacity"); attr(styles, "opacity") <- NULL
+  counts <- lengths(primitives)[selected]
+  offsets <- cumsum(c(1L, head(counts, -1L)))
+  text_defaults <- c(hjust = 0.5, vjust = 0.5, angle = 0)
   tables <- lapply(c("faces", "polylines", "text"), function(kind) {
-    i <- which(kinds == kind)
-    tab <- list(primitive_id = i, offset = offsets[i], count = counts[i], style_id = i,
-      layer_id = rep.int(0L, length(i)), source_row = as.integer(i),
-      partition = vapply(materials[i], `[[`, integer(1), "partition"), opacity = opacity[i])
+    j <- which(kinds[selected] == kind); i <- selected[j]
+    tab <- list(primitive_id = i, offset = offsets[j], count = counts[j], style_id = i,
+      layer_id = as.integer(ifelse(vapply(materials[i], function(m) isTRUE(m$scene), logical(1)), scene_furniture_layer_3d, 0L)),
+      source_row = as.integer(i), partition = vapply(materials[i], `[[`, integer(1), "partition"), opacity = opacity[i])
     if (kind == "polylines") tab$width_mm <- styles$linewidth[i]
+    if (kind == "text") for (key in names(text_defaults)) {
+      tab[[key]] <- vapply(materials[i], function(m) as.double(m$text[[key]] %or3d% text_defaults[[key]]), numeric(1))
+    }
     tab
   }); names(tables) <- c("faces", "polylines", "text")
-  vertices <- do.call(rbind, chunks)
   geometry <- lapply(as.data.frame(vertices), as.double); names(geometry) <- c("x", "y", "z")
   packet <- do.call(new_scene_packet, c(list(vertices = geometry,
-    corners = list(vertex = as.integer(unlist(primitives)), source_row = rep.int(0L, sum(counts))), styles = styles,
-    panel_id = panel_params$panel_id), tables))
+    corners = list(vertex = as.integer(unlist(primitives[selected])), source_row = rep.int(0L, sum(counts))), styles = styles,
+    panel_id = panel_id), tables))
   names(packet$vertices) <- c("x", "y", "z")
-  tags[length(primitives) + 1L] <- list(NULL)
-  list(packet = packet, camera = camera, overlay = list(frame = frame, corners = corner_queries, guides = guide_queries,
-    params = panel_params, fit = fit), viewport = fit$viewport, tags = tags[seq_along(primitives)])
+  packet
+}
+
+# Normalised panel position of a transformed value on one axis.
+range_position_3d <- function(panel_params, axis, value) {
+  range <- panel_params$ranges[[axis]]
+  (value - range[1L]) / diff(range)
+}
+
+# The origin of coord_3d() in normalised scale space, moved into the box.
+origin_position_3d <- function(panel_params) {
+  origin <- panel_params$coord_params$origin %or3d% c(x = 0, y = 0, z = 0)
+  u <- vapply(c("x", "y", "z"), function(axis) {
+    view <- panel_params[[axis]]
+    value <- if (isTRUE(view$is_discrete())) origin[[axis]] else view$get_transformation()$transform(origin[[axis]])
+    range_position_3d(panel_params, axis, value)
+  }, numeric(1))
+  u[is.nan(u)] <- 0
+  pmin(pmax(u, 0), 1)
+}
+
+# Model and screen derivatives of the frame map along a scale-space direction,
+# by differences kept inside the unit cube.
+frame_derivative_3d <- function(frame, points, direction, project, step = 1e-4) {
+  d <- matrix(direction, nrow(points), 3L, byrow = TRUE)
+  plus <- pmin(pmax(points + step * d, 0), 1)
+  minus <- pmin(pmax(points - step * d, 0), 1)
+  span <- rowSums((plus - minus) * d) / sum(direction^2)
+  a <- frame$map(plus); b <- frame$map(minus)
+  list(model = (a - b) / span, screen = (project(a) - project(b)) / span)
+}
+
+label_text_3d <- function(label) if (is.language(label)) deparse1(label) else as.character(label)
+
+# Justification that places a label of the given size (mm) beyond its anchor
+# in the screen direction `screen`, its nearest point `offset` mm away. The
+# anchor stays on the axis, inside the data box that clips the scene.
+origin_text_3d <- function(label, screen, size, offset, angle) {
+  screen <- screen / sqrt(sum(screen^2))
+  side <- screen / max(abs(screen))
+  size <- pmax(size, 1e-6)
+  list(label = label_text_3d(label), hjust = (1 - side[1L]) / 2 - offset * screen[1L] / size[1L],
+    vjust = (1 - side[2L]) / 2 - offset * screen[2L] / size[2L], angle = angle)
+}
+
+# Scene primitives of an axis through the origin: the line; ticks along the
+# coordinate direction drawn most nearly perpendicular to the axis on screen,
+# toward the bottom (the left for a vertical axis) unless that leaves the box;
+# tick labels beyond the ticks; the title past the upper end. project() maps
+# model points to millimetres in the scene viewport.
+origin_axis_primitives_3d <- function(frame, guide, metrics, origin, project, line = TRUE, crossing = FALSE) {
+  k <- match(guide$axis, c("x", "y", "z"))
+  path <- frame$origin_axis(k, origin)
+  out <- list()
+  push <- function(xyz, kind, element, text = NULL) out[[length(out) + 1L]] <<- list(xyz = xyz, kind = kind, element = element, text = text)
+  if (line) {
+    element <- element_3d(paste0("axis.line.origin.", guide$axis), guide$theme)
+    ends <- rbind(path$start, path$end)
+    if (visible_element_3d(element)) push(if (frame$linear) frame$map(ends) else polyline_model_3d(frame, ends)$model, "polylines", element)
+  }
+  along <- path$end - path$start
+  middle <- axis_candidate_points_3d(path, 0.5)
+  tangent <- frame_derivative_3d(frame, middle, along, project)$screen[1L, ]
+  if (!all(is.finite(tangent)) || sqrt(sum(tangent^2)) < 1e-9) return(out)
+  normal <- c(-tangent[2L], tangent[1L]) / sqrt(sum(tangent^2))
+  if (normal[2L] > 1e-9 || (abs(normal[2L]) <= 1e-9 && normal[1L] > 0)) normal <- -normal
+  options <- expand.grid(axis = setdiff(seq_len(3L), k), sign = c(1, -1))
+  options$score <- mapply(function(j, s) {
+    screen <- frame_derivative_3d(frame, middle, replace(numeric(3), j, s), project)$screen[1L, ]
+    size <- sqrt(sum(screen^2))
+    if (!is.finite(size) || size < 1e-9) NA_real_ else sum(screen * normal) / size
+  }, options$axis, options$sign)
+  inside <- ifelse(options$sign > 0, origin[options$axis] < 1, origin[options$axis] > 0)
+  options <- options[!is.na(options$score) & abs(options$score) > 1e-9 & inside, , drop = FALSE]
+  if (!nrow(options)) return(out)
+  best <- options[which.max(options$score), ]
+  direction <- replace(numeric(3), best$axis, best$sign)
+  outward <- function(values, toward) {
+    points <- axis_candidate_points_3d(path, values)
+    d <- frame_derivative_3d(frame, points, toward, project)
+    size <- sqrt(rowSums(d$screen^2))
+    list(base = frame$map(points), per_mm = d$model / size, screen = d$screen / size)
+  }
+  ticks <- function(values, element, length) {
+    if (!length(values) || !visible_element_3d(element) || length <= 0) return(invisible())
+    o <- outward(values, direction)
+    tip <- o$base + o$per_mm * length
+    for (i in seq_along(values)) push(rbind(o$base[i, ], tip[i, ]), "polylines", element)
+  }
+  major <- element_3d(paste0("axis.ticks.", guide$axis), guide$theme)
+  ticks(guide$position, major, metrics$tick_length)
+  if (isTRUE(guide$params$minor.ticks)) {
+    ticks(guide$minor, element_3d(paste0("axis.minor.ticks.", guide$axis), guide$theme) %or3d% major, metrics$tick_length / 2)
+  }
+  labelled <- seq_along(guide$position)
+  if (crossing) labelled <- labelled[abs(guide$position[labelled] - origin[[k]]) > 1e-9]
+  if (length(labelled) && visible_element_3d(metrics$text)) {
+    o <- outward(guide$position[labelled], direction)
+    for (j in seq_along(labelled)) {
+      push(o$base[j, , drop = FALSE], "text", metrics$text, origin_text_3d(guide$labels[[labelled[j]]], o$screen[j, ],
+        metrics$label[labelled[j], ], metrics$tick_length + metrics$gap, metrics$angle))
+    }
+  }
+  if (length(guide$title) && visible_element_3d(metrics$title)) {
+    o <- outward(1, along)
+    push(o$base, "text", metrics$title, origin_text_3d(guide$title, o$screen[1L, ], metrics$title_size[1L, ], metrics$title_gap, 0))
+  }
+  out
 }
 
 # Intersection of a convex scale-space pane polygon with the level set
@@ -539,7 +742,7 @@ view_guide_reserve_3d <- function(params, measured, viewport) {
   boxes <- matrix(c(0, 0, viewport$width_mm, viewport$height_mm), 1L)
   for (name in names(params$axis_guides)) {
     guide <- params$axis_guides[[name]]
-    if (!guide_visible_3d(guide, params)) next
+    if (!guide_on_box_3d(guide, params)) next
     m <- measured$metrics[[name]]
     layout <- axis_layout_3d(frame, guide, project, centre)
     if (is.null(layout)) next
@@ -564,6 +767,15 @@ view_guide_reserve_3d <- function(params, measured, viewport) {
 }
 
 guide_visible_3d <- function(guide, params) (guide$part %or3d% guide$axis) %in% params$coord_params$axes
+
+# A primary guide at position "auto" follows coord_3d(axis_lines = ).
+guide_at_origin_3d <- function(guide, params) {
+  position <- guide$params$position
+  guide_visible_3d(guide, params) && (identical(position, "origin") ||
+    (identical(position, "auto") && !isTRUE(guide$secondary) && identical(params$coord_params$axis_lines, "origin")))
+}
+
+guide_on_box_3d <- function(guide, params) guide_visible_3d(guide, params) && !guide_at_origin_3d(guide, params)
 
 # Labels are visited in order along the axis; a label is kept when its
 # rectangle lies on the device and clears every rectangle kept before it by
@@ -617,7 +829,7 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
   }
   for (name in names(params$axis_guides)) {
     guide <- params$axis_guides[[name]]
-    if (!guide_visible_3d(guide, params)) next
+    if (!guide_on_box_3d(guide, params)) next
     m <- fit$metrics[[name]]
     layout <- axis_layout_3d(frame, guide, project, centre)
     if (is.null(layout)) next
@@ -628,7 +840,8 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
     lo <- if (guide$params$cap %in% c("lower", "both") && n) min(guide$position) else 0
     hi <- if (guide$params$cap %in% c("upper", "both") && n) max(guide$position) else 1
     axis_element <- element_3d(paste0("axis.line.", guide$axis), guide$theme)
-    if (layout$straight) line(matrix(a + (b - a) * lo, 1), matrix(a + (b - a) * hi, 1), axis_element)
+    if (identical(params$coord_params$axis_lines, "none")) NULL
+    else if (layout$straight) line(matrix(a + (b - a) * lo, 1), matrix(a + (b - a) * hi, 1), axis_element)
     else if (visible_element_3d(axis_element)) {
       curve <- layout$at(seq(lo, hi, length.out = 129L))
       add(grid::linesGrob(curve[, 1L], curve[, 2L], default.units = "mm", gp = line_gp_3d(axis_element)))

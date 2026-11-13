@@ -169,8 +169,7 @@ check_inner_radius_3d <- function(inner.radius) {
 }
 
 coord_with_frame_3d <- function(coord, frame, panes) {
-  valid <- c("back", "floor", vapply(frame$panes(), `[[`, character(1), "name"))
-  if (!all(panes %in% valid)) stop("Unknown pane for this frame: ", paste(setdiff(panes, valid), collapse = ", "), ". Valid panes: ", paste(valid, collapse = ", "), ".", call. = FALSE)
+  check_frame_panes_3d(frame, panes)
   if (identical(coord$model_aspect, "data")) stop("aspect = \"data\" applies to Cartesian frames only.", call. = FALSE)
   coord$frame <- frame
   coord$config$panes <- unique(panes)
@@ -194,8 +193,10 @@ coord_with_frame_3d <- function(coord, frame, panes) {
 #' @param inner.radius Fraction of the outer radius left empty at the centre.
 #' @param direction 1 for clockwise, -1 for anticlockwise.
 #' @param panes Panes to draw: `"back"` (the rear half of the outer wall, of the
-#'   inner wall and of the cut planes of a partial turn), `"floor"`, or names
-#'   among `"floor"`, `"top"`, `"wall"`, `"inner"`, `"start"`, `"end"`.
+#'   inner wall and of the cut planes of a partial turn), `"floor"`,
+#'   `"front"` (the parts of the other panes that face the viewer, see
+#'   [coord_3d()]), or names among `"floor"`, `"top"`, `"wall"`, `"inner"`,
+#'   `"start"`, `"end"`.
 #' @param ... Other [coord_3d()] arguments: camera, limits, axes, box, light,
 #'   backend.
 #' @return A Coord3D ggproto object.
@@ -229,8 +230,9 @@ coord_cylindrical_3d <- function(theta = "x", r = "y", start = 0, end = NULL, in
 #' @param philim Latitude range in radians, default from the south pole to the
 #'   north pole.
 #' @param panes Panes to draw: `"back"` (the rear half of the outer shell and
-#'   of any cut surfaces), or names among `"shell"`, `"core"`, `"south"`,
-#'   `"north"`, `"start"`, `"end"`.
+#'   of any cut surfaces), `"front"` (the parts of the other panes that face
+#'   the viewer), or names among `"shell"`, `"core"`, `"south"`, `"north"`,
+#'   `"start"`, `"end"`.
 #' @param shells `"outer"` draws the graticule on the outer shell; `"breaks"`
 #'   adds the rear half of a graticule shell, without fill, at each major break
 #'   of the radius scale.

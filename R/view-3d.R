@@ -72,7 +72,7 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
     guide <- params$axis_guides[[name]]
     m <- furniture$overlay$fit$metrics[[name]]
     list(axis = match(guide$axis, c("x", "y", "z")) - 1L,
-      visible = guide_visible_3d(guide, params),
+      visible = guide_on_box_3d(guide, params),
       candidates = view_axis_candidates_3d(frame, guide),
       position = guide$params$position, secondary = guide$secondary,
       values = unname(guide$position), minor = unname(guide$minor),

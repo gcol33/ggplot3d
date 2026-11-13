@@ -77,8 +77,23 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' @param clip Rectangular viewport clipping, on or off.
 #' @param clip_data Whether to clip to the data box.
 #' @param axes Axes to draw.
-#' @param panes Cube faces to draw.
+#' @param panes Cube faces to draw: `"back"` (the rear pane of each pair of
+#'   walls), `"floor"`, `"front"` (the panes facing the viewer that are not
+#'   drawn otherwise, styled by the theme element `panel.pane.front` and drawn
+#'   over the data without grid lines), or pane names `"xmin"` to `"zmax"`.
 #' @param box Box edges, back, all or none.
+#' @param axis_lines Where axis lines and their ticks and labels sit:
+#'   `"box"` on an edge of the box, `"origin"` through the point `origin`, or
+#'   `"none"`, which keeps ticks and labels on the box edges and draws no axis
+#'   lines. A guide with an explicit position (see [guide_axis_3d()]) keeps
+#'   it. Origin axes, their ticks, tick labels and titles are part of the
+#'   scene, so data in front of them hide them; the label at the point where
+#'   origin axes cross is left out. Origin axis lines use the theme elements
+#'   `axis.line.origin.x`, `.y` and `.z`, which inherit from
+#'   `axis.line.origin`.
+#' @param origin Named numeric vector with entries `x`, `y` and `z` in data
+#'   units, the point through which origin axes pass. Missing entries are 0. A
+#'   value outside the panel range is moved to the nearest end of the range.
 #' @param z_scales Fixed or free z scales across panels.
 #' @param crs Target spatial coordinate reference system.
 #' @param light Lighting configuration or NULL.
@@ -88,6 +103,28 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #'   transformation name such as `"log10"` or a scales transformation. Lines
 #'   and faces are subdivided so their images bend with the transformation.
 #' @param default Whether this is the default coordinate system.
+#' @section Theme elements:
+#' Besides the ggplot2 elements, panels read these theme elements:
+#' \itemize{
+#'   \item `panel.pane`, `panel.pane.x`, `panel.pane.y`, `panel.pane.z`: pane
+#'     fills, by the axis normal to the pane; `panel.pane.front` styles the
+#'     panes selected with `panes = "front"`.
+#'   \item `panel.grid.major.x.xy`, `panel.grid.minor.z.yz` and so on: the grid
+#'     lines of one axis on the panes of one plane. Each inherits from the
+#'     grid element of its axis (`panel.grid.major.x.xy` from
+#'     `panel.grid.major.x`), so `element_blank()` removes those lines from
+#'     that plane only. In the default view the floor is the `xy` plane.
+#'   \item `panel.zero.x`, `panel.zero.y`, `panel.zero.z`: a plane through the
+#'     panel at transformed value 0 of that axis, when 0 lies inside the range.
+#'     They are blank by default; setting one to an [ggplot2::element_rect()]
+#'     draws it, filled from `panel.zero`. Zero planes are part of the scene,
+#'     so they hide data behind them.
+#'   \item `panel.zero.line.x`, `.y`, `.z`, inheriting from `panel.zero.line`
+#'     (blank by default): the line at transformed value 0 on each drawn pane.
+#'   \item `panel.box.back`, `panel.box.front`: box edges.
+#'   \item `axis.line.origin.x`, `.y`, `.z`: origin axis lines.
+#'   \item `panel.margin.3d`: the margin around the projected box.
+#' }
 #' @return A Coord3D ggproto object.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
@@ -99,6 +136,15 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' views <- rbind(transform(d, view = "front"), transform(d, view = "side"))
 #' ggplot2::ggplot(views, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
 #'   ggplot2::facet_wrap(~view) + coord_3d(azimuth = c(-60, 30))
+#' centred <- data.frame(x = c(-2, 1, 2), y = c(1, -2, 2), z = c(-1, 2, 1))
+#' ggplot2::ggplot(centred, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 3) +
+#'   coord_3d(axis_lines = "origin", panes = "floor") +
+#'   ggplot2::theme(panel.zero.z = ggplot2::element_rect(),
+#'     panel.zero.line = ggplot2::element_line(colour = "grey30"))
+#' ggplot2::ggplot(centred, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 3) +
+#'   coord_3d(panes = c("back", "floor", "front")) +
+#'   ggplot2::theme(panel.grid.major.z.xz = ggplot2::element_blank(),
+#'     panel.pane.front = ggplot2::element_rect(fill = "#4682B41A"))
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      oblique = c(angle = 45, ratio = 0.5), up = "z",
@@ -107,13 +153,13 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      expand = TRUE, clip = "on", clip_data = TRUE, axes = c("x", "y", "z"),
                      panes = c("back", "floor"), box = "back", z_scales = "fixed", crs = NULL,
                      light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
-                     transform = NULL) {
+                     transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0)) {
   clip <- match.arg(clip, c("on", "off"))
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
       !(length(expand) == 1L || (length(expand) == 3L && setequal(names(expand), c("x", "y", "z"))))) stop("expand must be logical scalar or named x/y/z vector.", call. = FALSE)
   expand_axes <- if (length(expand) == 1L) structure(rep(expand, 3L), names = c("x", "y", "z")) else expand[c("x", "y", "z")]
   if (!all(axes %in% c("x", "y", "z"))) stop("Unknown 3D axis.", call. = FALSE)
-  if (!all(panes %in% c("back", "floor", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))) stop("Unknown cube pane.", call. = FALSE)
+  if (!all(panes %in% c("back", "floor", "front", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))) stop("Unknown cube pane.", call. = FALSE)
   views <- list(azimuth = azimuth, elevation = elevation, roll = roll, distance = distance, fov = fov, zoom = zoom)
   sizes <- lengths(views)
   count <- max(1L, sizes)
@@ -131,8 +177,19 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
     limits = list(x = xlim, y = ylim, z = zlim), expand_axes = expand_axes,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
+                  axis_lines = match.arg(axis_lines, c("box", "origin", "none")), origin = check_origin_3d(origin),
                   light = light, backend = backend, crs = crs,
                   frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
+}
+
+check_origin_3d <- function(origin) {
+  if (!(is.numeric(origin) && length(origin) && all(is.finite(origin)) && !is.null(names(origin)) &&
+      all(names(origin) %in% c("x", "y", "z")) && !anyDuplicated(names(origin)))) {
+    stop("origin must be a named numeric vector with entries x, y or z.", call. = FALSE)
+  }
+  out <- c(x = 0, y = 0, z = 0)
+  out[names(origin)] <- origin
+  out
 }
 
 oblique_shear_3d <- function(projection, oblique) {

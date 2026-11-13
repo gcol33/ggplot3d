@@ -25,6 +25,10 @@ makeContent.scene_panel_grob <- function(x) {
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, as.list(x$frame_group))
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
   if (identical(backend$type, "raster")) {
+    if (!is.null(furniture$split)) {
+      x$packets <- c(x$packets, list(device_text_metrics_3d(furniture$split$scene)))
+      furniture$packet <- furniture$split$fixed
+    }
     result <- render_raster_panel_3d(x, furniture, backend)
     scene <- result$scene
     rendered <- result$grob
