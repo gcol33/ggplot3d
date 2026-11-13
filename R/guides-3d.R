@@ -13,6 +13,11 @@
 #' @param minor.ticks Draw minor ticks.
 #' @param cap Trim the lower, upper, both, or neither end to major breaks.
 #' @param order Guide ordering value.
+#' @return A ggplot2 guide for a three-dimensional position axis.
+#' @examples
+#' d <- data.frame(x = 1:3, y = c(1, 2, 1), z = 1:3)
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   geom_point_3d() + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
 #' @export
 guide_axis_3d <- function(title = ggplot2::waiver(), theme = NULL, position = "auto",
                           check.overlap = FALSE, angle = ggplot2::waiver(), n.dodge = 1L,

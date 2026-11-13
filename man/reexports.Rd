@@ -5,6 +5,10 @@
 \alias{reexports}
 \alias{fortify}
 \title{Objects exported from other packages}
+\examples{
+v <- data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = c(0, 0, 1))
+fortify(mesh_3d(v, matrix(1:3, nrow = 1)))
+}
 \keyword{internal}
 \description{
 These objects are imported from other packages. Follow the links

@@ -35,9 +35,17 @@ guide_axis_3d(
 
 \item{order}{Guide ordering value.}
 }
+\value{
+A ggplot2 guide for a three-dimensional position axis.
+}
 \description{
 Tick labels and titles are measured in the drawing viewport. Automatic
 placement uses an exterior cube edge. Integer positions 1 through 4 select
 a fixed edge in lexicographic order of its two fixed coordinates.
 Labels are thinned automatically using their measured extents along the edge.
+}
+\examples{
+d <- data.frame(x = 1:3, y = c(1, 2, 1), z = 1:3)
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_point_3d() + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
 }

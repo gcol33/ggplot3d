@@ -62,4 +62,8 @@ importFrom(ggplot2,
   update_ggplot
 )
 importFrom(grid,makeContent)
+importFrom(utils,
+  head,
+  tail
+)
 useDynLib(ggplot3d, .registration = TRUE)

@@ -27,7 +27,7 @@ geom_isosurface_3d(...)
 
 \item{levels}{Numeric scalar-field thresholds; NULL uses pretty levels.}
 
-\item{caps}{Whether to cap the superlevel region on the box faces.}
+\item{caps}{Whether to cap the sublevel region on the box faces.}
 }
 \description{
 Requires a complete rectilinear x/y/z grid with a numeric value aesthetic.
@@ -54,6 +54,8 @@ d <- expand.grid(x = seq(-1, 1, length.out = 10),
 d$value <- with(d, x^2 + y^2 + z^2)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
   geom_isosurface_3d(levels = 0.6) + coord_3d()
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
+  stat_isosurface_3d(levels = 0.6) + coord_3d()
 }
 \references{
 Doi and Koide (1991), An Efficient Method of Triangulating

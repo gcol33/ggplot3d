@@ -52,4 +52,6 @@ collapsed triangles are omitted.
 \examples{
 ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, as.numeric(Species),
   group = Species, fill = Species)) + geom_ridgeline_3d(n = 32) + coord_3d()
+ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, as.numeric(Species),
+  group = Species, fill = Species)) + stat_ridgeline_3d(n = 24) + coord_3d()
 }

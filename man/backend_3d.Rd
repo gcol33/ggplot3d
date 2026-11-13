@@ -13,6 +13,13 @@ backend_3d(type = "vector", dpi = 144, antialias = 2L)
 
 \item{antialias}{Positive integer supersampling factor.}
 }
+\value{
+A backend configuration for coord_3d().
+}
 \description{
 Select a 3D rendering backend
+}
+\examples{
+backend_3d("vector")
+backend_3d("raster", dpi = 144, antialias = 2)
 }

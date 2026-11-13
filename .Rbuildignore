@@ -5,3 +5,16 @@
 ^\.git$
 ^\.gitignore$
 ^bench$
+^README\.Rmd$
+^_pkgdown\.yml$
+^\.github$
+^CONTRIBUTING\.md$
+^CODE_OF_CONDUCT\.md$
+^docs$
+^doc$
+^Meta$
+^data-raw$
+^sidecars$
+^.*\.Rcheck$
+^.*\.tar\.gz$
+^Rplots\.pdf$

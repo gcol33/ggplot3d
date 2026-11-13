@@ -35,6 +35,8 @@ floating-point tolerance. x/y/z positions are already transformed.
 d <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_hull_3d(fill = "steelblue") + coord_3d()
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  stat_hull_3d(fill = "steelblue") + coord_3d()
 }
 \references{
 Barber, Dobkin and Huhdanpaa (1996). The Quickhull Algorithm for

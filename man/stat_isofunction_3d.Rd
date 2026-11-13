@@ -32,9 +32,11 @@ geom_isofunction_3d(...)
 
 \item{n}{Grid resolution, scalar or three integers.}
 
+\item{args}{Additional named arguments passed to fun.}
+
 \item{levels}{Numeric scalar-field thresholds; NULL uses pretty levels.}
 
-\item{caps}{Whether to cap the superlevel region on the box faces.}
+\item{caps}{Whether to cap the sublevel region on the box faces.}
 }
 \description{
 Evaluates fun on transformed x/y/z scale ranges and passes the scalar field
@@ -44,4 +46,7 @@ to the same tetrahedral extraction used by stat_isosurface_3d.
 ggplot2::ggplot() +
   geom_isofunction_3d(fun = function(x, y, z) x^2 + y^2 + z^2,
                      n = 10, levels = 0.5) + coord_3d()
+ggplot2::ggplot() +
+  stat_isofunction_3d(fun = function(x, y, z) x^2 + y^2 + z^2,
+                     n = 8, levels = 0.5) + coord_3d()
 }

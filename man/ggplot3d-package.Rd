@@ -6,12 +6,14 @@
 \alias{ggplot3d-package}
 \title{3D Plots in the Grammar of Graphics}
 \description{
-Internal columnar scene construction and native projection for 3D panels.
+Three-dimensional layers, z position scales and camera controls for ggplot2.
+Panel scenes resolve visibility across layers for vector and raster output.
 }
 \seealso{
 Useful links:
 \itemize{
   \item \url{https://github.com/gcol33/ggplot3d}
+  \item Report bugs at \url{https://github.com/gcol33/ggplot3d/issues}
 }
 
 }

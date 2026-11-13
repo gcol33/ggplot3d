@@ -1,8 +1,10 @@
 #' 3D Plots in the Grammar of Graphics
 #'
-#' Internal columnar scene construction and native projection for 3D panels.
+#' Three-dimensional layers, z position scales and camera controls for ggplot2.
+#' Panel scenes resolve visibility across layers for vector and raster output.
 #' @useDynLib ggplot3d, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
+#' @importFrom utils head tail
 #' @keywords internal
 "_PACKAGE"
 

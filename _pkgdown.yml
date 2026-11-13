@@ -1,0 +1,99 @@
+url: https://gillescolling.com/ggplot3d/
+template:
+  bootstrap: 5
+  bootswatch: sandstone
+  light-switch: true
+figures:
+  dev: ragg::agg_png
+  fig.ext: png
+  bg: white
+  fig.width: 5
+  fig.height: 4.5
+home:
+  title: 'ggplot3d: Three-Dimensional Plots with ggplot2'
+authors:
+  Gilles Colling:
+    href: https://github.com/gcol33
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github, lightswitch]
+  components:
+    github:
+      icon: fab fa-github
+      href: https://github.com/gcol33/ggplot3d
+      aria-label: GitHub
+reference:
+- title: Coordinates and lighting
+  contents: [coord_3d, light_3d]
+- title: Z position scales
+  contents:
+  - scale_z_continuous
+  - scale_z_discrete
+  - scale_z_log10
+  - scale_z_sqrt
+  - scale_z_reverse
+  - scale_z_date
+  - scale_z_datetime
+  - scale_z_time
+  - zlim
+- title: Point, path and polygon layers
+  contents:
+  - geom_point_3d
+  - geom_path_3d
+  - geom_segment_3d
+  - geom_text_3d
+  - geom_polygon_3d
+  - geom_band_3d
+  - geom_dropline_3d
+- title: Surface and solid layers
+  contents:
+  - geom_surface_3d
+  - geom_contour_3d
+  - geom_contour_filled_3d
+  - geom_mesh_3d
+  - geom_col_3d
+  - geom_bar_3d
+  - geom_extrude_3d
+- title: Statistical layers
+  contents:
+  - geom_function_3d
+  - geom_smooth_3d
+  - geom_ridgeline_3d
+  - geom_isosurface_3d
+  - geom_isofunction_3d
+  - geom_isodensity_3d
+  - geom_hull_3d
+- title: Statistical computations
+  contents:
+  - stat_surface_3d
+  - stat_count_3d
+  - stat_function_3d
+  - stat_smooth_3d
+  - stat_density_2d_3d
+  - stat_ridgeline_3d
+  - stat_isosurface_3d
+  - stat_isofunction_3d
+  - stat_density_3d
+  - stat_hull_3d
+  - probs
+- title: Positions
+  contents: [position_nudge_3d, position_stack_3d]
+- title: Guides and themes
+  contents: [guide_axis_3d]
+- title: Output backends
+  contents: [backend_3d]
+- title: Mesh input and extension API
+  contents: [mesh_3d, fortify, layer_3d, register_geom_3d]
+- title: Package
+  contents: [ggplot3d-package]
+articles:
+- title: Concepts
+  navbar: Concepts
+  contents: [z-scale, layers]
+- title: Workflows
+  navbar: Workflows
+  contents: [camera, backends]
+- title: Background
+  navbar: Background
+  contents: [visibility]

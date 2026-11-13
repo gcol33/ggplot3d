@@ -59,6 +59,9 @@ mesh_3d <- function(vertices, faces, vertex_data = NULL, face_data = NULL) {
 }
 
 #' @importFrom ggplot2 fortify
+#' @examples
+#' v <- data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = c(0, 0, 1))
+#' fortify(mesh_3d(v, matrix(1:3, nrow = 1)))
 #' @export
 ggplot2::fortify
 

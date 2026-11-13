@@ -3,6 +3,9 @@
 #' @param space Coordinate space, camera or data.
 #' @param ambient,diffuse Nonnegative light contributions with sum at most one.
 #' @param mode Colour operation, multiply or tint.
+#' @return A lighting configuration for coord_3d().
+#' @examples
+#' light_3d(direction = c(1, 1, 2), space = "camera")
 #' @export
 light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, diffuse = 0.65, mode = "multiply") {
   stopifnot(is.numeric(direction), length(direction) == 3L, all(is.finite(direction)), sum(direction^2) > 0,
@@ -16,6 +19,10 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #' @param type Backend, vector or raster.
 #' @param dpi Physical raster resolution.
 #' @param antialias Positive integer supersampling factor.
+#' @return A backend configuration for coord_3d().
+#' @examples
+#' backend_3d("vector")
+#' backend_3d("raster", dpi = 144, antialias = 2)
 #' @export
 backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
   stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
@@ -44,6 +51,10 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
 #' @param backend Backend configuration.
 #' @param default Whether this is the default coordinate system.
 #' @return A Coord3D ggproto object.
+#' @examples
+#' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   geom_point_3d(size = 3) + coord_3d(azimuth = -45, elevation = 25)
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      distance = NULL, fov = 35, zoom = 1, target = c(0.5, 0.5, 0.5), near = NULL, far = NULL,

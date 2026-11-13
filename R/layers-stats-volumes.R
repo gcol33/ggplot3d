@@ -35,7 +35,7 @@ probs <- function(...) {
 #' face attributes; .face, .corner and .vertex preserve triangle topology.
 #' @inheritParams stat_function_3d
 #' @param levels Numeric scalar-field thresholds; NULL uses pretty levels.
-#' @param caps Whether to cap the superlevel region on the box faces.
+#' @param caps Whether to cap the sublevel region on the box faces.
 #' @references Doi and Koide (1991), An Efficient Method of Triangulating
 #'   Equi-Valued Surfaces by Using Tetrahedral Cells. IEICE E74-D, 214-224.
 #'   <https://globals.ieice.org/en_transactions/information/10.1587/e74-d_1_214/_p>
@@ -46,6 +46,8 @@ probs <- function(...) {
 #' d$value <- with(d, x^2 + y^2 + z^2)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
 #'   geom_isosurface_3d(levels = 0.6) + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
+#'   stat_isosurface_3d(levels = 0.6) + coord_3d()
 stat_isosurface_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                 position = "identity", ..., levels = NULL, caps = FALSE,
                                 na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
@@ -75,6 +77,8 @@ geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
 #' d <- data.frame(x = rnorm(80), y = rnorm(80), z = rnorm(80))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_isodensity_3d(h = 0.6, levels = 0.02, n = 12) + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   stat_density_3d(h = 0.6, levels = 0.02, n = 8) + coord_3d()
 stat_density_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                              position = "identity", ..., h = NULL, adjust = 1, n = 32L,
                              levels = NULL, caps = FALSE, na.rm = FALSE,
@@ -94,12 +98,16 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #' to the same tetrahedral extraction used by stat_isosurface_3d.
 #' @inheritParams stat_isosurface_3d
 #' @param fun Vectorised scalar function of x, y and z.
+#' @param args Additional named arguments passed to fun.
 #' @param n Grid resolution, scalar or three integers.
 #' @export
 #' @examples
 #' ggplot2::ggplot() +
 #'   geom_isofunction_3d(fun = function(x, y, z) x^2 + y^2 + z^2,
 #'                      n = 10, levels = 0.5) + coord_3d()
+#' ggplot2::ggplot() +
+#'   stat_isofunction_3d(fun = function(x, y, z) x^2 + y^2 + z^2,
+#'                      n = 8, levels = 0.5) + coord_3d()
 stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                  position = "identity", ..., fun, n = 24L, args = list(),
                                  levels = NULL, caps = FALSE, na.rm = FALSE,
@@ -129,6 +137,8 @@ geom_isofunction_3d <- function(...) stat_isofunction_3d(...)
 #' d <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_hull_3d(fill = "steelblue") + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   stat_hull_3d(fill = "steelblue") + coord_3d()
 stat_hull_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                           position = "identity", ..., na.rm = FALSE,
                           show.legend = NA, inherit.aes = TRUE) {

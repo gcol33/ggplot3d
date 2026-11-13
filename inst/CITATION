@@ -1,0 +1,11 @@
+citHeader("To cite ggplot3d in publications, use:")
+
+bibentry(
+  bibtype = "Manual",
+  title = paste0("ggplot3d: ", meta$Title),
+  author = person("Gilles", "Colling", email = "gilles.colling051@gmail.com",
+                  comment = c(ORCID = "0000-0003-3070-6066")),
+  year = "2026",
+  note = paste("R package version", meta$Version),
+  url = "https://github.com/gcol33/ggplot3d"
+)

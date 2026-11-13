@@ -78,3 +78,8 @@ A Coord3D ggproto object.
 \description{
 Exact three-dimensional panel coordinates
 }
+\examples{
+d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_point_3d(size = 3) + coord_3d(azimuth = -45, elevation = 25)
+}

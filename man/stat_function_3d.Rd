@@ -45,4 +45,7 @@ once. Newly mapped after_stat variables follow ggplot2 scale transformation.
 ggplot2::ggplot() +
   stat_function_3d(fun = function(x, y) sin(x) * cos(y), n = 15) +
   ggplot2::xlim(-3, 3) + ggplot2::ylim(-3, 3) + coord_3d()
+ggplot2::ggplot() +
+  geom_function_3d(fun = function(x, y) x^2 + y^2, n = 8) +
+  ggplot2::xlim(-1, 1) + ggplot2::ylim(-1, 1) + coord_3d()
 }

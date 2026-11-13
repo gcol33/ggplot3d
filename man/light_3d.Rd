@@ -21,6 +21,12 @@ light_3d(
 
 \item{mode}{Colour operation, multiply or tint.}
 }
+\value{
+A lighting configuration for coord_3d().
+}
 \description{
 Lighting for a 3D scene
+}
+\examples{
+light_3d(direction = c(1, 1, 2), space = "camera")
 }

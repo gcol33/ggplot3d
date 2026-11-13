@@ -15,6 +15,9 @@
 #' ggplot2::ggplot() +
 #'   stat_function_3d(fun = function(x, y) sin(x) * cos(y), n = 15) +
 #'   ggplot2::xlim(-3, 3) + ggplot2::ylim(-3, 3) + coord_3d()
+#' ggplot2::ggplot() +
+#'   geom_function_3d(fun = function(x, y) x^2 + y^2, n = 8) +
+#'   ggplot2::xlim(-1, 1) + ggplot2::ylim(-1, 1) + coord_3d()
 stat_function_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                               position = "identity", ..., fun, n = 40L, args = list(),
                               na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
@@ -47,6 +50,8 @@ geom_function_3d <- function(...) stat_function_3d(...)
 #' d$z <- with(d, x + y + sin(3*x*y) / 5)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_smooth_3d(method = "lm", n = 12) + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   stat_smooth_3d(method = "lm", se = FALSE, n = 8) + coord_3d()
 stat_smooth_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                             position = "identity", ..., method = "loess", formula = NULL,
                             n = 30L, se = TRUE, level = 0.95, span = 0.75,
@@ -100,6 +105,8 @@ stat_density_2d_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurf
 #' @examples
 #' ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, as.numeric(Species),
 #'   group = Species, fill = Species)) + geom_ridgeline_3d(n = 32) + coord_3d()
+#' ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, as.numeric(Species),
+#'   group = Species, fill = Species)) + stat_ridgeline_3d(n = 24) + coord_3d()
 stat_ridgeline_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                position = "identity", ..., along = "x", n = 128L,
                                bw = "nrd0", adjust = 1, base = 0, height = 1,

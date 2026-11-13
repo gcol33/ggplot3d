@@ -49,6 +49,17 @@ stat_surface_3d(
 
 \item{geom}{Geom prototype used to draw the computed triangles.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Triangulated surfaces in three dimensions
+}
+\examples{
+d <- expand.grid(x = seq(-1, 1, length.out = 6),
+                 y = seq(-1, 1, length.out = 6))
+d$z <- with(d, x^2 + y^2)
+p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
+p + geom_surface_3d(fill = "steelblue") + coord_3d()
+p + stat_surface_3d() + coord_3d()
 }

@@ -36,7 +36,7 @@ geom_isodensity_3d(...)
 
 \item{levels}{Numeric scalar-field thresholds; NULL uses pretty levels.}
 
-\item{caps}{Whether to cap the superlevel region on the box faces.}
+\item{caps}{Whether to cap the sublevel region on the box faces.}
 }
 \description{
 Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z scale
@@ -52,4 +52,6 @@ set.seed(1)
 d <- data.frame(x = rnorm(80), y = rnorm(80), z = rnorm(80))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_isodensity_3d(h = 0.6, levels = 0.02, n = 12) + coord_3d()
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  stat_density_3d(h = 0.6, levels = 0.02, n = 8) + coord_3d()
 }
