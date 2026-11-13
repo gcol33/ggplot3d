@@ -1,9 +1,9 @@
 #' Sample a bivariate function in three dimensions
 #'
-#' The function receives transformed x and y coordinates and returns transformed
-#' z coordinates. Thus, on a log10 z scale, returning x + y draws z = 10^(x+y)
-#' in original units. Existing geometric coordinates pass through scale mapping
-#' once. Newly mapped after_stat variables follow ggplot2 scale transformation.
+#' The sampling grid is evenly spaced in transformed x and y coordinates.
+#' The function receives x and y in original data units and returns z in data
+#' units. The z scale transforms the returned heights once.
+#' Newly mapped after_stat variables follow ggplot2 scale transformation.
 #' @param mapping,data,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param geom Geom prototype for keyed triangle corners.
 #' @param fun Vectorised function of x and y.

@@ -53,7 +53,8 @@ stat_surface_3d(
 A ggplot2 layer.
 }
 \description{
-Triangulated surfaces in three dimensions
+Grid surfaces estimate vertex normals from height differences along each
+axis. Lighting uses the normalised mean of each face's vertex normals.
 }
 \examples{
 d <- expand.grid(x = seq(-1, 1, length.out = 6),

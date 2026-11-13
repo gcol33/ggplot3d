@@ -5,6 +5,7 @@
 #' @useDynLib ggplot3d, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @importFrom utils head tail
+#' @importFrom isoband isobands isolines
 #' @keywords internal
 "_PACKAGE"
 

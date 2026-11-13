@@ -39,7 +39,7 @@ Field values within 64 machine epsilons of a threshold, relative to the
 maximum absolute field value or threshold, are snapped to that threshold.
 This gives shared grid vertices at numerically coincident intersections.
 Finite-difference field gradients are interpolated and normalised at vertices
-(nx, ny, nz). The public face emitter currently uses geometric face normals.
+(nx, ny, nz). Lighting uses the normalised mean of each face's vertex normals.
 caps = TRUE closes the sublevel region on the grid box with outward faces.
 Surface triangle winding points towards increasing field value.
 }

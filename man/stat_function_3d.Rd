@@ -36,10 +36,10 @@ geom_function_3d(...)
 A ggplot2 layer.
 }
 \description{
-The function receives transformed x and y coordinates and returns transformed
-z coordinates. Thus, on a log10 z scale, returning x + y draws z = 10^(x+y)
-in original units. Existing geometric coordinates pass through scale mapping
-once. Newly mapped after_stat variables follow ggplot2 scale transformation.
+The sampling grid is evenly spaced in transformed x and y coordinates.
+The function receives x and y in original data units and returns z in data
+units. The z scale transforms the returned heights once.
+Newly mapped after_stat variables follow ggplot2 scale transformation.
 }
 \examples{
 ggplot2::ggplot() +

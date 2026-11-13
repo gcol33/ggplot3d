@@ -11,7 +11,10 @@ contour_levels_3d <- function(range, breaks, bins, binwidth) {
     low <- ceiling(range[1L] / binwidth); high <- floor(range[2L] / binwidth)
     return(if (low > high) numeric() else seq(low, high) * binwidth)
   }
-  bins <- bins %or3d% 10L
+  if (is.null(bins)) {
+    levels <- pretty(range, n = 10L)
+    return(levels[levels > range[1L] & levels < range[2L]])
+  }
   if (length(bins) != 1L || !is.finite(bins) || bins < 1 || bins != trunc(bins)) stop("bins must be a positive integer.", call. = FALSE)
   seq(range[1L], range[2L], length.out = bins + 2L)[-c(1L, bins + 2L)]
 }
@@ -110,6 +113,7 @@ contour_draw_data_3d <- function(data, params, panel_params) {
 #' @param bins,binwidth,breaks Level controls in transformed z units. Explicit breaks take precedence.
 #' @param plane Either surface, floor, or a numeric z in original units.
 #' @details Isoband operates on the same grid triangles used by geom_surface_3d().
+#'   Default levels are interior pretty(range, n = 10) values.
 #'   Surface bands are lifted by barycentric interpolation within each triangle.
 #'   Floor contours use the lower expanded panel boundary. The source height
 #'   range trains the z scale for either projection.

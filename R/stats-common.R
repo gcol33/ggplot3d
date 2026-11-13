@@ -27,9 +27,7 @@ stats_grid_3d <- function(scales, n, axes = c("x", "y")) {
     stop("n must contain integers of at least two, one per grid axis.", call. = FALSE)
   n <- rep_len(n, length(axes))
   out <- lapply(seq_along(axes), function(i) {
-    scale <- scales[[axes[i]]]
-    if (is.null(scale)) scale <- switch(axes[i], x = ggplot2::scale_x_continuous(),
-      y = ggplot2::scale_y_continuous(), z = scale_z_continuous())
+    scale <- stats_scale_3d(scales, axes[i])
     if (scale$is_discrete()) stop("Statistical grids require continuous position scales.", call. = FALSE)
     limits <- scale$dimension()
     if (any(!is.finite(limits)) || diff(limits) <= 0) stop("Grid ranges must have positive finite extent.", call. = FALSE)
@@ -38,11 +36,17 @@ stats_grid_3d <- function(scales, n, axes = c("x", "y")) {
   stats::setNames(out, axes)
 }
 
+stats_scale_3d <- function(scales, axis) {
+  scales[[axis]] %or3d% switch(axis, x = ggplot2::scale_x_continuous(),
+    y = ggplot2::scale_y_continuous(), z = scale_z_continuous())
+}
+
 StatGeometry3D <- ggplot2::ggproto("StatGeometry3D", ggplot2::Stat,
   dropped_aes = c(".source", "value", "weight")
 )
 
 stats_triangles_3d <- function(data) {
+  data <- surface_normals_3d(data)
   triangles <- surface_triangles_3d(data, "grid", Inf)
   if (!nrow(triangles)) return(data.frame())
   out <- data[as.vector(t(triangles)), , drop = FALSE]
@@ -53,6 +57,25 @@ stats_triangles_3d <- function(data) {
   for (name in intersect(c("density", "ndensity", "count"), names(out)))
     out[[name]] <- rep(rowMeans(matrix(data[[name]][triangles], ncol = 3L)), each = 3L)
   out
+}
+
+surface_normals_3d <- function(data) {
+  axes <- lapply(data[c("x", "y")], function(x) sort(unique(x)))
+  if (any(lengths(axes) < 2L)) return(data)
+  key <- cbind(match(data$x, axes$x), match(data$y, axes$y))
+  z <- matrix(NA_real_, length(axes$x), length(axes$y))
+  z[key] <- data$z
+  derivative <- function(values, axis) {
+    lo <- pmax(1L, seq_along(axis) - 1L)
+    hi <- pmin(length(axis), seq_along(axis) + 1L)
+    sweep(values[hi, , drop = FALSE] - values[lo, , drop = FALSE],
+      1L, axis[hi] - axis[lo], "/")
+  }
+  normal <- cbind(-derivative(z, axes$x)[key],
+    -t(derivative(t(z), axes$y))[key], 1)
+  normal <- normal / sqrt(rowSums(normal^2))
+  data[c("nx", "ny", "nz")] <- as.data.frame(normal)
+  data
 }
 
 stats_levels_3d <- function(values, levels) {

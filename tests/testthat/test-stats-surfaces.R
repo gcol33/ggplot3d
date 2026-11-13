@@ -1,21 +1,17 @@
-stats_scene <- function(plot) {
-  grDevices::pdf(tempfile(fileext = ".pdf"))
-  on.exit(grDevices::dev.off(), add = TRUE)
-  built <- ggplot2::ggplot_build(plot)
-  grobs <- lapply(seq_along(built$plot@layers), function(i) built$plot@layers[[i]]$draw_geom(built$data[[i]], built$layout)[[1L]])
-  packets <- collect_scene_layers(grobs, built$layout$panel_params[[1L]], built$plot@theme)$packets
-  list(packet = merge_scene_packets(packets, 1L), built = built)
-}
-
 test_that("function grids and new mappings respect transformed positions", {
   p <- ggplot2::ggplot() + geom_function_3d(fun = function(x, y) x + y, n = c(5, 4)) +
     ggplot2::scale_x_log10(limits = c(1, 100)) + ggplot2::ylim(0, 1) + scale_z_log10() + coord_3d()
   scene <- stats_scene(p); b <- scene$built$data[[1L]]
-  expect_equal(range(b$x), c(0, 2)); expect_equal(b$z, b$x + b$y)
+  expect_equal(range(b$x), c(0, 2)); expect_equal(b$z, log10(10^b$x + b$y))
   expect_length(scene$packet$faces$primitive_id, 24L)
   expect_silent(validate_scene_packet(scene$packet))
+  p <- ggplot2::ggplot() + stat_function_3d(fun = function(x, y, k) k * x * y,
+    args = list(k = 2), n = 3) + ggplot2::scale_x_log10(limits = c(1, 100)) +
+    ggplot2::scale_y_log10(limits = c(1, 10)) + scale_z_log10() + coord_3d()
+  b <- ggplot2::ggplot_build(p)$data[[1L]]
+  expect_equal(b$z, log10(2) + b$x + b$y)
   p <- ggplot2::ggplot() + stat_function_3d(ggplot2::aes(z = ggplot2::after_stat(10^z_mean)),
-    fun = function(x, y) x + y, n = 4) + scale_z_log10() + coord_3d()
+    fun = function(x, y) 1 + x + y, n = 4) + scale_z_log10() + coord_3d()
   b <- ggplot2::ggplot_build(p)$data[[1L]]
   expect_equal(b$z, b$z_mean)
   expect_error(stats_grid_3d(list(), 1), "at least two")
@@ -31,6 +27,7 @@ test_that("smooth recovers a log-scale plane and emits confidence surfaces", {
   fit <- b[b$surface == "fit", ]
   expect_equal(fit$z, 2 + 0.4 * fit$x - 0.2 * fit$y, tolerance = 0.005)
   expect_setequal(unique(b$surface), c("fit", "lower", "upper"))
+  expect_true(all(is.finite(as.matrix(b[c("nx", "ny", "nz")]))))
   expect_length(scene$packet$faces$primitive_id, 216L)
   expect_setequal(unique(round(scene$packet$faces$opacity, 3)), c(1, 0.2))
   expect_silent(validate_scene_packet(scene$packet))

@@ -50,6 +50,7 @@ Contours following a triangulated surface or a horizontal plane
 }
 \details{
 Isoband operates on the same grid triangles used by geom_surface_3d().
+Default levels are interior pretty(range, n = 10) values.
 Surface bands are lifted by barycentric interpolation within each triangle.
 Floor contours use the lower expanded panel boundary. The source height
 range trains the z scale for either projection.

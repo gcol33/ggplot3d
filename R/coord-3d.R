@@ -31,6 +31,9 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
 }
 
 #' Exact three-dimensional panel coordinates
+#'
+#' Set `z_scales = "free"` here to train a separate z range per facet.
+#' ggplot2 facets control x and y scales and have no z scale.
 #' @param projection Orthographic or perspective projection.
 #' @param azimuth,elevation,roll Camera angles in degrees.
 #' @param distance,fov,zoom Camera distance, field of view and magnification.
@@ -55,6 +58,9 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_point_3d(size = 3) + coord_3d(azimuth = -45, elevation = 25)
+#' d$site <- c("a", "a", "b")
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
+#'   ggplot2::facet_wrap(~site) + coord_3d(z_scales = "free")
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      distance = NULL, fov = 35, zoom = 1, target = c(0.5, 0.5, 0.5), near = NULL, far = NULL,
@@ -119,6 +125,8 @@ normalise_positions_3d <- function(data, panel_params) {
   for (axis in c("x", "y", "z")) {
     family <- if (axis == "z") z_aesthetics else panel_params[[axis]]$aesthetics
     range <- panel_params$ranges[[axis]]
+    normal <- paste0("n", axis)
+    if (normal %in% names(data)) data[[normal]] <- data[[normal]] * diff(range)
     for (column in intersect(family, names(data))) {
       value <- as.numeric(data[[column]])
       value[value == -Inf] <- range[1L]

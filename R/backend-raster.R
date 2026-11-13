@@ -13,7 +13,7 @@ raster_colours_3d <- function(packet, prepared, light) {
       shade <- which(style_value_3d(styles, "shade", FALSE))
       normals <- prepared$normals
       fragments <- list(normal_x = normals[, 1L], normal_y = normals[, 2L], normal_z = normals[, 3L])
-      colour[shade] <- shade_fill_3d(colour[shade], fragments, shade, prepared$camera, light)
+      colour[shade] <- shade_fill_3d(colour[shade], fragments, shade, prepared$camera, light, styles[shade, , drop = FALSE])
     }
     if (!length(colour)) return(matrix(numeric(), 4L, 0L))
     rgba <- colour_channels_3d(colour, alpha = TRUE) / 255

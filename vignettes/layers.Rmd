@@ -149,7 +149,7 @@ ggplot() + geom_mesh_3d(data = mesh, fill = "#2E6F9E") + coord_3d()
 
 ## Function and fitted surfaces
 
-Function surfaces sample a vectorized function of x and y. Function inputs and the returned z values use transformed coordinates. For example, returning 1 on a base-ten logarithmic z scale places the surface at height 10 in original units.
+Function surfaces sample a vectorized function of x and y. The grid is evenly spaced in transformed x and y coordinates. Function inputs and returned z values use original data units. The z scale transforms the returned heights.
 
 ```{r function, fig.alt="A sampled sine-cosine surface."}
 ggplot() + geom_function_3d(fun = function(x, y) sin(x) * cos(y), n = 10) +

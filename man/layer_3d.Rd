@@ -26,6 +26,14 @@ layer_3d(
 
 \item{hidden}{Hidden stroke policy.}
 }
+\value{
+A ggplot2 layer adapted to the 3D scene.
+}
 \description{
 Adapt a registered ggplot2 layer to three dimensions
+}
+\examples{
+d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  layer_3d(ggplot2::geom_point(size = 3)) + coord_3d()
 }

@@ -1,4 +1,7 @@
 #' Triangulated surfaces in three dimensions
+#'
+#' Grid surfaces estimate vertex normals from height differences along each
+#' axis. Lighting uses the normalised mean of each face's vertex normals.
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard ggplot2 layer arguments.
 #' @param method Grid connectivity or Delaunay triangulation.
 #' @param max_edge Maximum triangle edge length in transformed x/y units.
@@ -81,6 +84,7 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
     if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Surfaces require continuous x/y/z scales.", call. = FALSE)
     triangles <- surface_triangles_3d(data, method, max_edge)
     if (!length(triangles)) return(data.frame())
+    if (method == "grid") data <- surface_normals_3d(data)
     rows <- as.vector(t(triangles))
     out <- lapply(data, `[`, rows)
     out <- structure(out, class = "data.frame", row.names = .set_row_names(length(rows)))
@@ -97,6 +101,7 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
 
 GeomSurface3D <- ggplot2::ggproto("GeomSurface3D", ggplot2::GeomPolygon,
   required_aes = c("x", "y", "z", ".face", ".corner"),
+  optional_aes = c("nx", "ny", "nz"),
   default_aes = ggplot2::aes(colour = NA, fill = "grey70", linewidth = 0.3, linetype = 1, alpha = NA)
 )
 

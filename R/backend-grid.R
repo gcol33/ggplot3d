@@ -218,7 +218,7 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
     if (kind == 1L) {
       fill <- s$fill
       shade <- style_value_3d(s, "shade", FALSE)
-      if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light)
+      if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light, s[shade, , drop = FALSE])
       gp$fill <- fill
       if (all(seam[rows])) {
         # Fill-colour outlines cover shared-edge antialiasing within one device pixel.

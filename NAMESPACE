@@ -32,6 +32,7 @@ export(guide_axis_3d)
 export(layer_3d)
 export(light_3d)
 export(mesh_3d)
+export(new_scene_packet)
 export(position_nudge_3d)
 export(position_stack_3d)
 export(probs)
@@ -62,6 +63,10 @@ importFrom(ggplot2,
   update_ggplot
 )
 importFrom(grid,makeContent)
+importFrom(isoband,
+  isobands,
+  isolines
+)
 importFrom(utils,
   head,
   tail

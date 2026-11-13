@@ -76,10 +76,14 @@ coord_3d(
 A Coord3D ggproto object.
 }
 \description{
-Exact three-dimensional panel coordinates
+Set \code{z_scales = "free"} here to train a separate z range per facet.
+ggplot2 facets control x and y scales and have no z scale.
 }
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_point_3d(size = 3) + coord_3d(azimuth = -45, elevation = 25)
+d$site <- c("a", "a", "b")
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
+  ggplot2::facet_wrap(~site) + coord_3d(z_scales = "free")
 }

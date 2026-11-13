@@ -18,3 +18,4 @@
 ^.*\.Rcheck$
 ^.*\.tar\.gz$
 ^Rplots\.pdf$
+^.*\.log$
