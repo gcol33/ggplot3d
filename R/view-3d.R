@@ -10,10 +10,12 @@
 #'   static plot. Each widget displays one panel.
 #' @param elementId Optional HTML element identifier, default NULL. In Shiny,
 #'   camera changes set the input named paste0(elementId, "_camera").
-#' @return An htmlwidget of class ggplot3d_view. Its x contains schema_version,
-#'   scene (schema-1 indexed model geometry and mapped materials), furniture,
-#'   axes, camera, framing, viewport, reference, background and capabilities. Geometry is
-#'   transferred once; camera interaction stays in the browser.
+#' @return An htmlwidget of class ggplot3d_view. Its x contains schema_version
+#'   (2), scene (schema-1 indexed model geometry and mapped materials),
+#'   furniture (with the panes each primitive belongs to and their outward
+#'   normals), axes (candidate placements per guide), bounds, camera, framing,
+#'   viewport, reference, background and capabilities. Geometry is transferred
+#'   once; camera interaction stays in the browser.
 #' @details Requires htmlwidgets. Opaque geometry uses a WebGL depth buffer.
 #'   Transparent primitives are sorted back to front by centre depth; crossing
 #'   transparent surfaces can differ from the exact static vector backend.
@@ -48,16 +50,20 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
   params <- selected$panel_params
   outer <- selected$outer_viewport
   furniture <- panel_furniture_3d(params, selected$theme, outer, as.list(selected$frame_group))
+  frame <- frame_of_3d(params)
   all_params <- params
-  all_params$coord_params$panes <- unique(c("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))
+  all_params$coord_params$panes <- vapply(frame$panes(), `[[`, character(1), "name")
   all_params$coord_params$box <- "all"
   all_furniture <- panel_furniture_3d(all_params, selected$theme, outer, as.list(selected$frame_group))
   packet <- merge_scene_packets(selected$packets, params$panel_id)
+  furniture_view <- view_packet_3d(all_furniture$packet)
+  furniture_view$materials <- view_furniture_tags_3d(frame, all_furniture, furniture_view$materials)
   axes <- lapply(names(params$axis_guides), function(name) {
     guide <- params$axis_guides[[name]]
     m <- furniture$overlay$fit$metrics[[name]]
     list(axis = match(guide$axis, c("x", "y", "z")) - 1L,
-      visible = guide$axis %in% params$coord_params$axes,
+      visible = guide_visible_3d(guide, params),
+      candidates = view_axis_candidates_3d(frame, guide),
       position = guide$params$position, secondary = guide$secondary,
       values = unname(guide$position), minor = unname(guide$minor),
       labels = view_labels_3d(guide$labels), title = view_labels_3d(guide$title),
@@ -75,13 +81,15 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
   # Automatic camera values use JSON null; finite resolved values travel separately.
   raw_camera[c("distance", "near", "far")] <- lapply(raw_camera[c("distance", "near", "far")],
     function(value) if (is.na(value) || !is.finite(value)) NULL else value)
-  x <- list(schema_version = 1L, scene = view_packet_3d(packet),
-    furniture = view_packet_3d(all_furniture$packet), axes = unname(axes),
+  x <- list(schema_version = 2L, scene = view_packet_3d(packet),
+    furniture = furniture_view, axes = unname(axes),
+    bounds = unname(lapply(seq_len(nrow(frame$bounds())), function(i) unname(frame$bounds()[i, ]))),
     camera = raw_camera,
     framing = list(frame = params$coord_params$frame,
       zoom_scale = furniture$camera$zoom / params$camera$zoom,
       origin = unname(furniture$overlay$fit$origin),
-      panes = params$coord_params$panes, box = params$coord_params$box),
+      panes = params$coord_params$panes, box = params$coord_params$box,
+      back = as.list(frame$back_candidates()), floor = as.list(frame$floor_panes())),
     viewport = c(furniture$viewport, list(outer_width_mm = outer$width_mm,
       outer_height_mm = outer$height_mm)),
     reference = list(corners_mm = unname(selected$furniture$corners_mm)),
@@ -93,6 +101,43 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
   htmlwidgets::createWidget("ggplot3d_view", x, width = width, height = height,
     package = "ggplot3d", elementId = elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(padding = 0, browser.fill = FALSE))
+}
+
+# Pane membership and outward model normals of furniture primitives, so the
+# viewer can choose rear panes and rear edges for each camera it shows.
+view_furniture_tags_3d <- function(frame, furniture, materials) {
+  panes <- frame$panes()
+  names(panes) <- vapply(panes, `[[`, character(1), "name")
+  for (i in seq_along(furniture$tags)) {
+    tag <- furniture$tags[[i]]
+    if (is.null(tag)) next
+    at <- matrix(tag$at, 1L)
+    normals <- lapply(tag$panes, function(name) unname(pane_normals_3d(frame, panes[[name]], at, furniture$camera)[1L, ]))
+    materials[[i]]$frame <- list(type = tag$type, panes = as.list(tag$panes), normals = normals)
+  }
+  materials
+}
+
+# Candidate placements of an axis guide in model space: the path, tick and
+# minor tick anchors, neighbours that give the local direction of a curved
+# path, and the vertex that carries the title of a simplex part.
+view_axis_candidates_3d <- function(frame, guide) {
+  candidates <- frame$axis_candidates(guide)
+  rows <- function(m) unname(lapply(seq_len(nrow(m)), function(i) unname(m[i, ])))
+  at <- function(candidate, values) frame$map(axis_candidate_points_3d(candidate, values))
+  out <- lapply(candidates, function(candidate) {
+    xyz <- rbind(candidate$start, candidate$end)
+    path <- if (frame$linear) frame$map(xyz) else polyline_model_3d(frame, xyz)$model
+    values <- guide$position
+    entry <- list(path = rows(path), ticks = rows(at(candidate, values)), minor = rows(at(candidate, guide$minor)))
+    if (nrow(path) > 2L && length(values)) {
+      entry$before <- rows(at(candidate, values - 1e-4)); entry$after <- rows(at(candidate, values + 1e-4))
+    }
+    title <- candidate$title
+    if (identical(title$type, "vertex")) entry$title_at <- unname(drop(frame$map(matrix(title$at, 1L))))
+    entry
+  })
+  list(auto = attr(candidates, "auto") %or3d% "lower", options = unname(out))
 }
 
 view_rgba_3d <- function(colour) {

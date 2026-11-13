@@ -167,7 +167,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   if (entry$name %in% c("GeomPoint", "GeomText") && params$hidden != "hide") stop("Hidden-line policies require stroke geometry.", call. = FALSE)
   packet <- entry$emit(normalise_positions_3d(data, panel_params), params, panel_params)
   validate_scene_packet(packet)
-  packet
+  frame_packet_3d(frame_of_3d(panel_params), packet, panel_params$camera$clip_data)
 }
 
 `%or3d%` <- function(x, y) if (is.null(x)) y else x

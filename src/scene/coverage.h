@@ -10,7 +10,7 @@ static inline Vertex screen_vertex(double x, double y, double depth, const Proje
   Vertex out;
   for (int k = 0; k < 3; ++k)
     out.xyz[k] = (p.resolved.eye[k] + cx*p.resolved.right[k] +
-      cy*p.resolved.up[k] + depth*p.resolved.forward[k])/p.scale[k];
+      cy*p.resolved.up[k] + depth*p.resolved.ray[k])/p.scale[k];
   return out;
 }
 
@@ -138,7 +138,7 @@ struct CoverageFace {
 static inline double face_ray_parameter(const CoverageFace& face,const Vertex& vertex,
                                        const Projection& p) {
   Vec3 model=p.model(vertex.xyz);
-  Vec3 ray=p.camera.perspective ? subtract(model,p.resolved.eye) : p.resolved.forward;
+  Vec3 ray=p.camera.perspective ? subtract(model,p.resolved.eye) : p.resolved.ray;
   double denominator=dot(face.plane.normal,ray);
   if(std::abs(denominator)<=p.resolved.tolerance) return R_PosInf;
   return -dot(face.plane.normal,subtract(model,face.plane.origin))/denominator;
@@ -148,7 +148,7 @@ static inline void lift_coverage(Piece& piece,const CoverageFace& face,const Pro
   if(piece.anchor.empty()) piece.anchor=piece.polygon;
   for(Vertex& v:piece.polygon) {
     Vec3 model=p.model(v.xyz);
-    Vec3 ray=p.camera.perspective ? subtract(model,p.resolved.eye) : p.resolved.forward;
+    Vec3 ray=p.camera.perspective ? subtract(model,p.resolved.eye) : p.resolved.ray;
     double t=face_ray_parameter(face,v,p);
     require(std::isfinite(t),"unrepresentable hidden-stroke coverage plane");
     for(int k=0;k<3;++k) v.xyz[k]=(model[k]+t*ray[k])/p.scale[k];
@@ -185,7 +185,7 @@ public:
   bool hidden(const Vertex& anchor) const {
     auto s=projection.npc(projection.camera_point(anchor.xyz));
     Vec3 model=projection.model(anchor.xyz);
-    Vec3 ray=projection.camera.perspective ? subtract(model,projection.resolved.eye) : projection.resolved.forward;
+    Vec3 ray=projection.camera.perspective ? subtract(model,projection.resolved.eye) : projection.resolved.ray;
     for(const CoverageFace* face:query({s[0],s[1],s[0],s[1]})) {
       if(!face->opaque) continue;
       double t=face_ray_parameter(*face,anchor,projection);
@@ -228,7 +228,7 @@ public:
         for(std::size_t i=0;i<face->polygon.size();++i) {
           Vec3 a=projection.model(face->polygon[i].xyz);
           Vec3 b=projection.model(face->polygon[(i+1)%face->polygon.size()].xyz);
-          Vec3 ray=projection.camera.perspective ? subtract(a,projection.resolved.eye) : projection.resolved.forward;
+          Vec3 ray=projection.camera.perspective ? subtract(a,projection.resolved.eye) : projection.resolved.ray;
           Vec3 normal=cross(subtract(b,a),ray);
           double length=std::sqrt(dot(normal,normal));
           if(length<=projection.resolved.tolerance) continue;
@@ -251,7 +251,7 @@ public:
           for(const Vertex& v:cell.polygon) for(int k=0;k<3;++k) centre.xyz[k]+=v.xyz[k]/cell.polygon.size();
           if(!screen_contains(face->polygon,centre,projection)) continue;
           double t=face_ray_parameter(*face,centre,projection);
-          Vec3 ray=projection.camera.perspective ? subtract(projection.model(centre.xyz),projection.resolved.eye) : projection.resolved.forward;
+          Vec3 ray=projection.camera.perspective ? subtract(projection.model(centre.xyz),projection.resolved.eye) : projection.resolved.ray;
           if(coplanar || t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray))) {
             bool hidden=cell.hidden;
             lift_coverage(cell,*face,projection);

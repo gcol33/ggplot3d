@@ -23,6 +23,7 @@ Imports:
     isoband,
     Rcpp,
     S7,
+    scales,
     stats,
     utils
 LinkingTo: Rcpp

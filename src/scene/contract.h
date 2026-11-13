@@ -70,6 +70,9 @@ struct ScenePacket {
 struct Camera {
   bool perspective = false, clip_data = true, clip = true;
   double azimuth = -60, elevation = 30, roll = 0;
+  // Vertical model axis (0 x, 1 y, 2 z) and the oblique screen shear per unit depth.
+  int up_axis = 2;
+  std::array<double, 2> shear{0, 0};
   double distance, fov = 35, zoom = 1, near, far;
   std::array<double, 3> target{0.5, 0.5, 0.5}, aspect{1, 1, 1};
 };
@@ -78,7 +81,9 @@ struct Viewport {
 };
 struct ResolvedCamera {
   std::array<double, 16> view{}, projection{};
-  std::array<double, 3> eye{}, right{}, up{}, forward{};
+  // right, up and forward are orthonormal; ray is the parallel sight direction
+  // (forward unless oblique); screen_right and screen_up are the sheared screen axes.
+  std::array<double, 3> eye{}, right{}, up{}, forward{}, ray{}, screen_right{}, screen_up{};
   std::array<double, 3> model_scale{};
   double distance, near, far, view_height, tolerance;
 };

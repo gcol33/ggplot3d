@@ -133,7 +133,7 @@ static inline Rcpp::List prepare(Rcpp::List packet, Rcpp::List camera, Rcpp::Lis
   const auto& c=scene->projection.resolved;
   return Rcpp::List::create(Rcpp::Named("pointer")=scene,Rcpp::Named("normals")=normals,
     Rcpp::Named("camera")=Rcpp::List::create(Rcpp::Named("right")=c.right,Rcpp::Named("up")=c.up,
-      Rcpp::Named("forward")=c.forward,Rcpp::Named("model_scale")=c.model_scale,Rcpp::Named("tolerance")=c.tolerance),
+      Rcpp::Named("forward")=c.forward,Rcpp::Named("ray")=c.ray,Rcpp::Named("model_scale")=c.model_scale,Rcpp::Named("tolerance")=c.tolerance),
     Rcpp::Named("engine_seconds")=seconds(start));
 }
 } }

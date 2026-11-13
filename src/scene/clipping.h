@@ -13,8 +13,8 @@ static inline std::vector<Plane> clipping_planes(const Projection& p) {
   auto camera_plane = [&](const Vec3& n, double offset) {
     Vec3 origin = p.camera_point({0, 0, 0}), coefficients{};
     for (int k = 0; k < 3; ++k) {
-      coefficients[k] = p.scale[k]*(n[0]*p.resolved.right[k] +
-        n[1]*p.resolved.up[k] + n[2]*p.resolved.forward[k]);
+      coefficients[k] = p.scale[k]*(n[0]*p.resolved.screen_right[k] +
+        n[1]*p.resolved.screen_up[k] + n[2]*p.resolved.forward[k]);
     }
     planes.push_back({coefficients, dot(n, origin)+offset});
   };

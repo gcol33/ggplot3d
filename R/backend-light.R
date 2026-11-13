@@ -17,7 +17,7 @@ shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL) {
   if (light$space == "camera") direction <- camera$right * direction[1L] + camera$up * direction[2L] - camera$forward * direction[3L]
   if (light$space == "data") direction <- direction * camera$model_scale
   direction <- direction / sqrt(sum(direction^2))
-  toward <- -camera$forward
+  toward <- -(camera$ray %or3d% camera$forward)
   normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, ] <- -normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, , drop = FALSE]
   brightness <- light$ambient + light$diffuse * pmax(0, drop(normal %*% direction))
   rgb <- t(colour_channels_3d(fill)) / 255

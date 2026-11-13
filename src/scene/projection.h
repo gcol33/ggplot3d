@@ -35,13 +35,26 @@ struct Projection {
     resolved.tolerance = 64 * std::numeric_limits<double>::epsilon() * std::max(1.0, radius);
     double az = std::remainder(c.azimuth, 360.0) * pi/180;
     double el = c.elevation * pi/180, roll = std::remainder(c.roll, 360.0) * pi/180;
-    Vec3 outward{std::cos(el)*std::cos(az), std::cos(el)*std::sin(az), std::sin(el)};
-    Vec3 right{-std::sin(az), std::cos(az), 0};
-    Vec3 up{-std::sin(el)*std::cos(az), -std::sin(el)*std::sin(az), std::cos(el)};
+    Vec3 standard_outward{std::cos(el)*std::cos(az), std::cos(el)*std::sin(az), std::sin(el)};
+    Vec3 standard_right{-std::sin(az), std::cos(az), 0};
+    Vec3 standard_up{-std::sin(el)*std::cos(az), -std::sin(el)*std::sin(az), std::cos(el)};
+    // Angles are defined about the vertical axis; a cyclic permutation, a
+    // proper rotation, carries the z-up frame onto the chosen vertical axis.
+    Vec3 outward{}, right{}, up{};
+    for (int k = 0; k < 3; ++k) {
+      int axis = (k + c.up_axis + 1) % 3;
+      outward[axis] = standard_outward[k]; right[axis] = standard_right[k]; up[axis] = standard_up[k];
+    }
     for (int k = 0; k < 3; ++k) {
       resolved.right[k] = std::cos(roll)*right[k] - std::sin(roll)*up[k];
       resolved.up[k] = std::sin(roll)*right[k] + std::cos(roll)*up[k];
       resolved.forward[k] = -outward[k];
+    }
+    require(!c.perspective || (c.shear[0] == 0 && c.shear[1] == 0), "oblique shear requires a parallel projection");
+    for (int k = 0; k < 3; ++k) {
+      resolved.ray[k] = resolved.forward[k] - c.shear[0]*resolved.right[k] - c.shear[1]*resolved.up[k];
+      resolved.screen_right[k] = resolved.right[k] + c.shear[0]*resolved.forward[k];
+      resolved.screen_up[k] = resolved.up[k] + c.shear[1]*resolved.forward[k];
     }
     const double ratio = v.width_mm/v.height_mm;
     const double half_angle = std::atan(std::tan(c.fov*pi/360) * std::min(1.0, ratio));
@@ -58,14 +71,15 @@ struct Projection {
     sx = sy/ratio;
     require(std::isfinite(sx) && std::isfinite(sy) && sx > 0 && sy > 0,
             "unrepresentable projection scale");
-    for (int k = 0; k < 3; ++k) resolved.eye[k] = target[k] + resolved.distance*outward[k];
+    // A parallel eye sits on the sight ray through the target.
+    for (int k = 0; k < 3; ++k) resolved.eye[k] = target[k] - resolved.distance*resolved.ray[k];
     auto& view = resolved.view;
     for (int k = 0; k < 3; ++k) {
-      view[k*4] = resolved.right[k]; view[k*4+1] = resolved.up[k];
+      view[k*4] = resolved.screen_right[k]; view[k*4+1] = resolved.screen_up[k];
       view[k*4+2] = resolved.forward[k];
     }
-    view[12] = -dot(resolved.right, resolved.eye);
-    view[13] = -dot(resolved.up, resolved.eye);
+    view[12] = -dot(resolved.screen_right, resolved.eye);
+    view[13] = -dot(resolved.screen_up, resolved.eye);
     view[14] = -dot(resolved.forward, resolved.eye); view[15] = 1;
     auto& proj = resolved.projection;
     proj[0] = sx; proj[5] = sy;
@@ -78,7 +92,7 @@ struct Projection {
   Vec3 model(const Vec3& p) const { return {p[0]*scale[0], p[1]*scale[1], p[2]*scale[2]}; }
   Vec3 camera_point(const Vec3& p) const {
     Vec3 delta = subtract(model(p), target);
-    return {dot(delta, resolved.right), dot(delta, resolved.up),
+    return {dot(delta, resolved.screen_right), dot(delta, resolved.screen_up),
             resolved.distance + dot(delta, resolved.forward)};
   }
   std::array<double, 2> npc(const Vec3& c) const {

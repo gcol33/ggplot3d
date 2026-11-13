@@ -57,7 +57,7 @@ static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,const 
     for(int a=0;a<3;++a) inside=inside && p.resolved.eye[a]>=lo[r][a] && p.resolved.eye[a]<=hi[r][a];
     if(inside) continue;
     components[i]=r;
-    Vec3 direction=p.camera.perspective ? subtract(p.model(polygons[i][0].xyz),p.resolved.eye):p.resolved.forward;
+    Vec3 direction=p.camera.perspective ? subtract(p.model(polygons[i][0].xyz),p.resolved.eye):p.resolved.ray;
     double facing=dot(normals[i],direction)*(volume[r]>0 ? 1:-1);
     culled[i]=facing>p.resolved.tolerance;
   }

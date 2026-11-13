@@ -16,6 +16,7 @@ stat_density_3d(
   n = 32L,
   levels = NULL,
   caps = FALSE,
+  space = "data",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -37,6 +38,11 @@ geom_isodensity_3d(...)
 \item{levels}{Numeric scalar-field thresholds; NULL uses pretty levels.}
 
 \item{caps}{Whether to cap the sublevel region on the box faces.}
+
+\item{space}{\code{"data"} estimates in the position scales. \code{"ilr"} estimates a
+composition mapped with \code{a}, \code{b}, \code{c} (and \code{d}) in isometric log-ratio
+coordinates, where a Gaussian kernel respects relative scale, and maps
+the surface back into the simplex. With three parts, z stays as it is.}
 }
 \description{
 Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z scale

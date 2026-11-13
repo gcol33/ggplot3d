@@ -55,13 +55,14 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
       row <- self$layout[i, ]
       scales <- self$get_scales(row$PANEL)
       out <- coord$setup_panel_params(scales$x, scales$y, self$coord_params)
-      out <- c(out, axis_view_3d(scales$z, coord$limits$z, coord$expand_axes[["z"]], "z"))
+      out <- c(out, coord$axis_view(scales$z, "z"))
       out$panel_id <- as.integer(as.character(row$PANEL))
       out$scale_ids <- c(x = row$SCALE_X, y = row$SCALE_Y, z = row$SCALE_Z)
       out$ranges <- list(x = out$x.range, y = out$y.range, z = out$z.range)
       out$camera <- coord$camera
       if (identical(coord$model_aspect, "data")) out$camera$aspect <- as.double(vapply(out$ranges, diff, numeric(1)))
       out$coord_params <- coord$config
+      out$frame <- bind_frame_3d(coord$frame %or3d% FrameBox, out)
       out$axis_titles <- lapply(c("x", "y", "z"), function(axis) {
         name <- scales[[axis]]$name
         if (!inherits(name, "waiver")) return(name)
@@ -72,6 +73,13 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
         NULL
       })
       names(out$axis_titles) <- c("x", "y", "z")
+      parts <- (coord$frame %or3d% FrameBox)$parts
+      out$part_titles <- stats::setNames(lapply(parts, function(part) {
+        label <- self$context$labels[[part]]
+        if (!is.null(label)) return(label)
+        mapping <- self$context$mapping[[part]]
+        if (!is.null(mapping)) axis_mapping_label_3d(mapping) else part
+      }), parts)
       out
     })
     self$panel_params <- self$facet$setup_panel_params(panels, coord)

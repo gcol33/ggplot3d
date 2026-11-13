@@ -12,7 +12,7 @@ test_that("viewer serializes one mapped model scene with furniture and camera", 
   expect_s3_class(w, "htmlwidget")
   expect_s3_class(w, "ggplot3d_view")
   expect_identical(w$elementId, "motion-test")
-  expect_identical(w$x$schema_version, 1L)
+  expect_identical(w$x$schema_version, 2L)
   expect_equal(w$x$camera$azimuth, -35)
   expect_equal(w$x$camera$elevation, 25)
   expect_equal(w$x$camera$roll, 12)

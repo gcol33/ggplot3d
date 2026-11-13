@@ -80,7 +80,14 @@ reference:
 - title: Coordinates and lighting
   contents:
   - coord_3d
+  - camera_3d
   - light_3d
+- title: Curvilinear and compositional frames
+  contents:
+  - coord_cylindrical_3d
+  - coord_spherical_3d
+  - coord_ternary_3d
+  - coord_simplex_3d
 - title: Z position scales
   contents:
   - scale_z_continuous

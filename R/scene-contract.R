@@ -224,17 +224,17 @@ new_camera_3d <- function(projection = "orthographic", azimuth = -60,
                           elevation = 30, roll = 0, distance = NULL,
                           fov = 35, zoom = 1, target = c(0.5, 0.5, 0.5),
                           aspect = c(1, 1, 1), near = NULL, far = NULL,
-                          clip_data = TRUE, clip = TRUE) {
+                          clip_data = TRUE, clip = TRUE, up = 3L, shear = c(0, 0)) {
   camera <- list(projection = projection, azimuth = as.double(azimuth),
                  elevation = as.double(elevation), roll = as.double(roll),
                  distance = if (is.null(distance)) {
-                   if (identical(projection, "orthographic")) Inf else NA_real_
+                   if (identical(projection, "perspective")) NA_real_ else Inf
                  } else as.double(distance),
                  fov = as.double(fov), zoom = as.double(zoom),
                  target = as.double(target), aspect = as.double(aspect),
                  near = if (is.null(near)) NA_real_ else as.double(near),
                  far = if (is.null(far)) NA_real_ else as.double(far),
-                 clip_data = clip_data, clip = clip)
+                 clip_data = clip_data, clip = clip, up = as.double(up), shear = as.double(shear))
   validate_camera_3d(camera)
   structure(camera, class = "ggplot3d_camera")
 }
@@ -242,10 +242,16 @@ new_camera_3d <- function(projection = "orthographic", azimuth = -60,
 validate_camera_3d <- function(camera) {
   scene_assert(identical(names(camera), c("projection", "azimuth", "elevation",
     "roll", "distance", "fov", "zoom", "target", "aspect", "near", "far",
-    "clip_data", "clip")), "invalid camera schema")
+    "clip_data", "clip", "up", "shear")), "invalid camera schema")
   scene_assert(length(camera$projection) == 1L &&
-                 camera$projection %in% c("orthographic", "perspective"),
+                 camera$projection %in% c("orthographic", "perspective", "oblique"),
                "invalid camera projection")
+  scene_assert(is.double(camera$up) && length(camera$up) == 1L && camera$up %in% 1:3,
+               "camera up must be axis 1, 2 or 3")
+  scene_assert(is.double(camera$shear) && length(camera$shear) == 2L && all(is.finite(camera$shear)),
+               "invalid camera shear")
+  scene_assert(camera$projection == "oblique" || all(camera$shear == 0),
+               "camera shear requires the oblique projection")
   for (key in c("azimuth", "elevation", "roll", "fov", "zoom")) {
     scene_assert(is.double(camera[[key]]) && length(camera[[key]]) == 1L &&
                    is.finite(camera[[key]]), paste("invalid camera", key))
@@ -262,7 +268,7 @@ validate_camera_3d <- function(camera) {
     scene_assert(is.double(value) && length(value) == 1L && !is.nan(value) &&
                    (is.na(value) || value > 0), paste("invalid camera", key))
   }
-  if (camera$projection == "orthographic") {
+  if (camera$projection != "perspective") {
     scene_assert(identical(camera$distance, Inf), "orthographic distance must be Inf")
   } else scene_assert(is.na(camera$distance) || is.finite(camera$distance),
                       "perspective distance must be finite")

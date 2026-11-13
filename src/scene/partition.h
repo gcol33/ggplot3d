@@ -215,7 +215,7 @@ static inline std::vector<Piece> partition_scene(std::vector<Piece> pieces,
     }
     double eye_side = projection.camera.perspective ?
       dot(plane.normal, subtract(projection.resolved.eye, plane.origin)) :
-      -dot(plane.normal, projection.resolved.forward);
+      -dot(plane.normal, projection.resolved.ray);
     auto& near = eye_side >= 0 ? positive : negative;
     auto& far = eye_side >= 0 ? negative : positive;
     stack.push_back({std::move(near), false});

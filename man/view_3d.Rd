@@ -19,10 +19,12 @@ static plot. Each widget displays one panel.}
 camera changes set the input named paste0(elementId, "_camera").}
 }
 \value{
-An htmlwidget of class ggplot3d_view. Its x contains schema_version,
-scene (schema-1 indexed model geometry and mapped materials), furniture,
-axes, camera, framing, viewport, reference, background and capabilities. Geometry is
-transferred once; camera interaction stays in the browser.
+An htmlwidget of class ggplot3d_view. Its x contains schema_version
+(2), scene (schema-1 indexed model geometry and mapped materials),
+furniture (with the panes each primitive belongs to and their outward
+normals), axes (candidate placements per guide), bounds, camera, framing,
+viewport, reference, background and capabilities. Geometry is transferred
+once; camera interaction stays in the browser.
 }
 \description{
 Draw a panel in a WebGL htmlwidget, using its mapped scene and initial camera.

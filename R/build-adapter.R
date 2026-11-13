@@ -6,15 +6,16 @@ ggplot_build.ggplot3d <- function(plot, ...) {
   context <- new.env(parent = emptyenv())
   context$labels <- plot@labels
   context$mapping <- plot@mapping
+  frame <- plot@coordinates$frame %or3d% FrameBox
   for (layer in plot@layers) {
-    for (axis in c("x", "y", "z")) {
+    for (axis in c("x", "y", "z", frame$parts)) {
       if (is.null(context$mapping[[axis]]) && !is.null(layer$mapping[[axis]])) context$mapping[[axis]] <- layer$mapping[[axis]]
     }
   }
   context$theme <- ggplot2::theme_get() + plot@theme
   working <- plot
   working@coordinates <- ggplot2::ggproto(NULL, plot@coordinates)
-  working@layers <- lapply(seq_along(plot@layers), function(i) adapt_layer_3d(plot@layers[[i]], i))
+  working@layers <- lapply(seq_along(plot@layers), function(i) adapt_layer_3d(plot@layers[[i]], i, frame))
   working@scales <- scales_3d(plot@scales, context)
   working@layout <- ggplot2::ggproto(NULL, Layout3D, context = context)
   parent_build(working, ...)
@@ -58,7 +59,7 @@ scales_3d <- function(parent, context) {
   )
 }
 
-adapt_layer_3d <- function(layer, layer_id) {
+adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
   entry <- find_emitter_3d(layer$geom)
   if (is.null(entry)) stop("No 3D emitter registered for ", class(layer$geom)[1L], ".", call. = FALSE)
   supported_position <- inherits(layer$position, "PositionIdentity") ||
@@ -71,7 +72,7 @@ adapt_layer_3d <- function(layer, layer_id) {
   fixed <- layer$aes_params[intersect(names(layer$aes_params), c("x", "xmin", "xmax", "xend", "y", "ymin", "ymax", "yend", z_aesthetics))]
   base_stat <- entry$stat_adapter %or3d% layer$stat
   # The row index is internal; a stat that aggregates rows drops it silently.
-  stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, ".source"))
+  stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, c(".source", frame$parts)))
   result <- ggplot2::ggproto(NULL, layer,
     geom = scene_geom_3d(layer$geom, entry),
     stat = stat,
@@ -92,6 +93,7 @@ adapt_layer_3d <- function(layer, layer_id) {
     compute_aesthetics = function(self, data, plot) {
       out <- ggplot2::ggproto_parent(parent, self)$compute_aesthetics(data, plot)
       for (name in names(fixed)) out[[name]] <- rep_len(fixed[[name]], nrow(out))
+      out <- frame$setup_aesthetics(out)
       if (!"z" %in% names(out) && !"z" %in% names(self$computed_mapping) &&
           !"z" %in% names(self$stat$default_aes) && !"z" %in% self$geom$required_aes) out$z <- rep(0, nrow(out))
       out$.source <- if (nrow(out) == nrow(data)) data$.source else seq_len(nrow(out))

@@ -71,6 +71,10 @@ geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
 #' @inheritParams stat_isosurface_3d
 #' @inheritParams stat_density_2d_3d
 #' @param n Grid resolution, scalar or three integers.
+#' @param space `"data"` estimates in the position scales. `"ilr"` estimates a
+#'   composition mapped with `a`, `b`, `c` (and `d`) in isometric log-ratio
+#'   coordinates, where a Gaussian kernel respects relative scale, and maps
+#'   the surface back into the simplex. With three parts, z stays as it is.
 #' @export
 #' @examples
 #' set.seed(1)
@@ -81,11 +85,11 @@ geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
 #'   stat_density_3d(h = 0.6, levels = 0.02, n = 8) + coord_3d()
 stat_density_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                              position = "identity", ..., h = NULL, adjust = 1, n = 32L,
-                             levels = NULL, caps = FALSE, na.rm = FALSE,
+                             levels = NULL, caps = FALSE, space = "data", na.rm = FALSE,
                              show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, data, StatDensity3D, position,
     stats_params_3d(list(h = h, adjust = adjust, n = n, levels = levels, caps = caps,
-      na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+      space = match.arg(space, c("data", "ilr")), na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname stat_density_3d
@@ -130,8 +134,11 @@ geom_isofunction_3d <- function(...) stat_isofunction_3d(...)
 #' no faces. Orientation uses a fixed interior point and scale-relative
 #' floating-point tolerance. x/y/z positions are already transformed.
 #' @inheritParams stat_function_3d
+#' @param space `"data"` takes the hull of the positions. `"ilr"` takes the
+#'   hull of a composition mapped with `a`, `b`, `c` (and `d`) in isometric
+#'   log-ratio coordinates and keeps its facets on the original points.
 #' @references Barber, Dobkin and Huhdanpaa (1996). The Quickhull Algorithm for
-#'   Convex Hulls. ACM TOMS 22, 469-483. <https://doi.org/10.1145/235815.235821>
+#'   Convex Hulls. ACM TOMS 22, 469-483. \doi{10.1145/235815.235821}
 #' @export
 #' @examples
 #' d <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
@@ -140,10 +147,10 @@ geom_isofunction_3d <- function(...) stat_isofunction_3d(...)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   stat_hull_3d(fill = "steelblue") + coord_3d()
 stat_hull_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
-                          position = "identity", ..., na.rm = FALSE,
+                          position = "identity", ..., space = "data", na.rm = FALSE,
                           show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, data, StatHull3D, position,
-    stats_params_3d(list(na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+    stats_params_3d(list(space = match.arg(space, c("data", "ilr")), na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname stat_hull_3d

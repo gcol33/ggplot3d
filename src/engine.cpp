@@ -198,14 +198,14 @@ ScenePacket read_packet(const Rcpp::List& x) {
 
 Camera read_camera(const Rcpp::List& x) {
   fields(x, {"projection", "azimuth", "elevation", "roll", "distance", "fov", "zoom",
-             "target", "aspect", "near", "far", "clip_data", "clip"});
+             "target", "aspect", "near", "far", "clip_data", "clip", "up", "shear"});
   Camera c;
   SEXP projection = x["projection"];
   require(TYPEOF(projection) == STRSXP && Rf_xlength(projection) == 1 &&
           !Rf_isObject(projection) && Rf_isNull(Rf_getAttrib(projection,R_DimSymbol)) &&
           STRING_ELT(projection, 0) != NA_STRING, "invalid projection");
   std::string mode = Rcpp::as<std::string>(projection);
-  require(mode == "orthographic" || mode == "perspective", "invalid projection");
+  require(mode == "orthographic" || mode == "perspective" || mode == "oblique", "invalid projection");
   c.perspective = mode == "perspective";
   c.azimuth = scalar(x, "azimuth"); c.elevation = scalar(x, "elevation");
   c.roll = scalar(x, "roll"); c.fov = scalar(x, "fov"); c.zoom = scalar(x, "zoom");
@@ -230,6 +230,13 @@ Camera read_camera(const Rcpp::List& x) {
   require((R_IsNA(c.near) || c.near > 0) && (R_IsNA(c.far) || c.far > 0) &&
           (R_IsNA(c.near) || R_IsNA(c.far) || c.near < c.far), "invalid clipping distances");
   c.clip_data = logicals(x, "clip_data", 1)[0]; c.clip = logicals(x, "clip", 1)[0];
+  double up = scalar(x, "up");
+  require(up == 1 || up == 2 || up == 3, "camera up must be axis 1, 2 or 3");
+  c.up_axis = static_cast<int>(up) - 1;
+  auto shear = doubles(x, "shear", 2);
+  require(std::isfinite(shear[0]) && std::isfinite(shear[1]), "camera shear must be finite");
+  require(!c.perspective || (shear[0] == 0 && shear[1] == 0), "oblique shear requires a parallel projection");
+  c.shear = {shear[0], shear[1]};
   return c;
 }
 
@@ -282,7 +289,7 @@ Rcpp::List write_result(const CompiledScene& scene, const ScenePacket& packet,
   Rcpp::List camera = Rcpp::List::create(
     Rcpp::Named("view")=matrix(c.view), Rcpp::Named("projection")=matrix(c.projection),
     Rcpp::Named("eye")=c.eye, Rcpp::Named("right")=c.right, Rcpp::Named("up")=c.up,
-    Rcpp::Named("forward")=c.forward, Rcpp::Named("distance")=c.distance,
+    Rcpp::Named("forward")=c.forward, Rcpp::Named("ray")=c.ray, Rcpp::Named("distance")=c.distance,
     Rcpp::Named("model_scale")=c.model_scale,
     Rcpp::Named("near")=c.near, Rcpp::Named("far")=c.far,
     Rcpp::Named("view_height")=c.view_height, Rcpp::Named("tolerance")=c.tolerance);

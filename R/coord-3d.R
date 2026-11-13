@@ -34,7 +34,14 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
 #'
 #' Set `z_scales = "free"` here to train a separate z range per facet.
 #' ggplot2 facets control x and y scales and have no z scale.
-#' @param projection Orthographic or perspective projection.
+#' @param projection `"orthographic"`, `"perspective"` or `"oblique"`. An
+#'   oblique projection is parallel with a sight ray that is not perpendicular
+#'   to the image: depth recedes on the page along `oblique`.
+#' @param oblique Receding direction of an oblique projection: `angle` in
+#'   degrees counterclockwise from the page's right, and `ratio`, the drawn
+#'   length of one unit of depth.
+#' @param up Vertical axis, `"x"`, `"y"` or `"z"`. Azimuth turns about it and
+#'   elevation rises toward it.
 #' @param azimuth,elevation,roll Camera angles in degrees.
 #' @param distance,fov,zoom Camera distance, field of view and magnification.
 #' @param target Target fractions within the expanded box.
@@ -52,6 +59,10 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
 #' @param crs Target spatial coordinate reference system.
 #' @param light Lighting configuration or NULL.
 #' @param backend Backend configuration.
+#' @param transform Optional coordinate transformations applied after
+#'   statistics, as a named list with entries `x`, `y` or `z`, each a
+#'   transformation name such as `"log10"` or a scales transformation. Lines
+#'   and faces are subdivided so their images bend with the transformation.
 #' @param default Whether this is the default coordinate system.
 #' @return A Coord3D ggproto object.
 #' @examples
@@ -63,12 +74,17 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
 #'   ggplot2::facet_wrap(~site) + coord_3d(z_scales = "free")
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
+                     oblique = c(angle = 45, ratio = 0.5), up = "z",
                      distance = NULL, fov = 35, zoom = 1, target = c(0.5, 0.5, 0.5), near = NULL, far = NULL,
                      aspect = c(1, 1, 1), xlim = NULL, ylim = NULL, zlim = NULL,
                      expand = TRUE, clip = "on", clip_data = TRUE, axes = c("x", "y", "z"),
                      panes = c("back", "floor"), box = "back", z_scales = "fixed", crs = NULL,
-                     light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view") {
+                     light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
+                     transform = NULL) {
   clip <- match.arg(clip, c("on", "off"))
+  projection <- match.arg(projection, c("orthographic", "perspective", "oblique"))
+  up <- match(match.arg(up, c("x", "y", "z")), c("x", "y", "z"))
+  shear <- oblique_shear_3d(projection, oblique)
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
       !(length(expand) == 1L || (length(expand) == 3L && setequal(names(expand), c("x", "y", "z"))))) stop("expand must be logical scalar or named x/y/z vector.", call. = FALSE)
   expand_axes <- if (length(expand) == 1L) structure(rep(expand, 3L), names = c("x", "y", "z")) else expand[c("x", "y", "z")]
@@ -76,8 +92,8 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
   if (!all(panes %in% c("back", "floor", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))) stop("Unknown cube pane.", call. = FALSE)
   camera <- new_camera_3d(projection, azimuth, elevation, roll, distance, fov, zoom, target,
                           if (identical(aspect, "data")) c(1, 1, 1) else aspect,
-                          near, far, clip_data, clip == "on")
-  ggplot2::ggproto(NULL, Coord3D, camera = camera, model_aspect = aspect,
+                          near, far, clip_data, clip == "on", up = up, shear = shear)
+  ggplot2::ggproto(NULL, Coord3D, camera = camera, model_aspect = aspect, frame = frame_box_3d(transform),
     limits = list(x = xlim, y = ylim, z = zlim), expand_axes = expand_axes,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
@@ -85,7 +101,67 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                   frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
 }
 
+oblique_shear_3d <- function(projection, oblique) {
+  if (projection != "oblique") return(c(0, 0))
+  if (!(is.numeric(oblique) && length(oblique) == 2L && all(is.finite(oblique)))) stop("oblique must be c(angle = , ratio = ).", call. = FALSE)
+  if (!is.null(names(oblique))) {
+    if (!setequal(names(oblique), c("angle", "ratio"))) stop("oblique must be named angle and ratio.", call. = FALSE)
+    oblique <- oblique[c("angle", "ratio")]
+  }
+  if (oblique[2L] <= 0) stop("The oblique ratio must be positive.", call. = FALSE)
+  angle <- oblique[[1L]] * pi / 180
+  unname(oblique[[2L]] * c(cos(angle), sin(angle)))
+}
+
+camera_presets_3d <- function() {
+  # Dimetric with x foreshortened to half of y and z: sin(azimuth)^2 = 1/8,
+  # cos(elevation)^2 = 8/9.
+  list(
+    default = list(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0),
+    isometric = list(projection = "orthographic", azimuth = -45, elevation = atan(1 / sqrt(2)) * 180 / pi, roll = 0),
+    dimetric = list(projection = "orthographic", azimuth = -asin(sqrt(1 / 8)) * 180 / pi, elevation = acos(sqrt(8 / 9)) * 180 / pi, roll = 0),
+    trimetric = list(projection = "orthographic", azimuth = -30, elevation = 20, roll = 0),
+    top = list(projection = "orthographic", azimuth = -90, elevation = 90, roll = 0),
+    front = list(projection = "orthographic", azimuth = -90, elevation = 0, roll = 0),
+    right = list(projection = "orthographic", azimuth = 0, elevation = 0, roll = 0),
+    cabinet = list(projection = "oblique", azimuth = -90, elevation = 0, roll = 0, oblique = c(angle = 45, ratio = 0.5)),
+    cavalier = list(projection = "oblique", azimuth = -90, elevation = 0, roll = 0, oblique = c(angle = 45, ratio = 1)),
+    military = list(projection = "oblique", azimuth = -45, elevation = 90, roll = 0, oblique = c(angle = -90, ratio = 1))
+  )
+}
+
+#' Named camera views
+#'
+#' Returns camera arguments for [coord_3d()], so a preset and further
+#' arguments combine with `do.call()`. Explicit non-NULL arguments override
+#' the preset.
+#' @param preset One of `"default"`, `"isometric"`, `"dimetric"` (x drawn at
+#'   half the length of y and z), `"trimetric"`, `"top"`, `"front"`, `"right"`,
+#'   and the oblique views `"cabinet"` (depth at 45 degrees, half length),
+#'   `"cavalier"` (depth at 45 degrees, full length) and `"military"` (the
+#'   floor plan turned 45 degrees, heights drawn straight up at full length).
+#' @param projection,azimuth,elevation,roll,distance,fov,zoom,target,oblique,up
+#'   Overrides of the preset values; see [coord_3d()].
+#' @return A named list of [coord_3d()] arguments.
+#' @examples
+#' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
+#' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d()
+#' p + do.call(coord_3d, camera_3d("isometric"))
+#' p + do.call(coord_3d, c(camera_3d("cabinet"), list(panes = "floor")))
+#' @export
+camera_3d <- function(preset = c("default", "isometric", "dimetric", "trimetric", "top", "front",
+                                 "right", "cabinet", "cavalier", "military"),
+                      projection = NULL, azimuth = NULL, elevation = NULL, roll = NULL,
+                      distance = NULL, fov = NULL, zoom = NULL, target = NULL, oblique = NULL, up = NULL) {
+  values <- camera_presets_3d()[[match.arg(preset)]]
+  overrides <- list(projection = projection, azimuth = azimuth, elevation = elevation, roll = roll,
+    distance = distance, fov = fov, zoom = zoom, target = target, oblique = oblique, up = up)
+  for (name in names(overrides)) if (!is.null(overrides[[name]])) values[[name]] <- overrides[[name]]
+  values
+}
+
 Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
+  frame = NULL,
   is_free = function() TRUE,
   is_linear = function() FALSE,
   aspect = function(ranges) 1,
@@ -97,8 +173,10 @@ Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
     layout
   },
   setup_panel_params = function(self, scale_x, scale_y, params = list()) {
-    c(axis_view_3d(scale_x, self$limits$x, self$expand_axes[["x"]], "x"),
-      axis_view_3d(scale_y, self$limits$y, self$expand_axes[["y"]], "y"))
+    c(self$axis_view(scale_x, "x"), self$axis_view(scale_y, "y"))
+  },
+  axis_view = function(self, scale, axis) {
+    (self$frame %or3d% FrameBox)$axis_view(scale, self$limits[[axis]], self$expand_axes[[axis]], axis)
   },
   range = function(panel_params) panel_params$ranges,
   backtransform_range = function(panel_params) {
@@ -141,6 +219,11 @@ project_positions_3d <- function(data, panel_params) {
   if (is.null(data$z)) data$z <- rep(0, nrow(data))
   normal <- normalise_positions_3d(data, panel_params)
   coordinates <- normal[c("x", "y", "z")]
+  frame <- frame_of_3d(panel_params)
+  if (!isTRUE(frame$identity)) {
+    mapped <- frame$map(as.matrix(coordinates))
+    coordinates[] <- lapply(seq_len(3L), function(k) mapped[, k])
+  }
   has_end <- any(c("xend", "yend", "zend") %in% names(normal))
   if (has_end) {
     end <- coordinates

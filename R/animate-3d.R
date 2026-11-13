@@ -239,7 +239,7 @@ motion_frame_plot_3d <- function(plot, time, value, limits) {
   })
   if (is.null(limits)) return(plot)
   plot$scales <- limits$scales$clone()
-  mapping <- lapply(intersect(c("x", "y", "z"), names(limits$blank)), function(aes) rlang::sym(aes))
+  mapping <- lapply(intersect(c("x", "y", "z"), names(limits$blank)), as.name)
   names(mapping) <- intersect(c("x", "y", "z"), names(limits$blank))
   plot + ggplot2::geom_blank(data = limits$blank, mapping = do.call(ggplot2::aes, mapping), inherit.aes = FALSE)
 }
@@ -277,9 +277,12 @@ motion_coord_3d <- function(coord, values, backend, frame) {
   for (key in c("distance", "near", "far")) {
     if (is.na(camera[[key]])) camera[key] <- list(NULL)
   }
-  camera$clip <- if (camera$clip) "on" else "off"
-  camera$aspect <- coord$model_aspect
-  do.call(coord_3d, c(camera, list(backend = backend, frame = frame)))
+  # A copy of the coord keeps its frame, limits and theme settings.
+  config <- coord$config
+  config$backend <- backend
+  config$frame <- match.arg(frame, c("view", "azimuth", "sphere"))
+  config$frame_registry <- new.env(parent = emptyenv())
+  ggplot2::ggproto(NULL, coord, camera = do.call(new_camera_3d, camera), config = config)
 }
 
 motion_panels_3d <- function(grob) {

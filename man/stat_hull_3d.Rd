@@ -11,6 +11,7 @@ stat_hull_3d(
   geom = GeomStatsSurface3D,
   position = "identity",
   ...,
+  space = "data",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -22,6 +23,10 @@ geom_hull_3d(...)
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
 
 \item{geom}{Geom prototype for keyed triangle corners.}
+
+\item{space}{\code{"data"} takes the hull of the positions. \code{"ilr"} takes the
+hull of a composition mapped with \code{a}, \code{b}, \code{c} (and \code{d}) in isometric
+log-ratio coordinates and keeps its facets on the original points.}
 }
 \description{
 Native Quickhull assigns outside points to facets, selects the furthest point
@@ -40,5 +45,5 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 }
 \references{
 Barber, Dobkin and Huhdanpaa (1996). The Quickhull Algorithm for
-Convex Hulls. ACM TOMS 22, 469-483. \url{https://doi.org/10.1145/235815.235821}
+Convex Hulls. ACM TOMS 22, 469-483. \doi{10.1145/235815.235821}
 }

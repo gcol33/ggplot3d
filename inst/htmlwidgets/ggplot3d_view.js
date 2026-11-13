@@ -7,23 +7,29 @@
   const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
   const arr = x => x == null ? [] : Array.isArray(x) ? x : [x];
   const css = c => 'rgba(' + c.slice(0, 3).map(v => Math.round(v*255)).join(',') + ',' + c[3] + ')';
-  const corners = Array.from({length: 8}, (_, i) => [i&1, (i>>1)&1, (i>>2)&1]);
-  const edges = axis => corners.flatMap((p, i) => p[axis] ? [] : [[i, i+(1<<axis)]]);
 
   function cameraBasis(c, vp, framing) {
     const scale = c.aspect.map(v => v/Math.max(...c.aspect));
     const extent = scale.map((v, i) => v*Math.max(Math.abs(c.target[i]), Math.abs(1-c.target[i])));
     const radius = Math.hypot(...extent), az = c.azimuth*rad, el = c.elevation*rad, roll = c.roll*rad;
-    const r = [-Math.sin(az), Math.cos(az), 0];
-    const u = [-Math.sin(el)*Math.cos(az), -Math.sin(el)*Math.sin(az), Math.cos(el)];
-    const right = r.map((v, i) => Math.cos(roll)*v-Math.sin(roll)*u[i]);
-    const up = r.map((v, i) => Math.sin(roll)*v+Math.cos(roll)*u[i]);
-    const forward = [-Math.cos(el)*Math.cos(az), -Math.cos(el)*Math.sin(az), -Math.sin(el)];
+    // Angles turn about the vertical axis; a cyclic permutation carries the
+    // z-up frame onto it. An oblique shear tilts the sight ray.
+    const axes = [0, 1, 2].map(k => (k + (c.up || 3)) % 3);
+    const place = v => { const w = [0, 0, 0]; v.forEach((x, k) => { w[axes[k]] = x; }); return w; };
+    const r = place([-Math.sin(az), Math.cos(az), 0]);
+    const u = place([-Math.sin(el)*Math.cos(az), -Math.sin(el)*Math.sin(az), Math.cos(el)]);
+    const orthoRight = r.map((v, i) => Math.cos(roll)*v-Math.sin(roll)*u[i]);
+    const orthoUp = r.map((v, i) => Math.sin(roll)*v+Math.cos(roll)*u[i]);
+    const forward = place([-Math.cos(el)*Math.cos(az), -Math.cos(el)*Math.sin(az), -Math.sin(el)]);
+    const shear = arr(c.shear).length === 2 ? arr(c.shear) : [0, 0];
+    const right = orthoRight.map((v, i) => v+shear[0]*forward[i]);
+    const up = orthoUp.map((v, i) => v+shear[1]*forward[i]);
+    const ray = forward.map((v, i) => v-shear[0]*orthoRight[i]-shear[1]*orthoUp[i]);
     const perspective = c.projection === 'perspective', ratio = vp.width_mm/vp.height_mm;
     const tolerance = 64*Number.EPSILON*Math.max(1, radius);
     const distance = perspective ? (c.distance == null ? radius/Math.sin(Math.atan(Math.tan(c.fov*rad/2)*Math.min(1, ratio)))+tolerance : c.distance) : 2*radius+1;
     const base = (perspective ? 1/Math.tan(c.fov*rad/2) : Math.min(1, ratio)/radius)*c.zoom*framing.zoom_scale;
-    return {scale, radius, right, up, forward, distance, perspective, base,
+    return {scale, radius, right, up, forward, ray, orthoRight, orthoUp, distance, perspective, base,
       near: c.near == null ? Math.max(tolerance, distance-radius-tolerance) : c.near,
       far: c.far == null ? distance+radius+tolerance : c.far};
   }
@@ -127,30 +133,34 @@
         const q = project(p);
         return q[2]>=basis.near && q[2]<=basis.far && (!camera.clip_data || p.every(v => v>=0 && v<=1));
       }
-      function rearSide(axis) { return basis.forward[axis] >= 0 ? 1 : 0; }
+      // A pane faces away when its outward normal points away from the eye.
+      function rearFacing(normal, points) {
+        const centre = [0,1,2].map(i => points.reduce((s,v) => s+v[i], 0)/points.length);
+        const delta = centre.map((v,i) => (v-camera.target[i])*basis.scale[i]);
+        const toward = basis.perspective ? basis.forward.map((v,i) => -v*basis.distance-delta[i]) : basis.ray.map(v => -v);
+        const facing = dot(normal, toward);
+        return facing <= 64*Number.EPSILON*Math.max(1, Math.abs(facing));
+      }
       function furnitureVisible(p) {
-        const fixed = [0,1,2].filter(a => (p.points[0][a]===0 || p.points[0][a]===1) && p.points.every(v => Math.abs(v[a]-p.points[0][a])<1e-12));
-        const paneName = a => 'xyz'[a]+(p.points[0][a] ? 'max' : 'min');
-        if (fixed.length === 1) {
-          const a = fixed[0], name = paneName(a), panes = arr(data.framing.panes);
-          const selected = panes.includes(name) || (panes.includes('floor') && name==='zmin') ||
-            (panes.includes('back') && a<2 && p.points[0][a]===rearSide(a));
-          p.partition = camera.clip_data ? (p.points[0][a]===rearSide(a) ? 0 : 2) : 1;
-          return selected;
-        }
-        const rear = fixed.every(a => p.points[0][a]===rearSide(a));
+        const f = p.material.frame;
+        if (!f) return true;
+        const names = arr(f.panes), normals = f.normals || [];
+        const rear = normals.every(n => rearFacing(n, p.points));
         p.partition = camera.clip_data ? (rear ? 0 : 2) : 1;
-        return data.framing.box==='all' || (data.framing.box==='back' && rear);
+        if (f.type === 'edge') return data.framing.box==='all' || (data.framing.box==='back' && rear);
+        const name = names[0], panes = arr(data.framing.panes);
+        return panes.includes(name) || (panes.includes('floor') && arr(data.framing.floor).includes(name)) ||
+          (panes.includes('back') && arr(data.framing.back).includes(name) && rear);
       }
       function colour(p) {
         const m = p.material;
         let c = (p.kind===0 ? m.fill : p.kind===2 && Number(m.shape)>=21 ? m.fill : m.colour).slice();
         if (p.kind===0 && m.shade && data.light) {
           let n = norm(p.normal.map((v,i) => m.normal ? v/basis.scale[i] : v*basis.scale[(i+1)%3]*basis.scale[(i+2)%3]));
-          if (dot(n,basis.forward)>0) n = n.map(v => -v);
+          if (dot(n,basis.ray)>0) n = n.map(v => -v);
           const light = data.light;
           let direction = light.direction;
-          if (light.space==='camera') direction = n.map((_,i) => basis.right[i]*light.direction[0]+basis.up[i]*light.direction[1]-basis.forward[i]*light.direction[2]);
+          if (light.space==='camera') direction = n.map((_,i) => basis.orthoRight[i]*light.direction[0]+basis.orthoUp[i]*light.direction[1]-basis.forward[i]*light.direction[2]);
           else direction = direction.map((v,i) => v*basis.scale[i]);
           const brightness = light.ambient+light.diffuse*Math.max(0,dot(n,norm(direction)));
           c = c.map((v,i) => {
@@ -273,25 +283,36 @@
         ctx.fillText(label,-hjust*w,(vjust-0.5)*style.size*25.4/72.27*layout.ppm);ctx.restore();
       }
       function axes() {
-        const pts=corners.map(project),centre=[0,1].map(a=>pts.reduce((s,p)=>s+p[a]/8,0));
+        const pts=arr(data.bounds).map(project),centre=[0,1].map(a=>pts.reduce((s,p)=>s+p[a],0)/pts.length);
         const occupied=[];
         function line(a,b,s) {
           if(!s.visible) return;
           ctx.beginPath();ctx.strokeStyle=css(s.colour);ctx.lineWidth=s.width*layout.ppm;
           ctx.moveTo(a[0],height-a[1]);ctx.lineTo(b[0],height-b[1]);ctx.stroke();
         }
+        function polyline(points,s) {
+          if(!s.visible || points.length<2) return;
+          ctx.beginPath();ctx.strokeStyle=css(s.colour);ctx.lineWidth=s.width*layout.ppm;
+          points.forEach((p,i)=>i?ctx.lineTo(p[0],height-p[1]):ctx.moveTo(p[0],height-p[1]));ctx.stroke();
+        }
         data.axes.forEach(g=>{
           if(!g.visible) return;
-          const es=edges(g.axis), choices=es.flatMap((edge,i)=>{
-            const a=pts[edge[0]],b=pts[edge[1]],d=sub(b,a),len=Math.hypot(d[0],d[1]);
-            if(len<1e-7) return [];
+          const options=arr(g.candidates.options), choices=options.flatMap((c,i)=>{
+            const path=arr(c.path).map(project), a=path[0], b=path[path.length-1], d=sub(b,a), len=Math.hypot(d[0],d[1]);
+            const depth=path.reduce((s,p)=>s+p[2],0)/path.length;
+            if(len<1e-7) {
+              if(path.length<=2) return [];
+              const low=Math.min(...path.map(p=>p[1])), xs=path.map(p=>p[0]);
+              const mid=[(Math.min(...xs)+Math.max(...xs))/2,low];
+              return [{c,i,path,closed:true,n:[0,-1],a,b,mid,exterior:false,distance:centre[1]-low,depth}];
+            }
             let n=[-d[1]/len,d[0]/len];const mid=[(a[0]+b[0])/2,(a[1]+b[1])/2];
             if(dot(n,sub(mid,centre))<0) n=n.map(v=>-v);
             const exterior=Math.max(...pts.map(p=>dot(sub(p.slice(0,2),a.slice(0,2)),n)))<=1e-6;
-            const distance=dot(n,sub(mid,centre));
-            return [{edge,i,n,a,b,mid,exterior,distance,depth:(a[2]+b[2])/2}];
+            return [{c,i,path,closed:false,n,a,b,mid,exterior,distance:dot(n,sub(mid,centre)),depth:(a[2]+b[2])/2}];
           });
-          const score=q=>g.position==='top'?q.mid[1]:g.position==='bottom'?-q.mid[1]:g.position==='left'?-q.mid[0]:g.position==='right'?q.mid[0]:q.distance;
+          const auto=q=>g.candidates.auto==='lower'?-q.mid[1]:q.distance;
+          const score=q=>g.position==='top'?q.mid[1]:g.position==='bottom'?-q.mid[1]:g.position==='left'?-q.mid[0]:g.position==='right'?q.mid[0]:auto(q);
           const rounded=(v,n)=>Math.round(v*Math.pow(10,n))/Math.pow(10,n);
           choices.sort((a,b)=>Number(b.exterior)-Number(a.exterior) || rounded(score(b)/layout.ppm,8)-rounded(score(a)/layout.ppm,8) || rounded(a.depth,12)-rounded(b.depth,12) || a.i-b.i);
           let q=choices[0];
@@ -301,23 +322,32 @@
             q=choices.slice().sort((a,b)=>Number(b.exterior)-Number(a.exterior) || Math.hypot(...sub(b.mid,primary.mid))-Math.hypot(...sub(a.mid,primary.mid)))[0];
           }
           if(!q) return;
-          const values=arr(g.values), labels=arr(g.labels), d=sub(q.b,q.a),n=q.n;
+          const straight=q.path.length===2, values=arr(g.values), labels=arr(g.labels), d=sub(q.b,q.a);
+          const ticks=arr(q.c.ticks).map(project), before=arr(q.c.before).map(project), after=arr(q.c.after).map(project);
+          // A curved axis turns its ticks with the local direction, away from the frame centre.
+          const normalAt=i=>{
+            if(straight || !before[i]) return q.n;
+            const t=sub(after[i],before[i]), len=Math.hypot(t[0],t[1]) || 1;
+            let n=[-t[1]/len,t[0]/len];
+            if(dot(n,sub(ticks[i].slice(0,2),centre))<0) n=n.map(v=>-v);
+            return n;
+          };
           const lo=(g.cap==='lower' || g.cap==='both') && values.length ? Math.min(...values) : 0;
           const hi=(g.cap==='upper' || g.cap==='both') && values.length ? Math.max(...values) : 1;
-          line(q.a.map((v,i)=>v+d[i]*lo),q.a.map((v,i)=>v+d[i]*hi),g.line);
-          function at(value) {const v=corners[q.edge[0]].slice();v[g.axis]=value;return project(v);}
+          if(straight) line(q.a.map((v,i)=>v+d[i]*lo),q.a.map((v,i)=>v+d[i]*hi),g.line);
+          else polyline(q.path,g.line);
           const titleSize=arr(g.title_size).flat(), sizes=g.label_size || [];
           const sizeAt=i => Array.isArray(sizes[0]) ? sizes[i] : [sizes[i],sizes[i+values.length]];
-          const tangent=norm(d.slice(0,2));
+          const tangent=straight ? norm(d.slice(0,2)) : null;
           const candidates=values.map((value,i)=>{
-            const a=at(value), size=sizeAt(i);
+            const a=ticks[i], size=sizeAt(i), n=normalAt(i);
             const offset=g.tick_length+g.gap+(Math.abs(n[0])*size[0]+Math.abs(n[1])*size[1])/2+(i%g.dodge)*g.label_extent;
             const xy=a.slice(0,2).map((v,j)=>v+n[j]*offset*layout.ppm);
             line(a,a.slice(0,2).map((v,j)=>v+n[j]*g.tick_length*layout.ppm),g.ticks);
             const w=size[0]*layout.ppm,h=size[1]*layout.ppm;
-            return {i,xy,box:[xy[0]-w/2,xy[1]-h/2,xy[0]+w/2,xy[1]+h/2],end:dot(xy,tangent)+(Math.abs(tangent[0])*w+Math.abs(tangent[1])*h)/2};
+            return {i,xy,box:[xy[0]-w/2,xy[1]-h/2,xy[0]+w/2,xy[1]+h/2],end:tangent?dot(xy,tangent)+(Math.abs(tangent[0])*w+Math.abs(tangent[1])*h)/2:i};
           });
-          if(g.minor_ticks) arr(g.minor).forEach(value=>{const a=at(value);line(a,a.slice(0,2).map((v,j)=>v+n[j]*g.tick_length/2*layout.ppm),g.ticks);});
+          if(g.minor_ticks) arr(q.c.minor).map(project).forEach(a=>line(a,a.slice(0,2).map((v,j)=>v+q.n[j]*g.tick_length/2*layout.ppm),g.ticks));
           candidates.sort((a,b)=>a.i%g.dodge-b.i%g.dodge || a.end-b.end).forEach(c=>{
             const b=c.box,gap=0.5*layout.ppm;
             if(b.some(v=>!Number.isFinite(v)) || b[0]<0 || b[1]<0 || b[2]>width || b[3]>height || occupied.some(a=>a[0]<b[2]+gap && a[2]>b[0]-gap && a[1]<b[3]+gap && a[3]>b[1]-gap)) return;
@@ -326,10 +356,20 @@
           const title=arr(g.title)[0];
           if(title) {
             const th=Array.isArray(titleSize[0]) ? titleSize[0][1] : titleSize[1];
-            const offset=g.tick_length+g.gap+g.dodge*g.label_extent+g.title_gap+th/2;
-            const xy=q.mid.map((v,j)=>v+n[j]*offset*layout.ppm);
-            let angle=Math.atan2(d[1],d[0])/rad;if(angle>90)angle-=180;if(angle< -90)angle+=180;
-            text(title,xy,g.title_style,angle,0.5,0.5);
+            const offset=(g.tick_length+g.gap+g.dodge*g.label_extent+g.title_gap+th/2)*layout.ppm;
+            let anchor=q.mid, n=q.n, angle=0;
+            if(q.c.title_at) {
+              anchor=project(q.c.title_at);n=norm(sub(anchor.slice(0,2),centre));
+            } else if(q.closed) {
+              anchor=[q.mid[0],Math.min(q.mid[1],...pts.map(p=>p[1]))];n=[0,-1];
+            } else {
+              if(!straight) {
+                const offsets=q.path.map(p=>dot(sub(p.slice(0,2),q.a.slice(0,2)),n)), side=Math.abs(Math.max(...offsets))>=Math.abs(Math.min(...offsets))?1:-1;
+                const bulge=Math.max(0,...offsets.map(v=>side*v));n=n.map(v=>side*v);anchor=q.mid.map((v,j)=>v+n[j]*bulge);
+              }
+              angle=Math.atan2(d[1],d[0])/rad;if(angle>90)angle-=180;if(angle< -90)angle+=180;
+            }
+            text(title,anchor.slice(0,2).map((v,j)=>v+n[j]*offset),g.title_style,angle,0.5,0.5);
           }
         });
       }
@@ -340,7 +380,9 @@
         if(window.Shiny && el.id) window.Shiny.setInputValue(el.id+'_camera',snapshot,{priority:'event'});
         const n=x=>Number(x.toFixed(6));
         const vector=v=>'c('+v.map(n).join(', ')+')';
-        code.value='coord_3d(azimuth = '+n(camera.azimuth)+', elevation = '+n(camera.elevation)+',\n  roll = '+n(camera.roll)+', zoom = '+n(camera.zoom)+', projection = "'+camera.projection+'",\n  frame = "'+data.framing.frame+'", aspect = '+vector(camera.aspect)+',\n  target = '+vector(camera.target)+', fov = '+n(camera.fov)+
+        const shear=arr(camera.shear), oblique=camera.projection==='oblique' ? ', oblique = c(angle = '+n(Math.atan2(shear[1],shear[0])/rad)+', ratio = '+n(Math.hypot(shear[0],shear[1]))+')' : '';
+        const vertical=(camera.up || 3)!==3 ? ', up = "'+'xyz'[camera.up-1]+'"' : '';
+        code.value='coord_3d(azimuth = '+n(camera.azimuth)+', elevation = '+n(camera.elevation)+',\n  roll = '+n(camera.roll)+', zoom = '+n(camera.zoom)+', projection = "'+camera.projection+'"'+oblique+vertical+',\n  frame = "'+data.framing.frame+'", aspect = '+vector(camera.aspect)+',\n  target = '+vector(camera.target)+', fov = '+n(camera.fov)+
           (camera.distance==null?'':', distance = '+n(camera.distance))+
           (camera.near==null?'':', near = '+n(camera.near))+(camera.far==null?'':', far = '+n(camera.far))+')';
       }
@@ -419,7 +461,7 @@
       resize(width,height);
       return {
         renderValue: function(x) {
-          if(x.schema_version!==1 || x.scene.schema_version!==1) throw Error('Unsupported ggplot3d scene schema');
+          if(x.schema_version!==2 || x.scene.schema_version!==1) throw Error('Unsupported ggplot3d scene schema');
           buffers.forEach(b=>gl.deleteBuffer(b));buffers=[];
           data=x;camera=JSON.parse(JSON.stringify(x.camera));initial=JSON.parse(JSON.stringify(camera));
           primitives=packetPrimitives(x.scene,false).concat(packetPrimitives(x.furniture,true));
@@ -428,7 +470,7 @@
             gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(p.triangles.flatMap(v=>[...v,0,0])),gl.STATIC_DRAW);
           });
           el.ggplot3d={getCamera:()=>JSON.parse(JSON.stringify(camera)),
-            getProjectedBox:()=>corners.map(project),
+            getProjectedBox:()=>arr(data.bounds).map(project),
             setCamera:values=>{Object.assign(camera,values);schedule();}};
           draw();
         }, resize

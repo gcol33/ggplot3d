@@ -9,6 +9,8 @@ coord_3d(
   azimuth = -60,
   elevation = 30,
   roll = 0,
+  oblique = c(angle = 45, ratio = 0.5),
+  up = "z",
   distance = NULL,
   fov = 35,
   zoom = 1,
@@ -30,13 +32,23 @@ coord_3d(
   light = light_3d(),
   backend = backend_3d(),
   default = FALSE,
-  frame = "view"
+  frame = "view",
+  transform = NULL
 )
 }
 \arguments{
-\item{projection}{Orthographic or perspective projection.}
+\item{projection}{\code{"orthographic"}, \code{"perspective"} or \code{"oblique"}. An
+oblique projection is parallel with a sight ray that is not perpendicular
+to the image: depth recedes on the page along \code{oblique}.}
 
 \item{azimuth, elevation, roll}{Camera angles in degrees.}
+
+\item{oblique}{Receding direction of an oblique projection: \code{angle} in
+degrees counterclockwise from the page's right, and \code{ratio}, the drawn
+length of one unit of depth.}
+
+\item{up}{Vertical axis, \code{"x"}, \code{"y"} or \code{"z"}. Azimuth turns about it and
+elevation rises toward it.}
 
 \item{distance, fov, zoom}{Camera distance, field of view and magnification.}
 
@@ -71,6 +83,11 @@ coord_3d(
 \item{default}{Whether this is the default coordinate system.}
 
 \item{frame}{Fit the current view, all azimuths at this elevation, or a sphere.}
+
+\item{transform}{Optional coordinate transformations applied after
+statistics, as a named list with entries \code{x}, \code{y} or \code{z}, each a
+transformation name such as \code{"log10"} or a scales transformation. Lines
+and faces are subdivided so their images bend with the transformation.}
 }
 \value{
 A Coord3D ggproto object.

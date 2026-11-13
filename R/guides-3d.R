@@ -86,6 +86,6 @@ setup_guides_3d <- function(panel_params, guides, theme) {
         title = title, params = params, theme = theme + (params$theme %or3d% ggplot2::theme()))
     }
   }
-  panel_params$axis_guides <- result
+  panel_params$axis_guides <- frame_of_3d(panel_params)$guides(result, panel_params)
   panel_params
 }
