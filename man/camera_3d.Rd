@@ -5,8 +5,8 @@
 \title{Named camera views}
 \usage{
 camera_3d(
-  preset = c("default", "isometric", "dimetric", "trimetric", "top", "front", "right",
-    "cabinet", "cavalier", "military"),
+  preset = c("default", "isometric", "dimetric", "trimetric", "top", "bottom", "front",
+    "rear", "left", "right", "cabinet", "cavalier", "military"),
   projection = NULL,
   azimuth = NULL,
   elevation = NULL,
@@ -21,8 +21,9 @@ camera_3d(
 }
 \arguments{
 \item{preset}{One of \code{"default"}, \code{"isometric"}, \code{"dimetric"} (x drawn at
-half the length of y and z), \code{"trimetric"}, \code{"top"}, \code{"front"}, \code{"right"},
-and the oblique views \code{"cabinet"} (depth at 45 degrees, half length),
+half the length of y and z), \code{"trimetric"}, the six principal views
+\code{"top"}, \code{"bottom"}, \code{"front"}, \code{"rear"}, \code{"left"} and \code{"right"} (each
+looking along one axis, as placed by \code{\link[=facet_views]{facet_views()}}), and the oblique views \code{"cabinet"} (depth at 45 degrees, half length),
 \code{"cavalier"} (depth at 45 degrees, full length) and \code{"military"} (the
 floor plan turned 45 degrees, heights drawn straight up at full length).}
 

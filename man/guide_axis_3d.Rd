@@ -21,7 +21,8 @@ guide_axis_3d(
 
 \item{theme}{Local theme overrides.}
 
-\item{position}{"auto", a side (top, bottom, left, right), or edge 1 to 4.}
+\item{position}{"auto", a side (top, bottom, left, right), edge 1 to 4, or
+"origin".}
 
 \item{check.overlap}{Use extra clearance between measured label rectangles.}
 
@@ -42,10 +43,17 @@ A ggplot2 guide for a three-dimensional position axis.
 Tick labels and titles are measured in the drawing viewport. Automatic
 placement uses an exterior cube edge. Integer positions 1 through 4 select
 a fixed edge in lexicographic order of its two fixed coordinates.
+Position \code{"origin"} draws the axis through the \code{origin} point of
+\code{\link[=coord_3d]{coord_3d()}} as part of the scene, with ticks, tick labels and title in
+three dimensions; \code{coord_3d(axis_lines = "origin")} places every guide with
+position \code{"auto"} there.
 Labels are thinned automatically using their measured extents along the edge.
 }
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 2, 1), z = 1:3)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_point_3d() + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_point_3d() + scale_z_continuous(guide = guide_axis_3d(position = "origin")) +
+  coord_3d(origin = c(x = 2, y = 1.5))
 }

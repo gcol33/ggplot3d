@@ -77,8 +77,23 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' @param clip Rectangular viewport clipping, on or off.
 #' @param clip_data Whether to clip to the data box.
 #' @param axes Axes to draw.
-#' @param panes Cube faces to draw.
+#' @param panes Cube faces to draw: `"back"` (the rear pane of each pair of
+#'   walls), `"floor"`, `"front"` (the panes facing the viewer that are not
+#'   drawn otherwise, styled by the theme element `panel.pane.front` and drawn
+#'   over the data without grid lines), or pane names `"xmin"` to `"zmax"`.
 #' @param box Box edges, back, all or none.
+#' @param axis_lines Where axis lines and their ticks and labels sit:
+#'   `"box"` on an edge of the box, `"origin"` through the point `origin`, or
+#'   `"none"`, which keeps ticks and labels on the box edges and draws no axis
+#'   lines. A guide with an explicit position (see [guide_axis_3d()]) keeps
+#'   it. Origin axes, their ticks, tick labels and titles are part of the
+#'   scene, so data in front of them hide them; the label at the point where
+#'   origin axes cross is left out. Origin axis lines use the theme elements
+#'   `axis.line.origin.x`, `.y` and `.z`, which inherit from
+#'   `axis.line.origin`.
+#' @param origin Named numeric vector with entries `x`, `y` and `z` in data
+#'   units, the point through which origin axes pass. Missing entries are 0. A
+#'   value outside the panel range is moved to the nearest end of the range.
 #' @param z_scales Fixed or free z scales across panels.
 #' @param crs Target spatial coordinate reference system.
 #' @param light Lighting configuration or NULL.
@@ -88,6 +103,28 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #'   transformation name such as `"log10"` or a scales transformation. Lines
 #'   and faces are subdivided so their images bend with the transformation.
 #' @param default Whether this is the default coordinate system.
+#' @section Theme elements:
+#' Besides the ggplot2 elements, panels read these theme elements:
+#' \itemize{
+#'   \item `panel.pane`, `panel.pane.x`, `panel.pane.y`, `panel.pane.z`: pane
+#'     fills, by the axis normal to the pane; `panel.pane.front` styles the
+#'     panes selected with `panes = "front"`.
+#'   \item `panel.grid.major.x.xy`, `panel.grid.minor.z.yz` and so on: the grid
+#'     lines of one axis on the panes of one plane. Each inherits from the
+#'     grid element of its axis (`panel.grid.major.x.xy` from
+#'     `panel.grid.major.x`), so `element_blank()` removes those lines from
+#'     that plane only. In the default view the floor is the `xy` plane.
+#'   \item `panel.zero.x`, `panel.zero.y`, `panel.zero.z`: a plane through the
+#'     panel at transformed value 0 of that axis, when 0 lies inside the range.
+#'     They are blank by default; setting one to an [ggplot2::element_rect()]
+#'     draws it, filled from `panel.zero`. Zero planes are part of the scene,
+#'     so they hide data behind them.
+#'   \item `panel.zero.line.x`, `.y`, `.z`, inheriting from `panel.zero.line`
+#'     (blank by default): the line at transformed value 0 on each drawn pane.
+#'   \item `panel.box.back`, `panel.box.front`: box edges.
+#'   \item `axis.line.origin.x`, `.y`, `.z`: origin axis lines.
+#'   \item `panel.margin.3d`: the margin around the projected box.
+#' }
 #' @return A Coord3D ggproto object.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
@@ -99,6 +136,15 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' views <- rbind(transform(d, view = "front"), transform(d, view = "side"))
 #' ggplot2::ggplot(views, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
 #'   ggplot2::facet_wrap(~view) + coord_3d(azimuth = c(-60, 30))
+#' centred <- data.frame(x = c(-2, 1, 2), y = c(1, -2, 2), z = c(-1, 2, 1))
+#' ggplot2::ggplot(centred, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 3) +
+#'   coord_3d(axis_lines = "origin", panes = "floor") +
+#'   ggplot2::theme(panel.zero.z = ggplot2::element_rect(),
+#'     panel.zero.line = ggplot2::element_line(colour = "grey30"))
+#' ggplot2::ggplot(centred, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 3) +
+#'   coord_3d(panes = c("back", "floor", "front")) +
+#'   ggplot2::theme(panel.grid.major.z.xz = ggplot2::element_blank(),
+#'     panel.pane.front = ggplot2::element_rect(fill = "#4682B41A"))
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      oblique = c(angle = 45, ratio = 0.5), up = "z",
@@ -107,32 +153,43 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      expand = TRUE, clip = "on", clip_data = TRUE, axes = c("x", "y", "z"),
                      panes = c("back", "floor"), box = "back", z_scales = "fixed", crs = NULL,
                      light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
-                     transform = NULL) {
+                     transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0)) {
   clip <- match.arg(clip, c("on", "off"))
-  projection <- match.arg(projection, c("orthographic", "perspective", "oblique"))
-  up <- match(match.arg(up, c("x", "y", "z")), c("x", "y", "z"))
-  shear <- oblique_shear_3d(projection, oblique)
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
       !(length(expand) == 1L || (length(expand) == 3L && setequal(names(expand), c("x", "y", "z"))))) stop("expand must be logical scalar or named x/y/z vector.", call. = FALSE)
   expand_axes <- if (length(expand) == 1L) structure(rep(expand, 3L), names = c("x", "y", "z")) else expand[c("x", "y", "z")]
   if (!all(axes %in% c("x", "y", "z"))) stop("Unknown 3D axis.", call. = FALSE)
-  if (!all(panes %in% c("back", "floor", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))) stop("Unknown cube pane.", call. = FALSE)
+  if (!all(panes %in% c("back", "floor", "front", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))) stop("Unknown cube pane.", call. = FALSE)
   views <- list(azimuth = azimuth, elevation = elevation, roll = roll, distance = distance, fov = fov, zoom = zoom)
   sizes <- lengths(views)
   count <- max(1L, sizes)
   if (any(sizes > 1L & sizes != count)) stop("Camera arguments must have one value or the same number of values, one per panel.", call. = FALSE)
-  cameras <- lapply(seq_len(count), function(i) {
+  base <- list(projection = projection, azimuth = azimuth, elevation = elevation, roll = roll, distance = distance,
+    fov = fov, zoom = zoom, target = target, oblique = oblique, up = up,
+    aspect = if (identical(aspect, "data")) c(1, 1, 1) else aspect,
+    near = near, far = far, clip_data = clip_data, clip = clip == "on")
+  panel_args <- lapply(seq_len(count), function(i) {
     view <- lapply(views, function(v) if (length(v) > 1L) v[[i]] else v)
-    new_camera_3d(projection, view$azimuth, view$elevation, view$roll, view$distance, view$fov, view$zoom, target,
-                  if (identical(aspect, "data")) c(1, 1, 1) else aspect,
-                  near, far, clip_data, clip == "on", up = up, shear = shear)
+    camera_args_update_3d(base, view)
   })
-  ggplot2::ggproto(NULL, Coord3D, camera = cameras[[1L]], cameras = cameras, model_aspect = aspect, frame = frame_box_3d(transform),
+  cameras <- lapply(panel_args, camera_from_args_3d)
+  ggplot2::ggproto(NULL, Coord3D, camera = cameras[[1L]], cameras = cameras, camera_args = panel_args[[1L]], model_aspect = aspect, frame = frame_box_3d(transform),
     limits = list(x = xlim, y = ylim, z = zlim), expand_axes = expand_axes,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
+                  axis_lines = match.arg(axis_lines, c("box", "origin", "none")), origin = check_origin_3d(origin),
                   light = light, backend = backend, crs = crs,
                   frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
+}
+
+check_origin_3d <- function(origin) {
+  if (!(is.numeric(origin) && length(origin) && all(is.finite(origin)) && !is.null(names(origin)) &&
+      all(names(origin) %in% c("x", "y", "z")) && !anyDuplicated(names(origin)))) {
+    stop("origin must be a named numeric vector with entries x, y or z.", call. = FALSE)
+  }
+  out <- c(x = 0, y = 0, z = 0)
+  out[names(origin)] <- origin
+  out
 }
 
 oblique_shear_3d <- function(projection, oblique) {
@@ -147,6 +204,28 @@ oblique_shear_3d <- function(projection, oblique) {
   unname(oblique[[2L]] * c(cos(angle), sin(angle)))
 }
 
+# Camera from coord_3d() camera arguments: the projection, angles, framing
+# values, oblique receding direction and vertical axis by name.
+camera_from_args_3d <- function(args) {
+  projection <- match.arg(args$projection, c("orthographic", "perspective", "oblique"))
+  up <- match(match.arg(args$up, c("x", "y", "z")), c("x", "y", "z"))
+  new_camera_3d(projection, args$azimuth, args$elevation, args$roll, args$distance, args$fov, args$zoom,
+    args$target, args$aspect, args$near, args$far, args$clip_data, args$clip, up = up,
+    shear = oblique_shear_3d(projection, args$oblique))
+}
+
+camera_view_names_3d <- c("projection", "azimuth", "elevation", "roll", "distance", "fov", "zoom", "target", "oblique", "up")
+
+# Camera arguments with the entries of a view replacing their base values; a
+# NULL entry, such as distance = NULL, is kept as an automatic value.
+camera_args_update_3d <- function(args, view) {
+  unknown <- setdiff(names(view), camera_view_names_3d)
+  if (length(unknown) || (length(view) && is.null(names(view))))
+    stop("A camera view takes the camera_3d() arguments ", paste(camera_view_names_3d, collapse = ", "), ".", call. = FALSE)
+  for (name in names(view)) args[name] <- list(view[[name]])
+  args
+}
+
 camera_presets_3d <- function() {
   # Dimetric with x foreshortened to half of y and z: sin(azimuth)^2 = 1/8,
   # cos(elevation)^2 = 8/9.
@@ -156,7 +235,10 @@ camera_presets_3d <- function() {
     dimetric = list(projection = "orthographic", azimuth = -asin(sqrt(1 / 8)) * 180 / pi, elevation = acos(sqrt(8 / 9)) * 180 / pi, roll = 0),
     trimetric = list(projection = "orthographic", azimuth = -30, elevation = 20, roll = 0),
     top = list(projection = "orthographic", azimuth = -90, elevation = 90, roll = 0),
+    bottom = list(projection = "orthographic", azimuth = -90, elevation = -90, roll = 0),
     front = list(projection = "orthographic", azimuth = -90, elevation = 0, roll = 0),
+    rear = list(projection = "orthographic", azimuth = 90, elevation = 0, roll = 0),
+    left = list(projection = "orthographic", azimuth = 180, elevation = 0, roll = 0),
     right = list(projection = "orthographic", azimuth = 0, elevation = 0, roll = 0),
     cabinet = list(projection = "oblique", azimuth = -90, elevation = 0, roll = 0, oblique = c(angle = 45, ratio = 0.5)),
     cavalier = list(projection = "oblique", azimuth = -90, elevation = 0, roll = 0, oblique = c(angle = 45, ratio = 1)),
@@ -170,8 +252,9 @@ camera_presets_3d <- function() {
 #' arguments combine with `do.call()`. Explicit non-NULL arguments override
 #' the preset.
 #' @param preset One of `"default"`, `"isometric"`, `"dimetric"` (x drawn at
-#'   half the length of y and z), `"trimetric"`, `"top"`, `"front"`, `"right"`,
-#'   and the oblique views `"cabinet"` (depth at 45 degrees, half length),
+#'   half the length of y and z), `"trimetric"`, the six principal views
+#'   `"top"`, `"bottom"`, `"front"`, `"rear"`, `"left"` and `"right"` (each
+#'   looking along one axis, as placed by [facet_views()]), and the oblique views `"cabinet"` (depth at 45 degrees, half length),
 #'   `"cavalier"` (depth at 45 degrees, full length) and `"military"` (the
 #'   floor plan turned 45 degrees, heights drawn straight up at full length).
 #' @param projection,azimuth,elevation,roll,distance,fov,zoom,target,oblique,up
@@ -183,8 +266,8 @@ camera_presets_3d <- function() {
 #' p + do.call(coord_3d, camera_3d("isometric"))
 #' p + do.call(coord_3d, c(camera_3d("cabinet"), list(panes = "floor")))
 #' @export
-camera_3d <- function(preset = c("default", "isometric", "dimetric", "trimetric", "top", "front",
-                                 "right", "cabinet", "cavalier", "military"),
+camera_3d <- function(preset = c("default", "isometric", "dimetric", "trimetric", "top", "bottom", "front",
+                                 "rear", "left", "right", "cabinet", "cavalier", "military"),
                       projection = NULL, azimuth = NULL, elevation = NULL, roll = NULL,
                       distance = NULL, fov = NULL, zoom = NULL, target = NULL, oblique = NULL, up = NULL) {
   values <- camera_presets_3d()[[match.arg(preset)]]
@@ -204,12 +287,20 @@ Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
     if (length(cameras) != count) stop("coord_3d() has ", length(cameras), " camera views but the plot has ", count, " panels.", call. = FALSE)
     cameras[[index]]
   },
+  # Camera of a panel showing `view`, a list of camera_3d() arguments that
+  # replace the coord's own.
+  view_camera = function(self, view) {
+    if (length(self$cameras) > 1L) stop("Give camera views either to facet_views() or as camera argument vectors of coord_3d(), not both.", call. = FALSE)
+    camera_from_args_3d(camera_args_update_3d(self$camera_args, view))
+  },
   is_free = function() TRUE,
   is_linear = function() FALSE,
   aspect = function(ranges) 1,
   setup_params = function(self, data) list(),
   setup_layout = function(self, layout, params) {
-    layout$SCALE_Z <- if (self$z_scales == "free") seq_len(nrow(layout)) else rep.int(1L, nrow(layout))
+    # Views of one scene (facet_views()) share its z scale.
+    free <- self$z_scales == "free" && is.null(layout$VIEW)
+    layout$SCALE_Z <- if (free) seq_len(nrow(layout)) else rep.int(1L, nrow(layout))
     triples <- paste(layout$SCALE_X, layout$SCALE_Y, layout$SCALE_Z, sep = ":")
     layout$COORD <- match(triples, unique(triples))
     layout
@@ -282,7 +373,7 @@ project_positions_3d <- function(data, panel_params) {
       markers = list(offset = seq_len(n), footprint_id = rep.int(1L, n), source_row = as.integer(valid)),
       footprints = list(kind = 1L, offset = 1L, count = 0L, radius_x_mm = 0, radius_y_mm = 0, angle = 0),
       styles = data.frame(style_id = 1L), panel_id = panel_params$panel_id)
-    viewport <- panel_params$viewport %or3d% new_scene_viewport(100, 100)
+    viewport <- emit_viewport_3d(panel_params)
     compiled <- scene_compile(packet, panel_params$camera, viewport)
     f <- compiled$fragments
     if (length(f$offset)) {

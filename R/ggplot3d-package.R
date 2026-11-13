@@ -12,6 +12,10 @@
 #'   \item{`ggplot3d.cache_bytes`}{Memory, in bytes, kept for recently compiled
 #'     scenes, so that redrawing a plot at the same size and view skips the
 #'     compiler. Defaults to 256 MiB; 0 turns the cache off.}
+#'   \item{`ggplot3d.max.overlaps`}{Default `max.overlaps` of
+#'     [geom_text_repel_3d()] and [geom_label_repel_3d()]: a label that
+#'     overlaps more labels and points than this where it starts is not drawn.
+#'     Defaults to 10.}
 #' }
 #' @useDynLib ggplot3d, .registration = TRUE
 #' @importFrom Rcpp sourceCpp

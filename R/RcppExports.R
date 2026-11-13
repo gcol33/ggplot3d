@@ -5,12 +5,24 @@ scene_compile_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_scene_compile_cpp`, packet, camera, viewport)
 }
 
-geometry_isosurface_cpp <- function(x, y, z, value, levels, caps, method, gradient = NULL) {
-    .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps, method, gradient)
+geometry_isosurface_cpp <- function(x, y, z, value, levels, caps, method, gradient = NULL, clip = NULL) {
+    .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps, method, gradient, clip)
+}
+
+geometry_slice_cpp <- function(x, y, z, value, plane, n) {
+    .Call(`_ggplot3d_geometry_slice_cpp`, x, y, z, value, plane, n)
 }
 
 geometry_octree_isosurface_cpp <- function(lo, hi, depth, boxes, empty, levels, caps, method, value, crossing = NULL, gradient = NULL) {
     .Call(`_ggplot3d_geometry_octree_isosurface_cpp`, lo, hi, depth, boxes, empty, levels, caps, method, value, crossing, gradient)
+}
+
+geometry_contour_cpp <- function(points, triangles, values, levels) {
+    .Call(`_ggplot3d_geometry_contour_cpp`, points, triangles, values, levels)
+}
+
+geometry_isocurve_cpp <- function(x, y, z, f, g, level_f, level_g) {
+    .Call(`_ggplot3d_geometry_isocurve_cpp`, x, y, z, f, g, level_f, level_g)
 }
 
 geometry_isosurface_methods_cpp <- function() {
@@ -79,6 +91,10 @@ geometry_alpha_shape_cpp <- function(xyz, alpha) {
 
 geometry_rbf_cpp <- function(centres, weights, poly, points) {
     .Call(`_ggplot3d_geometry_rbf_cpp`, centres, weights, poly, points)
+}
+
+repel_labels_cpp <- function(anchors, radius, owner, start, half, bounds, force, force_pull, max_iter, max_time, max_overlaps, direction, seed, jitter) {
+    .Call(`_ggplot3d_repel_labels_cpp`, anchors, radius, owner, start, half, bounds, force, force_pull, max_iter, max_time, max_overlaps, direction, seed, jitter)
 }
 
 sweep_frames_cpp <- function(xyz, closed, hint) {

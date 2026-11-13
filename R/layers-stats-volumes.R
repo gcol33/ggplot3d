@@ -63,7 +63,16 @@ probs <- function(...) {
 #' face attributes; .face, .corner and .vertex preserve triangle topology.
 #' @inheritParams stat_function_3d
 #' @param levels Numeric scalar-field thresholds; NULL uses pretty levels.
-#' @param caps Whether to cap the sublevel region on the box faces.
+#' @param caps Whether to cap the sublevel region on the box faces (and on
+#'   the clipping plane).
+#' @param clip NULL, or a plane made with [sdf_plane()]. The surface keeps the
+#'   part on the side the plane normal points away from. With `caps = TRUE` the
+#'   sublevel region is also closed on the plane, as with MATLAB's
+#'   `isocaps`: each grid cell is split into the six tetrahedra of `method =
+#'   "tetra"`, the plane cuts each in a triangle or quad on which the linear
+#'   interpolant of the field is linear, and the part of that polygon below
+#'   the level is filled, as on the box faces. Plane caps point along the
+#'   plane normal. The plane is in transformed position coordinates.
 #' @param method Extraction method: `"cubes"`, `"tetra"`, `"dual"` or `"nets"`.
 #' @param simplify NULL, or a target face count (or fraction of the extracted
 #'   faces) to which the surface is reduced by quadric edge collapse
@@ -105,9 +114,10 @@ probs <- function(...) {
 #'   stat_isosurface_3d(levels = 0.6) + coord_3d()
 stat_isosurface_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                 position = "identity", ..., levels = NULL, caps = FALSE,
-                                method = "cubes", simplify = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                                method = "cubes", simplify = NULL, clip = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  if (!is.null(clip)) plane_coefficients_3d(clip, "clip")
   make_layer_3d(geom, mapping, data, StatIsosurface3D, position,
-    stats_params_3d(list(levels = levels, caps = caps, method = isosurface_method_3d(method), simplify = simplify, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+    stats_params_3d(list(levels = levels, caps = caps, method = isosurface_method_3d(method), simplify = simplify, clip = clip, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname stat_isosurface_3d
@@ -140,10 +150,11 @@ geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
 #'   stat_density_3d(h = 0.6, levels = 0.02, n = 8) + coord_3d()
 stat_density_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                              position = "identity", ..., h = NULL, adjust = 1, n = 32L,
-                             levels = NULL, caps = FALSE, space = "data", method = "cubes", simplify = NULL,
+                             levels = NULL, caps = FALSE, space = "data", method = "cubes", simplify = NULL, clip = NULL,
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  if (!is.null(clip)) plane_coefficients_3d(clip, "clip")
   make_layer_3d(geom, mapping, data, StatDensity3D, position,
-    stats_params_3d(list(h = h, adjust = adjust, n = n, levels = levels, caps = caps, method = isosurface_method_3d(method), simplify = simplify,
+    stats_params_3d(list(h = h, adjust = adjust, n = n, levels = levels, caps = caps, method = isosurface_method_3d(method), simplify = simplify, clip = clip,
       space = match.arg(space, c("data", "ilr")), na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
@@ -189,8 +200,14 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #' `atan()`, `min()`, `max()`, and `pmin()` and `pmax()` called in its own
 #' body. Any other operation, including comparisons and `ifelse()`, stops
 #' with an error that names the call.
+#'
+#' fun may be a signed distance function built with [sdf_sphere()] and
+#' [sdf_blend()]. levels then defaults to 0, and vertex normals (with the
+#' crossing normals of `"dual"`) come from the exact gradient of its
+#' expression tree in place of central differences.
 #' @inheritParams stat_isosurface_3d
-#' @param fun Vectorised scalar function of x, y and z.
+#' @param fun Vectorised scalar function of x, y and z, or a signed distance
+#'   function ([sdf_sphere()]).
 #' @param args Additional named arguments passed to fun.
 #' @param n Grid resolution, scalar or three integers.
 #' @param method Extraction method: `"cubes"` (the default on a grid),
@@ -227,18 +244,191 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                  position = "identity", ..., fun, n = 24L, args = list(),
                                  levels = NULL, caps = FALSE, method = NULL, refine = 2L,
-                                 adaptive = FALSE, depth = c(4L, 8L), tol = 0.002, simplify = NULL,
+                                 adaptive = FALSE, depth = c(4L, 8L), tol = 0.002, simplify = NULL, clip = NULL,
                                  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  if (!is.null(clip)) plane_coefficients_3d(clip, "clip")
   if (!is.logical(adaptive) || length(adaptive) != 1L || is.na(adaptive)) stop("adaptive must be TRUE or FALSE.", call. = FALSE)
   method <- isosurface_method_3d(method %or3d% if (adaptive) "dual" else "cubes")
+  if (is.null(levels) && inherits(fun, "ggplot3d_sdf")) levels <- 0
   make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsofunction3D, position,
     stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = method, refine = refine,
-      adaptive = adaptive, depth = depth, tol = tol, simplify = simplify, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+      adaptive = adaptive, depth = depth, tol = tol, simplify = simplify, clip = clip, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname stat_isofunction_3d
 #' @export
 geom_isofunction_3d <- function(...) stat_isofunction_3d(...)
+
+check_slices_3d <- function(xslice, yslice, zslice, slice) {
+  for (at in list(xslice, yslice, zslice))
+    if (!is.null(at) && (!is.numeric(at) || any(!is.finite(at)))) stop("xslice, yslice and zslice must contain finite numbers.", call. = FALSE)
+  for (p in slice_plane_list_3d(slice)) plane_coefficients_3d(p, "slice")
+}
+
+#' Planar slices through a gridded scalar field
+#'
+#' Cuts a complete rectilinear x/y/z grid with a numeric `value` aesthetic
+#' by planes and colours each section by the field, as MATLAB's `slice`,
+#' plotly's isosurface slices and PyVista's `slice()` do. Each plane is
+#' sampled on a lattice of points and the field is interpolated trilinearly
+#' within its grid cell. A plane perpendicular to an axis (`xslice`,
+#' `yslice`, `zslice`, or a `slice` plane with an axis normal) is sampled on
+#' the grid's own coordinates along the two other axes, so a slice on a grid
+#' layer reproduces the grid values exactly; any other plane is sampled on
+#' `n` x `n` points over the rectangle around its section with the grid box,
+#' and the lattice triangles are clipped to that section. Triangles with a
+#' missing corner value are dropped. With no slice given, one slice per axis
+#' passes through the centre of the grid, as in PyVista's
+#' `slice_orthogonal()`.
+#'
+#' Computed variables: `value`, the mean of the three corner values of each
+#' triangle (fill is constant per face), and `slice`, a factor naming the
+#' plane (`"x = 0.5"`, `"plane 1"`). The default fill is
+#' `after_stat(value)`. Slices are not shaded; pass `shade = TRUE` to light
+#' them.
+#'
+#' stat_density_slice_3d() slices the Gaussian product-kernel density of
+#' stat_density_3d(), computed on its `n` grid; `density` is the computed
+#' density.
+#' @inheritParams stat_isosurface_3d
+#' @param xslice,yslice,zslice Positions of planes perpendicular to the x, y
+#'   and z axes, in transformed position coordinates.
+#' @param slice NULL, a plane made with [sdf_plane()], or a list of them, for
+#'   slices in any direction.
+#' @param n Lattice size per side for oblique planes; NULL uses the largest
+#'   grid dimension. For stat_density_slice_3d() the density grid resolution,
+#'   which also sets the lattice.
+#' @references MathWorks. slice: Volume slice planes.
+#'   <https://www.mathworks.com/help/matlab/ref/slice.html>
+#'
+#'   PyVista. DataObjectFilters.slice_orthogonal.
+#'   <https://docs.pyvista.org/api/core/_autosummary/pyvista.dataobjectfilters.slice_orthogonal>
+#' @export
+#' @examples
+#' d <- expand.grid(x = seq(-1, 1, length.out = 12),
+#'                  y = seq(-1, 1, length.out = 12), z = seq(-1, 1, length.out = 12))
+#' d$value <- with(d, exp(-(x^2 + 2 * y^2 + z^2)))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
+#'   geom_slice_3d() + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
+#'   stat_slice_3d(slice = sdf_plane(c(1, -1, 1)), n = 30) + coord_3d()
+#' set.seed(1)
+#' p <- data.frame(x = rnorm(200), y = rnorm(200), z = rnorm(200))
+#' ggplot2::ggplot(p, ggplot2::aes(x, y, z = z)) +
+#'   geom_density_slice_3d(zslice = 0, n = 24) + coord_3d()
+stat_slice_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
+                          position = "identity", ..., xslice = NULL, yslice = NULL, zslice = NULL,
+                          slice = NULL, n = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  check_slices_3d(xslice, yslice, zslice, slice)
+  make_layer_3d(geom, mapping, data, StatSlice3D, position,
+    stats_params_3d(list(xslice = xslice, yslice = yslice, zslice = zslice, slice = slice, n = n,
+      na.rm = na.rm, shade = FALSE), list(...)), show.legend, inherit.aes)
+}
+
+#' @rdname stat_slice_3d
+#' @export
+geom_slice_3d <- function(...) stat_slice_3d(...)
+
+#' @rdname stat_slice_3d
+#' @inheritParams stat_density_3d
+#' @export
+stat_density_slice_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
+                                  position = "identity", ..., h = NULL, adjust = 1, n = 32L,
+                                  xslice = NULL, yslice = NULL, zslice = NULL, slice = NULL,
+                                  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  check_slices_3d(xslice, yslice, zslice, slice)
+  make_layer_3d(geom, mapping, data, StatDensitySlice3D, position,
+    stats_params_3d(list(h = h, adjust = adjust, n = n, xslice = xslice, yslice = yslice, zslice = zslice, slice = slice,
+      na.rm = na.rm, shade = FALSE), list(...)), show.legend, inherit.aes)
+}
+
+#' @rdname stat_slice_3d
+#' @export
+geom_density_slice_3d <- function(...) stat_density_slice_3d(...)
+
+#' Contour lines on slices through a gridded scalar field
+#'
+#' Cuts the field by the planes of [stat_slice_3d()] and traces level lines
+#' of the interpolated field on each section by the marching triangles of
+#' [geom_contour_3d()]: the field is linear on each section triangle,
+#' crossings on shared edges are shared, and segments are chained into open
+#' lines and closed loops. Computed variables: `level` (the default colour)
+#' and `slice`.
+#' @inheritParams stat_slice_3d
+#' @inheritParams geom_contour_3d
+#' @export
+#' @examples
+#' d <- expand.grid(x = seq(-1, 1, length.out = 12),
+#'                  y = seq(-1, 1, length.out = 12), z = seq(-1, 1, length.out = 12))
+#' d$value <- with(d, exp(-(x^2 + 2 * y^2 + z^2)))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
+#'   geom_slice_3d(zslice = 0) + geom_slice_contour_3d(zslice = 0, bins = 6, colour = "white") +
+#'   coord_3d()
+stat_slice_contour_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::GeomPath,
+                                  position = "identity", ..., xslice = NULL, yslice = NULL, zslice = NULL,
+                                  slice = NULL, n = NULL, bins = NULL, binwidth = NULL, breaks = NULL,
+                                  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  check_slices_3d(xslice, yslice, zslice, slice)
+  make_layer_3d(geom, mapping, data, StatSliceContour3D, position,
+    stats_params_3d(list(xslice = xslice, yslice = yslice, zslice = zslice, slice = slice, n = n,
+      bins = bins, binwidth = binwidth, breaks = breaks, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+}
+
+#' @rdname stat_slice_contour_3d
+#' @export
+geom_slice_contour_3d <- function(...) stat_slice_contour_3d(...)
+
+#' Intersection curves of two implicit surfaces
+#'
+#' Traces the curve where `fun1 = levels[1]` and `fun2 = levels[2]` meet,
+#' inside the box of the position scales. Both functions are evaluated on an
+#' `n` grid and each cell is split into the six tetrahedra of
+#' `stat_isosurface_3d(method = "tetra")`, on which both are replaced by their
+#' linear interpolants. In each tetrahedron the level set of fun1 is a
+#' triangle or a quad on which fun2 is linear, so the curve crosses it in one
+#' segment; segments end on the faces shared with the neighbouring
+#' tetrahedra and are chained into open curves (ending on the box) and
+#' closed loops. Each point is then moved onto both level sets by `refine`
+#' Newton steps with the minimum-norm update for the two equations, using
+#' central differences of the functions, or exact gradients for signed
+#' distance functions ([sdf_sphere()]). Points where the two surfaces touch
+#' tangentially keep their position.
+#'
+#' A curve that lies within a single grid cell, or two curves that pass
+#' through one cell, can be missed or joined; a finer `n` resolves them.
+#' Snyder's interval method subdivides until each box holds one curve piece
+#' that is monotone in some coordinate.
+#' @inheritParams stat_isofunction_3d
+#' @param fun1,fun2 Vectorised scalar functions of x, y and z, or signed
+#'   distance functions.
+#' @param levels The levels of fun1 and fun2.
+#' @param refine Number of Newton steps per curve point; 0 keeps the
+#'   intersection of the linear interpolants.
+#' @references Snyder (1992). Interval analysis for computer graphics.
+#'   SIGGRAPH '92, 121-130. \doi{10.1145/133994.134024}
+#' @export
+#' @examples
+#' ggplot2::ggplot() +
+#'   geom_isocurve_3d(fun1 = sdf_sphere(radius = 1),
+#'                    fun2 = function(x, y, z) x^2 - y^2 - z * 0.5, n = 16) +
+#'   ggplot2::xlim(-1.2, 1.2) + ggplot2::ylim(-1.2, 1.2) +
+#'   scale_z_continuous(limits = c(-1.2, 1.2)) + coord_3d()
+stat_isocurve_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::GeomPath,
+                             position = "identity", ..., fun1, fun2, n = 32L, args = list(),
+                             levels = c(0, 0), refine = 2L,
+                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  if (!is.function(fun1) || !is.function(fun2)) stop("fun1 and fun2 must be functions.", call. = FALSE)
+  if (!is.numeric(levels) || length(levels) != 2L || any(!is.finite(levels))) stop("levels must be two finite numbers.", call. = FALSE)
+  if (!is.numeric(refine) || length(refine) != 1L || !is.finite(refine) || refine < 0 || refine != trunc(refine))
+    stop("refine must be a non-negative integer.", call. = FALSE)
+  make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsocurve3D, position,
+    stats_params_3d(list(fun1 = fun1, fun2 = fun2, n = n, args = args, levels = as.double(levels), refine = as.integer(refine),
+      na.rm = na.rm), list(...)), show.legend, inherit.aes)
+}
+
+#' @rdname stat_isocurve_3d
+#' @export
+geom_isocurve_3d <- function(...) stat_isocurve_3d(...)
 
 #' Convex hulls in three dimensions
 #'

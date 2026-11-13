@@ -123,6 +123,8 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   build_seconds <- proc.time()[["elapsed"]] - start
   timings <- numeric(frames)
   extents <- vector("list", frames)
+  # Repelled labels start each frame where the previous frame left them.
+  label_state <- new.env(parent = emptyenv())
   for (i in seq_len(frames)) {
     start <- proc.time()[["elapsed"]]
     if (i > 1L) {
@@ -136,6 +138,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
       params$coord_params$backend <- backend
       params$coord_params$frame <- frame
       params$coord_params$frame_registry <- registry
+      params$coord_params$label_state <- label_state
       scene_panel_grob(panel$packets, params, panel$theme, panel$underlay, panel$overlay)
     })
     forced <- grid::grid.force(current)
@@ -285,14 +288,15 @@ motion_coord_3d <- function(coord, values, backend, frame) {
 
 # A panel with its own view moves with the animated camera and keeps its
 # offset from the coord's first view: azimuth, elevation and roll differences
-# add, the zoom ratio multiplies.
+# add, the zoom ratio multiplies. Projection, shear and the vertical axis stay
+# those of the panel's view.
 motion_panel_camera_3d <- function(camera, panel, base) {
-  camera$aspect <- panel$aspect
-  camera$azimuth <- camera$azimuth + panel$azimuth - base$azimuth
-  camera$elevation <- max(-90, min(90, camera$elevation + panel$elevation - base$elevation))
-  camera$roll <- camera$roll + panel$roll - base$roll
-  camera$zoom <- camera$zoom * panel$zoom / base$zoom
-  camera
+  out <- panel
+  out$azimuth <- panel$azimuth + camera$azimuth - base$azimuth
+  out$elevation <- max(-90, min(90, panel$elevation + camera$elevation - base$elevation))
+  out$roll <- panel$roll + camera$roll - base$roll
+  out$zoom <- panel$zoom * camera$zoom / base$zoom
+  out
 }
 
 motion_panels_3d <- function(grob) {

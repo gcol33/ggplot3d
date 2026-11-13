@@ -1,6 +1,6 @@
 #ifndef GGPLOT3D_GEOMETRY_EXTRACT_H
 #define GGPLOT3D_GEOMETRY_EXTRACT_H
-#include "isosurface.h"
+#include "slice.h"
 #include "dual.h"
 namespace ggplot3d_geometry {
 
@@ -21,11 +21,19 @@ static inline const std::vector<Method>& isosurface_methods() {
   return methods;
 }
 
+// With a clipping plane, the surface (and its box caps) keeps the part on the
+// plane's negative side, and caps closes the sublevel region on the plane too.
 static inline Rcpp::DataFrame extract_isosurface(const ScalarGrid& grid,Rcpp::NumericVector levels,bool caps,const std::string& name,
-                                                 const dual::GradientFunction& gradient) {
+                                                 const dual::GradientFunction& gradient,const Plane* clip=nullptr) {
   for(const auto& m:isosurface_methods()) if(name==m.name) {
     for(double level:levels) if(!std::isfinite(level)) Rcpp::stop("Levels must be finite.");
-    return m.extract(grid,Rcpp::as<std::vector<double>>(levels),caps,gradient).output();
+    std::vector<double> l=Rcpp::as<std::vector<double>>(levels);
+    Mesh mesh=m.extract(grid,l,caps,gradient);
+    if(clip) {
+      mesh=clip_mesh(mesh,*clip);
+      if(caps) plane_caps(mesh,grid,l,*clip);
+    }
+    return mesh.output();
   }
   Rcpp::stop("Unknown isosurface method.");
 }

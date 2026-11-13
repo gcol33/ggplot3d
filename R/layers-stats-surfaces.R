@@ -80,7 +80,8 @@ geom_smooth_3d <- function(...) stat_smooth_3d(...)
 #' @param plane `"surface"` draws density as height. `"floor"` or a numeric z
 #'   in original units lays the density grid flat at that height, filled by
 #'   density unless fill is mapped or set, and unshaded unless `shade = TRUE`.
-#'   The density range still trains the z scale, as for contours.
+#'   The density range still trains the z scale, as for contours. A flat
+#'   plane is a shorthand for [position_project_3d()].
 #' @export
 #' @examples
 #' ggplot2::ggplot(faithful, ggplot2::aes(eruptions, waiting)) +
@@ -99,8 +100,8 @@ stat_density_2d_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurf
     density_fill <- ggplot2::aes(fill = ggplot2::after_stat(density))
     if (is.null(mapping)) mapping <- density_fill else mapping[["fill"]] <- density_fill[["fill"]]
   }
-  make_layer_3d(geom, mapping, data, StatDensity2D3D, position,
-    stats_params_3d(list(h = h, adjust = adjust, n = n, plane = plane, na.rm = na.rm, shade = !flat), extra),
+  make_layer_3d(geom, mapping, data, StatDensity2D3D, plane_position_3d(plane, position),
+    stats_params_3d(list(h = h, adjust = adjust, n = n, na.rm = na.rm, shade = !flat), extra),
     show.legend, inherit.aes)
 }
 

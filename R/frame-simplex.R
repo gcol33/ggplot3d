@@ -37,6 +37,17 @@ FrameSimplex <- ggplot2::ggproto("FrameSimplex", Frame3D,
     rear <- names(partitions)[partitions == 0L]
     rear[!(rear %in% self$floor_panes())]
   },
+  origin_axis = function(self, axis, origin) {
+    stop("Origin axes need a frame whose scale space is the unit cube; a simplex frame has none.", call. = FALSE)
+  },
+  # Only the height of a ternary prism has cross-sections of the full frame.
+  section = function(self, axis, value) {
+    floor <- Find(function(pane) identical(pane$name, "floor"), self$panes())
+    if (axis != 3L || is.null(floor)) return(NULL)
+    floor$xyz[, 3L] <- value
+    floor$name <- "zzero"; floor$families <- list(); floor$outward <- c(0, 0, 1)
+    floor
+  },
   axis_candidates = function(self, guide) {
     part <- guide$part %or3d% guide$axis
     spec <- self$axes[[part]]
@@ -140,8 +151,7 @@ frame_tetrahedron_3d <- function() {
 }
 
 coord_simplex_frame_3d <- function(coord, frame, panes, part_axes) {
-  valid <- c("back", "floor", vapply(frame$panes(), `[[`, character(1), "name"))
-  if (!all(panes %in% valid)) stop("Unknown pane for this frame: ", paste(setdiff(panes, valid), collapse = ", "), ". Valid panes: ", paste(valid, collapse = ", "), ".", call. = FALSE)
+  check_frame_panes_3d(frame, panes)
   if (identical(coord$model_aspect, "data")) stop("aspect = \"data\" applies to Cartesian frames only.", call. = FALSE)
   coord$frame <- frame
   coord$config$panes <- unique(panes)
@@ -165,8 +175,9 @@ simplex_axes_3d <- function(axes, allowed) {
 #' with the aesthetics `a`, `b` and `c` in place of `x` and `y`. The map is
 #' affine, so visibility stays exact.
 #' @param axes Guides to draw, any of `"a"`, `"b"`, `"c"` and `"z"`.
-#' @param panes Panes to draw: `"back"` (the rear walls), `"floor"`, or names
-#'   among `"floor"`, `"top"`, `"ab"`, `"bc"`, `"ca"`.
+#' @param panes Panes to draw: `"back"` (the rear walls), `"floor"`, `"front"`
+#'   (the other panes facing the viewer), or names among `"floor"`, `"top"`,
+#'   `"ab"`, `"bc"`, `"ca"`.
 #' @param ... Other [coord_3d()] arguments: camera, z limits, box, light,
 #'   backend.
 #' @details The part guides share the break set of the `x` scale, and their
@@ -193,8 +204,8 @@ coord_ternary_3d <- function(axes = c("a", "b", "c", "z"), panes = c("back", "fl
 #' isolines of its three parts; each vertex carries the title of its part.
 #' @param axes Guides to draw, any of `"a"`, `"b"`, `"c"` and `"d"`.
 #' @param panes Panes to draw: `"back"` (rear faces other than the base),
-#'   `"floor"` (the base `"abc"`), or face names `"abc"`, `"bcd"`, `"acd"`,
-#'   `"abd"`.
+#'   `"floor"` (the base `"abc"`), `"front"` (the other faces facing the
+#'   viewer), or face names `"abc"`, `"bcd"`, `"acd"`, `"abd"`.
 #' @param ... Other [coord_3d()] arguments: camera, box, light, backend.
 #' @return A Coord3D ggproto object.
 #' @examples

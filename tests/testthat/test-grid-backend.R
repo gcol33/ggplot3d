@@ -453,7 +453,7 @@ test_that("pane grids and box edges share fixed furniture partitions", {
         ggplot2::scale_y_continuous(breaks = c(0.25, 0.75), minor_breaks = NULL) +
         scale_z_continuous(breaks = c(0.25, 0.75), minor_breaks = NULL)
       params <- ggplot2::ggplot_build(plot)$layout$panel_params[[1L]]
-      furniture <- panel_furniture_3d(params, ggplot2::theme_get(), new_scene_viewport(150, 150))
+      furniture <- panel_furniture_3d(params, ggplot2::complete_theme(), new_scene_viewport(150, 150))
       packet <- furniture$packet
       expected <- furniture_partitions_3d(furniture$camera, furniture$viewport)
       expect_equal(packet$faces$partition, if (clip_data) unname(expected) else rep(1L, 6))

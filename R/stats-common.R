@@ -7,7 +7,7 @@ GeomStatsSurface3D <- ggplot2::ggproto("GeomStatsSurface3D", GeomSurface3D,
 
 emit_stats_surface_3d <- function(data, params, panel_params) {
   if (!is.null(data$.opacity)) data$alpha <- data$alpha * data$.opacity
-  emit_surface_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
+  emit_surface_3d(data, params, panel_params)
 }
 
 register_geom_3d(GeomStatsSurface3D, emit_stats_surface_3d, parameters = list(outline = NULL))
@@ -94,27 +94,43 @@ isosurface_method_3d <- function(method) {
   match.arg(method[1L], methods)
 }
 
-stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, args = list(), refine = 0L, simplify = NULL) {
-  if (!is.logical(caps) || length(caps) != 1L || is.na(caps)) stop("caps must be TRUE or FALSE.", call. = FALSE)
-  method <- isosurface_method_3d(method)
+# Axes and values (x fastest) of a complete rectilinear x/y/z grid in data.
+stats_scalar_grid_3d <- function(data) {
   axes <- lapply(data[c("x", "y", "z")], function(x) sort(unique(x)))
   dims <- lengths(axes)
-  if (any(dims < 2L) || prod(dims) != nrow(data)) stop("An isosurface requires a complete rectilinear x/y/z grid.", call. = FALSE)
+  if (any(dims < 2L) || prod(dims) != nrow(data)) stop("A scalar field requires a complete rectilinear x/y/z grid.", call. = FALSE)
   key <- match(data$x, axes$x) + dims[1L] * (match(data$y, axes$y) - 1L + dims[2L] * (match(data$z, axes$z) - 1L))
   if (anyDuplicated(key)) stop("Scalar grid coordinates must be unique.", call. = FALSE)
-  value <- data$value[order(key)]
+  list(axes = axes, value = as.double(data$value[order(key)]))
+}
+
+# Normal and point of a plane given by sdf_plane(), as six numbers.
+plane_coefficients_3d <- function(plane, name = "plane") {
+  node <- if (inherits(plane, "ggplot3d_sdf")) sdf_node_3d(plane)
+  if (is.null(node) || node$op != "plane") stop(name, " must be a plane made with sdf_plane().", call. = FALSE)
+  c(node$params$normal, node$params$point)
+}
+
+stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, args = list(), refine = 0L, simplify = NULL, clip = NULL) {
+  if (!is.logical(caps) || length(caps) != 1L || is.na(caps)) stop("caps must be TRUE or FALSE.", call. = FALSE)
+  method <- isosurface_method_3d(method)
+  field <- stats_scalar_grid_3d(data)
+  axes <- field$axes; value <- field$value
   f <- if (!is.null(fun)) function_evaluator_3d(fun, args)
-  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps, method,
-    if (!is.null(f)) function_gradient_3d(f, axes))
+  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, value, stats_levels_3d(value, levels), caps, method,
+    if (!is.null(f)) function_gradient_3d(f, axes), if (!is.null(clip)) plane_coefficients_3d(clip, "clip"))
   isosurface_finish_3d(out, axes, value, f, refine, simplify)
 }
 
-# fun as a function of an n x 3 matrix of positions, one value per row.
+# fun as a function of an n x 3 matrix of positions, one value per row. A
+# signed distance function also carries its exact gradient.
 function_evaluator_3d <- function(fun, args) {
-  function(p) {
+  f <- function(p) {
     v <- do.call(fun, c(list(x = p[, 1L], y = p[, 2L], z = p[, 3L]), args))
     rep_len(as.double(v), nrow(p))
   }
+  if (inherits(fun, "ggplot3d_sdf")) attr(f, "gradient") <- function(p) sdf_gradient_3d(fun, p)
+  f
 }
 
 # Polishes vertices against fun when it is known, decimates to `simplify`
@@ -151,9 +167,11 @@ regula_falsi_3d <- function(a, b, fa, fb, f, steps) {
   pmin(pmax(t, 0), 1)
 }
 
-# Central-difference gradient of a vectorised function of an n x 3 matrix,
-# with steps of 1e-5 times each axis range, in one call over the six offsets.
+# Gradient of a vectorised function of an n x 3 matrix: the exact gradient
+# the function carries, or central differences with steps of 1e-5 times each
+# axis range, in one call over the six offsets.
 function_gradient_3d <- function(f, axes) {
+  if (!is.null(attr(f, "gradient"))) return(attr(f, "gradient"))
   h <- vapply(axes, function(a) diff(range(a)), numeric(1)) * 1e-5
   offsets <- rbind(diag(h), -diag(h))
   function(p) {

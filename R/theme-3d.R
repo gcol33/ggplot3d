@@ -1,5 +1,10 @@
 .theme_state_3d <- new.env(parent = emptyenv())
 
+# Planes of the box panes, keyed by the axis normal to each pane.
+pane_planes_3d <- c(x = "yz", y = "xz", z = "xy")
+
+pane_grid_plane_3d <- function(pane) pane_planes_3d[[pane$element]]
+
 register_theme_3d <- function() {
   definitions <- list()
   add <- function(name, class, parent = NULL) {
@@ -11,14 +16,33 @@ register_theme_3d <- function() {
   add("axis.ticks.length.z", "unit", "axis.ticks.length")
   add("axis.minor.ticks.z", "element_line", "axis.ticks.z")
   add("axis.minor.ticks.length.z", "unit", "axis.ticks.length.z")
-  for (level in c("major", "minor")) add(paste0("panel.grid.", level, ".z"), "element_line", paste0("panel.grid.", level))
+  for (level in c("major", "minor")) {
+    add(paste0("panel.grid.", level, ".z"), "element_line", paste0("panel.grid.", level))
+    for (axis in c("x", "y", "z")) for (plane in pane_planes_3d) {
+      add(paste0("panel.grid.", level, ".", axis, ".", plane), "element_line", paste0("panel.grid.", level, ".", axis))
+    }
+  }
   add("panel.pane", "element_rect", "panel.background")
   for (axis in c("x", "y", "z")) add(paste0("panel.pane.", axis), "element_rect", "panel.pane")
+  add("panel.pane.front", "element_rect", "panel.pane")
+  add("panel.zero", "element_rect", "rect")
+  for (axis in c("x", "y", "z")) add(paste0("panel.zero.", axis), "element_rect", "panel.zero")
+  add("panel.zero.line", "element_line", "line")
+  for (axis in c("x", "y", "z")) add(paste0("panel.zero.line.", axis), "element_line", "panel.zero.line")
+  add("axis.line.origin", "element_line", "line")
+  for (axis in c("x", "y", "z")) add(paste0("axis.line.origin.", axis), "element_line", "axis.line.origin")
   add("panel.box", "element_line", "line")
   for (side in c("back", "front")) add(paste0("panel.box.", side), "element_line", "panel.box")
   add("panel.margin.3d", "margin")
   ggplot2::register_theme_elements(
     axis.minor.ticks.length.z = grid::unit(1, "pt"),
+    axis.line.origin = ggplot2::element_line(colour = "grey20", inherit.blank = TRUE),
+    panel.pane.front = ggplot2::element_rect(fill = "#7F7F7F1A", colour = NA, inherit.blank = TRUE),
+    panel.zero = ggplot2::element_rect(fill = "#7F7F7F40", colour = NA, linewidth = 0.3, inherit.blank = TRUE),
+    panel.zero.x = ggplot2::element_blank(),
+    panel.zero.y = ggplot2::element_blank(),
+    panel.zero.z = ggplot2::element_blank(),
+    panel.zero.line = ggplot2::element_blank(),
     panel.box = ggplot2::element_line(colour = "grey50", linewidth = 0.3, inherit.blank = TRUE),
     panel.margin.3d = ggplot2::margin(8, 8, 8, 8, unit = "pt"),
     element_tree = definitions

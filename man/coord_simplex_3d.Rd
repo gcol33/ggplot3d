@@ -10,8 +10,8 @@ coord_simplex_3d(axes = c("a", "b", "c", "d"), panes = c("back", "floor"), ...)
 \item{axes}{Guides to draw, any of \code{"a"}, \code{"b"}, \code{"c"} and \code{"d"}.}
 
 \item{panes}{Panes to draw: \code{"back"} (rear faces other than the base),
-\code{"floor"} (the base \code{"abc"}), or face names \code{"abc"}, \code{"bcd"}, \code{"acd"},
-\code{"abd"}.}
+\code{"floor"} (the base \code{"abc"}), \code{"front"} (the other faces facing the
+viewer), or face names \code{"abc"}, \code{"bcd"}, \code{"acd"}, \code{"abd"}.}
 
 \item{...}{Other \code{\link[=coord_3d]{coord_3d()}} arguments: camera, box, light, backend.}
 }

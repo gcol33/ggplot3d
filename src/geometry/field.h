@@ -106,6 +106,39 @@ static inline int edge_vertex(Mesh& mesh,VertexSlab& slab,const ScalarGrid& grid
   return id;
 }
 
+// Oriented plane n . (p - point) = 0 with unit normal n.
+struct Plane {
+  V normal,point;
+  double distance(V p) const { return dot(normal,sub(p,point)); }
+};
+
+// Vertex of a cap polygon: its mesh id and whether it is a polygon corner
+// (as opposed to a level crossing on a polygon edge).
+struct CapVertex { int id; bool corner; };
+
+// Sublevel part (field below the level) of a polygon whose field is linear
+// along its edges, in the polygon's cyclic order: every corner below the
+// level and one crossing on each edge whose ends lie on either side.
+// high(j) classifies corner j, corner(j) and crossing(j, k) return mesh ids.
+template<class High,class Corner,class Crossing>
+static inline std::vector<CapVertex> sublevel_polygon(int n,High high,Corner corner,Crossing crossing) {
+  std::vector<CapVertex> poly;
+  for(int j=0;j<n;++j) {
+    int k=(j+1)%n; bool hj=high(j),hk=high(k);
+    if(!hj) poly.push_back({corner(j),true});
+    if(hj!=hk) poly.push_back({crossing(j,k),false});
+  }
+  return poly;
+}
+
+// Triangle fan of a convex cap polygon wound along normal. The fan starts at
+// a polygon corner, so no cap diagonal joins two crossings (a surface piece
+// next to the cap may join two crossings of the same polygon edge chain).
+static inline void cap_fan(Mesh& mesh,std::vector<CapVertex> poly,V normal,double level) {
+  for(size_t j=0;j<poly.size();++j) if(poly[j].corner) { std::rotate(poly.begin(),poly.begin()+j,poly.end()); break; }
+  for(size_t j=1;j+1<poly.size();++j) mesh.triangle(poly[0].id,poly[j].id,poly[j+1].id,normal,level,true);
+}
+
 // Closes the sublevel region (field below the level) on a face of the grid box.
 // corners lists the face's grid ids in cyclic order; a quad face with four
 // crossings is split as the surface's face decision splits it.
@@ -113,28 +146,19 @@ static inline void cap_face(Mesh& mesh,VertexSlab& slab,const ScalarGrid& grid,c
                             double level,int axis,double side,bool split_low) {
   int n=corners.size();
   V normal{0,0,0}; normal[axis]=side;
-  // Fans start at a grid corner, so no cap diagonal joins two crossings; a
-  // tunnel through the adjacent cell may join two crossings of this face.
-  auto emit=[&](std::vector<int> poly) {
-    for(size_t j=0;j<poly.size();++j) if(mesh.vertices[poly[j]].ea==mesh.vertices[poly[j]].eb) {
-      std::rotate(poly.begin(),poly.begin()+j,poly.end()); break;
-    }
-    for(size_t j=1;j+1<poly.size();++j) mesh.triangle(poly[0],poly[j],poly[j+1],normal,level,true);
+  auto high=[&](int j) { return grid.high(corners[j],level); };
+  auto corner=[&](int j) { return grid_vertex(mesh,slab,grid,corners[j]); };
+  auto crossing=[&](int j,int k) { return edge_vertex(mesh,slab,grid,corners[j],corners[k],level); };
+  // A crossing snapped onto a grid point is a grid point too.
+  auto fan=[&](std::vector<CapVertex> poly) {
+    for(auto& v:poly) v.corner=mesh.vertices[v.id].ea==mesh.vertices[v.id].eb;
+    cap_fan(mesh,poly,normal,level);
   };
-  auto low_vertex=[&](int a) { int id=grid_vertex(mesh,slab,grid,a); return id; };
-  std::vector<int> poly;
-  for(int j=0;j<n;++j) {
-    int a=corners[j],b=corners[(j+1)%n]; bool ha=grid.high(a,level),hb=grid.high(b,level);
-    if(!ha) poly.push_back(low_vertex(a));
-    if(ha!=hb) poly.push_back(edge_vertex(mesh,slab,grid,a,b,level));
-  }
+  std::vector<CapVertex> poly=sublevel_polygon(n,high,corner,crossing);
   if(poly.size()==6&&n==4&&split_low) {
-    int first=grid.high(corners[0],level)?1:0;
-    for(int j=first;j<4;j+=2) {
-      int a=corners[j],before=corners[(j+3)%4],after=corners[(j+1)%4];
-      emit({edge_vertex(mesh,slab,grid,before,a,level),low_vertex(a),edge_vertex(mesh,slab,grid,a,after,level)});
-    }
-  } else emit(poly);
+    int first=high(0)?1:0;
+    for(int j=first;j<4;j+=2) fan({{crossing((j+3)%4,j),false},{corner(j),true},{crossing(j,(j+1)%4),false}});
+  } else fan(poly);
 }
 }
 #endif
