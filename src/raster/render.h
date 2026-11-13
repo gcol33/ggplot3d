@@ -14,7 +14,12 @@ struct Paint {
 };
 
 static inline double edge(const Screen& a,const Screen& b,double x,double y) {
-  return (a.x-x)*(b.y-y)-(a.y-y)*(b.x-x);
+  // A shared edge uses one evaluation order, including under fused arithmetic.
+  bool reverse=std::make_tuple(a.x,a.y)>std::make_tuple(b.x,b.y);
+  const Screen& first=reverse ? b:a;
+  const Screen& last=reverse ? a:b;
+  double value=(first.x-x)*(last.y-y)-(first.y-y)*(last.x-x);
+  return reverse ? -value:value;
 }
 static inline bool edge_inside(double value,const Screen& a,const Screen& b,double orientation) {
   if(value!=0) return value>0;

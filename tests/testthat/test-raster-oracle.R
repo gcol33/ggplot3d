@@ -45,6 +45,31 @@ test_that("depth peeling matches the vector translucent stack", {
   }
 })
 
+test_that("shared triangle edges paint translucent interiors exactly once", {
+  quad <- ref_quad(.7)
+  triangulations <- list(list(1:4), list(c(1L, 2L, 3L), c(1L, 3L, 4L)),
+    list(c(1L, 2L, 4L), c(2L, 3L, 4L)))
+  for (n in c(80L, 160L)) for (elevation in c(-90, 90)) {
+    camera <- ref_cameras()$pole
+    camera$elevation <- elevation
+    viewport <- ggplot3d:::new_scene_viewport(100, 100, n * 25.4 / 100)
+    reference <- ref_packet(faces = list(quad), face_alpha = .4)
+    oracle <- ref_render(reference, camera, viewport, n)
+    interior <- !oracle$boundary & oracle$visible != 0L
+    for (triangles in triangulations) for (reverse in c(FALSE, TRUE)) {
+      faces <- lapply(triangles, function(i) quad[if (reverse) rev(i) else i, , drop = FALSE])
+      packet <- ref_packet(faces = faces, face_alpha = .4)
+      packet$styles$fill <- "red"
+      raster <- ggplot3d:::raster_scene_3d(packet, camera, viewport, 1L)
+      image <- matrix(as.integer(raster$image), n, n, byrow = TRUE)
+      pixels <- as.vector(t(image[n:1L, , drop = FALSE]))
+      alpha <- bitwAnd(bitwShiftR(pixels, 24L), 255L)
+      expect_true(any(interior))
+      expect_equal(alpha[interior], rep(102L, sum(interior)))
+    }
+  }
+})
+
 test_that("whole text anchors are hidden by nearer opaque coverage", {
   f <- ref_fixture("coplanar_layers", "pole")
   f$packet$text <- ggplot3d:::new_scene_packet(
