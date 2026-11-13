@@ -111,6 +111,8 @@ reference:
   - geom_label_3d
   - geom_polygon_3d
   - geom_band_3d
+  - geom_boxplot_3d
+  - geom_area_3d
   - geom_dropline_3d
   - geom_rug_3d
   - geom_plane_3d

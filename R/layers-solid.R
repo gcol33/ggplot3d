@@ -14,22 +14,26 @@ solid_heights_3d <- function(out, params) {
   out
 }
 
+setup_cell_bounds_3d <- function(data, params) {
+  for (axis in c("x", "y")) {
+    size <- params[[if (axis == "x") "width" else "depth"]]
+    if (!is.null(size) && (length(size) != 1L || !is.finite(size) || size <= 0)) stop("width and depth must be positive scalars.", call. = FALSE)
+    widths <- vapply(split(data[[axis]], data$PANEL), lattice_spacing_3d, numeric(1)) * 0.9
+    size <- size %or3d% unname(widths[as.character(data$PANEL)])
+    if (is.null(data[[paste0(axis, "min")]])) data[[paste0(axis, "min")]] <- data[[axis]] - size / 2
+    if (is.null(data[[paste0(axis, "max")]])) data[[paste0(axis, "max")]] <- data[[axis]] + size / 2
+    if (any(data[[paste0(axis, "min")]] > data[[paste0(axis, "max")]], na.rm = TRUE)) stop("Cell lower bounds must not exceed upper bounds.", call. = FALSE)
+  }
+  data
+}
+
 GeomCol3D <- ggplot2::ggproto("GeomCol3D", ggplot2::Geom,
   required_aes = c("x", "y", "z"), default_aes = solid_defaults_3d(),
   optional_aes = c("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"),
   draw_key = ggplot2::draw_key_polygon,
   setup_data = function(data, params) {
     if (anyDuplicated(data[c("PANEL", "group", "x", "y")])) stop("Column cells must be unique within each group.", call. = FALSE)
-    for (axis in c("x", "y")) {
-      size <- params[[if (axis == "x") "width" else "depth"]]
-      if (!is.null(size) && (length(size) != 1L || !is.finite(size) || size <= 0)) stop("width and depth must be positive scalars.", call. = FALSE)
-      widths <- vapply(split(data[[axis]], data$PANEL), lattice_spacing_3d, numeric(1)) * 0.9
-      size <- size %or3d% unname(widths[as.character(data$PANEL)])
-      if (is.null(data[[paste0(axis, "min")]])) data[[paste0(axis, "min")]] <- data[[axis]] - size / 2
-      if (is.null(data[[paste0(axis, "max")]])) data[[paste0(axis, "max")]] <- data[[axis]] + size / 2
-      if (any(data[[paste0(axis, "min")]] > data[[paste0(axis, "max")]], na.rm = TRUE)) stop("Cell lower bounds must not exceed upper bounds.", call. = FALSE)
-    }
-    data
+    setup_cell_bounds_3d(data, params)
   }
 )
 

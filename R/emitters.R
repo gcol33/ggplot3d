@@ -463,6 +463,7 @@ emit_segments_3d <- function(data, params, panel_params) {
 }
 
 merge_scene_packets <- function(packets, panel_id) {
+  packets <- unname(packets)
   if (!length(packets)) return(new_scene_packet(panel_id = panel_id))
   lapply(packets, validate_scene_packet)
   schema <- scene_schemas()
