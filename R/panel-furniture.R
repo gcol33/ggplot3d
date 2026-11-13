@@ -304,7 +304,7 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
       class
     }
     fill_pane(pane, element_3d(paste0("panel.pane.", pane$element), theme), classify)
-    plane <- pane_plane_3d(pane)
+    plane <- pane_grid_plane_3d(pane)
     for (family in pane$families) {
       view <- panel_params[[family$scale]]
       for (level in c("minor", "major")) {

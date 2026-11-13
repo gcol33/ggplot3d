@@ -3,7 +3,7 @@
 # Planes of the box panes, keyed by the axis normal to each pane.
 pane_planes_3d <- c(x = "yz", y = "xz", z = "xy")
 
-pane_plane_3d <- function(pane) pane_planes_3d[[pane$element]]
+pane_grid_plane_3d <- function(pane) pane_planes_3d[[pane$element]]
 
 register_theme_3d <- function() {
   definitions <- list()
