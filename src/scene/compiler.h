@@ -39,14 +39,16 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
             emit(table, row, Kind::face, polygon, clipped, normal);
         }
       } else if (kind == 2) {
-        bool constant_depth=polygon.size()>2 && packet.polylines.width_mm[row]>0;
+        const bool ordered_partition=table.partition[row]!=1;
+        bool complete_path=(polygon.size()>2 || ordered_partition) && packet.polylines.width_mm[row]>0;
         double depth=projection.camera_point(polygon[0].xyz)[2];
         const std::size_t slab_planes=planes.size()-(projection.camera.clip ? 4:0);
         for(const auto& v:polygon) {
-          constant_depth=constant_depth && std::abs(projection.camera_point(v.xyz)[2]-depth)<=projection.resolved.tolerance;
-          for(std::size_t j=0;j<slab_planes;++j) constant_depth=constant_depth && signed_distance(planes[j],v.xyz)>=0;
+          complete_path=complete_path && (ordered_partition ||
+            std::abs(projection.camera_point(v.xyz)[2]-depth)<=projection.resolved.tolerance);
+          for(std::size_t j=0;j<slab_planes;++j) complete_path=complete_path && signed_distance(planes[j],v.xyz)>=0;
         }
-        if(constant_depth && table.opacity[row]>0) {
+        if(complete_path && table.opacity[row]>0) {
           double length=0;
           for(std::size_t j=1;j<polygon.size();++j) length+=projected_length(polygon[j-1],polygon[j],projection);
           double extent=packet.polylines.width_mm[row]*.5;
@@ -99,12 +101,22 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
               j == 1 && start == 0 && packet.polylines.arrow_start[row],
               j+1 == polygon.size() && end == 1 && packet.polylines.arrow_end[row]);
             if(packet.polylines.width_mm[row]>0) {
-              Piece& piece=pieces.back();
-              Polygon bounds=stroke_bounds(piece,packet,projection,piece.normal);
-              if(!bounds.empty()) {
-                piece.anchor=piece.polygon;
-                piece.polygon=clip_polygon(std::move(bounds),planes,piece.clipped);
-                if(piece.polygon.size()<3) pieces.pop_back();
+              Piece source=std::move(pieces.back());pieces.pop_back();
+              bool caps=packet.polylines.cap[row]!=static_cast<Index>(Cap::butt) &&
+                std::abs(projection.camera_point(source.polygon[0].xyz)[2]-
+                  projection.camera_point(source.polygon[1].xyz)[2])>projection.resolved.tolerance;
+              for(int sector=(caps ? -1:0);sector<=(caps ? 1:0);++sector) {
+                Piece piece=source;
+                Polygon bounds=stroke_bounds(piece,packet,projection,piece.normal,sector);
+                if(!bounds.empty()) {
+                  piece.anchor=piece.polygon;
+                  piece.polygon=clip_polygon(std::move(bounds),planes,piece.clipped);
+                  if(caps && !piece.clipped) piece.whole_stroke_parts=3;
+                  piece.clipped=piece.clipped || caps;
+                  if(piece.polygon.size()<3) continue;
+                } else if(sector!=0) continue;
+                if(sector!=0) budget.piece(piece.polygon.size()+piece.anchor.size());
+                pieces.push_back(std::move(piece));
               }
             }
           }
@@ -137,7 +149,11 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       }
     }
   }
-  if(!packet.polylines.count.empty() || !packet.text.count.empty()) {
+  bool needs_coverage=false;
+  for(const Piece& piece:pieces) if(piece.source->partition[piece.row]==1)
+    needs_coverage=needs_coverage || piece.kind==Kind::text ||
+      (piece.kind==Kind::polyline && packet.polylines.hidden[piece.row]!=static_cast<Index>(Hidden::hide));
+  if(needs_coverage) {
     CoverageIndex coverage(pieces,projection);
     pieces.erase(std::remove_if(pieces.begin(),pieces.end(),[&](const Piece& piece) {
       return piece.kind==Kind::text && piece.source->partition[piece.row]==1 &&
@@ -173,10 +189,32 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       [](const Piece& a, const Piece& b) {
         if (a.source->layer_id[a.row] != b.source->layer_id[b.row])
           return a.source->layer_id[a.row] < b.source->layer_id[b.row];
-        return tie_less(a,b);
+        return a.serial < b.serial;
       });
   for (auto& partition : partitions)
-    for (Piece& piece : partition) pieces.push_back(std::move(piece));
+    for (Piece& piece : partition) {
+      if(piece.kind==Kind::marker && piece.clipped && piece.polygon.size()>=3) {
+        int coverage=marker_coverage(piece,packet,projection);
+        if(coverage==0) continue;
+        piece.mask_required=coverage==2;
+      }
+      pieces.push_back(std::move(piece));
+    }
+  std::size_t kept=0;
+  for(std::size_t i=0;i<pieces.size();) {
+    std::size_t count=pieces[i].whole_stroke_parts;
+    bool complete=count>0 && i+count<=pieces.size();
+    for(std::size_t j=1;complete && j<count;++j)
+      complete=pieces[i+j].serial==pieces[i].serial && pieces[i+j].whole_stroke_parts==count;
+    if(complete) {
+      pieces[i].polygon=std::move(pieces[i].anchor);
+      pieces[i].anchor.clear();
+      pieces[i].clipped=false;
+    }
+    if(kept!=i) pieces[kept]=std::move(pieces[i]);
+    ++kept;i+=complete ? count:1;
+  }
+  pieces.resize(kept);
   std::vector<std::size_t> storage(pieces.size());
   std::iota(storage.begin(), storage.end(), 0);
   std::stable_sort(storage.begin(), storage.end(), [&](std::size_t a, std::size_t b) {
@@ -200,7 +238,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
                     piece.path_end,
                     start,end);
     out.fragments.hidden.back()=piece.hidden;
-    if (!piece.anchor.empty() && piece.polygon.size()>=3)
+    if (!piece.anchor.empty() && piece.polygon.size()>=3 && piece.clipped && piece.mask_required)
       append_mask(out,piece.polygon,projection);
     if(!piece.mask.empty()) append_mask(out,piece.mask,projection);
   }

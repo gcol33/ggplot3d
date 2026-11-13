@@ -17,6 +17,8 @@ struct Piece {
   std::size_t serial;
   bool hidden = false;
   Polygon mask;
+  bool mask_required = true;
+  std::size_t whole_stroke_parts = 0;
 };
 
 struct SplitPlane { Vec3 normal, origin; };
@@ -79,6 +81,7 @@ static inline std::pair<Piece, Piece> split_piece(Piece piece, const SplitPlane&
   Piece positive = piece, negative = piece;
   positive.polygon.clear(); negative.polygon.clear();
   positive.clipped = negative.clipped = true;
+  positive.whole_stroke_parts = negative.whole_stroke_parts = 0;
   if (piece.polygon.size() == 2) {
     const Vertex& a = piece.polygon[0]; const Vertex& b = piece.polygon[1];
     double da = plane_distance(plane, a, projection), db = plane_distance(plane, b, projection);

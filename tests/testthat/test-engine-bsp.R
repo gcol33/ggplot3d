@@ -199,7 +199,7 @@ test_that("geometric tolerance is a distance for small valid faces", {
   engine_weights(result,packet)
 })
 
-test_that("opaque silhouettes split narrow and wide lines and retain hidden policies", {
+test_that("opaque silhouettes preserve whole hidden lines and subdivide retained policies", {
   packet <- ggplot3d:::new_scene_packet(
     vertices=list(x=c(.4,.6,.6,.4,.1,.9),y=c(.2,.2,.8,.8,.5,.5),z=c(.6,.6,.6,.6,.4,.4)),
     corners=list(vertex=1:6),faces=list(offset=1L,count=4L),
@@ -210,11 +210,15 @@ test_that("opaque silhouettes split narrow and wide lines and retain hidden poli
       packet$polylines$hidden <- as.integer(policy)
       result <- engine_compile(packet)
       f <- result$fragments; line <- which(f$kind==2L)
-      expect_gte(length(line),2L)
+      if(policy==0L) {
+        expect_length(line,1L)
+        expect_identical(f$kind[result$draw_order],c(2L,1L))
+        expect_identical(f$mask_count[line],0L)
+      } else expect_gte(length(line),2L)
       expect_identical(any(f$hidden),policy>0L)
       expect_equal(sum(f$arrow_start),1L)
       expect_equal(sum(f$arrow_end),1L)
-      if(width>0) expect_true(all(f$mask_count[line]>=3L))
+      if(width>0 && policy>0L) expect_true(all(f$mask_count[line]>=3L))
       expect_true(all(f$normal_x[line]==0 & f$normal_y[line]==0 & f$normal_z[line]==0))
       if(policy>0) expect_true(all(match(which(f$hidden),result$draw_order) >
         match(which(f$kind==1L),result$draw_order)))
@@ -460,3 +464,107 @@ test_that("hidden stroke depth follows the nearest of crossing opaque blockers",
   engine_weights(result,packet)
 })
 
+
+test_that("uncut markers have no masks with other markers or a noncrossing face", {
+  for(surface in c(FALSE,TRUE)) {
+    packet <- ggplot3d:::new_scene_packet(
+      vertices=list(x=c(0,1,1,0,.49,.51),y=c(0,0,1,1,.5,.5),z=c(rep(.4,4),.3,.7)),
+      corners=list(vertex=1:6),faces=if(surface) list(offset=1L,count=4L) else list(),
+      markers=list(offset=5:6,footprint_id=c(1L,1L),opacity=c(.4,.6)),
+      footprints=list(kind=1L,offset=1L,count=0L,radius_x_mm=10,radius_y_mm=6,angle=27),
+      styles=data.frame(style_id=1L))
+    result <- engine_compile(packet)
+    marker <- result$fragments$kind==3L
+    expect_equal(sum(marker),2L)
+    expect_true(all(result$fragments$mask_count[marker]==0L))
+    expect_identical(result$fragments$source_index[marker],1:2)
+    engine_weights(result,packet)
+  }
+})
+
+test_that("underlays and overlays keep supplied order and complete paths", {
+  for(partition in c(0L,2L)) {
+    packet <- ggplot3d:::new_scene_packet(
+      vertices=list(x=c(0,1,1,0,.1,.5,.9,.9,.5,.1),
+        y=c(0,0,1,1,.3,.7,.3,.7,.3,.7),z=c(rep(.5,4),.2,.8,.2,.8,.2,.8)),
+      corners=list(vertex=1:10),faces=list(offset=1L,count=4L),
+      polylines=list(offset=c(5L,8L),count=c(3L,3L),width_mm=c(2,2),
+        source_row=c(10L,1L),partition=rep(partition,2)),styles=data.frame(style_id=1L))
+    result <- engine_compile(packet)
+    f <- result$fragments; line <- which(f$kind==2L)
+    expect_identical(f$count[line],c(3L,3L))
+    expect_identical(f$mask_count[line],c(0L,0L))
+    expect_identical(f$source_index[intersect(result$draw_order,line)],1:2)
+    expect_identical(f$kind[result$draw_order],if(partition==0L) c(2L,2L,1L) else c(1L,2L,2L))
+    engine_weights(result,packet)
+  }
+})
+
+test_that("rear depth strokes remain whole over a triangulated surface", {
+  packet <- engine_grid(2000L)
+  xyz <- rbind(c(.1,.5,.1),c(.9,.5,.1))
+  line <- ggplot3d:::new_scene_packet(vertices=list(x=xyz[,1],y=xyz[,2],z=xyz[,3]),
+    corners=list(vertex=1:2),polylines=list(offset=1L,width_mm=1),styles=data.frame(style_id=1L))
+  packet <- ggplot3d:::merge_scene_packets(list(packet,line),1L)
+  result <- engine_compile(packet)
+  f <- result$fragments; strokes <- which(f$kind==2L)
+  expect_length(strokes,1L)
+  expect_identical(f$mask_count[strokes],0L)
+  expect_equal(sum(f$kind==1L),2000L)
+})
+
+test_that("face-plane crossings outside screen overlap do not split a stroke", {
+  packet <- ggplot3d:::new_scene_packet(
+    vertices=list(x=c(.7,.9,.9,.7,.1,.9),y=c(.3,.3,.7,.7,.5,.5),
+      z=c(rep(.5,4),.1,.9)),corners=list(vertex=1:6),faces=list(offset=1L,count=4L),
+    polylines=list(offset=5L,width_mm=1),styles=data.frame(style_id=1L))
+  result <- engine_compile(packet)
+  expect_length(result$draw_order,2L)
+  expect_true(all(result$fragments$mask_count==0L))
+})
+
+test_that("pole-aligned strokes have finite geometry in every partition", {
+  for(mode in c("orthographic","perspective")) for(elevation in c(-90,90))
+    for(partition in 0:2) {
+      packet <- ggplot3d:::new_scene_packet(vertices=list(x=c(1,1),y=c(1,1),z=c(0,1)),
+        corners=list(vertex=1:2),polylines=list(offset=1L,width_mm=.5,partition=as.integer(partition)),
+        styles=data.frame(style_id=1L))
+      camera <- ggplot3d:::new_camera_3d(projection=mode,azimuth=-60,elevation=elevation)
+      result <- engine_compile(packet,camera,141.6143,141.6143)
+      expect_true(all(is.finite(unlist(result$vertices))))
+      expect_true(all(is.finite(unlist(result$masks))))
+      engine_weights(result,packet)
+    }
+})
+
+test_that("variable-depth endpoint caps agree with the independent ray oracle", {
+  reference <- new.env(parent=environment())
+  source(testthat::test_path("..","fixtures","oracle","reference.R"),local=reference)
+  source(testthat::test_path("..","fixtures","scenes","builders.R"),local=reference)
+  for(mode in c("orthographic","perspective")) for(cap in 1:2) {
+    packet <- reference$ref_packet(list(reference$ref_quad(.65)),
+      lines=list(rbind(c(.2,.5,.3),c(.8,.5,.7))),face_alpha=.4,line_width=10)
+    packet$polylines$cap <- as.integer(cap)
+    packet$polylines$opacity <- .5
+    camera <- ggplot3d:::new_camera_3d(projection=mode,azimuth=-90,elevation=90)
+    viewport <- ggplot3d:::new_scene_viewport(100,100)
+    result <- ggplot3d:::scene_compile(packet,camera,viewport)
+    score <- reference$ref_score(packet,camera,viewport,result,100L)
+    expect_equal(score$wrong,0L,info=paste(mode,cap))
+    engine_weights(result,packet)
+  }
+})
+
+test_that("uninterrupted variable-depth cap sectors replay as one unmasked stroke", {
+  for(cap in 1:2) {
+    packet <- ggplot3d:::new_scene_packet(vertices=list(x=c(.2,.8),y=c(.5,.5),z=c(.2,.8)),
+      corners=list(vertex=1:2),polylines=list(offset=1L,width_mm=8,cap=as.integer(cap),opacity=.5,
+        arrow_start=TRUE,arrow_end=TRUE),styles=data.frame(style_id=1L))
+    result <- engine_compile(packet)
+    expect_length(result$draw_order,1L)
+    expect_identical(result$fragments$mask_count,0L)
+    expect_false(result$fragments$clipped)
+    expect_true(result$fragments$arrow_start && result$fragments$arrow_end)
+    engine_weights(result,packet)
+  }
+})

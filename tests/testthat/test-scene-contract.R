@@ -182,7 +182,7 @@ test_that("all primitive tables join one draw order with stable source identity"
   expect_identical(result$fragments$kind[result$draw_order], c(2L, 1L, 3L, 4L))
   expect_identical(result$fragments$parent_primitive_id, 1:4)
   expect_identical(result$fragments$style_id, rep(1L, 4))
-  expect_identical(result$fragments$arrow_start, c(FALSE, FALSE, FALSE, FALSE))
+  expect_identical(result$fragments$arrow_start, c(FALSE, TRUE, FALSE, FALSE))
   expect_identical(result$fragments$arrow_end, c(FALSE, TRUE, FALSE, FALSE))
   expect_gt(result$fragments$path_end_mm[2], 0)
   expect_identical(serialize(packet, NULL), before)

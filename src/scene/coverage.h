@@ -77,28 +77,38 @@ static inline Polygon text_bounds(const ScenePacket& packet,Index row,const Vert
 }
 
 static inline Polygon stroke_bounds(const Piece& piece, const ScenePacket& packet,
-                                    const Projection& p, Vec3& normal) {
+                                    const Projection& p, Vec3& normal, int sector=0) {
   const auto& line=packet.polylines;
   Vec3 a=p.camera_point(piece.polygon[0].xyz), b=p.camera_point(piece.polygon[1].xyz);
   auto sa=p.npc(a), sb=p.npc(b);
   double dx=(sb[0]-sa[0])*p.viewport.width_mm, dy=(sb[1]-sa[1])*p.viewport.height_mm;
   double length=std::hypot(dx,dy);
-  if(length<=p.resolved.tolerance) return {};
+  double model_per_mm=2/(p.sy*p.viewport.height_mm);
+  if(p.camera.perspective) model_per_mm*=std::min(a[2],b[2]);
+  if(length*model_per_mm<=p.resolved.tolerance) return {};
   double ux=dx/length, uy=dy/length;
   double extent=line.width_mm[piece.row]*0.5;
-  if(line.join[piece.row]==static_cast<Index>(Join::mitre)) extent*=line.mitre_limit[piece.row];
+  if(line.count[piece.row]>2 && line.join[piece.row]==static_cast<Index>(Join::mitre))
+    extent*=line.mitre_limit[piece.row];
+  bool constant_depth=std::abs(a[2]-b[2])<=p.resolved.tolerance;
   Vec3 across{};
   for(int k=0;k<3;++k) across[k]=(-uy*p.resolved.right[k]+ux*p.resolved.up[k]);
   Vec3 direction=subtract(p.model(piece.polygon[1].xyz),p.model(piece.polygon[0].xyz));
   normal=cross(direction,across);
   double norm=std::sqrt(dot(normal,normal));
   for(double& x:normal) x/=norm;
+  if(sector!=0 || constant_depth) normal=p.resolved.forward;
+  double first=0,last=length;
+  if(sector<0) {first=-extent;last=0;}
+  else if(sector>0) {first=length;last=length+extent;}
+  else if(constant_depth && line.cap[piece.row]!=static_cast<Index>(Cap::butt)) {
+    first=-extent;last=length+extent;
+  }
   Polygon polygon;
-  for(auto uv:{std::array<double,2>{-extent,-extent},{length+extent,-extent},
-              {length+extent,extent},{-extent,extent}}) {
-    double t=uv[0]/length;
+  for(auto uv:{std::array<double,2>{first,-extent},{last,-extent},
+              {last,extent},{first,extent}}) {
+    double t=std::max(0.0,std::min(1.0,uv[0]/length));
     double depth=p.camera.perspective ? 1/((1-t)/a[2]+t/b[2]) : (1-t)*a[2]+t*b[2];
-    require(depth>0 && std::isfinite(depth),"stroke footprint crosses the eye plane");
     polygon.push_back(screen_vertex(sa[0]+(uv[0]*ux-uv[1]*uy)/p.viewport.width_mm,
                                    sa[1]+(uv[0]*uy+uv[1]*ux)/p.viewport.height_mm,depth,p));
   }
@@ -133,6 +143,7 @@ static inline double face_ray_parameter(const CoverageFace& face,const Vertex& v
   return -dot(face.plane.normal,subtract(model,face.plane.origin))/denominator;
 }
 static inline void lift_coverage(Piece& piece,const CoverageFace& face,const Projection& p) {
+  piece.whole_stroke_parts=0;
   if(piece.anchor.empty()) piece.anchor=piece.polygon;
   for(Vertex& v:piece.polygon) {
     Vec3 model=p.model(v.xyz);
@@ -197,7 +208,8 @@ public:
                                  ResourceBudget& budget) const {
     std::vector<Piece> result;
     for(Piece& piece:pieces) {
-      if(piece.kind!=Kind::polyline || piece.source->partition[piece.row]!=1) {
+      if(piece.kind!=Kind::polyline || piece.source->partition[piece.row]!=1 ||
+          packet.polylines.hidden[piece.row]==static_cast<Index>(Hidden::hide)) {
         result.push_back(std::move(piece)); continue;
       }
       std::array<double,4> bounds{R_PosInf,R_PosInf,R_NegInf,R_NegInf};

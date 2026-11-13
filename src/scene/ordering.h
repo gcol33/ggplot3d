@@ -196,6 +196,25 @@ static inline Ring2 glyph_overlap(const Ring2& overlap,const Piece& glyph,
   return samples;
 }
 
+static inline int marker_coverage(const Piece& piece,const ScenePacket& packet,const Projection& p) {
+  ProjectedPiece carrier=project_piece(piece,p),direction;
+  if(glyph_overlap(carrier.ring,piece,direction,packet,p).empty()) return 0;
+  Projection unbounded=p;unbounded.camera.clip=false;
+  bool clipped=false;
+  Piece full=piece;
+  full.polygon=marker_bounds(packet,piece.row,piece.anchor[0],unbounded,clipped);
+  auto footprint=project_piece(full,p);
+  for(std::size_t i=0;i<carrier.ring.size();++i) {
+    const auto& a=carrier.ring[i];const auto& b=carrier.ring[(i+1)%carrier.ring.size()];
+    direction.field={a[1]-b[1],b[0]-a[0],0};
+    double length=std::hypot(b[0]-a[0],b[1]-a[1]);
+    double tolerance=p.resolved.tolerance*length/(p.camera.perspective ? carrier.first_depth:1);
+    for(const auto& q:glyph_overlap(footprint.ring,full,direction,packet,p))
+      if(orient2(a,b,q)<-tolerance) return 2;
+  }
+  return 1;
+}
+
 static inline int occlusion_relation(const Piece& a,const Piece& b,const ProjectedPiece& x,
                                     const ProjectedPiece& y,const ScenePacket& packet,const Projection& p) {
   if(!bounds_overlap(x.bounds,y.bounds)) return 0;
