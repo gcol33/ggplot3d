@@ -159,12 +159,7 @@ plane_target_3d <- function(axis, at, panel_params) {
     }
     return(list(axis = k, value = value, pane = NULL))
   }
-  view <- panel_params[[axis]]
-  position <- if (view$is_discrete()) at else view$get_transformation()$transform(at)
-  range <- panel_params$ranges[[axis]]
-  value <- (position - range[1L]) / diff(range)
-  if (!is.finite(value)) stop("The ", axis, " plane at ", at, " is undefined on this scale.", call. = FALSE)
-  list(axis = k, value = value, pane = NULL)
+  list(axis = k, value = scale_unit_3d(axis, at, panel_params), pane = NULL)
 }
 
 # Targets of a projection; with planar axes, only those perpendicular to the

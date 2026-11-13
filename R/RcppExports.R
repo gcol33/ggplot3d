@@ -37,6 +37,10 @@ geometry_kde_cpp <- function(data, axes, bandwidth) {
     .Call(`_ggplot3d_geometry_kde_cpp`, data, axes, bandwidth)
 }
 
+geometry_triangulate_rings_cpp <- function(xy, ring) {
+    .Call(`_ggplot3d_geometry_triangulate_rings_cpp`, xy, ring)
+}
+
 mesh_process_cpp <- function(xyz, tri, parent, channels, verb, args) {
     .Call(`_ggplot3d_mesh_process_cpp`, xyz, tri, parent, channels, verb, args)
 }

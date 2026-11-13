@@ -1,5 +1,6 @@
 # ggplot3d 0.0.0.9000
 
+* Reference and clipping planes: `geom_plane_3d()` draws planes of constant x, y or z, or of any orientation from a normal and a point (such as a fitted regression plane), cut to the panel box as one face that intersects surfaces exactly. `coord_3d(clip_planes = )` cuts every layer by `clip_plane_3d()` half-spaces set in data units, and a layer's `clip_planes` argument replaces them for that layer; `cap = TRUE` closes cut solids with faces on the plane, leaving the holes of hollow solids open.
 * Networks and trees: `ggplot(graph)` fortifies an igraph graph into nodes and edges with a 3D igraph layout (`fortify(graph, layout = )`); `geom_edge_3d()` draws edges as lines, arcs or shaded tubes and `geom_node_3d()` the nodes; `stat_layers_3d()` stacks the layers of a multilayer network on z planes with inter-layer edges; `stat_dendrogram_3d()` draws an `hclust` tree in any coordinate plane, such as a wall beside a floor heatmap, with branches coloured by cluster.
 * Draw points, paths, segments, text, polygons, surfaces, contours, meshes, bands, columns and extrusions in three dimensions.
 * Train continuous, discrete and date/time z scales, with fixed or free z ranges across facets.
@@ -22,7 +23,7 @@
 * `geom_point_3d(render = "splat")` draws large point clouds in the raster backend as depth-tested spheres with eye-dome lighting (`edl`); the vector backend stops above `getOption("ggplot3d.vector_markers", 50000)` markers per panel.
 * `backend_3d("hybrid")` rasterises the layers drawn with `raster = TRUE` and keeps the other layers, axes, panes and text as vector graphics, clipped where the image's opaque coverage lies in front of them.
 * Translucent surfaces in vector output cover the shared edges inside each group of non-overlapping faces once.
-* `geom_label()`, `geom_rect()`, `geom_tile()`, `geom_hline()`, `geom_vline()`, `annotation_custom()` and `annotation_raster()` work inside `coord_3d()`.
+* `geom_label()`, `geom_rect()`, `geom_tile()`, `geom_hline()`, `geom_vline()`, `geom_abline()`, `annotation_custom()` and `annotation_raster()` work inside `coord_3d()`; reference lines lie on the floor unless z is mapped.
 * Position adjustments in three dimensions: `position_jitter_3d()` jitters x, y and z; `position_dodge_3d()` places groups side by side along x or y within each x/y cell; `position_stack_3d()` and the new `position_fill_3d()` stack along z, x or y, for columns, walls and bands, points and text. `register_geom_3d()` gains `positions` and `extents`, so each geometry declares the adjustments it accepts.
 * `annotate_3d()` adds fixed annotations with z positions.
 * `position_project_3d()` draws any layer flattened onto the panes of the panel box: `"floor"`, `"back"` (chosen for the camera), a pane name, or a plane at a data value, several at once. Projected primitives are painted with their pane. With `axes = c("x", "z")` a two-dimensional ggplot2 layer, such as a histogram or `geom_density()`, stands on a wall as a marginal plot. The `plane` argument of contour and density layers is a shorthand for it.

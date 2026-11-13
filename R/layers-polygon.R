@@ -24,60 +24,6 @@ segments_cross_3d <- function(a, b, c, d, tolerance) {
     (abs(cd[2]) <= tolerance && on_segment(b, c, d))
 }
 
-# A visible bridge joins a clockwise hole to its containing counterclockwise ring.
-bridge_ring_3d <- function(outer, hole, xy, rings, tolerance) {
-  h <- which.max(xy[hole, 1L]); vertex <- hole[h]
-  candidates <- order(rowSums((sweep(xy[outer, , drop = FALSE], 2L, xy[vertex, ]))^2))
-  for (k in candidates) {
-    a <- xy[vertex, ]; b <- xy[outer[k], ]; midpoint <- (a + b) / 2
-    if (!inside_ring_3d(midpoint, xy, outer) || inside_ring_3d(midpoint, xy, hole)) next
-    blocked <- FALSE
-    for (ring in rings) for (j in seq_along(ring)) {
-      pair <- ring[c(j, if (j == length(ring)) 1L else j + 1L)]
-      if (any(pair %in% c(vertex, outer[k]))) next
-      if (segments_cross_3d(a, b, xy[pair[1L], ], xy[pair[2L], ], tolerance)) blocked <- TRUE
-    }
-    if (blocked) next
-    cycle <- hole[c(seq.int(h, length(hole)), if (h > 1L) seq_len(h - 1L))]
-    return(c(outer[seq_len(k)], cycle, vertex, outer[k], if (k < length(outer)) outer[seq.int(k + 1L, length(outer))]))
-  }
-  stop("Polygon hole has no visible bridge to its containing ring.", call. = FALSE)
-}
-
-# Ear clipping preserves original vertex references while removing convex ears.
-ear_triangles_3d <- function(xy, ring, tolerance) {
-  triangles <- list()
-  while (length(ring) > 3L) {
-    clipped <- FALSE
-    for (i in seq_along(ring)) {
-      locations <- c(if (i == 1L) length(ring) else i - 1L, i, if (i == length(ring)) 1L else i + 1L)
-      ids <- ring[locations]; tri <- xy[ids, , drop = FALSE]
-      area <- cross2_3d(tri[2, ] - tri[1, ], tri[3, ] - tri[1, ])
-      if (area <= tolerance) next
-      other <- setdiff(unique(ring), ids)
-      contains <- vapply(other, function(j) {
-        p <- xy[j, ]
-        if (any(rowSums((sweep(tri, 2, p))^2) <= tolerance^2)) return(FALSE)
-        all(vapply(1:3, function(k) cross2_3d(tri[if (k == 3L) 1L else k + 1L, ] - tri[k, ], p - tri[k, ]), numeric(1)) >= -tolerance)
-      }, logical(1))
-      if (any(contains)) next
-      triangles[[length(triangles) + 1L]] <- ids
-      ring <- ring[-i]; clipped <- TRUE; break
-    }
-    if (!clipped) {
-      collinear <- which(vapply(seq_along(ring), function(i) {
-        prev <- if (i == 1L) length(ring) else i - 1L
-        next_i <- if (i == length(ring)) 1L else i + 1L
-        abs(cross2_3d(xy[ring[i], ] - xy[ring[prev], ], xy[ring[next_i], ] - xy[ring[i], ])) <= tolerance
-      }, logical(1)))
-      if (!length(collinear)) stop("Polygon triangulation requires simple nonintersecting rings.", call. = FALSE)
-      ring <- ring[-collinear[1L]]
-    }
-  }
-  if (length(ring) == 3L && abs(ring_area_3d(xy, ring)) > tolerance) triangles[[length(triangles) + 1L]] <- ring
-  triangles
-}
-
 triangulate_polygon_3d <- function(data, rings) {
   xyz <- as.matrix(data[c("x", "y", "z")])
   centred <- sweep(xyz, 2L, colMeans(xyz))
@@ -103,20 +49,19 @@ triangulate_polygon_3d <- function(data, rings) {
     }
   }
   if (any(vapply(rings, function(r) abs(ring_area_3d(xy, r)) <= tolerance, logical(1)))) stop("Polygon rings must have nonzero area.", call. = FALSE)
-  depth <- vapply(seq_along(rings), function(i) sum(vapply(setdiff(seq_along(rings), i), function(j) inside_ring_3d(xy[rings[[i]][1L], ], xy, rings[[j]]), logical(1))), integer(1))
-  result <- list()
-  for (i in which(depth %% 2L == 0L)) {
-    outer <- rings[[i]]
-    if (ring_area_3d(xy, outer) < 0) outer <- rev(outer)
-    holes <- which(depth == depth[i] + 1L & vapply(rings, function(r) inside_ring_3d(xy[r[1L], ], xy, outer), logical(1)))
-    for (j in holes) {
-      hole <- rings[[j]]
-      if (ring_area_3d(xy, hole) > 0) hole <- rev(hole)
-      outer <- bridge_ring_3d(outer, hole, xy, rings, tolerance)
-    }
-    result <- c(result, ear_triangles_3d(xy, outer, tolerance))
-  }
-  list(triangles = result, rings = rings)
+  t <- triangulate_rings_2d(xy, rings, tolerance)
+  list(triangles = lapply(seq_len(nrow(t)), function(i) t[i, ]), rings = rings)
+}
+
+# Triangles (rows of a matrix of row indices of xy) filling the region inside an odd
+# number of rings, counterclockwise in xy; triangles without area are dropped.
+triangulate_rings_2d <- function(xy, rings, tolerance = 0) {
+  order <- unlist(rings, use.names = FALSE)
+  t <- geometry_triangulate_rings_cpp(xy[order, , drop = FALSE], rep.int(seq_along(rings), lengths(rings)))
+  t[] <- order[t]
+  a <- xy[t[, 1L], , drop = FALSE]
+  area <- (xy[t[, 2L], 1L] - a[, 1L]) * (xy[t[, 3L], 2L] - a[, 2L]) - (xy[t[, 2L], 2L] - a[, 2L]) * (xy[t[, 3L], 1L] - a[, 1L])
+  t[area > tolerance, , drop = FALSE]
 }
 
 emit_polygons_3d <- function(data, params, panel_params) {

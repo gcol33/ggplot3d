@@ -35,7 +35,8 @@ coord_3d(
   frame = "view",
   transform = NULL,
   axis_lines = "box",
-  origin = c(x = 0, y = 0, z = 0)
+  origin = c(x = 0, y = 0, z = 0),
+  clip_planes = list()
 )
 }
 \arguments{
@@ -110,6 +111,10 @@ origin axes cross is left out. Origin axis lines use the theme elements
 \item{origin}{Named numeric vector with entries \code{x}, \code{y} and \code{z} in data
 units, the point through which origin axes pass. Missing entries are 0. A
 value outside the panel range is moved to the nearest end of the range.}
+
+\item{clip_planes}{A list of \code{\link[=clip_plane_3d]{clip_plane_3d()}} planes that cut every layer
+of the panel. A layer's own \code{clip_planes} argument replaces this list for
+that layer.}
 }
 \value{
 A Coord3D ggproto object.
@@ -162,4 +167,6 @@ ggplot2::ggplot(centred, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 3) +
   coord_3d(panes = c("back", "floor", "front")) +
   ggplot2::theme(panel.grid.major.z.xz = ggplot2::element_blank(),
     panel.pane.front = ggplot2::element_rect(fill = "#4682B41A"))
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
+  coord_3d(clip_planes = list(clip_plane_3d(c(0, 0, -1), c(z = 2.5))))
 }

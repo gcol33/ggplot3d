@@ -82,7 +82,9 @@ geom_polygon_3d <- function(mapping = NULL, data = NULL, stat = "identity", posi
 #' Adapt a registered ggplot2 layer to three dimensions
 #' @param layer A ggplot2 layer.
 #' @param mapping Additional aesthetic mappings.
-#' @param ... Fixed aesthetics and rendering parameters.
+#' @param ... Fixed aesthetics and rendering parameters, such as
+#'   `clip_planes`, a list of [clip_plane_3d()] planes that replaces the
+#'   coordinate system's planes for this layer.
 #' @param occlusion Depth testing or overlay drawing.
 #' @param shade Whether to shade faces.
 #' @param hidden Hidden stroke policy.

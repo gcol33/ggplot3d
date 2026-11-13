@@ -135,6 +135,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_triangulate_rings_cpp
+Rcpp::IntegerMatrix geometry_triangulate_rings_cpp(Rcpp::NumericMatrix xy, Rcpp::IntegerVector ring);
+RcppExport SEXP _ggplot3d_geometry_triangulate_rings_cpp(SEXP xySEXP, SEXP ringSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xy(xySEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type ring(ringSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_triangulate_rings_cpp(xy, ring));
+    return rcpp_result_gen;
+END_RCPP
+}
 // mesh_process_cpp
 Rcpp::List mesh_process_cpp(Rcpp::NumericMatrix xyz, Rcpp::IntegerMatrix tri, Rcpp::IntegerVector parent, Rcpp::NumericMatrix channels, std::string verb, Rcpp::List args);
 RcppExport SEXP _ggplot3d_mesh_process_cpp(SEXP xyzSEXP, SEXP triSEXP, SEXP parentSEXP, SEXP channelsSEXP, SEXP verbSEXP, SEXP argsSEXP) {
@@ -397,6 +408,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_isosurface_methods_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_methods_cpp, 0},
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
+    {"_ggplot3d_geometry_triangulate_rings_cpp", (DL_FUNC) &_ggplot3d_geometry_triangulate_rings_cpp, 2},
     {"_ggplot3d_mesh_process_cpp", (DL_FUNC) &_ggplot3d_mesh_process_cpp, 6},
     {"_ggplot3d_mesh_geodesic_path_cpp", (DL_FUNC) &_ggplot3d_mesh_geodesic_path_cpp, 5},
     {"_ggplot3d_outline_lines_cpp", (DL_FUNC) &_ggplot3d_outline_lines_cpp, 9},

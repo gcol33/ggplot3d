@@ -76,6 +76,9 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' @param expand Logical scalar or named x, y, z logical vector.
 #' @param clip Rectangular viewport clipping, on or off.
 #' @param clip_data Whether to clip to the data box.
+#' @param clip_planes A list of [clip_plane_3d()] planes that cut every layer
+#'   of the panel. A layer's own `clip_planes` argument replaces this list for
+#'   that layer.
 #' @param axes Axes to draw.
 #' @param panes Cube faces to draw: `"back"` (the rear pane of each pair of
 #'   walls), `"floor"`, `"front"` (the panes facing the viewer that are not
@@ -145,6 +148,8 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #'   coord_3d(panes = c("back", "floor", "front")) +
 #'   ggplot2::theme(panel.grid.major.z.xz = ggplot2::element_blank(),
 #'     panel.pane.front = ggplot2::element_rect(fill = "#4682B41A"))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
+#'   coord_3d(clip_planes = list(clip_plane_3d(c(0, 0, -1), c(z = 2.5))))
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      oblique = c(angle = 45, ratio = 0.5), up = "z",
@@ -153,8 +158,10 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      expand = TRUE, clip = "on", clip_data = TRUE, axes = c("x", "y", "z"),
                      panes = c("back", "floor"), box = "back", z_scales = "fixed", crs = NULL,
                      light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
-                     transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0)) {
+                     transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0),
+                     clip_planes = list()) {
   clip <- match.arg(clip, c("on", "off"))
+  clip_planes <- check_clip_planes_3d(clip_planes)
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
       !(length(expand) == 1L || (length(expand) == 3L && setequal(names(expand), c("x", "y", "z"))))) stop("expand must be logical scalar or named x/y/z vector.", call. = FALSE)
   expand_axes <- if (length(expand) == 1L) structure(rep(expand, 3L), names = c("x", "y", "z")) else expand[c("x", "y", "z")]
@@ -178,7 +185,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
                   axis_lines = match.arg(axis_lines, c("box", "origin", "none")), origin = check_origin_3d(origin),
-                  light = light, backend = backend, crs = crs,
+                  light = light, backend = backend, crs = crs, clip_planes = clip_planes,
                   frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
 }
 

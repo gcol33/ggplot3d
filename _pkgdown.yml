@@ -83,6 +83,7 @@ reference:
   - camera_3d
   - facet_views
   - light_3d
+  - clip_plane_3d
 - title: Curvilinear and compositional frames
   contents:
   - coord_cylindrical_3d
@@ -111,6 +112,7 @@ reference:
   - geom_band_3d
   - geom_dropline_3d
   - geom_rug_3d
+  - geom_plane_3d
   - annotate_3d
 - title: Surface and solid layers
   contents:

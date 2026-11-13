@@ -18,7 +18,9 @@ layer_3d(
 
 \item{mapping}{Additional aesthetic mappings.}
 
-\item{...}{Fixed aesthetics and rendering parameters.}
+\item{...}{Fixed aesthetics and rendering parameters, such as
+\code{clip_planes}, a list of \code{\link[=clip_plane_3d]{clip_plane_3d()}} planes that replaces the
+coordinate system's planes for this layer.}
 
 \item{occlusion}{Depth testing or overlay drawing.}
 

@@ -328,49 +328,11 @@ munch_triangles_3d <- function(frame, p0, p1, p2, boundary = matrix(TRUE, nrow(p
     scale = do.call(rbind, scale))
 }
 
-# Scale-space clipping ----------------------------------------------------------
-
-clip_polygon_unit_3d <- function(xyz) {
-  for (axis in 1:3) for (side in 0:1) {
-    if (!nrow(xyz)) return(xyz)
-    d <- if (side == 0L) xyz[, axis] else 1 - xyz[, axis]
-    n <- nrow(xyz); out <- list()
-    for (i in seq_len(n)) {
-      j <- if (i == n) 1L else i + 1L
-      if (d[i] >= 0) out[[length(out) + 1L]] <- xyz[i, ]
-      if ((d[i] >= 0) != (d[j] >= 0)) {
-        t <- d[i] / (d[i] - d[j])
-        p <- xyz[i, ] + t * (xyz[j, ] - xyz[i, ])
-        p[axis] <- side
-        out[[length(out) + 1L]] <- p
-      }
-    }
-    xyz <- if (length(out)) do.call(rbind, out) else matrix(numeric(), 0L, 3L)
-  }
-  xyz
-}
-
-clip_segment_unit_3d <- function(a, b) {
-  t0 <- 0; t1 <- 1; d <- b - a
-  for (axis in 1:3) for (side in 0:1) {
-    p <- if (side == 0L) -d[axis] else d[axis]
-    q <- if (side == 0L) a[axis] else 1 - a[axis]
-    if (p == 0) { if (q < 0) return(NULL); next }
-    r <- q / p
-    if (p < 0) t0 <- max(t0, r) else t1 <- min(t1, r)
-    if (t0 > t1) return(NULL)
-  }
-  c(t0, t1)
-}
-
-inside_unit_3d <- function(xyz, eps = 1e-9) {
-  rowSums(xyz >= -eps & xyz <= 1 + eps) == 3L
-}
-
 # Packet munching ---------------------------------------------------------------
 
 # Maps a scale-space packet through a frame. Linear frames map vertices; other
-# frames subdivide faces and strokes so curved images stay within tolerance.
+# frames clip to the panel box in scale space, then subdivide faces and
+# strokes so curved images stay within tolerance.
 munch_packet_3d <- function(frame, packet, clip = TRUE) {
   validate_scene_packet(packet)
   if (frame$linear) {
@@ -378,6 +340,11 @@ munch_packet_3d <- function(frame, packet, clip = TRUE) {
     packet$vertices <- list(x = as.double(xyz[, 1L]), y = as.double(xyz[, 2L]), z = as.double(xyz[, 3L]))
     validate_scene_packet(packet)
     return(packet)
+  }
+  clipped <- NULL
+  if (clip) {
+    packet <- clip_packet_planes_3d(packet, unit_box_planes_3d())
+    clipped <- attr(packet, "parent")
   }
   scale_xyz <- do.call(cbind, packet$vertices)
   corner_xyz <- function(rows) scale_xyz[packet$corners$vertex[rows], , drop = FALSE]
@@ -390,13 +357,11 @@ munch_packet_3d <- function(frame, packet, clip = TRUE) {
     n_points <<- n_points + nrow(model)
     seq.int(first, length.out = nrow(model))
   }
-  # Faces: clip, fan-triangulate, subdivide.
+  # Faces: fan-triangulate, subdivide.
   faces <- packet$faces
   tri <- list(p0 = list(), p1 = list(), p2 = list(), parent = integer(), boundary = list())
   for (f in seq_along(faces$offset)) {
     xyz <- corner_xyz(seq.int(faces$offset[f], length.out = faces$count[f]))
-    if (clip && !all(inside_unit_3d(xyz))) xyz <- clip_polygon_unit_3d(xyz)
-    if (nrow(xyz) < 3L) next
     for (i in 2:(nrow(xyz) - 1L)) {
       tri$p0[[length(tri$p0) + 1L]] <- xyz[1L, ]; tri$p1[[length(tri$p1) + 1L]] <- xyz[i, ]; tri$p2[[length(tri$p2) + 1L]] <- xyz[i + 1L, ]
       tri$parent <- c(tri$parent, f)
@@ -417,27 +382,21 @@ munch_packet_3d <- function(frame, packet, clip = TRUE) {
     face_rows$corners <- ids[as.vector(t(munched$triangles[keep, , drop = FALSE]))]
     face_rows$parent <- parents[keep]
   }
-  # Polylines: clip into runs, subdivide each segment canonically.
+  # Polylines: subdivide each segment canonically.
   line <- packet$polylines
   line_rows <- list(corners = integer(), count = integer(), parent = integer())
   for (l in seq_along(line$offset)) {
     xyz <- corner_xyz(seq.int(line$offset[l], length.out = line$count[l]))
-    runs <- if (clip && !all(inside_unit_3d(xyz))) clip_polyline_runs_3d(xyz) else list(xyz)
-    for (run in runs) {
-      if (nrow(run) < 2L) next
-      path <- polyline_model_3d(frame, run)
-      ids <- emit(path$model, rep.int(line$source_row[l], nrow(path$model)), path$scale)
-      line_rows$corners <- c(line_rows$corners, ids)
-      line_rows$count <- c(line_rows$count, length(ids))
-      line_rows$parent <- c(line_rows$parent, l)
-    }
+    path <- polyline_model_3d(frame, xyz)
+    ids <- emit(path$model, rep.int(line$source_row[l], nrow(path$model)), path$scale)
+    line_rows$corners <- c(line_rows$corners, ids)
+    line_rows$count <- c(line_rows$count, length(ids))
+    line_rows$parent <- c(line_rows$parent, l)
   }
-  # Markers and text: map anchors, drop those outside the clip box.
+  # Markers and text: map anchors.
   point_rows <- lapply(c("markers", "text"), function(kind) {
     tab <- packet[[kind]]
-    xyz <- corner_xyz(tab$offset)
-    keep <- if (clip) which(inside_unit_3d(xyz)) else seq_along(tab$offset)
-    list(xyz = xyz[keep, , drop = FALSE], parent = keep)
+    list(xyz = corner_xyz(tab$offset), parent = seq_along(tab$offset))
   }); names(point_rows) <- c("markers", "text")
   for (kind in c("markers", "text")) {
     rows <- point_rows[[kind]]
@@ -477,30 +436,16 @@ munch_packet_3d <- function(frame, packet, clip = TRUE) {
     packet$styles$normal_x <- NA_real_; packet$styles$normal_y <- NA_real_; packet$styles$normal_z <- NA_real_
   }
   validate_scene_packet(packet)
-  attr(packet, "parent") <- list(faces = face_rows$parent, polylines = line_rows$parent,
+  parent <- list(faces = face_rows$parent, polylines = line_rows$parent,
     markers = point_rows$markers$parent, text = point_rows$text$parent)
+  if (!is.null(clipped)) for (kind in names(parent)) parent[[kind]] <- clipped[[kind]][parent[[kind]]]
+  attr(packet, "parent") <- parent
   attr(packet, "scale") <- scale_points[used, , drop = FALSE]
   packet
 }
 
 cross_rows_3d <- function(u, v) {
   cbind(u[, 2L] * v[, 3L] - u[, 3L] * v[, 2L], u[, 3L] * v[, 1L] - u[, 1L] * v[, 3L], u[, 1L] * v[, 2L] - u[, 2L] * v[, 1L])
-}
-
-clip_polyline_runs_3d <- function(xyz) {
-  runs <- list(); current <- NULL
-  for (i in seq_len(nrow(xyz) - 1L)) {
-    a <- xyz[i, ]; b <- xyz[i + 1L, ]
-    t <- clip_segment_unit_3d(a, b)
-    if (is.null(t)) { if (!is.null(current)) runs[[length(runs) + 1L]] <- current; current <- NULL; next }
-    p <- a + t[1L] * (b - a); q <- a + t[2L] * (b - a)
-    if (is.null(current)) current <- rbind(p)
-    else if (t[1L] > 0) { runs[[length(runs) + 1L]] <- current; current <- rbind(p) }
-    current <- rbind(current, q)
-    if (t[2L] < 1) { runs[[length(runs) + 1L]] <- current; current <- NULL }
-  }
-  if (!is.null(current)) runs[[length(runs) + 1L]] <- current
-  lapply(runs, function(r) { rownames(r) <- NULL; r })
 }
 
 # Facing ------------------------------------------------------------------------

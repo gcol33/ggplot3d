@@ -2,6 +2,7 @@
 #include "geometry/contour.h"
 #include "geometry/octree.h"
 #include "geometry/hull.h"
+#include "geometry/earcut.h"
 using ggplot3d_geometry::V;
 
 namespace {
@@ -203,5 +204,25 @@ Rcpp::NumericVector geometry_kde_cpp(Rcpp::NumericMatrix data,Rcpp::List axes,Rc
     for(size_t z=0;z<nz;++z) for(size_t y=0;y<grid[1].size();++y) for(size_t x=0;x<grid[0].size();++x)
       out[k++]+=kernel[0][x]*kernel[1][y]*(dim==3?kernel[2][z]:1)/n;
   }
+  return out;
+}
+
+// Triangles (1-based rows of xy) of the region inside an odd number of rings;
+// ring gives each row's ring, rows of one ring contiguous and in order.
+// [[Rcpp::export(rng = false)]]
+Rcpp::IntegerMatrix geometry_triangulate_rings_cpp(Rcpp::NumericMatrix xy,Rcpp::IntegerVector ring) {
+  const int n=xy.nrow();
+  if(xy.ncol()!=2||ring.size()!=n) Rcpp::stop("Ring triangulation requires an n x 2 matrix and one ring id per row.");
+  std::vector<double> x(n),y(n);
+  std::vector<std::vector<int>> rings;
+  for(int i=0;i<n;++i) {
+    x[i]=xy(i,0); y[i]=xy(i,1);
+    if(!std::isfinite(x[i])||!std::isfinite(y[i])) Rcpp::stop("Ring vertices must be finite.");
+    if(i==0||ring[i]!=ring[i-1]) rings.emplace_back();
+    rings.back().push_back(i);
+  }
+  const auto triangles=ggplot3d_geometry::earcut::triangulate_rings(x,y,rings);
+  Rcpp::IntegerMatrix out(triangles.size(),3);
+  for(std::size_t t=0;t<triangles.size();++t) for(int k=0;k<3;++k) out(t,k)=triangles[t][k]+1;
   return out;
 }

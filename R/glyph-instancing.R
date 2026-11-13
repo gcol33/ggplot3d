@@ -203,6 +203,7 @@ emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_param
   if (!isTRUE(frame$identity) && isTRUE(panel_params$camera$clip_data)) {
     keep <- keep & data$x >= 0 & data$x <= 1 & data$y >= 0 & data$y <= 1 & data$z >= 0 & data$z <= 1
   }
+  if (!isTRUE(frame$identity)) keep <- keep & inside_planes_3d(as.matrix(data[c("x", "y", "z")]), params$clip_planes)
   keep[is.na(keep)] <- FALSE
   if (!any(keep)) return(empty)
   data <- data[keep, , drop = FALSE]; maps <- maps[, , keep, drop = FALSE]; space <- space[keep]

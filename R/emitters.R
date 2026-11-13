@@ -165,7 +165,7 @@ scene_draw_formals_3d <- function() {
     arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
     size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
     width = NULL, depth = NULL, face = "zmin", .project = NULL,
-    render = "marker", edl = 1, raster = FALSE)
+    render = "marker", edl = 1, raster = FALSE, clip_planes = NULL)
 }
 
 find_emitter_3d <- function(geom) {
@@ -183,7 +183,7 @@ scene_geom_3d <- function(parent, entry) {
     required_aes = if (entry$name == "GeomSegment") c("x", "y") else parent$required_aes,
     optional_aes = union(parent$optional_aes, c(z_aesthetics, entry$aesthetics,
       if (entry$name == "GeomSegment") c("xend", "yend"))),
-    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", ".project", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl", "raster")),
+    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", ".project", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl", "raster", "clip_planes")),
     handle_na = function(data, params) data,
     setup_data = function(data, params) {
       if (entry$name == "GeomSegment") {
@@ -231,13 +231,21 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   raster <- params$raster %or3d% FALSE
   if (!is.logical(raster) || length(raster) != 1L || is.na(raster)) stop("raster must be TRUE or FALSE.", call. = FALSE)
   data <- normalise_positions_3d(data, panel_params)
+  params$clip_planes <- layer_clip_planes_3d(params$clip_planes, panel_params)
   packet <- if (is.null(params$.project)) entry$emit(data, params, panel_params) else emit_projected_3d(entry, data, params, panel_params)
   if (inherits(packet, "grob")) return(packet)
   validate_scene_packet(packet)
   if (raster && nrow(packet$styles)) packet$styles$raster <- TRUE
-  # Packets already placed in model space, such as rigid glyphs, skip the frame.
-  if (isTRUE(attr(packet, "model_space"))) return(packet)
-  frame_packet_3d(frame_of_3d(panel_params), packet, panel_params$camera$clip_data)
+  frame <- frame_of_3d(panel_params)
+  # Packets already placed in model space, such as rigid glyphs, skip the
+  # frame; outside the identity frame they are cut by their anchors instead.
+  model_space <- isTRUE(attr(packet, "model_space"))
+  if (length(params$clip_planes) && (!model_space || isTRUE(frame$identity))) {
+    packet <- clip_packet_planes_3d(packet, params$clip_planes)
+    attr(packet, "parent") <- NULL
+  }
+  if (model_space) return(packet)
+  frame_packet_3d(frame, packet, panel_params$camera$clip_data)
 }
 
 `%or3d%` <- function(x, y) if (is.null(x)) y else x
