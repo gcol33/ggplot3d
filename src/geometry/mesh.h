@@ -34,9 +34,17 @@ struct Mesh {
     triangles.push_back({a,b,c}); levels.push_back(level); caps.push_back(cap); cap_normals.push_back(cap?direction:V{0,0,0});
   }
   // Adds a triangle whose winding is already oriented towards increasing field value.
-  void oriented(int a,int b,int c,double level,bool cap=false) {
+  void oriented(int a,int b,int c,double level,bool cap=false,V cap_normal=V{0,0,0}) {
     if(a==b||b==c||a==c) return;
-    triangles.push_back({a,b,c}); levels.push_back(level); caps.push_back(cap); cap_normals.push_back(V{0,0,0});
+    triangles.push_back({a,b,c}); levels.push_back(level); caps.push_back(cap); cap_normals.push_back(cap_normal);
+  }
+  void append(const Mesh& other) {
+    int offset=vertices.size();
+    vertices.insert(vertices.end(),other.vertices.begin(),other.vertices.end());
+    for(auto t:other.triangles) { if(t[0]>=0) for(int& x:t) x+=offset; triangles.push_back(t); }
+    levels.insert(levels.end(),other.levels.begin(),other.levels.end());
+    caps.insert(caps.end(),other.caps.begin(),other.caps.end());
+    cap_normals.insert(cap_normals.end(),other.cap_normals.begin(),other.cap_normals.end());
   }
   Rcpp::DataFrame output() const {
     std::vector<std::array<int,3>> kept; std::vector<int> source;

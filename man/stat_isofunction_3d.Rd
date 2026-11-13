@@ -40,7 +40,7 @@ geom_isofunction_3d(...)
 
 \item{caps}{Whether to cap the sublevel region on the box faces.}
 
-\item{method}{Extraction method: \code{"cubes"} or \code{"tetra"}.}
+\item{method}{Extraction method: \code{"cubes"}, \code{"tetra"}, \code{"dual"} or \code{"nets"}.}
 
 \item{refine}{Number of regula falsi steps per edge vertex; 0 keeps the
 linear interpolation of the gridded values.}

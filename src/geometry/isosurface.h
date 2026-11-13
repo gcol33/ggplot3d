@@ -167,10 +167,10 @@ static inline bool high_joined(double a,double b,double c,double d,bool a_high) 
   return a_high ? a*c>=b*d : b*d>=a*c;
 }
 
-struct Analysis {
-  int next[12];
-  int loops=0, loop_edges[12][12], loop_size[12];
-  int split_low[6];
+struct Topology {
+  bool split_low[6]={false,false,false,false,false,false};
+  std::vector<std::vector<int>> loops;
+  std::vector<int> partner;
 };
 
 // Topology of the trilinear interpolant in one cube, following the case
@@ -180,10 +180,11 @@ struct Analysis {
 // the set of closed boundary loops on the cube surface, oriented with the high
 // region on their left seen from outside, and the pairs of loops that bound a
 // tunnel through the cube interior.
-static inline void cell(Mesh& mesh,LevelState& s,const ScalarGrid& grid,const Cell& c,bool caps) {
-  double level=s.level,v[8]; bool hi[8]; int mask=0;
-  for(int a=0;a<8;++a) { v[a]=grid.sample(c.ids[a],level)-level; hi[a]=v[a]>=0; mask|=hi[a]<<a; }
-  bool split_low[6]={false,false,false,false,false,false};
+// v holds the corner values relative to the level.
+static inline Topology analyse(const double v[8]) {
+  Topology out; bool hi[8]; int mask=0;
+  for(int a=0;a<8;++a) { hi[a]=v[a]>=0; mask|=hi[a]<<a; }
+  bool* split_low=out.split_low;
   int next[12]; std::fill(next,next+12,-1);
   UnionFind surface(8);
   for(auto& e:edges) if(hi[e[0]]==hi[e[1]]) surface.unite(e[0],e[1]);
@@ -218,17 +219,10 @@ static inline void cell(Mesh& mesh,LevelState& s,const ScalarGrid& grid,const Ce
       if(forward) next[sg[0]]=sg[1]; else next[sg[1]]=sg[0];
     }
   }
-  if(caps) for(int f=0;f<6;++f) {
-    int axis=face_axis[f],q=f%2?(axis==0?c.i+1:axis==1?c.j+1:c.k+1):(axis==0?c.i:axis==1?c.j:c.k);
-    int n=axis==0?grid.nx:axis==1?grid.ny:grid.nz;
-    if((face_side[f]<0&&q!=0)||(face_side[f]>0&&q!=n-1)) continue;
-    std::vector<int> corners; for(int j=0;j<4;++j) corners.push_back(c.ids[faces[f][j]]);
-    cap_face(mesh,s.slab,grid,corners,level,axis,face_side[f],split_low[f]);
-  }
-  if(mask==0||mask==255) return;
+  if(mask==0||mask==255) return out;
 
   // Boundary loops.
-  std::vector<std::vector<int>> loops; bool used[12]={false};
+  auto& loops=out.loops; bool used[12]={false};
   for(int e=0;e<12;++e) {
     if(next[e]<0||used[e]) continue;
     std::vector<int> loop; int x=e;
@@ -268,11 +262,9 @@ static inline void cell(Mesh& mesh,LevelState& s,const ScalarGrid& grid,const Ce
     }
   }
 
-  auto vid=[&](int e) { return edge_vertex(mesh,s.slab,grid,c.ids[edges[e][0]],c.ids[edges[e][1]],level); };
-  auto position=[&](int e) { return mesh.vertices[vid(e)].p; };
-  auto apart=[&](int a,int b) { return !(edge_faces(a)&edge_faces(b)); };
   int nl=loops.size();
-  std::vector<int> high_side(nl),low_side(nl),partner(nl,-1);
+  std::vector<int> high_side(nl),low_side(nl);
+  auto& partner=out.partner; partner.assign(nl,-1);
   for(int l=0;l<nl;++l) {
     int e=loops[l][0],a=edges[e][0],b=edges[e][1];
     high_side[l]=hi[a]?a:b; low_side[l]=hi[a]?b:a;
@@ -284,7 +276,29 @@ static inline void cell(Mesh& mesh,LevelState& s,const ScalarGrid& grid,const Ce
     bool shared=high_tunnel?surface.find(low_side[a])==surface.find(low_side[b]):surface.find(high_side[a])==surface.find(high_side[b]);
     if((high_tunnel||low_tunnel)&&(shared||pass==1)) { partner[a]=b; partner[b]=a; }
   }
+  return out;
+}
 
+// Marching cubes cell: caps on the grid box, then a disk per boundary loop
+// and a strip per tunnel.
+static inline void cell(Mesh& mesh,LevelState& s,const ScalarGrid& grid,const Cell& c,bool caps) {
+  double level=s.level,v[8];
+  for(int a=0;a<8;++a) v[a]=grid.sample(c.ids[a],level)-level;
+  Topology topology=analyse(v);
+  const bool* split_low=topology.split_low;
+  if(caps) for(int f=0;f<6;++f) {
+    int axis=face_axis[f],q=f%2?(axis==0?c.i+1:axis==1?c.j+1:c.k+1):(axis==0?c.i:axis==1?c.j:c.k);
+    int n=axis==0?grid.nx:axis==1?grid.ny:grid.nz;
+    if((face_side[f]<0&&q!=0)||(face_side[f]>0&&q!=n-1)) continue;
+    std::vector<int> corners; for(int j=0;j<4;++j) corners.push_back(c.ids[faces[f][j]]);
+    cap_face(mesh,s.slab,grid,corners,level,axis,face_side[f],split_low[f]);
+  }
+  const auto& loops=topology.loops; const auto& partner=topology.partner;
+  if(loops.empty()) return;
+  auto vid=[&](int e) { return edge_vertex(mesh,s.slab,grid,c.ids[edges[e][0]],c.ids[edges[e][1]],level); };
+  auto position=[&](int e) { return mesh.vertices[vid(e)].p; };
+  auto apart=[&](int a,int b) { return !(edge_faces(a)&edge_faces(b)); };
+  int nl=loops.size();
   for(int l=0;l<nl;++l) {
     if(partner[l]>=0) {
       if(partner[l]<l) continue;
@@ -352,23 +366,11 @@ static inline void cell(Mesh& mesh,LevelState& s,const ScalarGrid& grid,const Ce
 
 using CellFunction=void(*)(Mesh&,LevelState&,const ScalarGrid&,const Cell&,bool);
 using Finish=void(*)(Mesh&,const ScalarGrid&);
-struct Method { const char* name; CellFunction cell; Finish finish; };
 
-static inline const std::vector<Method>& isosurface_methods() {
-  static const std::vector<Method> methods{
-    {"tetra",tetra::cell,tetra::regularise},
-    {"cubes",cubes::cell,nullptr}
-  };
-  return methods;
-}
-
-// Extracts every level in one sweep over the cells. Each level keeps its own
-// two-layer vertex slab; levels are emitted in the order given.
-static inline Rcpp::DataFrame extract_isosurface(ScalarGrid& grid,Rcpp::NumericVector levels,bool caps,const std::string& name) {
-  const Method* method=nullptr;
-  for(const auto& m:isosurface_methods()) if(name==m.name) method=&m;
-  if(!method) Rcpp::stop("Unknown isosurface method.");
-  for(double level:levels) if(!std::isfinite(level)) Rcpp::stop("Levels must be finite.");
+// Marching extraction of every level in one sweep over the cells. Each level
+// keeps its own two-layer vertex slab and mesh; levels are appended in order.
+template<CellFunction cell,Finish finish>
+static inline Mesh march(const ScalarGrid& grid,const std::vector<double>& levels,bool caps) {
   int nl=levels.size();
   std::vector<Mesh> meshes(nl);
   std::vector<LevelState> states; states.reserve(nl);
@@ -380,20 +382,14 @@ static inline Rcpp::DataFrame extract_isosurface(ScalarGrid& grid,Rcpp::NumericV
       Cell c{i,j,k,{}}; bool valid=true;
       for(int a=0;a<8;++a) { c.ids[a]=grid.corner(i,j,k,a); valid=valid&&grid.finite(c.ids[a]); }
       if(!valid) continue;
-      for(int l=0;l<nl;++l) method->cell(meshes[l],states[l],grid,c,caps);
+      for(int l=0;l<nl;++l) cell(meshes[l],states[l],grid,c,caps);
     }
   }
   Mesh mesh;
-  for(int l=0;l<nl;++l) {
-    if(method->finish) method->finish(meshes[l],grid);
-    int offset=mesh.vertices.size();
-    mesh.vertices.insert(mesh.vertices.end(),meshes[l].vertices.begin(),meshes[l].vertices.end());
-    for(auto t:meshes[l].triangles) { if(t[0]>=0) for(int& x:t) x+=offset; mesh.triangles.push_back(t); }
-    mesh.levels.insert(mesh.levels.end(),meshes[l].levels.begin(),meshes[l].levels.end());
-    mesh.caps.insert(mesh.caps.end(),meshes[l].caps.begin(),meshes[l].caps.end());
-    mesh.cap_normals.insert(mesh.cap_normals.end(),meshes[l].cap_normals.begin(),meshes[l].cap_normals.end());
-  }
-  return mesh.output();
+  for(int l=0;l<nl;++l) { finish(meshes[l],grid); mesh.append(meshes[l]); }
+  return mesh;
 }
+
+static inline void no_finish(Mesh&,const ScalarGrid&) {}
 }
 #endif

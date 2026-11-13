@@ -81,6 +81,15 @@ static inline int grid_vertex(Mesh& mesh,VertexSlab& slab,const ScalarGrid& grid
   return id;
 }
 
+// Point at parameter t along the grid edge a-b with linearly interpolated
+// position and normalised interpolated gradient.
+static inline Vertex edge_point(const ScalarGrid& grid,int a,int b,double t) {
+  Vertex v; V pa=grid.point(a),pb=grid.point(b);
+  v.p=add(pa,mul(sub(pb,pa),t));
+  v.n=unit(add(grid.gradients[a],mul(sub(grid.gradients[b],grid.gradients[a]),t)));
+  return v;
+}
+
 // Welded vertex where the level crosses the grid edge a-b, with linearly
 // interpolated position and normalised interpolated gradient.
 static inline int edge_vertex(Mesh& mesh,VertexSlab& slab,const ScalarGrid& grid,int a,int b,double level) {
@@ -91,12 +100,7 @@ static inline int edge_vertex(Mesh& mesh,VertexSlab& slab,const ScalarGrid& grid
   auto qa=grid.ijk(a),qb=grid.ijk(b);
   int mask=(qb[0]-qa[0])|((qb[1]-qa[1])<<1)|((qb[2]-qa[2])<<2);
   int& id=slab.at(a,mask);
-  if(id<0) {
-    Vertex v; V pa=grid.point(a),pb=grid.point(b);
-    v.p=add(pa,mul(sub(pb,pa),t));
-    v.n=unit(add(grid.gradients[a],mul(sub(grid.gradients[b],grid.gradients[a]),t)));
-    v.ea=a; v.eb=b; v.t=t; id=mesh.add(v);
-  }
+  if(id<0) { Vertex v=edge_point(grid,a,b,t); v.ea=a; v.eb=b; v.t=t; id=mesh.add(v); }
   return id;
 }
 

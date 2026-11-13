@@ -45,7 +45,7 @@ composition mapped with \code{a}, \code{b}, \code{c} (and \code{d}) in isometric
 coordinates, where a Gaussian kernel respects relative scale, and maps
 the surface back into the simplex. With three parts, z stays as it is.}
 
-\item{method}{Extraction method: \code{"cubes"} or \code{"tetra"}.}
+\item{method}{Extraction method: \code{"cubes"}, \code{"tetra"}, \code{"dual"} or \code{"nets"}.}
 }
 \description{
 Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z scale

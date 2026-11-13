@@ -104,14 +104,27 @@ stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, arg
   key <- match(data$x, axes$x) + dims[1L] * (match(data$y, axes$y) - 1L + dims[2L] * (match(data$z, axes$z) - 1L))
   if (anyDuplicated(key)) stop("Scalar grid coordinates must be unique.", call. = FALSE)
   value <- data$value[order(key)]
-  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps, method)
-  if (!is.null(fun)) out <- isosurface_polish_3d(out, axes, value, function(p) {
+  f <- if (!is.null(fun)) function(p) {
     v <- do.call(fun, c(list(x = p[, 1L], y = p[, 2L], z = p[, 3L]), args))
     rep_len(as.double(v), nrow(p))
-  }, refine)
+  }
+  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps, method,
+    if (!is.null(f)) function_gradient_3d(f, axes))
+  if (!is.null(f)) out <- isosurface_polish_3d(out, axes, value, f, refine)
   out$.edge_a <- out$.edge_b <- NULL
   out$z_mean <- rep(colMeans(matrix(out$z, nrow = 3L)), each = 3L)
   out
+}
+
+# Central-difference gradient of a vectorised function of an n x 3 matrix,
+# with steps of 1e-5 times each axis range, in one call over the six offsets.
+function_gradient_3d <- function(f, axes) {
+  h <- vapply(axes, function(a) diff(range(a)), numeric(1)) * 1e-5
+  offsets <- rbind(diag(h), -diag(h))
+  function(p) {
+    probe <- matrix(f(do.call(rbind, lapply(seq_len(6L), function(k) sweep(p, 2L, offsets[k, ], `+`)))), nrow = nrow(p))
+    (probe[, 1:3, drop = FALSE] - probe[, 4:6, drop = FALSE]) / rep(2 * h, each = nrow(p))
+  }
 }
 
 # Moves every vertex that lies on a grid edge onto f = level with `refine`
@@ -150,11 +163,7 @@ isosurface_polish_3d <- function(out, axes, value, f, refine) {
     }
     p[edge, ] <- a + (b - a) * pmin(pmax(t, 0), 1)
   }
-  h <- vapply(axes, function(a) diff(range(a)), numeric(1)) * 1e-5
-  offsets <- rbind(diag(h), -diag(h))
-  probe <- f(do.call(rbind, lapply(seq_len(6L), function(k) sweep(p, 2L, offsets[k, ], `+`))))
-  probe <- matrix(probe, nrow = nrow(p))
-  gradient <- (probe[, 1:3, drop = FALSE] - probe[, 4:6, drop = FALSE]) / rep(2 * h, each = nrow(p))
+  gradient <- function_gradient_3d(f, axes)(p)
   size <- sqrt(rowSums(gradient^2))
   good <- is.finite(size) & size > 0
   normal <- gradient / ifelse(good, size, 1)

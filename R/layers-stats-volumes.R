@@ -32,6 +32,21 @@ probs <- function(...) {
 #' diagonal and regularises the result (Treece et al. 1999): crossings closest
 #' to one grid point are merged where the merge keeps a 2-manifold, which
 #' removes most sliver triangles and the directional bias of the split.
+#' `method = "dual"` is dual contouring (Ju et al. 2002): one vertex per
+#' sign-changing cell placed at the minimiser of the quadratic error of the
+#' tangent planes at its edge crossings, so creases and corners of the level
+#' set are kept. The 3x3 normal equations are solved by an eigen-decomposition
+#' relative to the mass point of the crossings, eigenvalues below 1 % of the
+#' largest are truncated, and the vertex is clamped to its cell. Each grid edge
+#' crossing gives one quad between the four cells around it, split along the
+#' shorter diagonal. As in manifold dual contouring (Schaefer et al. 2007) a
+#' cell carries one vertex per level curve loop on its faces, resolved by the
+#' asymptotic decider, and a second level-curve arc between the same two
+#' vertices gets its own vertex, so the surface is a 2-manifold.
+#' `method = "nets"` uses the same connectivity with each vertex at the mean
+#' of its crossings (naive surface nets).
+#' Crossing normals for `"dual"` are interpolated finite-difference gradients
+#' of the grid, or central differences of `fun` in stat_isofunction_3d.
 #'
 #' Field values within 64 machine epsilons of a threshold, relative to the
 #' maximum absolute field value or threshold, are snapped to that threshold.
@@ -49,7 +64,7 @@ probs <- function(...) {
 #' @inheritParams stat_function_3d
 #' @param levels Numeric scalar-field thresholds; NULL uses pretty levels.
 #' @param caps Whether to cap the sublevel region on the box faces.
-#' @param method Extraction method: `"cubes"` or `"tetra"`.
+#' @param method Extraction method: `"cubes"`, `"tetra"`, `"dual"` or `"nets"`.
 #' @references Lewiner, Lopes, Vieira and Tavares (2003). Efficient
 #'   implementation of Marching Cubes' cases with topological guarantees.
 #'   Journal of Graphics Tools 8, 1-15. \doi{10.1080/10867651.2003.10487582}
@@ -65,6 +80,13 @@ probs <- function(...) {
 #'   Doi and Koide (1991), An Efficient Method of Triangulating
 #'   Equi-Valued Surfaces by Using Tetrahedral Cells. IEICE E74-D, 214-224.
 #'   <https://globals.ieice.org/en_transactions/information/10.1587/e74-d_1_214/_p>
+#'
+#'   Ju, Losasso, Schaefer and Warren (2002). Dual contouring of Hermite data.
+#'   ACM Transactions on Graphics 21, 339-346. \doi{10.1145/566654.566586}
+#'
+#'   Schaefer, Ju and Warren (2007). Manifold dual contouring. IEEE
+#'   Transactions on Visualization and Computer Graphics 13, 610-619.
+#'   \doi{10.1109/TVCG.2007.1012}
 #'
 #'   Schroeder, Maynard and Geveci (2015). Flying edges: a high-performance
 #'   scalable isocontouring algorithm. IEEE LDAV, 33-40. \doi{10.1109/LDAV.2015.7348069}

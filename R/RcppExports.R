@@ -5,8 +5,8 @@ scene_compile_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_scene_compile_cpp`, packet, camera, viewport)
 }
 
-geometry_isosurface_cpp <- function(x, y, z, value, levels, caps, method) {
-    .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps, method)
+geometry_isosurface_cpp <- function(x, y, z, value, levels, caps, method, gradient = NULL) {
+    .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps, method, gradient)
 }
 
 geometry_isosurface_methods_cpp <- function() {

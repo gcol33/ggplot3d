@@ -1,11 +1,24 @@
-#include "geometry/isosurface.h"
+#include "geometry/extract.h"
 #include "geometry/hull.h"
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::DataFrame geometry_isosurface_cpp(Rcpp::NumericVector x,Rcpp::NumericVector y,Rcpp::NumericVector z,
-                                       Rcpp::NumericVector value,Rcpp::NumericVector levels,bool caps,std::string method) {
+                                       Rcpp::NumericVector value,Rcpp::NumericVector levels,bool caps,std::string method,
+                                       Rcpp::Nullable<Rcpp::Function> gradient = R_NilValue) {
   ggplot3d_geometry::ScalarGrid grid(x,y,z,value);
-  return ggplot3d_geometry::extract_isosurface(grid,levels,caps,method);
+  ggplot3d_geometry::dual::GradientFunction field_gradient;
+  if(gradient.isNotNull()) {
+    Rcpp::Function f(gradient);
+    field_gradient=[f](const std::vector<ggplot3d_geometry::V>& points,std::vector<ggplot3d_geometry::V>& out) {
+      int n=points.size(); Rcpp::NumericMatrix p(n,3);
+      for(int i=0;i<n;++i) for(int a=0;a<3;++a) p(i,a)=points[i][a];
+      Rcpp::NumericMatrix g=Rcpp::as<Rcpp::NumericMatrix>(f(p));
+      if(g.nrow()!=n||g.ncol()!=3) Rcpp::stop("The gradient function must return one row per point and three columns.");
+      out.resize(n);
+      for(int i=0;i<n;++i) for(int a=0;a<3;++a) out[i][a]=std::isfinite(g(i,a))?g(i,a):0;
+    };
+  }
+  return ggplot3d_geometry::extract_isosurface(grid,levels,caps,method,field_gradient);
 }
 
 // [[Rcpp::export(rng = false)]]
