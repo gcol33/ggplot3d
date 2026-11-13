@@ -81,8 +81,8 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   on.exit(if (!complete || !is.null(file)) unlink(directory, recursive = TRUE), add = TRUE)
   paths <- file.path(directory, sprintf("frame-%06d.png", seq_len(frames)))
   # The device fixes text measurements before the grammar is built.
-  motion_png_3d(paths[1L], width, height, dpi)
-  device <- grDevices::dev.cur()
+  motion_require_3d("ragg")
+  device <- motion_png_3d(paths[1L], width, height, dpi)
   on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE, after = FALSE)
   built <- ggplot2::ggplotGrob(plot)
   panels <- motion_panels_3d(built)
@@ -93,8 +93,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   for (i in seq_len(frames)) {
     start <- proc.time()[["elapsed"]]
     if (i > 1L) {
-      motion_png_3d(paths[i], width, height, dpi)
-      device <- grDevices::dev.cur()
+      device <- motion_png_3d(paths[i], width, height, dpi)
     }
     registry <- new.env(parent = emptyenv())
     current <- motion_map_panels_3d(built, function(panel) {
@@ -144,7 +143,10 @@ motion_dimensions_3d <- function(width, height, dpi) {
 }
 
 motion_png_3d <- function(file, width, height, dpi) {
-  grDevices::png(file, width = width, height = height, res = dpi, type = "cairo")
+  ragg::agg_png(file, width = width, height = height, res = dpi, units = "px")
+  device <- grDevices::dev.cur()
+  scene_assert(device > 1L, "could not open a PNG device for animation frames")
+  device
 }
 
 motion_plot_coord_3d <- function(plot) {
