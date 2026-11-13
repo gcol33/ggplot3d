@@ -1,6 +1,5 @@
-# ggplot2 rectangles, tiles, reference lines, labels and annotation grobs in a
-# 3D scene. Without a z mapping rectangles, tiles and labels lie at z = 0 and
-# reference lines on the floor; set or map z to move them.
+# ggplot2 rectangles, tiles, labels and annotation grobs in a 3D scene.
+# Without a z mapping they lie at z = 0; set or map z to move them.
 
 emit_rects_3d <- function(data, params, panel_params) {
   data <- data[valid_rows_3d(data, params, c("xmin", "xmax", "ymin", "ymax", "z")), , drop = FALSE]
@@ -19,32 +18,6 @@ emit_rects_3d <- function(data, params, panel_params) {
     c(as.vector(t(quad[filled, , drop = FALSE])), as.vector(t(outline))),
     c(rep("faces", length(filled)), rep("polylines", length(stroked))),
     params, panel_params$panel_id, c(rep.int(4L, length(filled)), rep.int(5L, length(stroked))))
-}
-
-# Reference lines lie on the floor of the panel box, or at a mapped height.
-# ends(data, panel_params) gives the x and y of both ends of each row's line
-# in panel box coordinates, as two-column matrices.
-reference_line_emitter_3d <- function(columns, ends) {
-  function(data, params, panel_params) {
-    data <- data[valid_rows_3d(data, params, c(columns, "z")), , drop = FALSE]
-    n <- nrow(data)
-    xy <- ends(data, panel_params)
-    rows <- data[rep(seq_len(n), each = 2L), , drop = FALSE]
-    rows$x <- as.vector(t(xy$x)); rows$y <- as.vector(t(xy$y))
-    packet_from_primitives_3d(rows, seq_len(2L * n), rep("polylines", n), params, panel_params$panel_id, rep.int(2L, n))
-  }
-}
-
-# Horizontal and vertical lines span the box along the other planar axis.
-span_ends_3d <- function(values) cbind(values, values)
-box_ends_3d <- function(n) cbind(rep(0, n), rep(1, n))
-
-# A sloped line y = intercept + slope x in transformed units, across the x
-# range of the box; the box clips it where it leaves through y.
-abline_ends_3d <- function(data, panel_params) {
-  x <- panel_params$ranges$x; y <- panel_params$ranges$y
-  at <- outer(data$slope, x) + data$intercept
-  list(x = box_ends_3d(nrow(data)), y = (at - y[1L]) / diff(y))
 }
 
 text_size_pt_3d <- function(size.unit) {
@@ -137,11 +110,7 @@ annotate_3d <- function(geom, x = NULL, y = NULL, z = NULL, xmin = NULL, xmax = 
   planar <- Filter(Negate(is.null), list(x = x, y = y, xmin = xmin, xmax = xmax,
     ymin = ymin, ymax = ymax, xend = xend, yend = yend))
   heights <- Filter(Negate(is.null), list(z = z, zmin = zmin, zmax = zmax, zend = zend))
-  sizes <- lengths(c(planar, heights))
-  n <- max(c(1L, sizes))
-  if (any(!sizes %in% c(1L, n))) {
-    stop("Unequal position lengths: ", paste0(names(sizes), " (", sizes, ")", collapse = ", "), ".", call. = FALSE)
-  }
+  n <- common_length_3d(lengths(c(planar, heights)), "position lengths")
   planar <- lapply(planar, rep, length.out = n)
   layer <- do.call(ggplot2::annotate, c(list(geom = geom), planar, list(...), list(na.rm = na.rm)))
   if (!length(heights)) return(layer)
@@ -152,11 +121,6 @@ annotate_3d <- function(geom, x = NULL, y = NULL, z = NULL, xmin = NULL, xmax = 
 }
 
 register_geom_3d(ggplot2::GeomRect, emit_rects_3d)
-register_geom_3d(ggplot2::GeomHline, reference_line_emitter_3d("yintercept",
-  function(data, panel_params) list(x = box_ends_3d(nrow(data)), y = span_ends_3d(data$yintercept))), default_z = -Inf)
-register_geom_3d(ggplot2::GeomVline, reference_line_emitter_3d("xintercept",
-  function(data, panel_params) list(x = span_ends_3d(data$xintercept), y = box_ends_3d(nrow(data)))), default_z = -Inf)
-register_geom_3d(ggplot2::GeomAbline, reference_line_emitter_3d(c("slope", "intercept"), abline_ends_3d), default_z = -Inf)
 register_geom_3d(ggplot2::GeomLabel, emit_labels_3d,
   parameters = list(label.padding = grid::unit(0.25, "lines"), label.r = grid::unit(0.15, "lines"),
     border.colour = NULL, text.colour = NULL), positions = mark_positions_3d)

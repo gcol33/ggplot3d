@@ -115,6 +115,9 @@ reference:
   - geom_rug_3d
   - geom_plane_3d
   - annotate_3d
+  - geom_refline_3d
+  - geom_abline_3d
+  - geom_bracket_3d
 - title: Interval layers
   contents:
   - geom_errorbar_3d
