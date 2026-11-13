@@ -57,6 +57,9 @@ test_that("axis colourbars match expressions and support distinct scale transfor
   bad <- legend_surface() + ggplot2::aes(fill = x) +
     ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d())
   expect_error(ggplot2::ggplot_build(bad), "same expression")
+  fixed <- legend_surface() + geom_surface_3d(ggplot2::aes(fill = x), fill = "grey70") +
+    ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d())
+  expect_no_error(ggplot2::ggplot_build(fixed))
   expect_error(ggplot2::ggplot_build(legend_surface(axes = character()) +
     ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d())), "visible box guide")
   expect_error(guide_colourbar_3d(width = grid::unit(1, "npc")), "physical")

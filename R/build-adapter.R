@@ -9,6 +9,7 @@ ggplot_build.ggplot3d <- function(plot, ...) {
   context$layer_mappings <- lapply(plot@layers, function(layer) {
     mapping <- if (isTRUE(layer$inherit.aes)) plot@mapping else ggplot2::aes()
     for (name in names(layer$mapping)) mapping[[name]] <- layer$mapping[[name]]
+    for (name in names(layer$aes_params)) mapping[[name]] <- NULL
     mapping
   })
   frame <- plot@coordinates$frame %or3d% FrameBox
