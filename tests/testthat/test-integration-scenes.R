@@ -143,7 +143,8 @@ test_that("packet remapping accepts typed empty buffers and collector rejects un
   params <- list(panel_id = 1L)
   expect_error(collect_scene_layers(list(grid::rectGrob()), params, ggplot2::theme_get()), "Unsupported nonempty")
   expect_error(ggplot2::ggplot_build(ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = y, ymax = y)) + coord_3d()), "No 3D emitter")
+    ggplot2::layer(geom = ggplot2::ggproto("GeomUnregistered", ggplot2::Geom, required_aes = c("x", "y")),
+      stat = "identity", position = "identity") + coord_3d()), "No 3D emitter")
 })
 
 test_that("concave polygon triangles conserve area and reject invalid topology", {
