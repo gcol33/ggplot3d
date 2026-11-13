@@ -2,6 +2,7 @@
 
 * `guide_triad_3d()` and `annotation_north_3d()` show camera-aligned model directions in each panel. `annotation_scale_3d()` draws a bar in data units with ticks and a label in its coordinate plane, including perspective views.
 
+* `stat_ellipsoid_3d()` fits grouped covariance and confidence ellipsoids with t, normal or Euclidean shapes, Hotelling regions for the mean and enclosing hulls. It computes `level`, `volume` and `n`; `axes = TRUE` draws the principal axes.
 * Interval layers on all three axes: `geom_errorbar_3d()`, `geom_linerange_3d()`, `geom_pointrange_3d()` and `geom_crossbar_3d()` draw any combination of x, y and z intervals. `geom_stem_3d()` draws stems from a base value; `stat_summary_3d()` summarises one axis at each position on the other two.
 * Reference and clipping planes: `geom_plane_3d()` draws planes of constant x, y or z, or of any orientation from a normal and a point (such as a fitted regression plane), cut to the panel box as one face that intersects surfaces exactly. `coord_3d(clip_planes = )` cuts every layer by `clip_plane_3d()` half-spaces set in data units, and a layer's `clip_planes` argument replaces them for that layer; `cap = TRUE` closes cut solids with faces on the plane, leaving the holes of hollow solids open.
 * `guide_axis_3d()` adds edge-following labels, glyph outlines lying in a pane, in-plane ticks, near-end titles and perspective depth scaling. Plane text and ticks participate in scene visibility. `geom_text_3d(orientation = "plane", plane = )` lays font outlines in a coordinate plane.

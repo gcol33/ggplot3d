@@ -140,6 +140,7 @@ reference:
   - geom_ribbon_3d
   - geom_sphere_3d
   - geom_ellipsoid_3d
+  - stat_ellipsoid_3d
   - geom_glyph_3d
 - title: Network and tree layers
   contents:

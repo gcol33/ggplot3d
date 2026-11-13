@@ -11,6 +11,7 @@ geom_ellipsoid_3d(
   position = "identity",
   ...,
   detail = 2L,
+  axes = FALSE,
   shade = TRUE,
   na.rm = FALSE,
   show.legend = NA,
@@ -21,6 +22,11 @@ geom_ellipsoid_3d(
 \item{mapping, data, stat, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
 
 \item{detail}{Subdivision level of the icosphere, from 0 to 6.}
+
+\item{axes}{Whether to draw the three principal axes of each ellipsoid as
+opaque segments through its centre, in the \code{colour} aesthetic or, where
+that is missing, the \code{fill} darkened by half. Inside an opaque ellipsoid
+they are hidden; give the ellipsoids an \code{alpha} below one to see them.}
 
 \item{shade}{Whether to apply lighting.}
 }
@@ -54,8 +60,9 @@ e <- data.frame(t(sapply(groups, colMeans)), species = names(groups))
 names(e)[1:3] <- c("x", "y", "z")
 e$sigma <- lapply(groups, function(g) cov(g) * qchisq(0.95, 3))
 ggplot2::ggplot(e, ggplot2::aes(x, y, z = z, sigma = sigma, fill = species)) +
-  geom_ellipsoid_3d(alpha = 0.6) + coord_3d()
+  geom_ellipsoid_3d(alpha = 0.6, axes = TRUE) + coord_3d()
 }
 \seealso{
-\code{\link[=geom_sphere_3d]{geom_sphere_3d()}}, \code{\link[=geom_glyph_3d]{geom_glyph_3d()}}.
+\code{\link[=stat_ellipsoid_3d]{stat_ellipsoid_3d()}} estimates the ellipsoids from groups of
+points; \code{\link[=geom_sphere_3d]{geom_sphere_3d()}}, \code{\link[=geom_glyph_3d]{geom_glyph_3d()}}.
 }

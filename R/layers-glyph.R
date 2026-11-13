@@ -269,12 +269,41 @@ GeomEllipsoid3D <- ggplot2::ggproto("GeomEllipsoid3D", ggplot2::Geom,
   }
 )
 
-emit_ellipsoids_3d <- function(data, params, panel_params) {
-  maps <- normalise_maps_3d(ellipsoid_maps_3d(data), panel_params)
-  emit_glyph_instances_3d(data, maps, rep("data", nrow(data)), glyph_mesh_3d("sphere", params$detail), params, panel_params)
+# The three principal semi-axes of the unit sphere, as segments through the
+# origin; an ellipsoid map carries them onto the ellipsoid's principal axes.
+principal_axes_unit_3d <- list(
+  vertices = rbind(c(1, 0, 0), c(-1, 0, 0), c(0, 1, 0), c(0, -1, 0), c(0, 0, 1), c(0, 0, -1)),
+  faces = list(), edges = matrix(1:6, ncol = 2L, byrow = TRUE), sphere = TRUE)
+
+# Principal axes are opaque strokes in the colour aesthetic, or where that is
+# missing in the fill darkened by half, so they stand out through a
+# translucent surface of the same hue; alpha belongs to the fill, as for
+# ggplot2's polygons.
+axis_colours_3d <- function(colour, fill) {
+  dark <- rep(NA_character_, length(fill))
+  known <- !is.na(fill)
+  if (any(known)) {
+    rgb <- grDevices::col2rgb(fill[known]) / 2
+    dark[known] <- grDevices::rgb(rgb[1L, ], rgb[2L, ], rgb[3L, ], maxColorValue = 255)
+  }
+  ifelse(is.na(colour), dark, colour)
 }
 
-register_geom_3d(GeomEllipsoid3D, emit_ellipsoids_3d, parameters = list(detail = 2L))
+emit_ellipsoids_3d <- function(data, params, panel_params) {
+  maps <- normalise_maps_3d(ellipsoid_maps_3d(data), panel_params)
+  space <- rep("data", nrow(data))
+  body <- emit_glyph_instances_3d(data, maps, space, glyph_mesh_3d("sphere", params$detail), params, panel_params)
+  if (!isTRUE(params$axes)) return(body)
+  strokes <- data
+  strokes$colour <- axis_colours_3d(strokes$colour, strokes$fill)
+  strokes$alpha <- 1
+  axes <- emit_glyph_instances_3d(strokes, maps, space, principal_axes_unit_3d, params, panel_params)
+  packet <- merge_scene_packets(list(body, axes), panel_params$panel_id)
+  attr(packet, "model_space") <- TRUE
+  packet
+}
+
+register_geom_3d(GeomEllipsoid3D, emit_ellipsoids_3d, parameters = list(detail = 2L, axes = FALSE))
 
 #' Ellipsoids
 #'
@@ -294,9 +323,14 @@ register_geom_3d(GeomEllipsoid3D, emit_ellipsoids_3d, parameters = list(detail =
 #'
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param detail Subdivision level of the icosphere, from 0 to 6.
+#' @param axes Whether to draw the three principal axes of each ellipsoid as
+#'   opaque segments through its centre, in the `colour` aesthetic or, where
+#'   that is missing, the `fill` darkened by half. Inside an opaque ellipsoid
+#'   they are hidden; give the ellipsoids an `alpha` below one to see them.
 #' @param shade Whether to apply lighting.
 #' @return A ggplot2 layer.
-#' @seealso [geom_sphere_3d()], [geom_glyph_3d()].
+#' @seealso [stat_ellipsoid_3d()] estimates the ellipsoids from groups of
+#'   points; [geom_sphere_3d()], [geom_glyph_3d()].
 #' @examples
 #' d <- data.frame(x = c(0, 3), y = c(0, 1), z = c(0, 1), rx = c(1, 0.5),
 #'                 ry = c(0.5, 0.5), rz = c(0.3, 1.2))
@@ -308,11 +342,12 @@ register_geom_3d(GeomEllipsoid3D, emit_ellipsoids_3d, parameters = list(detail =
 #' names(e)[1:3] <- c("x", "y", "z")
 #' e$sigma <- lapply(groups, function(g) cov(g) * qchisq(0.95, 3))
 #' ggplot2::ggplot(e, ggplot2::aes(x, y, z = z, sigma = sigma, fill = species)) +
-#'   geom_ellipsoid_3d(alpha = 0.6) + coord_3d()
+#'   geom_ellipsoid_3d(alpha = 0.6, axes = TRUE) + coord_3d()
 #' @export
 geom_ellipsoid_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
-                              detail = 2L, shade = TRUE,
+                              detail = 2L, axes = FALSE, shade = TRUE,
                               na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomEllipsoid3D, mapping, data, stat, position,
-    c(list(detail = check_detail_3d(detail), shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+    c(list(detail = check_detail_3d(detail), axes = check_flag_3d(axes, "axes"), shade = shade, na.rm = na.rm), list(...)),
+    show.legend, inherit.aes)
 }
