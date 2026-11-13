@@ -22,6 +22,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_isosurface_cpp
+Rcpp::DataFrame geometry_isosurface_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::NumericVector z, Rcpp::NumericVector value, Rcpp::NumericVector levels, bool caps);
+RcppExport SEXP _ggplot3d_geometry_isosurface_cpp(SEXP xSEXP, SEXP ySEXP, SEXP zSEXP, SEXP valueSEXP, SEXP levelsSEXP, SEXP capsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type z(zSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< bool >::type caps(capsSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_isosurface_cpp(x, y, z, value, levels, caps));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_hull_cpp
+Rcpp::IntegerMatrix geometry_hull_cpp(Rcpp::NumericMatrix xyz);
+RcppExport SEXP _ggplot3d_geometry_hull_cpp(SEXP xyzSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_hull_cpp(xyz));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_kde_cpp
+Rcpp::NumericVector geometry_kde_cpp(Rcpp::NumericMatrix data, Rcpp::List axes, Rcpp::NumericVector bandwidth);
+RcppExport SEXP _ggplot3d_geometry_kde_cpp(SEXP dataSEXP, SEXP axesSEXP, SEXP bandwidthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type axes(axesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type bandwidth(bandwidthSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_kde_cpp(data, axes, bandwidth));
+    return rcpp_result_gen;
+END_RCPP
+}
 // raster_prepare_cpp
 Rcpp::List raster_prepare_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport);
 RcppExport SEXP _ggplot3d_raster_prepare_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP) {
@@ -53,6 +90,9 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_scene_compile_cpp", (DL_FUNC) &_ggplot3d_scene_compile_cpp, 3},
+    {"_ggplot3d_geometry_isosurface_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_cpp, 6},
+    {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
+    {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 7},
     {NULL, NULL, 0}

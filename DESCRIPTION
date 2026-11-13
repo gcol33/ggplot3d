@@ -23,6 +23,7 @@ Imports:
     utils
 LinkingTo: Rcpp
 Suggests:
+    mgcv,
     ragg,
     rgl,
     sf,

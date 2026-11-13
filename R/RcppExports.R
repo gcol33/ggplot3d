@@ -5,6 +5,18 @@ scene_compile_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_scene_compile_cpp`, packet, camera, viewport)
 }
 
+geometry_isosurface_cpp <- function(x, y, z, value, levels, caps) {
+    .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps)
+}
+
+geometry_hull_cpp <- function(xyz) {
+    .Call(`_ggplot3d_geometry_hull_cpp`, xyz)
+}
+
+geometry_kde_cpp <- function(data, axes, bandwidth) {
+    .Call(`_ggplot3d_geometry_kde_cpp`, data, axes, bandwidth)
+}
+
 raster_prepare_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_raster_prepare_cpp`, packet, camera, viewport)
 }
