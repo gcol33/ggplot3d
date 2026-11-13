@@ -129,6 +129,14 @@ slice_field_3d <- function(field, xslice, yslice, zslice, slice, n) {
   names(out)[names(out) == "value"] <- ".value"
   out$value <- rep(colMeans(matrix(out$.value, nrow = 3L)), each = 3L)
   out$z_mean <- rep(colMeans(matrix(out$z, nrow = 3L)), each = 3L)
+  slice_extent_3d(out, axes)
+}
+
+# The grid box as position ranges, so the scales cover the sliced volume.
+slice_extent_3d <- function(out, axes) {
+  for (a in c("x", "y", "z")) {
+    out[[paste0(a, "min")]] <- min(axes[[a]]); out[[paste0(a, "max")]] <- max(axes[[a]])
+  }
   out
 }
 
@@ -144,6 +152,62 @@ StatSlice3D <- ggplot2::ggproto("StatSlice3D", StatGeometry3D,
   compute_group = function(data, scales, xslice = NULL, yslice = NULL, zslice = NULL, slice = NULL, n = NULL) {
     if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Slices require continuous position scales.", call. = FALSE)
     slice_field_3d(stats_scalar_grid_3d(data), xslice, yslice, zslice, slice, n)
+  }
+)
+
+# Contour lines of slice sections: marching triangles on each section's
+# triangles, with the trilinear vertex values.
+slice_contours_3d <- function(faces, breaks, bins, binwidth, scales) {
+  if (!nrow(faces)) return(data.frame())
+  first <- !duplicated(faces$.vertex)
+  vertices <- faces[first, c("x", "y", "z", ".value", "slice"), drop = FALSE]
+  triangles <- matrix(match(faces$.vertex, faces$.vertex[first]), ncol = 3L, byrow = TRUE)
+  levels <- contour_levels_3d(range(vertices$.value, finite = TRUE), breaks, bins, binwidth)
+  if (!length(levels)) return(data.frame())
+  out <- contour_lines_3d(vertices, triangles, vertices$.value, levels, c(faces$zmin[1L], faces$zmax[1L]), "surface", scales)
+  if (!nrow(out)) return(out)
+  out$.value <- NULL
+  axes <- list(x = c(faces$xmin[1L], faces$xmax[1L]), y = c(faces$ymin[1L], faces$ymax[1L]), z = c(faces$zmin[1L], faces$zmax[1L]))
+  slice_extent_3d(out, axes)
+}
+
+StatSliceContour3D <- ggplot2::ggproto("StatSliceContour3D", StatSlice3D,
+  default_aes = ggplot2::aes(colour = ggplot2::after_stat(level)),
+  compute_group = function(data, scales, xslice = NULL, yslice = NULL, zslice = NULL, slice = NULL, n = NULL,
+                           breaks = NULL, bins = NULL, binwidth = NULL) {
+    if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Slices require continuous position scales.", call. = FALSE)
+    slice_contours_3d(slice_field_3d(stats_scalar_grid_3d(data), xslice, yslice, zslice, slice, n), breaks, bins, binwidth, scales)
+  }
+)
+
+# Moves points onto f = levels[1] and g = levels[2] by Newton steps with the
+# minimum-norm update: p - J^T (J J^T)^-1 r for the 2 x 3 Jacobian J of
+# (f, g) and the residual r. Points where the two gradients are parallel stay.
+isocurve_polish_3d <- function(p, f, g, levels, axes, steps) {
+  df <- function_gradient_3d(f, axes); dg <- function_gradient_3d(g, axes)
+  for (step in seq_len(steps)) {
+    r1 <- f(p) - levels[1L]; r2 <- g(p) - levels[2L]
+    a <- df(p); b <- dg(p)
+    aa <- rowSums(a * a); ab <- rowSums(a * b); bb <- rowSums(b * b)
+    det <- aa * bb - ab^2
+    ok <- is.finite(det) & is.finite(r1) & is.finite(r2) & det > 1e-12 * aa * bb
+    u <- (bb * r1 - ab * r2) / det; v <- (aa * r2 - ab * r1) / det
+    p[ok, ] <- p[ok, , drop = FALSE] - (a * u + b * v)[ok, , drop = FALSE]
+  }
+  p
+}
+
+StatIsocurve3D <- ggplot2::ggproto("StatIsocurve3D", StatGeometry3D,
+  required_aes = character(),
+  optional_aes = c("x", "y", "z"),
+  compute_group = function(data, scales, fun1, fun2, n = 32L, args = list(), levels = c(0, 0), refine = 2L) {
+    axes <- stats_grid_3d(scales, n, c("x", "y", "z"))
+    first <- stats_function_grid_3d(fun1, args, scales, n); second <- stats_function_grid_3d(fun2, args, scales, n)
+    lines <- geometry_isocurve_cpp(axes$x, axes$y, axes$z, first$value, second$value, levels[1L], levels[2L])
+    if (!nrow(lines)) return(data.frame())
+    p <- isocurve_polish_3d(as.matrix(lines[c("x", "y", "z")]), function_evaluator_3d(fun1, args),
+      function_evaluator_3d(fun2, args), levels, axes, refine)
+    data.frame(x = p[, 1L], y = p[, 2L], z = p[, 3L], piece = lines$piece, group = lines$piece)
   }
 )
 

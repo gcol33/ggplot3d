@@ -1,4 +1,5 @@
 #include "geometry/extract.h"
+#include "geometry/contour.h"
 #include "geometry/octree.h"
 #include "geometry/hull.h"
 using ggplot3d_geometry::V;
@@ -111,6 +112,63 @@ Rcpp::DataFrame geometry_octree_isosurface_cpp(Rcpp::NumericVector lo,Rcpp::Nume
   if(method=="dual") return extract<true>(tree,blank,l,field,place,g).output();
   if(method=="nets") return extract<false>(tree,blank,l,field,place,g).output();
   Rcpp::stop("Adaptive extraction supports the \"dual\" and \"nets\" methods.");
+}
+
+namespace {
+// Polylines as a data frame of points with level, piece (1-based polyline
+// number) and triangle (1-based triangle each polyline starts in).
+Rcpp::DataFrame polyline_frame(const std::vector<ggplot3d_geometry::Polyline>& lines) {
+  std::vector<double> x,y,z,level; std::vector<int> piece,triangle;
+  for(size_t l=0;l<lines.size();++l) for(const V& p:lines[l].points) {
+    x.push_back(p[0]); y.push_back(p[1]); z.push_back(p[2]); level.push_back(lines[l].level);
+    piece.push_back(l+1); triangle.push_back(lines[l].triangle+1);
+  }
+  return Rcpp::DataFrame::create(Rcpp::Named("x")=x,Rcpp::Named("y")=y,Rcpp::Named("z")=z,Rcpp::Named("level")=level,
+    Rcpp::Named("piece")=piece,Rcpp::Named("triangle")=triangle);
+}
+}
+
+// Level lines of values (one per point) on the triangles (1-based rows of
+// point indices) of a mesh, by marching triangles.
+// [[Rcpp::export(rng = false)]]
+Rcpp::DataFrame geometry_contour_cpp(Rcpp::NumericMatrix points,Rcpp::IntegerMatrix triangles,Rcpp::NumericVector values,
+                                     Rcpp::NumericVector levels) {
+  int n=points.nrow();
+  if(points.ncol()!=3||values.size()!=n||triangles.ncol()!=3) Rcpp::stop("Invalid contour mesh.");
+  std::vector<V> p=matrix_points(points,n,"Points must have three columns.");
+  std::vector<std::array<int,3>> t(triangles.nrow());
+  for(int f=0;f<triangles.nrow();++f) for(int k=0;k<3;++k) {
+    int id=triangles(f,k);
+    if(id==NA_INTEGER||id<1||id>n) Rcpp::stop("Triangle indices must refer to points.");
+    t[f][k]=id-1;
+  }
+  return polyline_frame(ggplot3d_geometry::contour_mesh(p,t,Rcpp::as<std::vector<double>>(values),Rcpp::as<std::vector<double>>(levels)));
+}
+
+// Intersection curve of the level sets f = level_f and g = level_g of two
+// fields on one grid. Each cell is split into the six tetrahedra of the
+// "tetra" method, where both linear interpolants are linear: the level set
+// of f is extracted without regularisation, g is interpolated onto its
+// vertices along their grid edges, and the level line of g on that surface
+// is traced by marching triangles. Inside a tetrahedron this is the exact
+// intersection segment of the two linear level sets; segments are chained
+// through the surface edges they end on.
+// [[Rcpp::export(rng = false)]]
+Rcpp::DataFrame geometry_isocurve_cpp(Rcpp::NumericVector x,Rcpp::NumericVector y,Rcpp::NumericVector z,
+                                      Rcpp::NumericVector f,Rcpp::NumericVector g,double level_f,double level_g) {
+  using namespace ggplot3d_geometry;
+  if(!std::isfinite(level_f)||!std::isfinite(level_g)) Rcpp::stop("Levels must be finite.");
+  ScalarGrid grid(x,y,z,f);
+  if(g.size()!=f.size()) Rcpp::stop("Both fields need one value per grid point.");
+  Mesh mesh=march<tetra::cell,no_finish>(grid,{level_f},false);
+  std::vector<V> points; std::vector<double> values;
+  for(const Vertex& v:mesh.vertices) {
+    points.push_back(v.p);
+    values.push_back(v.ea==v.eb?g[v.ea]:g[v.ea]+v.t*(g[v.eb]-g[v.ea]));
+  }
+  std::vector<std::array<int,3>> triangles;
+  for(const auto& t:mesh.triangles) if(t[0]>=0) triangles.push_back(t);
+  return polyline_frame(contour_mesh(points,triangles,values,{level_g}));
 }
 
 // [[Rcpp::export(rng = false)]]

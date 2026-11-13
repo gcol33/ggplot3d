@@ -17,6 +17,14 @@ geometry_octree_isosurface_cpp <- function(lo, hi, depth, boxes, empty, levels, 
     .Call(`_ggplot3d_geometry_octree_isosurface_cpp`, lo, hi, depth, boxes, empty, levels, caps, method, value, crossing, gradient)
 }
 
+geometry_contour_cpp <- function(points, triangles, values, levels) {
+    .Call(`_ggplot3d_geometry_contour_cpp`, points, triangles, values, levels)
+}
+
+geometry_isocurve_cpp <- function(x, y, z, f, g, level_f, level_g) {
+    .Call(`_ggplot3d_geometry_isocurve_cpp`, x, y, z, f, g, level_f, level_g)
+}
+
 geometry_isosurface_methods_cpp <- function() {
     .Call(`_ggplot3d_geometry_isosurface_methods_cpp`)
 }

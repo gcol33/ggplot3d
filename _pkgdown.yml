@@ -140,6 +140,8 @@ reference:
   - geom_isofunction_3d
   - geom_isodensity_3d
   - geom_slice_3d
+  - geom_slice_contour_3d
+  - geom_isocurve_3d
   - geom_hull_3d
   - geom_alpha_shape_3d
   - geom_parametric_3d
@@ -162,6 +164,8 @@ reference:
   - stat_isofunction_3d
   - stat_density_3d
   - stat_slice_3d
+  - stat_slice_contour_3d
+  - stat_isocurve_3d
   - stat_hull_3d
   - stat_alpha_shape_3d
   - stat_implicit_fit_3d

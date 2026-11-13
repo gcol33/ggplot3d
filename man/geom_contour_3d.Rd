@@ -15,6 +15,8 @@ geom_contour_3d(
   binwidth = NULL,
   breaks = NULL,
   plane = c("surface", "floor"),
+  method = c("grid", "delaunay"),
+  max_edge = Inf,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -41,6 +43,12 @@ geom_contour_filled_3d(
 \item{bins, binwidth, breaks}{Level controls in transformed z units. Explicit breaks take precedence.}
 
 \item{plane}{Either surface, floor, or a numeric z in original units.}
+
+\item{method}{\code{"grid"} triangulates a complete x/y grid as
+geom_surface_3d() does; \code{"delaunay"} triangulates scattered x/y
+positions. Mesh input (\code{\link[=mesh_3d]{mesh_3d()}}) uses its own faces.}
+
+\item{max_edge}{Longest x/y edge kept in a Delaunay triangulation.}
 }
 \value{
 A ggplot2 layer.
@@ -49,7 +57,17 @@ A ggplot2 layer.
 Contours following a triangulated surface or a horizontal plane
 }
 \details{
-Isoband operates on the same grid triangles used by geom_surface_3d().
+Contour lines are traced by marching triangles on the triangles
+of the surface: the field is linear on each triangle, crossings on a
+shared edge are shared, and segments are chained into open lines and
+closed loops. The field is z, or the \code{value} aesthetic when mapped, so
+any scalar on any triangulated surface can be contoured: a variable
+measured on a terrain, or \verb{value = n . p} for sections of the surface by
+parallel planes. Mesh input (a \code{mesh3d} or \code{\link[=mesh_3d]{mesh_3d()}} data with \code{.face},
+\code{.corner} and \code{.vertex} keys) is contoured on its own faces, polygons
+fanned from their first corner.
+Filled contours follow z only; isoband operates on the same grid
+triangles used by geom_surface_3d().
 Default levels are interior pretty(range, n = 10) values.
 Surface bands are lifted by barycentric interpolation within each triangle.
 Floor contours use the lower expanded panel boundary. The source height
@@ -60,6 +78,9 @@ d <- expand.grid(x = seq(-2, 2, length.out = 12), y = seq(-2, 2, length.out = 12
 d$z <- exp(-d$x^2 - d$y^2)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d() + geom_contour_3d(bins = 4, colour = "navy") + coord_3d()
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d() +
+  geom_contour_3d(ggplot2::aes(value = x + y), bins = 6, colour = "navy") + coord_3d()
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_contour_filled_3d(bins = 4, plane = "floor") + coord_3d()
 }

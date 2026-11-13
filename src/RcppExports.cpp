@@ -75,6 +75,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_contour_cpp
+Rcpp::DataFrame geometry_contour_cpp(Rcpp::NumericMatrix points, Rcpp::IntegerMatrix triangles, Rcpp::NumericVector values, Rcpp::NumericVector levels);
+RcppExport SEXP _ggplot3d_geometry_contour_cpp(SEXP pointsSEXP, SEXP trianglesSEXP, SEXP valuesSEXP, SEXP levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type points(pointsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type triangles(trianglesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type values(valuesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type levels(levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_contour_cpp(points, triangles, values, levels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_isocurve_cpp
+Rcpp::DataFrame geometry_isocurve_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::NumericVector z, Rcpp::NumericVector f, Rcpp::NumericVector g, double level_f, double level_g);
+RcppExport SEXP _ggplot3d_geometry_isocurve_cpp(SEXP xSEXP, SEXP ySEXP, SEXP zSEXP, SEXP fSEXP, SEXP gSEXP, SEXP level_fSEXP, SEXP level_gSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type z(zSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type f(fSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type g(gSEXP);
+    Rcpp::traits::input_parameter< double >::type level_f(level_fSEXP);
+    Rcpp::traits::input_parameter< double >::type level_g(level_gSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_isocurve_cpp(x, y, z, f, g, level_f, level_g));
+    return rcpp_result_gen;
+END_RCPP
+}
 // geometry_isosurface_methods_cpp
 Rcpp::CharacterVector geometry_isosurface_methods_cpp();
 RcppExport SEXP _ggplot3d_geometry_isosurface_methods_cpp() {
@@ -298,6 +327,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_isosurface_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_cpp, 9},
     {"_ggplot3d_geometry_slice_cpp", (DL_FUNC) &_ggplot3d_geometry_slice_cpp, 6},
     {"_ggplot3d_geometry_octree_isosurface_cpp", (DL_FUNC) &_ggplot3d_geometry_octree_isosurface_cpp, 11},
+    {"_ggplot3d_geometry_contour_cpp", (DL_FUNC) &_ggplot3d_geometry_contour_cpp, 4},
+    {"_ggplot3d_geometry_isocurve_cpp", (DL_FUNC) &_ggplot3d_geometry_isocurve_cpp, 7},
     {"_ggplot3d_geometry_isosurface_methods_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_methods_cpp, 0},
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},

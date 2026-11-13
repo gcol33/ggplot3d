@@ -346,6 +346,90 @@ stat_density_slice_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsS
 #' @export
 geom_density_slice_3d <- function(...) stat_density_slice_3d(...)
 
+#' Contour lines on slices through a gridded scalar field
+#'
+#' Cuts the field by the planes of [stat_slice_3d()] and traces level lines
+#' of the interpolated field on each section by the marching triangles of
+#' [geom_contour_3d()]: the field is linear on each section triangle,
+#' crossings on shared edges are shared, and segments are chained into open
+#' lines and closed loops. Computed variables: `level` (the default colour)
+#' and `slice`.
+#' @inheritParams stat_slice_3d
+#' @inheritParams geom_contour_3d
+#' @export
+#' @examples
+#' d <- expand.grid(x = seq(-1, 1, length.out = 12),
+#'                  y = seq(-1, 1, length.out = 12), z = seq(-1, 1, length.out = 12))
+#' d$value <- with(d, exp(-(x^2 + 2 * y^2 + z^2)))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
+#'   geom_slice_3d(zslice = 0) + geom_slice_contour_3d(zslice = 0, bins = 6, colour = "white") +
+#'   coord_3d()
+stat_slice_contour_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::GeomPath,
+                                  position = "identity", ..., xslice = NULL, yslice = NULL, zslice = NULL,
+                                  slice = NULL, n = NULL, bins = NULL, binwidth = NULL, breaks = NULL,
+                                  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  check_slices_3d(xslice, yslice, zslice, slice)
+  make_layer_3d(geom, mapping, data, StatSliceContour3D, position,
+    stats_params_3d(list(xslice = xslice, yslice = yslice, zslice = zslice, slice = slice, n = n,
+      bins = bins, binwidth = binwidth, breaks = breaks, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+}
+
+#' @rdname stat_slice_contour_3d
+#' @export
+geom_slice_contour_3d <- function(...) stat_slice_contour_3d(...)
+
+#' Intersection curves of two implicit surfaces
+#'
+#' Traces the curve where `fun1 = levels[1]` and `fun2 = levels[2]` meet,
+#' inside the box of the position scales. Both functions are evaluated on an
+#' `n` grid and each cell is split into the six tetrahedra of
+#' `stat_isosurface_3d(method = "tetra")`, on which both are replaced by their
+#' linear interpolants. In each tetrahedron the level set of fun1 is a
+#' triangle or a quad on which fun2 is linear, so the curve crosses it in one
+#' segment; segments end on the faces shared with the neighbouring
+#' tetrahedra and are chained into open curves (ending on the box) and
+#' closed loops. Each point is then moved onto both level sets by `refine`
+#' Newton steps with the minimum-norm update for the two equations, using
+#' central differences of the functions, or exact gradients for signed
+#' distance functions ([sdf_sphere()]). Points where the two surfaces touch
+#' tangentially keep their position.
+#'
+#' A curve that lies within a single grid cell, or two curves that pass
+#' through one cell, can be missed or joined; a finer `n` resolves them.
+#' Snyder's interval method subdivides until each box holds one curve piece
+#' that is monotone in some coordinate.
+#' @inheritParams stat_isofunction_3d
+#' @param fun1,fun2 Vectorised scalar functions of x, y and z, or signed
+#'   distance functions.
+#' @param levels The levels of fun1 and fun2.
+#' @param refine Number of Newton steps per curve point; 0 keeps the
+#'   intersection of the linear interpolants.
+#' @references Snyder (1992). Interval analysis for computer graphics.
+#'   SIGGRAPH '92, 121-130. \doi{10.1145/133994.134024}
+#' @export
+#' @examples
+#' ggplot2::ggplot() +
+#'   geom_isocurve_3d(fun1 = sdf_sphere(radius = 1),
+#'                    fun2 = function(x, y, z) x^2 - y^2 - z * 0.5, n = 16) +
+#'   ggplot2::xlim(-1.2, 1.2) + ggplot2::ylim(-1.2, 1.2) +
+#'   scale_z_continuous(limits = c(-1.2, 1.2)) + coord_3d()
+stat_isocurve_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::GeomPath,
+                             position = "identity", ..., fun1, fun2, n = 32L, args = list(),
+                             levels = c(0, 0), refine = 2L,
+                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  if (!is.function(fun1) || !is.function(fun2)) stop("fun1 and fun2 must be functions.", call. = FALSE)
+  if (!is.numeric(levels) || length(levels) != 2L || any(!is.finite(levels))) stop("levels must be two finite numbers.", call. = FALSE)
+  if (!is.numeric(refine) || length(refine) != 1L || !is.finite(refine) || refine < 0 || refine != trunc(refine))
+    stop("refine must be a non-negative integer.", call. = FALSE)
+  make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsocurve3D, position,
+    stats_params_3d(list(fun1 = fun1, fun2 = fun2, n = n, args = args, levels = as.double(levels), refine = as.integer(refine),
+      na.rm = na.rm), list(...)), show.legend, inherit.aes)
+}
+
+#' @rdname stat_isocurve_3d
+#' @export
+geom_isocurve_3d <- function(...) stat_isocurve_3d(...)
+
 #' Convex hulls in three dimensions
 #'
 #' Native Quickhull assigns outside points to facets, selects the furthest point

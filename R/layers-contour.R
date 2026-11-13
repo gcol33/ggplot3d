@@ -27,7 +27,9 @@ check_plane_3d <- function(plane) {
 
 StatContour3D <- ggplot2::ggproto("StatContour3D", ggplot2::Stat,
   required_aes = c("x", "y", "z"),
-  extra_params = c("na.rm", "breaks", "bins", "binwidth", "plane", "filled"),
+  optional_aes = "value",
+  dropped_aes = "value",
+  extra_params = c("na.rm", "breaks", "bins", "binwidth", "plane", "filled", "method", "max_edge"),
   compute_panel = function(self, data, scales, ...) {
     output <- list(); offset <- 0L
     for (rows in split(seq_len(nrow(data)), data$group)) {
@@ -40,16 +42,19 @@ StatContour3D <- ggplot2::ggproto("StatContour3D", ggplot2::Stat,
     if (!length(output)) data.frame() else do.call(rbind, output)
   },
   compute_group = function(data, scales, breaks = NULL, bins = NULL, binwidth = NULL,
-                            plane = "surface", filled = FALSE) {
-    require_geometry_package_3d("isoband")
+                            plane = "surface", filled = FALSE, method = "grid", max_edge = Inf) {
     if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Contours require continuous position scales.", call. = FALSE)
-    triangles <- surface_triangles_3d(data, "grid", Inf)
+    method <- match.arg(method, c("grid", "delaunay"))
+    if (filled && !is.null(data$value)) stop("Filled contours follow z; the value aesthetic applies to contour lines.", call. = FALSE)
+    triangles <- contour_triangles_3d(data, method, max_edge)
     if (!nrow(triangles)) return(data.frame())
     range <- range(data$z, finite = TRUE)
-    levels <- contour_levels_3d(range, breaks, bins, binwidth)
+    values <- data$value %or3d% data$z
+    levels <- contour_levels_3d(range(values, finite = TRUE), breaks, bins, binwidth)
     if (filled) levels <- sort(unique(c(range, levels)))
     if (!length(levels) || (filled && length(levels) < 2L)) return(data.frame())
-    if (!filled) return(contour_lines_3d(data, triangles, levels, range, plane, scales))
+    if (!filled) return(contour_lines_3d(data, triangles, values, levels, range, plane, scales))
+    require_geometry_package_3d("isoband")
     results <- list(); group <- 0L
     for (i in seq_len(nrow(triangles))) {
       rows <- triangles[i, ]; tri <- data[rows, c("x", "y", "z")]
@@ -85,70 +90,43 @@ StatContour3D <- ggplot2::ggproto("StatContour3D", ggplot2::Stat,
   }
 )
 
-# Marching triangles. A level crosses a triangle edge whose end values lie on
-# either side of it; the crossing is keyed by the edge's two vertex rows, so
-# the two triangles sharing an edge share the crossing exactly. Each crossed
-# triangle contributes one segment between its two crossed edges, and segments
-# are chained through shared edges into open lines (ending on the grid
-# boundary) or closed loops.
-contour_lines_3d <- function(data, triangles, levels, range, plane, scales) {
-  xyz <- as.matrix(data[c("x", "y", "z")])
-  pairs <- list(c(1L, 2L), c(2L, 3L), c(3L, 1L))
-  results <- list(); group <- 0L
-  for (level in levels) {
-    above <- matrix(xyz[triangles, 3L] >= level, ncol = 3L)
-    crossed <- vapply(pairs, function(e) above[, e[1L]] != above[, e[2L]], logical(nrow(triangles)))
-    crossed <- matrix(crossed, ncol = 3L)
-    cells <- which(rowSums(crossed) == 2L)
-    if (!length(cells)) next
-    ends <- t(vapply(cells, function(i) {
-      e <- pairs[crossed[i, ]]
-      a <- triangles[i, c(e[[1L]][1L], e[[2L]][1L])]; b <- triangles[i, c(e[[1L]][2L], e[[2L]][2L])]
-      c(pmin(a, b), pmax(a, b))
-    }, integer(4L)))
-    keys <- paste(c(ends[, 1L], ends[, 2L]), c(ends[, 3L], ends[, 4L]))
-    edge <- match(keys, unique(keys))
-    first <- matrix(edge, ncol = 2L)
-    edges <- unique(data.frame(id = edge, lo = c(ends[, 1L], ends[, 2L]), hi = c(ends[, 3L], ends[, 4L])))
-    edges <- edges[order(edges$id), ]
-    t <- (level - xyz[edges$lo, 3L]) / (xyz[edges$hi, 3L] - xyz[edges$lo, 3L])
-    point <- xyz[edges$lo, , drop = FALSE] + t * (xyz[edges$hi, , drop = FALSE] - xyz[edges$lo, , drop = FALSE])
-    point[, 3L] <- level
-    incident <- split(c(seq_along(cells), seq_along(cells)), c(first[, 1L], first[, 2L]))
-    used <- logical(length(cells))
-    degree <- lengths(incident)
-    starts <- c(as.integer(names(incident)[degree == 1L]), first[, 1L])
-    for (start in starts) {
-      segment <- incident[[as.character(start)]]
-      segment <- segment[!used[segment]]
-      if (!length(segment)) next
-      path <- start; current <- start; next_segment <- segment[1L]
-      while (length(next_segment) && !used[next_segment]) {
-        used[next_segment] <- TRUE
-        current <- setdiff(first[next_segment, ], current)[1L] %or3d% current
-        path <- c(path, current)
-        candidates <- incident[[as.character(current)]]
-        next_segment <- candidates[!used[candidates]]
-        next_segment <- next_segment[seq_len(min(1L, length(next_segment)))]
-      }
-      line <- point[path, , drop = FALSE]
-      keep <- c(TRUE, rowSums(abs(diff(line))) > 0)
-      line <- line[keep, , drop = FALSE]
-      if (nrow(line) < 2L) next
-      group <- group + 1L
-      source <- triangles[cells[which(first[, 1L] == path[1L] | first[, 2L] == path[1L])[1L]], 1L]
-      out <- data[rep(source, nrow(line)), , drop = FALSE]
-      out[c("x", "y", "z")] <- as.data.frame(line)
-      out$.origin <- rep(as.integer(data$.source[source] %or3d% source), nrow(out))
-      out$level <- level; out$level_low <- level; out$level_high <- level
-      out$piece <- group; out$group <- group
-      out$zmin <- range[1L]; out$zmax <- range[2L]
-      if (is.numeric(plane)) out$zintercept <- scales$z$get_transformation()$transform(plane)
-      results[[length(results) + 1L]] <- out
-    }
+# Level lines of values (one per row of data) on the triangles of data, by
+# the marching triangles of geometry_contour_cpp(): crossings are keyed by the
+# edge's two vertex rows, so triangles sharing an edge share the crossing
+# exactly, and segments are chained into open lines (ending on the mesh
+# boundary) or closed loops. Each line keeps the attributes of the first row
+# of the triangle it starts in. Contours of z lie exactly at their level.
+contour_lines_3d <- function(data, triangles, values, levels, range, plane, scales) {
+  lines <- geometry_contour_cpp(as.matrix(data[c("x", "y", "z")]), matrix(as.integer(triangles), ncol = 3L),
+    as.double(values), as.double(levels))
+  if (!nrow(lines)) return(data.frame())
+  source <- triangles[lines$triangle, 1L]
+  out <- data[source, , drop = FALSE]
+  out[c("x", "y", "z")] <- lines[c("x", "y", "z")]
+  if (identical(values, data$z)) out$z <- lines$level
+  out$.origin <- as.integer(data$.source[source] %or3d% source)
+  out$level <- out$level_low <- out$level_high <- lines$level
+  out$piece <- out$group <- lines$piece
+  out$zmin <- range[1L]; out$zmax <- range[2L]
+  if (is.numeric(plane)) out$zintercept <- scales$z$get_transformation()$transform(plane)
+  rownames(out) <- NULL
+  out
+}
+
+# Triangles of a contour layer's rows: the faces of mesh input (keyed by
+# .face and .corner, polygons fanned, corners welded by .vertex), otherwise
+# the grid or Delaunay triangulation of x and y used by geom_surface_3d().
+contour_triangles_3d <- function(data, method, max_edge) {
+  if (!all(c(".face", ".corner") %in% names(data))) return(surface_triangles_3d(data, method, max_edge))
+  rows <- order(data$.mesh %or3d% 1L, data$.face, data$.corner)
+  face <- interaction(data$.mesh %or3d% 1L, data$.face, drop = TRUE)[rows]
+  pieces <- lapply(split(rows, face), function(r) if (length(r) >= 3L) cbind(r[1L], r[-c(1L, length(r))], r[-(1:2)]))
+  triangles <- do.call(rbind, pieces) %or3d% matrix(integer(), ncol = 3L)
+  if (!is.null(data$.vertex)) {
+    key <- paste(data$.mesh %or3d% 1L, data$.vertex)
+    triangles[] <- match(key, key)[triangles]
   }
-  if (!length(results)) return(data.frame())
-  do.call(rbind, results)
+  triangles
 }
 
 GeomContour3D <- ggplot2::ggproto("GeomContour3D", ggplot2::GeomPath,
@@ -184,7 +162,21 @@ plane_draw_data_3d <- function(data, params, panel_params) {
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param bins,binwidth,breaks Level controls in transformed z units. Explicit breaks take precedence.
 #' @param plane Either surface, floor, or a numeric z in original units.
-#' @details Isoband operates on the same grid triangles used by geom_surface_3d().
+#' @param method `"grid"` triangulates a complete x/y grid as
+#'   geom_surface_3d() does; `"delaunay"` triangulates scattered x/y
+#'   positions. Mesh input ([mesh_3d()]) uses its own faces.
+#' @param max_edge Longest x/y edge kept in a Delaunay triangulation.
+#' @details Contour lines are traced by marching triangles on the triangles
+#'   of the surface: the field is linear on each triangle, crossings on a
+#'   shared edge are shared, and segments are chained into open lines and
+#'   closed loops. The field is z, or the `value` aesthetic when mapped, so
+#'   any scalar on any triangulated surface can be contoured: a variable
+#'   measured on a terrain, or `value = n . p` for sections of the surface by
+#'   parallel planes. Mesh input (a `mesh3d` or [mesh_3d()] data with `.face`,
+#'   `.corner` and `.vertex` keys) is contoured on its own faces, polygons
+#'   fanned from their first corner.
+#'   Filled contours follow z only; isoband operates on the same grid
+#'   triangles used by geom_surface_3d().
 #'   Default levels are interior pretty(range, n = 10) values.
 #'   Surface bands are lifted by barycentric interpolation within each triangle.
 #'   Floor contours use the lower expanded panel boundary. The source height
@@ -196,14 +188,19 @@ plane_draw_data_3d <- function(data, params, panel_params) {
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d() + geom_contour_3d(bins = 4, colour = "navy") + coord_3d()
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   geom_surface_3d() +
+#'   geom_contour_3d(ggplot2::aes(value = x + y), bins = 6, colour = "navy") + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_contour_filled_3d(bins = 4, plane = "floor") + coord_3d()
 #' @export
 geom_contour_3d <- function(mapping = NULL, data = NULL, stat = StatContour3D, position = "identity", ...,
                             bins = NULL, binwidth = NULL, breaks = NULL, plane = c("surface", "floor"),
+                            method = c("grid", "delaunay"), max_edge = Inf,
                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   plane <- check_plane_3d(plane)
   make_layer_3d(GeomContour3D, mapping, data, stat, position,
-    c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = FALSE, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+    c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = FALSE,
+      method = match.arg(method), max_edge = max_edge, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname geom_contour_3d
@@ -216,9 +213,19 @@ geom_contour_filled_3d <- function(mapping = NULL, data = NULL, stat = StatConto
     c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = TRUE, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
+# Mesh input keeps its face keys for the contour stat.
+prepare_contour_data_3d <- function(data) {
+  if (inherits(data, "mesh3d")) prepare_mesh_data_3d(data) else data
+}
+prepare_contour_aesthetics_3d <- function(out, data, plot, params) {
+  if (is.data.frame(data) && nrow(data) == nrow(out))
+    for (key in intersect(c(".mesh", ".face", ".corner", ".vertex"), names(data))) out[[key]] <- data[[key]]
+  out
+}
+
 register_geom_3d(GeomContour3D, function(data, params, panel_params) {
   emit_paths_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
-})
+}, prepare_data = prepare_contour_data_3d, prepare_aesthetics = prepare_contour_aesthetics_3d)
 register_geom_3d(GeomContourFilled3D, function(data, params, panel_params) {
   emit_polygons_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
 })
