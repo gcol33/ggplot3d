@@ -59,7 +59,8 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
       out$panel_id <- as.integer(as.character(row$PANEL))
       out$scale_ids <- c(x = row$SCALE_X, y = row$SCALE_Y, z = row$SCALE_Z)
       out$ranges <- list(x = out$x.range, y = out$y.range, z = out$z.range)
-      out$camera <- coord$panel_camera(i, nrow(self$layout))
+      view <- if (is.null(row$VIEW)) NULL else self$facet_params$views[[row$VIEW]]
+      out$camera <- if (is.null(view)) coord$panel_camera(i, nrow(self$layout)) else coord$view_camera(view)
       if (identical(coord$model_aspect, "data")) out$camera$aspect <- as.double(vapply(out$ranges, diff, numeric(1)))
       out$coord_params <- coord$config
       out$frame <- bind_frame_3d(coord$frame %or3d% FrameBox, out)

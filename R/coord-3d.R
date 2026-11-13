@@ -109,9 +109,6 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
                      transform = NULL) {
   clip <- match.arg(clip, c("on", "off"))
-  projection <- match.arg(projection, c("orthographic", "perspective", "oblique"))
-  up <- match(match.arg(up, c("x", "y", "z")), c("x", "y", "z"))
-  shear <- oblique_shear_3d(projection, oblique)
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
       !(length(expand) == 1L || (length(expand) == 3L && setequal(names(expand), c("x", "y", "z"))))) stop("expand must be logical scalar or named x/y/z vector.", call. = FALSE)
   expand_axes <- if (length(expand) == 1L) structure(rep(expand, 3L), names = c("x", "y", "z")) else expand[c("x", "y", "z")]
@@ -121,13 +118,16 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
   sizes <- lengths(views)
   count <- max(1L, sizes)
   if (any(sizes > 1L & sizes != count)) stop("Camera arguments must have one value or the same number of values, one per panel.", call. = FALSE)
-  cameras <- lapply(seq_len(count), function(i) {
+  base <- list(projection = projection, azimuth = azimuth, elevation = elevation, roll = roll, distance = distance,
+    fov = fov, zoom = zoom, target = target, oblique = oblique, up = up,
+    aspect = if (identical(aspect, "data")) c(1, 1, 1) else aspect,
+    near = near, far = far, clip_data = clip_data, clip = clip == "on")
+  panel_args <- lapply(seq_len(count), function(i) {
     view <- lapply(views, function(v) if (length(v) > 1L) v[[i]] else v)
-    new_camera_3d(projection, view$azimuth, view$elevation, view$roll, view$distance, view$fov, view$zoom, target,
-                  if (identical(aspect, "data")) c(1, 1, 1) else aspect,
-                  near, far, clip_data, clip == "on", up = up, shear = shear)
+    camera_args_update_3d(base, view)
   })
-  ggplot2::ggproto(NULL, Coord3D, camera = cameras[[1L]], cameras = cameras, model_aspect = aspect, frame = frame_box_3d(transform),
+  cameras <- lapply(panel_args, camera_from_args_3d)
+  ggplot2::ggproto(NULL, Coord3D, camera = cameras[[1L]], cameras = cameras, camera_args = panel_args[[1L]], model_aspect = aspect, frame = frame_box_3d(transform),
     limits = list(x = xlim, y = ylim, z = zlim), expand_axes = expand_axes,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
@@ -147,6 +147,28 @@ oblique_shear_3d <- function(projection, oblique) {
   unname(oblique[[2L]] * c(cos(angle), sin(angle)))
 }
 
+# Camera from coord_3d() camera arguments: the projection, angles, framing
+# values, oblique receding direction and vertical axis by name.
+camera_from_args_3d <- function(args) {
+  projection <- match.arg(args$projection, c("orthographic", "perspective", "oblique"))
+  up <- match(match.arg(args$up, c("x", "y", "z")), c("x", "y", "z"))
+  new_camera_3d(projection, args$azimuth, args$elevation, args$roll, args$distance, args$fov, args$zoom,
+    args$target, args$aspect, args$near, args$far, args$clip_data, args$clip, up = up,
+    shear = oblique_shear_3d(projection, args$oblique))
+}
+
+camera_view_names_3d <- c("projection", "azimuth", "elevation", "roll", "distance", "fov", "zoom", "target", "oblique", "up")
+
+# Camera arguments with the entries of a view replacing their base values; a
+# NULL entry, such as distance = NULL, is kept as an automatic value.
+camera_args_update_3d <- function(args, view) {
+  unknown <- setdiff(names(view), camera_view_names_3d)
+  if (length(unknown) || (length(view) && is.null(names(view))))
+    stop("A camera view takes the camera_3d() arguments ", paste(camera_view_names_3d, collapse = ", "), ".", call. = FALSE)
+  for (name in names(view)) args[name] <- list(view[[name]])
+  args
+}
+
 camera_presets_3d <- function() {
   # Dimetric with x foreshortened to half of y and z: sin(azimuth)^2 = 1/8,
   # cos(elevation)^2 = 8/9.
@@ -156,7 +178,10 @@ camera_presets_3d <- function() {
     dimetric = list(projection = "orthographic", azimuth = -asin(sqrt(1 / 8)) * 180 / pi, elevation = acos(sqrt(8 / 9)) * 180 / pi, roll = 0),
     trimetric = list(projection = "orthographic", azimuth = -30, elevation = 20, roll = 0),
     top = list(projection = "orthographic", azimuth = -90, elevation = 90, roll = 0),
+    bottom = list(projection = "orthographic", azimuth = -90, elevation = -90, roll = 0),
     front = list(projection = "orthographic", azimuth = -90, elevation = 0, roll = 0),
+    rear = list(projection = "orthographic", azimuth = 90, elevation = 0, roll = 0),
+    left = list(projection = "orthographic", azimuth = 180, elevation = 0, roll = 0),
     right = list(projection = "orthographic", azimuth = 0, elevation = 0, roll = 0),
     cabinet = list(projection = "oblique", azimuth = -90, elevation = 0, roll = 0, oblique = c(angle = 45, ratio = 0.5)),
     cavalier = list(projection = "oblique", azimuth = -90, elevation = 0, roll = 0, oblique = c(angle = 45, ratio = 1)),
@@ -170,8 +195,9 @@ camera_presets_3d <- function() {
 #' arguments combine with `do.call()`. Explicit non-NULL arguments override
 #' the preset.
 #' @param preset One of `"default"`, `"isometric"`, `"dimetric"` (x drawn at
-#'   half the length of y and z), `"trimetric"`, `"top"`, `"front"`, `"right"`,
-#'   and the oblique views `"cabinet"` (depth at 45 degrees, half length),
+#'   half the length of y and z), `"trimetric"`, the six principal views
+#'   `"top"`, `"bottom"`, `"front"`, `"rear"`, `"left"` and `"right"` (each
+#'   looking along one axis, as placed by [facet_views()]), and the oblique views `"cabinet"` (depth at 45 degrees, half length),
 #'   `"cavalier"` (depth at 45 degrees, full length) and `"military"` (the
 #'   floor plan turned 45 degrees, heights drawn straight up at full length).
 #' @param projection,azimuth,elevation,roll,distance,fov,zoom,target,oblique,up
@@ -183,8 +209,8 @@ camera_presets_3d <- function() {
 #' p + do.call(coord_3d, camera_3d("isometric"))
 #' p + do.call(coord_3d, c(camera_3d("cabinet"), list(panes = "floor")))
 #' @export
-camera_3d <- function(preset = c("default", "isometric", "dimetric", "trimetric", "top", "front",
-                                 "right", "cabinet", "cavalier", "military"),
+camera_3d <- function(preset = c("default", "isometric", "dimetric", "trimetric", "top", "bottom", "front",
+                                 "rear", "left", "right", "cabinet", "cavalier", "military"),
                       projection = NULL, azimuth = NULL, elevation = NULL, roll = NULL,
                       distance = NULL, fov = NULL, zoom = NULL, target = NULL, oblique = NULL, up = NULL) {
   values <- camera_presets_3d()[[match.arg(preset)]]
@@ -204,12 +230,20 @@ Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
     if (length(cameras) != count) stop("coord_3d() has ", length(cameras), " camera views but the plot has ", count, " panels.", call. = FALSE)
     cameras[[index]]
   },
+  # Camera of a panel showing `view`, a list of camera_3d() arguments that
+  # replace the coord's own.
+  view_camera = function(self, view) {
+    if (length(self$cameras) > 1L) stop("Give camera views either to facet_views() or as camera argument vectors of coord_3d(), not both.", call. = FALSE)
+    camera_from_args_3d(camera_args_update_3d(self$camera_args, view))
+  },
   is_free = function() TRUE,
   is_linear = function() FALSE,
   aspect = function(ranges) 1,
   setup_params = function(self, data) list(),
   setup_layout = function(self, layout, params) {
-    layout$SCALE_Z <- if (self$z_scales == "free") seq_len(nrow(layout)) else rep.int(1L, nrow(layout))
+    # Views of one scene (facet_views()) share its z scale.
+    free <- self$z_scales == "free" && is.null(layout$VIEW)
+    layout$SCALE_Z <- if (free) seq_len(nrow(layout)) else rep.int(1L, nrow(layout))
     triples <- paste(layout$SCALE_X, layout$SCALE_Y, layout$SCALE_Z, sep = ":")
     layout$COORD <- match(triples, unique(triples))
     layout

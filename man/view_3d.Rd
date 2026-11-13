@@ -4,7 +4,14 @@
 \alias{view_3d}
 \title{Explore a scene with orbit controls}
 \usage{
-view_3d(plot, width = 640L, height = 640L, panel = 1L, elementId = NULL)
+view_3d(
+  plot,
+  width = 640L,
+  height = 640L,
+  panel = 1L,
+  elementId = NULL,
+  link = NULL
+)
 }
 \arguments{
 \item{plot}{A ggplot with \code{\link[=coord_3d]{coord_3d()}}.}
@@ -17,13 +24,19 @@ static plot. Each widget displays one panel.}
 
 \item{elementId}{Optional HTML element identifier, default NULL. In Shiny,
 camera changes set the input named paste0(elementId, "_camera").}
+
+\item{link}{Optional name of a link group, default NULL. Viewers on one
+page with the same \code{link} move together: an orbit, zoom or reset in one
+applies to all, azimuth, elevation and roll changes add and zoom factors
+multiply, so each viewer keeps its own view. Linking the panels of a
+\code{\link[=facet_views]{facet_views()}} plot turns the front, top and side views as one object.}
 }
 \value{
 An htmlwidget of class ggplot3d_view. Its x contains schema_version
 (2), scene (schema-1 indexed model geometry and mapped materials),
 furniture (with the panes each primitive belongs to and their outward
 normals), axes (candidate placements per guide), bounds, camera, framing,
-viewport, reference, background and capabilities. Geometry is transferred
+viewport, reference, background, capabilities and link. Geometry is transferred
 once; camera interaction stays in the browser.
 }
 \description{
@@ -44,5 +57,8 @@ if (requireNamespace("htmlwidgets", quietly = TRUE)) {
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
     geom_point_3d(size = 3) + coord_3d()
   view_3d(p)
+  views <- p + facet_views(c("front", "isometric"))
+  front <- view_3d(views, panel = 1, width = 320, height = 320, link = "cars")
+  iso <- view_3d(views, panel = 2, width = 320, height = 320, link = "cars")
 }
 }

@@ -285,14 +285,15 @@ motion_coord_3d <- function(coord, values, backend, frame) {
 
 # A panel with its own view moves with the animated camera and keeps its
 # offset from the coord's first view: azimuth, elevation and roll differences
-# add, the zoom ratio multiplies.
+# add, the zoom ratio multiplies. Projection, shear and the vertical axis stay
+# those of the panel's view.
 motion_panel_camera_3d <- function(camera, panel, base) {
-  camera$aspect <- panel$aspect
-  camera$azimuth <- camera$azimuth + panel$azimuth - base$azimuth
-  camera$elevation <- max(-90, min(90, camera$elevation + panel$elevation - base$elevation))
-  camera$roll <- camera$roll + panel$roll - base$roll
-  camera$zoom <- camera$zoom * panel$zoom / base$zoom
-  camera
+  out <- panel
+  out$azimuth <- panel$azimuth + camera$azimuth - base$azimuth
+  out$elevation <- max(-90, min(90, panel$elevation + camera$elevation - base$elevation))
+  out$roll <- panel$roll + camera$roll - base$roll
+  out$zoom <- panel$zoom * camera$zoom / base$zoom
+  out
 }
 
 motion_panels_3d <- function(grob) {

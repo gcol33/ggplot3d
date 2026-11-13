@@ -24,5 +24,8 @@
 * `annotate_3d()` adds fixed annotations with z positions.
 * `stat_density_2d_3d(plane = )` draws the density flat on the floor or at a given height, filled by density.
 * The camera arguments of `coord_3d()` take one value per panel, so facets can show different views; `animate_3d()` keeps each panel's offset.
+* `facet_views()` draws one scene from several cameras, one panel per view, with the layers computed once and one magnification across panels. `layout = "third_angle"` and `"first_angle"` place front, top, bottom, left, right and rear views by the projection methods of ISO 5456-2, so edges line up across adjacent views. `camera_3d()` gains the `"bottom"`, `"rear"` and `"left"` views.
+* `view_3d(link = )` links viewers on one page: an orbit, zoom or reset in one moves every viewer of the group, each keeping its own view.
+* Outlined faces seen edge-on, as in front, top and side views, no longer stop the compilation of hidden strokes.
 * `labs(x = NULL)` and friends remove a 3D axis title.
 * Discrete axes keep every label unless `check.overlap = TRUE`; tick labels are thinned by their measured rectangles, `n.dodge` rows stack directly outside one another, and axis titles sit next to the tick labels.

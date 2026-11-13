@@ -10,11 +10,16 @@
 #'   static plot. Each widget displays one panel.
 #' @param elementId Optional HTML element identifier, default NULL. In Shiny,
 #'   camera changes set the input named paste0(elementId, "_camera").
+#' @param link Optional name of a link group, default NULL. Viewers on one
+#'   page with the same `link` move together: an orbit, zoom or reset in one
+#'   applies to all, azimuth, elevation and roll changes add and zoom factors
+#'   multiply, so each viewer keeps its own view. Linking the panels of a
+#'   [facet_views()] plot turns the front, top and side views as one object.
 #' @return An htmlwidget of class ggplot3d_view. Its x contains schema_version
 #'   (2), scene (schema-1 indexed model geometry and mapped materials),
 #'   furniture (with the panes each primitive belongs to and their outward
 #'   normals), axes (candidate placements per guide), bounds, camera, framing,
-#'   viewport, reference, background and capabilities. Geometry is transferred
+#'   viewport, reference, background, capabilities and link. Geometry is transferred
 #'   once; camera interaction stays in the browser.
 #' @details Requires htmlwidgets. Opaque geometry uses a WebGL depth buffer.
 #'   Transparent primitives are sorted back to front by centre depth; crossing
@@ -27,15 +32,20 @@
 #'   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
 #'     geom_point_3d(size = 3) + coord_3d()
 #'   view_3d(p)
+#'   views <- p + facet_views(c("front", "isometric"))
+#'   front <- view_3d(views, panel = 1, width = 320, height = 320, link = "cars")
+#'   iso <- view_3d(views, panel = 2, width = 320, height = 320, link = "cars")
 #' }
 #' @export
 view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
-                    elementId = NULL) {
+                    elementId = NULL, link = NULL) {
   motion_require_3d("htmlwidgets")
   motion_plot_coord_3d(plot)
   motion_dimensions_3d(width, height, 96)
   scene_assert(is.numeric(panel) && length(panel) == 1L && is.finite(panel) &&
     panel >= 1 && panel == trunc(panel), "panel must be a positive integer")
+  scene_assert(is.null(link) || (is.character(link) && length(link) == 1L && !is.na(link) && nzchar(link)),
+    "link must be NULL or one group name")
   path <- tempfile(fileext = ".png")
   on.exit(unlink(path), add = TRUE)
   motion_png_3d(path, width, height, 96)
@@ -85,7 +95,7 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
   x <- list(schema_version = 2L, scene = view_packet_3d(packet),
     furniture = furniture_view, axes = unname(axes),
     bounds = unname(lapply(seq_len(nrow(frame$bounds())), function(i) unname(frame$bounds()[i, ]))),
-    camera = raw_camera,
+    camera = raw_camera, link = link,
     framing = list(frame = params$coord_params$frame,
       zoom_scale = furniture$camera$zoom / params$camera$zoom,
       origin = unname(furniture$overlay$fit$origin),
