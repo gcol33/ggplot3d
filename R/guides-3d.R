@@ -3,10 +3,15 @@
 #' Tick labels and titles are measured in the drawing viewport. Automatic
 #' placement uses an exterior cube edge. Integer positions 1 through 4 select
 #' a fixed edge in lexicographic order of its two fixed coordinates.
+#' Position `"origin"` draws the axis through the `origin` point of
+#' [coord_3d()] as part of the scene, with ticks, tick labels and title in
+#' three dimensions; `coord_3d(axis_lines = "origin")` places every guide with
+#' position `"auto"` there.
 #' Labels are thinned automatically using their measured extents along the edge.
 #' @param title Guide title, with waiver inheriting the scale or plot title.
 #' @param theme Local theme overrides.
-#' @param position "auto", a side (top, bottom, left, right), or edge 1 to 4.
+#' @param position "auto", a side (top, bottom, left, right), edge 1 to 4, or
+#'   "origin".
 #' @param check.overlap Use extra clearance between measured label rectangles.
 #' @param angle Label rotation in degrees. Waiver keeps labels horizontal.
 #' @param n.dodge Number of parallel label rows.
@@ -18,11 +23,14 @@
 #' d <- data.frame(x = 1:3, y = c(1, 2, 1), z = 1:3)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_point_3d() + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   geom_point_3d() + scale_z_continuous(guide = guide_axis_3d(position = "origin")) +
+#'   coord_3d(origin = c(x = 2, y = 1.5))
 #' @export
 guide_axis_3d <- function(title = ggplot2::waiver(), theme = NULL, position = "auto",
                           check.overlap = FALSE, angle = ggplot2::waiver(), n.dodge = 1L,
                           minor.ticks = FALSE, cap = "none", order = 0L) {
-  if (!(length(position) == 1L && (position %in% c("auto", "top", "bottom", "left", "right", 1:4)))) stop("Invalid 3D axis position.", call. = FALSE)
+  if (!(length(position) == 1L && (position %in% c("auto", "origin", "top", "bottom", "left", "right", 1:4)))) stop("Invalid 3D axis position.", call. = FALSE)
   if (length(n.dodge) != 1L || !is.finite(n.dodge) || n.dodge < 1 || n.dodge != trunc(n.dodge)) stop("n.dodge must be a positive integer.", call. = FALSE)
   if (!inherits(angle, "waiver") && !(is.numeric(angle) && length(angle) == 1L && is.finite(angle))) stop("angle must be a finite number or waiver().", call. = FALSE)
   ggplot2::new_guide(title = title, theme = theme, position = position,

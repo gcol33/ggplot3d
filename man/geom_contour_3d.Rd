@@ -42,7 +42,10 @@ geom_contour_filled_3d(
 
 \item{bins, binwidth, breaks}{Level controls in transformed z units. Explicit breaks take precedence.}
 
-\item{plane}{Either surface, floor, or a numeric z in original units.}
+\item{plane}{Either surface, floor, or a numeric z in original units. A
+flat plane is a shorthand for \code{position = position_project_3d("zmin")} or
+\code{position_project_3d(list(axis = "z", at = plane))}; use
+\code{\link[=position_project_3d]{position_project_3d()}} directly to draw contours on a side wall.}
 
 \item{method}{\code{"grid"} triangulates a complete x/y grid as
 geom_surface_3d() does; \code{"delaunay"} triangulates scattered x/y
@@ -70,7 +73,8 @@ Filled contours follow z only; isoband operates on the same grid
 triangles used by geom_surface_3d().
 Default levels are interior pretty(range, n = 10) values.
 Surface bands are lifted by barycentric interpolation within each triangle.
-Floor contours use the lower expanded panel boundary. The source height
+Floor contours use the lower expanded panel boundary and are painted with
+the floor pane. The source height
 range trains the z scale for either projection.
 }
 \examples{

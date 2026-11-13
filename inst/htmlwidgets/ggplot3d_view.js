@@ -7,6 +7,9 @@
   const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
   const arr = x => x == null ? [] : Array.isArray(x) ? x : [x];
   const css = c => 'rgba(' + c.slice(0, 3).map(v => Math.round(v*255)).join(',') + ',' + c[3] + ')';
+  // Viewers in one link group share every orbit, zoom and reset: angle
+  // changes add and zoom factors multiply, so each keeps its offset.
+  const linkGroups = new Map();
 
   function cameraBasis(c, vp, framing) {
     const scale = c.aspect.map(v => v/Math.max(...c.aspect));
@@ -119,7 +122,24 @@
       ['Target','Scale','Right','Up','Forward','Distance','Near','Far','Base','Perspective','Size','Origin','Pixels','Inner','Colour','Clip'].forEach(k => uniforms[k] = gl.getUniformLocation(program, 'u'+k));
       const pointLoc = gl.getAttribLocation(program, 'aPoint'), offsetLoc = gl.getAttribLocation(program, 'aOffset');
       const dynamic = gl.createBuffer();
-      let data, camera, initial, primitives = [], buffers = [], basis, layout, frameRequest;
+      let data, camera, initial, primitives = [], buffers = [], basis, layout, frameRequest, link = null;
+      const self = {
+        turn(change) {
+          if(change.azimuth) camera.azimuth+=change.azimuth;
+          if(change.elevation) camera.elevation=Math.max(-90,Math.min(90,camera.elevation+change.elevation));
+          if(change.roll) camera.roll+=change.roll;
+          if(change.zoom) camera.zoom*=change.zoom;
+          schedule();
+        },
+        reset() {camera=JSON.parse(JSON.stringify(initial));schedule();}
+      };
+      function peers() {return link ? Array.from(linkGroups.get(link) || []) : [self];}
+      function move(change) {if(data) peers().forEach(v=>v.turn(change));}
+      function joinLink(group) {
+        if(link) linkGroups.get(link).delete(self);
+        link=group || null;
+        if(link) {if(!linkGroups.has(link)) linkGroups.set(link,new Set());linkGroups.get(link).add(self);}
+      }
       let opaqueFaces = [];
 
       function project(p) {
@@ -448,19 +468,18 @@
       canvas.addEventListener('pointermove',e=>{
         if(!data || !pointers.has(e.pointerId))return;
         const old=pointers.get(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);
-        if(pointers.size===1) {camera.azimuth-=(e.clientX-old[0])*0.5;camera.elevation=Math.max(-90,Math.min(90,camera.elevation+(e.clientY-old[1])*0.5));}
-        else {const ps=Array.from(pointers.values()),d=Math.hypot(...sub(ps[0],ps[1]));if(pinch)camera.zoom*=d/pinch;pinch=d;}
-        schedule();
+        if(pointers.size===1) move({azimuth:-(e.clientX-old[0])*0.5,elevation:(e.clientY-old[1])*0.5});
+        else {const ps=Array.from(pointers.values()),d=Math.hypot(...sub(ps[0],ps[1]));if(pinch)move({zoom:d/pinch});pinch=d;}
       });
       function release(e){pointers.delete(e.pointerId);pinch=null;}
       canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
-      canvas.addEventListener('wheel',e=>{if(!data)return;e.preventDefault();camera.zoom*=Math.exp(-Math.max(-100,Math.min(100,e.deltaY))*0.001);schedule();},{passive:false});
+      canvas.addEventListener('wheel',e=>{if(!data)return;e.preventDefault();move({zoom:Math.exp(-Math.max(-100,Math.min(100,e.deltaY))*0.001)});},{passive:false});
       canvas.addEventListener('keydown',e=>{
         if(!data)return;
-        const actions={ArrowLeft:()=>camera.azimuth-=5,ArrowRight:()=>camera.azimuth+=5,ArrowUp:()=>camera.elevation=Math.min(90,camera.elevation+5),ArrowDown:()=>camera.elevation=Math.max(-90,camera.elevation-5),'+':()=>camera.zoom*=1.1,'=':()=>camera.zoom*=1.1,'-':()=>camera.zoom/=1.1};
-        if(actions[e.key]){e.preventDefault();actions[e.key]();schedule();}
+        const actions={ArrowLeft:{azimuth:-5},ArrowRight:{azimuth:5},ArrowUp:{elevation:5},ArrowDown:{elevation:-5},'+':{zoom:1.1},'=':{zoom:1.1},'-':{zoom:1/1.1}};
+        if(actions[e.key]){e.preventDefault();move(actions[e.key]);}
       });
-      reset.addEventListener('click',()=>{camera=JSON.parse(JSON.stringify(initial));schedule();});
+      reset.addEventListener('click',()=>{if(data) peers().forEach(v=>v.reset());});
       report.addEventListener('click',()=>{publish();code.hidden=!code.hidden;if(!code.hidden){code.focus();code.select();}});
       resize(width,height);
       return {
@@ -468,6 +487,7 @@
           if(x.schema_version!==2 || x.scene.schema_version!==1) throw Error('Unsupported ggplot3d scene schema');
           buffers.forEach(b=>gl.deleteBuffer(b));buffers=[];
           data=x;camera=JSON.parse(JSON.stringify(x.camera));initial=JSON.parse(JSON.stringify(camera));
+          joinLink(x.link);el.dataset.link=link || '';
           primitives=packetPrimitives(x.scene,false).concat(packetPrimitives(x.furniture,true));
           primitives.filter(p=>p.kind===0).forEach(p=>{
             p.buffer=gl.createBuffer();buffers.push(p.buffer);gl.bindBuffer(gl.ARRAY_BUFFER,p.buffer);
@@ -475,7 +495,8 @@
           });
           el.ggplot3d={getCamera:()=>JSON.parse(JSON.stringify(camera)),
             getProjectedBox:()=>arr(data.bounds).map(project),
-            setCamera:values=>{Object.assign(camera,values);schedule();}};
+            setCamera:values=>{Object.assign(camera,values);schedule();},
+            turn:move};
           draw();
         }, resize
       };

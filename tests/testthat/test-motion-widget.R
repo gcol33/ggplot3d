@@ -56,3 +56,19 @@ test_that("viewer selects a facet and validates its index", {
   expect_error(view_3d(p, panel = 3), "outside")
   expect_error(view_3d(p, panel = 0), "positive integer")
 })
+
+test_that("viewers in one link group carry the group name", {
+  skip_if_not_installed("htmlwidgets")
+  p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
+    geom_point_3d() + coord_3d() + facet_views(c("front", "isometric"))
+  front <- view_3d(p, panel = 1, width = 320, height = 320, link = "cars")
+  iso <- view_3d(p, panel = 2, width = 320, height = 320, link = "cars")
+  expect_identical(front$x$link, "cars")
+  expect_identical(iso$x$link, "cars")
+  expect_equal(c(front$x$camera$azimuth, iso$x$camera$azimuth), c(-90, -45))
+  expect_null(view_3d(p, width = 320, height = 320)$x$link)
+  expect_error(view_3d(p, link = c("a", "b")), "one group name")
+  script <- paste(readLines(system.file("htmlwidgets", "ggplot3d_view.js", package = "ggplot3d")), collapse = "
+")
+  expect_match(script, "linkGroups", fixed = TRUE)
+})

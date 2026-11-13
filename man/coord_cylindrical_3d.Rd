@@ -30,8 +30,10 @@ turn after \code{start}.}
 \item{direction}{1 for clockwise, -1 for anticlockwise.}
 
 \item{panes}{Panes to draw: \code{"back"} (the rear half of the outer wall, of the
-inner wall and of the cut planes of a partial turn), \code{"floor"}, or names
-among \code{"floor"}, \code{"top"}, \code{"wall"}, \code{"inner"}, \code{"start"}, \code{"end"}.}
+inner wall and of the cut planes of a partial turn), \code{"floor"},
+\code{"front"} (the parts of the other panes that face the viewer, see
+\code{\link[=coord_3d]{coord_3d()}}), or names among \code{"floor"}, \code{"top"}, \code{"wall"}, \code{"inner"},
+\code{"start"}, \code{"end"}.}
 
 \item{...}{Other \code{\link[=coord_3d]{coord_3d()}} arguments: camera, limits, axes, box, light,
 backend.}

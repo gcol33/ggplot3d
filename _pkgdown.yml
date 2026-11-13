@@ -81,6 +81,7 @@ reference:
   contents:
   - coord_3d
   - camera_3d
+  - facet_views
   - light_3d
 - title: Curvilinear and compositional frames
   contents:
@@ -105,9 +106,11 @@ reference:
   - geom_path_3d
   - geom_segment_3d
   - geom_text_3d
+  - geom_label_3d
   - geom_polygon_3d
   - geom_band_3d
   - geom_dropline_3d
+  - geom_rug_3d
   - annotate_3d
 - title: Surface and solid layers
   contents:
@@ -123,6 +126,9 @@ reference:
   - geom_voxel_3d
   - geom_tube_3d
   - geom_ribbon_3d
+  - geom_sphere_3d
+  - geom_ellipsoid_3d
+  - geom_glyph_3d
 - title: Network and tree layers
   contents:
   - geom_edge_3d
@@ -183,6 +189,7 @@ reference:
   - position_nudge_3d
   - position_jitter_3d
   - position_dodge_3d
+  - position_project_3d
   - position_stack_3d
   - position_fill_3d
 - title: Guides and themes

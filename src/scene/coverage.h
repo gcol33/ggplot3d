@@ -171,6 +171,8 @@ public:
         auto s=p.npc(p.camera_point(v.xyz));
         for(int k=0;k<2;++k) {f.bounds[k]=std::min(f.bounds[k],s[k]);f.bounds[k+2]=std::max(f.bounds[k+2],s[k]);}
       }
+      // A face seen edge-on has no projected area and covers nothing.
+      if(!std::isfinite(face_ray_parameter(f,piece.polygon[0],p))) continue;
       faces.push_back(std::move(f));
     }
     index.reset(faces);

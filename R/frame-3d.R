@@ -66,6 +66,21 @@ Frame3D <- ggplot2::ggproto("Frame3D", NULL,
   rear_only = function(self, pane) FALSE,
   floor_panes = function(self) paste0(c("x", "y", "z")[self$up], "min"),
   back_candidates = function(self) paste0(rep(c("x", "y", "z")[-self$up], each = 2L), c("min", "max")),
+  # The line of one scale axis through a scale-space point.
+  origin_axis = function(self, axis, origin) {
+    start <- end <- unname(origin)
+    start[axis] <- 0; end[axis] <- 1
+    list(start = start, end = end)
+  },
+  # The cross-section of the scale-space cube where one axis takes a value.
+  section = function(self, axis, value) {
+    other <- setdiff(seq_len(3L), axis)
+    xyz <- matrix(value, 4L, 3L)
+    xyz[, other] <- rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1))
+    outward <- numeric(3); outward[axis] <- 1
+    name <- c("x", "y", "z")[axis]
+    list(name = paste0(name, "zero"), xyz = xyz, outward = outward, families = list(), element = name)
+  },
   axis_candidates = function(self, guide) {
     axis <- match(guide$axis, c("x", "y", "z"))
     candidates <- cube_axis_candidates_3d(axis)
@@ -131,6 +146,12 @@ frame_box_3d <- function(transform = NULL) {
 }
 
 frame_of_3d <- function(panel_params) panel_params$frame %or3d% FrameBox
+
+check_frame_panes_3d <- function(frame, panes) {
+  valid <- c("back", "floor", "front", vapply(frame$panes(), `[[`, character(1), "name"))
+  if (!all(panes %in% valid)) stop("Unknown pane for this frame: ", paste(setdiff(panes, valid), collapse = ", "), ". Valid panes: ", paste(valid, collapse = ", "), ".", call. = FALSE)
+  invisible(panes)
+}
 
 # Binds a frame to a panel: per-panel ranges, and the camera's vertical axis.
 bind_frame_3d <- function(frame, panel_params) {

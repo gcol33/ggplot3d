@@ -33,7 +33,9 @@ coord_3d(
   backend = backend_3d(),
   default = FALSE,
   frame = "view",
-  transform = NULL
+  transform = NULL,
+  axis_lines = "box",
+  origin = c(x = 0, y = 0, z = 0)
 )
 }
 \arguments{
@@ -71,7 +73,10 @@ the scene from different views.}
 
 \item{axes}{Axes to draw.}
 
-\item{panes}{Cube faces to draw.}
+\item{panes}{Cube faces to draw: \code{"back"} (the rear pane of each pair of
+walls), \code{"floor"}, \code{"front"} (the panes facing the viewer that are not
+drawn otherwise, styled by the theme element \code{panel.pane.front} and drawn
+over the data without grid lines), or pane names \code{"xmin"} to \code{"zmax"}.}
 
 \item{box}{Box edges, back, all or none.}
 
@@ -91,6 +96,20 @@ the scene from different views.}
 statistics, as a named list with entries \code{x}, \code{y} or \code{z}, each a
 transformation name such as \code{"log10"} or a scales transformation. Lines
 and faces are subdivided so their images bend with the transformation.}
+
+\item{axis_lines}{Where axis lines and their ticks and labels sit:
+\code{"box"} on an edge of the box, \code{"origin"} through the point \code{origin}, or
+\code{"none"}, which keeps ticks and labels on the box edges and draws no axis
+lines. A guide with an explicit position (see \code{\link[=guide_axis_3d]{guide_axis_3d()}}) keeps
+it. Origin axes, their ticks, tick labels and titles are part of the
+scene, so data in front of them hide them; the label at the point where
+origin axes cross is left out. Origin axis lines use the theme elements
+\code{axis.line.origin.x}, \code{.y} and \code{.z}, which inherit from
+\code{axis.line.origin}.}
+
+\item{origin}{Named numeric vector with entries \code{x}, \code{y} and \code{z} in data
+units, the point through which origin axes pass. Missing entries are 0. A
+value outside the panel range is moved to the nearest end of the range.}
 }
 \value{
 A Coord3D ggproto object.
@@ -99,6 +118,31 @@ A Coord3D ggproto object.
 Set \code{z_scales = "free"} here to train a separate z range per facet.
 ggplot2 facets control x and y scales and have no z scale.
 }
+\section{Theme elements}{
+
+Besides the ggplot2 elements, panels read these theme elements:
+\itemize{
+\item \code{panel.pane}, \code{panel.pane.x}, \code{panel.pane.y}, \code{panel.pane.z}: pane
+fills, by the axis normal to the pane; \code{panel.pane.front} styles the
+panes selected with \code{panes = "front"}.
+\item \code{panel.grid.major.x.xy}, \code{panel.grid.minor.z.yz} and so on: the grid
+lines of one axis on the panes of one plane. Each inherits from the
+grid element of its axis (\code{panel.grid.major.x.xy} from
+\code{panel.grid.major.x}), so \code{element_blank()} removes those lines from
+that plane only. In the default view the floor is the \code{xy} plane.
+\item \code{panel.zero.x}, \code{panel.zero.y}, \code{panel.zero.z}: a plane through the
+panel at transformed value 0 of that axis, when 0 lies inside the range.
+They are blank by default; setting one to an \code{\link[ggplot2:element_rect]{ggplot2::element_rect()}}
+draws it, filled from \code{panel.zero}. Zero planes are part of the scene,
+so they hide data behind them.
+\item \code{panel.zero.line.x}, \code{.y}, \code{.z}, inheriting from \code{panel.zero.line}
+(blank by default): the line at transformed value 0 on each drawn pane.
+\item \code{panel.box.back}, \code{panel.box.front}: box edges.
+\item \code{axis.line.origin.x}, \code{.y}, \code{.z}: origin axis lines.
+\item \code{panel.margin.3d}: the margin around the projected box.
+}
+}
+
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
@@ -109,4 +153,13 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
 views <- rbind(transform(d, view = "front"), transform(d, view = "side"))
 ggplot2::ggplot(views, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
   ggplot2::facet_wrap(~view) + coord_3d(azimuth = c(-60, 30))
+centred <- data.frame(x = c(-2, 1, 2), y = c(1, -2, 2), z = c(-1, 2, 1))
+ggplot2::ggplot(centred, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 3) +
+  coord_3d(axis_lines = "origin", panes = "floor") +
+  ggplot2::theme(panel.zero.z = ggplot2::element_rect(),
+    panel.zero.line = ggplot2::element_line(colour = "grey30"))
+ggplot2::ggplot(centred, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 3) +
+  coord_3d(panes = c("back", "floor", "front")) +
+  ggplot2::theme(panel.grid.major.z.xz = ggplot2::element_blank(),
+    panel.pane.front = ggplot2::element_rect(fill = "#4682B41A"))
 }

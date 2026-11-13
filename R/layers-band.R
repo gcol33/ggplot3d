@@ -31,7 +31,9 @@ geom_band_3d <- function(mapping = NULL, data = NULL, stat = "identity", positio
     c(list(shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
-emit_bands_3d <- function(data, params, panel_params) {
+# Outlines: "full" closes the band, "both" strokes the lower and upper
+# boundaries, "lower" and "upper" one of them.
+emit_bands_3d <- function(data, params, panel_params, outline = "full") {
   valid <- valid_rows_3d(data, params, c("x", "y", "z", "xend", "yend", "zend"))
   rows <- order(match(data$group, unique(data$group)), seq_len(nrow(data)))
   a <- head(rows, -1L); b <- tail(rows, -1L)
@@ -43,8 +45,24 @@ emit_bands_3d <- function(data, params, panel_params) {
   faces <- rbind(cbind(a, b, b + n), cbind(a, b + n, a + n))
   faces <- faces[nondegenerate_triangles_3d(all, faces), , drop = FALSE]
   ends <- unique(c(a[!a %in% b], b[!b %in% a]))
-  edges <- rbind(cbind(a, b), cbind(a + n, b + n), cbind(ends, ends + n))
-  packet_from_faces_edges_3d(all, faces, edges, params, panel_params)
+  edges <- rbind(if (outline != "upper") cbind(a, b), if (outline != "lower") cbind(a + n, b + n),
+                 if (outline == "full") cbind(ends, ends + n))
+  packet_from_faces_edges_3d(all, faces, edges %or3d% matrix(integer(), 0L, 2L), params, panel_params)
+}
+
+# A ggplot2 ribbon or area is a flat band between its lower and upper
+# boundary at its height; flipped ribbons run along y.
+emit_ribbons_3d <- function(data, params, panel_params) {
+  flipped <- isTRUE(params$flipped_aes) || isTRUE(data$flipped_aes[1L])
+  data <- ggplot2::flip_data(data, flipped)
+  data <- data[order(match(data$group, unique(data$group)), data$x), , drop = FALSE]
+  band <- data
+  band$y <- data$ymin; band$xend <- data$x; band$yend <- data$ymax; band$zend <- data$z
+  if (flipped) {
+    band[c("x", "y", "xend", "yend")] <- band[c("y", "x", "yend", "xend")]
+  }
+  outline <- match.arg(params$outline.type %or3d% "both", c("both", "upper", "lower", "full"))
+  emit_bands_3d(band, params, panel_params, outline)
 }
 
 register_geom_3d(GeomBand3D, emit_bands_3d, prepare_aesthetics = prepare_band_3d,
@@ -76,5 +94,8 @@ emit_droplines_3d <- function(data, params, panel_params) {
   data[[paste0(substr(params$face, 1L, 1L), "end")]] <- if (endsWith(params$face, "min")) 0 else 1
   emit_segments_3d(data, params, panel_params)
 }
+
+register_geom_3d(ggplot2::GeomRibbon, emit_ribbons_3d,
+  parameters = list(flipped_aes = FALSE, outline.type = "both"))
 
 register_geom_3d(GeomDropline3D, emit_droplines_3d, positions = c("nudge", "jitter", "dodge", "stack"))

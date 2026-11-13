@@ -23,7 +23,12 @@ makeContent.scene_panel_grob <- function(x) {
   dpi <- if (backend$type %in% c("raster", "hybrid")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
   outer <- new_scene_viewport(grid::unit(1, "npc"), grid::unit(1, "npc"), dpi)
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, as.list(x$frame_group))
+  x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
   if (identical(backend$type, "raster")) {
+    if (!is.null(furniture$split)) {
+      x$packets <- c(x$packets, list(device_text_metrics_3d(furniture$split$scene)))
+      furniture$packet <- furniture$split$fixed
+    }
     result <- render_raster_panel_3d(x, furniture, backend)
     scene <- result$scene
     rendered <- result$grob
@@ -44,8 +49,9 @@ makeContent.scene_panel_grob <- function(x) {
   decorations <- furniture_overlay_3d(furniture, scene, x$theme)
   background <- ggplot2::element_render(x$theme, "panel.background")
   border <- ggplot2::element_render(x$theme, "panel.border", fill = NA)
-  project <- furniture_projector_3d(furniture)
-  overlay <- lapply(x$overlay, place_annotation_3d, project)
+  context <- list(project = furniture_projector_3d(furniture), width_mm = outer$width_mm,
+    height_mm = outer$height_mm, state = x$panel_params$coord_params$label_state)
+  overlay <- lapply(x$overlay, place_overlay_3d, context)
   children <- c(list(background), x$underlay, list(rendered, decorations, border), overlay)
   x$scene <- scene; x$furniture <- decorations; x$inner_viewport <- furniture$viewport; x$outer_viewport <- outer
   grid::setChildren(x, do.call(grid::gList, children))

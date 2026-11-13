@@ -7,7 +7,7 @@ GeomStatsSurface3D <- ggplot2::ggproto("GeomStatsSurface3D", GeomSurface3D,
 
 emit_stats_surface_3d <- function(data, params, panel_params) {
   if (!is.null(data$.opacity)) data$alpha <- data$alpha * data$.opacity
-  emit_surface_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
+  emit_surface_3d(data, params, panel_params)
 }
 
 register_geom_3d(GeomStatsSurface3D, emit_stats_surface_3d)

@@ -33,8 +33,9 @@ north pole.}
 \item{direction}{1 for clockwise, -1 for anticlockwise.}
 
 \item{panes}{Panes to draw: \code{"back"} (the rear half of the outer shell and
-of any cut surfaces), or names among \code{"shell"}, \code{"core"}, \code{"south"},
-\code{"north"}, \code{"start"}, \code{"end"}.}
+of any cut surfaces), \code{"front"} (the parts of the other panes that face
+the viewer), or names among \code{"shell"}, \code{"core"}, \code{"south"}, \code{"north"},
+\code{"start"}, \code{"end"}.}
 
 \item{shells}{\code{"outer"} draws the graticule on the outer shell; \code{"breaks"}
 adds the rear half of a graticule shell, without fill, at each major break

@@ -108,6 +108,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
   )
   result$geom_params$.emitter <- entry$name
   result$geom_params$.layer_id <- as.integer(layer_id)
+  if (inherits(layer$position, "PositionProject3D")) result$geom_params$.project <- list(onto = layer$position$onto, axes = layer$position$axes)
   result
 }
 

@@ -9,8 +9,9 @@ coord_ternary_3d(axes = c("a", "b", "c", "z"), panes = c("back", "floor"), ...)
 \arguments{
 \item{axes}{Guides to draw, any of \code{"a"}, \code{"b"}, \code{"c"} and \code{"z"}.}
 
-\item{panes}{Panes to draw: \code{"back"} (the rear walls), \code{"floor"}, or names
-among \code{"floor"}, \code{"top"}, \code{"ab"}, \code{"bc"}, \code{"ca"}.}
+\item{panes}{Panes to draw: \code{"back"} (the rear walls), \code{"floor"}, \code{"front"}
+(the other panes facing the viewer), or names among \code{"floor"}, \code{"top"},
+\code{"ab"}, \code{"bc"}, \code{"ca"}.}
 
 \item{...}{Other \code{\link[=coord_3d]{coord_3d()}} arguments: camera, z limits, box, light,
 backend.}

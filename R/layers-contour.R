@@ -142,26 +142,13 @@ StatContourFilled3D <- ggplot2::ggproto("StatContourFilled3D", StatContour3D,
   default_aes = ggplot2::aes(fill = ggplot2::after_stat(level))
 )
 
-# A layer drawn on the floor or on a horizontal plane keeps its x and y and
-# replaces its height; vertex normals of a flattened surface point up.
-plane_draw_data_3d <- function(data, params, panel_params) {
-  plane <- params$plane %or3d% "surface"
-  if (identical(plane, "surface")) return(data)
-  if (identical(plane, "floor")) data$z <- rep(0, nrow(data))
-  else {
-    value <- panel_params$z$get_transformation()$transform(plane)
-    data$z <- rep((value - panel_params$ranges$z[1L]) / diff(panel_params$ranges$z), nrow(data))
-  }
-  if (all(c("nx", "ny", "nz") %in% names(data))) {
-    data$nx <- 0; data$ny <- 0; data$nz <- 1
-  }
-  data
-}
-
 #' Contours following a triangulated surface or a horizontal plane
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param bins,binwidth,breaks Level controls in transformed z units. Explicit breaks take precedence.
-#' @param plane Either surface, floor, or a numeric z in original units.
+#' @param plane Either surface, floor, or a numeric z in original units. A
+#'   flat plane is a shorthand for `position = position_project_3d("zmin")` or
+#'   `position_project_3d(list(axis = "z", at = plane))`; use
+#'   [position_project_3d()] directly to draw contours on a side wall.
 #' @param method `"grid"` triangulates a complete x/y grid as
 #'   geom_surface_3d() does; `"delaunay"` triangulates scattered x/y
 #'   positions. Mesh input ([mesh_3d()]) uses its own faces.
@@ -179,7 +166,8 @@ plane_draw_data_3d <- function(data, params, panel_params) {
 #'   triangles used by geom_surface_3d().
 #'   Default levels are interior pretty(range, n = 10) values.
 #'   Surface bands are lifted by barycentric interpolation within each triangle.
-#'   Floor contours use the lower expanded panel boundary. The source height
+#'   Floor contours use the lower expanded panel boundary and are painted with
+#'   the floor pane. The source height
 #'   range trains the z scale for either projection.
 #' @return A ggplot2 layer.
 #' @examples
@@ -198,7 +186,7 @@ geom_contour_3d <- function(mapping = NULL, data = NULL, stat = StatContour3D, p
                             method = c("grid", "delaunay"), max_edge = Inf,
                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   plane <- check_plane_3d(plane)
-  make_layer_3d(GeomContour3D, mapping, data, stat, position,
+  make_layer_3d(GeomContour3D, mapping, data, stat, plane_position_3d(plane, position),
     c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = FALSE,
       method = match.arg(method), max_edge = max_edge, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
@@ -209,7 +197,7 @@ geom_contour_filled_3d <- function(mapping = NULL, data = NULL, stat = StatConto
                                    bins = NULL, binwidth = NULL, breaks = NULL, plane = c("surface", "floor"),
                                    na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   plane <- check_plane_3d(plane)
-  make_layer_3d(GeomContourFilled3D, mapping, data, stat, position,
+  make_layer_3d(GeomContourFilled3D, mapping, data, stat, plane_position_3d(plane, position),
     c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = TRUE, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
@@ -223,9 +211,6 @@ prepare_contour_aesthetics_3d <- function(out, data, plot, params) {
   out
 }
 
-register_geom_3d(GeomContour3D, function(data, params, panel_params) {
-  emit_paths_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
-}, prepare_data = prepare_contour_data_3d, prepare_aesthetics = prepare_contour_aesthetics_3d)
-register_geom_3d(GeomContourFilled3D, function(data, params, panel_params) {
-  emit_polygons_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
-})
+register_geom_3d(GeomContour3D, emit_paths_3d,
+  prepare_data = prepare_contour_data_3d, prepare_aesthetics = prepare_contour_aesthetics_3d)
+register_geom_3d(GeomContourFilled3D, function(data, params, panel_params) emit_polygons_3d(data, params, panel_params))
