@@ -1,0 +1,46 @@
+---
+title: "Ordination biplots"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Ordination biplots}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 5, dev = "png")
+library(ggplot2)
+library(ggplot3d)
+```
+
+An ordination places observations on a small set of axes computed from their measured variables. A biplot draws the observations and variable directions in the same view. `stat_biplot_3d()` composes site points, solid-headed quiver arrows and optional group regions.
+
+```{r iris}
+fit <- prcomp(iris[1:4], scale. = TRUE)
+groups <- setNames(iris$Species, rownames(iris))
+ggplot() + stat_biplot_3d(fit, groups = groups, region = "ellipsoid",
+                        loading_scale = 2) + coord_3d()
+```
+
+For `prcomp`, sites use `fit$x` and arrows use `fit$rotation`. `loading_scale` explicitly multiplies the arrow vectors for display. The chosen multiplier therefore belongs in a figure's methods or caption. `choices` selects the three axes.
+
+Site identifiers are the score matrix's row names, or sequential character identifiers when row names are absent. Group membership is joined by these identifiers. A named vector or a table with `id` and `group` columns can supply membership in any order.
+
+```{r hull}
+membership <- data.frame(id = names(groups), group = unname(groups))
+membership <- membership[rev(seq_len(nrow(membership))), ]
+ggplot() + stat_biplot_3d(fit, groups = membership, region = "hull",
+                        loading_scale = 2) + coord_3d()
+```
+
+## Vegan scores
+
+[vegan](https://vegandevs.github.io/vegan/) supplies ecological ordination methods and a `scores()` generic that applies their scaling conventions. `stat_biplot_3d()` calls that generic for vegan fits. Pass method-specific arguments in `scores_args`, or supply a list containing `sites` and `species` score matrices directly.
+
+```{r vegan, eval=requireNamespace("vegan", quietly=TRUE)}
+model <- vegan::rda(iris[1:4], scale = TRUE)
+ggplot() + stat_biplot_3d(model, groups = groups,
+                        scores_args = list(scaling = 2)) + coord_3d()
+```
+
+The group ellipsoids use `stat_ellipsoid_3d(type = "norm")`. Their level describes the spread of observations under that covariance model. Individual point, quiver, text, hull and ellipsoid layers can also be composed directly when a figure needs separate mappings. [vegan3d](https://rdrr.io/cran/vegan3d/man/vegan3d-package.html) documents the corresponding ordination and group-region conventions.

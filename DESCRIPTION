@@ -32,6 +32,7 @@ Imports:
 LinkingTo: Rcpp
 Suggests:
     av,
+    bio3d,
     chromote,
     cowplot,
     crosstalk,
@@ -57,6 +58,7 @@ Suggests:
     svglite,
     terra,
     testthat (>= 3.0.0),
+    vegan,
     xml2
 SystemRequirements: C++17
 VignetteBuilder: knitr

@@ -28,6 +28,10 @@ theme_set(theme_minimal(base_size = 17) + theme(
 
 This article draws familiar charts and solid geometry from small datasets. Each example gives the data and the code that draws it. [Layers](layers.html) explains the data layers, and [Vector fields](vector-fields.html) develops the streamtube example. Installation is covered in [Get started](ggplot3d.html).
 
+## Domain recipes
+
+[Tensor glyphs](tensors.html) draw symmetric tensors as ellipsoids or superquadrics. [Ordination biplots](ordination.html) combine site scores, variable arrows and group regions. [Molecular views](molecules.html) draw atoms and bonds from bio3d records. [Colour gamuts](colour-gamuts.html) place sampled colours and their convex hull in Lab coordinates.
+
 ## Parametric curves
 
 Sample a curve in row order and sweep a circular cross-section along it to

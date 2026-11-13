@@ -147,7 +147,9 @@ reference:
   - geom_ribbon_3d
   - geom_sphere_3d
   - geom_ellipsoid_3d
+  - geom_tensor_3d
   - stat_ellipsoid_3d
+  - stat_biplot_3d
   - geom_glyph_3d
 - title: Network and tree layers
   contents:
@@ -265,6 +267,7 @@ reference:
   - mesh_processing
   - mesh_geodesic
   - fortify
+  - fortify.pdb
   - layer_3d
   - register_geom_3d
   - new_scene_packet
@@ -296,6 +299,10 @@ articles:
   - pde
   - implicit-surfaces
   - thurston-geometries
+  - tensors
+  - ordination
+  - molecules
+  - colour-gamuts
 - title: Background
   navbar: Background
   contents: visibility
