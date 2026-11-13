@@ -32,8 +32,11 @@ Imports:
 LinkingTo: Rcpp
 Suggests:
     av,
+    chromote,
+    crosstalk,
     gifski,
     hms,
+    htmltools,
     htmlwidgets,
     igraph,
     jsonlite,

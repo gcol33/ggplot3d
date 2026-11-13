@@ -312,20 +312,20 @@ test_that("frames drawn by several workers equal the serial frames", {
 test_that("the viewer carries the sampled path for playback", {
   skip_if_not_installed("htmlwidgets")
   p <- path_test_plot(projection = "perspective")
-  w <- view_3d(p, path = orbit_3d(360, 2), fps = 10, width = 300, height = 300)
-  path <- w$x$path
+  w <- view_3d(p, panel = 1, path = orbit_3d(360, 2), fps = 10, width = 300, height = 300)
+  path <- w$x$panels[[1L]]$path
   expect_length(path$azimuth, 20L)
   expect_true(path$loop)
   expect_equal(path$step, 0.1)
   expect_equal(path$azimuth[1:2], c(-60, -42))
   expect_true(all(path$distance == -1))
   expect_true(is.finite(path$zoom_scale) && path$zoom_scale > 0)
-  dolly <- view_3d(p, path = dolly_zoom_3d(0, 1), fps = 4)$x$path
+  dolly <- view_3d(p, panel = 1, path = dolly_zoom_3d(0, 1), fps = 4)$x$panels[[1L]]$path
   expect_false(dolly$loop)
   expect_identical(dolly$projection[length(dolly$projection)], "orthographic")
   expect_equal(dolly$zoom_scale, 1)
-  expect_null(view_3d(p)$x$path)
-  expect_error(view_3d(p, path = "orbit"), "camera path")
+  expect_null(view_3d(p, panel = 1)$x$panels[[1L]]$path)
+  expect_error(view_3d(p, panel = 1, path = "orbit"), "camera path")
 })
 
 test_that("panels follow a path's projection and target unless their view sets them", {

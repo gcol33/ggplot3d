@@ -1,73 +1,168 @@
-#' Explore a scene with orbit controls
+#' Explore a plot with orbit controls, tooltips and selection
 #'
-#' Draw a panel in a WebGL htmlwidget, using its mapped scene and initial camera.
-#' Drag to orbit, use the wheel or pinch to zoom, and select Camera code to copy
-#' the current angles into a coord_3d() call. Arrow keys orbit; + and - zoom.
+#' Draw a plot in a WebGL htmlwidget, using its mapped scenes and initial
+#' cameras. Drag to orbit, use the wheel or pinch to zoom, and select Camera
+#' code to copy the current angles into a coord_3d() call. Arrow keys orbit;
+#' + and - zoom. Hovering a primitive shows its tooltip; clicking selects it.
+#'
+#' Interaction follows [ggiraph](https://davidgohel.github.io/ggiraph/) for
+#' aesthetics, [deck.gl](https://deck.gl/docs/api-reference/core/layer) for
+#' picking and [crosstalk](https://rstudio.github.io/crosstalk/) for linked
+#' selection. Every `_3d` layer accepts two extra aesthetics: `tooltip`, the
+#' text shown on hover, and `data_id`, the selection key; rows that share a
+#' key are selected together, across layers. Without a `tooltip` mapping, the
+#' tooltip lists the mapped aesthetics of the row under the pointer. Without a
+#' `data_id`, each row of each layer is its own key, written `"<layer>:<row>"`.
+#' Map these aesthetics in [ggplot2::ggplot()] when a layer comes from
+#' ggplot2 itself, whose layer constructors do not know them.
+#'
+#' The browser holds one interleaved vertex buffer per primitive kind (faces,
+#' stroke segments, marker footprints) and identifies the primitive under the
+#' pointer from an offscreen id image, by the same `primitive_id` the raster
+#' backend returns in its id buffer.
 #' @param plot A ggplot with [coord_3d()].
+#' @param data Optional crosstalk `SharedData` whose `origData()` the plot
+#'   draws, default NULL. Layers that draw these rows take their selection
+#'   keys from it, share selections with the other crosstalk widgets of its
+#'   group, and hide rows that a crosstalk filter removes.
 #' @param width,height Widget dimensions in pixels, default 640 each.
-#' @param panel Panel index in layout order, default 1. Facet strips, legends,
-#'   plot titles and ordinary two-dimensional annotation grobs stay in the
-#'   static plot. Each widget displays one panel.
+#' @param panel NULL (default) shows the whole plot: every panel is live, and
+#'   facet strips, legends, titles and the other parts outside the panels are
+#'   embedded as SVG around them (requires svglite). A panel index in layout
+#'   order shows that panel alone.
+#' @param link Linked cameras, default TRUE: orbiting or zooming one panel
+#'   turns every panel by the same amount, keeping their offsets. FALSE moves
+#'   the panel under the pointer alone. A group name links the panels and
+#'   also links this viewer with the other viewers on the page that carry
+#'   the same name: an orbit, zoom or reset in one applies to all, azimuth,
+#'   elevation and roll changes add and zoom factors multiply, so each viewer
+#'   keeps its own view. Linking the panels of a [facet_views()] plot shown
+#'   in separate viewers turns the front, top and side views as one object.
+#' @param selection `"multiple"` (default) lets shift- or control-click add
+#'   and remove keys, `"single"` keeps one key, `"none"` disables selection.
+#'   Unselected primitives are dimmed while a selection exists.
+#' @param tooltip Default tooltips listing mapped values, default TRUE. A
+#'   mapped `tooltip` aesthetic is always shown.
 #' @param elementId Optional HTML element identifier, default NULL. In Shiny,
-#'   camera changes set the input named paste0(elementId, "_camera").
-#' @param link Optional name of a link group, default NULL. Viewers on one
-#'   page with the same `link` move together: an orbit, zoom or reset in one
-#'   applies to all, azimuth, elevation and roll changes add and zoom factors
-#'   multiply, so each viewer keeps its own view. Linking the panels of a
-#'   [facet_views()] plot turns the front, top and side views as one object.
+#'   camera changes set the input named `paste0(elementId, "_camera")` and
+#'   selections set `paste0(elementId, "_selected")` to the selected keys.
 #' @param path A camera path from [camera_path_3d()], [orbit_3d()],
 #'   [fly_through_3d()] or [dolly_zoom_3d()], or NULL (default). The viewer
-#'   gains a Play button that moves the camera along the path with the views
-#'   [animate_3d()] renders; dragging or Reset stops it.
+#'   gains a Play button that moves every panel's camera along the path with
+#'   the views [animate_3d()] renders; dragging or Reset stops it.
 #' @param fps Camera views per second of the sampled path, default 30.
 #' @return An htmlwidget of class ggplot3d_view. Its x contains schema_version
-#'   (2), scene (schema-1 indexed model geometry and mapped materials),
-#'   furniture (with the panes each primitive belongs to and their outward
-#'   normals), axes (candidate placements per guide), bounds, camera, framing,
-#'   viewport, reference, background, capabilities and link, and with `path`
-#'   the sampled camera views. Geometry is transferred once; camera
-#'   interaction and playback stay in the browser.
-#' @details Requires htmlwidgets. Opaque geometry uses a WebGL depth buffer.
-#'   Transparent primitives are sorted back to front by centre depth; crossing
-#'   transparent surfaces can differ from the exact static vector backend.
-#'   Text uses plain browser text, with whole-anchor visibility for scene labels.
-#'   Lighting uses the same linear-light colour calculation as static output.
-#'   Furniture and its labels rotate with the camera. No external scripts load.
+#'   (3), frame (the plot size in mm), chrome (the SVG of everything outside
+#'   the panels, or NULL), panels, link (whether the panels share camera
+#'   moves), link_group (the group name, or NULL), selection settings and
+#'   capabilities.
+#'   Each panel holds its rectangle in the frame, scene and furniture
+#'   (schema-1 geometry whose table columns are base64 little-endian arrays,
+#'   with mapped materials), axes, bounds, camera, framing, viewport, light,
+#'   background, layers (the source rows, keys and tooltips of its
+#'   primitives) and, with `path`, the sampled camera views. Geometry is
+#'   transferred once; camera interaction and playback stay in the browser.
+#' @details Requires htmlwidgets and a browser with WebGL 2. Opaque geometry
+#'   uses a depth buffer. Transparent primitives are sorted back to front by
+#'   centre depth; crossing transparent surfaces can differ from the exact
+#'   static vector backend. Strokes and markers widen to their physical size
+#'   in the vertex shader, and face lighting uses the same linear-light colour
+#'   calculation as static output. Text uses plain browser text, with
+#'   whole-anchor visibility for scene labels. Furniture and its labels rotate
+#'   with the camera. The widget element receives `ggplot3d:camera`,
+#'   `ggplot3d:hover` and `ggplot3d:select` events. No external scripts load.
+#'
+#'   A discrete `tooltip` or `data_id` mapping does not split groups, so paths
+#'   and surfaces keep their shape.
 #' @examples
+#' if (requireNamespace("htmlwidgets", quietly = TRUE) &&
+#'     requireNamespace("svglite", quietly = TRUE)) {
+#'   cars <- data.frame(mtcars, model = rownames(mtcars))
+#'   p <- ggplot2::ggplot(cars, ggplot2::aes(wt, mpg, z = hp,
+#'       colour = factor(cyl), tooltip = model, data_id = model)) +
+#'     geom_point_3d(size = 3) + coord_3d() + ggplot2::facet_wrap(~am)
+#'   view_3d(p, width = 720, height = 400)
+#' }
+#' if (requireNamespace("htmlwidgets", quietly = TRUE) &&
+#'     requireNamespace("crosstalk", quietly = TRUE) &&
+#'     requireNamespace("svglite", quietly = TRUE)) {
+#'   shared <- crosstalk::SharedData$new(mtcars)
+#'   p <- ggplot2::ggplot(shared$origData(), ggplot2::aes(wt, mpg, z = hp)) +
+#'     geom_point_3d() + coord_3d()
+#'   view_3d(p, data = shared)
+#' }
 #' if (requireNamespace("htmlwidgets", quietly = TRUE)) {
 #'   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
 #'     geom_point_3d(size = 3) + coord_3d()
-#'   view_3d(p)
 #'   views <- p + facet_views(c("front", "isometric"))
 #'   front <- view_3d(views, panel = 1, width = 320, height = 320, link = "cars")
 #'   iso <- view_3d(views, panel = 2, width = 320, height = 320, link = "cars")
-#'   view_3d(p, path = orbit_3d(degrees = 360, duration = 6))
+#'   view_3d(p, panel = 1, path = orbit_3d(degrees = 360, duration = 6))
 #' }
 #' @export
-view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
-                    elementId = NULL, link = NULL, path = NULL, fps = 30) {
+view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL,
+                    link = TRUE, selection = c("multiple", "single", "none"),
+                    tooltip = TRUE, elementId = NULL, path = NULL, fps = 30) {
   motion_require_3d("htmlwidgets")
   motion_plot_coord_3d(plot)
   plot <- mono_plot_3d(plot)
   motion_dimensions_3d(width, height, 96)
-  scene_assert(is.numeric(panel) && length(panel) == 1L && is.finite(panel) &&
-    panel >= 1 && panel == trunc(panel), "panel must be a positive integer")
-  scene_assert(is.null(link) || (is.character(link) && length(link) == 1L && !is.na(link) && nzchar(link)),
-    "link must be NULL or one group name")
+  selection <- match.arg(selection)
+  scene_assert(is.null(panel) || (is.numeric(panel) && length(panel) == 1L && is.finite(panel) &&
+    panel >= 1 && panel == trunc(panel)), "panel must be a positive integer")
+  scene_assert(isTRUE(link) || isFALSE(link) ||
+    (is.character(link) && length(link) == 1L && !is.na(link) && nzchar(link)),
+    "link must be TRUE, FALSE or one group name")
+  scene_assert(isTRUE(tooltip) || isFALSE(tooltip), "tooltip must be TRUE or FALSE")
   scene_assert(is.null(path) || inherits(path, "ggplot3d_camera_path"),
     "path must be a camera path such as camera_path_3d() or orbit_3d()")
   scene_assert(is.numeric(fps) && length(fps) == 1L && is.finite(fps) && fps > 0,
     "fps must be a positive finite number")
+  shared <- view_shared_data_3d(data)
+  if (is.null(panel)) motion_require_3d("svglite")
   scratch <- tempfile(fileext = ".png")
   on.exit(unlink(scratch), add = TRUE)
   device <- motion_open_device_3d("png", scratch, width, height, 96)
   on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE, after = FALSE)
-  built <- ggplot2::ggplotGrob(plot)
-  panels <- motion_panels_3d(built)
-  scene_assert(panel <= length(panels), "panel is outside the plot layout")
+  built <- ggplot2::ggplot_build(plot)
+  table <- ggplot2::ggplot_gtable(built)
+  count <- length(motion_panels_3d(table))
+  scene_assert(count > 0L, "plot has no 3D scene panels")
+  scene_assert(is.null(panel) || panel <= count, "panel is outside the plot layout")
   # Furniture layout supplies authoritative physical margins and text metrics.
-  forced <- grid::grid.force(built)
-  selected <- motion_panels_3d(forced)[[panel]]
+  forced <- motion_panels_3d(grid::grid.force(table))
+  device_mm <- unname(grDevices::dev.size("in") * 25.4)
+  layers <- view_layers_3d(built, shared, tooltip)
+  chosen <- if (is.null(panel)) seq_along(forced) else panel
+  panels <- lapply(chosen, function(i) {
+    selected <- forced[[i]]
+    view <- view_panel_3d(selected, path, fps)
+    size <- c(selected$outer_viewport$width_mm, selected$outer_viewport$height_mm)
+    view$rect_mm <- c(if (is.null(panel)) selected$device_origin_in * 25.4 else c(0, 0), size)
+    view$layers <- view_panel_layers_3d(layers, selected$panel_params$panel_id)
+    view
+  })
+  grDevices::dev.off(device)
+  frame <- if (is.null(panel)) device_mm else panels[[1L]]$rect_mm[3:4]
+  x <- list(schema_version = 3L,
+    frame = list(width_mm = frame[1L], height_mm = frame[2L]),
+    chrome = if (is.null(panel)) view_chrome_3d(table, width, height) else NULL,
+    panels = panels, link = !isFALSE(link),
+    link_group = if (is.character(link)) link else NULL,
+    selection = list(mode = selection, dim = 0.2,
+      group = if (is.null(shared)) NULL else shared$groupName()),
+    capabilities = list(opaque_visibility = "depth-buffer",
+      transparency = "primitive-centroid", text = "plain-anchor", geometry_schema = 1L,
+      picking = "id-buffer", buffers = "interleaved-per-kind"))
+  htmlwidgets::createWidget("ggplot3d_view", x, width = width, height = height,
+    package = "ggplot3d", elementId = elementId,
+    dependencies = if (is.null(shared)) NULL else crosstalk::crosstalkLibs(),
+    sizingPolicy = htmlwidgets::sizingPolicy(padding = 0, browser.fill = FALSE))
+}
+
+# One panel of the viewer: its scene, furniture for every camera, axis
+# candidates and initial camera.
+view_panel_3d <- function(selected, path = NULL, fps = 30) {
   params <- selected$panel_params
   outer <- selected$outer_viewport
   furniture <- panel_furniture_3d(params, selected$theme, outer, as.list(selected$frame_group))
@@ -103,10 +198,10 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
   # Automatic camera values use JSON null; finite resolved values travel separately.
   raw_camera[c("distance", "near", "far")] <- lapply(raw_camera[c("distance", "near", "far")],
     function(value) if (is.na(value) || !is.finite(value)) NULL else value)
-  x <- list(schema_version = 2L, scene = view_packet_3d(packet),
+  list(id = params$panel_id, scene = view_packet_3d(packet),
     furniture = furniture_view, axes = unname(axes),
     bounds = unname(lapply(seq_len(nrow(frame$bounds())), function(i) unname(frame$bounds()[i, ]))),
-    camera = raw_camera, link = link,
+    camera = raw_camera,
     framing = list(frame = params$coord_params$frame,
       zoom_scale = furniture$camera$zoom / params$camera$zoom,
       origin = unname(furniture$overlay$fit$origin),
@@ -116,14 +211,22 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
       outer_height_mm = outer$height_mm)),
     reference = list(corners_mm = unname(selected$furniture$corners_mm)),
     light = params$coord_params$light,
-    background = if (visible_element_3d(bg)) view_rgba_3d(bg$fill) else c(1, 1, 1, 1),
-    capabilities = list(opaque_visibility = "depth-buffer",
-      transparency = "primitive-centroid", text = "plain-anchor", geometry_schema = 1L))
-  if (!is.null(path)) x$path <- view_path_3d(path, fps, params, furniture$viewport, frame$bounds())
+    background = if (visible_element_3d(bg)) view_rgba_3d(bg$fill) else c(0, 0, 0, 0),
+    path = if (is.null(path)) NULL else view_path_3d(path, fps, params, furniture$viewport, frame$bounds()))
+}
+
+# Everything the static plot draws outside its scene panels, as one SVG of
+# the widget's size: strips, legends, titles, captions and the plot
+# background.
+view_chrome_3d <- function(table, width, height) {
+  chrome <- motion_map_panels_3d(table, function(g) grid::nullGrob())
+  svg <- svglite::svgstring(width = width / 96, height = height / 96, standalone = FALSE)
+  device <- grDevices::dev.cur()
+  on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE)
+  grid::grid.newpage()
+  grid::grid.draw(chrome)
   grDevices::dev.off(device)
-  htmlwidgets::createWidget("ggplot3d_view", x, width = width, height = height,
-    package = "ggplot3d", elementId = elementId,
-    sizingPolicy = htmlwidgets::sizingPolicy(padding = 0, browser.fill = FALSE))
+  as.character(svg())
 }
 
 # Camera views of a path for the viewer to play, as columns, with the frame
@@ -233,5 +336,26 @@ view_packet_3d <- function(packet) {
   })
   packet$styles <- NULL
   packet$materials <- unname(materials)
+  for (table in names(scene_schemas())) packet[[table]] <- lapply(packet[[table]], view_column_3d)
   unclass(packet)
+}
+
+# A numeric column as a base64 typed array: little-endian float32 for
+# doubles, int32 for integers and uint8 for logicals.
+view_column_3d <- function(x) {
+  if (is.logical(x)) return(list(type = "u8", b64 = base64_3d(as.raw(as.integer(x)))))
+  if (is.integer(x)) return(list(type = "i32", b64 = base64_3d(writeBin(x, raw(), size = 4L, endian = "little"))))
+  list(type = "f32", b64 = base64_3d(writeBin(as.double(x), raw(), size = 4L, endian = "little")))
+}
+
+base64_3d <- function(bytes) {
+  n <- length(bytes)
+  if (!n) return("")
+  pad <- (3L - n %% 3L) %% 3L
+  b <- matrix(as.integer(c(bytes, raw(pad))), 3L)
+  v <- b[1L, ] * 65536L + b[2L, ] * 256L + b[3L, ]
+  index <- rbind(v %/% 262144L, (v %/% 4096L) %% 64L, (v %/% 64L) %% 64L, v %% 64L)
+  out <- charToRaw("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")[index + 1L]
+  if (pad) out[length(out) - seq_len(pad) + 1L] <- charToRaw("=")
+  rawToChar(out)
 }

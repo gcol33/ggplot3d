@@ -1,5 +1,6 @@
 # ggplot3d 0.0.0.9000
 
+* `view_3d()` displays facet panels with linked cameras and embeds strips, legends and titles as SVG. WebGL 2 batches primitives and provides picking, tooltips, selection, Shiny inputs and crosstalk selection/filtering. Named camera link groups also support path playback.
 * `export_3d()` writes glTF/GLB, OBJ, PLY and binary STL scenes with layer nodes, mapped colours and cameras. `animate_3d()` exports camera and geometry tracks to glTF. rgl mesh and plotting methods and `as_rayrender_3d()` connect scenes to other renderers.
 * `geom_refline_3d()` draws axis-aligned reference lines and `geom_abline_3d()` draws lines through a point in any direction. `geom_bracket_3d()` adds brackets and dimension lines. Reference lines share box clipping and bend with curvilinear frames.
 * `annotation_plot_3d()` places a whole 2D ggplot on a panel plane through vector or raster rendering. `facet_slices_3d()` draws small multiples in depth, with statistics computed per slice. Additional 2D ggplot2 layers draw in horizontal planes.

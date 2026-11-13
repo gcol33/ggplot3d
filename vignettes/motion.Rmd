@@ -22,7 +22,7 @@ Camera motion shows a fixed scene from several directions. This article saves a 
 
 2. **Render** a camera path with `animate_3d()`.
 
-3. **Explore** a panel with `view_3d()`.
+3. **Explore** the plot with `view_3d()`.
 
 ## Example
 
@@ -95,14 +95,34 @@ if (requireNamespace("av", quietly = TRUE)) {
 The viewer opens one panel at its static camera position. Drag to orbit and use the wheel or a two-finger pinch to zoom. Arrow keys rotate the view; plus and minus change magnification.
 
 ```{r widget}
-if (requireNamespace("htmlwidgets", quietly = TRUE)) {
+if (requireNamespace("htmlwidgets", quietly = TRUE) &&
+    requireNamespace("svglite", quietly = TRUE)) {
   view_3d(p, width = 560, height = 560)
 }
 ```
 
 Select **Camera code** to display the current coordinate call, then copy it into the plot code. **Reset** restores the initial camera. In a Shiny application, camera changes also update the input whose name is the widget identifier followed by `_camera`.
 
-The browser draws opaque geometry with a depth buffer, which records the nearest painted surface at each pixel. Transparent primitives are ordered by centre depth, so intersecting transparent surfaces can differ from static vector output. Browser labels use plain text. A faceted plot selects its panel through the viewer's `panel` argument; legends and facet strips remain part of static output.
+The viewer shows the whole plot: every facet panel is live, and the parts outside the panels (strips, legends, titles) are the static plot's own, embedded as SVG around them. Orbiting one panel turns every panel by the same amount; `view_3d(link = FALSE)` moves each panel alone, and `panel = ` shows one panel by itself.
+
+Hovering a point, line, face or label shows its tooltip, and clicking selects it. Two aesthetics drive this, following [ggiraph](https://davidgohel.github.io/ggiraph/): `tooltip` sets the text, and `data_id` sets the selection key, so rows that share a key highlight together across layers. Without a `tooltip`, the tooltip lists the mapped values of the row. Shift-click adds a key to the selection, a click on empty space clears it, and unselected primitives dim while a selection exists. In Shiny, the input named by the widget identifier followed by `_selected` holds the selected keys.
+
+```{r widget-tooltips}
+cars <- data.frame(mtcars, model = rownames(mtcars))
+picked <- ggplot(cars, aes(wt, mpg, z = hp, colour = factor(cyl),
+    tooltip = model, data_id = model)) +
+  geom_point_3d(size = 3) +
+  coord_3d() +
+  facet_wrap(~am)
+if (requireNamespace("htmlwidgets", quietly = TRUE) &&
+    requireNamespace("svglite", quietly = TRUE)) {
+  view_3d(picked, width = 620, height = 360)
+}
+```
+
+Linked brushing across widgets uses [crosstalk](https://rstudio.github.io/crosstalk/): pass the `SharedData` whose `origData()` the plot draws as `view_3d(plot, data = shared)`. Selections then travel between the viewer and the other widgets of the group, and a crosstalk filter hides the rows it removes.
+
+The browser draws opaque geometry with a depth buffer, which records the nearest painted surface at each pixel. Transparent primitives are ordered by centre depth, so intersecting transparent surfaces can differ from static vector output. Browser labels use plain text. The pointer finds its primitive in an offscreen image of primitive identifiers, the same `primitive_id` the raster backend returns in its id buffer.
 
 ## Camera conventions
 

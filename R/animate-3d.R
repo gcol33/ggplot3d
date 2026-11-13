@@ -434,9 +434,7 @@ motion_export_options_3d <- function(...) {
 }
 
 motion_require_3d <- function(package) {
-  if (!requireNamespace(package, quietly = TRUE)) {
-    stop(sprintf("Install the '%s' package to use this output.", package), call. = FALSE)
-  }
+  rlang::check_installed(package, reason = "to use this output.")
 }
 
 motion_dimensions_3d <- function(width, height, dpi) {

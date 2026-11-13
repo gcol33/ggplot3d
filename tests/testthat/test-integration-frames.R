@@ -219,13 +219,14 @@ test_that("the viewer receives frame-generic furniture and axis candidates", {
   skip_if_not_installed("htmlwidgets")
   d <- data.frame(month = 1:12, ring = 1, rain = 1:12)
   p <- ggplot2::ggplot(d, ggplot2::aes(month, ring, z = rain)) + geom_point_3d() + coord_cylindrical_3d()
-  w <- view_3d(p)
-  expect_identical(w$x$schema_version, 2L)
-  tagged <- Filter(function(m) !is.null(m$frame), w$x$furniture$materials)
+  w <- view_3d(p, panel = 1)
+  expect_identical(w$x$schema_version, 3L)
+  view <- w$x$panels[[1L]]
+  tagged <- Filter(function(m) !is.null(m$frame), view$furniture$materials)
   expect_gt(length(tagged), 0L)
   expect_true(all(vapply(tagged, function(m) all(lengths(m$frame$normals) == 3L), logical(1))))
-  expect_true(all(vapply(w$x$axes, function(a) length(a$candidates$options) >= 1L, logical(1))))
-  expect_identical(unlist(w$x$framing$back), "wall")
+  expect_true(all(vapply(view$axes, function(a) length(a$candidates$options) >= 1L, logical(1))))
+  expect_identical(unlist(view$framing$back), "wall")
 })
 
 test_that("log-ratio statistics stay inside the simplex", {

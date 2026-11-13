@@ -86,7 +86,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL
   hook_params <- c(layer$aes_params, layer$geom_params, layer$stat_params)
   base_stat <- entry$stat_adapter %or3d% layer$stat
   # The row index is internal; a stat that aggregates rows drops it silently.
-  stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, c(".source", frame$parts)))
+  stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, c(".source", interactive_aesthetics_3d, frame$parts)))
   result <- ggplot2::ggproto(NULL, layer,
     geom = scene_geom_3d(layer$geom, entry),
     position = bind_position_3d(layer$position, entry),
@@ -107,9 +107,18 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL
       data
     },
     compute_aesthetics = function(self, data, plot) {
+      # Tooltips and selection keys label rows: they neither form groups nor
+      # train scales.
+      mapping <- self$computed_mapping
+      interactive <- intersect(names(mapping), interactive_aesthetics_3d)
+      if (length(interactive)) {
+        self$computed_mapping <- mapping[setdiff(names(mapping), interactive)]
+        on.exit(self$computed_mapping <- mapping, add = TRUE)
+      }
       out <- ggplot2::ggproto_parent(parent, self)$compute_aesthetics(data, plot)
       if (!is.null(entry$prepare_aesthetics)) out <- entry$prepare_aesthetics(out, data, plot, hook_params)
       if (is.function(plot@facet$positions_3d)) out <- plot@facet$positions_3d(out, data)
+      for (name in interactive) out[[name]] <- rep_len(rlang::eval_tidy(mapping[[name]], data), nrow(out))
       for (name in names(fixed)) out[[name]] <- rep_len(fixed[[name]], nrow(out))
       out <- frame$setup_aesthetics(out)
       if (!"z" %in% names(out) && !"z" %in% names(self$computed_mapping) &&

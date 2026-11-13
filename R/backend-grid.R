@@ -56,6 +56,7 @@ makeContent.scene_panel_grob <- function(x) {
   children <- c(list(background), x$underlay, list(rendered, decorations, border), overlay)
   if (!is.null(x$ink)) children <- lapply(children, ink_grob_3d, filter = x$ink)
   x$scene <- scene; x$furniture <- decorations; x$inner_viewport <- furniture$viewport; x$outer_viewport <- outer
+  x$device_origin_in <- unlist(grid::deviceLoc(grid::unit(0, "npc"), grid::unit(0, "npc"), valueOnly = TRUE), use.names = FALSE)
   grid::setChildren(x, do.call(grid::gList, children))
 }
 
