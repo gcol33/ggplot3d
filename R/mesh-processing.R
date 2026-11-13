@@ -92,9 +92,10 @@ mesh_assemble_3d <- function(d, a, res) {
   structure(out, class = "data.frame", row.names = .set_row_names(3L * nt))
 }
 
-# Runs a verb on every .mesh of a corner table. A rebuilding verb returns a
-# new table; otherwise the verb's corner and vertex values are joined onto
-# the input corners by face and vertex.
+# Runs a verb on every .mesh of a corner table. args is a list, or a
+# function of the part's rows giving the list for that part. A rebuilding
+# verb returns a new table; otherwise the verb's corner and vertex values are
+# joined onto the input corners by face and vertex.
 mesh_run_3d <- function(m, verb, args, rebuild) {
   m <- mesh_input_3d(m)
   attributes_in <- attributes(m)
@@ -106,7 +107,7 @@ mesh_run_3d <- function(m, verb, args, rebuild) {
   results <- lapply(parts, function(rows) {
     part <- d[rows, , drop = FALSE]
     a <- mesh_arrays_3d(part)
-    res <- mesh_process_cpp(a$xyz, a$triangles, a$parent, a$channels, verb, args)
+    res <- mesh_process_cpp(a$xyz, a$triangles, a$parent, a$channels, verb, if (is.function(args)) args(part) else args)
     if (rebuild) return(mesh_assemble_3d(part, a, res))
     v <- as.vector(t(res$triangles)); f <- rep(seq_len(nrow(res$triangles)), each = 3L)
     values <- if (ncol(res$corner)) res$corner else res$vertex[v, , drop = FALSE]

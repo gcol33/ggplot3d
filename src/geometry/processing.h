@@ -1,13 +1,11 @@
 #ifndef GGPLOT3D_GEOMETRY_PROCESSING_H
 #define GGPLOT3D_GEOMETRY_PROCESSING_H
-#include "halfedge.h"
+#include "operators.h"
 #include "dual.h"
 #include <queue>
 #include <string>
 namespace ggplot3d_geometry {
 namespace halfedge {
-
-constexpr double pi=3.14159265358979323846;
 
 // Output of a mesh verb: the processed triangles, values per output corner
 // and per output vertex (row-major, one column per name), and scalar
@@ -18,8 +16,6 @@ struct Result {
   std::vector<double> corner, vertex;
   std::vector<std::pair<std::string,double>> info;
 };
-
-static inline double angle(V u,V w) { return std::atan2(norm(cross(u,w)),dot(u,w)); }
 
 static inline double mean_edge_length(const Mesh& m) {
   double sum=0; int n=0;
@@ -72,20 +68,13 @@ static inline Result curvature(const Soup& in,const Rcpp::List&) {
   Mesh m=build(in); size_t n=m.p.size();
   std::vector<double> area(n,0),theta(n,0); std::vector<V> lap(n,V{0,0,0}),normal(n,V{0,0,0});
   for(size_t f=0;f<m.fh.size();++f) {
-    Tri t=m.corners(f); V x[3]={m.p[t[0]],m.p[t[1]],m.p[t[2]]};
-    V cr=cross(sub(x[1],x[0]),sub(x[2],x[0])); double twice=norm(cr);
-    double a[3],cot[3]; bool obtuse=false;
-    for(int i=0;i<3;++i) {
-      V u=sub(x[(i+1)%3],x[i]),w=sub(x[(i+2)%3],x[i]);
-      a[i]=angle(u,w); cot[i]=twice>0?dot(u,w)/twice:0; obtuse=obtuse||a[i]>pi/2;
-    }
+    FaceGeometry g=face_geometry(m,f); const Tri& t=g.t;
     for(int i=0;i<3;++i) {
       int j=(i+1)%3,k=(i+2)%3;
-      if(!obtuse) area[t[i]]+=(dot(sub(x[j],x[i]),sub(x[j],x[i]))*cot[k]+dot(sub(x[k],x[i]),sub(x[k],x[i]))*cot[j])/8;
-      else area[t[i]]+=twice/2*(a[i]>pi/2?0.5:0.25);
-      theta[t[i]]+=a[i]; normal[t[i]]=add(normal[t[i]],cr);
-      lap[t[j]]=add(lap[t[j]],mul(sub(x[j],x[k]),cot[i]));
-      lap[t[k]]=add(lap[t[k]],mul(sub(x[k],x[j]),cot[i]));
+      area[t[i]]+=mixed_area(g,i);
+      theta[t[i]]+=g.a[i]; normal[t[i]]=add(normal[t[i]],g.cr);
+      lap[t[j]]=add(lap[t[j]],mul(sub(g.x[j],g.x[k]),g.cot[i]));
+      lap[t[k]]=add(lap[t[k]],mul(sub(g.x[k],g.x[j]),g.cot[i]));
     }
   }
   std::vector<int> vertex_of; Result r; r.soup=m.soup(&vertex_of,nullptr);
@@ -438,14 +427,6 @@ static inline Result remesh(const Soup& in,const Rcpp::List& args) {
   return r;
 }
 
-using Verb=Result(*)(const Soup&,const Rcpp::List&);
-static inline const std::map<std::string,Verb>& verbs() {
-  static const std::map<std::string,Verb> table{
-    {"normals",normals},{"curvature",curvature},{"subdivide",subdivide},
-    {"smooth",smooth},{"decimate",decimate},{"remesh",remesh}
-  };
-  return table;
-}
 }
 }
 #endif

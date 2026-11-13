@@ -33,7 +33,7 @@ mesh_3d <- function(vertices, faces, vertex_data = NULL, face_data = NULL) {
     }
   }
   if (anyDuplicated(vertices[c(".mesh", ".vertex")]) || anyDuplicated(faces[c(".mesh", ".face", ".corner")])) stop("Mesh keys must be unique.", call. = FALSE)
-  key <- function(d, id) paste(d$.mesh, d[[id]], sep = ":")
+  key <- function(d, id) paste(as.integer(d$.mesh), as.integer(d[[id]]), sep = ":")
   index <- match(key(faces, ".vertex"), key(vertices, ".vertex"))
   if (anyNA(index)) stop("Face indices reference missing vertices.", call. = FALSE)
   result <- cbind(faces, vertices[index, setdiff(names(vertices), c(".mesh", ".vertex")), drop = FALSE])
@@ -185,24 +185,39 @@ StatMesh3D <- ggplot2::ggproto("StatMesh3D", ggplot2::Stat,
   required_aes = c("x", "y", "z", ".mesh", ".face", ".corner", ".vertex"),
   compute_panel = function(data, scales, subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L,
                            curvature = FALSE, crease = NULL) {
-    data <- mesh_pipeline_3d(data, subdivide, remesh, decimate, smooth, curvature, crease)
-    rows <- order(data$.mesh, data$.face, data$.corner)
-    first <- c(TRUE, diff(data$.mesh[rows]) != 0L | diff(data$.face[rows]) != 0L)
-    ids <- integer(nrow(data)); ids[rows] <- cumsum(first)
-    for (field in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
-      value <- data[[field]]
-      if (field == "fill" && is.numeric(value)) {
-        sums <- rowsum(value, ids, reorder = TRUE)
-        data[[field]] <- as.double(sums[, 1L] / tabulate(ids))[ids]
-      } else {
-        keys <- match(value, unique(value))
-        adjacent <- head(rows, -1L); next_row <- tail(rows, -1L)
-        if (any(ids[adjacent] == ids[next_row] & keys[adjacent] != keys[next_row])) stop("Mesh materials must be constant per face; numeric vertex fill is averaged before scaling.", call. = FALSE)
-      }
-    }
-    data
+    mesh_face_materials_3d(mesh_pipeline_3d(data, subdivide, remesh, decimate, smooth, curvature, crease))
   }
 )
+
+# Numeric fill averaged over the corners of each face; other materials must
+# already be constant per face.
+mesh_face_materials_3d <- function(data) {
+  rows <- order(data$.mesh, data$.face, data$.corner)
+  ids <- mesh_face_ids_3d(data, rows)
+  for (field in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
+    value <- data[[field]]
+    if (field == "fill" && is.numeric(value)) {
+      data[[field]] <- mesh_face_mean_3d(value, ids)
+    } else {
+      keys <- match(value, unique(value))
+      adjacent <- head(rows, -1L); next_row <- tail(rows, -1L)
+      if (any(ids[adjacent] == ids[next_row] & keys[adjacent] != keys[next_row])) stop("Mesh materials must be constant per face; numeric vertex fill is averaged before scaling.", call. = FALSE)
+    }
+  }
+  data
+}
+
+# Face number of every corner row, counting faces in the order of rows.
+mesh_face_ids_3d <- function(data, rows = order(data$.mesh, data$.face, data$.corner)) {
+  first <- c(TRUE, diff(data$.mesh[rows]) != 0L | diff(data$.face[rows]) != 0L)
+  ids <- integer(nrow(data)); ids[rows] <- cumsum(first)
+  ids
+}
+
+mesh_face_mean_3d <- function(value, ids) {
+  sums <- rowsum(value, ids, reorder = TRUE)
+  as.double(sums[, 1L] / tabulate(ids))[ids]
+}
 
 # Mesh verbs applied in a fixed order: refine, resample, coarsen, smooth,
 # then annotate. A rebuilt mesh no longer maps to input rows.
@@ -326,3 +341,113 @@ mesh_face_triangles_3d <- function(data, r, rings) {
 
 register_geom_3d(GeomMesh3D, emit_mesh_3d,
   prepare_data = prepare_mesh_data_3d, prepare_aesthetics = prepare_mesh_aesthetics_3d)
+
+# Mesh stats that add intrinsic quantities to the corner table, averaged
+# over each face so that a fill mapped from them is constant per face.
+mesh_face_columns_3d <- function(data, columns) {
+  ids <- mesh_face_ids_3d(data)
+  for (name in columns) data[[name]] <- mesh_face_mean_3d(data[[name]], ids)
+  data
+}
+
+StatGeodesicDistance3D <- ggplot2::ggproto("StatGeodesicDistance3D", StatMesh3D,
+  compute_panel = function(self, data, scales, source, time = 1, boundary = "average") {
+    data <- ggplot2::ggproto_parent(StatMesh3D, self)$compute_panel(data, scales)
+    mesh_face_columns_3d(mesh_geodesic_distance(data, source, time, boundary), "distance")
+  }
+)
+
+StatLogmap3D <- ggplot2::ggproto("StatLogmap3D", StatMesh3D,
+  compute_panel = function(self, data, scales, source, direction = NULL, time = 1) {
+    data <- ggplot2::ggproto_parent(StatMesh3D, self)$compute_panel(data, scales)
+    mesh_face_columns_3d(mesh_logmap(data, source, direction, time), c("logmap_u", "logmap_v"))
+  }
+)
+
+StatGeodesicPath3D <- ggplot2::ggproto("StatGeodesicPath3D", StatMesh3D,
+  compute_panel = function(data, scales, from, to, max_iterations = 100000L) {
+    path <- mesh_geodesic_path(data, from, to, max_iterations)
+    path$length <- attr(path, "length")[path$path]
+    path$group <- path$path
+    attr(path, "length") <- NULL
+    path
+  }
+)
+
+# A path geom that accepts mesh corner tables as input, so a mesh stat can
+# turn them into polylines.
+GeomGeodesicPath3D <- ggplot2::ggproto("GeomGeodesicPath3D", ggplot2::GeomPath)
+
+register_geom_3d(GeomGeodesicPath3D, emit_paths_3d,
+  prepare_data = prepare_mesh_data_3d, prepare_aesthetics = prepare_mesh_aesthetics_3d)
+
+#' Geodesic distance, log map and shortest paths on a mesh
+#'
+#' Stats over a mesh layer's data (a [mesh_3d()] corner table, an rgl
+#' `mesh3d`, or the corners a surface stat returns) that measure along the
+#' surface. They run the [intrinsic geometry][mesh_geodesic] verbs on each
+#' panel, in transformed position units, so points are given in the same
+#' units as the positions.
+#'
+#' `stat_geodesic_distance_3d()` computes `distance`, the geodesic distance
+#' from the nearest of the `source` points, by the heat method.
+#' `stat_logmap_3d()` computes `logmap_u` and `logmap_v`, polar coordinates
+#' around `source` whose radius is the geodesic distance and whose angle is
+#' that of the shortest geodesic, by the vector heat method; mapped to a
+#' periodic fill they place a texture or decal on the surface. Both draw the
+#' mesh, and their computed variables are averaged over each face, so a fill
+#' mapped from them is constant per face; the verbs give the values at the
+#' vertices.
+#'
+#' `stat_geodesic_path_3d()` draws the shortest paths between the mesh
+#' vertices closest to the rows of `from` and `to`, found by FlipOut, as
+#' polylines lying on the surface. It computes `s`, the arc length along each
+#' path, and `length`, the length of the whole path.
+#' @inheritParams geom_mesh_3d
+#' @inheritParams mesh_geodesic
+#' @param geom Geom drawing the result.
+#' @return A ggplot2 layer.
+#' @examples
+#' sphere <- function(u, v) list(x = cos(u) * sin(v), y = sin(u) * sin(v), z = cos(v))
+#' m <- ggplot2::layer_data(ggplot2::ggplot() +
+#'   stat_parametric_3d(fun = sphere, v = c(0, pi), n = c(40, 21), closed = c(TRUE, FALSE)) +
+#'   coord_3d())
+#' m <- mesh_3d(unique(m[c("x", "y", "z", ".vertex")]),
+#'   data.frame(.face = m$.face, .corner = m$.corner, .vertex = m$.vertex))
+#' ggplot2::ggplot(m) +
+#'   stat_geodesic_distance_3d(ggplot2::aes(fill = ggplot2::after_stat(distance)),
+#'     source = c(0, 0, 1)) +
+#'   stat_geodesic_path_3d(from = c(1, 0, 0), to = c(0, 0.6, 0.8), colour = "white") +
+#'   coord_3d()
+#' ggplot2::ggplot(m) +
+#'   stat_logmap_3d(ggplot2::aes(fill = ggplot2::after_stat(
+#'     (floor(4 * logmap_u) + floor(4 * logmap_v)) %% 2)),
+#'     source = c(0, 0, 1), direction = c(1, 0, 0)) +
+#'   coord_3d()
+#' @export
+stat_geodesic_distance_3d <- function(mapping = NULL, data = NULL, geom = GeomMesh3D, position = "identity", ...,
+                                      source, time = 1, boundary = c("average", "neumann", "dirichlet"),
+                                      na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  make_layer_3d(geom, mapping, data, StatGeodesicDistance3D, position,
+    c(list(source = mesh_points_3d(source, "source"), time = time, boundary = match.arg(boundary), na.rm = na.rm), list(...)),
+    show.legend, inherit.aes)
+}
+
+#' @rdname stat_geodesic_distance_3d
+#' @export
+stat_logmap_3d <- function(mapping = NULL, data = NULL, geom = GeomMesh3D, position = "identity", ...,
+                           source, direction = NULL, time = 1, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  make_layer_3d(geom, mapping, data, StatLogmap3D, position,
+    c(list(source = mesh_points_3d(source, "source"), direction = direction, time = time, na.rm = na.rm), list(...)),
+    show.legend, inherit.aes)
+}
+
+#' @rdname stat_geodesic_distance_3d
+#' @export
+stat_geodesic_path_3d <- function(mapping = NULL, data = NULL, geom = GeomGeodesicPath3D, position = "identity", ...,
+                                  from, to, max_iterations = 100000L, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  make_layer_3d(geom, mapping, data, StatGeodesicPath3D, position,
+    c(list(from = mesh_points_3d(from, "from"), to = mesh_points_3d(to, "to"), max_iterations = max_iterations,
+      na.rm = na.rm), list(...)), show.legend, inherit.aes)
+}
+

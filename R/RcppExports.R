@@ -29,6 +29,10 @@ mesh_process_cpp <- function(xyz, tri, parent, channels, verb, args) {
     .Call(`_ggplot3d_mesh_process_cpp`, xyz, tri, parent, channels, verb, args)
 }
 
+mesh_geodesic_path_cpp <- function(xyz, tri, from, to, max_iterations) {
+    .Call(`_ggplot3d_mesh_geodesic_path_cpp`, xyz, tri, from, to, max_iterations)
+}
+
 parametric_grid_cpp <- function(n, closed, twist, xyz, u, v) {
     .Call(`_ggplot3d_parametric_grid_cpp`, n, closed, twist, xyz, u, v)
 }

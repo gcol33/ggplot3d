@@ -105,6 +105,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// mesh_geodesic_path_cpp
+Rcpp::List mesh_geodesic_path_cpp(Rcpp::NumericMatrix xyz, Rcpp::IntegerMatrix tri, Rcpp::NumericMatrix from, Rcpp::NumericMatrix to, int max_iterations);
+RcppExport SEXP _ggplot3d_mesh_geodesic_path_cpp(SEXP xyzSEXP, SEXP triSEXP, SEXP fromSEXP, SEXP toSEXP, SEXP max_iterationsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type tri(triSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type to(toSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iterations(max_iterationsSEXP);
+    rcpp_result_gen = Rcpp::wrap(mesh_geodesic_path_cpp(xyz, tri, from, to, max_iterations));
+    return rcpp_result_gen;
+END_RCPP
+}
 // parametric_grid_cpp
 Rcpp::List parametric_grid_cpp(Rcpp::IntegerVector n, Rcpp::LogicalVector closed, Rcpp::LogicalVector twist, Rcpp::NumericMatrix xyz, Rcpp::NumericVector u, Rcpp::NumericVector v);
 RcppExport SEXP _ggplot3d_parametric_grid_cpp(SEXP nSEXP, SEXP closedSEXP, SEXP twistSEXP, SEXP xyzSEXP, SEXP uSEXP, SEXP vSEXP) {
@@ -285,6 +299,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_mesh_process_cpp", (DL_FUNC) &_ggplot3d_mesh_process_cpp, 6},
+    {"_ggplot3d_mesh_geodesic_path_cpp", (DL_FUNC) &_ggplot3d_mesh_geodesic_path_cpp, 5},
     {"_ggplot3d_parametric_grid_cpp", (DL_FUNC) &_ggplot3d_parametric_grid_cpp, 6},
     {"_ggplot3d_parametric_edges_cpp", (DL_FUNC) &_ggplot3d_parametric_edges_cpp, 4},
     {"_ggplot3d_parametric_bisect_cpp", (DL_FUNC) &_ggplot3d_parametric_bisect_cpp, 6},

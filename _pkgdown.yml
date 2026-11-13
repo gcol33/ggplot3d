@@ -164,6 +164,8 @@ reference:
   - stat_alpha_shape_3d
   - stat_implicit_fit_3d
   - stat_parametric_3d
+  - stat_parametric_geodesic_3d
+  - stat_geodesic_distance_3d
   - stat_sweep_3d
   - stat_revolve_3d
   - stat_spline_3d
@@ -187,6 +189,7 @@ reference:
   - mesh_3d
   - read_mesh_3d
   - mesh_processing
+  - mesh_geodesic
   - fortify
   - layer_3d
   - register_geom_3d
