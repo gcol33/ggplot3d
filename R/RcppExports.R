@@ -53,6 +53,22 @@ raster_occlusion_cpp <- function(scene, colours, dashes, extent, width, height, 
     .Call(`_ggplot3d_raster_occlusion_cpp`, scene, colours, dashes, extent, width, height, antialias, depth)
 }
 
+geometry_delaunay_cpp <- function(xy) {
+    .Call(`_ggplot3d_geometry_delaunay_cpp`, xy)
+}
+
+geometry_delaunay3_cpp <- function(xyz) {
+    .Call(`_ggplot3d_geometry_delaunay3_cpp`, xyz)
+}
+
+geometry_alpha_shape_cpp <- function(xyz, alpha) {
+    .Call(`_ggplot3d_geometry_alpha_shape_cpp`, xyz, alpha)
+}
+
+geometry_rbf_cpp <- function(centres, weights, poly, points) {
+    .Call(`_ggplot3d_geometry_rbf_cpp`, centres, weights, poly, points)
+}
+
 voxel_faces_cpp <- function(n, material, translucent, greedy) {
     .Call(`_ggplot3d_voxel_faces_cpp`, n, material, translucent, greedy)
 }

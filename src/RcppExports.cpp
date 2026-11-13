@@ -192,6 +192,50 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_delaunay_cpp
+Rcpp::IntegerMatrix geometry_delaunay_cpp(Rcpp::NumericMatrix xy);
+RcppExport SEXP _ggplot3d_geometry_delaunay_cpp(SEXP xySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xy(xySEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_delaunay_cpp(xy));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_delaunay3_cpp
+Rcpp::IntegerMatrix geometry_delaunay3_cpp(Rcpp::NumericMatrix xyz);
+RcppExport SEXP _ggplot3d_geometry_delaunay3_cpp(SEXP xyzSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_delaunay3_cpp(xyz));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_alpha_shape_cpp
+Rcpp::IntegerMatrix geometry_alpha_shape_cpp(Rcpp::NumericMatrix xyz, double alpha);
+RcppExport SEXP _ggplot3d_geometry_alpha_shape_cpp(SEXP xyzSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_alpha_shape_cpp(xyz, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_rbf_cpp
+Rcpp::NumericVector geometry_rbf_cpp(Rcpp::NumericMatrix centres, Rcpp::NumericVector weights, Rcpp::NumericVector poly, Rcpp::NumericMatrix points);
+RcppExport SEXP _ggplot3d_geometry_rbf_cpp(SEXP centresSEXP, SEXP weightsSEXP, SEXP polySEXP, SEXP pointsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type centres(centresSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type poly(polySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type points(pointsSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_rbf_cpp(centres, weights, poly, points));
+    return rcpp_result_gen;
+END_RCPP
+}
 // voxel_faces_cpp
 Rcpp::IntegerMatrix voxel_faces_cpp(Rcpp::IntegerVector n, Rcpp::IntegerVector material, Rcpp::LogicalVector translucent, bool greedy);
 RcppExport SEXP _ggplot3d_voxel_faces_cpp(SEXP nSEXP, SEXP materialSEXP, SEXP translucentSEXP, SEXP greedySEXP) {
@@ -220,6 +264,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 10},
     {"_ggplot3d_raster_occlusion_cpp", (DL_FUNC) &_ggplot3d_raster_occlusion_cpp, 8},
+    {"_ggplot3d_geometry_delaunay_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay_cpp, 1},
+    {"_ggplot3d_geometry_delaunay3_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay3_cpp, 1},
+    {"_ggplot3d_geometry_alpha_shape_cpp", (DL_FUNC) &_ggplot3d_geometry_alpha_shape_cpp, 2},
+    {"_ggplot3d_geometry_rbf_cpp", (DL_FUNC) &_ggplot3d_geometry_rbf_cpp, 4},
     {"_ggplot3d_voxel_faces_cpp", (DL_FUNC) &_ggplot3d_voxel_faces_cpp, 4},
     {NULL, NULL, 0}
 };
