@@ -3,8 +3,16 @@
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::DataFrame geometry_isosurface_cpp(Rcpp::NumericVector x,Rcpp::NumericVector y,Rcpp::NumericVector z,
-                                       Rcpp::NumericVector value,Rcpp::NumericVector levels,bool caps) {
-  return ggplot3d_geometry::Field(x,y,z,value).extract(levels,caps);
+                                       Rcpp::NumericVector value,Rcpp::NumericVector levels,bool caps,std::string method) {
+  ggplot3d_geometry::ScalarGrid grid(x,y,z,value);
+  return ggplot3d_geometry::extract_isosurface(grid,levels,caps,method);
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::CharacterVector geometry_isosurface_methods_cpp() {
+  Rcpp::CharacterVector out;
+  for(const auto& m:ggplot3d_geometry::isosurface_methods()) out.push_back(m.name);
+  return out;
 }
 
 // [[Rcpp::export(rng = false)]]

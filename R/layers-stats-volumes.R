@@ -19,12 +19,25 @@ probs <- function(...) {
 #'
 #' Requires a complete rectilinear x/y/z grid with a numeric value aesthetic.
 #' Missing field values mask their incident cells. Coordinates are transformed
-#' before extraction. Each cell is split into six tetrahedra sharing a fixed
-#' body diagonal, giving consistent face diagonals across adjacent cells.
-#' Linear interpolation within tetrahedra avoids ambiguous cube cases.
+#' before extraction.
+#'
+#' `method = "cubes"` (the default) is marching cubes with the topology of the
+#' trilinear interpolant in each cell, as in Marching Cubes 33: faces whose
+#' corners alternate in sign are resolved by the asymptotic decider, and a
+#' bilinear slice test along each axis decides whether two boundary curves
+#' are joined by a tunnel through the cell. The cell triangulation is derived
+#' from these boundary curves rather than from a case table; curves of seven
+#' or more crossings are fanned around their mean point.
+#' `method = "tetra"` splits each cell into six tetrahedra around a fixed body
+#' diagonal and regularises the result (Treece et al. 1999): crossings closest
+#' to one grid point are merged where the merge keeps a 2-manifold, which
+#' removes most sliver triangles and the directional bias of the split.
+#'
 #' Field values within 64 machine epsilons of a threshold, relative to the
 #' maximum absolute field value or threshold, are snapped to that threshold.
 #' This gives shared grid vertices at numerically coincident intersections.
+#' Vertices are welded through per-layer edge arrays and all levels are
+#' extracted in one sweep over the grid.
 #' Finite-difference field gradients are interpolated and normalised at vertices
 #' (nx, ny, nz). Lighting uses the normalised mean of each face's vertex normals.
 #' caps = TRUE closes the sublevel region on the grid box with outward faces.
@@ -36,9 +49,25 @@ probs <- function(...) {
 #' @inheritParams stat_function_3d
 #' @param levels Numeric scalar-field thresholds; NULL uses pretty levels.
 #' @param caps Whether to cap the sublevel region on the box faces.
-#' @references Doi and Koide (1991), An Efficient Method of Triangulating
+#' @param method Extraction method: `"cubes"` or `"tetra"`.
+#' @references Lewiner, Lopes, Vieira and Tavares (2003). Efficient
+#'   implementation of Marching Cubes' cases with topological guarantees.
+#'   Journal of Graphics Tools 8, 1-15. \doi{10.1080/10867651.2003.10487582}
+#'
+#'   Nielson and Hamann (1991). The asymptotic decider: resolving the
+#'   ambiguity in marching cubes. IEEE Visualization '91, 83-91.
+#'   \doi{10.1109/VISUAL.1991.175782}
+#'
+#'   Treece, Prager and Gee (1999). Regularised marching tetrahedra: improved
+#'   iso-surface extraction. Computers & Graphics 23, 583-598.
+#'   \doi{10.1016/S0097-8493(99)00076-X}
+#'
+#'   Doi and Koide (1991), An Efficient Method of Triangulating
 #'   Equi-Valued Surfaces by Using Tetrahedral Cells. IEICE E74-D, 214-224.
 #'   <https://globals.ieice.org/en_transactions/information/10.1587/e74-d_1_214/_p>
+#'
+#'   Schroeder, Maynard and Geveci (2015). Flying edges: a high-performance
+#'   scalable isocontouring algorithm. IEEE LDAV, 33-40. \doi{10.1109/LDAV.2015.7348069}
 #' @export
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 10),
@@ -50,9 +79,9 @@ probs <- function(...) {
 #'   stat_isosurface_3d(levels = 0.6) + coord_3d()
 stat_isosurface_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                 position = "identity", ..., levels = NULL, caps = FALSE,
-                                na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                                method = "cubes", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, data, StatIsosurface3D, position,
-    stats_params_3d(list(levels = levels, caps = caps, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+    stats_params_3d(list(levels = levels, caps = caps, method = isosurface_method_3d(method), na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname stat_isosurface_3d
@@ -85,10 +114,10 @@ geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
 #'   stat_density_3d(h = 0.6, levels = 0.02, n = 8) + coord_3d()
 stat_density_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                              position = "identity", ..., h = NULL, adjust = 1, n = 32L,
-                             levels = NULL, caps = FALSE, space = "data", na.rm = FALSE,
-                             show.legend = NA, inherit.aes = TRUE) {
+                             levels = NULL, caps = FALSE, space = "data", method = "cubes",
+                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, data, StatDensity3D, position,
-    stats_params_3d(list(h = h, adjust = adjust, n = n, levels = levels, caps = caps,
+    stats_params_3d(list(h = h, adjust = adjust, n = n, levels = levels, caps = caps, method = isosurface_method_3d(method),
       space = match.arg(space, c("data", "ilr")), na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
@@ -99,7 +128,7 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #' Level surfaces of a trivariate function
 #'
 #' Evaluates fun on transformed x/y/z scale ranges and passes the scalar field
-#' to the same tetrahedral extraction used by stat_isosurface_3d.
+#' to the same extraction used by stat_isosurface_3d.
 #' @inheritParams stat_isosurface_3d
 #' @param fun Vectorised scalar function of x, y and z.
 #' @param args Additional named arguments passed to fun.
@@ -114,10 +143,10 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #'                      n = 8, levels = 0.5) + coord_3d()
 stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                  position = "identity", ..., fun, n = 24L, args = list(),
-                                 levels = NULL, caps = FALSE, na.rm = FALSE,
+                                 levels = NULL, caps = FALSE, method = "cubes", na.rm = FALSE,
                                  show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsofunction3D, position,
-    stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps,
+    stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = isosurface_method_3d(method),
       na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 

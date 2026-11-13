@@ -17,6 +17,7 @@ stat_density_3d(
   levels = NULL,
   caps = FALSE,
   space = "data",
+  method = "cubes",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -43,6 +44,8 @@ geom_isodensity_3d(...)
 composition mapped with \code{a}, \code{b}, \code{c} (and \code{d}) in isometric log-ratio
 coordinates, where a Gaussian kernel respects relative scale, and maps
 the surface back into the simplex. With three parts, z stays as it is.}
+
+\item{method}{Extraction method: \code{"cubes"} or \code{"tetra"}.}
 }
 \description{
 Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z scale

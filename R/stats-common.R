@@ -1,4 +1,4 @@
-utils::globalVariables(c("geometry_isosurface_cpp", "geometry_hull_cpp", "geometry_kde_cpp", "density"))
+utils::globalVariables(c("geometry_isosurface_cpp", "geometry_isosurface_methods_cpp", "geometry_hull_cpp", "geometry_kde_cpp", "density"))
 
 GeomStatsSurface3D <- ggplot2::ggproto("GeomStatsSurface3D", GeomSurface3D,
   optional_aes = c(".opacity", "nx", "ny", "nz", "level", "density", "surface"),
@@ -89,15 +89,23 @@ stats_levels_3d <- function(values, levels) {
   sort(unique(as.double(levels)))
 }
 
-stats_field_3d <- function(data, levels, caps) {
+isosurface_method_3d <- function(method) {
+  methods <- geometry_isosurface_methods_cpp()
+  if (!is.character(method) || length(method) < 1L) stop("method must be one of ", paste0('"', methods, '"', collapse = ", "), ".", call. = FALSE)
+  match.arg(method[1L], methods)
+}
+
+stats_field_3d <- function(data, levels, caps, method = "cubes") {
   if (!is.logical(caps) || length(caps) != 1L || is.na(caps)) stop("caps must be TRUE or FALSE.", call. = FALSE)
+  method <- isosurface_method_3d(method)
   axes <- lapply(data[c("x", "y", "z")], function(x) sort(unique(x)))
   dims <- lengths(axes)
   if (any(dims < 2L) || prod(dims) != nrow(data)) stop("An isosurface requires a complete rectilinear x/y/z grid.", call. = FALSE)
   key <- match(data$x, axes$x) + dims[1L] * (match(data$y, axes$y) - 1L + dims[2L] * (match(data$z, axes$z) - 1L))
   if (anyDuplicated(key)) stop("Scalar grid coordinates must be unique.", call. = FALSE)
   value <- data$value[order(key)]
-  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps)
+  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps, method)
+  out$.edge_a <- out$.edge_b <- NULL
   out$z_mean <- rep(colMeans(matrix(out$z, nrow = 3L)), each = 3L)
   out
 }

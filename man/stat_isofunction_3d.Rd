@@ -16,6 +16,7 @@ stat_isofunction_3d(
   args = list(),
   levels = NULL,
   caps = FALSE,
+  method = "cubes",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -37,10 +38,12 @@ geom_isofunction_3d(...)
 \item{levels}{Numeric scalar-field thresholds; NULL uses pretty levels.}
 
 \item{caps}{Whether to cap the sublevel region on the box faces.}
+
+\item{method}{Extraction method: \code{"cubes"} or \code{"tetra"}.}
 }
 \description{
 Evaluates fun on transformed x/y/z scale ranges and passes the scalar field
-to the same tetrahedral extraction used by stat_isosurface_3d.
+to the same extraction used by stat_isosurface_3d.
 }
 \examples{
 ggplot2::ggplot() +
