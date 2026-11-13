@@ -58,7 +58,7 @@ surface_triangles_3d <- function(data, method, max_edge) {
     }
   } else {
     good <- which(is.finite(data$z))
-    triangles <- matrix(good[unlist(delaunay_triangles_3d(as.matrix(data[good, c("x", "y")])), use.names = FALSE)], ncol = 3L, byrow = TRUE)
+    triangles <- matrix(good[delaunay_triangles_3d(as.matrix(data[good, c("x", "y")]))], ncol = 3L)
   }
   if (is.finite(max_edge) && nrow(triangles)) {
     next_corner <- triangles[, c(2L, 3L, 1L), drop = FALSE]
@@ -135,42 +135,13 @@ constant_corners_3d <- function(value, corners) {
   all(ids[corners[, 1L]] == ids[corners[, 2L]] & ids[corners[, 1L]] == ids[corners[, 3L]])
 }
 
-# Bowyer-Watson insertion removes triangles whose circumcircles contain the new vertex.
-# Boundary edges of that cavity form the replacement triangles in counterclockwise order.
+# Delaunay triangles of the x/y positions as a three-column matrix of row
+# indices, counterclockwise (native Bowyer-Watson with exact predicates).
 delaunay_triangles_3d <- function(xy) {
-  n <- nrow(xy)
-  if (n < 3L) return(list())
-  index <- order(xy[, 1L], xy[, 2L])
-  xy <- xy[index, , drop = FALSE]
-  span <- max(apply(xy, 2L, function(x) diff(range(x))))
-  if (!is.finite(span) || span == 0) stop("Delaunay surface coordinates are collinear.", call. = FALSE)
-  xy <- sweep(xy, 2L, colMeans(xy)) / span
-  xy <- rbind(xy, c(-32, -16), c(32, -16), c(0, 32))
-  triangles <- list(as.integer(n + 1:3))
-  for (i in seq_len(n)) {
-    inside <- vapply(triangles, function(t) {
-      p <- sweep(xy[t, , drop = FALSE], 2L, xy[i, ])
-      s <- rowSums(p^2)
-      determinant <- s[1] * cross2_3d(p[2, ], p[3, ]) - s[2] * cross2_3d(p[1, ], p[3, ]) + s[3] * cross2_3d(p[1, ], p[2, ])
-      determinant > 64 * .Machine$double.eps * max(s)^2
-    }, logical(1))
-    edges <- do.call(rbind, lapply(triangles[inside], function(t) rbind(t[c(1, 2)], t[c(2, 3)], t[c(3, 1)])))
-    triangles <- triangles[!inside]
-    if (is.null(edges)) stop("Delaunay insertion produced no containing cavity.", call. = FALSE)
-    keys <- apply(edges, 1L, function(e) paste(sort(e), collapse = ":"))
-    edges <- edges[!(duplicated(keys) | duplicated(keys, fromLast = TRUE)), , drop = FALSE]
-    for (j in seq_len(nrow(edges))) {
-      t <- c(edges[j, ], i)
-      orient <- cross2_3d(xy[t[2], ] - xy[t[1], ], xy[t[3], ] - xy[t[1], ])
-      if (abs(orient) <= 64 * .Machine$double.eps) next
-      if (orient < 0) t <- t[c(2, 1, 3)]
-      triangles[[length(triangles) + 1L]] <- as.integer(t)
-    }
-  }
-  triangles <- Filter(function(t) all(t <= n), triangles)
-  if (!length(triangles)) stop("Delaunay surface coordinates are collinear.", call. = FALSE)
-  lapply(triangles, function(t) as.integer(index[t]))
+  if (nrow(xy) < 3L) return(matrix(integer(), ncol = 3L))
+  triangles <- geometry_delaunay_cpp(xy)
+  if (!nrow(triangles)) stop("Delaunay surface coordinates are collinear.", call. = FALSE)
+  triangles
 }
 
-register_geom_3d(GeomSurface3D, emit_surface_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+register_geom_3d(GeomSurface3D, emit_surface_3d)

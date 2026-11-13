@@ -39,6 +39,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_octree_isosurface_cpp
+Rcpp::DataFrame geometry_octree_isosurface_cpp(Rcpp::NumericVector lo, Rcpp::NumericVector hi, int depth, Rcpp::IntegerMatrix boxes, Rcpp::LogicalVector empty, Rcpp::NumericVector levels, bool caps, std::string method, Rcpp::Function value, Rcpp::Nullable<Rcpp::Function> crossing, Rcpp::Nullable<Rcpp::Function> gradient);
+RcppExport SEXP _ggplot3d_geometry_octree_isosurface_cpp(SEXP loSEXP, SEXP hiSEXP, SEXP depthSEXP, SEXP boxesSEXP, SEXP emptySEXP, SEXP levelsSEXP, SEXP capsSEXP, SEXP methodSEXP, SEXP valueSEXP, SEXP crossingSEXP, SEXP gradientSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lo(loSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type hi(hiSEXP);
+    Rcpp::traits::input_parameter< int >::type depth(depthSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type boxes(boxesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type empty(emptySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< bool >::type caps(capsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::Function> >::type crossing(crossingSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::Function> >::type gradient(gradientSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_octree_isosurface_cpp(lo, hi, depth, boxes, empty, levels, caps, method, value, crossing, gradient));
+    return rcpp_result_gen;
+END_RCPP
+}
 // geometry_isosurface_methods_cpp
 Rcpp::CharacterVector geometry_isosurface_methods_cpp();
 RcppExport SEXP _ggplot3d_geometry_isosurface_methods_cpp() {
@@ -187,6 +207,50 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_delaunay_cpp
+Rcpp::IntegerMatrix geometry_delaunay_cpp(Rcpp::NumericMatrix xy);
+RcppExport SEXP _ggplot3d_geometry_delaunay_cpp(SEXP xySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xy(xySEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_delaunay_cpp(xy));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_delaunay3_cpp
+Rcpp::IntegerMatrix geometry_delaunay3_cpp(Rcpp::NumericMatrix xyz);
+RcppExport SEXP _ggplot3d_geometry_delaunay3_cpp(SEXP xyzSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_delaunay3_cpp(xyz));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_alpha_shape_cpp
+Rcpp::IntegerMatrix geometry_alpha_shape_cpp(Rcpp::NumericMatrix xyz, double alpha);
+RcppExport SEXP _ggplot3d_geometry_alpha_shape_cpp(SEXP xyzSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_alpha_shape_cpp(xyz, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_rbf_cpp
+Rcpp::NumericVector geometry_rbf_cpp(Rcpp::NumericMatrix centres, Rcpp::NumericVector weights, Rcpp::NumericVector poly, Rcpp::NumericMatrix points);
+RcppExport SEXP _ggplot3d_geometry_rbf_cpp(SEXP centresSEXP, SEXP weightsSEXP, SEXP polySEXP, SEXP pointsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type centres(centresSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type poly(polySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type points(pointsSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_rbf_cpp(centres, weights, poly, points));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sweep_frames_cpp
 Rcpp::List sweep_frames_cpp(Rcpp::NumericMatrix xyz, bool closed, Rcpp::NumericVector hint);
 RcppExport SEXP _ggplot3d_sweep_frames_cpp(SEXP xyzSEXP, SEXP closedSEXP, SEXP hintSEXP) {
@@ -216,6 +280,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_scene_compile_cpp", (DL_FUNC) &_ggplot3d_scene_compile_cpp, 3},
     {"_ggplot3d_geometry_isosurface_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_cpp, 8},
+    {"_ggplot3d_geometry_octree_isosurface_cpp", (DL_FUNC) &_ggplot3d_geometry_octree_isosurface_cpp, 11},
     {"_ggplot3d_geometry_isosurface_methods_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_methods_cpp, 0},
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
@@ -227,6 +292,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 10},
     {"_ggplot3d_raster_occlusion_cpp", (DL_FUNC) &_ggplot3d_raster_occlusion_cpp, 8},
+    {"_ggplot3d_geometry_delaunay_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay_cpp, 1},
+    {"_ggplot3d_geometry_delaunay3_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay3_cpp, 1},
+    {"_ggplot3d_geometry_alpha_shape_cpp", (DL_FUNC) &_ggplot3d_geometry_alpha_shape_cpp, 2},
+    {"_ggplot3d_geometry_rbf_cpp", (DL_FUNC) &_ggplot3d_geometry_rbf_cpp, 4},
     {"_ggplot3d_sweep_frames_cpp", (DL_FUNC) &_ggplot3d_sweep_frames_cpp, 3},
     {"_ggplot3d_voxel_faces_cpp", (DL_FUNC) &_ggplot3d_voxel_faces_cpp, 4},
     {NULL, NULL, 0}

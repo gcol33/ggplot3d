@@ -17,11 +17,10 @@ GeomCol3D <- ggplot2::ggproto("GeomCol3D", ggplot2::Geom,
   draw_key = ggplot2::draw_key_polygon,
   setup_data = function(data, params) {
     if (anyDuplicated(data[c("PANEL", "group", "x", "y")])) stop("Column cells must be unique within each group.", call. = FALSE)
-    spacing <- function(v) {d <- diff(sort(unique(v[is.finite(v)]))); if (length(d)) min(d[d > 0]) else 1}
     for (axis in c("x", "y")) {
       size <- params[[if (axis == "x") "width" else "depth"]]
       if (!is.null(size) && (length(size) != 1L || !is.finite(size) || size <= 0)) stop("width and depth must be positive scalars.", call. = FALSE)
-      widths <- vapply(split(data[[axis]], data$PANEL), spacing, numeric(1)) * 0.9
+      widths <- vapply(split(data[[axis]], data$PANEL), lattice_spacing_3d, numeric(1)) * 0.9
       size <- size %or3d% unname(widths[as.character(data$PANEL)])
       if (is.null(data[[paste0(axis, "min")]])) data[[paste0(axis, "min")]] <- data[[axis]] - size / 2
       if (is.null(data[[paste0(axis, "max")]])) data[[paste0(axis, "max")]] <- data[[axis]] + size / 2
@@ -246,8 +245,9 @@ convex_prisms_3d <- function(data, rows) {
 }
 
 register_geom_3d(GeomCol3D, emit_columns_3d, prepare_aesthetics = prepare_solid_3d,
-                 position_check = function(position, scales) check_position_3d(position, scales, stack = TRUE))
+  positions = c("nudge", "jitter", "dodge", "stack"),
+  extents = list(x = extent_3d("xmin", "xmax", "x"), y = extent_3d("ymin", "ymax", "y"),
+                 z = extent_3d("zmin", "zmax", "z")))
 register_geom_3d(GeomExtrude3D, emit_extrusions_3d,
   prepare_data = function(data) spatial_corners_3d(data, extrusion = TRUE),
-  prepare_aesthetics = prepare_solid_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+  prepare_aesthetics = prepare_solid_3d)

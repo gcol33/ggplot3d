@@ -325,5 +325,4 @@ mesh_face_triangles_3d <- function(data, r, rings) {
 }
 
 register_geom_3d(GeomMesh3D, emit_mesh_3d,
-  prepare_data = prepare_mesh_data_3d, prepare_aesthetics = prepare_mesh_aesthetics_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+  prepare_data = prepare_mesh_data_3d, prepare_aesthetics = prepare_mesh_aesthetics_3d)

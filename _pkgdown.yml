@@ -117,10 +117,20 @@ reference:
   - geom_mesh_3d
   - geom_col_3d
   - geom_bar_3d
+  - geom_histogram_3d
+  - geom_hex_3d
   - geom_extrude_3d
   - geom_voxel_3d
   - geom_tube_3d
   - geom_ribbon_3d
+- title: Network and tree layers
+  contents:
+  - geom_edge_3d
+  - geom_node_3d
+  - fortify.igraph
+  - get_edges_3d
+  - stat_layers_3d
+  - stat_dendrogram_3d
 - title: Statistical layers
   contents:
   - geom_function_3d
@@ -130,6 +140,7 @@ reference:
   - geom_isofunction_3d
   - geom_isodensity_3d
   - geom_hull_3d
+  - geom_alpha_shape_3d
   - geom_parametric_3d
   - geom_sweep_3d
   - geom_revolve_3d
@@ -137,6 +148,10 @@ reference:
   contents:
   - stat_surface_3d
   - stat_count_3d
+  - stat_bin_2d_3d
+  - stat_summary_2d_3d
+  - stat_bin_hex_3d
+  - stat_summary_hex_3d
   - stat_bin_3d
   - stat_function_3d
   - stat_smooth_3d
@@ -146,6 +161,8 @@ reference:
   - stat_isofunction_3d
   - stat_density_3d
   - stat_hull_3d
+  - stat_alpha_shape_3d
+  - stat_implicit_fit_3d
   - stat_parametric_3d
   - stat_sweep_3d
   - stat_revolve_3d
@@ -154,7 +171,10 @@ reference:
 - title: Positions
   contents:
   - position_nudge_3d
+  - position_jitter_3d
+  - position_dodge_3d
   - position_stack_3d
+  - position_fill_3d
 - title: Guides and themes
   contents: guide_axis_3d
 - title: Output backends

@@ -152,5 +152,4 @@ emit_polygons_3d <- function(data, params, panel_params) {
                             params, panel_params$panel_id, unlist(counts, use.names = FALSE))
 }
 
-register_geom_3d(ggplot2::GeomPolygon, emit_polygons_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+register_geom_3d(ggplot2::GeomPolygon, emit_polygons_3d)

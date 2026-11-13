@@ -117,31 +117,47 @@ static inline void collect(Hermite& h,const Padded& g,int i,int j,int k,double l
   }
 }
 
+// Vertex of one boundary loop of the level set on a cell's faces: the QEF
+// minimiser of its crossings (dual contouring) or their mean (surface nets),
+// with the normalised sum of the crossing normals.
+template<bool hermite>
+static inline Vertex loop_vertex(const std::vector<V>& points,const std::vector<V>& normals,V lo,V hi) {
+  Vertex x; x.n=V{0,0,0};
+  for(const V& m:normals) x.n=add(x.n,m);
+  x.n=unit(x.n);
+  if(hermite) x.p=qef_vertex(points,normals,lo,hi);
+  else { x.p=V{0,0,0}; for(const V& p:points) x.p=add(x.p,p); x.p=mul(x.p,1.0/points.size()); }
+  return x;
+}
+
+// Vertex halfway between two cell vertices, for a second level-curve arc
+// that joins them across one face.
+static inline int midpoint_vertex(Mesh& mesh,int a,int b) {
+  Vertex m; m.p=mul(add(mesh.vertices[a].p,mesh.vertices[b].p),0.5); m.n=unit(add(mesh.vertices[a].n,mesh.vertices[b].n));
+  return mesh.add(m);
+}
+
 template<bool hermite>
 static inline void resolve(Mesh& mesh,const Hermite& h) {
   for(const auto& loop:h.loops) {
     size_t n=loop.edges.size();
     std::vector<V> points(h.points.begin()+loop.first,h.points.begin()+loop.first+n);
     std::vector<V> normals(h.normals.begin()+loop.first,h.normals.begin()+loop.first+n);
-    Vertex x; x.n=V{0,0,0};
-    for(const V& m:normals) x.n=add(x.n,m);
-    x.n=unit(x.n);
-    if(hermite) x.p=qef_vertex(points,normals,loop.lo,loop.hi);
-    else { x.p=V{0,0,0}; for(const V& p:points) x.p=add(x.p,p); x.p=mul(x.p,1.0/n); }
-    int id=mesh.add(x);
+    int id=mesh.add(loop_vertex<hermite>(points,normals,loop.lo,loop.hi));
     for(int e:loop.edges) loop.slot[e]=id;
   }
 }
 
 using GradientFunction=std::function<void(const std::vector<V>&,std::vector<V>&)>;
 
-// One polygon per sign-changing grid edge, joining the vertices of the four
-// cells around it in cyclic order, facing increasing field value. A plain
-// quad is split along its shorter diagonal; a polygon with split arc vertices
-// is fanned around its mean. An edge with one endpoint in the padding layer
-// gives a cap polygon with the box normal.
+// One polygon per sign-changing grid edge, joining the vertices of the cells
+// around it in cyclic order, facing increasing field value. A triangle is
+// kept, a plain quad is split along its shorter diagonal, and a polygon with
+// split arc vertices is fanned around its mean. An edge with one endpoint in
+// the padding layer gives a cap polygon with the box normal.
 static inline void polygon(Mesh& mesh,std::vector<int> ids,bool reverse,double level,bool cap,V normal) {
   if(reverse) std::reverse(ids.begin(),ids.end());
+  if(ids.size()==3) { mesh.oriented(ids[0],ids[1],ids[2],level,cap,normal); return; }
   if(ids.size()==4) {
     V p[4]; for(int a=0;a<4;++a) p[a]=mesh.vertices[ids[a]].p;
     if(norm(sub(p[2],p[0]))<=norm(sub(p[3],p[1]))) {
@@ -202,8 +218,7 @@ static inline Mesh extract(const ScalarGrid& grid,const std::vector<double>& lev
     if(found->second==key) return -1;
     auto made=seen.split.find(key);
     if(made!=seen.split.end()) return made->second;
-    Vertex m; m.p=mul(add(mesh.vertices[A].p,mesh.vertices[B].p),0.5); m.n=unit(add(mesh.vertices[A].n,mesh.vertices[B].n));
-    int id=mesh.add(m); seen.split[key]=id; return id;
+    int id=midpoint_vertex(mesh,A,B); seen.split[key]=id; return id;
   };
   auto edge=[&](int l,const int a[3],const int b[3],int axis,const int cells[4][4]) {
     LevelSlots& s=states[l]; Mesh& mesh=meshes[l];

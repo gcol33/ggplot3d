@@ -9,6 +9,10 @@ geometry_isosurface_cpp <- function(x, y, z, value, levels, caps, method, gradie
     .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps, method, gradient)
 }
 
+geometry_octree_isosurface_cpp <- function(lo, hi, depth, boxes, empty, levels, caps, method, value, crossing = NULL, gradient = NULL) {
+    .Call(`_ggplot3d_geometry_octree_isosurface_cpp`, lo, hi, depth, boxes, empty, levels, caps, method, value, crossing, gradient)
+}
+
 geometry_isosurface_methods_cpp <- function() {
     .Call(`_ggplot3d_geometry_isosurface_methods_cpp`)
 }
@@ -51,6 +55,22 @@ raster_draw_cpp <- function(scene, colours, dashes, width, height, antialias, id
 
 raster_occlusion_cpp <- function(scene, colours, dashes, extent, width, height, antialias, depth) {
     .Call(`_ggplot3d_raster_occlusion_cpp`, scene, colours, dashes, extent, width, height, antialias, depth)
+}
+
+geometry_delaunay_cpp <- function(xy) {
+    .Call(`_ggplot3d_geometry_delaunay_cpp`, xy)
+}
+
+geometry_delaunay3_cpp <- function(xyz) {
+    .Call(`_ggplot3d_geometry_delaunay3_cpp`, xyz)
+}
+
+geometry_alpha_shape_cpp <- function(xyz, alpha) {
+    .Call(`_ggplot3d_geometry_alpha_shape_cpp`, xyz, alpha)
+}
+
+geometry_rbf_cpp <- function(centres, weights, poly, points) {
+    .Call(`_ggplot3d_geometry_rbf_cpp`, centres, weights, poly, points)
 }
 
 sweep_frames_cpp <- function(xyz, closed, hint) {

@@ -1,5 +1,6 @@
 # ggplot3d 0.0.0.9000
 
+* Networks and trees: `ggplot(graph)` fortifies an igraph graph into nodes and edges with a 3D igraph layout (`fortify(graph, layout = )`); `geom_edge_3d()` draws edges as lines, arcs or shaded tubes and `geom_node_3d()` the nodes; `stat_layers_3d()` stacks the layers of a multilayer network on z planes with inter-layer edges; `stat_dendrogram_3d()` draws an `hclust` tree in any coordinate plane, such as a wall beside a floor heatmap, with branches coloured by cluster.
 * Draw points, paths, segments, text, polygons, surfaces, contours, meshes, bands, columns and extrusions in three dimensions.
 * Train continuous, discrete and date/time z scales, with fixed or free z ranges across facets.
 * Control camera angles, projection, lighting and framing with `coord_3d()`.
@@ -10,6 +11,7 @@
 * Resolve visibility across layers within each panel for vector and raster output.
 * Large scenes compile faster: a 200,000-face surface takes about 2 s instead of 7 s. The occlusion graph uses several threads, set with `options(ggplot3d.threads = )`; the result is the same for every thread count. Redrawing a plot with the same panel size and view reuses the compiled scene (`options(ggplot3d.cache_bytes = )`).
 * Compute function surfaces, fitted surfaces, density surfaces, ridgelines, convex hulls and scalar-field level surfaces.
+* Bin two variables into columns: `stat_bin_2d_3d()` and its bar-style form `geom_histogram_3d()` count observations in rectangles, `geom_hex_3d()` and `stat_bin_hex_3d()` in hexagons drawn as prisms, and `stat_summary_2d_3d()` and `stat_summary_hex_3d()` summarise a mapped z in each bin. Computed variables follow ggplot2 (`count`, `density`, `ncount`, `ndensity`) plus the bin `width` and `depth`.
 * Animate data that change over time with `animate_3d(time = )`: one frame per value of a column, with scales trained on all frames.
 * `geom_blank()` and `expand_limits()` train scales inside `coord_3d()`.
 * The raster backend renders 64-pixel tiles on several threads (option `ggplot3d.threads`) with one fragment list per sample, keeps the exact compositing order and can return depth, id and normal buffers.
@@ -18,6 +20,7 @@
 * `backend_3d("hybrid")` rasterises the layers drawn with `raster = TRUE` and keeps the other layers, axes, panes and text as vector graphics, clipped where the image's opaque coverage lies in front of them.
 * Translucent surfaces in vector output cover the shared edges inside each group of non-overlapping faces once.
 * `geom_label()`, `geom_rect()`, `geom_tile()`, `geom_hline()`, `geom_vline()`, `annotation_custom()` and `annotation_raster()` work inside `coord_3d()`.
+* Position adjustments in three dimensions: `position_jitter_3d()` jitters x, y and z; `position_dodge_3d()` places groups side by side along x or y within each x/y cell; `position_stack_3d()` and the new `position_fill_3d()` stack along z, x or y, for columns, walls and bands, points and text. `register_geom_3d()` gains `positions` and `extents`, so each geometry declares the adjustments it accepts.
 * `annotate_3d()` adds fixed annotations with z positions.
 * `stat_density_2d_3d(plane = )` draws the density flat on the floor or at a given height, filled by density.
 * The camera arguments of `coord_3d()` take one value per panel, so facets can show different views; `animate_3d()` keeps each panel's offset.
