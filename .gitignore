@@ -9,5 +9,4 @@ src/*.dll
 dev_notes/agents/logs/*.log
 tests/testthat/Rplots.pdf
 Rplots.pdf
-docs/
 *.log

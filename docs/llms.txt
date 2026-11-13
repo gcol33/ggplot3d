@@ -1,0 +1,398 @@
+# ggplot3d
+
+*three-dimensional plots with ggplot2*
+
+ggplot3d draws three-dimensional points, paths, surfaces and solids with
+[ggplot2](https://ggplot2.tidyverse.org/).
+
+The package extends ggplot2’s grammar of graphics with a z position
+scale and a camera. Each panel combines its layers into a scene, the
+collection of geometry used to determine which parts are visible. You
+can map variables to position, colour and fill, choose a view, and save
+the plot with
+[`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
+
+ggplot3d supports:
+
+- Surfaces with observations, contours and fitted values.
+- Columns, extruded polygons and indexed meshes.
+- Continuous, discrete and date/time z scales, including transformations
+  and facets.
+- Vector drawing and raster rendering from the same scene geometry.
+
+[Visibility](https://gillescolling.com/ggplot3d/vignettes/visibility.Rmd)
+explains how overlapping geometry is ordered and split. The examples
+below generate their figures from the package.
+
+## Installation
+
+The development version compiles C++17 code. Install build tools for
+your operating system:
+
+| Operating system | Build tools |
+|----|----|
+| Windows | [Rtools](https://cran.r-project.org/bin/windows/Rtools/) matching your R version |
+| macOS | Run `xcode-select --install` in Terminal |
+| Debian / Ubuntu | Install `r-base-dev` |
+
+Check that R can find the compiler:
+
+``` r
+
+pkgbuild::has_build_tools(debug = TRUE)
+```
+
+Install the development package:
+
+``` r
+
+# install.packages("pak")
+pak::pak("gcol33/ggplot3d")
+```
+
+## Usage
+
+1.  Map three position columns with
+    [`aes()`](https://ggplot2.tidyverse.org/reference/aes.html).
+2.  Add a three-dimensional layer and
+    [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
+
+The data below contain a regular grid of x and y positions and a height
+z. A surface connects neighbouring grid positions. The point layer marks
+selected positions above and below that surface.
+
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+
+surface <- expand.grid(x = seq(-2, 2, length.out = 15),
+                       y = seq(-2, 2, length.out = 15))
+surface$z <- with(surface, exp(-(x^2 + y^2) / 2))
+observations <- surface[c(49, 73, 97, 121, 145, 169), ]
+observations$z <- observations$z + c(0.3, -0.3, 0.3, -0.3, 0.3, -0.3)
+
+ggplot(surface, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "#2E6F9E") +
+  geom_point_3d(data = observations, colour = "#B5342B", size = 3) +
+  coord_3d()
+```
+
+![A curved blue surface with red observations above and below it,
+partially hidden by the
+surface.](reference/figures/README-surface-points-1.svg)
+
+The result is a ggplot object. Layer geometry is depth-sorted together
+within the panel, including where the surface covers a point.
+
+## Intersecting surfaces
+
+Each surface has its own data and fill. Their intersection determines
+which pieces are visible from the chosen camera.
+
+``` r
+
+first <- surface
+first$z <- with(first, 0.6 * x)
+second <- surface
+second$z <- with(second, -0.6 * x + 0.2 * y)
+
+ggplot(first, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "#2E6F9E") +
+  geom_surface_3d(data = second, fill = "#9E5E0F") +
+  coord_3d(azimuth = -45, elevation = 60)
+```
+
+![Blue and orange sloping surfaces intersect along their
+middle.](reference/figures/README-intersections-1.svg)
+
+## Columns
+
+Map z to the top of each column. The default baseline is zero; `zmin`
+supplies a baseline from the data.
+
+``` r
+
+columns <- expand.grid(x = 1:3, y = 1:3)
+columns$z <- c(2, 4, 3, 5, 2, 4, 3, 6, 2)
+
+ggplot(columns, aes(x, y, z = z)) +
+  geom_col_3d(fill = "#2E6F9E", width = 0.65, depth = 0.65) +
+  coord_3d()
+```
+
+![Nine blue columns on a three-by-three grid with different
+heights.](reference/figures/README-columns-1.svg)
+
+## Raster output
+
+A raster backend draws the scene into pixels at the requested
+resolution. It is useful for dense geometry and fixed-size images. Set
+it inside the coordinate system.
+
+``` r
+
+raster_plot <- ggplot(surface, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "#2E6F9E") +
+  geom_point_3d(data = observations, colour = "#B5342B", size = 3) +
+  coord_3d(backend = backend_3d("raster", dpi = 144, antialias = 2))
+raster_plot
+```
+
+![A raster rendering of the curved blue surface and red
+observations.](reference/figures/README-raster-1.svg)
+
+``` r
+
+ggsave("surface.png", raster_plot, width = 5, height = 4.5, dpi = 144)
+```
+
+## Documentation
+
+Start with [Get
+started](https://gillescolling.com/ggplot3d/vignettes/ggplot3d.Rmd) to
+create and save a plot.
+
+- [The z
+  scale](https://gillescolling.com/ggplot3d/vignettes/z-scale.Rmd):
+  transformations, categories, limits and facets.
+- [Layers](https://gillescolling.com/ggplot3d/vignettes/layers.Rmd):
+  examples of every three-dimensional geom and stat.
+- [Camera and
+  framing](https://gillescolling.com/ggplot3d/vignettes/camera.Rmd):
+  view angles, projections and plot bounds.
+- [Output
+  backends](https://gillescolling.com/ggplot3d/vignettes/backends.Rmd):
+  choose vector or raster rendering.
+- [Visibility](https://gillescolling.com/ggplot3d/vignettes/visibility.Rmd):
+  how the scene resolves overlapping geometry.
+
+Function help is available in R, for example
+[`?coord_3d`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+and
+[`?geom_surface_3d`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md).
+
+## Getting help
+
+Send questions and bug reports to [GitHub
+issues](https://github.com/gcol33/ggplot3d/issues). Include a small
+reproducible example, the rendering backend, and
+[`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html).
+
+## Contributing
+
+See [Contributing](https://gillescolling.com/ggplot3d/CONTRIBUTING.md)
+for development setup and documentation checks.
+
+## Support
+
+I’m a PhD student who builds R packages in my free time because I
+believe good tools should be free and open. I started these projects for
+my own work and figured others might find them useful too.
+
+If this package saved you some time, buying me a coffee is a nice way to
+say thanks. It helps with my coffee addiction.
+
+[![Buy Me A
+Coffee](https://img.shields.io/badge/-Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/gcol33)
+
+## Acknowledgements
+
+ggplot3d builds on ggplot2’s grammar, scales and extension classes, and
+R’s grid graphics system.
+
+## License
+
+MIT, see [LICENSE.md](https://gillescolling.com/ggplot3d/LICENSE.md).
+
+## Citation
+
+``` R
+To cite ggplot3d in publications, use:
+
+  Colling G (2026). _ggplot3d: 3D Plots in the Grammar of Graphics_. R
+  package version 0.0.0.9000, <https://github.com/gcol33/ggplot3d>.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {ggplot3d: 3D Plots in the Grammar of Graphics},
+    author = {Gilles Colling},
+    year = {2026},
+    note = {R package version 0.0.0.9000},
+    url = {https://github.com/gcol33/ggplot3d},
+  }
+```
+
+# Package index
+
+## Coordinates and lighting
+
+- [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+  : Exact three-dimensional panel coordinates
+- [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
+  : Lighting for a 3D scene
+
+## Z position scales
+
+- [`scale_z_continuous()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+  [`scale_z_discrete()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+  [`scale_z_log10()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+  [`scale_z_sqrt()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+  [`scale_z_reverse()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+  [`scale_z_date()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+  [`scale_z_datetime()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+  [`scale_z_time()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+  : Continuous z position scales
+- [`zlim()`](https://gillescolling.com/ggplot3d/reference/zlim.md) : Set
+  z scale limits
+
+## Point, path and polygon layers
+
+- [`geom_point_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
+  [`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
+  [`geom_segment_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
+  [`geom_text_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
+  [`geom_polygon_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
+  : Point, path, segment, text and polygon layers in three dimensions
+- [`geom_band_3d()`](https://gillescolling.com/ggplot3d/reference/geom_band_3d.md)
+  : Draw a three-dimensional ribbon or wall
+- [`geom_dropline_3d()`](https://gillescolling.com/ggplot3d/reference/geom_dropline_3d.md)
+  : Drop segments from points to a box face
+
+## Surface and solid layers
+
+- [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md)
+  [`stat_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md)
+  : Triangulated surfaces in three dimensions
+- [`geom_contour_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
+  [`geom_contour_filled_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
+  : Contours following a triangulated surface or a horizontal plane
+- [`geom_mesh_3d()`](https://gillescolling.com/ggplot3d/reference/geom_mesh_3d.md)
+  : Draw an external triangle or polygon mesh
+- [`geom_col_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
+  [`geom_bar_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
+  [`stat_count_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
+  : Columns and counts on an x/y lattice
+- [`geom_extrude_3d()`](https://gillescolling.com/ggplot3d/reference/geom_extrude_3d.md)
+  : Extrude polygon rings along z
+
+## Statistical layers
+
+- [`stat_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
+  [`geom_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
+  : Sample a bivariate function in three dimensions
+- [`stat_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
+  [`geom_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
+  : Fit a bivariate response surface
+- [`stat_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
+  [`geom_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
+  : Grouped one-dimensional density ridges
+- [`stat_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
+  [`geom_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
+  : Level surfaces of a gridded scalar field
+- [`stat_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
+  [`geom_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
+  : Level surfaces of a trivariate function
+- [`stat_density_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
+  [`geom_isodensity_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
+  : Trivariate density isosurfaces
+- [`stat_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
+  [`geom_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
+  : Convex hulls in three dimensions
+
+## Statistical computations
+
+- [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md)
+  [`stat_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md)
+  : Triangulated surfaces in three dimensions
+- [`geom_col_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
+  [`geom_bar_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
+  [`stat_count_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
+  : Columns and counts on an x/y lattice
+- [`stat_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
+  [`geom_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
+  : Sample a bivariate function in three dimensions
+- [`stat_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
+  [`geom_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
+  : Fit a bivariate response surface
+- [`stat_density_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_2d_3d.md)
+  : Bivariate kernel density as a height surface
+- [`stat_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
+  [`geom_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
+  : Grouped one-dimensional density ridges
+- [`stat_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
+  [`geom_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
+  : Level surfaces of a gridded scalar field
+- [`stat_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
+  [`geom_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
+  : Level surfaces of a trivariate function
+- [`stat_density_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
+  [`geom_isodensity_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
+  : Trivariate density isosurfaces
+- [`stat_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
+  [`geom_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
+  : Convex hulls in three dimensions
+- [`probs()`](https://gillescolling.com/ggplot3d/reference/probs.md) :
+  Request probability-content density levels
+
+## Positions
+
+- [`position_nudge_3d()`](https://gillescolling.com/ggplot3d/reference/position_nudge_3d.md)
+  : Nudge all three position families
+- [`position_stack_3d()`](https://gillescolling.com/ggplot3d/reference/position_stack_3d.md)
+  : Stack column heights along z
+
+## Guides and themes
+
+- [`guide_axis_3d()`](https://gillescolling.com/ggplot3d/reference/guide_axis_3d.md)
+  : Position guides for three-dimensional axes
+
+## Output backends
+
+- [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md)
+  : Select a 3D rendering backend
+- [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+  : Render a camera path
+- [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
+  : Explore a scene with orbit controls
+
+## Mesh input and extension API
+
+- [`mesh_3d()`](https://gillescolling.com/ggplot3d/reference/mesh_3d.md)
+  : Fortify an indexed three-dimensional mesh
+- [`reexports`](https://gillescolling.com/ggplot3d/reference/reexports.md)
+  [`fortify`](https://gillescolling.com/ggplot3d/reference/reexports.md)
+  : Objects exported from other packages
+- [`layer_3d()`](https://gillescolling.com/ggplot3d/reference/layer_3d.md)
+  : Adapt a registered ggplot2 layer to three dimensions
+- [`register_geom_3d()`](https://gillescolling.com/ggplot3d/reference/register_geom_3d.md)
+  : Register a geometry emitter
+- [`new_scene_packet()`](https://gillescolling.com/ggplot3d/reference/new_scene_packet.md)
+  : Construct a 3D geometry packet
+
+## Package
+
+- [`ggplot3d`](https://gillescolling.com/ggplot3d/reference/ggplot3d-package.md)
+  [`ggplot3d-package`](https://gillescolling.com/ggplot3d/reference/ggplot3d-package.md)
+  : 3D Plots in the Grammar of Graphics
+
+# Articles
+
+### Concepts
+
+- [The z scale](https://gillescolling.com/ggplot3d/articles/z-scale.md):
+- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md):
+
+### Workflows
+
+- [Camera and
+  framing](https://gillescolling.com/ggplot3d/articles/camera.md):
+- [Output
+  backends](https://gillescolling.com/ggplot3d/articles/backends.md):
+- [Camera animation and
+  interaction](https://gillescolling.com/ggplot3d/articles/motion.md):
+
+### Background
+
+- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):

@@ -1,0 +1,156 @@
+# Camera animation and interaction
+
+Camera motion shows a fixed scene from several directions. This article
+saves a camera path and opens a panel with orbit controls. Installation
+is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md). Movie
+output uses [gifski](https://r-rlib.github.io/gifski/) for GIF files or
+[av](https://docs.ropensci.org/av/) for MP4 files; the viewer uses
+[htmlwidgets](https://www.htmlwidgets.org/).
+
+1.  **Build** the scene with
+    [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
+
+2.  **Render** a camera path with
+    [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md).
+
+3.  **Explore** a panel with
+    [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md).
+
+## Example
+
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
+d <- expand.grid(x = seq(-2, 2, length.out = 12),
+                 y = seq(-2, 2, length.out = 12))
+d$z <- with(d, exp(-(x^2 + y^2) / 2))
+p <- ggplot(d, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "#2E6F9E") +
+  coord_3d(azimuth = -60, elevation = 30, frame = "azimuth")
+```
+
+The data describe a curved surface sampled on a regular grid. The camera
+looks toward the centre of its expanded box.
+
+``` r
+
+p
+```
+
+![A blue curved surface viewed at azimuth minus sixty degrees and
+elevation thirty degrees.](motion_files/figure-html/static-1.svg)
+
+### Save a camera path
+
+The default path makes a full azimuth turn. Each frame retains the panel
+dimensions and framing bounds; the final angle precedes the starting
+angle so a loop repeats each view once. The result records the rendering
+time of each frame in seconds.
+
+``` r
+
+if (requireNamespace("gifski", quietly = TRUE)) {
+  path <- tempfile(fileext = ".gif")
+  movie <- animate_3d(p, frames = 12, fps = 6, file = path,
+                     width = 480, height = 480, progress = FALSE)
+  data.frame(frames = movie$frame_count, fps = movie$fps,
+             file_written = file.exists(movie$file))
+  range(movie$timings)
+  unlink(path)
+}
+```
+
+Camera arguments accept a scalar, a vector with one value per frame, or
+a function of time in seconds. This path raises the camera while it
+rotates. Varying elevation or roll uses sphere framing, which reserves
+bounds for arbitrary rotation.
+
+``` r
+
+frames <- animate_3d(p, frames = 3, fps = 2,
+  azimuth = function(t) -60 + 90 * t,
+  elevation = c(20, 35, 50), renderer = "vector",
+  width = 320, height = 320, progress = FALSE)
+frames$camera
+#>   time azimuth elevation zoom roll
+#> 1  0.0     -60        20    1    0
+#> 2  0.5     -15        35    1    0
+#> 3  1.0      30        50    1    0
+frames$panel_extents[[1]]
+#> $`panel.9-7-9-7.scene-panel-3d`
+#>  width_mm height_mm 
+#>  40.54863  40.54863
+unlink(dirname(frames$frames[1]), recursive = TRUE)
+```
+
+Raster rendering is the default. Selecting vector rendering uses the
+exact vector scene backend to produce each PNG frame, and an output
+filename ending in `.mp4` selects the video encoder.
+
+``` r
+
+if (requireNamespace("av", quietly = TRUE)) {
+  path <- tempfile(fileext = ".mp4")
+  movie <- animate_3d(p, frames = 3, fps = 6, file = path,
+                     width = 320, height = 320, progress = FALSE)
+  file.exists(movie$file)
+  unlink(path)
+}
+```
+
+### Explore the scene
+
+The viewer opens one panel at its static camera position. Drag to orbit
+and use the wheel or a two-finger pinch to zoom. Arrow keys rotate the
+view; plus and minus change magnification.
+
+``` r
+
+if (requireNamespace("htmlwidgets", quietly = TRUE)) {
+  view_3d(p, width = 560, height = 560)
+}
+```
+
+Select **Camera code** to display the current coordinate call, then copy
+it into the plot code. **Reset** restores the initial camera. In a Shiny
+application, camera changes also update the input whose name is the
+widget identifier followed by `_camera`.
+
+The browser draws opaque geometry with a depth buffer, which records the
+nearest painted surface at each pixel. Transparent primitives are
+ordered by centre depth, so intersecting transparent surfaces can differ
+from static vector output. Browser labels use plain text. A faceted plot
+selects its panel through the viewer’s `panel` argument; legends and
+facet strips remain part of static output.
+
+## Camera conventions
+
+The camera path keeps the plot data fixed.
+[gganimate](https://gganimate.com/reference/transition_time.html)
+separates changes in data over time from its [fixed
+view](https://gganimate.com/reference/view_static.html); the fixed-view
+principle informs the locked animation bounds here. [rayshader’s movie
+renderer](https://www.rayshader.com/reference/render_movie.html)
+supplies the precedent for scalar and per-frame camera vectors and
+extension-selected encoders. [rgl’s movie
+recorder](https://dmurdoch.github.io/rgl/reference/play3d.html) and
+[spin function](https://dmurdoch.github.io/rgl/reference/spin3d.html)
+supply the time-function pattern.
+
+The viewer orbits around the coordinate system’s target and retains its
+projection and roll. [Plotly’s scene
+camera](https://plotly.com/javascript/reference/layout/scene/#scene-camera)
+exposes target, eye and up vectors with a projection choice. Dragging
+and wheel zoom follow [three.js orbit
+controls](https://threejs.org/docs/pages/OrbitControls.html). Geometry,
+colours and lighting travel to the browser once; camera changes are
+evaluated there.
