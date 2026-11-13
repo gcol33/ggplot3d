@@ -82,8 +82,10 @@ plane normal. The plane is in transformed position coordinates.}
 with an opaque fill per raster sample. In the raster backend the traced
 surface composites at its depth with the other layers, translucent ones
 included; vector and hybrid panels place it as an image, and vector
-primitives behind it are hidden. Tracing uses transformed scale
-coordinates inside the panel box.}
+primitives behind it are hidden. Intrinsic primitives require
+backend_3d("raymarch"). Tracing uses transformed scale coordinates inside
+the panel box; these are geometry chart coordinates for the intrinsic
+backend.}
 
 \item{trace_tolerance}{Surface tolerance in transformed scale units.}
 

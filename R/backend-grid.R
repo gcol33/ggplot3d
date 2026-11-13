@@ -20,9 +20,19 @@ scene_panel_grob <- function(packets, panel_params, theme, underlay = list(), ov
 #' @export
 makeContent.scene_panel_grob <- function(x) {
   stereo <- x$panel_params$coord_params$stereo
-  if (!is.null(stereo) && is.null(x$eye)) return(grid::setChildren(x, do.call(grid::gList, stereo_panel_children_3d(x, stereo))))
   backend <- x$panel_params$coord_params$backend
+  if (!is.null(stereo) && is.null(x$eye)) {
+    if (identical(backend$type, "raymarch")) stop("Intrinsic stereo needs separate observer and facing settings for each eye.", call. = FALSE)
+    return(grid::setChildren(x, do.call(grid::gList, stereo_panel_children_3d(x, stereo))))
+  }
   outer <- panel_outer_viewport_3d(x$panel_params)
+  if (identical(backend$type, "raymarch")) {
+    rendered <- render_thurston_panel_3d(x, outer, backend)
+    background <- ggplot2::element_render(x$theme, "panel.background")
+    border <- ggplot2::element_render(x$theme, "panel.border", fill = NA)
+    x$inner_viewport <- x$outer_viewport <- outer
+    return(grid::setChildren(x, do.call(grid::gList, c(list(background), x$underlay, list(rendered, border)))))
+  }
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, x$eye_group %or3d% as.list(x$frame_group))
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
   if (identical(backend$type, "pathtrace")) {
@@ -67,7 +77,7 @@ makeContent.scene_panel_grob <- function(x) {
 # Physical panel size at the backend's raster resolution or device resolution.
 panel_outer_viewport_3d <- function(panel_params) {
   backend <- panel_params$coord_params$backend
-  dpi <- if (backend$type %in% c("raster", "hybrid", "pathtrace")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
+  dpi <- if (backend$type %in% c("raster", "hybrid", "pathtrace", "raymarch")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
   new_scene_viewport(grid::unit(1, "npc"), grid::unit(1, "npc"), dpi)
 }
 

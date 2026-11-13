@@ -2,6 +2,8 @@
 
 * `geom_quiver_3d()` draws vectors with solid cone heads and line or tube shafts; `geom_cone_3d()` draws magnitude-scaled cones. `stat_streamline_3d()` integrates trilinear vector fields with RK4 or adaptive RK45, accepts point/rake/plane seeds and Jobard-Lefer slice placement, and sweeps streamtubes through the shared tube machinery.
 
+* `backend_3d("raymarch")` renders in-space views of all eight Thurston geometries with geodesic sphere tracing, paired quotient faces, parallel transport, and geodesic-sphere area lighting. `geom_thurston_3d()` supplies intrinsic primitives, and `geodesic_3d()` exposes the shared flow and transport calculations.
+
 * `geom_boxplot_3d()` draws box prisms, median faces, whiskers and outliers on x/y cells. `geom_violin_3d()` draws mirrored density walls or revolved solids. `geom_waterfall_3d()` draws curtains and `geom_area_3d()` stacks area walls through `position_stack_3d()`.
 * `backend_3d("pathtrace")` adds diffuse global illumination, distant-disk soft shadows, thin-lens depth of field and seeded progressive accumulation. Native BVH traversal shares the SDF ray kernel; batches and worker counts produce identical samples.
 

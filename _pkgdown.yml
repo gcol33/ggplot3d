@@ -238,6 +238,9 @@ reference:
 - title: Output backends
   contents:
   - backend_3d
+  - geom_thurston_3d
+  - geodesic_3d
+  - thurston_portal_3d
   - animate_3d
   - tween_3d
   - view_3d

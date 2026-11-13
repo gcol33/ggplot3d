@@ -16,7 +16,8 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 }
 
 #' Select a 3D rendering backend
-#' @param type Backend: `"vector"`, `"raster"`, `"hybrid"` or `"pathtrace"`. A hybrid panel
+#' @param type Backend: `"vector"`, `"raster"`, `"hybrid"`, `"pathtrace"`, or
+#'   `"raymarch"` (an intrinsic view in a Thurston geometry). A hybrid panel
 #'   rasterises the layers created with `raster = TRUE` (an argument of every
 #'   `geom_*_3d()` layer and of [layer_3d()]) into one image at `dpi` and draws
 #'   the other layers, axes, panes and text as vector graphics. Vector
@@ -35,6 +36,16 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #'   Changes to geometry, camera, lighting or image dimensions reset accumulation.
 #' @param batch_size Samples per native batch; accumulation is independent of
 #'   batch size and worker count. R can interrupt between batches.
+#' @param geometry Intrinsic geometry for the raymarch backend; see [geodesic_3d()].
+#' @param observer Observer coordinates in that geometry's chart.
+#' @param facing Orthonormal 3 by 3 matrix whose columns are the camera's right,
+#'   up and forward tangent vectors in the observer's orthonormal frame.
+#' @param fov Vertical intrinsic field of view in degrees.
+#' @param max_distance Maximum intrinsic ray arc length.
+#' @param tolerance Surface residual and quotient-boundary tolerance.
+#' @param max_steps Maximum steps per intrinsic ray.
+#' @param quotient List of paired [thurston_portal_3d()] domain faces.
+#' @param light_size Positive point-light softening radius for intrinsic views.
 #' @param blend Colour space in which the raster backend composites
 #'   translucent paint and averages antialiasing samples: `"linear"` light,
 #'   encoded to sRGB after averaging, or `"srgb"`, which matches the
@@ -49,6 +60,16 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #' is a uniform environment; the diffuse light is a sampled distant disk.
 #' Points and paths use the solid conversion of [export_3d()], and SDF layers
 #' use the shared sphere tracer. Furniture and text remain vector graphics.
+#'
+#' The raymarch backend traces geodesics from an observer inside the geometry.
+#' Use [geom_thurston_3d()] for balls, cylinders and half-spaces, or traced SDF
+#' layers for chart-defined CSG. It draws a full-panel perspective image;
+#' Euclidean plot axes and exterior-camera settings have no intrinsic meaning.
+#' Lighting is an isotropic point light at the observer, with the ambient and
+#' diffuse strengths from [light_3d()]. Irradiance divides by the area density
+#' of geodesic spheres plus `light_size^2`. Each visible geodesic supplies its
+#' own light path, including paths through quotient faces. Intrinsic surfaces
+#' are opaque. See [geodesic_3d()] for charts and numerical accuracy details.
 #' @references Pharr, Jakob and Humphreys (2023). Physically Based Rendering,
 #'   fourth edition. <https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing>
 #' @return A backend configuration for coord_3d().
@@ -66,13 +87,18 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #' @export
 backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "linear",
                        samples = 64L, bounces = 8L, seed = 1L, aperture = 0,
-                       focus = NULL, light_radius = 5, progressive = FALSE, batch_size = 8L) {
+                       focus = NULL, light_radius = 5, progressive = FALSE, batch_size = 8L,
+                       geometry = "e3", observer = c(0, 0, 0), facing = diag(3), fov = 70,
+                       max_distance = 10, tolerance = 1e-5, max_steps = 2048L,
+                       quotient = NULL, light_size = 0.1) {
   stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
             is.finite(antialias), antialias >= 1, antialias == trunc(antialias))
-  result <- list(type = match.arg(type, c("vector", "raster", "hybrid", "pathtrace")), dpi = dpi, antialias = as.integer(antialias),
+  result <- list(type = match.arg(type, c("vector", "raster", "hybrid", "pathtrace", "raymarch")), dpi = dpi, antialias = as.integer(antialias),
        blend = match.arg(blend, c("linear", "srgb")))
   if (result$type == "pathtrace") result <- c(result,
     pathtrace_settings_3d(samples, bounces, seed, aperture, focus, light_radius, progressive, batch_size))
+  if (result$type == "raymarch") result <- c(result,
+    thurston_settings_3d(geometry, observer, facing, fov, max_distance, tolerance, max_steps, quotient, light_size))
   result
 }
 
