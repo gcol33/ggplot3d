@@ -318,15 +318,23 @@ engine_threads <- function() {
 }
 
 scene_compile <- function(packet, camera = new_camera_3d(), viewport) {
-  validate_scene_packet(packet)
-  validate_camera_3d(camera)
   scene_assert(identical(names(viewport), c("width_mm", "height_mm", "dpi")),
                "invalid viewport schema")
   viewport <- do.call(new_scene_viewport, viewport)
-  attr(viewport, "engine_threads") <- engine_threads()
+  threads <- engine_threads()
+  limit <- scene_cache_limit()
+  if (limit == 0) scene_cache$entries <- list()
+  cached <- scene_cache_find(packet, camera, viewport)
+  if (!is.null(cached)) return(cached)
+  validate_scene_packet(packet)
+  validate_camera_3d(camera)
+  attr(viewport, "engine_threads") <- threads
   result <- scene_compile_cpp(packet[names(packet) != "styles"], camera, viewport)
+  attr(viewport, "engine_threads") <- NULL
+  bytes <- as.numeric(utils::object.size(result)) + as.numeric(utils::object.size(packet))
   result$styles <- packet$styles
   result$source <- packet[names(packet) != "styles"]
   class(result) <- "ggplot3d_compiled_scene"
+  scene_cache_store(packet, camera, viewport, result, bytes, limit)
   result
 }
