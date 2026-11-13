@@ -10,6 +10,7 @@
 * Resolve visibility across layers within each panel for vector and raster output.
 * Large scenes compile faster: a 200,000-face surface takes about 2 s instead of 7 s. The occlusion graph uses several threads, set with `options(ggplot3d.threads = )`; the result is the same for every thread count. Redrawing a plot with the same panel size and view reuses the compiled scene (`options(ggplot3d.cache_bytes = )`).
 * Compute function surfaces, fitted surfaces, density surfaces, ridgelines, convex hulls and scalar-field level surfaces.
+* Bin two variables into columns: `stat_bin_2d_3d()` and its bar-style form `geom_histogram_3d()` count observations in rectangles, `geom_hex_3d()` and `stat_bin_hex_3d()` in hexagons drawn as prisms, and `stat_summary_2d_3d()` and `stat_summary_hex_3d()` summarise a mapped z in each bin. Computed variables follow ggplot2 (`count`, `density`, `ncount`, `ndensity`) plus the bin `width` and `depth`.
 * Animate data that change over time with `animate_3d(time = )`: one frame per value of a column, with scales trained on all frames.
 * `geom_blank()` and `expand_limits()` train scales inside `coord_3d()`.
 * The raster backend renders 64-pixel tiles on several threads (option `ggplot3d.threads`) with one fragment list per sample, keeps the exact compositing order and can return depth, id and normal buffers.

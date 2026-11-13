@@ -2,6 +2,14 @@
 
 solid_defaults_3d <- function() ggplot2::aes(colour = NA, fill = "grey70", linewidth = 0.3, linetype = 1, alpha = 1)
 
+# Smallest positive gap between distinct finite values: the default cell size of
+# a lattice of centres.
+lattice_spacing_3d <- function(v, default = 1) {
+  d <- diff(sort(unique(v[is.finite(v)])))
+  d <- d[d > 0]
+  if (length(d)) min(d) else default
+}
+
 paint_metrics_3d <- function(styles) {
   point_lwd <- style_value_3d(styles, "stroke", 0.5) * 96 / 25.4 / 2
   fontsize <- style_value_3d(styles, "size", 1.5) * 72.27 / 25.4 + point_lwd

@@ -132,6 +132,13 @@ counts + geom_bar_3d(fill = PAL["blue"]) + coord_3d()
 counts + stat_count_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
+Two continuous variables are binned first. `geom_histogram_3d()` counts observations in rectangles and `geom_hex_3d()` in hexagons, drawn as hexagonal prisms. `stat_summary_2d_3d()` and `stat_summary_hex_3d()` bin the same way and set each height to a summary of z, the mean by default.
+
+```{r hex, fig.alt="Hexagonal prisms counting Old Faithful eruptions by duration and waiting time, coloured by count."}
+ggplot(faithful, aes(eruptions, waiting)) +
+  geom_hex_3d(aes(fill = after_stat(count)), bins = 12) + coord_3d()
+```
+
 Extrusion extends an ordered x/y polygon between two heights. The z value gives its endpoint. The `base` argument supplies the starting height; a mapped zmin overrides it. Caps close the top and bottom.
 
 ```{r extrusion, fig.alt="A blue rectangular polygon extruded to a height of two."}

@@ -8,13 +8,12 @@ GeomVoxel3D <- ggplot2::ggproto("GeomVoxel3D", ggplot2::Geom,
   draw_key = ggplot2::draw_key_polygon,
   extra_params = c("na.rm", "width", "depth", "height", "greedy"),
   setup_data = function(data, params) {
-    spacing <- function(v) { d <- diff(sort(unique(v[is.finite(v)]))); if (length(d)) min(d[d > 0]) else 1 }
     for (axis in names(voxel_axes_3d)) {
       lo <- paste0(axis, "min"); hi <- paste0(axis, "max")
       if (!is.null(data[[lo]]) && !is.null(data[[hi]])) next
       size <- params[[voxel_axes_3d[[axis]]]]
       if (!is.null(size) && (length(size) != 1L || !is.finite(size) || size <= 0)) stop("width, depth and height must be positive scalars.", call. = FALSE)
-      size <- size %or3d% unname(vapply(split(data[[axis]], data$PANEL), spacing, numeric(1))[as.character(data$PANEL)])
+      size <- size %or3d% unname(vapply(split(data[[axis]], data$PANEL), lattice_spacing_3d, numeric(1))[as.character(data$PANEL)])
       data[[lo]] <- data[[axis]] - size / 2; data[[hi]] <- data[[axis]] + size / 2
     }
     data
@@ -111,22 +110,10 @@ StatBin3D <- ggplot2::ggproto("StatBin3D", ggplot2::Stat,
   default_aes = ggplot2::aes(fill = ggplot2::after_stat(count)),
   compute_group = function(data, scales, bins = 10L, binwidth = NULL) {
     if (any(vapply(scales[c("x", "y", "z")], function(s) !is.null(s) && s$is_discrete(), logical(1)))) stop("stat_bin_3d() requires continuous positions.", call. = FALSE)
-    bins <- rep_len(bins, 3L)
-    if (any(!is.finite(bins) | bins < 1 | bins != trunc(bins))) stop("bins must be positive integers.", call. = FALSE)
-    if (!is.null(binwidth)) {
-      binwidth <- rep_len(binwidth, 3L)
-      if (any(!is.finite(binwidth) | binwidth <= 0)) stop("binwidth must be positive.", call. = FALSE)
-    }
     axes <- c("x", "y", "z")
-    breaks <- lapply(seq_along(axes), function(a) {
-      r <- range(data[[axes[a]]], finite = TRUE)
-      if (!is.null(binwidth)) {
-        lo <- floor(r[1L] / binwidth[a]) * binwidth[a]
-        return(seq(lo, max(lo + binwidth[a], ceiling(r[2L] / binwidth[a]) * binwidth[a]), by = binwidth[a]))
-      }
-      if (diff(r) == 0) r <- r + c(-0.5, 0.5)
-      seq(r[1L], r[2L], length.out = bins[a] + 1L)
-    })
+    args <- check_bin_args_3d(bins, binwidth, axes)
+    breaks <- lapply(seq_along(axes), function(a)
+      bin_breaks_3d(range(data[[axes[a]]], finite = TRUE), args$bins[a], args$binwidth[a]))
     index <- vapply(seq_along(axes), function(a) findInterval(data[[axes[a]]], breaks[[a]], rightmost.closed = TRUE, all.inside = TRUE), integer(nrow(data)))
     index <- matrix(index, ncol = 3L)
     key <- paste(index[, 1L], index[, 2L], index[, 3L])
