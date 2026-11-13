@@ -729,4 +729,162 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   }
   return result;
 }
+
+// Closed rings bounding a set of grid cells, in cell-corner coordinates. Each
+// boundary side of a cell becomes a directed edge with the cell on its left,
+// and edges are chained at shared corners. Filled with the even-odd rule the
+// rings cover exactly the set, whichever way chains split at pinch corners.
+struct CellRings { std::vector<int> x,y,ring; };
+static inline void trace_cells(const std::vector<std::int64_t>& cells,std::int64_t columns,CellRings& out) {
+  if(cells.empty()) return;
+  auto member=[&](std::int64_t x,std::int64_t y) {
+    return x>=0 && x<columns && y>=0 && std::binary_search(cells.begin(),cells.end(),y*columns+x);
+  };
+  struct Edge {std::int64_t from,to;};
+  const std::int64_t stride=columns+1;
+  std::vector<Edge> edges;
+  for(std::int64_t cell:cells) {
+    std::int64_t x=cell%columns,y=cell/columns;
+    std::int64_t a=y*stride+x,b=a+1,c=b+stride,d=a+stride;
+    if(!member(x,y-1)) edges.push_back({a,b});
+    if(!member(x+1,y)) edges.push_back({b,c});
+    if(!member(x,y+1)) edges.push_back({c,d});
+    if(!member(x-1,y)) edges.push_back({d,a});
+  }
+  std::sort(edges.begin(),edges.end(),[](const Edge& p,const Edge& q){return p.from<q.from;});
+  std::vector<bool> used(edges.size(),false);
+  auto find=[&](std::int64_t from) {
+    auto it=std::lower_bound(edges.begin(),edges.end(),from,[](const Edge& e,std::int64_t v){return e.from<v;});
+    for(;it!=edges.end() && it->from==from;++it) if(!used[it-edges.begin()]) return static_cast<std::ptrdiff_t>(it-edges.begin());
+    return static_cast<std::ptrdiff_t>(-1);
+  };
+  int ring=out.ring.empty() ? 0:out.ring.back();
+  for(std::size_t first=0;first<edges.size();++first) {
+    if(used[first]) continue;
+    ++ring;
+    std::vector<std::int64_t> corners;
+    std::ptrdiff_t e=static_cast<std::ptrdiff_t>(first);
+    while(e>=0) {used[e]=true;corners.push_back(edges[e].from);e=find(edges[e].to);}
+    std::size_t n=corners.size();
+    for(std::size_t k=0;k<n;++k) {
+      std::int64_t p=corners[(k+n-1)%n],q=corners[k],r=corners[(k+1)%n];
+      bool straight=(q-p)==(r-q);
+      if(straight) continue;
+      out.x.push_back(static_cast<int>(q%stride));out.y.push_back(static_cast<int>(q/stride));out.ring.push_back(ring);
+    }
+  }
+}
+
+// Visibility of vector primitives against an opaque raster depth buffer on the
+// raster's pixel grid. Per primitive (kind, row): 0 when no painted pixel
+// centre lies behind the raster, 1 when every one does, 2 otherwise, with the
+// rings of its hidden pixels. Text is tested at its anchor. Underlay
+// primitives count as behind and overlay primitives as in front.
+static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
+                                   Rcpp::NumericVector extent,int width,int height,int aa,Rcpp::NumericMatrix depth) {
+  Rcpp::XPtr<Scene> holder(pointer); Scene& scene=*holder;
+  struct Restore {
+    Scene& scene;std::size_t items,vertices;
+    ~Restore() {scene.items.resize(items);scene.vertices.resize(vertices);}
+  } restore{scene,scene.items.size(),scene.vertices.size()};
+  require(width>0 && height>0 && depth.nrow()==height && depth.ncol()==width,"invalid raster depth buffer");
+  auto paint=paints(scene,colours,dashes,false);
+  add_arrowheads(scene,paint,colours[1],restore.items);
+  Shapes shapes=shapes_of(scene,paint);
+  Canvas canvas;
+  const auto& viewport=scene.projection.viewport;
+  canvas.width=width;canvas.height=height;canvas.w=width;canvas.h=height;
+  canvas.origin_x=extent[0]*viewport.width_mm;canvas.origin_y=extent[1]*viewport.height_mm;
+  canvas.dx=(extent[2]-extent[0])*viewport.width_mm/width;canvas.dy=(extent[3]-extent[1])*viewport.height_mm/height;
+  const double tolerance=scene.projection.resolved.tolerance;
+  auto raster_depth=[&](int x,int y) {
+    x=std::max(0,std::min(width-1,x)); y=std::max(0,std::min(height-1,y));
+    double z=depth(height-1-y,x);
+    return Rcpp::NumericVector::is_na(z) ? R_PosInf:z;
+  };
+  // Raster depth that hides a canvas point: the farthest of the four buffer
+  // samples around it (each pixel's centre sample, (aa / 2 + 0.5) / aa of a
+  // pixel in). Paint lying on a rasterised surface is never hidden by the
+  // interpolation error between samples, and an occlusion edge moves by at
+  // most one pixel toward the visible side.
+  auto depth_at_point=[&](double px,double py) {
+    const double offset=(aa/2+.5)/aa;
+    double u=(px-canvas.origin_x)/canvas.dx-offset,v=(py-canvas.origin_y)/canvas.dy-offset;
+    int x0=static_cast<int>(std::floor(u)),y0=static_cast<int>(std::floor(v));
+    return std::max(std::max(raster_depth(x0,y0),raster_depth(x0+1,y0)),
+                    std::max(raster_depth(x0,y0+1),raster_depth(x0+1,y0+1)));
+  };
+  // The point whose depth decides a sample: a stroke ribbon lies at the depth
+  // of its centreline, so a stroke sample is seen when the nearest centreline
+  // point is; other paint is tested where it is drawn.
+  auto decisive=[&](const Item& item,double x,double y) {
+    const Screen* v=scene.vertices.data()+item.offset;
+    if(item.kind==2 && item.geometry==0) {
+      double dx=v[1].x-v[0].x,dy=v[1].y-v[0].y,length2=dx*dx+dy*dy;
+      double t=length2>0 ? std::max(0.0,std::min(1.0,((x-v[0].x)*dx+(y-v[0].y)*dy)/length2)):0;
+      return std::array<double,2>{v[0].x+t*dx,v[0].y+t*dy};
+    }
+    if(item.kind==2 && (item.geometry==1 || item.geometry==2)) return std::array<double,2>{v[0].x,v[0].y};
+    return std::array<double,2>{x,y};
+  };
+  struct State {std::vector<std::int64_t> hidden; bool shown=false;};
+  std::array<std::vector<State>,4> states;
+  for(int kind=1;kind<=4;++kind) states[kind-1].resize(scene.table(kind).count.size());
+  for(std::size_t i=0;i<scene.items.size();++i) {
+    if(i%4096==0) Rcpp::checkUserInterrupt();
+    const Item& item=scene.items[i]; const Paint& p=paint[i];
+    State& state=states[item.kind-1][item.row];
+    int partition=scene.table(item.kind).partition[item.row];
+    if(partition!=1) continue;
+    if(item.kind==4) {
+      const Screen& anchor=scene.vertices[item.offset];
+      int x=static_cast<int>(std::floor((anchor.x-canvas.origin_x)/canvas.dx));
+      int y=static_cast<int>(std::floor((anchor.y-canvas.origin_y)/canvas.dy));
+      bool inside=x>=0 && y>=0 && x<width && y<height;
+      if(inside && anchor.depth>depth_at_point(anchor.x,anchor.y)+tolerance) state.hidden.push_back(static_cast<std::int64_t>(y)*width+x);
+      else state.shown=true;
+      continue;
+    }
+    auto b=canvas.samples(p.bounds);
+    for(int y=b[1];y<=b[3];++y) for(int x=b[0];x<=b[2];++x) {
+      double xx=canvas.origin_x+(x+.5)*canvas.dx,yy=canvas.origin_y+(y+.5)*canvas.dy;
+      double z=sample(shapes,item,p,xx,yy,nullptr,false,true);
+      if(!std::isfinite(z)) continue;
+      auto point=decisive(item,xx,yy);
+      double occluder=depth_at_point(point[0],point[1]);
+      if(z>occluder+tolerance) state.hidden.push_back(static_cast<std::int64_t>(y)*width+x);
+      else state.shown=true;
+    }
+  }
+  Rcpp::List status(4);
+  CellRings rings; std::vector<int> ring_kind,ring_row;
+  for(int kind=1;kind<=4;++kind) {
+    const auto& table=scene.table(kind);
+    Rcpp::IntegerVector out(table.count.size());
+    for(std::size_t row=0;row<table.count.size();++row) {
+      State& state=states[kind-1][row];
+      int partition=table.partition[row];
+      if(partition==0) {out[row]=1;continue;}
+      if(partition==2 || state.hidden.empty()) {out[row]=0;continue;}
+      if(!state.shown) {out[row]=1;continue;}
+      out[row]=2;
+      std::sort(state.hidden.begin(),state.hidden.end());
+      state.hidden.erase(std::unique(state.hidden.begin(),state.hidden.end()),state.hidden.end());
+      std::size_t before=rings.ring.size();
+      trace_cells(state.hidden,width,rings);
+      ring_kind.insert(ring_kind.end(),rings.ring.size()-before,kind);
+      ring_row.insert(ring_row.end(),rings.ring.size()-before,static_cast<int>(row)+1);
+    }
+    status[kind-1]=out;
+  }
+  status.names()=Rcpp::CharacterVector::create("faces","polylines","markers","text");
+  Rcpp::NumericVector x(rings.x.size()),y(rings.y.size());
+  for(std::size_t k=0;k<rings.x.size();++k) {
+    x[k]=(canvas.origin_x+rings.x[k]*canvas.dx)/viewport.width_mm;
+    y[k]=(canvas.origin_y+rings.y[k]*canvas.dy)/viewport.height_mm;
+  }
+  return Rcpp::List::create(Rcpp::Named("status")=status,
+    Rcpp::Named("rings")=Rcpp::List::create(Rcpp::Named("x")=x,Rcpp::Named("y")=y,Rcpp::Named("ring")=rings.ring,
+      Rcpp::Named("kind")=ring_kind,Rcpp::Named("row")=ring_row));
+}
 } }

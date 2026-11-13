@@ -25,3 +25,7 @@ raster_draw_cpp <- function(scene, colours, dashes, width, height, antialias, id
     .Call(`_ggplot3d_raster_draw_cpp`, scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear)
 }
 
+raster_occlusion_cpp <- function(scene, colours, dashes, extent, width, height, antialias, depth) {
+    .Call(`_ggplot3d_raster_occlusion_cpp`, scene, colours, dashes, extent, width, height, antialias, depth)
+}
+

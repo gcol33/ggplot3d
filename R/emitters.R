@@ -127,7 +127,7 @@ scene_geom_3d <- function(parent, entry) {
     required_aes = if (entry$name == "GeomSegment") c("x", "y") else parent$required_aes,
     optional_aes = union(parent$optional_aes, c(z_aesthetics, entry$aesthetics,
       if (entry$name == "GeomSegment") c("xend", "yend"))),
-    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl")),
+    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl", "raster")),
     handle_na = function(data, params) data,
     setup_data = function(data, params) {
       if (entry$name == "GeomSegment") {
@@ -144,7 +144,7 @@ scene_geom_3d <- function(parent, entry) {
                            arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
                            size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
                            width = NULL, depth = NULL, face = "zmin", plane = "surface",
-                           render = "marker", edl = 1) {
+                           render = "marker", edl = 1, raster = FALSE) {
       if (!inherits(coord, "Coord3D")) stop("3D layers require coord_3d().", call. = FALSE)
       params <- list(.emitter = .emitter, na.rm = na.rm, occlusion = occlusion,
                      shade = shade, hidden = hidden, method = method, max_edge = max_edge,
@@ -152,7 +152,7 @@ scene_geom_3d <- function(parent, entry) {
                      linemitre = linemitre, arrow = arrow, arrow.fill = arrow.fill,
                      parse = parse, check_overlap = check_overlap, size.unit = size.unit, rule = rule,
                      base = base, cap = cap, width = width, depth = depth, face = face, plane = plane,
-                     render = render, edl = edl)
+                     render = render, edl = edl, raster = raster)
       scene_layer_grob(emit_scene_3d(data, params, panel_params, .layer_id))
     }
   )
@@ -171,8 +171,11 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   if (params$render == "splat" && entry$name != "GeomPoint") stop("render = \"splat\" requires a point layer.", call. = FALSE)
   edl <- params$edl %or3d% 1
   if (!is.numeric(edl) || length(edl) != 1L || !is.finite(edl) || edl < 0) stop("edl must be a nonnegative number.", call. = FALSE)
+  raster <- params$raster %or3d% FALSE
+  if (!is.logical(raster) || length(raster) != 1L || is.na(raster)) stop("raster must be TRUE or FALSE.", call. = FALSE)
   packet <- entry$emit(normalise_positions_3d(data, panel_params), params, panel_params)
   validate_scene_packet(packet)
+  if (raster && nrow(packet$styles)) packet$styles$raster <- TRUE
   frame_packet_3d(frame_of_3d(panel_params), packet, panel_params$camera$clip_data)
 }
 

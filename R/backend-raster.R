@@ -87,21 +87,28 @@ raster_text_3d <- function(result, packet) {
   })
 }
 
+raster_image_grob_3d <- function(result) {
+  extent <- result$extent
+  grid::rasterGrob(result$image, x = mean(extent[c(1L, 3L)]), y = mean(extent[c(2L, 4L)]),
+    width = grid::unit(extent[3L] - extent[1L], "npc"),
+    height = grid::unit(extent[4L] - extent[2L], "npc"), interpolate = FALSE, name = "scene-raster-image-3d")
+}
+
 render_raster_panel_3d <- function(x, furniture, backend) {
   scene <- scene_compile(furniture$packet, furniture$camera, furniture$viewport)
-  part <- function(partition) {
+  # The two parts carry distinct names: a gTree draws its children by name.
+  part <- function(partition, name) {
     selected <- scene
     selected$draw_order <- scene$draw_order[scene$fragments$partition[scene$draw_order] %in% partition]
-    render_scene_grid(selected, furniture$viewport)
+    g <- render_scene_grid(selected, furniture$viewport)
+    g$name <- name
+    g
   }
   packet <- merge_scene_packets(x$packets, x$panel_params$panel_id)
   result <- raster_scene_3d(packet, furniture$camera, furniture$viewport,
     backend$antialias, x$panel_params$coord_params$light, blend = backend$blend)
-  extent <- result$extent
-  image <- grid::rasterGrob(result$image, x = mean(extent[c(1L, 3L)]), y = mean(extent[c(2L, 4L)]),
-    width = grid::unit(extent[3L] - extent[1L], "npc"),
-    height = grid::unit(extent[4L] - extent[2L], "npc"), interpolate = FALSE, name = "scene-raster-image-3d")
-  children <- c(list(part(c(0L, 1L)), image), raster_text_3d(result, packet), list(part(2L)))
+  children <- c(list(part(c(0L, 1L), "scene-raster-underlay-3d"), raster_image_grob_3d(result)),
+    raster_text_3d(result, packet), list(part(2L, "scene-raster-overlay-3d")))
   grob <- grid::gTree(children = do.call(grid::gList, children), raster_result = result,
     name = "scene-raster-3d")
   list(scene = scene, grob = grob)

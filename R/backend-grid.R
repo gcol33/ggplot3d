@@ -20,27 +20,20 @@ scene_panel_grob <- function(packets, panel_params, theme, underlay = list(), ov
 #' @export
 makeContent.scene_panel_grob <- function(x) {
   backend <- x$panel_params$coord_params$backend
-  dpi <- if (identical(backend$type, "raster")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
+  dpi <- if (backend$type %in% c("raster", "hybrid")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
   outer <- new_scene_viewport(grid::unit(1, "npc"), grid::unit(1, "npc"), dpi)
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, as.list(x$frame_group))
   if (identical(backend$type, "raster")) {
     result <- render_raster_panel_3d(x, furniture, backend)
     scene <- result$scene
     rendered <- result$grob
+  } else if (identical(backend$type, "hybrid")) {
+    result <- render_hybrid_panel_3d(x, furniture, backend)
+    scene <- result$scene
+    rendered <- result$grob
   } else {
-    packet <- merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id)
+    packet <- device_text_metrics_3d(merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id))
     vector_marker_limit_3d(packet)
-    # Device text metrics are authoritative at the physical-size boundary.
-    if (length(packet$text$style_id)) {
-      for (i in seq_along(packet$text$style_id)) {
-        row <- match(packet$text$style_id[i], packet$styles$style_id)
-        if (isTRUE(packet$styles$.anchor[row])) next
-        s <- packet$styles[row, , drop = FALSE]
-        g <- grid::textGrob(text_label_3d(s), gp = material_gp_3d(s, 1, 4L))
-        packet$text$width_mm[i] <- grid::convertWidth(grid::grobWidth(g), "mm", TRUE)
-        packet$text$height_mm[i] <- grid::convertHeight(grid::grobHeight(g), "mm", TRUE)
-      }
-    }
     scene <- scene_compile(packet, furniture$camera, furniture$viewport)
     rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light)
   }
@@ -56,6 +49,19 @@ makeContent.scene_panel_grob <- function(x) {
   grid::setChildren(x, do.call(grid::gList, children))
 }
 
+# Device text metrics are authoritative at the physical-size boundary.
+device_text_metrics_3d <- function(packet) {
+  for (i in seq_along(packet$text$style_id)) {
+    row <- match(packet$text$style_id[i], packet$styles$style_id)
+    if (isTRUE(packet$styles$.anchor[row])) next
+    s <- packet$styles[row, , drop = FALSE]
+    g <- grid::textGrob(text_label_3d(s), gp = material_gp_3d(s, 1, 4L))
+    packet$text$width_mm[i] <- grid::convertWidth(grid::grobWidth(g), "mm", TRUE)
+    packet$text$height_mm[i] <- grid::convertHeight(grid::grobHeight(g), "mm", TRUE)
+  }
+  packet
+}
+
 # Vector compilation and drawing grow faster than linearly in the marker
 # count: on bench/point-backends.R a 6 in, 150 dpi PNG of N points took 2.7 s
 # at 3e4, 7.8 s at 5e4 and 31 s at 1e5, against 0.3 to 0.5 s raster.
@@ -64,7 +70,7 @@ vector_marker_limit_3d <- function(packet) {
   n <- length(packet$markers$offset)
   if (n > limit) stop(sprintf(paste0(
     "The vector backend draws at most %s markers per panel and this panel has %s. ",
-    "Use coord_3d(backend = backend_3d(\"raster\")) with geom_point_3d(render = \"splat\"), ",
+    "Use coord_3d(backend = backend_3d(\"raster\")) or backend_3d(\"hybrid\") with geom_point_3d(render = \"splat\", raster = TRUE), ",
     "bin the points, or raise options(ggplot3d.vector_markers = )."),
     format(limit, big.mark = ",", scientific = FALSE), format(n, big.mark = ",", scientific = FALSE)), call. = FALSE)
   invisible(n)
@@ -77,7 +83,8 @@ style_value_3d <- function(styles, name, default) {
     if (length(x) == 1L && is.atomic(x) && is.na(x)) return(default[[1L]])
     x
   }))
-  value[is.na(value)] <- default
+  missing <- is.na(value)
+  value[missing] <- if (length(default) == length(value)) default[missing] else default
   value
 }
 
@@ -234,7 +241,19 @@ arrow_heads_3d <- function(scene, rows, styles, viewport) {
   } else grid::polylineGrob(xx, yy, default.units = "mm", id = id, gp = gp)
 }
 
-render_scene_grid <- function(scene, viewport, light = NULL) {
+# Clips a run's grob to its fragment mask, to a region, or to both: the mask
+# as clipping path and the region as alpha mask, since a nested clipping path
+# replaces the outer one instead of intersecting it.
+clip_grob_3d <- function(g, clip = NULL, region = NULL) {
+  if (is.null(clip) && is.null(region)) return(g)
+  vp <- if (is.null(region)) grid::viewport(clip = clip) else if (is.null(clip)) grid::viewport(clip = region) else
+    grid::viewport(clip = clip, mask = region)
+  if (is.null(g$vp)) { g$vp <- vp; g } else grid::grobTree(g, vp = vp)
+}
+
+# `regions`: optional list(id, grobs). Fragment i is clipped to grobs[[id[i]]]
+# when id[i] > 0.
+render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   f <- scene$fragments; order <- scene$draw_order
   styles <- scene$styles[match(f$style_id, scene$styles$style_id), , drop = FALSE]
   if (is.null(styles$colour)) styles$colour <- rep(NA_character_, nrow(styles))
@@ -271,6 +290,8 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   seam <- face & f$layer_id > 0L & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
   key[face] <- paste(key[face], seam[face],
     ifelse(seam[face], paste(f$layer_id[face], f$seam_group[face], f$opacity[face]), 0L), sep = ":")
+  region_id <- if (is.null(regions)) integer(length(key)) else regions$id
+  key <- paste(key, region_id, sep = ":region:")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   grobs <- lapply(seq_along(runs), function(run) {
@@ -343,7 +364,8 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
       label <- text_label_3d(s)
       g <- grid::textGrob(label, x, y, hjust = tab$hjust[source], vjust = tab$vjust[source], rot = tab$angle[source[1L]], gp = gp)
     }
-    if (!is.null(clip)) g$vp <- grid::viewport(clip = clip)
+    region <- if (region_id[rows[1L]] > 0L) regions$grobs[[region_id[rows[1L]]]] else NULL
+    g <- clip_grob_3d(g, clip, region)
     g$name <- paste0("scene-run-", run)
     g
   })

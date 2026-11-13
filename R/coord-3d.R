@@ -16,7 +16,12 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 }
 
 #' Select a 3D rendering backend
-#' @param type Backend, vector or raster.
+#' @param type Backend: `"vector"`, `"raster"` or `"hybrid"`. A hybrid panel
+#'   rasterises the layers created with `raster = TRUE` (an argument of every
+#'   `geom_*_3d()` layer and of [layer_3d()]) into one image at `dpi` and draws
+#'   the other layers, axes, panes and text as vector graphics. Vector
+#'   geometry behind the image's opaque coverage is clipped at its pixels, so
+#'   lines on or behind a rasterised surface stay exact where they are seen.
 #' @param dpi Physical raster resolution.
 #' @param antialias Positive integer supersampling factor.
 #' @param blend Colour space in which the raster backend composites
@@ -32,11 +37,17 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #' backend_3d("vector")
 #' backend_3d("raster", dpi = 144, antialias = 2)
 #' backend_3d("raster", blend = "srgb")
+#' d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
+#' d$z <- sin(pi * d$x) * cos(pi * d$y)
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   geom_surface_3d(fill = "grey80", colour = NA, raster = TRUE) +
+#'   geom_contour_3d(colour = "black") +
+#'   coord_3d(backend = backend_3d("hybrid", dpi = 150))
 #' @export
 backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "linear") {
   stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
             is.finite(antialias), antialias >= 1, antialias == trunc(antialias))
-  list(type = match.arg(type, c("vector", "raster")), dpi = dpi, antialias = as.integer(antialias),
+  list(type = match.arg(type, c("vector", "raster", "hybrid")), dpi = dpi, antialias = as.integer(antialias),
        blend = match.arg(blend, c("linear", "srgb")))
 }
 
