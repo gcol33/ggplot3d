@@ -54,7 +54,7 @@ measure_guides_3d <- function(params, theme, viewport) {
   margin <- element_3d("panel.margin.3d", theme) %or3d% ggplot2::margin(8, 8, 8, 8, unit = "pt")
   margin <- grid::convertUnit(margin, "mm", valueOnly = TRUE)
   # A common reserve on all sides keeps magnification independent of edge selection.
-  reserve <- extent + margin
+  reserve <- if (identical(params$coord_params$frame, "view")) margin else extent + margin
   width <- viewport$width_mm - reserve[2L] - reserve[4L]
   height <- viewport$height_mm - reserve[1L] - reserve[3L]
   if (!is.finite(width) || !is.finite(height) || min(width, height) <= 0) stop("3D panel too small for measured axis labels and titles; enlarge the device or reduce text size.", call. = FALSE)
@@ -63,8 +63,118 @@ measure_guides_3d <- function(params, theme, viewport) {
     origin = c(reserve[4L], reserve[3L]))
 }
 
-panel_furniture_3d <- function(panel_params, theme, viewport) {
+frame_basis_3d <- function(camera, viewport) {
+  scale <- camera$aspect / max(camera$aspect)
+  extent <- pmax(abs(camera$target * scale), abs((1 - camera$target) * scale))
+  radius <- sqrt(sum(extent^2))
+  ratio <- viewport$width_mm / viewport$height_mm
+  az <- (camera$azimuth %% 360) * pi / 180
+  el <- camera$elevation * pi / 180
+  roll <- (camera$roll %% 360) * pi / 180
+  right <- c(-sin(az), cos(az), 0)
+  up <- c(-sin(el) * cos(az), -sin(el) * sin(az), cos(el))
+  basis <- cbind(cos(roll) * right - sin(roll) * up, sin(roll) * right + cos(roll) * up)
+  forward <- -c(cos(el) * cos(az), cos(el) * sin(az), sin(el))
+  perspective <- camera$projection == "perspective"
+  distance <- camera$distance
+  if (perspective && is.na(distance)) {
+    half_angle <- atan(tan(camera$fov * pi / 360) * min(1, ratio))
+    distance <- radius / sin(half_angle) + 64 * .Machine$double.eps * max(1, radius)
+  }
+  base <- if (perspective) 1 / tan(camera$fov * pi / 360) else min(1, ratio) / radius
+  list(scale = scale, extent = extent, radius = radius, ratio = ratio, basis = basis,
+    forward = forward, perspective = perspective, distance = distance, base = base)
+}
+
+frame_coordinates_3d <- function(xyz, camera, basis) {
+  delta <- sweep(sweep(xyz, 2L, camera$target), 2L, basis$scale, "*")
+  xy <- delta %*% basis$basis
+  distance <- if (basis$perspective) basis$distance else 2 * basis$radius + 1
+  depth <- distance + drop(delta %*% basis$forward)
+  if (any(depth <= 0)) stop("The projected box crosses the eye plane; use a greater camera distance.", call. = FALSE)
+  if (basis$perspective) xy <- xy / depth
+  cbind(x = xy[, 1L], y = xy[, 2L], depth = depth)
+}
+
+frame_positions_3d <- function(xyz, camera, basis) {
+  coordinates <- frame_coordinates_3d(xyz, camera, basis)
+  coordinates[, 1L] <- 0.5 + coordinates[, 1L] * basis$base * camera$zoom / (2 * basis$ratio)
+  coordinates[, 2L] <- 0.5 + coordinates[, 2L] * basis$base * camera$zoom / 2
+  coordinates
+}
+
+frame_camera_3d <- function(camera, viewport, frame) {
+  if (frame == "sphere") return(camera)
+  geometry <- frame_basis_3d(camera, viewport)
+  scale <- geometry$scale; extent <- geometry$extent; radius <- geometry$radius
+  ratio <- geometry$ratio; basis <- geometry$basis; forward <- geometry$forward
+  perspective <- geometry$perspective; distance <- geometry$distance
+  if (frame == "view") {
+    xy <- frame_coordinates_3d(cube_edges_3d()$corners, camera, geometry)
+    support <- apply(abs(xy[, 1:2]), 2L, max)
+  } else {
+    # The enclosing vertical cylinder has azimuth-invariant projected support.
+    radial <- sqrt(sum(extent[1:2]^2))
+    if (!perspective) support <- radial * sqrt(colSums(basis[1:2, , drop = FALSE]^2)) + extent[3L] * abs(basis[3L, ])
+    else {
+      support <- vapply(seq_len(2L), function(axis) {
+        a <- basis[1:2, axis]; b <- forward[1:2]
+        z <- c(-camera$target[3L], 1 - camera$target[3L]) * scale[3L]
+        d <- distance + z * forward[3L]; c <- z * basis[3L, axis]
+        if (any(d <= radial * sqrt(sum(b^2)))) stop("The azimuth frame crosses the eye plane; use a greater camera distance.", call. = FALSE)
+        aa <- d^2 - radial^2 * sum(b^2)
+        bb <- -2 * c * d + 2 * radial^2 * sum(a * b)
+        cc <- c^2 - radial^2 * sum(a^2)
+        root <- sqrt(pmax(0, bb^2 - 4 * aa * cc))
+        max(abs(c((-bb - root) / (2 * aa), (-bb + root) / (2 * aa))))
+      }, numeric(1))
+    }
+  }
+  base <- geometry$base
+  camera$zoom <- camera$zoom / (base * max(support[1L] / ratio, support[2L]))
+  camera$zoom <- camera$zoom * (1 - 1 / min(viewport$width_mm, viewport$height_mm) * 25.4 / viewport$dpi)
+  camera
+}
+
+panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list()) {
   fit <- measure_guides_3d(panel_params, theme, viewport)
+  if (length(frame_group)) {
+    fits <- lapply(frame_group, function(panel) measure_guides_3d(panel$params, panel$theme, viewport))
+    fit$reserve <- Reduce(pmax, lapply(fits, `[[`, "reserve"))
+    fit$origin <- fit$reserve[c(4L, 3L)]
+    fit$viewport <- new_scene_viewport(viewport$width_mm - sum(fit$reserve[c(2L, 4L)]),
+      viewport$height_mm - sum(fit$reserve[c(1L, 3L)]), viewport$dpi)
+  }
+  frame <- panel_params$coord_params$frame %or3d% "sphere"
+  camera <- frame_camera_3d(panel_params$camera, fit$viewport, frame)
+  if (length(frame_group)) {
+    magnifications <- vapply(frame_group, function(panel) {
+      fitted <- frame_camera_3d(panel$params$camera, fit$viewport, frame)
+      fitted$zoom / panel$params$camera$zoom
+    }, numeric(1))
+    camera$zoom <- panel_params$camera$zoom * min(magnifications)
+  }
+  if (frame == "view") {
+    groups <- if (length(frame_group)) frame_group else list(list(params = panel_params, theme = theme))
+    group_fits <- lapply(groups, function(panel) measure_guides_3d(panel$params, panel$theme, viewport))
+    for (iteration in seq_len(16L)) {
+      reserves <- Map(function(panel, measured) view_guide_reserve_3d(panel$params, measured, fit$viewport), groups, group_fits)
+      reserve <- Reduce(pmax, reserves)
+      difference <- max(abs(reserve - fit$reserve))
+      fit$reserve <- if (difference < 0.01) pmax(reserve, fit$reserve) else (reserve + fit$reserve) / 2
+      fit$origin <- fit$reserve[c(4L, 3L)]
+      width <- viewport$width_mm - sum(fit$reserve[c(2L, 4L)])
+      height <- viewport$height_mm - sum(fit$reserve[c(1L, 3L)])
+      if (min(width, height) <= 0) stop("3D panel too small for measured axis labels and titles; enlarge the device or reduce text size.", call. = FALSE)
+      fit$viewport <- new_scene_viewport(width, height, viewport$dpi)
+      if (difference < 0.01) break
+    }
+    magnifications <- vapply(groups, function(panel) {
+      fitted <- frame_camera_3d(panel$params$camera, fit$viewport, frame)
+      fitted$zoom / panel$params$camera$zoom
+    }, numeric(1))
+    camera$zoom <- panel_params$camera$zoom * min(magnifications)
+  }
   cube <- cube_edges_3d()
   vertices <- cube$corners
   primitives <- list(); kinds <- character(); materials <- list(); anchor_rows <- integer()
@@ -164,7 +274,7 @@ panel_furniture_3d <- function(panel_params, theme, viewport) {
     corners = list(vertex = as.integer(unlist(primitives)), source_row = rep.int(0L, sum(counts))), styles = styles,
     panel_id = panel_params$panel_id), tables))
   names(packet$vertices) <- c("x", "y", "z")
-  list(packet = packet, overlay = list(cube = cube, rear_edges = rear_edges, corners = corner_queries, guides = guide_queries,
+  list(packet = packet, camera = camera, overlay = list(cube = cube, rear_edges = rear_edges, corners = corner_queries, guides = guide_queries,
     params = panel_params, fit = fit), viewport = fit$viewport)
 }
 
@@ -198,6 +308,89 @@ select_axis_edge_3d <- function(points, edges, position = "auto", secondary = FA
   scores[chosen, ]
 }
 
+axis_label_positions_3d <- function(major, normal, metrics, dodge) {
+  support <- drop(metrics$label %*% abs(normal)) / 2
+  offset <- metrics$tick_length + metrics$gap + support +
+    ((seq_len(nrow(major)) - 1L) %% dodge) * metrics$label_extent
+  major + outer(offset, normal)
+}
+
+axis_title_geometry_3d <- function(a, b, normal, metrics, dodge) {
+  size <- metrics$title_size[1L, ]
+  offset <- metrics$tick_length + metrics$gap + dodge * metrics$label_extent + metrics$title_gap + size[2L] / 2
+  location <- (a + b) / 2 + normal * offset
+  angle <- atan2(b[2L] - a[2L], b[1L] - a[1L]) * 180 / pi
+  if (angle > 90) angle <- angle - 180
+  if (angle < -90) angle <- angle + 180
+  theta <- angle * pi / 180
+  extent <- c(abs(cos(theta)) * size[1L] + abs(sin(theta)) * size[2L],
+    abs(sin(theta)) * size[1L] + abs(cos(theta)) * size[2L])
+  list(location = location, angle = angle, bounds = c(location - extent / 2, location + extent / 2))
+}
+
+view_guide_reserve_3d <- function(params, measured, viewport) {
+  camera <- params$camera; camera$zoom <- 1
+  camera <- frame_camera_3d(camera, viewport, "view")
+  basis <- frame_basis_3d(camera, viewport)
+  project <- function(xyz) {
+    xy <- frame_positions_3d(xyz, camera, basis)
+    xy[, 1:2] <- sweep(xy[, 1:2, drop = FALSE], 2L, c(viewport$width_mm, viewport$height_mm), "*")
+    unname(xy)
+  }
+  cube <- cube_edges_3d(); corners <- project(cube$corners)
+  boxes <- matrix(c(0, 0, viewport$width_mm, viewport$height_mm), 1L)
+  for (name in names(params$axis_guides)) {
+    guide <- params$axis_guides[[name]]
+    if (!guide$axis %in% params$coord_params$axes) next
+    m <- measured$metrics[[name]]
+    axis <- match(guide$axis, c("x", "y", "z"))
+    edges <- cube$edges[cube$edges[, "axis"] == axis, , drop = FALSE]
+    chosen <- select_axis_edge_3d(corners, edges, guide$params$position, guide$secondary)
+    if (is.null(chosen)) next
+    edge <- edges[chosen["edge"], ]; normal <- unname(chosen[c("nx", "ny")])
+    a <- corners[edge["a"], 1:2]; b <- corners[edge["b"], 1:2]
+    if (length(guide$position)) {
+      xyz <- cube$corners[rep(edge["a"], length(guide$position)), , drop = FALSE]
+      xyz[, axis] <- guide$position
+      major <- project(xyz)[, 1:2, drop = FALSE]
+      tip <- sweep(major, 2L, normal * m$tick_length, "+")
+      boxes <- rbind(boxes, cbind(pmin(major, tip), pmax(major, tip)))
+      if (visible_element_3d(m$text)) {
+        labels <- axis_label_positions_3d(major, normal, m, guide$params$n.dodge)
+        boxes <- rbind(boxes, cbind(labels - m$label / 2, labels + m$label / 2))
+      }
+    }
+    if (length(guide$title) && visible_element_3d(m$title)) {
+      boxes <- rbind(boxes, axis_title_geometry_3d(a, b, normal, m, guide$params$n.dodge)$bounds)
+    }
+  }
+  measured$reserve + c(max(0, max(boxes[, 4L]) - viewport$height_mm),
+    max(0, max(boxes[, 3L]) - viewport$width_mm), max(0, -min(boxes[, 2L])), max(0, -min(boxes[, 1L])))
+}
+
+thin_axis_labels_3d <- function(locations, size, tangent, rows, occupied, viewport, gap = 0.5) {
+  along <- drop(locations %*% tangent)
+  half <- drop(size %*% abs(tangent)) / 2
+  intervals <- cbind(along - half - gap / 2, along + half + gap / 2)
+  boxes <- cbind(locations - size / 2, locations + size / 2)
+  keep <- rep(FALSE, nrow(locations))
+  for (row in unique(rows)) {
+    candidates <- which(rows == row)
+    candidates <- candidates[order(intervals[candidates, 2L], candidates)]
+    end <- -Inf
+    for (i in candidates) {
+      box <- boxes[i, ]
+      if (intervals[i, 1L] < end || any(!is.finite(box)) || any(box[1:2] < 0) ||
+          box[3L] > viewport$width_mm || box[4L] > viewport$height_mm) next
+      if (nrow(occupied) && any(occupied[, 1L] < box[3L] + gap & occupied[, 3L] > box[1L] - gap &
+          occupied[, 2L] < box[4L] + gap & occupied[, 4L] > box[2L] - gap)) next
+      keep[i] <- TRUE; end <- intervals[i, 2L]
+      occupied <- rbind(occupied, box)
+    }
+  }
+  list(keep = keep, boxes = boxes, intervals = intervals, rows = rows, occupied = occupied)
+}
+
 furniture_overlay_3d <- function(furniture, scene, theme) {
   meta <- furniture$overlay; fit <- meta$fit; params <- meta$params
   # Furniture styles are unique query keys and occupy the first merged style range.
@@ -212,7 +405,7 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
   if (any(!is.finite(corners)) && (length(params$coord_params$axes) || params$coord_params$box == "all")) {
     stop("3D axis and front-frame placement requires unclipped cube projection queries for this camera; schema 1 does not retain these anchors outside the scene rectangle.", call. = FALSE)
   }
-  children <- list(); bounds <- list(); occupied <- matrix(numeric(), 0, 4L)
+  children <- list(); bounds <- list(); occupied <- matrix(numeric(), 0, 4L); label_layout <- list()
   add <- function(g) children[[length(children) + 1L]] <<- g
   line <- function(a, b, element) {
     if (visible_element_3d(element)) add(grid::segmentsGrob(a[, 1L], a[, 2L], b[, 1L], b[, 2L], default.units = "mm", gp = line_gp_3d(element)))
@@ -242,32 +435,24 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
       line(minor, sweep(minor, 2L, normal * m$tick_length / 2, "+"), element_3d(paste0("axis.minor.ticks.", guide$axis), guide$theme) %or3d% element_3d(paste0("axis.ticks.", guide$axis), guide$theme))
     }
     if (n && visible_element_3d(m$text)) {
-      support <- (abs(normal[1L]) * m$label[, 1L] + abs(normal[2L]) * m$label[, 2L]) / 2
-      offset <- m$tick_length + m$gap + support + ((seq_len(n) - 1L) %% guide$params$n.dodge) * m$label_extent
-      locations <- major + outer(offset, normal)
-      keep <- rep(TRUE, n)
-      for (i in seq_len(n)) {
-        box <- c(locations[i, ] - m$label[i, ] / 2, locations[i, ] + m$label[i, ] / 2)
-        overlap <- nrow(occupied) && any(occupied[, 1L] < box[3L] & occupied[, 3L] > box[1L] & occupied[, 2L] < box[4L] & occupied[, 4L] > box[2L])
-        if (isTRUE(guide$params$check.overlap) && overlap) keep[i] <- FALSE
-        else { occupied <- rbind(occupied, box); bounds[[length(bounds) + 1L]] <- box }
-      }
+      locations <- axis_label_positions_3d(major, normal, m, guide$params$n.dodge)
+      tangent <- (b - a) / sqrt(sum((b - a)^2))
+      layout <- thin_axis_labels_3d(locations, m$label, tangent,
+        (seq_len(n) - 1L) %% guide$params$n.dodge, occupied,
+        new_scene_viewport(fit$viewport$width_mm + sum(fit$reserve[c(2L, 4L)]),
+          fit$viewport$height_mm + sum(fit$reserve[c(1L, 3L)]), fit$viewport$dpi),
+        gap = if (isTRUE(guide$params$check.overlap)) 1 else 0.5)
+      keep <- layout$keep; occupied <- layout$occupied
+      label_layout[[name]] <- layout
+      bounds <- c(bounds, lapply(which(keep), function(i) layout$boxes[i, ]))
       add(grid::textGrob(guide$labels[keep], locations[keep, 1L], locations[keep, 2L], default.units = "mm", rot = m$angle, gp = text_gp_3d(m$text)))
     }
     if (length(guide$title) && visible_element_3d(m$title)) {
-      size <- m$title_size[1L, ]
-      support <- size[2L] / 2
-      offset <- m$tick_length + m$gap + guide$params$n.dodge * m$label_extent + m$title_gap + support
-      location <- (a + b) / 2 + normal * offset
-      angle <- atan2(b[2L] - a[2L], b[1L] - a[1L]) * 180 / pi
-      if (angle > 90) angle <- angle - 180
-      if (angle < -90) angle <- angle + 180
-      theta <- angle * pi / 180
-      extent <- c(abs(cos(theta)) * size[1L] + abs(sin(theta)) * size[2L], abs(sin(theta)) * size[1L] + abs(cos(theta)) * size[2L])
-      box <- c(location - extent / 2, location + extent / 2)
-      bounds[[length(bounds) + 1L]] <- box
-      add(grid::textGrob(guide$title, location[1L], location[2L], default.units = "mm", rot = angle, gp = text_gp_3d(m$title)))
+      title <- axis_title_geometry_3d(a, b, normal, m, guide$params$n.dodge)
+      bounds[[length(bounds) + 1L]] <- title$bounds
+      add(grid::textGrob(guide$title, title$location[1L], title$location[2L], default.units = "mm", rot = title$angle, gp = text_gp_3d(m$title)))
     }
   }
-  grid::gTree(children = do.call(grid::gList, children), bounds = bounds, corners_mm = corners, name = "furniture-3d")
+  grid::gTree(children = do.call(grid::gList, children), bounds = bounds, label_layout = label_layout,
+    corners_mm = corners, name = "furniture-3d")
 }

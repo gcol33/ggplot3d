@@ -3,10 +3,11 @@
 #' Tick labels and titles are measured in the drawing viewport. Automatic
 #' placement uses an exterior cube edge. Integer positions 1 through 4 select
 #' a fixed edge in lexicographic order of its two fixed coordinates.
+#' Labels are thinned automatically using their measured extents along the edge.
 #' @param title Guide title, with waiver inheriting the scale or plot title.
 #' @param theme Local theme overrides.
 #' @param position "auto", a side (top, bottom, left, right), or edge 1 to 4.
-#' @param check.overlap Suppress labels whose measured rectangles intersect.
+#' @param check.overlap Use extra clearance between measured label rectangles.
 #' @param angle Label rotation in degrees. Waiver keeps labels horizontal.
 #' @param n.dodge Number of parallel label rows.
 #' @param minor.ticks Draw minor ticks.

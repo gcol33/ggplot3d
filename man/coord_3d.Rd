@@ -29,7 +29,8 @@ coord_3d(
   crs = NULL,
   light = light_3d(),
   backend = backend_3d(),
-  default = FALSE
+  default = FALSE,
+  frame = "view"
 )
 }
 \arguments{
@@ -68,6 +69,8 @@ coord_3d(
 \item{backend}{Backend configuration.}
 
 \item{default}{Whether this is the default coordinate system.}
+
+\item{frame}{Fit the current view, all azimuths at this elevation, or a sphere.}
 }
 \value{
 A Coord3D ggproto object.

@@ -6,8 +6,13 @@ grid_capabilities_3d <- function() {
 }
 
 scene_panel_grob <- function(packets, panel_params, theme, underlay = list(), overlay = list()) {
+  registry <- panel_params$coord_params$frame_registry
+  if (is.null(registry)) registry <- new.env(parent = emptyenv())
+  if (panel_params$panel_id == 1L || is.null(registry$group)) registry$group <- new.env(parent = emptyenv())
+  group <- registry$group
+  group[[as.character(panel_params$panel_id)]] <- list(params = panel_params, theme = theme)
   grid::gTree(packets = packets, panel_params = panel_params, theme = theme,
-    underlay = underlay, overlay = overlay, cl = "scene_panel_grob", name = "scene-panel-3d")
+    underlay = underlay, overlay = overlay, frame_group = group, cl = "scene_panel_grob", name = "scene-panel-3d")
 }
 
 #' @importFrom grid makeContent
@@ -17,7 +22,7 @@ makeContent.scene_panel_grob <- function(x) {
   if (!identical(backend$type, "vector")) stop("The grid backend supports vector output; raster output requires the frustumR backend adapter.", call. = FALSE)
   dpi <- mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
   outer <- new_scene_viewport(grid::unit(1, "npc"), grid::unit(1, "npc"), dpi)
-  furniture <- panel_furniture_3d(x$panel_params, x$theme, outer)
+  furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, as.list(x$frame_group))
   packet <- merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id)
   # Device text metrics are authoritative at the physical-size boundary.
   if (length(packet$text$style_id)) {
@@ -30,7 +35,7 @@ makeContent.scene_panel_grob <- function(x) {
       packet$text$height_mm[i] <- grid::convertHeight(grid::grobHeight(g), "mm", TRUE)
     }
   }
-  scene <- scene_compile(packet, x$panel_params$camera, furniture$viewport)
+  scene <- scene_compile(packet, furniture$camera, furniture$viewport)
   rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light)
   fit <- furniture$overlay$fit
   rendered$vp <- grid::viewport(x = grid::unit(fit$origin[1L], "mm"), y = grid::unit(fit$origin[2L], "mm"),
@@ -141,76 +146,45 @@ dash_segments_3d <- function(x, y, start, pattern, viewport) {
 }
 
 arrow_heads_3d <- function(scene, rows, styles, viewport) {
-  f <- scene$fragments; heads <- list(); materials <- integer()
+  f <- scene$fragments
   arrow <- style_value_3d(styles[1L, , drop = FALSE], "arrow", list(NULL))[[1L]]
   if (is.null(arrow)) return(grid::nullGrob())
+  materials <- rep(seq_along(rows), each = 2L)
+  start <- rep(c(TRUE, FALSE), length(rows))
+  keep <- ifelse(start, f$arrow_start[rows[materials]], f$arrow_end[rows[materials]])
+  materials <- materials[keep]; start <- start[keep]
+  if (!length(materials)) return(grid::nullGrob())
+  source <- rows[materials]
+  tip <- f$offset[source] + ifelse(start, 0L, f$count[source] - 1L)
+  adjacent <- tip + ifelse(start, 1L, -1L)
+  x <- scene$vertices$x_npc[tip] * viewport$width_mm
+  y <- scene$vertices$y_npc[tip] * viewport$height_mm
+  dx <- x - scene$vertices$x_npc[adjacent] * viewport$width_mm
+  dy <- y - scene$vertices$y_npc[adjacent] * viewport$height_mm
+  magnitude <- sqrt(dx^2 + dy^2)
+  keep <- magnitude > 0
+  if (!any(keep)) return(grid::nullGrob())
+  x <- x[keep]; y <- y[keep]; dx <- dx[keep] / magnitude[keep]; dy <- dy[keep] / magnitude[keep]
+  materials <- materials[keep]
   length <- grid::convertWidth(arrow$length, "mm", TRUE)
   angle <- arrow$angle * pi / 180
-  for (j in seq_along(rows)) {
-    row <- rows[j]; indices <- seq.int(f$offset[row], length.out = f$count[row])
-    xy <- cbind(scene$vertices$x_npc[indices] * viewport$width_mm, scene$vertices$y_npc[indices] * viewport$height_mm)
-    for (start in c(TRUE, FALSE)) {
-      if (!(if (start) f$arrow_start[row] else f$arrow_end[row])) next
-      pair <- if (start) c(1L, 2L) else c(nrow(xy), nrow(xy) - 1L)
-      tip <- xy[pair[1L], ]; direction <- tip - xy[pair[2L], ]
-      magnitude <- sqrt(sum(direction^2)); if (magnitude == 0) next
-      direction <- direction / magnitude
-      normal <- c(-direction[2L], direction[1L])
-      base <- tip - direction * length * cos(angle)
-      heads[[length(heads) + 1L]] <- rbind(base + normal * length * sin(angle), tip, base - normal * length * sin(angle))
-      materials <- c(materials, j)
-    }
-  }
-  if (!length(heads)) return(grid::nullGrob())
-  xy <- do.call(rbind, heads); gp <- material_gp_3d(styles[materials, , drop = FALSE], f$opacity[rows[materials]], 2L)
+  bx <- x - dx * length * cos(angle); by <- y - dy * length * cos(angle)
+  xx <- as.vector(t(cbind(bx - dy * length * sin(angle), x, bx + dy * length * sin(angle))))
+  yy <- as.vector(t(cbind(by + dx * length * sin(angle), y, by - dx * length * sin(angle))))
+  gp <- material_gp_3d(styles[materials, , drop = FALSE], f$opacity[rows[materials]], 2L)
   gp$lty <- 1
-  id <- rep(seq_along(heads), each = 3L)
+  id <- rep(seq_along(materials), each = 3L)
   if (arrow$type == 2L) {
     gp$fill <- style_value_3d(styles[materials, , drop = FALSE], "arrow_fill", "black")
-    grid::polygonGrob(xy[, 1L], xy[, 2L], default.units = "mm", id = id, gp = gp)
-  } else grid::polylineGrob(xy[, 1L], xy[, 2L], default.units = "mm", id = id, gp = gp)
-}
-
-opaque_silhouette_3d <- function(scene, rows) {
-  f <- scene$fragments; counts <- f$count[rows]
-  indices <- rep(f$offset[rows], counts) + sequence(counts) - 1L
-  x <- scene$vertices$x_npc[indices]; y <- scene$vertices$y_npc[indices]
-  starts <- cumsum(c(1L, head(counts, -1L))); ends <- cumsum(counts)
-  next_vertex <- seq_along(x) + 1L; next_vertex[ends] <- starts
-  area <- as.vector(rowsum(x * y[next_vertex] - y * x[next_vertex], rep(seq_along(rows), counts), reorder = FALSE))
-  reverse <- rep(area < 0, counts)
-  a <- ifelse(reverse, next_vertex, seq_along(x)); b <- ifelse(reverse, seq_along(x), next_vertex)
-  # Keys identify coincident coverage edges; the drawn coordinates retain full precision.
-  key <- paste(sprintf("%.17g", x), sprintf("%.17g", y), sep = ":")
-  vertex <- match(key, unique(key))
-  va <- vertex[a]; vb <- vertex[b]
-  group <- match(paste(pmin(va, vb), pmax(va, vb), sep = ":"), unique(paste(pmin(va, vb), pmax(va, vb), sep = ":")))
-  winding <- as.vector(rowsum(ifelse(va < vb, 1L, -1L), group, reorder = FALSE))
-  keep <- winding[group] != 0 & va != vb
-  a <- a[keep]; b <- b[keep]; va <- va[keep]; vb <- vb[keep]
-  outgoing <- split(seq_along(a), va)
-  used <- rep(FALSE, length(a)); path <- integer(length(a)); ring_counts <- integer(length(a))
-  n <- 0L; nr <- 0L
-  for (first in seq_along(a)) {
-    if (used[first]) next
-    before <- n; current <- first
-    repeat {
-      if (used[current]) break
-      used[current] <- TRUE; n <- n + 1L; path[n] <- a[current]
-      candidates <- outgoing[[as.character(vb[current])]]
-      candidates <- candidates[!used[candidates]]
-      if (!length(candidates)) break
-      current <- candidates[1L]
-    }
-    nr <- nr + 1L; ring_counts[nr] <- n - before
-  }
-  indices <- path[seq_len(n)]
-  grid::pathGrob(x[indices], y[indices], id.lengths = ring_counts[seq_len(nr)], rule = "winding")
+    grid::polygonGrob(xx, yy, default.units = "mm", id = id, gp = gp)
+  } else grid::polylineGrob(xx, yy, default.units = "mm", id = id, gp = gp)
 }
 
 render_scene_grid <- function(scene, viewport, light = NULL) {
   f <- scene$fragments; order <- scene$draw_order
   styles <- scene$styles[match(f$style_id, scene$styles$style_id), , drop = FALSE]
+  if (is.null(styles$colour)) styles$colour <- rep(NA_character_, nrow(styles))
+  if (is.null(styles$fill)) styles$fill <- rep(NA_character_, nrow(styles))
   anchors <- if (is.null(styles$.anchor)) rep(FALSE, nrow(styles)) else !is.na(styles$.anchor) & styles$.anchor
   order <- order[!anchors[order]]
   caps <- grid_capabilities_3d()
@@ -218,14 +192,20 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   if (!length(order)) return(grid::gTree(children = grid::gList(), fragment_runs = list(), capabilities = caps))
   # Properties that grid cannot vectorise terminate a compatible run.
   key <- as.character(f$kind)
-  for (i in which(f$kind == 2L)) {
-    source <- f$source_index[i]; tab <- scene$source$polylines
-    arrow <- style_value_3d(styles[i, , drop = FALSE], "arrow", list(NULL))[[1L]]
-    arrow_key <- if (is.null(arrow)) "" else paste(c(arrow$angle, as.character(arrow$length), arrow$type), collapse = ",")
-    key[i] <- paste(key[i], tab$cap[source], tab$join[source], tab$mitre_limit[source],
-      f$arrow_start[i], f$arrow_end[i], arrow_key, sep = ":")
+  lines <- which(f$kind == 2L)
+  if (length(lines)) {
+    source <- f$source_index[lines]; tab <- scene$source$polylines
+    arrows <- style_value_3d(scene$styles, "arrow", list(NULL))
+    arrow_key <- vapply(arrows, function(arrow) {
+      if (is.null(arrow)) "" else paste(c(arrow$angle, as.character(arrow$length), arrow$type), collapse = ",")
+    }, character(1))
+    key[lines] <- paste(key[lines], tab$cap[source], tab$join[source], tab$mitre_limit[source],
+      f$arrow_start[lines], f$arrow_end[lines], arrow_key[match(f$style_id[lines], scene$styles$style_id)], sep = ":")
+    lty <- style_value_3d(styles, "linetype", 1)
+    key[lines] <- paste(key[lines], lty[lines] %in% c("solid", "1") & !f$hidden[lines], sep = ":")
   }
-  for (i in which(f$kind == 4L)) key[i] <- paste(key[i], scene$source$text$angle[f$source_index[i]], sep = ":")
+  text <- which(f$kind == 4L)
+  key[text] <- paste(key[text], scene$source$text$angle[f$source_index[text]], sep = ":")
   # Adjacent pieces of one glyph share one paint operation over their disjoint masks.
   masked <- which(f$mask_count > 0L)
   key[masked] <- paste0(key[masked], ":mask:", f$mask_offset[masked], ":", f$mask_count[masked])
@@ -233,8 +213,7 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   key[glyphs] <- paste(f$kind[glyphs], "glyph", f$parent_primitive_id[glyphs], f$style_id[glyphs], f$source_index[glyphs], sep = ":")
   face <- f$kind == 1L
   seam <- face & f$layer_id > 0L & f$opacity == 1 & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
-  key[face] <- paste(key[face], seam[face], ifelse(seam[face], f$layer_id[face], 0L), sep = ":")
-  silhouettes <- lapply(split(which(seam), f$layer_id[seam]), function(rows) opaque_silhouette_3d(scene, rows))
+  key[face] <- paste(key[face], seam[face], sep = ":")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   grobs <- lapply(seq_along(runs), function(run) {
@@ -253,29 +232,32 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
       if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light)
       gp$fill <- fill
       if (all(seam[rows])) {
-        if (!caps$clipping_paths) stop("Seam-free opaque vector meshes require a device supporting clipping paths.", call. = FALSE)
-        # A layer silhouette closes cracks across draw runs and retains exterior coverage.
-        clip <- silhouettes[[as.character(f$layer_id[rows[1L]])]]
-        gp$col <- fill; gp$lwd <- rep(2 * 96 / viewport$dpi, length(rows)); gp$lty <- 1
+        # Fill-colour outlines cover shared-edge antialiasing within one device pixel.
+        gp$col <- fill; gp$lwd <- 2 * 96 / viewport$dpi; gp$lty <- 1; gp$linejoin <- "round"
       }
       g <- grid::polygonGrob(x, y, id = rep(seq_along(counts), counts), gp = gp)
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]
-      paths <- lapply(seq_along(rows), function(j) {
-        i <- seq.int(starts[j], length.out = counts[j])
-        lty <- style_value_3d(s[j, , drop = FALSE], "linetype", 1)
-        if (f$hidden[rows[j]]) lty <- "dashed"
-        dash_segments_3d(x[i], y[i], f$path_start_mm[rows[j]], dash_pattern_3d(lty, tab$width_mm[source[j]]), viewport)
-      })
-      npaths <- vapply(paths, function(p) length(p$count), integer(1))
-      gp <- material_gp_3d(s[rep(seq_along(rows), npaths), , drop = FALSE], rep(f$opacity[rows], npaths), kind)
+      lty <- style_value_3d(s, "linetype", 1)
+      if (all(lty %in% c("solid", "1") & !f$hidden[rows])) {
+        path_x <- x; path_y <- y; path_counts <- counts; npaths <- rep.int(1L, length(rows))
+      } else {
+        paths <- lapply(seq_along(rows), function(j) {
+          i <- seq.int(starts[j], length.out = counts[j])
+          pattern <- if (f$hidden[rows[j]]) "dashed" else lty[j]
+          dash_segments_3d(x[i], y[i], f$path_start_mm[rows[j]], dash_pattern_3d(pattern, tab$width_mm[source[j]]), viewport)
+        })
+        npaths <- vapply(paths, function(p) length(p$count), integer(1))
+        path_x <- unlist(lapply(paths, `[[`, "x")); path_y <- unlist(lapply(paths, `[[`, "y"))
+        path_counts <- unlist(lapply(paths, `[[`, "count"))
+        gp <- material_gp_3d(s[rep(seq_along(rows), npaths), , drop = FALSE], rep(f$opacity[rows], npaths), kind)
+      }
       gp$lty <- 1; gp$lwd <- rep(tab$width_mm[source] * 72.27 / 25.4, npaths)
       gp$lineend <- c("butt", "round", "square")[tab$cap[source[1L]] + 1L]
       gp$linejoin <- c("round", "mitre", "bevel")[tab$join[source[1L]] + 1L]
       gp$linemitre <- tab$mitre_limit[source[1L]]
       g <- if (!sum(npaths)) grid::nullGrob() else grid::polylineGrob(
-        unlist(lapply(paths, `[[`, "x")), unlist(lapply(paths, `[[`, "y")),
-        id = rep(seq_len(sum(npaths)), unlist(lapply(paths, `[[`, "count"))), gp = gp)
+        path_x, path_y, id = rep(seq_len(sum(npaths)), path_counts), gp = gp)
       heads <- arrow_heads_3d(scene, rows, s, viewport)
       if (!inherits(heads, "null")) g <- grid::grobTree(g, heads)
     } else if (kind == 3L) {

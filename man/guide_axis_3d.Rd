@@ -23,7 +23,7 @@ guide_axis_3d(
 
 \item{position}{"auto", a side (top, bottom, left, right), or edge 1 to 4.}
 
-\item{check.overlap}{Suppress labels whose measured rectangles intersect.}
+\item{check.overlap}{Use extra clearance between measured label rectangles.}
 
 \item{angle}{Label rotation in degrees. Waiver keeps labels horizontal.}
 
@@ -39,4 +39,5 @@ guide_axis_3d(
 Tick labels and titles are measured in the drawing viewport. Automatic
 placement uses an exterior cube edge. Integer positions 1 through 4 select
 a fixed edge in lexicographic order of its two fixed coordinates.
+Labels are thinned automatically using their measured extents along the edge.
 }

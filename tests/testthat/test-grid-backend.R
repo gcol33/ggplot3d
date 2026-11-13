@@ -50,6 +50,16 @@ test_that("effective opacity is applied once and translucent coverage is unchang
   })
 })
 
+test_that("sparse style tables receive transparent colour defaults", {
+  grid_test_device({
+    scene <- grid_test_scene()
+    scene$styles <- scene$styles["style_id"]
+    result <- render_scene_grid(scene, scene$viewport)
+    expect_true(all(is.na(result$children[[1L]]$gp$fill)))
+    expect_true(all(is.na(result$children[[1L]]$gp$col)))
+  })
+})
+
 test_that("masks use even-odd clipping and unsupported devices error", {
   grid_test_device({
     scene <- grid_test_scene()
@@ -74,14 +84,15 @@ test_that("dash arclength advances across hidden or clipped sections", {
   expect_identical(dash_pattern_3d("blank", 1), numeric())
 })
 
-test_that("opaque mesh hairlines retain the exact vector silhouette", {
+test_that("opaque mesh hairlines use device-sized fill outlines", {
   grid_test_device({
     scene <- grid_test_scene()
     result <- render_scene_grid(scene, scene$viewport)
     face <- result$children[[1L]]
     expect_identical(face$gp$col, face$gp$fill)
     expect_gt(face$gp$lwd, 0)
-    expect_s3_class(face$vp$clip, "GridClipPath")
+    expect_null(face$vp)
+    expect_equal(face$gp$lwd, 2 * 96 / scene$viewport$dpi)
   })
 })
 
@@ -120,7 +131,7 @@ test_that("real ggplot path compiles exactly once and resolves physical dimensio
 test_that("eight independent azimuths retain panel dimensions and magnification", {
   grid_test_device({
     metrics <- lapply(seq(0, 315, 45), function(angle) {
-      panel <- grid_test_panels(grid::grid.force(ggplot2::ggplotGrob(grid_test_plot(azimuth = angle))))[[1]]
+      panel <- grid_test_panels(grid::grid.force(ggplot2::ggplotGrob(grid_test_plot(azimuth = angle, frame = "sphere"))))[[1]]
       c(unlist(panel$inner_viewport), view_height = panel$scene$camera$view_height)
     })
     for (i in 2:8) expect_equal(metrics[[i]], metrics[[1]], tolerance = 1e-12)
@@ -273,5 +284,112 @@ test_that("adjacent masks of one translucent glyph share one paint operation", {
     expect_identical(result$fragment_runs[[2L]], 2:3)
     expect_length(result$children[[2L]]$label, 1L)
     expect_equal(result$children[[2L]]$gp$alpha, 0.5)
+  })
+})
+test_that("frame selection validates and preserves sphere compatibility", {
+  expect_error(coord_3d(frame = "unknown"), "arg")
+  expect_identical(coord_3d()$config$frame, "view")
+  camera <- new_camera_3d()
+  viewport <- new_scene_viewport(100, 100, 150)
+  expect_identical(frame_camera_3d(camera, viewport, "sphere"), camera)
+  expect_gt(frame_camera_3d(camera, viewport, "view")$zoom, camera$zoom)
+})
+
+test_that("view frames fit native projected box corners in both projections", {
+  corners <- cube_edges_3d()$corners
+  packet <- new_scene_packet(vertices = lapply(as.data.frame(corners), as.double),
+    corners = list(vertex = 1:8), text = list(offset = 1:8, partition = rep(2L, 8L)),
+    styles = data.frame(style_id = 1L))
+  for (projection in c("orthographic", "perspective")) {
+    for (angle in c(0, 45, 90, 137)) {
+      for (dimensions in list(c(100, 100), c(70, 130), c(150, 70))) {
+        viewport <- new_scene_viewport(dimensions[1L], dimensions[2L], 150)
+        camera <- new_camera_3d(projection, azimuth = angle, roll = 25, aspect = c(2, 1, 0.6))
+        fitted <- frame_camera_3d(camera, viewport, "view")
+        scene <- scene_compile(packet, fitted, viewport)
+        expect_length(scene$fragments$offset, 8L)
+        positions <- frame_positions_3d(corners, fitted, frame_basis_3d(fitted, viewport))
+        source <- scene$source$text$offset[scene$fragments$source_index]
+        expect_equal(unname(positions[source, 1L]), scene$vertices$x_npc, tolerance = 1e-12)
+        expect_equal(unname(positions[source, 2L]), scene$vertices$y_npc, tolerance = 1e-12)
+        expect_equal(unname(positions[source, 3L]), scene$vertices$depth, tolerance = 1e-12)
+        xy <- c(scene$vertices$x_npc, scene$vertices$y_npc)
+        expect_true(all(xy >= 0 & xy <= 1))
+        expect_gt(max(abs(xy - 0.5)), 0.49)
+      }
+    }
+  }
+})
+
+test_that("azimuth frames keep constant magnification and contain a whole turn", {
+  viewport <- new_scene_viewport(100, 130, 150)
+  for (projection in c("orthographic", "perspective")) {
+    cameras <- lapply(seq(0, 345, 15), function(angle) {
+      new_camera_3d(projection, azimuth = angle, elevation = 32, roll = 25, aspect = c(2, 1, 0.6))
+    })
+    zoom <- vapply(cameras, function(camera) frame_camera_3d(camera, viewport, "azimuth")$zoom, numeric(1))
+    view <- vapply(cameras, function(camera) frame_camera_3d(camera, viewport, "view")$zoom, numeric(1))
+    expect_equal(zoom, rep(zoom[1L], length(zoom)), tolerance = 1e-12)
+    expect_true(all(zoom <= view + 1e-12))
+  }
+})
+
+test_that("view framing reports a box intersecting the eye plane", {
+  camera <- new_camera_3d("perspective", distance = 0.1)
+  expect_error(frame_camera_3d(camera, new_scene_viewport(100, 100), "view"), "eye plane")
+  expect_error(frame_camera_3d(camera, new_scene_viewport(100, 100), "azimuth"), "eye plane")
+})
+
+test_that("label intervals are separated in every dodge row", {
+  locations <- cbind(seq(10, 50, length.out = 9), rep(20, 9))
+  size <- cbind(rep(12, 9), rep(3, 9))
+  result <- thin_axis_labels_3d(locations, size, c(1, 0), rep(0L, 9),
+    matrix(numeric(), 0, 4L), new_scene_viewport(60, 40))
+  kept <- result$intervals[result$keep, , drop = FALSE]
+  expect_lt(sum(result$keep), 9L)
+  expect_gt(sum(result$keep), 1L)
+  expect_true(all(head(kept[, 2L], -1L) <= tail(kept[, 1L], -1L)))
+})
+
+test_that("small facets thin tick labels and share a frame with free labels", {
+  grid_test_device({
+    data <- rbind(data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1), panel = "A"),
+      data.frame(x = c(0, 1), y = c(0, 1e5), z = c(0, 1), panel = "B"))
+    p <- ggplot2::ggplot(data, ggplot2::aes(x, y, z = z)) + ggplot2::geom_point() +
+      coord_3d() + ggplot2::facet_wrap(~panel, scales = "free_y") + ggplot2::theme_minimal() +
+      ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.05))
+    panels <- grid_test_panels(grid::grid.force(ggplot2::ggplotGrob(p)))
+    expect_length(panels, 2L)
+    expect_equal(panels[[1L]]$inner_viewport, panels[[2L]]$inner_viewport)
+    expect_equal(panels[[1L]]$scene$camera$view_height, panels[[2L]]$scene$camera$view_height)
+    for (panel in panels) {
+      expect_lt(sum(panel$furniture$label_layout$x$keep), 21L)
+      for (layout in panel$furniture$label_layout) {
+        for (row in unique(layout$rows)) {
+          ids <- which(layout$keep & layout$rows == row)
+          ids <- ids[order(layout$intervals[ids, 1L])]
+          if (length(ids) > 1L) expect_true(all(layout$intervals[head(ids, -1L), 2L] <= layout$intervals[tail(ids, -1L), 1L]))
+        }
+        boxes <- layout$occupied
+        if (nrow(boxes) > 1L) for (i in seq_len(nrow(boxes) - 1L)) {
+          later <- boxes[seq.int(i + 1L, nrow(boxes)), , drop = FALSE]
+          expect_false(any(later[, 1L] < boxes[i, 3L] & later[, 3L] > boxes[i, 1L] &
+            later[, 2L] < boxes[i, 4L] & later[, 4L] > boxes[i, 2L]))
+        }
+      }
+    }
+  }, width = 5, height = 4)
+})
+
+test_that("frame groups belong to an individual built gtable", {
+  grid_test_device({
+    p <- grid_test_plot()
+    first <- ggplot2::ggplotGrob(p)
+    second <- ggplot2::ggplotGrob(p + ggplot2::facet_wrap(~z))
+    a <- grid_test_panels(grid::grid.force(first))
+    b <- grid_test_panels(grid::grid.force(second))
+    expect_length(as.list(a[[1L]]$frame_group), 1L)
+    expect_length(as.list(b[[1L]]$frame_group), 2L)
+    expect_false(identical(a[[1L]]$frame_group, b[[1L]]$frame_group))
   })
 })

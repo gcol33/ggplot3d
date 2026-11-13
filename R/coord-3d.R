@@ -30,6 +30,7 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
 #' @param target Target fractions within the expanded box.
 #' @param near,far Camera clipping distances.
 #' @param aspect Three positive model side lengths, or "data".
+#' @param frame Fit the current view, all azimuths at this elevation, or a sphere.
 #' @param xlim,ylim,zlim Coordinate zoom limits in original units.
 #' @param expand Logical scalar or named x, y, z logical vector.
 #' @param clip Rectangular viewport clipping, on or off.
@@ -49,7 +50,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      aspect = c(1, 1, 1), xlim = NULL, ylim = NULL, zlim = NULL,
                      expand = TRUE, clip = "on", clip_data = TRUE, axes = c("x", "y", "z"),
                      panes = c("back", "floor"), box = "back", z_scales = "fixed", crs = NULL,
-                     light = light_3d(), backend = backend_3d(), default = FALSE) {
+                     light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view") {
   clip <- match.arg(clip, c("on", "off"))
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
       !(length(expand) == 1L || (length(expand) == 3L && setequal(names(expand), c("x", "y", "z"))))) stop("expand must be logical scalar or named x/y/z vector.", call. = FALSE)
@@ -63,7 +64,8 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
     limits = list(x = xlim, y = ylim, z = zlim), expand_axes = expand_axes,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
-                  light = light, backend = backend, crs = crs))
+                  light = light, backend = backend, crs = crs,
+                  frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
 }
 
 Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
