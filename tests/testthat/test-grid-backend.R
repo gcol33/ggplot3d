@@ -84,15 +84,30 @@ test_that("dash arclength advances across hidden or clipped sections", {
   expect_identical(dash_pattern_3d("blank", 1), numeric())
 })
 
-test_that("opaque mesh hairlines use device-sized fill outlines", {
+test_that("opaque mesh seams are covered by a union underlay, never by outlines", {
+  packet <- new_scene_packet(
+    vertices = list(x = c(0, 1, 0, 1), y = c(0, 0, 1, 1), z = c(0, 0, 0, 0)),
+    corners = list(vertex = c(1L, 2L, 3L, 3L, 4L, 2L)), faces = list(offset = c(1L, 4L), style_id = c(1L, 1L)),
+    styles = data.frame(style_id = 1L, fill = "red", colour = NA))
   grid_test_device({
-    scene <- grid_test_scene()
+    scene <- scene_compile(packet, new_camera_3d(), new_scene_viewport(100, 100, 150))
     result <- render_scene_grid(scene, scene$viewport)
-    face <- result$children[[1L]]
-    expect_identical(face$gp$col, face$gp$fill)
-    expect_gt(face$gp$lwd, 0)
-    expect_null(face$vp)
-    expect_equal(face$gp$lwd, 2 * 96 / scene$viewport$dpi)
+    expect_length(result$children, 1L)
+    run <- result$children[[1L]]
+    expect_s3_class(run, "gTree")
+    underlay <- run$children[[1L]]; faces <- run$children[[2L]]
+    expect_identical(underlay$gp$fill, "#FF0000")
+    expect_s3_class(underlay, "pathgrob")
+    expect_identical(underlay$rule, "winding")
+    expect_true(is.na(underlay$gp$col))
+    expect_s3_class(faces, "polygon")
+    expect_true(all(is.na(faces$gp$col)))
+    expect_equal(sort(as.numeric(underlay$x)), sort(as.numeric(faces$x)))
+    signed <- vapply(split(seq_along(underlay$id), underlay$id), function(i) {
+      x <- as.numeric(underlay$x)[i]; y <- as.numeric(underlay$y)[i]
+      sum(x * c(y[-1L], y[1L]) - c(x[-1L], x[1L]) * y)
+    }, numeric(1))
+    expect_true(all(signed > 0))
   })
 })
 
@@ -107,6 +122,25 @@ grid_test_panels <- function(grob) {
   children <- if (length(grob$children)) as.list(grob$children) else grob$grobs
   unlist(lapply(children, grid_test_panels), recursive = FALSE)
 }
+
+test_that("intersecting surfaces paint in few single-layer runs, each underlaid", {
+  surface <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
+  first <- transform(surface, z = 0.6 * x)
+  second <- transform(surface, z = -0.6 * x + 0.2 * y)
+  plot <- ggplot2::ggplot(first, ggplot2::aes(x, y, z = z)) +
+    geom_surface_3d(fill = "#2E6F9E") + geom_surface_3d(data = second, fill = "#9E5E0F") +
+    coord_3d(azimuth = -45, elevation = 60)
+  grid_test_device({
+    panel <- grid_test_panels(grid::grid.force(ggplot2::ggplotGrob(plot)))[[1L]]
+    f <- panel$scene$fragments; rendered <- panel$children[[2L]]
+    surface_runs <- Filter(function(run) all(f$kind[run] == 1L & f$layer_id[run] > 0L), rendered$fragment_runs)
+    expect_true(all(vapply(surface_runs, function(run) length(unique(f$layer_id[run])) == 1L, logical(1))))
+    expect_lt(length(surface_runs), sum(lengths(surface_runs)) / 4)
+    children <- rendered$children[match(surface_runs, rendered$fragment_runs)]
+    expect_true(all(vapply(children[lengths(surface_runs) > 1L], function(g)
+      inherits(g, "gTree") && inherits(g$children[[1L]], "pathgrob") && inherits(g$children[[2L]], "polygon"), logical(1))))
+  })
+})
 
 grid_test_plot <- function(...) {
   ggplot2::ggplot(data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1)), ggplot2::aes(x, y, z = z)) +

@@ -86,6 +86,24 @@ material_gp_3d <- function(styles, opacity, kind, fill = NULL) {
     fontfamily = style_value_3d(styles, "family", ""), fontface = style_value_3d(styles, "fontface", 1))
 }
 
+# Antialiasing is computed per path, so faces that share an edge inside one
+# compound path leave no seam along it. A run of opaque, unoutlined faces from
+# one layer is underlaid by the union of its faces, every face wound
+# counter-clockwise so overlapping faces never cancel, filled in their mean
+# colour. The faces cover the whole union right after it, so the underlay shows
+# only through their shared-edge antialiasing, in place of what lies behind.
+seam_underlay_3d <- function(x, y, id, fill) {
+  nxt <- unlist(lapply(split(seq_along(id), id), function(i) c(i[-1L], i[1L])), use.names = FALSE)
+  area <- rowsum(x * y[nxt] - x[nxt] * y, id)[, 1L]
+  flip <- id %in% which(area < 0)
+  if (any(flip)) {
+    reversed <- unlist(lapply(split(which(flip), id[flip]), rev), use.names = FALSE)
+    x[flip] <- x[reversed]; y[flip] <- y[reversed]
+  }
+  mean_fill <- grDevices::rgb(t(rowMeans(grDevices::col2rgb(fill))), maxColorValue = 255)
+  grid::pathGrob(x, y, id = id, rule = "winding", gp = grid::gpar(fill = mean_fill, col = NA))
+}
+
 mask_path_3d <- function(scene, rows) {
   f <- scene$fragments
   rows <- rows[!duplicated(paste(f$mask_offset[rows], f$mask_count[rows], sep = ":"))]
@@ -202,7 +220,7 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
   seam <- face & f$layer_id > 0L & f$opacity == 1 & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
-  key[face] <- paste(key[face], seam[face], sep = ":")
+  key[face] <- paste(key[face], seam[face], ifelse(seam[face], f$layer_id[face], 0L), sep = ":")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   grobs <- lapply(seq_along(runs), function(run) {
@@ -220,11 +238,9 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
       shade <- style_value_3d(s, "shade", FALSE)
       if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light, s[shade, , drop = FALSE])
       gp$fill <- fill
-      if (all(seam[rows])) {
-        # Fill-colour outlines cover shared-edge antialiasing within one device pixel.
-        gp$col <- fill; gp$lwd <- 2 * 96 / viewport$dpi; gp$lty <- 1; gp$linejoin <- "round"
-      }
-      g <- grid::polygonGrob(x, y, id = rep(seq_along(counts), counts), gp = gp)
+      id <- rep(seq_along(counts), counts)
+      g <- grid::polygonGrob(x, y, id = id, gp = gp)
+      if (all(seam[rows]) && length(rows) > 1L) g <- grid::grobTree(seam_underlay_3d(x, y, id, fill), g)
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]
       lty <- style_value_3d(s, "linetype", 1)

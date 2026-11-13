@@ -1,6 +1,8 @@
 #pragma once
 #include "coverage.h"
+#include <map>
 #include <queue>
+#include <tuple>
 
 namespace ggplot3d { namespace engine {
 using Point2 = std::array<double,2>;
@@ -404,12 +406,40 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
     free_less));
   for(std::size_t v=0;v<n;++v) for(std::size_t e=offsets[v];e<offsets[v+1];++e)
     if(component[v]!=component[targets[e]]) ++indegree[component[targets[e]]];
+  // Any topological order is an exact painter's order, since only pieces that
+  // overlap on screen are constrained. Among ready components the next one
+  // continues the material (kind, primitive table and layer) of the
+  // last emitted piece whenever possible, so each layer is painted in long
+  // runs that a backend can fill as one path; otherwise far precedes near.
+  using Material=std::tuple<int,const PrimitiveTable*,Index>;
+  std::map<Material,Index> material_index;
+  std::vector<Index> material(components.size());
+  for(std::size_t c=0;c<components.size();++c) {
+    const Piece& r=pieces[representative[c]];
+    Material key{static_cast<int>(r.kind),r.source,r.source->layer_id[r.row]};
+    material[c]=material_index.emplace(key,static_cast<Index>(material_index.size())).first->second;
+  }
   auto later=[&](Index a,Index b) {return free_less(representative[b],representative[a]);};
-  std::priority_queue<Index,std::vector<Index>,decltype(later)> ready(later);
-  for(std::size_t c=0;c<components.size();++c) if(indegree[c]==0) ready.push(c);
+  using ReadyQueue=std::priority_queue<Index,std::vector<Index>,decltype(later)>;
+  ReadyQueue ready(later);
+  std::vector<ReadyQueue> ready_by_material(material_index.size(),ReadyQueue(later));
+  std::vector<bool> emitted(components.size(),false);
+  auto make_ready=[&](Index c) {ready.push(c);ready_by_material[material[c]].push(c);};
+  auto next_ready=[&](Index last)->Index {
+    if(last>=0) {
+      auto& same=ready_by_material[material[last]];
+      while(!same.empty() && emitted[same.top()]) same.pop();
+      if(!same.empty()) {Index c=same.top();same.pop();return c;}
+    }
+    while(emitted[ready.top()]) ready.pop();
+    Index c=ready.top();ready.pop();return c;
+  };
+  std::size_t pending=0;
+  for(std::size_t c=0;c<components.size();++c) if(indegree[c]==0) {make_ready(c);++pending;}
   std::vector<Piece> ordered;ordered.reserve(n);
-  while(!ready.empty()) {
-    Index c=ready.top();ready.pop();auto& group=components[c];
+  Index last=-1;
+  while(pending) {
+    Index c=next_ready(last);emitted[c]=true;--pending;last=c;auto& group=components[c];
     if(group.size()==1 && pieces[group.front()].members.empty()) ordered.push_back(std::move(pieces[group.front()]));
     else {
       std::sort(group.begin(),group.end());
@@ -425,7 +455,7 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
     }
     for(Index v:group) for(std::size_t e=offsets[v];e<offsets[v+1];++e) {
       Index other=component[targets[e]];
-      if(other!=c && --indegree[other]==0) ready.push(other);
+      if(other!=c && --indegree[other]==0) {make_ready(other);++pending;}
     }
   }
   return ordered;

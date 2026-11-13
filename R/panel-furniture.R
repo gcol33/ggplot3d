@@ -323,7 +323,11 @@ select_axis_edge_3d <- function(points, edges, position = "auto", secondary = FA
   scores <- do.call(rbind, candidates[valid])
   if (is.numeric(position) || position %in% as.character(1:4)) chosen <- match(as.integer(position), scores[, "edge"])
   else {
-    score <- switch(position, top = scores[, "y"], bottom = -scores[, "y"], left = -scores[, "x"], right = scores[, "x"], scores[, "distance"])
+    # Automatic placement keeps the horizontal axes on the outer edges of the
+    # floor, the lower of each pair of exterior edges on screen, and the z
+    # axis on the vertical silhouette edge farthest from the centre.
+    auto <- if (edges[1L, "axis"] %in% 1:2) -scores[, "y"] else scores[, "distance"]
+    score <- switch(position, top = scores[, "y"], bottom = -scores[, "y"], left = -scores[, "x"], right = scores[, "x"], auto)
     if (secondary) {
       primary <- select_axis_edge_3d(points, edges, position, FALSE)
       score <- (scores[, "x"] - primary["x"])^2 + (scores[, "y"] - primary["y"])^2
