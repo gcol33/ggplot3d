@@ -29,3 +29,4 @@
 * Outlined faces seen edge-on, as in front, top and side views, no longer stop the compilation of hidden strokes.
 * `labs(x = NULL)` and friends remove a 3D axis title.
 * Discrete axes keep every label unless `check.overlap = TRUE`; tick labels are thinned by their measured rectangles, `n.dodge` rows stack directly outside one another, and axis titles sit next to the tick labels.
+* Solid glyph layers: `geom_sphere_3d()` (radius in data units or on-screen millimetres), `geom_ellipsoid_3d()` (semi-axes `rx`, `ry`, `rz` with an optional `rotation`, or a `sigma` shape matrix) and `geom_glyph_3d()`, which places a sphere, cube, cone, cylinder, octahedron or any mesh at each observation, sized by `size` and turned by `u`, `v`, `w`. Glyphs are meshes in the panel scene, so they intersect other geometry, take light and keep perspective.

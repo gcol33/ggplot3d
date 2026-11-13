@@ -233,6 +233,8 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   if (inherits(packet, "grob")) return(packet)
   validate_scene_packet(packet)
   if (raster && nrow(packet$styles)) packet$styles$raster <- TRUE
+  # Packets already placed in model space, such as rigid glyphs, skip the frame.
+  if (isTRUE(attr(packet, "model_space"))) return(packet)
   frame_packet_3d(frame_of_3d(panel_params), packet, panel_params$camera$clip_data)
 }
 

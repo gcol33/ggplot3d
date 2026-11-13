@@ -314,9 +314,7 @@ mesh_face_triangles_3d <- function(data, r, rings) {
   if (length(r) == 3L && length(rings) == 1L) return(matrix(r, nrow = 1L))
   topology <- triangulate_polygon_3d(data[r, , drop = FALSE], rings)
   t <- matrix(r[unlist(topology$triangles)], ncol = 3L, byrow = TRUE)
-  xyz <- as.matrix(data[r[rings[[1L]]], c("x", "y", "z")]); next_xyz <- xyz[c(seq.int(2L, nrow(xyz)), 1L), , drop = FALSE]
-  normal <- c(sum((xyz[, 2] - next_xyz[, 2]) * (xyz[, 3] + next_xyz[, 3])),
-    sum((xyz[, 3] - next_xyz[, 3]) * (xyz[, 1] + next_xyz[, 1])), sum((xyz[, 1] - next_xyz[, 1]) * (xyz[, 2] + next_xyz[, 2])))
+  normal <- polygon_normal_3d(as.matrix(data[r[rings[[1L]]], c("x", "y", "z")]))
   a <- as.numeric(data[t[1L, 2L], c("x", "y", "z")] - data[t[1L, 1L], c("x", "y", "z")])
   b <- as.numeric(data[t[1L, 3L], c("x", "y", "z")] - data[t[1L, 1L], c("x", "y", "z")])
   cross <- c(a[2] * b[3] - a[3] * b[2], a[3] * b[1] - a[1] * b[3], a[1] * b[2] - a[2] * b[1])

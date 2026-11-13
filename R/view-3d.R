@@ -65,7 +65,7 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
   all_params$coord_params$panes <- vapply(frame$panes(), `[[`, character(1), "name")
   all_params$coord_params$box <- "all"
   all_furniture <- panel_furniture_3d(all_params, selected$theme, outer, as.list(selected$frame_group))
-  packet <- merge_scene_packets(selected$packets, params$panel_id)
+  packet <- merge_scene_packets(resolve_glyph_packets_3d(selected$packets, furniture$camera, furniture$viewport), params$panel_id)
   furniture_view <- view_packet_3d(all_furniture$packet)
   furniture_view$materials <- view_furniture_tags_3d(frame, all_furniture, furniture_view$materials)
   axes <- lapply(names(params$axis_guides), function(name) {

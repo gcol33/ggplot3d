@@ -23,6 +23,7 @@ makeContent.scene_panel_grob <- function(x) {
   dpi <- if (backend$type %in% c("raster", "hybrid")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
   outer <- new_scene_viewport(grid::unit(1, "npc"), grid::unit(1, "npc"), dpi)
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, as.list(x$frame_group))
+  x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
   if (identical(backend$type, "raster")) {
     result <- render_raster_panel_3d(x, furniture, backend)
     scene <- result$scene
