@@ -101,6 +101,7 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' @param crs Target spatial coordinate reference system.
 #' @param light Lighting configuration or NULL.
 #' @param backend Backend configuration.
+#' @param stereo Stereo output from [stereo_3d()], or NULL for one view.
 #' @param transform Optional coordinate transformations applied after
 #'   statistics, as a named list with entries `x`, `y` or `z`, each a
 #'   transformation name such as `"log10"` or a scales transformation. Lines
@@ -150,6 +151,8 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #'     panel.pane.front = ggplot2::element_rect(fill = "#4682B41A"))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
 #'   coord_3d(clip_planes = list(clip_plane_3d(c(0, 0, -1), c(z = 2.5))))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
+#'   coord_3d(stereo = stereo_3d("cross"))
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      oblique = c(angle = 45, ratio = 0.5), up = "z",
@@ -159,7 +162,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      panes = c("back", "floor"), box = "back", z_scales = "fixed", crs = NULL,
                      light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
                      transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0),
-                     clip_planes = list()) {
+                     clip_planes = list(), stereo = NULL) {
   clip <- match.arg(clip, c("on", "off"))
   clip_planes <- check_clip_planes_3d(clip_planes)
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
@@ -167,6 +170,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
   expand_axes <- if (length(expand) == 1L) structure(rep(expand, 3L), names = c("x", "y", "z")) else expand[c("x", "y", "z")]
   if (!all(axes %in% c("x", "y", "z"))) stop("Unknown 3D axis.", call. = FALSE)
   if (!all(panes %in% c("back", "floor", "front", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))) stop("Unknown cube pane.", call. = FALSE)
+  if (!is.null(stereo) && !inherits(stereo, "ggplot3d_stereo")) stop("stereo must be NULL or a stereo_3d() configuration.", call. = FALSE)
   views <- list(azimuth = azimuth, elevation = elevation, roll = roll, distance = distance, fov = fov, zoom = zoom)
   sizes <- lengths(views)
   count <- max(1L, sizes)
@@ -185,7 +189,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
                   axis_lines = match.arg(axis_lines, c("box", "origin", "none")), origin = check_origin_3d(origin),
-                  light = light, backend = backend, crs = crs, clip_planes = clip_planes,
+                  light = light, backend = backend, crs = crs, clip_planes = clip_planes, stereo = stereo,
                   frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
 }
 
@@ -302,7 +306,8 @@ Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
   },
   is_free = function() TRUE,
   is_linear = function() FALSE,
-  aspect = function(ranges) 1,
+  # A side-by-side stereo panel holds two square eye images.
+  aspect = function(self, ranges) if (stereo_side_by_side_3d(self$config$stereo)) 0.5 else 1,
   setup_params = function(self, data) list(),
   setup_layout = function(self, layout, params) {
     # Views of one scene (facet_views()) share its z scale.

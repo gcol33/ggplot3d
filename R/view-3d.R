@@ -48,6 +48,7 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
                     elementId = NULL, link = NULL, path = NULL, fps = 30) {
   motion_require_3d("htmlwidgets")
   motion_plot_coord_3d(plot)
+  plot <- mono_plot_3d(plot)
   motion_dimensions_3d(width, height, 96)
   scene_assert(is.numeric(panel) && length(panel) == 1L && is.finite(panel) &&
     panel >= 1 && panel == trunc(panel), "panel must be a positive integer")

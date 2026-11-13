@@ -82,6 +82,7 @@ reference:
   - coord_3d
   - camera_3d
   - facet_views
+  - stereo_3d
   - light_3d
   - clip_plane_3d
 - title: Curvilinear and compositional frames

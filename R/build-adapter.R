@@ -18,7 +18,9 @@ ggplot_build.ggplot3d <- function(plot, ...) {
   working@layers <- lapply(seq_along(plot@layers), function(i) adapt_layer_3d(plot@layers[[i]], i, frame))
   working@scales <- scales_3d(plot@scales, context)
   working@layout <- ggplot2::ggproto(NULL, Layout3D, context = context)
-  parent_build(working, ...)
+  built <- parent_build(working, ...)
+  stereo_colour_warning_3d(plot@coordinates, context$scales)
+  built
 }
 
 scales_3d <- function(parent, context) {
