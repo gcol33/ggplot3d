@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* `guide_colourbar_3d(along = "z")` places a colourbar beside the matching position axis, sharing its ticks and labels. `guide_legend_3d()` lights shaded-layer facet keys with the scene light and can display their shading range.
+
 * Fitted surfaces accept fitting functions and fitted models with `predict()` methods, hull-masked domains and confidence bands, surfaces or standard-error fills. `stat_residual_3d()` and `geom_residual_3d()` draw observation-to-fit segments with computed fitted values, residuals and signs.
 * `guide_triad_3d()` and `annotation_north_3d()` show camera-aligned model directions in each panel. `annotation_scale_3d()` draws a bar in data units with ticks and a label in its coordinate plane, including perspective views.
 

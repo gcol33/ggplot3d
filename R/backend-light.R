@@ -32,9 +32,13 @@ shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL) {
   toward <- -(camera$ray %or3d% camera$forward)
   normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, ] <- -normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, , drop = FALSE]
   brightness <- light$ambient + light$diffuse * pmax(0, drop(normal %*% direction))
+  apply_brightness_3d(fill, brightness, light$mode)
+}
+
+apply_brightness_3d <- function(fill, brightness, mode) {
   rgb <- t(colour_channels_3d(fill)) / 255
   linear <- srgb_decode_3d(rgb)
-  linear <- if (light$mode == "multiply") linear * brightness else 1 - (1 - linear) * brightness
+  linear <- if (mode == "multiply") linear * brightness else 1 - (1 - linear) * brightness
   rgb <- srgb_encode_3d(linear)
   result <- grDevices::rgb(pmin(1, pmax(0, rgb[, 1L])), pmin(1, pmax(0, rgb[, 2L])), pmin(1, pmax(0, rgb[, 3L])))
   result[is.na(fill)] <- NA_character_

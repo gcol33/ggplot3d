@@ -131,7 +131,7 @@ normalise_guide_3d <- function(spec, axis) {
   do.call(guide_axis_3d, args)
 }
 
-setup_guides_3d <- function(panel_params, guides, theme) {
+setup_guides_3d <- function(panel_params, guides, theme, scales = NULL, mappings = list()) {
   if (!isTRUE(.theme_state_3d$registered)) register_theme_3d()
   result <- list()
   for (axis in c("x", "y", "z")) {
@@ -162,5 +162,12 @@ setup_guides_3d <- function(panel_params, guides, theme) {
   }
   panel_params$axis_guides <- frame_of_3d(panel_params)$guides(result, panel_params)
   panel_params$panel_guides <- Filter(function(guide) inherits(guide, "Guide") && is.function(guide$draw_panel_3d), guides$guides)
+  if (!is.null(scales)) for (scale in scales$non_position_scales()$scales) {
+    for (aesthetic in scale$aesthetics) {
+      guide <- guides$guides[[aesthetic]] %or3d% scale$guide
+      if (!inherits(guide, "Guide") || !is.function(guide$setup_panel_3d)) next
+      panel_params$panel_guides[[aesthetic]] <- guide$setup_panel_3d(panel_params, scale, aesthetic, mappings)
+    }
+  }
   panel_params
 }

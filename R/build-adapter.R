@@ -6,6 +6,11 @@ ggplot_build.ggplot3d <- function(plot, ...) {
   context <- new.env(parent = emptyenv())
   context$labels <- plot@labels
   context$mapping <- plot@mapping
+  context$layer_mappings <- lapply(plot@layers, function(layer) {
+    mapping <- if (isTRUE(layer$inherit.aes)) plot@mapping else ggplot2::aes()
+    for (name in names(layer$mapping)) mapping[[name]] <- layer$mapping[[name]]
+    mapping
+  })
   frame <- plot@coordinates$frame %or3d% FrameBox
   for (layer in plot@layers) {
     for (axis in c("x", "y", "z", frame$parts)) {
@@ -15,7 +20,10 @@ ggplot_build.ggplot3d <- function(plot, ...) {
   context$theme <- ggplot2::theme_get() + plot@theme
   working <- plot
   working@coordinates <- ggplot2::ggproto(NULL, plot@coordinates)
-  working@layers <- lapply(seq_along(plot@layers), function(i) adapt_layer_3d(plot@layers[[i]], i, frame))
+  context$key_context <- new.env(parent = emptyenv())
+  context$key_context$camera <- plot@coordinates$camera
+  context$key_context$light <- plot@coordinates$config$light
+  working@layers <- lapply(seq_along(plot@layers), function(i) adapt_layer_3d(plot@layers[[i]], i, frame, context$key_context))
   working@scales <- scales_3d(plot@scales, context)
   working@layout <- ggplot2::ggproto(NULL, Layout3D, context = context)
   built <- parent_build(working, ...)
@@ -61,7 +69,7 @@ scales_3d <- function(parent, context) {
   )
 }
 
-adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
+adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL) {
   entry <- find_emitter_3d(layer$geom)
   if (is.null(entry)) stop("No 3D emitter registered for ", class(layer$geom)[1L], ".", call. = FALSE)
   check_position_kind_3d(layer$position, entry)
@@ -110,6 +118,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
   )
   result$geom_params$.emitter <- entry$name
   result$geom_params$.layer_id <- as.integer(layer_id)
+  result$geom_params$.key_context <- key_context
   if (inherits(layer$position, "PositionProject3D")) result$geom_params$.project <- list(onto = layer$position$onto, axes = layer$position$axes)
   result
 }

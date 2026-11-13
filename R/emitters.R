@@ -183,7 +183,7 @@ scene_geom_3d <- function(parent, entry) {
     required_aes = if (entry$name == "GeomSegment") c("x", "y") else parent$required_aes,
     optional_aes = union(parent$optional_aes, c(z_aesthetics, entry$aesthetics,
       if (entry$name == "GeomSegment") c("xend", "yend"))),
-    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", ".project", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl", "raster", "clip_planes")),
+    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", ".project", ".key_context", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl", "raster", "clip_planes")),
     handle_na = function(data, params) data,
     setup_data = function(data, params) {
       if (entry$name == "GeomSegment") {

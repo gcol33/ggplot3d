@@ -52,6 +52,9 @@ measure_guides_3d <- function(params, theme, viewport) {
     title_size <- text_metrics_3d(guide$title, title)
     tick <- element_3d(paste0("axis.ticks.", axis), local)
     tick_length <- if (visible_element_3d(tick)) abs(grid::convertUnit(element_3d(paste0("axis.ticks.length.", axis), local), "mm", valueOnly = TRUE)) else 0
+    for (panel_guide in params$panel_guides) {
+      if (is.function(panel_guide$axis_space_3d)) tick_length <- tick_length + panel_guide$axis_space_3d(axis)
+    }
     minor_length <- if (isTRUE(guide$params$minor.ticks)) abs(grid::convertUnit(element_3d(paste0("axis.minor.ticks.length.", axis), local) %or3d% grid::unit(1, "pt"), "mm", valueOnly = TRUE)) else 0
     gap <- if (visible_element_3d(text)) element_margin_mm_3d(text) + 0.8 else 0
     title_gap <- if (visible_element_3d(title)) element_margin_mm_3d(title) + 1.2 else 0

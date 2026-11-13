@@ -84,11 +84,13 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
       out
     })
     self$panel_params <- self$facet$setup_panel_params(panels, coord)
+    if (is.environment(self$context$key_context)) self$context$key_context$camera <- self$panel_params[[1L]]$camera
     invisible()
   },
   setup_panel_guides = function(self, guides, layers) {
     self$panel_params <- lapply(self$panel_params, function(p) {
-      if (exists("setup_guides_3d", mode = "function")) return(setup_guides_3d(p, guides, self$context$theme))
+      if (exists("setup_guides_3d", mode = "function")) return(setup_guides_3d(p, guides, self$context$theme,
+        self$context$scales, self$context$layer_mappings))
       p$axis_guides <- lapply(p[c("x", "y", "z")], function(s) list(breaks = s$get_breaks(), labels = s$get_labels()))
       p
     })
