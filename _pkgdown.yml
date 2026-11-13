@@ -115,6 +115,14 @@ reference:
   - geom_rug_3d
   - geom_plane_3d
   - annotate_3d
+- title: Interval layers
+  contents:
+  - geom_errorbar_3d
+  - geom_linerange_3d
+  - geom_pointrange_3d
+  - geom_crossbar_3d
+  - geom_stem_3d
+  - stat_summary_3d
 - title: Surface and solid layers
   contents:
   - geom_surface_3d
