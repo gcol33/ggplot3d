@@ -109,12 +109,15 @@ stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, arg
   isosurface_finish_3d(out, axes, value, f, refine, simplify)
 }
 
-# fun as a function of an n x 3 matrix of positions, one value per row.
+# fun as a function of an n x 3 matrix of positions, one value per row. A
+# signed distance function also carries its exact gradient.
 function_evaluator_3d <- function(fun, args) {
-  function(p) {
+  f <- function(p) {
     v <- do.call(fun, c(list(x = p[, 1L], y = p[, 2L], z = p[, 3L]), args))
     rep_len(as.double(v), nrow(p))
   }
+  if (inherits(fun, "ggplot3d_sdf")) attr(f, "gradient") <- function(p) sdf_gradient_3d(fun, p)
+  f
 }
 
 # Polishes vertices against fun when it is known, decimates to `simplify`
@@ -151,9 +154,11 @@ regula_falsi_3d <- function(a, b, fa, fb, f, steps) {
   pmin(pmax(t, 0), 1)
 }
 
-# Central-difference gradient of a vectorised function of an n x 3 matrix,
-# with steps of 1e-5 times each axis range, in one call over the six offsets.
+# Gradient of a vectorised function of an n x 3 matrix: the exact gradient
+# the function carries, or central differences with steps of 1e-5 times each
+# axis range, in one call over the six offsets.
 function_gradient_3d <- function(f, axes) {
+  if (!is.null(attr(f, "gradient"))) return(attr(f, "gradient"))
   h <- vapply(axes, function(a) diff(range(a)), numeric(1)) * 1e-5
   offsets <- rbind(diag(h), -diag(h))
   function(p) {

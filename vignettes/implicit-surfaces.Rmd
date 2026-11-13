@@ -1,0 +1,127 @@
+---
+title: "Implicit surfaces"
+description: "Algebraic surfaces, triply periodic minimal surfaces and shapes built from signed distance functions, drawn as level sets with geom_isofunction_3d()."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Implicit surfaces}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+  fig.height = 5, dpi = 144, out.width = "100%", dev = "svglite",
+  fig.ext = "svg", dev.args = list(pointsize = 14))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A")
+```
+
+```{r packages, message=FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
+
+An implicit surface is the set of points where a function of x, y and z
+takes one value. `geom_isofunction_3d()` samples the function on a grid over
+the position scales, extracts the level set and then moves every vertex onto
+the exact level along its grid edge, so a coarse grid still gives a surface
+that lies on the function's zero set.
+
+```{r box}
+cube <- function(k) list(xlim(-k, k), ylim(-k, k), scale_z_continuous(limits = c(-k, k)))
+```
+
+## Algebraic surfaces
+
+Barth's sextic has 65 ordinary double points, the most a sextic surface can
+have. The polynomial below is the one of PyVista's contouring example; points
+outside the sphere of radius sqrt(3.1) are set to `NA`, which masks their
+grid cells.
+
+```{r barth}
+phi <- (1 + sqrt(5)) / 2
+barth <- function(x, y, z) {
+  x2 <- x^2; y2 <- y^2; z2 <- z^2
+  v <- 3 * (phi^2 * x2 - y2) * (phi^2 * y2 - z2) * (phi^2 * z2 - x2) -
+    (1 + 2 * phi) * (x2 + y2 + z2 - 1)^2
+  ifelse(x2 + y2 + z2 > 3.1, NA, v)
+}
+ggplot() +
+  geom_isofunction_3d(fun = barth, levels = 0, n = 48, fill = PAL[["blue"]]) +
+  cube(1.8) + coord_3d()
+```
+
+The Clebsch diagonal cubic contains all 27 lines a smooth cubic surface can
+carry, each one real.
+
+```{r clebsch}
+clebsch <- function(x, y, z) {
+  81 * (x^3 + y^3 + z^3) - 189 * (x^2 * (y + z) + y^2 * (z + x) + z^2 * (x + y)) +
+    54 * x * y * z + 126 * (x * y + y * z + z * x) - 9 * (x^2 + y^2 + z^2) -
+    9 * (x + y + z) + 1
+}
+ggplot() +
+  geom_isofunction_3d(fun = clebsch, levels = 0, n = 40, fill = PAL[["orange"]]) +
+  cube(1) + coord_3d()
+```
+
+## Triply periodic surfaces
+
+The Schwarz P surface is close to the zero set of cos x + cos y + cos z. Two
+level sets on either side of zero bound a wall around it.
+
+```{r schwarz}
+schwarz <- function(x, y, z) cos(x) + cos(y) + cos(z)
+ggplot() +
+  geom_isofunction_3d(aes(fill = after_stat(factor(level))),
+    fun = schwarz, levels = c(-0.4, 0.4), n = 36) +
+  scale_fill_manual(values = unname(PAL[c("teal", "purple")]), name = "level") +
+  cube(pi) + coord_3d()
+```
+
+## Shapes from signed distance functions
+
+A signed distance function is negative inside a shape, positive outside and
+zero on its surface. `sdf_sphere()`, `sdf_box()`, `sdf_torus()`,
+`sdf_capsule()`, `sdf_plane()`, `sdf_gyroid()` and `sdf_metaballs()` build
+them, and `|`, `&`, `-`, `sdf_blend()`, `sdf_offset()`, `sdf_shell()` and
+`sdf_transform()` combine them. The result is still a function of x, y and
+z, so it goes straight into `geom_isofunction_3d()`, which extracts its zero
+set by default and takes the normals from its exact gradient.
+
+```{r csg}
+part <- sdf_box(size = c(2, 2, 2), radius = 0.15) & sdf_sphere(radius = 1.3)
+drill <- sdf_capsule(c(-2, 0, 0), c(2, 0, 0), 0.5) |
+  sdf_capsule(c(0, -2, 0), c(0, 2, 0), 0.5) |
+  sdf_capsule(c(0, 0, -2), c(0, 0, 2), 0.5)
+part - drill
+ggplot() +
+  geom_isofunction_3d(fun = part - drill, n = 40, fill = PAL[["green"]]) +
+  cube(1.2) + coord_3d()
+```
+
+`sdf_blend()` replaces the sharp minimum of a union by a smooth one that adds
+at most `k` where the shapes meet. A gyroid sheet cut by a sphere shows a
+second use of the same algebra: `sdf_shell()` turns the gyroid's zero set
+into a wall of given thickness.
+
+```{r blend}
+blob <- sdf_blend(sdf_sphere(c(-0.6, 0, 0), 0.6),
+  sdf_torus(c(0.5, 0, 0), major = 0.6, minor = 0.2), k = 0.15)
+sheet <- sdf_shell(sdf_gyroid(period = 1.2), 0.08) & sdf_sphere(radius = 1.2)
+ggplot() +
+  geom_isofunction_3d(fun = sheet, n = 56, fill = PAL[["red"]]) +
+  cube(1.25) + coord_3d()
+```
+
+Because the expression tree of a distance function can also be evaluated on
+whole boxes in interval arithmetic, `adaptive = TRUE` refines an octree only
+near the surface and near its sharp edges.
+
+```{r adaptive}
+ggplot() +
+  geom_isofunction_3d(fun = blob, adaptive = TRUE, depth = c(3, 6),
+    fill = PAL[["purple"]]) +
+  xlim(-1.3, 1.4) + ylim(-0.9, 0.9) + scale_z_continuous(limits = c(-0.7, 0.7)) +
+  coord_3d()
+```

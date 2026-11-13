@@ -168,6 +168,10 @@ reference:
   - stat_revolve_3d
   - stat_spline_3d
   - probs
+- title: Signed distance functions
+  contents:
+  - sdf_sphere
+  - sdf_blend
 - title: Positions
   contents:
   - position_nudge_3d
@@ -211,6 +215,7 @@ articles:
   contents:
   - gallery
   - pde
+  - implicit-surfaces
 - title: Background
   navbar: Background
   contents: visibility

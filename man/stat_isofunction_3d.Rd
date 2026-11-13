@@ -34,7 +34,8 @@ geom_isofunction_3d(...)
 
 \item{geom}{Geom prototype for keyed triangle corners.}
 
-\item{fun}{Vectorised scalar function of x, y and z.}
+\item{fun}{Vectorised scalar function of x, y and z, or a signed distance
+function (\code{\link[=sdf_sphere]{sdf_sphere()}}).}
 
 \item{n}{Grid resolution, scalar or three integers.}
 
@@ -101,6 +102,11 @@ fun is evaluated on interval objects, so it may use \code{+}, \code{-}, \code{*}
 \code{atan()}, \code{min()}, \code{max()}, and \code{pmin()} and \code{pmax()} called in its own
 body. Any other operation, including comparisons and \code{ifelse()}, stops
 with an error that names the call.
+
+fun may be a signed distance function built with \code{\link[=sdf_sphere]{sdf_sphere()}} and
+\code{\link[=sdf_blend]{sdf_blend()}}. levels then defaults to 0, and vertex normals (with the
+crossing normals of \code{"dual"}) come from the exact gradient of its
+expression tree in place of central differences.
 }
 \examples{
 ggplot2::ggplot() +

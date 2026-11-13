@@ -189,8 +189,14 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #' `atan()`, `min()`, `max()`, and `pmin()` and `pmax()` called in its own
 #' body. Any other operation, including comparisons and `ifelse()`, stops
 #' with an error that names the call.
+#'
+#' fun may be a signed distance function built with [sdf_sphere()] and
+#' [sdf_blend()]. levels then defaults to 0, and vertex normals (with the
+#' crossing normals of `"dual"`) come from the exact gradient of its
+#' expression tree in place of central differences.
 #' @inheritParams stat_isosurface_3d
-#' @param fun Vectorised scalar function of x, y and z.
+#' @param fun Vectorised scalar function of x, y and z, or a signed distance
+#'   function ([sdf_sphere()]).
 #' @param args Additional named arguments passed to fun.
 #' @param n Grid resolution, scalar or three integers.
 #' @param method Extraction method: `"cubes"` (the default on a grid),
@@ -231,6 +237,7 @@ stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSur
                                  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.logical(adaptive) || length(adaptive) != 1L || is.na(adaptive)) stop("adaptive must be TRUE or FALSE.", call. = FALSE)
   method <- isosurface_method_3d(method %or3d% if (adaptive) "dual" else "cubes")
+  if (is.null(levels) && inherits(fun, "ggplot3d_sdf")) levels <- 0
   make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsofunction3D, position,
     stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = method, refine = refine,
       adaptive = adaptive, depth = depth, tol = tol, simplify = simplify, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
