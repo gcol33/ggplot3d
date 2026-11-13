@@ -311,7 +311,7 @@ position_kind_3d <- function(position) {
 
 check_position_kind_3d <- function(position, entry) {
   kind <- position_kind_3d(position)
-  if (identical(kind, "identity")) return(invisible(position))
+  if (kind %in% c("identity", "project")) return(invisible(position))
   if (is.na(kind) || !kind %in% (entry$positions %or3d% "nudge")) {
     stop("Unsupported 3D position for ", entry$name, ": ", class(position)[1L], ".", call. = FALSE)
   }
@@ -329,6 +329,6 @@ check_position_scales_3d <- function(position, scales) {
 
 # Hands a 3D position the emitter's extent columns.
 bind_position_3d <- function(position, entry) {
-  if (is.null(position$kind_3d) || identical(position$kind_3d, "nudge")) return(position)
+  if (is.null(position$kind_3d) || position$kind_3d %in% c("nudge", "project")) return(position)
   ggplot2::ggproto(NULL, position, extents = entry$extents)
 }

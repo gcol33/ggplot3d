@@ -70,6 +70,7 @@ marker_footprints_3d <- function(styles) {
 
 # Kinds of adjustment an emitter accepts: "nudge", "jitter", "dodge",
 # "stack" (stack and fill) and "planar" (ggplot2's own x/y adjustments).
+# Identity and position_project_3d() are accepted by every geometry.
 position_kinds_3d <- c("nudge", "jitter", "dodge", "stack", "planar")
 
 # Columns holding a geometry's interval along one axis: lower (NA when the
@@ -163,7 +164,7 @@ scene_draw_formals_3d <- function() {
     lineend = "butt", linejoin = "round", linemitre = 10,
     arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
     size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
-    width = NULL, depth = NULL, face = "zmin", plane = "surface",
+    width = NULL, depth = NULL, face = "zmin", .project = NULL,
     render = "marker", edl = 1, raster = FALSE)
 }
 
@@ -182,7 +183,7 @@ scene_geom_3d <- function(parent, entry) {
     required_aes = if (entry$name == "GeomSegment") c("x", "y") else parent$required_aes,
     optional_aes = union(parent$optional_aes, c(z_aesthetics, entry$aesthetics,
       if (entry$name == "GeomSegment") c("xend", "yend"))),
-    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl", "raster")),
+    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", ".project", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl", "raster")),
     handle_na = function(data, params) data,
     setup_data = function(data, params) {
       if (entry$name == "GeomSegment") {
@@ -229,7 +230,8 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   if (!is.numeric(edl) || length(edl) != 1L || !is.finite(edl) || edl < 0) stop("edl must be a nonnegative number.", call. = FALSE)
   raster <- params$raster %or3d% FALSE
   if (!is.logical(raster) || length(raster) != 1L || is.na(raster)) stop("raster must be TRUE or FALSE.", call. = FALSE)
-  packet <- entry$emit(normalise_positions_3d(data, panel_params), params, panel_params)
+  data <- normalise_positions_3d(data, panel_params)
+  packet <- if (is.null(params$.project)) entry$emit(data, params, panel_params) else emit_projected_3d(entry, data, params, panel_params)
   if (inherits(packet, "grob")) return(packet)
   validate_scene_packet(packet)
   if (raster && nrow(packet$styles)) packet$styles$raster <- TRUE

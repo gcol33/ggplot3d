@@ -33,7 +33,8 @@ stat_density_2d_3d(
 \item{plane}{\code{"surface"} draws density as height. \code{"floor"} or a numeric z
 in original units lays the density grid flat at that height, filled by
 density unless fill is mapped or set, and unshaded unless \code{shade = TRUE}.
-The density range still trains the z scale, as for contours.}
+The density range still trains the z scale, as for contours. A flat
+plane is a shorthand for \code{\link[=position_project_3d]{position_project_3d()}}.}
 }
 \description{
 Uses an axis-aligned Gaussian product kernel on transformed x/y coordinates.

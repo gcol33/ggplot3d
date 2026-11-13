@@ -316,7 +316,7 @@ project_positions_3d <- function(data, panel_params) {
       markers = list(offset = seq_len(n), footprint_id = rep.int(1L, n), source_row = as.integer(valid)),
       footprints = list(kind = 1L, offset = 1L, count = 0L, radius_x_mm = 0, radius_y_mm = 0, angle = 0),
       styles = data.frame(style_id = 1L), panel_id = panel_params$panel_id)
-    viewport <- panel_params$viewport %or3d% new_scene_viewport(100, 100)
+    viewport <- emit_viewport_3d(panel_params)
     compiled <- scene_compile(packet, panel_params$camera, viewport)
     f <- compiled$fragments
     if (length(f$offset)) {

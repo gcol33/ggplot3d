@@ -22,6 +22,9 @@
 * `geom_label()`, `geom_rect()`, `geom_tile()`, `geom_hline()`, `geom_vline()`, `annotation_custom()` and `annotation_raster()` work inside `coord_3d()`.
 * Position adjustments in three dimensions: `position_jitter_3d()` jitters x, y and z; `position_dodge_3d()` places groups side by side along x or y within each x/y cell; `position_stack_3d()` and the new `position_fill_3d()` stack along z, x or y, for columns, walls and bands, points and text. `register_geom_3d()` gains `positions` and `extents`, so each geometry declares the adjustments it accepts.
 * `annotate_3d()` adds fixed annotations with z positions.
+* `position_project_3d()` draws any layer flattened onto the panes of the panel box: `"floor"`, `"back"` (chosen for the camera), a pane name, or a plane at a data value, several at once. Projected primitives are painted with their pane. With `axes = c("x", "z")` a two-dimensional ggplot2 layer, such as a histogram or `geom_density()`, stands on a wall as a marginal plot. The `plane` argument of contour and density layers is a shorthand for it.
+* `geom_rug_3d(sides = c("floor:x", "back:z"))` marks positions with rug ticks on the walls.
+* `geom_ribbon()`, `geom_area()` and `geom_density()` work inside `coord_3d()` as flat bands.
 * `stat_density_2d_3d(plane = )` draws the density flat on the floor or at a given height, filled by density.
 * The camera arguments of `coord_3d()` take one value per panel, so facets can show different views; `animate_3d()` keeps each panel's offset.
 * `facet_views()` draws one scene from several cameras, one panel per view, with the layers computed once and one magnification across panels. `layout = "third_angle"` and `"first_angle"` place front, top, bottom, left, right and rear views by the projection methods of ISO 5456-2, so edges line up across adjacent views. `camera_3d()` gains the `"bottom"`, `"rear"` and `"left"` views.

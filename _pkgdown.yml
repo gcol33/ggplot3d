@@ -109,6 +109,7 @@ reference:
   - geom_polygon_3d
   - geom_band_3d
   - geom_dropline_3d
+  - geom_rug_3d
   - annotate_3d
 - title: Surface and solid layers
   contents:
@@ -177,6 +178,7 @@ reference:
   - position_nudge_3d
   - position_jitter_3d
   - position_dodge_3d
+  - position_project_3d
   - position_stack_3d
   - position_fill_3d
 - title: Guides and themes
