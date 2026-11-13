@@ -21,6 +21,7 @@ struct Piece {
   std::size_t whole_stroke_parts = 0;
   bool cap_start = true, cap_end = true;
   Index solid = -1;
+  Index seam_group = 0;
   std::vector<Piece> members;
 };
 

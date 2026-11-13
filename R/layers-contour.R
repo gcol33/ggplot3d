@@ -49,13 +49,13 @@ StatContour3D <- ggplot2::ggproto("StatContour3D", ggplot2::Stat,
     levels <- contour_levels_3d(range, breaks, bins, binwidth)
     if (filled) levels <- sort(unique(c(range, levels)))
     if (!length(levels) || (filled && length(levels) < 2L)) return(data.frame())
+    if (!filled) return(contour_lines_3d(data, triangles, levels, range, plane, scales))
     results <- list(); group <- 0L
     for (i in seq_len(nrow(triangles))) {
       rows <- triangles[i, ]; tri <- data[rows, c("x", "y", "z")]
       values <- matrix(as.double(c(tri$z[1L], tri$z[3L], tri$z[2L], tri$z[3L])), 2L)
       # Collapsing the upper square edge maps one isoband cell onto a triangle.
-      iso <- if (filled) isoband::isobands(c(0, 1), c(0, 1), values, head(levels, -1L), tail(levels, -1L))
-      else isoband::isolines(c(0, 1), c(0, 1), values, levels)
+      iso <- isoband::isobands(c(0, 1), c(0, 1), values, head(levels, -1L), tail(levels, -1L))
       for (j in seq_along(iso)) {
         curve <- iso[[j]]
         if (!length(curve$x)) next
@@ -65,14 +65,14 @@ StatContour3D <- ggplot2::ggproto("StatContour3D", ggplot2::Stat,
           xyz <- weights %*% as.matrix(tri)
           keep <- !duplicated(as.data.frame(xyz))
           xyz <- xyz[keep, , drop = FALSE]
-          if (nrow(xyz) < if (filled) 3L else 2L) next
+          if (nrow(xyz) < 3L) next
           group <- group + 1L
           out <- data[rep(rows[1L], nrow(xyz)), , drop = FALSE]
           out[c("x", "y", "z")] <- as.data.frame(xyz)
           out$.origin <- rep(as.integer(data$.source[rows[1L]] %or3d% rows[1L]), nrow(out))
-          out$level <- if (filled) mean(levels[j + 0:1]) else levels[j]
-          out$level_low <- if (filled) levels[j] else levels[j]
-          out$level_high <- if (filled) levels[j + 1L] else levels[j]
+          out$level <- mean(levels[j + 0:1])
+          out$level_low <- levels[j]
+          out$level_high <- levels[j + 1L]
           out$piece <- group; out$group <- group
           out$zmin <- range[1L]; out$zmax <- range[2L]
           if (is.numeric(plane)) out$zintercept <- scales$z$get_transformation()$transform(plane)
@@ -84,6 +84,72 @@ StatContour3D <- ggplot2::ggproto("StatContour3D", ggplot2::Stat,
     do.call(rbind, results)
   }
 )
+
+# Marching triangles. A level crosses a triangle edge whose end values lie on
+# either side of it; the crossing is keyed by the edge's two vertex rows, so
+# the two triangles sharing an edge share the crossing exactly. Each crossed
+# triangle contributes one segment between its two crossed edges, and segments
+# are chained through shared edges into open lines (ending on the grid
+# boundary) or closed loops.
+contour_lines_3d <- function(data, triangles, levels, range, plane, scales) {
+  xyz <- as.matrix(data[c("x", "y", "z")])
+  pairs <- list(c(1L, 2L), c(2L, 3L), c(3L, 1L))
+  results <- list(); group <- 0L
+  for (level in levels) {
+    above <- matrix(xyz[triangles, 3L] >= level, ncol = 3L)
+    crossed <- vapply(pairs, function(e) above[, e[1L]] != above[, e[2L]], logical(nrow(triangles)))
+    crossed <- matrix(crossed, ncol = 3L)
+    cells <- which(rowSums(crossed) == 2L)
+    if (!length(cells)) next
+    ends <- t(vapply(cells, function(i) {
+      e <- pairs[crossed[i, ]]
+      a <- triangles[i, c(e[[1L]][1L], e[[2L]][1L])]; b <- triangles[i, c(e[[1L]][2L], e[[2L]][2L])]
+      c(pmin(a, b), pmax(a, b))
+    }, integer(4L)))
+    keys <- paste(c(ends[, 1L], ends[, 2L]), c(ends[, 3L], ends[, 4L]))
+    edge <- match(keys, unique(keys))
+    first <- matrix(edge, ncol = 2L)
+    edges <- unique(data.frame(id = edge, lo = c(ends[, 1L], ends[, 2L]), hi = c(ends[, 3L], ends[, 4L])))
+    edges <- edges[order(edges$id), ]
+    t <- (level - xyz[edges$lo, 3L]) / (xyz[edges$hi, 3L] - xyz[edges$lo, 3L])
+    point <- xyz[edges$lo, , drop = FALSE] + t * (xyz[edges$hi, , drop = FALSE] - xyz[edges$lo, , drop = FALSE])
+    point[, 3L] <- level
+    incident <- split(c(seq_along(cells), seq_along(cells)), c(first[, 1L], first[, 2L]))
+    used <- logical(length(cells))
+    degree <- lengths(incident)
+    starts <- c(as.integer(names(incident)[degree == 1L]), first[, 1L])
+    for (start in starts) {
+      segment <- incident[[as.character(start)]]
+      segment <- segment[!used[segment]]
+      if (!length(segment)) next
+      path <- start; current <- start; next_segment <- segment[1L]
+      while (length(next_segment) && !used[next_segment]) {
+        used[next_segment] <- TRUE
+        current <- setdiff(first[next_segment, ], current)[1L] %or3d% current
+        path <- c(path, current)
+        candidates <- incident[[as.character(current)]]
+        next_segment <- candidates[!used[candidates]]
+        next_segment <- next_segment[seq_len(min(1L, length(next_segment)))]
+      }
+      line <- point[path, , drop = FALSE]
+      keep <- c(TRUE, rowSums(abs(diff(line))) > 0)
+      line <- line[keep, , drop = FALSE]
+      if (nrow(line) < 2L) next
+      group <- group + 1L
+      source <- triangles[cells[which(first[, 1L] == path[1L] | first[, 2L] == path[1L])[1L]], 1L]
+      out <- data[rep(source, nrow(line)), , drop = FALSE]
+      out[c("x", "y", "z")] <- as.data.frame(line)
+      out$.origin <- rep(as.integer(data$.source[source] %or3d% source), nrow(out))
+      out$level <- level; out$level_low <- level; out$level_high <- level
+      out$piece <- group; out$group <- group
+      out$zmin <- range[1L]; out$zmax <- range[2L]
+      if (is.numeric(plane)) out$zintercept <- scales$z$get_transformation()$transform(plane)
+      results[[length(results) + 1L]] <- out
+    }
+  }
+  if (!length(results)) return(data.frame())
+  do.call(rbind, results)
+}
 
 GeomContour3D <- ggplot2::ggproto("GeomContour3D", ggplot2::GeomPath,
   required_aes = c("x", "y", "z"), optional_aes = c(".origin", "level", "level_low", "level_high")

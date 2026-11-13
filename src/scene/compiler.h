@@ -223,7 +223,8 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
     partitions[piece.source->partition[piece.row]].push_back(std::move(piece));
   pieces.clear(); pieces.shrink_to_fit();
   PartitionStats stats;
-  partitions[1] = order_scene(std::move(partitions[1]), packet, projection, stats, budget);
+  Index seam_groups = 0;
+  partitions[1] = order_scene(std::move(partitions[1]), packet, projection, stats, budget, true, &seam_groups);
 #ifdef GGPLOT3D_ENGINE_METRICS
   Rcpp::Rcout << "graph_metrics candidates=" << stats.pairs << " classifications="
               << stats.classifications << " splits=" << stats.splits << " nodes=" << stats.nodes
@@ -288,6 +289,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
                     piece.path_end,
                     start,end);
     out.fragments.hidden.back()=piece.hidden;
+    out.fragments.seam_group.push_back(piece.seam_group);
     if (!piece.anchor.empty() && piece.polygon.size()>=3 && piece.clipped && piece.mask_required)
       append_mask(out,piece.polygon,projection);
     if(!piece.mask.empty()) append_mask(out,piece.mask,projection);

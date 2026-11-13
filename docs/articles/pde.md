@@ -1,0 +1,233 @@
+# Animated solutions of four linear PDEs
+
+The transport, heat, wave and Laplace equations are the four linear
+partial differential equations (PDEs) with explicit solution formulas
+that Evans (2010) treats first. This article evaluates each formula on a
+grid of positions and times, draws the solution as a surface, and
+renders one frame per time with
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md).
+Each section ends on an animated GIF. Installation is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md); the
+GIF files need [gifski](https://r-rlib.github.io/gifski/).
+
+1.  **Tabulate** the solution $`u(x, y, t)`$ in a data frame with one
+    row per position and time.
+
+2.  **Draw** one surface per time with
+    [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md).
+
+3.  **Animate** the frames with `animate_3d(time = "t")`.
+
+## Example
+
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
+```
+
+Every solution below is a function `u(x, y, t)` of two space coordinates
+and time. `solution_frames()` evaluates it on a square grid of `n` by
+`n` positions at each time in `times`, and returns one row per position
+and time with columns `x`, `y`, `t` and `u`.
+
+``` r
+
+solution_frames <- function(u, times, range = c(-2, 2), n = 31) {
+  grid <- expand.grid(x = seq(range[1], range[2], length.out = n),
+                      y = seq(range[1], range[2], length.out = n),
+                      t = times)
+  grid$u <- u(grid$x, grid$y, grid$t)
+  grid
+}
+```
+
+`animate_3d(time = "t")` draws the rows of one value of `t` per frame,
+in increasing order. The scales are trained on all frames, so the z axis
+and the fill colours keep the same range throughout, and a decaying
+solution is seen to decay. `animate()` below renders a plot at 480 by
+480 pixels, writes the GIF next to the article’s figures and returns its
+path for
+[`knitr::include_graphics()`](https://rdrr.io/pkg/knitr/man/include_graphics.html).
+
+``` r
+
+animate <- function(plot, fps = 12, ...) {
+  path <- knitr::fig_path(".gif")
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  animate_3d(plot, time = "t", fps = fps, file = path, width = 480,
+             height = 480, progress = FALSE, ...)
+  path
+}
+```
+
+### Transport equation
+
+The transport equation moves an initial profile $`g`$ at constant
+velocity $`b = (b_1, b_2)`$ without changing its shape:
+
+``` math
+u_t + b \cdot \nabla u = 0, \qquad u(x, 0) = g(x), \qquad u(x, t) = g(x - t b).
+```
+
+The profile here is a bump that is periodic in both coordinates with
+period 4,
+$`g(x, y) = \exp\{3(\cos(\pi x / 2) - 1) + 3(\cos(\pi y / 2) - 1)\}`$,
+moved along the diagonal $`b = (1, 1)`$. After $`t = 4`$ it is back at
+its start, so the 32 frames from $`t = 0`$ to $`t = 3.875`$ loop without
+a jump.
+
+``` r
+
+transport <- function(x, y, t) {
+  exp(3 * (cos(pi * (x - t) / 2) - 1) + 3 * (cos(pi * (y - t) / 2) - 1))
+}
+moving <- solution_frames(transport, times = seq(0, 4, length.out = 33)[-33])
+```
+
+``` r
+
+p <- ggplot(moving, aes(x, y, z = u, fill = after_stat(z_mean))) +
+  geom_surface_3d(colour = NA) +
+  scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
+  coord_3d(azimuth = -50, elevation = 35) +
+  labs(z = "u")
+knitr::include_graphics(animate(p))
+```
+
+![Animation of a blue bump on a flat surface that travels diagonally
+across the square and re-enters at the opposite
+corner.](pde_files/figure-html/transport-1.gif)
+
+### Heat equation
+
+The heat equation spreads an initial temperature $`g`$ by diffusion.
+With unit diffusivity and the Gaussian $`g(x) = \exp(-|x|^2)`$ on the
+whole plane, the solution stays Gaussian; its width grows and its peak
+falls:
+
+``` math
+u_t = \Delta u, \qquad u(x, t) = \frac{1}{1 + 4t} \exp\left(-\frac{|x|^2}{1 + 4t}\right).
+```
+
+The peak value $`1 / (1 + 4t)`$ falls from 1 at $`t = 0`$ to 0.2 at
+$`t = 1`$, while the integral of $`u`$ over the plane stays at $`\pi`$.
+
+``` r
+
+heat <- function(x, y, t) exp(-(x^2 + y^2) / (1 + 4 * t)) / (1 + 4 * t)
+cooling <- solution_frames(heat, times = seq(0, 1, length.out = 25))
+```
+
+``` r
+
+p <- ggplot(cooling, aes(x, y, z = u, fill = after_stat(z_mean))) +
+  geom_surface_3d(colour = NA) +
+  scale_fill_gradient(low = PAL[["blue"]], high = PAL[["red"]]) +
+  coord_3d(azimuth = -50, elevation = 25) +
+  labs(z = "u")
+knitr::include_graphics(animate(p))
+```
+
+![Animation of a tall red peak that flattens and widens into a low broad
+mound while the z axis stays fixed from zero to
+one.](pde_files/figure-html/heat-1.gif)
+
+### Wave equation
+
+The wave equation describes a membrane fixed along its edges. On the
+unit square, each product $`\sin(m \pi x) \sin(n \pi y)`$ vibrates at
+angular frequency $`\pi \sqrt{m^2 + n^2}`$. The modes
+$`(m, n) = (1, 2)`$ and $`(2, 1)`$ share the frequency
+$`\omega = \sqrt{5} \pi`$; adding them a quarter period apart gives a
+pattern that turns round the centre:
+
+``` math
+u_{tt} = \Delta u, \qquad u(x, y, t) = \sin(\pi x) \sin(2 \pi y) \cos(\omega t) + \sin(2 \pi x) \sin(\pi y) \sin(\omega t).
+```
+
+The solution repeats after one period
+$`T = 2 \pi / \omega = 2 / \sqrt{5}`$, so 30 frames over $`[0, T)`$
+loop.
+
+``` r
+
+omega <- sqrt(5) * pi
+wave <- function(x, y, t) {
+  sin(pi * x) * sin(2 * pi * y) * cos(omega * t) +
+    sin(2 * pi * x) * sin(pi * y) * sin(omega * t)
+}
+period <- 2 * pi / omega
+membrane <- solution_frames(wave, times = seq(0, period, length.out = 31)[-31],
+                            range = c(0, 1))
+```
+
+``` r
+
+p <- ggplot(membrane, aes(x, y, z = u, fill = after_stat(z_mean))) +
+  geom_surface_3d(colour = NA) +
+  scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
+  coord_3d(azimuth = -50, elevation = 30) +
+  labs(z = "u")
+knitr::include_graphics(animate(p))
+```
+
+![Animation of a square membrane with a raised red lobe and a lowered
+blue lobe that circle round its centre while the edges stay at
+zero.](pde_files/figure-html/wave-1.gif)
+
+### Laplace equation
+
+A solution of the Laplace equation is the steady state of the heat
+equation: it has no time derivative, and its values inside a region are
+fixed by its values on the boundary. The real part of any polynomial in
+$`x + iy`$ solves it. The frames below take
+$`u = \operatorname{Re}\{e^{-i\varphi} (x + iy)^3\} = r^3 \cos(3\theta - \varphi)`$
+in polar coordinates $`(r, \theta)`$, and use the phase $`\varphi`$ as
+the frame variable `t`: every frame is an exact harmonic function, with
+boundary values that rotate as $`\varphi`$ grows. Raising $`\varphi`$ by
+$`2\pi`$ turns the saddle by a third of a turn, which maps it onto
+itself, so 36 frames over $`\varphi \in [0, 2\pi)`$ loop.
+
+``` math
+\Delta u = u_{xx} + u_{yy} = 0, \qquad u(x, y) = r^3 \cos(3\theta - \varphi).
+```
+
+``` r
+
+laplace <- function(x, y, t) Re(exp(-1i * t) * complex(real = x, imaginary = y)^3)
+saddle <- solution_frames(laplace, times = seq(0, 2 * pi, length.out = 37)[-37],
+                          range = c(-1, 1))
+```
+
+``` r
+
+p <- ggplot(saddle, aes(x, y, z = u, fill = after_stat(z_mean))) +
+  geom_surface_3d(colour = NA) +
+  scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
+  coord_3d(azimuth = -50, elevation = 35) +
+  labs(z = "u")
+knitr::include_graphics(animate(p))
+```
+
+![Animation of a monkey saddle with three raised red ridges and three
+lowered blue valleys that rotate slowly about the vertical
+axis.](pde_files/figure-html/laplace-1.gif)
+
+## Where next
+
+- [Camera animation and
+  interaction](https://gillescolling.com/ggplot3d/articles/motion.md):
+  camera paths, MP4 output and the interactive viewer.
+
+- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md): the
+  layers used here and their aesthetics.
+
+## References
+
+Evans, L. C. (2010). *Partial Differential Equations* (2nd ed.).
+Graduate Studies in Mathematics 19. American Mathematical Society.

@@ -320,7 +320,10 @@ static inline bool single_cut_component(std::vector<Piece>& pieces,const ScenePa
 }
 
 static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const ScenePacket& packet,const Projection& p,
-                                            PartitionStats& stats,ResourceBudget& budget,bool group_solids=true) {
+                                            PartitionStats& stats,ResourceBudget& budget,bool group_solids=true,
+                                            Index* seam_groups=nullptr) {
+  Index local_groups=0;
+  Index& groups=seam_groups ? *seam_groups : local_groups;
   if(group_solids) {
     std::map<Index,std::vector<Piece>> solids;
     std::vector<Piece> ungrouped;
@@ -361,6 +364,12 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   auto cursor=offsets;
   std::vector<Index> targets(edges.size());
   for(const auto& e:edges) targets[cursor[e.first]++]=e.second;
+  std::vector<std::size_t> in_offsets(n+1,0);
+  for(const auto& e:edges) ++in_offsets[e.second+1];
+  std::partial_sum(in_offsets.begin(),in_offsets.end(),in_offsets.begin());
+  auto in_cursor=in_offsets;
+  std::vector<Index> sources(edges.size());
+  for(const auto& e:edges) sources[in_cursor[e.second]++]=e.first;
   edges.clear();edges.shrink_to_fit();
   projected.clear();projected.shrink_to_fit();
   // Tarjan's explicit DFS stack emits components in reverse topological order.
@@ -408,24 +417,51 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
     if(component[v]!=component[targets[e]]) ++indegree[component[targets[e]]];
   // Any topological order is an exact painter's order, since only pieces that
   // overlap on screen are constrained. Among ready components the next one
-  // continues the material (kind, primitive table and layer) of the
+  // continues the material (kind, primitive table, layer, opacity) of the
   // last emitted piece whenever possible, so each layer is painted in long
   // runs that a backend can fill as one path; otherwise far precedes near.
-  using Material=std::tuple<int,const PrimitiveTable*,Index>;
+  using Material=std::tuple<int,const PrimitiveTable*,Index,double>;
   std::map<Material,Index> material_index;
   std::vector<Index> material(components.size());
   for(std::size_t c=0;c<components.size();++c) {
     const Piece& r=pieces[representative[c]];
-    Material key{static_cast<int>(r.kind),r.source,r.source->layer_id[r.row]};
+    Material key{static_cast<int>(r.kind),r.source,r.source->layer_id[r.row],r.source->opacity[r.row]};
     material[c]=material_index.emplace(key,static_cast<Index>(material_index.size())).first->second;
   }
   auto later=[&](Index a,Index b) {return free_less(representative[b],representative[a]);};
   using ReadyQueue=std::priority_queue<Index,std::vector<Index>,decltype(later)>;
   ReadyQueue ready(later);
   std::vector<ReadyQueue> ready_by_material(material_index.size(),ReadyQueue(later));
-  std::vector<bool> emitted(components.size(),false);
-  auto make_ready=[&](Index c) {ready.push(c);ready_by_material[material[c]].push(c);};
+  std::vector<bool> emitted(components.size(),false),is_ready(components.size(),false);
+  auto make_ready=[&](Index c) {is_ready[c]=true;ready.push(c);ready_by_material[material[c]].push(c);};
+  // Before any other piece of the material, a ready fragment of the same
+  // polyline: first the one that starts where the last one ended, so a backend
+  // draws the two as one stroke with a line join, then any other, so masked
+  // pieces of one whole stroke share a single paint operation.
+  using PathKey=std::pair<const PrimitiveTable*,Index>;
+  std::map<PathKey,std::vector<std::pair<double,Index>>> path_fragments;
+  for(std::size_t c=0;c<components.size();++c) {
+    const Piece& r=pieces[representative[c]];
+    if(components[c].size()==1 && r.members.empty() && r.kind==Kind::polyline)
+      path_fragments[PathKey(r.source,r.row)].emplace_back(r.path_start,static_cast<Index>(c));
+  }
+  for(auto& entry:path_fragments) std::sort(entry.second.begin(),entry.second.end());
+  bool has_path=false;PathKey last_path(nullptr,0);double last_end=0;
+  auto continuation=[&]()->Index {
+    if(!has_path) return -1;
+    auto found=path_fragments.find(last_path);
+    if(found==path_fragments.end()) return -1;
+    const auto& list=found->second;
+    double tolerance=1e-9*std::max(1.0,std::abs(last_end));
+    auto it=std::lower_bound(list.begin(),list.end(),std::make_pair(last_end-tolerance,Index(-1)));
+    for(;it!=list.end() && it->first<=last_end+tolerance;++it)
+      if(is_ready[it->second] && !emitted[it->second]) return it->second;
+    for(const auto& fragment:list) if(is_ready[fragment.second] && !emitted[fragment.second]) return fragment.second;
+    return -1;
+  };
   auto next_ready=[&](Index last)->Index {
+    Index follow=continuation();
+    if(follow>=0) return follow;
     if(last>=0) {
       auto& same=ready_by_material[material[last]];
       while(!same.empty() && emitted[same.top()]) same.pop();
@@ -438,10 +474,30 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   for(std::size_t c=0;c<components.size();++c) if(indegree[c]==0) {make_ready(c);++pending;}
   std::vector<Piece> ordered;ordered.reserve(n);
   Index last=-1;
+  // Seam groups: consecutive pieces of one material of which no two overlap on
+  // screen. Every overlapping pair carries an occlusion edge, so a piece opens
+  // a new group when it is adjacent to a piece of the current one. A backend
+  // may paint the union of a group under its faces without covering any face
+  // drawn later in the group.
+  std::vector<Index> piece_group(n,-1);
+  Index current_group=-1,current_material=-1;
   while(pending) {
     Index c=next_ready(last);emitted[c]=true;--pending;last=c;auto& group=components[c];
-    if(group.size()==1 && pieces[group.front()].members.empty()) ordered.push_back(std::move(pieces[group.front()]));
-    else {
+    {
+      const Piece& r=pieces[representative[c]];
+      has_path=group.size()==1 && r.members.empty() && r.kind==Kind::polyline;
+      if(has_path) {last_path=PathKey(r.source,r.row);last_end=r.path_end;}
+    }
+    if(group.size()==1 && pieces[group.front()].members.empty()) {
+      Index v=group.front();
+      bool open=current_group<0 || material[c]!=current_material;
+      for(std::size_t e=offsets[v];!open && e<offsets[v+1];++e) open=piece_group[targets[e]]==current_group;
+      for(std::size_t e=in_offsets[v];!open && e<in_offsets[v+1];++e) open=piece_group[sources[e]]==current_group;
+      if(open) current_group=++groups;
+      current_material=material[c];piece_group[v]=current_group;
+      pieces[v].seam_group=current_group;
+      ordered.push_back(std::move(pieces[v]));
+    } else {
       std::sort(group.begin(),group.end());
       std::vector<Piece> local;local.reserve(group.size());
       bool compound=false;
@@ -449,9 +505,13 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
         if(pieces[i].members.empty()) local.push_back(std::move(pieces[i]));
         else {compound=true;for(auto& member:pieces[i].members) local.push_back(std::move(member));}
       }
-      if(compound) local=order_scene(std::move(local),packet,p,stats,budget,false);
-      else if(!single_cut_component(local,packet,p,stats,budget)) local=partition_scene(std::move(local),p,stats,budget);
+      if(compound) local=order_scene(std::move(local),packet,p,stats,budget,false,&groups);
+      else {
+        if(!single_cut_component(local,packet,p,stats,budget)) local=partition_scene(std::move(local),p,stats,budget);
+        for(auto& piece:local) piece.seam_group=++groups;
+      }
       for(auto& piece:local) ordered.push_back(std::move(piece));
+      current_group=-1;current_material=-1;
     }
     for(Index v:group) for(std::size_t e=offsets[v];e<offsets[v+1];++e) {
       Index other=component[targets[e]];

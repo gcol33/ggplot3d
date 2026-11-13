@@ -100,6 +100,7 @@ struct Fragments : PrimitiveTable {
   std::vector<double> normal_x, normal_y, normal_z;
   std::vector<double> path_start_mm, path_end_mm;
   std::vector<bool> clipped, hidden, arrow_start, arrow_end;
+  std::vector<Index> seam_group;
 };
 struct ClipVertices {
   std::vector<double> x_npc, y_npc;

@@ -1,5 +1,6 @@
 ---
 title: "Gallery"
+description: "Three-dimensional versions of common ggplot2 charts: curves, histograms, bars, pies, time series, fitted surfaces, densities and contours."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Gallery}
@@ -25,7 +26,7 @@ theme_set(theme_minimal(base_size = 17) + theme(
   legend.position = "none"))
 ```
 
-This article draws three-dimensional versions of common ggplot2 charts: curves, function plots, histograms, grouped bars, time series, fitted surfaces and densities. Each section names the ggplot2 layer it corresponds to and shows which variables move to the z axis. [Layers](layers.html) gives a minimal example of every geom and stat; installation is covered in [Get started](ggplot3d.html).
+This article draws three-dimensional versions of common ggplot2 charts: curves, function plots, histograms, grouped bars, pie charts, time series, fitted surfaces, densities and contour lines. Each section names the ggplot2 layer it corresponds to and shows which variables move to the z axis. [Layers](layers.html) gives a minimal example of every geom and stat; installation is covered in [Get started](ggplot3d.html).
 
 ## Parametric curves
 
@@ -132,6 +133,34 @@ ggplot(prices, aes(cut, color, z = price, fill = cut)) +
 
 For the Very Good, Premium and Ideal cuts, the median price rises from colour D to colour J. The Fair and Good cuts have a higher median at D than at F.
 
+## Pie charts
+
+A ggplot2 pie chart is a stacked bar in `coord_polar(theta = "y")`. In three dimensions each slice is a wedge polygon raised to a common height with `geom_extrude_3d()`. The data give the share of each cut grade among all diamonds; each wedge spans an angle proportional to its share, sampled at 40 points on its arc.
+
+```{r pie-data}
+share <- prop.table(table(diamonds$cut))
+edges <- c(0, cumsum(share)) * 2 * pi
+wedges <- do.call(rbind, lapply(seq_along(share), function(i) {
+  arc <- seq(edges[i], edges[i + 1], length.out = 40)
+  data.frame(cut = names(share)[i], x = c(0, cos(arc)), y = c(0, sin(arc)))
+}))
+round(share, 2)
+```
+
+Each wedge starts at the centre and runs along its arc; `group = cut` keeps the five polygons apart. The extrusion height is a constant `z`, and the aspect flattens the disc.
+
+```{r pie, fig.alt="A flat three-dimensional pie of five coloured wedges for the diamond cut grades; the Ideal wedge covers about two fifths of the disc and the Fair wedge the smallest sliver."}
+wedges$cut <- factor(wedges$cut, levels = names(share))
+ggplot(wedges, aes(x, y, z = 0.2, group = cut, fill = cut)) +
+  geom_extrude_3d() +
+  scale_fill_manual(values = unname(PAL[1:5])) +
+  coord_3d(aspect = c(1, 1, 0.2), elevation = 35, axes = character(),
+           panes = character(), box = "none") +
+  theme(legend.position = "right")
+```
+
+Ideal diamonds make up 40% of the data and Fair diamonds 3%. The walls are lit by their angle to the light, so the front of the disc is darker than the top.
+
 ## Several series over time
 
 A line chart of several series maps time to x and each series to a colour (`geom_line(aes(colour = variable))`). In three dimensions each series gets its own position on y. A wall runs from zero up to its value. `economics_long` holds monthly US economic series in long format, with `value01` rescaled to run from 0 to 1 in each series. Three of them are used here: the personal savings rate, the median duration of unemployment and the number of unemployed.
@@ -187,6 +216,30 @@ ggplot(small, aes(carat, log10(price))) +
 ```
 
 The peaks follow a ridge that rises in price with carat. They sit just above 0.3, 0.7, 1 and 1.5 carats, where the sample holds more stones than at neighbouring weights.
+
+## Contour lines
+
+`geom_contour()` draws the lines where a gridded height crosses a set of levels. `geom_contour_3d()` draws the same lines on the surface, each at the height of its level. `volcano` holds heights in metres of Maunga Whau on a 10 m grid, 87 rows by 61 columns.
+
+```{r contour-data}
+heights <- data.frame(x = rep(seq_len(nrow(volcano)), ncol(volcano)),
+                      y = rep(seq_len(ncol(volcano)), each = nrow(volcano)),
+                      z = as.vector(volcano))
+range(heights$z)
+```
+
+A grey surface carries the lines, drawn every 10 m and coloured by level.
+
+```{r contour, fig.alt="A grey surface of the Maunga Whau volcano with contour lines every ten metres, coloured from blue at 100 metres to red at 190 metres, ringing the crater."}
+ggplot(heights, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey80", colour = NA) +
+  geom_contour_3d(aes(colour = after_stat(level)), binwidth = 10,
+                  linewidth = 0.6) +
+  scale_colour_gradient(low = PAL["blue"], high = PAL["red"]) +
+  coord_3d(azimuth = -40, elevation = 40, aspect = c(1.4, 1, 0.6))
+```
+
+The lines close round the summit and the crater rim. Lines on the far slope are hidden where the near slope covers them. ggplot2's own `geom_contour()` also works inside `coord_3d()`, drawing each line at its level without the surface.
 
 ## Where next
 

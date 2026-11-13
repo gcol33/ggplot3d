@@ -392,13 +392,20 @@
 <polyline points='220.83,142.31 340.33,176.80 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='151.84,202.06 220.83,142.31 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='220.83,142.31 220.83,22.80 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<path d='M 223.13 141.16 L 331.77 172.52 L 331.77 63.88 ZM 331.77 63.88 L 223.13 32.52 L 223.13 141.16 ZM 269.04 226.84 L 331.77 172.52 L 223.13 141.16 ZM 223.13 141.16 L 223.13 32.52 L 160.41 86.84 ZM 269.04 226.84 L 223.13 141.16 L 160.41 195.48 ZM 223.13 141.16 L 160.41 86.84 L 160.41 195.48 ZM 269.04 226.84 L 331.77 172.52 L 331.77 63.88 ZM 331.77 63.88 L 223.13 32.52 L 160.41 86.84 ZM 160.41 86.84 L 160.41 195.48 L 269.04 226.84 ZM 331.77 63.88 L 269.04 118.20 L 269.04 226.84 ZM 160.41 86.84 L 269.04 118.20 L 331.77 63.88 ZM 269.04 226.84 L 269.04 118.20 L 160.41 86.84 Z' style='fill-rule: nonzero; fill: #23597F; stroke-width: 0.75; stroke: none;' />
+<path d='M 223.13 141.16 L 331.77 172.52 L 331.77 63.88 ZM 331.77 63.88 L 223.13 32.52 L 223.13 141.16 ZM 269.04 226.84 L 331.77 172.52 L 223.13 141.16 ZM 223.13 141.16 L 223.13 32.52 L 160.41 86.84 ZM 269.04 226.84 L 223.13 141.16 L 160.41 195.48 ZM 223.13 141.16 L 160.41 86.84 L 160.41 195.48 Z' style='fill-rule: nonzero; fill: #23597F; stroke-width: 0.75; stroke: none;' />
+<path d='M 223.13 141.16 L 331.77 172.52 L 331.77 63.88 ZM 331.77 63.88 L 223.13 32.52 L 223.13 141.16 Z' style='fill-rule: nonzero; fill: #28628C; stroke-width: 0.75; stroke: none;' />
+<path d='M 269.04 226.84 L 331.77 172.52 L 223.13 141.16 ZM 269.04 226.84 L 223.13 141.16 L 160.41 195.48 Z' style='fill-rule: nonzero; fill: #2A6792; stroke-width: 0.75; stroke: none;' />
+<path d='M 223.13 141.16 L 223.13 32.52 L 160.41 86.84 ZM 223.13 141.16 L 160.41 86.84 L 160.41 195.48 Z' style='fill-rule: nonzero; fill: #194361; stroke-width: 0.75; stroke: none;' />
 <polygon points='331.77,63.88 331.77,172.52 223.13,141.16 ' style='stroke-width: 0.64; stroke: none; fill: #28628C;' />
 <polygon points='223.13,141.16 223.13,32.52 331.77,63.88 ' style='stroke-width: 0.64; stroke: none; fill: #28628C;' />
 <polygon points='223.13,141.16 331.77,172.52 269.04,226.84 ' style='stroke-width: 0.64; stroke: none; fill: #2A6792;' />
 <polygon points='160.41,86.84 223.13,32.52 223.13,141.16 ' style='stroke-width: 0.64; stroke: none; fill: #194361;' />
 <polygon points='160.41,195.48 223.13,141.16 269.04,226.84 ' style='stroke-width: 0.64; stroke: none; fill: #2A6792;' />
 <polygon points='160.41,195.48 160.41,86.84 223.13,141.16 ' style='stroke-width: 0.64; stroke: none; fill: #194361;' />
+<path d='M 269.04 226.84 L 331.77 172.52 L 331.77 63.88 ZM 331.77 63.88 L 223.13 32.52 L 160.41 86.84 ZM 160.41 86.84 L 160.41 195.48 L 269.04 226.84 ZM 331.77 63.88 L 269.04 118.20 L 269.04 226.84 ZM 160.41 86.84 L 269.04 118.20 L 331.77 63.88 ZM 269.04 226.84 L 269.04 118.20 L 160.41 86.84 Z' style='fill-rule: nonzero; fill: #23597F; stroke-width: 0.75; stroke: none;' />
+<path d='M 269.04 226.84 L 331.77 172.52 L 331.77 63.88 ZM 331.77 63.88 L 269.04 118.20 L 269.04 226.84 Z' style='fill-rule: nonzero; fill: #194361; stroke-width: 0.75; stroke: none;' />
+<path d='M 331.77 63.88 L 223.13 32.52 L 160.41 86.84 ZM 160.41 86.84 L 269.04 118.20 L 331.77 63.88 Z' style='fill-rule: nonzero; fill: #2A6792; stroke-width: 0.75; stroke: none;' />
+<path d='M 160.41 86.84 L 160.41 195.48 L 269.04 226.84 ZM 269.04 226.84 L 269.04 118.20 L 160.41 86.84 Z' style='fill-rule: nonzero; fill: #28628C; stroke-width: 0.75; stroke: none;' />
 <polygon points='269.04,226.84 331.77,172.52 331.77,63.88 ' style='stroke-width: 0.64; stroke: none; fill: #194361;' />
 <polygon points='331.77,63.88 223.13,32.52 160.41,86.84 ' style='stroke-width: 0.64; stroke: none; fill: #2A6792;' />
 <polygon points='160.41,86.84 160.41,195.48 269.04,226.84 ' style='stroke-width: 0.64; stroke: none; fill: #28628C;' />

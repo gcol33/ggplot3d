@@ -159,6 +159,7 @@ knitr::include_graphics(animate(p))
 ## Where next
 
 - [Camera animation and interaction](motion.html): camera paths, MP4 output and the interactive viewer.
+
 - [Layers](layers.html): the layers used here and their aesthetics.
 
 ## References

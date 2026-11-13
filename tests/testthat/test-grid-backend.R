@@ -96,7 +96,7 @@ test_that("opaque mesh seams are covered by a union underlay, never by outlines"
     run <- result$children[[1L]]
     expect_s3_class(run, "gTree")
     underlay <- run$children[[1L]]; faces <- run$children[[2L]]
-    expect_identical(underlay$gp$fill, "#FF0000")
+    expect_identical(underlay$gp$fill, "red")
     expect_s3_class(underlay, "pathgrob")
     expect_identical(underlay$rule, "winding")
     expect_true(is.na(underlay$gp$col))
@@ -486,5 +486,41 @@ test_that("theme_bw panel border retains its stroke with transparent fill", {
     expect_true(is.na(border$gp$fill))
     expect_false(is.na(border$gp$col))
     expect_true(any(panel$scene$fragments$layer_id > 0L))
+  })
+})
+
+test_that("shaded solids paint seam groups of non-overlapping faces over a two-tier underlay", {
+  angle <- seq(0, 2 * pi, length.out = 41)[-41]
+  disc <- data.frame(x = cos(angle), y = sin(angle), z = 0.3)
+  p <- ggplot2::ggplot(disc, ggplot2::aes(x, y, z = z)) + geom_extrude_3d(fill = "#2E6F9E") +
+    coord_3d(aspect = c(1, 1, 0.3), elevation = 35)
+  grid_test_device({
+    panel <- grid_test_panels(grid::grid.force(ggplot2::ggplotGrob(p)))[[1L]]
+    f <- panel$scene$fragments; rendered <- panel$children[[2L]]
+    faces <- panel$scene$draw_order[f$kind[panel$scene$draw_order] == 1L & f$layer_id[panel$scene$draw_order] > 0L]
+    expect_lt(length(unique(f$seam_group[faces])), length(faces) / 4)
+    for (run in rendered$fragment_runs) {
+      if (all(f$kind[run] == 1L & f$layer_id[run] > 0L)) expect_length(unique(f$seam_group[run]), 1L)
+    }
+    shaded <- Filter(function(g) inherits(g, "gTree") && length(g$children) == 3L, rendered$children)
+    expect_gt(length(shaded), 0L)
+    tiers <- shaded[[1L]]$children
+    expect_s3_class(tiers[[1L]], "pathgrob"); expect_length(tiers[[1L]]$gp$fill, 1L)
+    expect_s3_class(tiers[[2L]], "pathgrob"); expect_gt(length(tiers[[2L]]$gp$fill), 1L)
+    expect_s3_class(tiers[[3L]], "polygon")
+  })
+})
+
+test_that("fragments of one contour line paint as one stroke", {
+  bump <- expand.grid(x = seq(-2, 2, length.out = 25), y = seq(-2, 2, length.out = 25))
+  bump$z <- with(bump, exp(-(x^2 + y^2)) + 0.3 * exp(-((x - 1)^2 + (y + 1)^2) * 3))
+  p <- ggplot2::ggplot(bump, ggplot2::aes(x, y, z = z)) + geom_contour_3d(bins = 5) + coord_3d()
+  lines <- ggplot2::layer_data(p)
+  expect_true(all(table(lines$group) > 10L))
+  grid_test_device({
+    panel <- grid_test_panels(grid::grid.force(ggplot2::ggplotGrob(p)))[[1L]]
+    f <- panel$scene$fragments; rendered <- panel$children[[2L]]
+    contour <- Filter(function(run) all(f$kind[run] == 2L & f$layer_id[run] > 0L), rendered$fragment_runs)
+    expect_lte(length(contour), 2L * length(unique(lines$group)))
   })
 })

@@ -1,7 +1,7 @@
-# Render a camera path
+# Render a camera path or data that change over time
 
-Render a fixed scene from successive camera positions. Geometry and
-scales are built once; projection, visibility and lighting are evaluated
+Render a scene from successive camera positions, or draw one subset of
+the data per frame. Projection, visibility and lighting are evaluated
 per frame.
 
 ## Usage
@@ -21,7 +21,8 @@ animate_3d(
   height = 640L,
   dpi = 96,
   antialias = 1L,
-  progress = interactive()
+  progress = interactive(),
+  time = NULL
 )
 ```
 
@@ -36,12 +37,13 @@ animate_3d(
 
   A scalar, a numeric vector of length `frames`, or a function receiving
   times in seconds and returning either. NULL retains the plot setting,
-  except azimuth, which makes one full turn.
+  except azimuth without `time`, which makes one full turn.
 
 - frames:
 
   Number of frames, default 60. The closing view is excluded from the
-  default turn so that looping repeats each view once.
+  default turn so that looping repeats each view once. With `time`, one
+  frame per distinct value of the time column.
 
 - fps:
 
@@ -72,10 +74,19 @@ animate_3d(
 
   Report rendering time for each frame, default interactive().
 
+- time:
+
+  Name of a data column holding the frame of each row, or NULL (default)
+  for a fixed scene. Frame `i` draws the rows whose value equals the
+  `i`-th sorted distinct value; layers without the column appear in
+  every frame. Scales are trained on all frames, so limits, breaks and
+  colour mappings are the same in each frame.
+
 ## Value
 
 A ggplot3d_animation list with `file`, `frame_count`, `fps`, `camera`
-(one row per frame), `timings` in seconds, `build_seconds`, `frame`,
+(one row per frame, with the frame's `value` of the time column when
+`time` is set), `timings` in seconds, `build_seconds`, `frame`,
 `panel_extents` in millimetres, and `frames` (PNG paths when file is
 NULL). PNG frames returned with file = NULL belong to the caller.
 
@@ -85,7 +96,9 @@ Framing is "azimuth" for constant elevation and roll, and "sphere"
 otherwise. Axis reserves and physical panel extents are fixed. Zoom
 remains an explicit magnification. GIF needs gifski; MP4 needs av.
 Optional packages are checked before rendering. Rendering streams frames
-to disk.
+to disk. A fixed scene is built once; with `time`, each frame is built
+from its subset with the scale limits of the full data, as in
+gganimate's `transition_manual()` and plotly's `frame` aesthetic.
 
 ## Examples
 
@@ -96,5 +109,15 @@ if (requireNamespace("gifski", quietly = TRUE)) {
   movie <- animate_3d(p, frames = 3, width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$timings
+}
+waves <- expand.grid(x = seq(0, 1, length.out = 20), y = seq(0, 1, length.out = 20),
+                     t = seq(0, 0.75, by = 0.25))
+waves$z <- sin(pi * waves$x) * sin(pi * waves$y) * cos(2 * pi * waves$t)
+wave <- ggplot2::ggplot(waves, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d() + coord_3d()
+if (requireNamespace("gifski", quietly = TRUE)) {
+  movie <- animate_3d(wave, time = "t", width = 320, height = 320,
+                      file = tempfile(fileext = ".gif"))
+  movie$camera$value
 }
 ```

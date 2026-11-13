@@ -12,3 +12,10 @@
   raster output.
 - Compute function surfaces, fitted surfaces, density surfaces,
   ridgelines, convex hulls and scalar-field level surfaces.
+- Animate data that change over time with `animate_3d(time = )`: one
+  frame per value of a column, with scales trained on all frames.
+- [`geom_blank()`](https://ggplot2.tidyverse.org/reference/geom_blank.html)
+  and
+  [`expand_limits()`](https://ggplot2.tidyverse.org/reference/expand_limits.html)
+  train scales inside
+  [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).

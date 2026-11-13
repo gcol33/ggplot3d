@@ -54,7 +54,7 @@ h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
   coord_3d()
 ```
 
-The accepted ggplot2 geoms are points, paths, lines, segments, text and polygons. A layer without a z mapping is drawn at z = 0, and the z scale extends to include 0. Here the path is drawn a second time with `inherit.aes = FALSE`, so it lies flat at height 0 below the helix.
+The accepted ggplot2 geoms are points, paths, lines, segments, text, polygons and `geom_blank()`; `geom_contour()` and `geom_density_2d()` draw each line at the height of its level. A layer without a z mapping is drawn at z = 0, and the z scale extends to include 0. Here the path is drawn a second time with `inherit.aes = FALSE`, so it lies flat at height 0 below the helix.
 
 ```{r z-zero, fig.alt="The blue helix above a grey circle drawn at height zero; the z axis now starts at zero."}
 h + geom_path(colour = PAL["blue"], linewidth = 0.8) +

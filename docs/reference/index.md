@@ -127,7 +127,7 @@
 - [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md)
   : Select a 3D rendering backend
 - [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
-  : Render a camera path
+  : Render a camera path or data that change over time
 - [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
   : Explore a scene with orbit controls
 

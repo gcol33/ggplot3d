@@ -87,11 +87,13 @@ material_gp_3d <- function(styles, opacity, kind, fill = NULL) {
 }
 
 # Antialiasing is computed per path, so faces that share an edge inside one
-# compound path leave no seam along it. A run of opaque, unoutlined faces from
-# one layer is underlaid by the union of its faces, every face wound
-# counter-clockwise so overlapping faces never cancel, filled in their mean
-# colour. The faces cover the whole union right after it, so the underlay shows
-# only through their shared-edge antialiasing, in place of what lies behind.
+# compound path leave no seam along it. A run of opaque, unoutlined faces of
+# which no two overlap on screen (one seam group) is underlaid by the union of
+# its faces as one compound path in their mean colour, then, when the faces
+# differ in colour, by one compound path per colour. Every face is wound
+# counter-clockwise so overlapping rings never cancel. The faces cover the
+# union right after, so a shared edge blends the two faces' colours with at
+# most a sixteenth of the mean colour and nothing of what lies behind.
 seam_underlay_3d <- function(x, y, id, fill) {
   nxt <- unlist(lapply(split(seq_along(id), id), function(i) c(i[-1L], i[1L])), use.names = FALSE)
   area <- rowsum(x * y[nxt] - x[nxt] * y, id)[, 1L]
@@ -100,8 +102,17 @@ seam_underlay_3d <- function(x, y, id, fill) {
     reversed <- unlist(lapply(split(which(flip), id[flip]), rev), use.names = FALSE)
     x[flip] <- x[reversed]; y[flip] <- y[reversed]
   }
+  colours <- unique(fill)
   mean_fill <- grDevices::rgb(t(rowMeans(grDevices::col2rgb(fill))), maxColorValue = 255)
-  grid::pathGrob(x, y, id = id, rule = "winding", gp = grid::gpar(fill = mean_fill, col = NA))
+  union <- grid::pathGrob(x, y, id = id, rule = "winding", gp = grid::gpar(fill = mean_fill, col = NA))
+  if (length(colours) == 1L) {
+    union$gp$fill <- colours
+    return(grid::gList(union))
+  }
+  path <- match(fill, colours)[id]
+  order <- order(path, method = "radix")
+  grid::gList(union, grid::pathGrob(x[order], y[order], id = id[order], pathId = path[order],
+    rule = "winding", gp = grid::gpar(fill = colours, col = NA)))
 }
 
 mask_path_3d <- function(scene, rows) {
@@ -220,7 +231,7 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
   seam <- face & f$layer_id > 0L & f$opacity == 1 & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
-  key[face] <- paste(key[face], seam[face], ifelse(seam[face], f$layer_id[face], 0L), sep = ":")
+  key[face] <- paste(key[face], seam[face], ifelse(seam[face], paste(f$layer_id[face], f$seam_group[face]), 0L), sep = ":")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   grobs <- lapply(seq_along(runs), function(run) {
@@ -240,12 +251,25 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
       g <- grid::polygonGrob(x, y, id = id, gp = gp)
-      if (all(seam[rows]) && length(rows) > 1L) g <- grid::grobTree(seam_underlay_3d(x, y, id, fill), g)
+      if (all(seam[rows]) && length(rows) > 1L) g <- grid::grobTree(children = grid::gList(seam_underlay_3d(x, y, id, fill), g))
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]
       lty <- style_value_3d(s, "linetype", 1)
+      widths <- source
       if (all(lty %in% c("solid", "1") & !f$hidden[rows])) {
-        path_x <- x; path_y <- y; path_counts <- counts; npaths <- rep.int(1L, length(rows))
+        # Consecutive fragments of one path that continue where the previous
+        # one ended are drawn as one polyline, so their joint takes the line
+        # join instead of two line ends.
+        n <- length(rows); previous <- rows[-n]; current <- rows[-1L]
+        join <- c(FALSE, f$parent_primitive_id[current] == f$parent_primitive_id[previous] &
+          f$style_id[current] == f$style_id[previous] & f$opacity[current] == f$opacity[previous] &
+          abs(f$path_start_mm[current] - f$path_end_mm[previous]) <= 1e-9 * pmax(1, abs(f$path_end_mm[previous])))
+        path <- cumsum(!join); lead <- which(!join)
+        repeated <- rep(join, counts) & sequence(counts) == 1L
+        path_x <- x[!repeated]; path_y <- y[!repeated]
+        path_counts <- as.vector(rowsum(counts - join, path))
+        npaths <- rep.int(1L, length(lead)); widths <- source[lead]
+        gp <- material_gp_3d(s[lead, , drop = FALSE], f$opacity[rows[lead]], kind)
       } else {
         paths <- lapply(seq_along(rows), function(j) {
           i <- seq.int(starts[j], length.out = counts[j])
@@ -257,7 +281,7 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
         path_counts <- unlist(lapply(paths, `[[`, "count"))
         gp <- material_gp_3d(s[rep(seq_along(rows), npaths), , drop = FALSE], rep(f$opacity[rows], npaths), kind)
       }
-      gp$lty <- 1; gp$lwd <- rep(tab$width_mm[source] * 96 / 25.4, npaths)
+      gp$lty <- 1; gp$lwd <- rep(tab$width_mm[widths] * 96 / 25.4, npaths)
       gp$lineend <- c("butt", "round", "square")[tab$cap[source[1L]] + 1L]
       gp$linejoin <- c("round", "mitre", "bevel")[tab$join[source[1L]] + 1L]
       gp$linemitre <- tab$mitre_limit[source[1L]]

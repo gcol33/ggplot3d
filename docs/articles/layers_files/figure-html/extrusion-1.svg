@@ -393,6 +393,9 @@
 <polyline points='144.87,207.91 216.47,145.90 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='216.47,145.90 216.47,21.89 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <path d='M 266.50 233.63 L 331.59 177.26 L 331.59 64.52 L 266.50 120.89 ZM 153.76 88.34 L 266.50 120.89 L 331.59 64.52 L 218.85 31.97 ZM 153.76 201.08 L 266.50 233.63 L 266.50 120.89 L 153.76 88.34 Z' style='fill-rule: nonzero; fill: #23597F; stroke-width: 0.75; stroke: none;' />
+<path d='M 266.50 233.63 L 331.59 177.26 L 331.59 64.52 L 266.50 120.89 Z' style='fill-rule: nonzero; fill: #194361; stroke-width: 0.75; stroke: none;' />
+<path d='M 153.76 88.34 L 266.50 120.89 L 331.59 64.52 L 218.85 31.97 Z' style='fill-rule: nonzero; fill: #2A6792; stroke-width: 0.75; stroke: none;' />
+<path d='M 153.76 201.08 L 266.50 233.63 L 266.50 120.89 L 153.76 88.34 Z' style='fill-rule: nonzero; fill: #28628C; stroke-width: 0.75; stroke: none;' />
 <polygon points='266.50,233.63 331.59,177.26 331.59,64.52 266.50,120.89 ' style='stroke-width: 0.64; stroke: none; fill: #194361;' />
 <polygon points='153.76,88.34 266.50,120.89 331.59,64.52 218.85,31.97 ' style='stroke-width: 0.64; stroke: none; fill: #2A6792;' />
 <polygon points='153.76,201.08 266.50,233.63 266.50,120.89 153.76,88.34 ' style='stroke-width: 0.64; stroke: none; fill: #28628C;' />

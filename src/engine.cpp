@@ -278,7 +278,7 @@ Rcpp::List write_result(const CompiledScene& scene, const ScenePacket& packet,
   fragments["normal_z"] = Rcpp::wrap(f.normal_z); fragments["path_start_mm"] = Rcpp::wrap(f.path_start_mm);
   fragments["path_end_mm"] = Rcpp::wrap(f.path_end_mm); fragments["clipped"] = booleans(f.clipped);
   fragments["hidden"] = booleans(f.hidden); fragments["arrow_start"] = booleans(f.arrow_start);
-  fragments["arrow_end"] = booleans(f.arrow_end);
+  fragments["arrow_end"] = booleans(f.arrow_end); fragments["seam_group"] = indices(f.seam_group);
   Rcpp::List camera = Rcpp::List::create(
     Rcpp::Named("view")=matrix(c.view), Rcpp::Named("projection")=matrix(c.projection),
     Rcpp::Named("eye")=c.eye, Rcpp::Named("right")=c.right, Rcpp::Named("up")=c.up,

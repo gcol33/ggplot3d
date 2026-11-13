@@ -1,0 +1,406 @@
+# Gallery
+
+This article draws three-dimensional versions of common ggplot2 charts:
+curves, function plots, histograms, grouped bars, pie charts, time
+series, fitted surfaces, densities and contour lines. Each section names
+the ggplot2 layer it corresponds to and shows which variables move to
+the z axis.
+[Layers](https://gillescolling.com/ggplot3d/articles/layers.md) gives a
+minimal example of every geom and stat; installation is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+
+## Parametric curves
+
+In ggplot2,
+[`geom_path()`](https://ggplot2.tidyverse.org/reference/geom_path.html)
+joins rows in the order they appear in the data.
+[`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
+does the same with a third coordinate, so any curve given as a function
+of a parameter can be drawn by sampling the parameter. The trefoil knot
+below is traced by three sine and cosine terms in a parameter `t` from 0
+to 2π.
+
+``` r
+
+t <- seq(0, 2 * pi, length.out = 300)
+knot <- data.frame(x = sin(t) + 2 * sin(2 * t),
+                   y = cos(t) - 2 * cos(2 * t),
+                   z = -sin(3 * t))
+ggplot(knot, aes(x, y, z = z)) +
+  geom_path_3d(linewidth = 1.2, colour = PAL["blue"]) +
+  coord_3d()
+```
+
+![A blue trefoil knot drawn as a closed curve in three dimensions,
+crossing itself three times.](gallery_files/figure-html/knot-1.svg)
+
+At each of the three crossings, the strand nearer the camera is drawn
+over the other.
+
+## Functions of two variables
+
+[`geom_function()`](https://ggplot2.tidyverse.org/reference/geom_function.html)
+draws a function of x as a line.
+[`geom_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
+samples a function of x and y on a grid and draws the result as a
+surface. The x and y limits set the sampling range, and `n` sets the
+number of grid points along each axis. The function below is the radial
+sinc, sin(r)/r, where r is the distance from the origin.
+
+``` r
+
+sinc <- function(x, y) {
+  r <- sqrt(x^2 + y^2)
+  sin(r) / r
+}
+ggplot() +
+  geom_function_3d(aes(fill = after_stat(z_mean)), fun = sinc, n = 40) +
+  xlim(-10, 10) + ylim(-10, 10) +
+  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"]) +
+  coord_3d()
+```
+
+![A surface with a central peak of height one surrounded by concentric
+ripples, shaded from light to dark blue with
+height.](gallery_files/figure-html/sinc-1.svg)
+
+The fill maps `z_mean`, the mean height of each triangle, so the ripples
+are distinguished by shade as well as by position.
+
+## Bézier curves
+
+A cubic Bézier curve is defined by four control points P0 to P3. For a
+parameter s from 0 to 1, the curve passes through (1 - s)^3 P0 + 3s(1 -
+s)^2 P1 + 3s^2(1 - s) P2 + s^3 P3. It starts at P0 and ends at P3; P1
+and P2 pull it towards them without lying on it. Write the four weights
+as columns of a matrix and multiply by the control points to get the
+sampled curve.
+
+``` r
+
+ctrl <- data.frame(x = c(0, 1, 3, 4), y = c(0, 3, -1, 2),
+                   z = c(0, 3, 3, 0))
+s <- seq(0, 1, length.out = 100)
+weights <- cbind((1 - s)^3, 3 * s * (1 - s)^2, 3 * s^2 * (1 - s), s^3)
+bezier <- as.data.frame(weights %*% as.matrix(ctrl))
+head(bezier, 3)
+#>            x          y          z
+#> 1 0.00000000 0.00000000 0.00000000
+#> 2 0.03060706 0.08878088 0.08999082
+#> 3 0.06181394 0.17336306 0.17814509
+```
+
+In two dimensions the sampled points would go to
+[`geom_path()`](https://ggplot2.tidyverse.org/reference/geom_path.html).
+Here the curve is a
+[`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
+layer, and the control polygon is a dashed path through the control
+points.
+
+``` r
+
+ggplot(bezier, aes(x, y, z = z)) +
+  geom_path_3d(data = ctrl, linetype = "dashed", colour = PAL["grey"]) +
+  geom_point_3d(data = ctrl, size = 3, colour = PAL["grey"]) +
+  geom_path_3d(linewidth = 1.2, colour = PAL["blue"]) +
+  coord_3d()
+```
+
+![A blue cubic Bezier curve rising from the first control point and
+returning to the floor at the fourth, with a dashed grey control polygon
+joining the four grey control
+points.](gallery_files/figure-html/bezier-1.svg)
+
+The curve touches the polygon only at its two end points, and it leaves
+each end along the polygon’s first and last edge.
+
+## Bivariate histograms
+
+[`geom_bin_2d()`](https://ggplot2.tidyverse.org/reference/geom_bin_2d.html)
+counts observations in rectangular cells of two continuous variables and
+shows each count as a fill colour. In three dimensions the count becomes
+the height of a column. The `faithful` data record the duration of 272
+eruptions of the Old Faithful geyser and the waiting time before each,
+both in minutes. Assign each eruption to a cell 0.5 minutes wide in
+duration and 5 minutes wide in waiting time, then count the eruptions in
+each cell.
+
+``` r
+
+duration <- 0.5 * floor(faithful$eruptions / 0.5) + 0.25
+waiting <- 5 * floor(faithful$waiting / 5) + 2.5
+bins <- aggregate(list(count = duration),
+                  list(duration = duration, waiting = waiting), length)
+head(bins, 3)
+#>   duration waiting count
+#> 1     1.75    42.5     1
+#> 2     1.75    47.5    14
+#> 3     2.25    47.5     6
+```
+
+Each row of `bins` holds a cell centre and its count; empty cells have
+no row.
+[`geom_col_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
+draws one column per row, and setting `width` and `depth` to the bin
+widths makes neighbouring columns touch, as histogram bars do.
+
+``` r
+
+ggplot(bins, aes(duration, waiting, z = count)) +
+  geom_col_3d(width = 0.5, depth = 5, fill = PAL["blue"]) +
+  coord_3d()
+```
+
+![Columns counting Old Faithful eruptions by duration and waiting time,
+forming two clusters: short eruptions after short waits and long
+eruptions after long waits.](gallery_files/figure-html/hist-1.svg)
+
+The two clusters are the short eruptions after waits of about 50 minutes
+and the long eruptions after waits of about 80 minutes.
+
+## Grouped bar charts
+
+`geom_col(position = "dodge")` places the bars of a second grouping
+variable side by side within each x category. In three dimensions the
+second variable takes the y axis. Compute the median price of the
+diamonds in each combination of cut grade and four of the seven colour
+grades, from D (colourless) to J.
+
+``` r
+
+some_colours <- subset(diamonds, color %in% c("D", "F", "H", "J"))
+some_colours$color <- droplevels(some_colours$color)
+prices <- aggregate(price ~ cut + color, data = some_colours,
+                    FUN = median)
+head(prices, 3)
+#>         cut color  price
+#> 1      Fair     D 3730.0
+#> 2      Good     D 2728.5
+#> 3 Very Good     D 2310.0
+```
+
+Both factors map to position directly, and the median price maps to z.
+The x axis has room for only some of the five cut names, so the fill
+repeats the cut grade with a legend.
+
+``` r
+
+ggplot(prices, aes(cut, color, z = price, fill = cut)) +
+  geom_col_3d() +
+  scale_fill_manual(values = unname(PAL[1:5])) +
+  coord_3d() +
+  theme(legend.position = "right")
+```
+
+![Columns of median diamond price by cut grade along x and colour grade
+along y; for the Very Good, Premium and Ideal cuts the price rises from
+colour D to colour J.](gallery_files/figure-html/grouped-1.svg)
+
+For the Very Good, Premium and Ideal cuts, the median price rises from
+colour D to colour J. The Fair and Good cuts have a higher median at D
+than at F.
+
+## Pie charts
+
+A ggplot2 pie chart is a stacked bar in `coord_polar(theta = "y")`. In
+three dimensions each slice is a wedge polygon raised to a common height
+with
+[`geom_extrude_3d()`](https://gillescolling.com/ggplot3d/reference/geom_extrude_3d.md).
+The data give the share of each cut grade among all diamonds; each wedge
+spans an angle proportional to its share, sampled at 40 points on its
+arc.
+
+``` r
+
+share <- prop.table(table(diamonds$cut))
+edges <- c(0, cumsum(share)) * 2 * pi
+wedges <- do.call(rbind, lapply(seq_along(share), function(i) {
+  arc <- seq(edges[i], edges[i + 1], length.out = 40)
+  data.frame(cut = names(share)[i], x = c(0, cos(arc)), y = c(0, sin(arc)))
+}))
+round(share, 2)
+#> 
+#>      Fair      Good Very Good   Premium     Ideal 
+#>      0.03      0.09      0.22      0.26      0.40
+```
+
+Each wedge starts at the centre and runs along its arc; `group = cut`
+keeps the five polygons apart. The extrusion height is a constant `z`,
+and the aspect flattens the disc.
+
+``` r
+
+wedges$cut <- factor(wedges$cut, levels = names(share))
+ggplot(wedges, aes(x, y, z = 0.2, group = cut, fill = cut)) +
+  geom_extrude_3d() +
+  scale_fill_manual(values = unname(PAL[1:5])) +
+  coord_3d(aspect = c(1, 1, 0.2), elevation = 35, axes = character(),
+           panes = character(), box = "none") +
+  theme(legend.position = "right")
+```
+
+![A flat three-dimensional pie of five coloured wedges for the diamond
+cut grades; the Ideal wedge covers about two fifths of the disc and the
+Fair wedge the smallest sliver.](gallery_files/figure-html/pie-1.svg)
+
+Ideal diamonds make up 40% of the data and Fair diamonds 3%. The walls
+are lit by their angle to the light, so the front of the disc is darker
+than the top.
+
+## Several series over time
+
+A line chart of several series maps time to x and each series to a
+colour (`geom_line(aes(colour = variable))`). In three dimensions each
+series gets its own position on y. A wall runs from zero up to its
+value. `economics_long` holds monthly US economic series in long format,
+with `value01` rescaled to run from 0 to 1 in each series. Three of them
+are used here: the personal savings rate, the median duration of
+unemployment and the number of unemployed.
+
+``` r
+
+econ <- subset(economics_long,
+               variable %in% c("psavert", "uempmed", "unemploy"))
+econ$series <- match(econ$variable, c("psavert", "uempmed", "unemploy"))
+range(econ$value01)
+#> [1] 0 1
+```
+
+[`geom_band_3d()`](https://gillescolling.com/ggplot3d/reference/geom_band_3d.md)
+with `zmin` and `zmax` mapped draws a vertical wall along the x/y path
+of each group. The y axis labels as many series names as fit along its
+edge, and the legend names all three.
+
+``` r
+
+ggplot(econ, aes(date, series, zmin = 0, zmax = value01,
+                 group = variable, fill = variable)) +
+  geom_band_3d() +
+  scale_y_continuous(breaks = 1:3,
+                     labels = c("psavert", "uempmed", "unemploy")) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  coord_3d(azimuth = -50, aspect = c(1.6, 1, 0.8)) +
+  theme(legend.position = "right")
+```
+
+![Three walls along the date axis from 1967 to 2015, one each for the
+savings rate, median unemployment duration and number of unemployed,
+with heights rescaled to zero to
+one.](gallery_files/figure-html/series-1.svg)
+
+Both unemployment series reach their highest values in 2009 and 2010.
+The savings rate falls from above 12% in the early 1970s to its lowest
+value in 2005.
+
+## Scatter plots with a fitted surface
+
+[`geom_smooth()`](https://ggplot2.tidyverse.org/reference/geom_smooth.html)
+fits y as a function of x and draws the fitted line over the points.
+[`geom_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
+fits z as a function of x and y and draws the fitted surface. Here the
+`mtcars` fuel consumption (`mpg`, miles per gallon) is modelled by
+weight (`wt`, in 1,000 lb) and gross horsepower (`hp`). The formula uses
+the names x, y and z for the mapped variables and adds a quadratic term
+in weight.
+
+``` r
+
+ggplot(mtcars, aes(wt, hp, z = mpg)) +
+  geom_smooth_3d(method = "lm", formula = z ~ x + I(x^2) + y,
+                 n = 20, fill = PAL["blue"]) +
+  geom_point_3d(size = 2.5, colour = PAL["red"]) +
+  coord_3d()
+```
+
+![A dark blue fitted surface of miles per gallon against weight and
+horsepower, curving down with weight, between two pale confidence
+surfaces, with red points for the 32
+cars.](gallery_files/figure-html/smooth-1.svg)
+
+The pale surfaces above and below the fit are the pointwise 95%
+confidence bounds for the mean, the counterpart of the grey ribbon
+around
+[`geom_smooth()`](https://ggplot2.tidyverse.org/reference/geom_smooth.html).
+Points below the fitted surface are hidden by it.
+
+## Two-dimensional densities
+
+[`geom_density_2d()`](https://ggplot2.tidyverse.org/reference/geom_density_2d.html)
+draws contour lines of a bivariate kernel density estimate.
+[`stat_density_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_2d_3d.md)
+computes the same kind of estimate and draws the density as height. The
+sample below holds 2,000 diamonds under 2.5 carats, with price on a
+log10 scale.
+
+``` r
+
+set.seed(1)
+small <- subset(diamonds, carat < 2.5)
+small <- small[sample(nrow(small), 2000), ]
+ggplot(small, aes(carat, log10(price))) +
+  stat_density_2d_3d(aes(fill = after_stat(density)), n = 40) +
+  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"]) +
+  coord_3d()
+```
+
+![A density surface over carat and log10 price, with its highest peak
+just above 0.3 carats and smaller peaks near 0.7, 1 and 1.5 carats,
+shaded by density.](gallery_files/figure-html/density-1.svg)
+
+The peaks follow a ridge that rises in price with carat. They sit just
+above 0.3, 0.7, 1 and 1.5 carats, where the sample holds more stones
+than at neighbouring weights.
+
+## Contour lines
+
+[`geom_contour()`](https://ggplot2.tidyverse.org/reference/geom_contour.html)
+draws the lines where a gridded height crosses a set of levels.
+[`geom_contour_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
+draws the same lines on the surface, each at the height of its level.
+`volcano` holds heights in metres of Maunga Whau on a 10 m grid, 87 rows
+by 61 columns.
+
+``` r
+
+heights <- data.frame(x = rep(seq_len(nrow(volcano)), ncol(volcano)),
+                      y = rep(seq_len(ncol(volcano)), each = nrow(volcano)),
+                      z = as.vector(volcano))
+range(heights$z)
+#> [1]  94 195
+```
+
+A grey surface carries the lines, drawn every 10 m and coloured by
+level.
+
+``` r
+
+ggplot(heights, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey80", colour = NA) +
+  geom_contour_3d(aes(colour = after_stat(level)), binwidth = 10,
+                  linewidth = 0.6) +
+  scale_colour_gradient(low = PAL["blue"], high = PAL["red"]) +
+  coord_3d(azimuth = -40, elevation = 40, aspect = c(1.4, 1, 0.6))
+```
+
+![A grey surface of the Maunga Whau volcano with contour lines every ten
+metres, coloured from blue at 100 metres to red at 190 metres, ringing
+the crater.](gallery_files/figure-html/contour-1.svg)
+
+The lines close round the summit and the crater rim. Lines on the far
+slope are hidden where the near slope covers them. ggplot2’s own
+[`geom_contour()`](https://ggplot2.tidyverse.org/reference/geom_contour.html)
+also works inside
+[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
+drawing each line at its level without the surface.
+
+## Where next
+
+- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md): a
+  minimal example of every geom and stat.
+
+- [Camera and
+  framing](https://gillescolling.com/ggplot3d/articles/camera.md):
+  change the viewing angles used above.
+
+- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
+  how overlapping geometry is ordered.
