@@ -99,9 +99,9 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL
     stat = stat,
     compute_statistic = function(self, data, layout) {
       out <- ggplot2::ggproto_parent(parent, self)$compute_statistic(data, layout)
-      # Contour stats replace z by the level of each line; a line is drawn at
-      # its own level.
-      if (!"z" %in% names(out) && "level" %in% names(out) && is.numeric(out$level)) out$z <- out$level
+      # Contours lie at their numeric level; filled bands lie at their midpoint.
+      level <- out$level_mid %or3d% out$level
+      if (!"z" %in% names(out) && is.numeric(level)) out$z <- level
       out
     },
     aes_params = layer$aes_params[setdiff(names(layer$aes_params), names(fixed))],
