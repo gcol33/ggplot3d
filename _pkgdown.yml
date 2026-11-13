@@ -106,6 +106,7 @@ reference:
   - geom_path_3d
   - geom_segment_3d
   - geom_text_3d
+  - geom_label_3d
   - geom_polygon_3d
   - geom_band_3d
   - geom_dropline_3d

@@ -45,8 +45,9 @@ makeContent.scene_panel_grob <- function(x) {
   decorations <- furniture_overlay_3d(furniture, scene, x$theme)
   background <- ggplot2::element_render(x$theme, "panel.background")
   border <- ggplot2::element_render(x$theme, "panel.border", fill = NA)
-  project <- furniture_projector_3d(furniture)
-  overlay <- lapply(x$overlay, place_annotation_3d, project)
+  context <- list(project = furniture_projector_3d(furniture), width_mm = outer$width_mm,
+    height_mm = outer$height_mm, state = x$panel_params$coord_params$label_state)
+  overlay <- lapply(x$overlay, place_overlay_3d, context)
   children <- c(list(background), x$underlay, list(rendered, decorations, border), overlay)
   x$scene <- scene; x$furniture <- decorations; x$inner_viewport <- furniture$viewport; x$outer_viewport <- outer
   grid::setChildren(x, do.call(grid::gList, children))

@@ -251,6 +251,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// repel_labels_cpp
+Rcpp::List repel_labels_cpp(Rcpp::NumericMatrix anchors, Rcpp::NumericVector radius, Rcpp::IntegerVector owner, Rcpp::NumericMatrix start, Rcpp::NumericMatrix half, Rcpp::NumericVector bounds, double force, double force_pull, int max_iter, double max_time, int max_overlaps, int direction, double seed, bool jitter);
+RcppExport SEXP _ggplot3d_repel_labels_cpp(SEXP anchorsSEXP, SEXP radiusSEXP, SEXP ownerSEXP, SEXP startSEXP, SEXP halfSEXP, SEXP boundsSEXP, SEXP forceSEXP, SEXP force_pullSEXP, SEXP max_iterSEXP, SEXP max_timeSEXP, SEXP max_overlapsSEXP, SEXP directionSEXP, SEXP seedSEXP, SEXP jitterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type anchors(anchorsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type owner(ownerSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type start(startSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type half(halfSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type bounds(boundsSEXP);
+    Rcpp::traits::input_parameter< double >::type force(forceSEXP);
+    Rcpp::traits::input_parameter< double >::type force_pull(force_pullSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< double >::type max_time(max_timeSEXP);
+    Rcpp::traits::input_parameter< int >::type max_overlaps(max_overlapsSEXP);
+    Rcpp::traits::input_parameter< int >::type direction(directionSEXP);
+    Rcpp::traits::input_parameter< double >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< bool >::type jitter(jitterSEXP);
+    rcpp_result_gen = Rcpp::wrap(repel_labels_cpp(anchors, radius, owner, start, half, bounds, force, force_pull, max_iter, max_time, max_overlaps, direction, seed, jitter));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sweep_frames_cpp
 Rcpp::List sweep_frames_cpp(Rcpp::NumericMatrix xyz, bool closed, Rcpp::NumericVector hint);
 RcppExport SEXP _ggplot3d_sweep_frames_cpp(SEXP xyzSEXP, SEXP closedSEXP, SEXP hintSEXP) {
@@ -296,6 +319,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_delaunay3_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay3_cpp, 1},
     {"_ggplot3d_geometry_alpha_shape_cpp", (DL_FUNC) &_ggplot3d_geometry_alpha_shape_cpp, 2},
     {"_ggplot3d_geometry_rbf_cpp", (DL_FUNC) &_ggplot3d_geometry_rbf_cpp, 4},
+    {"_ggplot3d_repel_labels_cpp", (DL_FUNC) &_ggplot3d_repel_labels_cpp, 14},
     {"_ggplot3d_sweep_frames_cpp", (DL_FUNC) &_ggplot3d_sweep_frames_cpp, 3},
     {"_ggplot3d_voxel_faces_cpp", (DL_FUNC) &_ggplot3d_voxel_faces_cpp, 4},
     {NULL, NULL, 0}

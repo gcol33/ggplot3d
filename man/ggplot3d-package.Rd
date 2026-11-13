@@ -19,6 +19,10 @@ scene is the same for every thread count.}
 \item{\code{ggplot3d.cache_bytes}}{Memory, in bytes, kept for recently compiled
 scenes, so that redrawing a plot at the same size and view skips the
 compiler. Defaults to 256 MiB; 0 turns the cache off.}
+\item{\code{ggplot3d.max.overlaps}}{Default \code{max.overlaps} of
+\code{\link[=geom_text_repel_3d]{geom_text_repel_3d()}} and \code{\link[=geom_label_repel_3d]{geom_label_repel_3d()}}: a label that
+overlaps more labels and points than this where it starts is not drawn.
+Defaults to 10.}
 }
 }
 

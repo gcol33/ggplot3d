@@ -38,8 +38,9 @@ text_size_pt_3d <- function(size.unit) {
 }
 
 # Padding and corner radius in mm. Units relative to text (lines, char) refer
-# to each label's own font size, as in ggplot2.
+# to each label's own font size, as in ggplot2; a plain number is in lines.
 label_unit_mm_3d <- function(value, fontsize, lineheight) {
+  if (is.numeric(value) && !grid::is.unit(value)) value <- grid::unit(value, "lines")
   value <- value[1L]
   type <- grid::unitType(value)
   if (type == "lines") return(as.numeric(value) * fontsize * lineheight * 25.4 / 72.27)
@@ -47,14 +48,25 @@ label_unit_mm_3d <- function(value, fontsize, lineheight) {
   rep(grid::convertUnit(value, "mm", valueOnly = TRUE), length(fontsize))
 }
 
-emit_labels_3d <- function(data, params, panel_params) {
-  fontsize <- data$size * text_size_pt_3d(params$size.unit)
-  lineheight <- data$lineheight %or3d% rep(1.2, nrow(data))
-  data$label_padding <- label_unit_mm_3d(params$label.padding %or3d% grid::unit(0.25, "lines"), fontsize, lineheight)
-  data$label_r <- label_unit_mm_3d(params$label.r %or3d% grid::unit(0.15, "lines"), fontsize, lineheight)
+# Font size in points and line height of each text row.
+text_rows_metrics_3d <- function(data, params) {
+  list(fontsize = data$size * text_size_pt_3d(params$size.unit),
+       lineheight = data$lineheight %or3d% rep(1.2, nrow(data)))
+}
+
+# The style columns of a label box: padding, corner radius, border colour, and
+# the text colour when it differs from the border.
+label_box_columns_3d <- function(data, params) {
+  metrics <- text_rows_metrics_3d(data, params)
+  data$label_padding <- label_unit_mm_3d(params$label.padding %or3d% grid::unit(0.25, "lines"), metrics$fontsize, metrics$lineheight)
+  data$label_r <- label_unit_mm_3d(params$label.r %or3d% grid::unit(0.15, "lines"), metrics$fontsize, metrics$lineheight)
   data$border_colour <- rep(params$border.colour %or3d% data$colour, length.out = nrow(data))
   if (!is.null(params$text.colour)) data$colour <- rep(params$text.colour, length.out = nrow(data))
-  emit_text_3d(data, params, panel_params)
+  data
+}
+
+emit_labels_3d <- function(data, params, panel_params) {
+  emit_text_3d(label_box_columns_3d(data, params), params, panel_params)
 }
 
 # An annotation grob fills the screen rectangle that bounds its x/y rectangle
@@ -70,9 +82,18 @@ annotation_emitter_3d <- function(make_grob) {
   }
 }
 
-place_annotation_3d <- function(grob, project) {
-  if (!inherits(grob, "scene_annotation_grob")) return(grob)
-  xy <- project(grob$corners)[, 1:2, drop = FALSE]
+# Overlay grobs that depend on the projection are placed at draw time. The
+# context holds the projector from frame positions to panel millimetres, the
+# panel size in millimetres, and the state kept across the frames of an
+# animation (NULL otherwise).
+place_overlay_3d <- function(grob, context) UseMethod("place_overlay_3d")
+
+#' @export
+place_overlay_3d.default <- function(grob, context) grob
+
+#' @export
+place_overlay_3d.scene_annotation_grob <- function(grob, context) {
+  xy <- context$project(grob$corners)[, 1:2, drop = FALSE]
   if (any(!is.finite(xy))) return(grid::nullGrob())
   low <- apply(xy, 2L, min); high <- apply(xy, 2L, max)
   grob$vp <- grid::viewport(grid::unit(low[1L], "mm"), grid::unit(low[2L], "mm"),

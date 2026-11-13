@@ -123,6 +123,8 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   build_seconds <- proc.time()[["elapsed"]] - start
   timings <- numeric(frames)
   extents <- vector("list", frames)
+  # Repelled labels start each frame where the previous frame left them.
+  label_state <- new.env(parent = emptyenv())
   for (i in seq_len(frames)) {
     start <- proc.time()[["elapsed"]]
     if (i > 1L) {
@@ -136,6 +138,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
       params$coord_params$backend <- backend
       params$coord_params$frame <- frame
       params$coord_params$frame_registry <- registry
+      params$coord_params$label_state <- label_state
       scene_panel_grob(panel$packets, params, panel$theme, panel$underlay, panel$overlay)
     })
     forced <- grid::grid.force(current)
