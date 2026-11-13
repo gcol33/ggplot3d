@@ -1,11 +1,12 @@
 # Pixel comparison of the raster renderer against a saved reference run.
 #   Rscript bench/raster-compare.R save <reference.rds>
-#   Rscript bench/raster-compare.R compare <reference.rds>
+#   Rscript bench/raster-compare.R compare <reference.rds> [linear|srgb]
 # The scene set covers the oracle fixtures under three cameras, the stroke
 # styling scenes of the raster tests and reduced bench scenes.
 Sys.setlocale("LC_ALL", "C")
 args <- commandArgs(TRUE)
 mode <- args[1L]; path <- args[2L]
+blend <- if (length(args) >= 3L) args[3L] else "linear"
 suppressMessages(devtools::load_all(quiet = TRUE))
 source("tests/fixtures/oracle/reference.R")
 source("tests/fixtures/scenes/builders.R")
@@ -43,7 +44,7 @@ compare_scenes <- function() {
 }
 
 render <- function(scenes) lapply(scenes, function(f) lapply(c(1L, 2L), function(aa) {
-  r <- ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, aa)
+  r <- ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, aa, blend = blend)
   r[c("image", "id", "text", "passes", "extent", "width", "height")]
 }))
 

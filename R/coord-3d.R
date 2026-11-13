@@ -19,6 +19,10 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #' @param type Backend, vector or raster.
 #' @param dpi Physical raster resolution.
 #' @param antialias Positive integer supersampling factor.
+#' @param blend Colour space in which the raster backend composites
+#'   translucent paint and averages antialiasing samples: `"linear"` light,
+#'   encoded to sRGB after averaging, or `"srgb"`, which matches the
+#'   compositing of vector graphics devices.
 #' @details The raster backend renders 64-pixel tiles in parallel. The number
 #'   of worker threads is the option `ggplot3d.threads`; the default `0` uses
 #'   one thread per hardware thread, at most two when `_R_CHECK_LIMIT_CORES_`
@@ -27,11 +31,13 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #' @examples
 #' backend_3d("vector")
 #' backend_3d("raster", dpi = 144, antialias = 2)
+#' backend_3d("raster", blend = "srgb")
 #' @export
-backend_3d <- function(type = "vector", dpi = 144, antialias = 2L) {
+backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "linear") {
   stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
             is.finite(antialias), antialias >= 1, antialias == trunc(antialias))
-  list(type = match.arg(type, c("vector", "raster")), dpi = dpi, antialias = as.integer(antialias))
+  list(type = match.arg(type, c("vector", "raster")), dpi = dpi, antialias = as.integer(antialias),
+       blend = match.arg(blend, c("linear", "srgb")))
 }
 
 #' Exact three-dimensional panel coordinates

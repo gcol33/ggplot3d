@@ -260,9 +260,12 @@ static inline void add_arrowheads(Scene& scene,std::vector<Paint>& paint,Rcpp::N
 }
 
 // Sample grid of the canvas: sample centres sit at origin + (index + 0.5) * step.
+// With `linear`, paints are composited and averaged in linear light and the
+// averaged pixel is sRGB-encoded.
 struct Canvas {
   double origin_x=0,origin_y=0,dx=1,dy=1;
   int width=0,height=0,aa=1,w=0,h=0;
+  bool linear=false;
   int tile=64,tiles_x=0,tiles_y=0;
   std::array<int,4> samples(const std::array<double,4>& b) const {
     return {static_cast<int>(std::max(0.0,std::min(static_cast<double>(w),std::ceil((b[0]-origin_x)/dx-.5)))),
@@ -381,6 +384,11 @@ struct TileScratch {
   std::vector<Index> order,painted;
 };
 
+// IEC 61966-2-1 sRGB transfer function and its inverse.
+static inline double srgb_decode(double v) {return v<=0.04045 ? v/12.92:std::pow((v+0.055)/1.055,2.4);}
+static inline double srgb_encode(double v) {return v<=0.0031308 ? 12.92*v:1.055*std::pow(v,1/2.4)-0.055;}
+static inline Colour linear_colour(const Colour& c) {return {srgb_decode(c.r),srgb_decode(c.g),srgb_decode(c.b),c.a};}
+
 static inline std::uint32_t channel_byte(double value) {
   return static_cast<std::uint32_t>(std::round(std::max(0.0,std::min(1.0,value))*255));
 }
@@ -455,7 +463,11 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
     }
     double alpha=sum.a/(static_cast<double>(aa)*aa);
     std::uint32_t packed=channel_byte(alpha)<<24;
-    if(sum.a>0) packed|=channel_byte(sum.r/sum.a)|(channel_byte(sum.g/sum.a)<<8)|(channel_byte(sum.b/sum.a)<<16);
+    if(sum.a>0) {
+      Colour c{sum.r/sum.a,sum.g/sum.a,sum.b/sum.a,0};
+      if(canvas.linear) c={srgb_encode(c.r),srgb_encode(c.g),srgb_encode(c.b),0};
+      packed|=channel_byte(c.r)|(channel_byte(c.g)<<8)|(channel_byte(c.b)<<16);
+    }
     std::size_t pixel=static_cast<std::size_t>(canvas.height-1-py)*canvas.width+px;
     const SampleResult& centre=s.results[static_cast<std::size_t>(py*aa+aa/2-sy0)*tw+px*aa+aa/2-sx0];
     out.image[pixel]=packed;
@@ -499,7 +511,7 @@ static inline int thread_count(int requested,int tiles) {
 }
 
 static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
-                              int width,int height,int aa,bool id_pass,int threads,bool keep_buffers) {
+                              int width,int height,int aa,bool id_pass,int threads,bool keep_buffers,bool linear) {
   auto start=Clock::now();
   Rcpp::XPtr<Scene> holder(pointer); Scene& scene=*holder;
   struct Restore {
@@ -509,7 +521,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   require(width>0 && height>0 && aa>0,"raster dimensions and antialias must be positive");
   auto paint=paints(scene,colours,dashes,id_pass);
   add_arrowheads(scene,paint,colours[1],restore.items);
-  Canvas canvas;
+  if(linear) for(auto& p:paint) {p.colour=linear_colour(p.colour);p.outline=linear_colour(p.outline);}
+  Canvas canvas; canvas.linear=linear;
   double pixel_x=scene.projection.viewport.width_mm/width,pixel_y=scene.projection.viewport.height_mm/height;
   if(!scene.projection.camera.clip) {
     double xmax=scene.projection.viewport.width_mm,ymax=scene.projection.viewport.height_mm;

@@ -4,7 +4,7 @@
 \alias{backend_3d}
 \title{Select a 3D rendering backend}
 \usage{
-backend_3d(type = "vector", dpi = 144, antialias = 2L)
+backend_3d(type = "vector", dpi = 144, antialias = 2L, blend = "linear")
 }
 \arguments{
 \item{type}{Backend, vector or raster.}
@@ -12,6 +12,11 @@ backend_3d(type = "vector", dpi = 144, antialias = 2L)
 \item{dpi}{Physical raster resolution.}
 
 \item{antialias}{Positive integer supersampling factor.}
+
+\item{blend}{Colour space in which the raster backend composites
+translucent paint and averages antialiasing samples: \code{"linear"} light,
+encoded to sRGB after averaging, or \code{"srgb"}, which matches the
+compositing of vector graphics devices.}
 }
 \value{
 A backend configuration for coord_3d().
@@ -28,4 +33,5 @@ is set. The image does not depend on the thread count.
 \examples{
 backend_3d("vector")
 backend_3d("raster", dpi = 144, antialias = 2)
+backend_3d("raster", blend = "srgb")
 }

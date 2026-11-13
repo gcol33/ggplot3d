@@ -21,7 +21,7 @@ raster_prepare_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_raster_prepare_cpp`, packet, camera, viewport)
 }
 
-raster_draw_cpp <- function(scene, colours, dashes, width, height, antialias, id_pass, threads, buffers) {
-    .Call(`_ggplot3d_raster_draw_cpp`, scene, colours, dashes, width, height, antialias, id_pass, threads, buffers)
+raster_draw_cpp <- function(scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear) {
+    .Call(`_ggplot3d_raster_draw_cpp`, scene, colours, dashes, width, height, antialias, id_pass, threads, buffers, linear)
 }
 

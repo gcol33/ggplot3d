@@ -50,7 +50,8 @@ raster_threads_3d <- function() {
 }
 
 raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NULL,
-                           id_pass = FALSE, buffers = FALSE) {
+                           id_pass = FALSE, buffers = FALSE, blend = "linear") {
+  blend <- match.arg(blend, c("linear", "srgb"))
   validate_camera_3d(camera)
   prepared <- raster_prepare_cpp(packet[names(packet) != "styles"], camera, viewport)
   colours <- raster_colours_3d(packet, prepared, light)
@@ -63,7 +64,7 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
   scene_assert(all(is.finite(pixels)) && all(pixels <= .Machine$integer.max), "Unrepresentable raster dimensions.")
   result <- raster_draw_cpp(prepared$pointer, colours, dashes,
     as.integer(pixels[1L]), as.integer(pixels[2L]), as.integer(antialias), id_pass,
-    raster_threads_3d(), buffers)
+    raster_threads_3d(), buffers, blend == "linear")
   result$engine_seconds <- prepared$engine_seconds
   result$camera <- prepared$camera
   result$viewport <- viewport
@@ -90,7 +91,7 @@ render_raster_panel_3d <- function(x, furniture, backend) {
   }
   packet <- merge_scene_packets(x$packets, x$panel_params$panel_id)
   result <- raster_scene_3d(packet, furniture$camera, furniture$viewport,
-    backend$antialias, x$panel_params$coord_params$light)
+    backend$antialias, x$panel_params$coord_params$light, blend = backend$blend)
   extent <- result$extent
   image <- grid::rasterGrob(result$image, x = mean(extent[c(1L, 3L)]), y = mean(extent[c(2L, 4L)]),
     width = grid::unit(extent[3L] - extent[1L], "npc"),

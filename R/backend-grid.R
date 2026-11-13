@@ -2,6 +2,7 @@ grid_capabilities_3d <- function() {
   caps <- grDevices::dev.capabilities()
   list(vector = TRUE, clipping_paths = isTRUE(caps$clippingPaths),
        masks = length(caps$masks) > 0L && !all(is.na(caps$masks)),
+       group_atop = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "atop" %in% caps$compositing,
        dash_phase = "physical segmented strokes", raster = FALSE)
 }
 
@@ -113,6 +114,28 @@ seam_underlay_3d <- function(x, y, id, fill) {
   order <- order(path, method = "radix")
   grid::gList(union, grid::pathGrob(x[order], y[order], id = id[order], pathId = path[order],
     rule = "winding", gp = grid::gpar(fill = colours, col = NA)))
+}
+
+# A translucent seam group must cover each pixel once, with the coverage of
+# the union of its faces. Faces painted over their union cover an edge pixel
+# twice, so the group is painted from the compound paths alone. One colour: the
+# union at the group's opacity. Several colours, on a device with Porter-Duff
+# groups and alpha masks: the colour paths composited atop the union inside an
+# isolated group, which keeps the union's coverage, and the group composited
+# once through a uniform alpha mask. Otherwise each colour path at the group's
+# opacity, which blends twice only where two colours meet.
+translucent_seam_3d <- function(paths, opacity, caps) {
+  if (length(paths) == 1L) {
+    paths[[1L]]$gp$alpha <- opacity
+    return(paths[[1L]])
+  }
+  if (!isTRUE(caps$group_atop)) {
+    paths[[2L]]$gp$alpha <- opacity
+    return(paths[[2L]])
+  }
+  group <- getExportedValue("grid", "groupGrob")(paths[[2L]], op = "atop", dst = paths[[1L]])
+  mask <- grid::rectGrob(gp = grid::gpar(fill = grDevices::rgb(0, 0, 0, opacity), col = NA))
+  grid::grobTree(group, vp = grid::viewport(mask = mask))
 }
 
 mask_path_3d <- function(scene, rows) {
@@ -230,8 +253,9 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   masked_lines <- intersect(glyphs, lines)
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
-  seam <- face & f$layer_id > 0L & f$opacity == 1 & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
-  key[face] <- paste(key[face], seam[face], ifelse(seam[face], paste(f$layer_id[face], f$seam_group[face]), 0L), sep = ":")
+  seam <- face & f$layer_id > 0L & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
+  key[face] <- paste(key[face], seam[face],
+    ifelse(seam[face], paste(f$layer_id[face], f$seam_group[face], f$opacity[face]), 0L), sep = ":")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   grobs <- lapply(seq_along(runs), function(run) {
@@ -251,7 +275,12 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
       g <- grid::polygonGrob(x, y, id = id, gp = gp)
-      if (all(seam[rows]) && length(rows) > 1L) g <- grid::grobTree(children = grid::gList(seam_underlay_3d(x, y, id, fill), g))
+      if (all(seam[rows]) && length(rows) > 1L) {
+        paths <- seam_underlay_3d(x, y, id, fill)
+        opacity <- f$opacity[rows[1L]]
+        g <- if (opacity == 1) grid::grobTree(children = grid::gList(paths, g)) else
+          translucent_seam_3d(paths, opacity, caps)
+      }
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]
       lty <- style_value_3d(s, "linetype", 1)
