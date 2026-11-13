@@ -268,8 +268,10 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL) {
   rgba <- colour_channels_3d(chosen, alpha = TRUE)
   opacity <- as.double(styles$alpha[index] * rgba[4L, ] / 255)
   for (name in intersect(c("colour", "fill", "border_colour"), names(styles))) {
-    rgb <- grDevices::col2rgb(styles[[name]], alpha = TRUE)
-    styles[[name]] <- ifelse(is.na(styles[[name]]), NA_character_, grDevices::rgb(rgb[1, ], rgb[2, ], rgb[3, ], maxColorValue = 255))
+    palette <- unique(styles[[name]])
+    rgb <- grDevices::col2rgb(palette, alpha = TRUE)
+    hex <- ifelse(is.na(palette), NA_character_, grDevices::rgb(rgb[1, ], rgb[2, ], rgb[3, ], maxColorValue = 255))
+    styles[[name]] <- hex[match(styles[[name]], palette)]
   }
   styles$alpha <- 1
   styles$shade <- isTRUE(params$shade)
@@ -290,15 +292,18 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
   rows <- primitives[offsets]
   normals <- NULL
   if (all(c("nx", "ny", "nz") %in% names(data))) {
+    # Each face takes the mean of its unit vertex normals, renormalised.
     normals <- matrix(NA_real_, length(rows), 3L)
-    face <- which(kinds == "faces")
-    for (j in face) {
-      corners <- primitives[seq.int(offsets[j], length.out = counts[j])]
-      vertex_normals <- as.matrix(data[corners, c("nx", "ny", "nz")])
+    owner <- rep.int(seq_along(counts), counts)
+    corner <- kinds[owner] == "faces"
+    if (any(corner)) {
+      vertex_normals <- cbind(data$nx, data$ny, data$nz)[primitives[corner], , drop = FALSE]
       vertex_normals <- vertex_normals / sqrt(rowSums(vertex_normals^2))
-      normal <- colMeans(vertex_normals)
-      length <- sqrt(sum(normal^2))
-      if (is.finite(length) && length > 0) normals[j, ] <- normal / length
+      face <- unique(owner[corner])
+      mean <- rowsum(vertex_normals, owner[corner], reorder = FALSE) / counts[face]
+      length <- sqrt(rowSums(mean^2))
+      ok <- is.finite(length) & length > 0
+      normals[face[ok], ] <- mean[ok, , drop = FALSE] / length[ok]
     }
   }
   material <- styles_3d(data, rows, kinds, params, normals)
