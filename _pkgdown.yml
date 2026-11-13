@@ -236,6 +236,7 @@ reference:
   - animate_3d
   - tween_3d
   - view_3d
+  - alt_text_3d
 - title: Camera paths
   contents:
   - camera_path_3d
@@ -272,6 +273,7 @@ articles:
   - backends
   - motion
   - combining-2d-3d
+  - documents
   - spatial
 - title: Examples
   navbar: Examples

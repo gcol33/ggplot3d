@@ -1,0 +1,66 @@
+---
+title: "Documents"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Documents}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(ggplot3d)
+knitr::opts_chunk$set(fig.width = 6, fig.height = 4, dpi = 144)
+```
+
+A knitr document can show a plot as a static figure or an interactive viewer.
+Quarto's R engine uses the same chunk options.
+
+```{r plot, eval=FALSE}
+p <- ggplot(mtcars, aes(wt, mpg, z = hp)) + geom_point_3d() + coord_3d()
+p
+```
+
+Set `view3d = TRUE` to embed the interactive viewer in HTML. PDF and Word
+output draw the plot with the vector scene backend. The document's graphics
+device determines the image format: for example, `dev = "pdf"` produces a
+vector image for a PDF document. The viewer follows the chunk's `fig.width`
+and `fig.height`, with its facet panels, titles and legends.
+
+````markdown
+```{r, view3d=TRUE, fig.width=6, fig.height=4}
+p
+```
+````
+
+In Quarto, the equivalent chunk begins with:
+
+````markdown
+```{r}
+#| view3d: true
+#| fig-width: 6
+#| fig-height: 4
+p
+```
+````
+
+`alt_text_3d(p)` describes the layer types, mapped variables and camera
+angles. This description supplies `fig.alt` for static figures and an
+accessible name around an HTML viewer. Set `fig.alt` in the chunk or add
+`labs(alt = "...")` to describe the finding in the plot.
+
+```{r description}
+p <- ggplot(mtcars, aes(wt, mpg, z = hp)) + geom_point_3d() + coord_3d()
+alt_text_3d(p)
+```
+
+Patchwork and cowplot preserve each panel's scene when arranging several
+plots. Each scene is compiled at the physical dimensions of its panel.
+
+When saving a raster scene, match the scene sampling resolution to the
+output device. Both dpi values refer to the requested physical plot size.
+
+```{r save, eval=FALSE}
+raster <- p + coord_3d(backend = backend_3d("raster", dpi = 300))
+ggsave("cars.png", raster, width = 6, height = 4, dpi = 300)
+```
