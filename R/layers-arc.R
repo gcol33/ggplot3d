@@ -57,5 +57,4 @@ emit_arcs_3d <- function(data, params, panel_params) {
   emit_paths_3d(out, params, panel_params)
 }
 
-register_geom_3d(GeomArc3D, emit_arcs_3d, parameters = list(height = 0.25, n = 32L), default_z = -Inf,
-  position_check = function(position, scales) check_position_3d(position, scales))
+register_geom_3d(GeomArc3D, emit_arcs_3d, parameters = list(height = 0.25, n = 32L), default_z = -Inf)

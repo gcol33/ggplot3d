@@ -132,8 +132,7 @@ emit_sf_3d <- function(data, params, panel_params) {
 
 register_geom_3d(ggplot2::GeomSf, emit_sf_3d, aesthetics = c("height", "subgroup"),
   stat_adapter = ggplot2::StatIdentity, default_z = -Inf,
-  prepare_data = prepare_sf_data_3d, prepare_aesthetics = prepare_sf_aesthetics_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
+  prepare_data = prepare_sf_data_3d, prepare_aesthetics = prepare_sf_aesthetics_3d)
 
 #' Simple features in three dimensions
 #'
