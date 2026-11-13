@@ -66,6 +66,9 @@ test_that("vegan ordinations use the scores generic and its scaling", {
   expected <- vegan::scores(fit, choices = c(3, 1, 2), display = c("sites", "species"), scaling = 2)
   expect_equal(as.matrix(actual$sites[1:3]), unname(expected$sites), ignore_attr = TRUE)
   expect_equal(as.matrix(actual$species[1:3]), unname(expected$species), ignore_attr = TRUE)
+  sites_only <- ordination_scores_3d(expected$sites, 1:3, list())
+  expect_equal(as.matrix(sites_only$sites[1:3]), unname(expected$sites), ignore_attr = TRUE)
+  expect_equal(nrow(sites_only$species), 0L)
 })
 
 test_that("molecular endpoints use serial keys independently of atom order", {
