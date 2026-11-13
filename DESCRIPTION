@@ -1,0 +1,23 @@
+Package: ggplot3d
+Title: 3D Plots in the Grammar of Graphics
+Version: 0.0.0.9000
+Authors@R: person("Gilles", "Colling", email = "gilles.colling051@gmail.com",
+    role = c("aut", "cre", "cph"),
+    comment = c(ORCID = "0000-0003-3070-6066"))
+Description: Provides a columnar scene representation and a native projection
+    engine for three-dimensional graphics within the grammar of graphics.
+    Preserves geometry and source provenance across a shared panel scene.
+License: MIT + file LICENSE
+URL: https://github.com/gcol33/ggplot3d
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/testthat/edition: 3
+Imports:
+    ggplot2,
+    grid,
+    Rcpp
+LinkingTo: Rcpp
+Suggests:
+    testthat (>= 3.0.0)
+SystemRequirements: C++17
+Config/roxygen2/version: 8.1.0
