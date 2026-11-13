@@ -115,6 +115,7 @@ reference:
   - geom_contour_3d
   - geom_contour_filled_3d
   - geom_mesh_3d
+  - outline_3d
   - geom_col_3d
   - geom_bar_3d
   - geom_histogram_3d

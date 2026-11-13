@@ -16,6 +16,7 @@ geom_surface_3d(
   shade = TRUE,
   wireframe = FALSE,
   hidden = "hide",
+  outline = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -46,6 +47,8 @@ stat_surface_3d(
 \item{wireframe}{Whether to draw triangle edges.}
 
 \item{hidden}{Hidden stroke policy.}
+
+\item{outline}{Feature lines from \code{\link[=outline_3d]{outline_3d()}}, or NULL for none.}
 
 \item{geom}{Geom prototype used to draw the computed triangles.}
 }

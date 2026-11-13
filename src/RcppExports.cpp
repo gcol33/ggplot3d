@@ -119,6 +119,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// outline_lines_cpp
+Rcpp::List outline_lines_cpp(Rcpp::NumericMatrix xyz, Rcpp::NumericMatrix view, Rcpp::NumericMatrix normals, Rcpp::IntegerMatrix tri, Rcpp::NumericVector eye, bool perspective, int silhouette, double crease, bool boundary);
+RcppExport SEXP _ggplot3d_outline_lines_cpp(SEXP xyzSEXP, SEXP viewSEXP, SEXP normalsSEXP, SEXP triSEXP, SEXP eyeSEXP, SEXP perspectiveSEXP, SEXP silhouetteSEXP, SEXP creaseSEXP, SEXP boundarySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type view(viewSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type normals(normalsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type tri(triSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type eye(eyeSEXP);
+    Rcpp::traits::input_parameter< bool >::type perspective(perspectiveSEXP);
+    Rcpp::traits::input_parameter< int >::type silhouette(silhouetteSEXP);
+    Rcpp::traits::input_parameter< double >::type crease(creaseSEXP);
+    Rcpp::traits::input_parameter< bool >::type boundary(boundarySEXP);
+    rcpp_result_gen = Rcpp::wrap(outline_lines_cpp(xyz, view, normals, tri, eye, perspective, silhouette, crease, boundary));
+    return rcpp_result_gen;
+END_RCPP
+}
 // parametric_grid_cpp
 Rcpp::List parametric_grid_cpp(Rcpp::IntegerVector n, Rcpp::LogicalVector closed, Rcpp::LogicalVector twist, Rcpp::NumericMatrix xyz, Rcpp::NumericVector u, Rcpp::NumericVector v);
 RcppExport SEXP _ggplot3d_parametric_grid_cpp(SEXP nSEXP, SEXP closedSEXP, SEXP twistSEXP, SEXP xyzSEXP, SEXP uSEXP, SEXP vSEXP) {
@@ -300,6 +318,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_mesh_process_cpp", (DL_FUNC) &_ggplot3d_mesh_process_cpp, 6},
     {"_ggplot3d_mesh_geodesic_path_cpp", (DL_FUNC) &_ggplot3d_mesh_geodesic_path_cpp, 5},
+    {"_ggplot3d_outline_lines_cpp", (DL_FUNC) &_ggplot3d_outline_lines_cpp, 9},
     {"_ggplot3d_parametric_grid_cpp", (DL_FUNC) &_ggplot3d_parametric_grid_cpp, 6},
     {"_ggplot3d_parametric_edges_cpp", (DL_FUNC) &_ggplot3d_parametric_edges_cpp, 4},
     {"_ggplot3d_parametric_bisect_cpp", (DL_FUNC) &_ggplot3d_parametric_bisect_cpp, 6},

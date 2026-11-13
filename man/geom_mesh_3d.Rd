@@ -21,6 +21,7 @@ geom_mesh_3d(
   smooth = 0L,
   curvature = FALSE,
   crease = NULL,
+  outline = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -51,6 +52,8 @@ edge length.}
 
 \item{crease}{Crease angle for \code{\link[=mesh_normals]{mesh_normals()}}; NULL keeps the input's
 normals.}
+
+\item{outline}{Feature lines from \code{\link[=outline_3d]{outline_3d()}}, or NULL for none.}
 }
 \value{
 A ggplot2 layer.

@@ -8,6 +8,7 @@
 #' @param shade Whether to apply lighting.
 #' @param wireframe Whether to draw triangle edges.
 #' @param hidden Hidden stroke policy.
+#' @param outline Feature lines from [outline_3d()], or NULL for none.
 #' @return A ggplot2 layer.
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 6),
@@ -19,11 +20,11 @@
 #' @export
 geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
                              position = "identity", ..., method = "grid", max_edge = Inf,
-                             shade = TRUE, wireframe = FALSE, hidden = "hide",
+                             shade = TRUE, wireframe = FALSE, hidden = "hide", outline = NULL,
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSurface3D, mapping, data, stat, position,
     c(list(method = method, max_edge = max_edge, shade = shade, wireframe = wireframe,
-           hidden = hidden, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+           hidden = hidden, outline = outline, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname geom_surface_3d
@@ -127,7 +128,7 @@ emit_surface_3d <- function(data, params, panel_params) {
     edges <- matrix(as.vector(t(faces[, c(1L, 2L, 2L, 3L, 3L, 1L), drop = FALSE])), ncol = 2L, byrow = TRUE)
     edges <- unique_edges_3d(edges, data$.source, data$group)
   }
-  packet_from_faces_edges_3d(data, faces, edges, params, panel_params)
+  outline_merge_3d(packet_from_faces_edges_3d(data, faces, edges, params, panel_params), data, faces, params, panel_params)
 }
 
 constant_corners_3d <- function(value, corners) {
@@ -144,4 +145,4 @@ delaunay_triangles_3d <- function(xy) {
   triangles
 }
 
-register_geom_3d(GeomSurface3D, emit_surface_3d)
+register_geom_3d(GeomSurface3D, emit_surface_3d, parameters = list(outline = NULL))

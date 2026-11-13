@@ -33,6 +33,10 @@ mesh_geodesic_path_cpp <- function(xyz, tri, from, to, max_iterations) {
     .Call(`_ggplot3d_mesh_geodesic_path_cpp`, xyz, tri, from, to, max_iterations)
 }
 
+outline_lines_cpp <- function(xyz, view, normals, tri, eye, perspective, silhouette, crease, boundary) {
+    .Call(`_ggplot3d_outline_lines_cpp`, xyz, view, normals, tri, eye, perspective, silhouette, crease, boundary)
+}
+
 parametric_grid_cpp <- function(n, closed, twist, xyz, u, v) {
     .Call(`_ggplot3d_parametric_grid_cpp`, n, closed, twist, xyz, u, v)
 }
