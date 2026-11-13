@@ -10,7 +10,10 @@ emit_rects_3d <- function(data, params, panel_params) {
   corners$x <- as.vector(rbind(data$xmin, data$xmax, data$xmax, data$xmin))
   corners$y <- as.vector(rbind(data$ymin, data$ymin, data$ymax, data$ymax))
   quad <- matrix(seq_len(4L * n), ncol = 4L, byrow = TRUE)
-  filled <- which(!is.na(data$fill)); stroked <- which(!is.na(data$colour))
+  # A rectangle of zero width or height, such as an empty histogram bin, has
+  # no face; its outline is still drawn.
+  filled <- which(!is.na(data$fill) & data$xmax != data$xmin & data$ymax != data$ymin)
+  stroked <- which(!is.na(data$colour))
   outline <- cbind(quad[stroked, , drop = FALSE], quad[stroked, 1L])
   packet_from_primitives_3d(corners,
     c(as.vector(t(quad[filled, , drop = FALSE])), as.vector(t(outline))),

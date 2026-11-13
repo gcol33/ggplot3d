@@ -1,5 +1,6 @@
 # ggplot3d 0.0.0.9000
 
+* `annotation_plot_3d()` places a whole 2D ggplot on a panel plane through vector or raster rendering. `facet_slices_3d()` draws small multiples in depth, with statistics computed per slice. Additional 2D ggplot2 layers draw in horizontal planes.
 * `guide_colourbar_3d(along = "z")` places a colourbar beside the matching position axis, sharing its ticks and labels. `guide_legend_3d()` lights shaded-layer facet keys with the scene light and can display their shading range.
 
 * Geospatial inputs: terra and stars rasters become height surfaces, simple features draw as points, paths, polygons or prisms, and lidR point clouds fortify to point attributes. `stat_profile_3d()` samples cross-sections and `geom_arc_3d()` draws flow arcs. The spatial article includes a space-time cube.

@@ -387,9 +387,9 @@ motion_frame_plot_3d <- function(plot, time, value, limits) {
   plot$data <- keep(plot$data)
   plot$layers <- lapply(plot$layers, function(layer) {
     if (!is.data.frame(layer$data)) return(layer)
-    layer <- ggplot2::ggproto(NULL, layer)
-    layer$data <- keep(layer$data)
-    layer
+    framed <- ggplot2::ggproto(NULL, layer)
+    framed$data <- keep(layer$data)
+    framed
   })
   if (is.null(limits)) return(plot)
   plot$scales <- limits$scales$clone()

@@ -109,6 +109,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL
     compute_aesthetics = function(self, data, plot) {
       out <- ggplot2::ggproto_parent(parent, self)$compute_aesthetics(data, plot)
       if (!is.null(entry$prepare_aesthetics)) out <- entry$prepare_aesthetics(out, data, plot, hook_params)
+      if (is.function(plot@facet$positions_3d)) out <- plot@facet$positions_3d(out, data)
       for (name in names(fixed)) out[[name]] <- rep_len(fixed[[name]], nrow(out))
       out <- frame$setup_aesthetics(out)
       if (!"z" %in% names(out) && !"z" %in% names(self$computed_mapping) &&

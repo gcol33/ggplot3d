@@ -499,13 +499,11 @@ StatDendrogram3D <- ggplot2::ggproto("StatDendrogram3D", ggplot2::Stat,
       rescale <- function(h) height[1L] + (height[2L] - height[1L]) * h / if (tree_height > 0) tree_height else 1
       segments$base <- rescale(segments$base); segments$base_end <- rescale(segments$base_end)
     }
-    axes <- strsplit(plane, "")[[1L]]
-    fixed <- setdiff(c("x", "y", "z"), axes)
+    axes <- check_plane_axes_3d(plane)
+    fixed <- axes[3L]
     out <- data.frame(segments[c("leaf", "leaf_end", "base", "base_end")])
     names(out) <- c(axes[1L], paste0(axes[1L], "end"), axes[2L], paste0(axes[2L], "end"))
-    # An infinite position needs a trained range on that axis to land on.
-    untrained <- is.null(scales[[fixed]]) || is.null(scales[[fixed]]$range$range)
-    if (is.infinite(at) && untrained) at <- 0
+    at <- plane_at_3d(at, scales, fixed)
     out[[fixed]] <- at; out[[paste0(fixed, "end")]] <- at
     out$height <- hclust$height[segments$node]
     out$node <- segments$node
@@ -572,9 +570,7 @@ stat_dendrogram_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::Geom
                                type = "rectangle", k = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = FALSE) {
   tree <- stats::as.hclust(hclust)
   n <- length(tree$order)
-  if (!is.character(plane) || length(plane) != 1L || !grepl("^[xyz]{2}$", plane) || substr(plane, 1L, 1L) == substr(plane, 2L, 2L)) {
-    stop("plane must be two distinct axis letters, such as \"xz\".", call. = FALSE)
-  }
+  check_plane_axes_3d(plane)
   if (!is.numeric(at) || length(at) != 1L || is.na(at)) stop("at must be a number.", call. = FALSE)
   positions <- positions %or3d% seq_len(n)
   if (!is.numeric(positions) || length(positions) != n || any(!is.finite(positions))) stop("positions must give one finite position per leaf.", call. = FALSE)

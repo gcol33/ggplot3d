@@ -71,7 +71,7 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
         if (axis %in% names(self$context$labels)) return(self$context$labels[[axis]])
         mapping <- self$context$mapping[[axis]]
         if (!is.null(mapping)) return(axis_mapping_label_3d(mapping))
-        NULL
+        self$facet$params$axis_titles_3d[[axis]]
       })
       names(out$axis_titles) <- c("x", "y", "z")
       parts <- (coord$frame %or3d% FrameBox)$parts

@@ -23,6 +23,24 @@ paint_metrics_3d <- function(styles) {
        radius_mm = radius + border, body_radius_mm = radius, border_mm = border)
 }
 
+# Body outline in mm of a square, diamond or triangle point shape (pch 0, 2,
+# 5, 6, 15, 17, 18, 22 to 25) of body radius r; NULL for round shapes.
+marker_body_3d <- function(shape, r) {
+  if (shape %in% c(0,15,22)) {
+    r <- r * if (shape == 22) sqrt(pi / 4) else 1
+    return(cbind(c(-1,1,1,-1), c(-1,-1,1,1)) * r)
+  }
+  if (shape %in% c(5,18,23)) {
+    r <- r * if (shape == 23) sqrt(pi / 2) else if (shape == 5) sqrt(2) else 1
+    return(cbind(c(0,1,0,-1),c(-1,0,1,0)) * r)
+  }
+  if (!shape %in% c(2,6,17,24,25)) return(NULL)
+  r <- r * sqrt(4 * pi / (3 * sqrt(3)))
+  xy <- cbind(c(0,-sqrt(3)/2,sqrt(3)/2),c(1,-.5,-.5)) * r
+  if (shape %in% c(6,25)) xy[,2L] <- -xy[,2L]
+  xy
+}
+
 marker_footprints_3d <- function(styles) {
   metrics <- paint_metrics_3d(styles)
   shapes <- style_value_3d(styles, "shape", 19)
@@ -34,18 +52,8 @@ marker_footprints_3d <- function(styles) {
     count = rep.int(0L, length(chosen)), radius_x_mm = radii, radius_y_mm = radii, angle = rep(0, length(chosen)))
   vertices <- list(x_mm = numeric(), y_mm = numeric(), ring = integer())
   for (i in which(shapes %in% c(0,2,5,6,15,17,18,22:25))) {
-    shape <- shapes[i]; r <- metrics$body_radius_mm[chosen[i]]; border <- metrics$border_mm[chosen[i]]
-    if (shape %in% c(0,15,22)) {
-      r <- r * if (shape == 22) sqrt(pi / 4) else 1
-      xy <- cbind(c(-1,1,1,-1), c(-1,-1,1,1)) * r
-    } else if (shape %in% c(5,18,23)) {
-      r <- r * if (shape == 23) sqrt(pi / 2) else if (shape == 5) sqrt(2) else 1
-      xy <- cbind(c(0,1,0,-1),c(-1,0,1,0)) * r
-    } else {
-      r <- r * sqrt(4 * pi / (3 * sqrt(3)))
-      xy <- cbind(c(0,-sqrt(3)/2,sqrt(3)/2),c(1,-.5,-.5)) * r
-      if (shape %in% c(6,25)) xy[,2L] <- -xy[,2L]
-    }
+    shape <- shapes[i]; border <- metrics$border_mm[chosen[i]]
+    xy <- marker_body_3d(shape, metrics$body_radius_mm[chosen[i]])
     centre <- colMeans(xy)
     area <- sum(xy[,1L] * xy[c(2:nrow(xy),1L),2L] - xy[,2L] * xy[c(2:nrow(xy),1L),1L])
     if (area < 0) xy <- xy[nrow(xy):1L,,drop=FALSE]

@@ -156,6 +156,10 @@ reference:
   - geom_sf_3d
   - stat_profile_3d
   - geom_arc_3d
+- title: 2D plots on planes
+  contents:
+  - annotation_plot_3d
+  - facet_slices_3d
 - title: Statistical layers
   contents:
   - geom_function_3d

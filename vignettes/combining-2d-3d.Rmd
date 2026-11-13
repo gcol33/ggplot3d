@@ -86,6 +86,35 @@ k + geom_point_3d(aes(z = -Inf), colour = PAL["grey"], size = 1.5) +
 
 Shadows and wall projections use the same x, y and z scales as the points, so each projection lies on the box grid at the coordinates it shares with its point. The scales are trained on the finite positions only, so the box keeps the range of the data.
 
+## A whole 2D plot on a wall
+
+A projection shows the points; a 2D plot on the wall can show a summary of them as well. `annotation_plot_3d()` takes a finished 2D ggplot and draws its panel, every layer with its background and grid lines, on a plane of the box. The plot below shows z against x with a linear fit, and it is placed on the back wall at the largest y. It keeps its own coordinates, so its x and z line up with the axes of the box.
+
+```{r plot-on-wall, fig.alt="Forty dark points in a box; on the back wall a grey 2D panel with the same points in orange and a blue fitted line with its grey confidence band."}
+side <- ggplot(cloud, aes(x, z)) +
+  geom_point(colour = PAL["orange"], size = 1) +
+  geom_smooth(method = "lm", formula = y ~ x, colour = PAL["blue"])
+k + annotation_plot_3d(side, plane = "xz", at = Inf) +
+  geom_point_3d(size = 2.5) +
+  coord_3d()
+```
+
+The wall plot is made of faces in the plane of the wall, so it is foreshortened with the box and points in front of it cover it. `route = "raster"` draws it as an image instead, which suits plots with many marks.
+
+## Small multiples in depth
+
+`facet_slices_3d()` splits the data like `facet_wrap()` and stacks the subsets on parallel planes of one panel. The cloud is split by the sign of x; each half gets its own density, computed within its slice.
+
+```{r slices, fig.alt="Two translucent planes one behind the other, labelled negative and positive, each with a filled density curve; the curve on the front plane lies further left."}
+cloud$side <- ifelse(cloud$x < 0, "negative", "positive")
+ggplot(cloud, aes(z)) +
+  geom_density(fill = PAL["blue"], alpha = 0.6) +
+  facet_slices_3d(vars(side)) +
+  coord_3d(up = "y", azimuth = 30, elevation = 20)
+```
+
+The slices lie on z, so the 2D layers keep x and y; `coord_3d(up = "y")` stands the planes upright, one behind the other.
+
 ## Reference lines and annotations
 
 `geom_hline()` and `geom_vline()` draw a line across the box at height 0, here the two zero lines of x and y. `annotate()` has no z position; `annotate_3d()` takes the same arguments as `annotate()` together with `z`, `zmin`, `zmax` and `zend`. Here it labels the highest point of the cloud.
