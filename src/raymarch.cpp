@@ -1,5 +1,6 @@
 #include "raymarch/kernel.h"
 #include "raymarch/volume.h"
+#include "raymarch/path.h"
 using namespace ggplot3d::raymarch;
 
 // [[Rcpp::export(rng = false)]]
@@ -40,12 +41,12 @@ Rcpp::List raymarch_rays_cpp(Rcpp::List camera,Rcpp::List viewport,int width,int
   ggplot3d::engine::Projection p(ggplot3d::engine::read_camera(camera),v);
   const auto& c=p.resolved;int n=width*height;Rcpp::NumericMatrix origins(n,3),directions(n,3);
   for(int x=0;x<width;++x) for(int y=0;y<height;++y) {
-    int i=y+height*x;double u=(2*(extent[0]+(x+0.5)*(extent[2]-extent[0])/width)-1)/p.sx;
-    double w=(2*(extent[3]-(y+0.5)*(extent[3]-extent[1])/height)-1)/p.sy;
+    int i=y+height*x;
+    Ray ray=camera_ray(p,extent[0]+(x+0.5)*(extent[2]-extent[0])/width,extent[3]-(y+0.5)*(extent[3]-extent[1])/height);
+    Vec3 origin=point(ray.origin,ray.direction,ray.near);
+    double forward=ggplot3d::engine::dot(ray.direction,c.forward);
     for(int k=0;k<3;++k) {
-      double d=c.ray[k]+(p.camera.perspective ? u*c.right[k]+w*c.up[k]:0);
-      double o=c.eye[k]+(p.camera.perspective ? 0:u*c.right[k]+w*c.up[k]);
-      origins(i,k)=(o+c.near*d)/p.scale[k];directions(i,k)=d/p.scale[k];
+      origins(i,k)=origin[k]/p.scale[k];directions(i,k)=ray.direction[k]/(forward*p.scale[k]);
     }
   }
   return Rcpp::List::create(Rcpp::Named("origin")=origins,Rcpp::Named("direction")=directions,
@@ -75,4 +76,44 @@ Rcpp::List raymarch_volume_cpp(Rcpp::List inputs,Rcpp::NumericMatrix origins,Rcp
     else if(hits[i].hit.found){distance[i]=hits[i].hit.t;alpha[i]=1;value[i]=hits[i].value;for(int k=0;k<3;++k){colour(i,k)=rgb[i][k];normal(i,k)=hits[i].hit.normal[k];}}
   }
   return Rcpp::List::create(Rcpp::Named("distance")=distance,Rcpp::Named("normal")=normal,Rcpp::Named("colour")=colour,Rcpp::Named("alpha")=alpha,Rcpp::Named("value")=value);
+}
+
+struct PathContext {
+  ggplot3d::engine::Projection projection;
+  TraceScene scene;
+  PathContext(Rcpp::List mesh,Rcpp::List fields,Rcpp::List camera,Rcpp::List viewport):
+    projection(ggplot3d::engine::read_camera(camera),ggplot3d::Viewport{Rcpp::as<double>(viewport["width_mm"]),Rcpp::as<double>(viewport["height_mm"]),Rcpp::as<double>(viewport["dpi"])}),
+    scene(mesh,fields,projection.scale,projection.camera.clip_data){}
+};
+
+// [[Rcpp::export(rng = false)]]
+SEXP raymarch_path_prepare_cpp(Rcpp::List mesh,Rcpp::List fields,Rcpp::List camera,Rcpp::List viewport) {
+  return Rcpp::XPtr<PathContext>(new PathContext(mesh,fields,camera,viewport),true);
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericMatrix raymarch_path_cpp(SEXP pointer,int width,int height,Rcpp::NumericVector extent,
+  Rcpp::List settings,Rcpp::NumericVector illumination,int start,int samples,Rcpp::NumericMatrix previous,int threads) {
+  Rcpp::XPtr<PathContext> ctx(pointer);require(ctx.get()!=nullptr,"Invalid path-trace scene");
+  require(width>0 && height>0 && double(width)*height<=std::numeric_limits<int>::max() && extent.size()==4,"Invalid path-trace dimensions");
+  std::size_t n=std::size_t(width)*height;
+  require(previous.nrow()==int(n) && previous.ncol()==4 && start>=0 && samples>0 && double(start)+samples<=std::numeric_limits<int>::max(),"Invalid progressive accumulation");
+  require(illumination.size()==5,"Invalid path-trace lighting");
+  int bounces=Rcpp::as<int>(settings["bounces"]);double aperture=Rcpp::as<double>(settings["aperture"]),focus=Rcpp::as<double>(settings["focus"]);
+  double epsilon=Rcpp::as<double>(settings["epsilon"]),angle=Rcpp::as<double>(settings["light_radius"])*ggplot3d::engine::pi/180;
+  require(bounces>0 && aperture>=0 && focus>0 && epsilon>0 && angle>=0 && angle<ggplot3d::engine::pi/2,"Invalid path-trace controls");
+  std::uint64_t seed=Rcpp::as<double>(settings["seed"]);
+  PathLight light{unit({illumination[0],illumination[1],illumination[2]}),illumination[3],illumination[4],std::cos(angle)};
+  std::vector<std::array<double,4>> sums(n);for(std::size_t i=0;i<n;++i)for(int k=0;k<4;++k)sums[i][k]=previous(i,k);
+  ggplot3d::engine::parallel_blocks((n+63)/64,threads==0 ? std::max(1u,std::thread::hardware_concurrency()):threads,[&](std::size_t block){
+    for(std::size_t i=block*64;i<std::min(n,(block+1)*64);++i) {
+      int x=i/height,y=i%height;
+      for(int s=start;s<start+samples;++s){Sampler rng(seed,i,s);
+        double px=extent[0]+(x+rng.next())*(extent[2]-extent[0])/width,py=extent[3]-(y+rng.next())*(extent[3]-extent[1])/height;
+        Ray ray=lens_ray(ctx->projection,px,py,aperture,focus,rng);
+        auto value=path_sample(ctx->scene,ray,light,bounces,rng,epsilon);for(int k=0;k<4;++k)sums[i][k]+=value[k];
+      }
+    }
+  });
+  Rcpp::NumericMatrix out(n,4);for(std::size_t i=0;i<n;++i)for(int k=0;k<4;++k)out(i,k)=sums[i][k];return out;
 }

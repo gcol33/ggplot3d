@@ -105,6 +105,14 @@ raymarch_volume_cpp <- function(inputs, origins, directions, limit, threads) {
     .Call(`_ggplot3d_raymarch_volume_cpp`, inputs, origins, directions, limit, threads)
 }
 
+raymarch_path_prepare_cpp <- function(mesh, fields, camera, viewport) {
+    .Call(`_ggplot3d_raymarch_path_prepare_cpp`, mesh, fields, camera, viewport)
+}
+
+raymarch_path_cpp <- function(pointer, width, height, extent, settings, illumination, start, samples, previous, threads) {
+    .Call(`_ggplot3d_raymarch_path_cpp`, pointer, width, height, extent, settings, illumination, start, samples, previous, threads)
+}
+
 geometry_delaunay_cpp <- function(xy) {
     .Call(`_ggplot3d_geometry_delaunay_cpp`, xy)
 }

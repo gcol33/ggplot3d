@@ -6,8 +6,8 @@ GeomRaymarch3D <- ggplot2::ggproto("GeomRaymarch3D", ggplot2::Geom,
 raymarch_payload_3d <- function(spec, params, panel_params) {
   if (!identical(frame_of_3d(panel_params)$identity, TRUE))
     stop("Ray-marched Euclidean layers require an identity coordinate frame.", call. = FALSE)
-  if (!identical(panel_params$coord_params$backend$type, "raster"))
-    stop("Ray-marched layers require backend_3d('raster').", call. = FALSE)
+  if (!(panel_params$coord_params$backend$type %in% c("raster", "pathtrace")))
+    stop("Ray-marched layers require a raster or pathtrace backend.", call. = FALSE)
   if (params$occlusion != "depth" || length(params$clip_planes))
     stop("Ray-marched layers require depth occlusion and the panel clipping box.", call. = FALSE)
   spec$ranges <- panel_params$ranges[c("x", "y", "z")]
@@ -21,7 +21,7 @@ emit_raymarch_3d <- function(data, params, panel_params) {
   if (nrow(data) != 1L) stop("A ray-marched layer requires one material row per panel.", call. = FALSE)
   spec <- params$ray_spec
   spec$fill <- data$fill[1L]; spec$alpha <- data$alpha[1L]
-  if (is.na(spec$fill) || is.na(spec$alpha) || spec$alpha != 1)
+  if (is.na(spec$fill) || is.na(spec$alpha) || spec$alpha != 1 || colour_channels_3d(spec$fill, TRUE)[4L, 1L] != 255)
     stop("SDF trace surfaces require an opaque fill.", call. = FALSE)
   spec$layer_id <- data$.layer[1L]
   raymarch_payload_3d(spec, params, panel_params)

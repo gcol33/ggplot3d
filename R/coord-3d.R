@@ -16,7 +16,7 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 }
 
 #' Select a 3D rendering backend
-#' @param type Backend: `"vector"`, `"raster"` or `"hybrid"`. A hybrid panel
+#' @param type Backend: `"vector"`, `"raster"`, `"hybrid"` or `"pathtrace"`. A hybrid panel
 #'   rasterises the layers created with `raster = TRUE` (an argument of every
 #'   `geom_*_3d()` layer and of [layer_3d()]) into one image at `dpi` and draws
 #'   the other layers, axes, panes and text as vector graphics. Vector
@@ -24,6 +24,17 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #'   lines on or behind a rasterised surface stay exact where they are seen.
 #' @param dpi Physical raster resolution.
 #' @param antialias Positive integer supersampling factor.
+#' @param samples Path-tracing samples per pixel added by each render.
+#' @param bounces Maximum diffuse surface interactions per path.
+#' @param seed Nonnegative integer seed for pixel and sample indexed randomness.
+#' @param aperture Thin-lens radius in aspect-scaled model units; zero is a pinhole.
+#' @param focus Focal-plane distance along the camera forward axis, in model
+#'   units. NULL focuses on the camera target.
+#' @param light_radius Angular radius of the distant light in degrees.
+#' @param progressive Accumulate samples across redraws of the same scene.
+#'   Changes to geometry, camera, lighting or image dimensions reset accumulation.
+#' @param batch_size Samples per native batch; accumulation is independent of
+#'   batch size and worker count. R can interrupt between batches.
 #' @param blend Colour space in which the raster backend composites
 #'   translucent paint and averages antialiasing samples: `"linear"` light,
 #'   encoded to sRGB after averaging, or `"srgb"`, which matches the
@@ -32,11 +43,20 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #'   of worker threads is the option `ggplot3d.threads`; the default `0` uses
 #'   one thread per hardware thread, at most two when `_R_CHECK_LIMIT_CORES_`
 #'   is set. The image does not depend on the thread count.
+#'
+#' The native path tracer uses diffuse materials, a bounding-volume hierarchy,
+#' cosine-weighted reflection sampling and Russian roulette. The ambient light
+#' is a uniform environment; the diffuse light is a sampled distant disk.
+#' Points and paths use the solid conversion of [export_3d()], and SDF layers
+#' use the shared sphere tracer. Furniture and text remain vector graphics.
+#' @references Pharr, Jakob and Humphreys (2023). Physically Based Rendering,
+#'   fourth edition. <https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing>
 #' @return A backend configuration for coord_3d().
 #' @examples
 #' backend_3d("vector")
 #' backend_3d("raster", dpi = 144, antialias = 2)
 #' backend_3d("raster", blend = "srgb")
+#' backend_3d("pathtrace", samples = 8, seed = 1)
 #' d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
 #' d$z <- sin(pi * d$x) * cos(pi * d$y)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
@@ -44,11 +64,16 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #'   geom_contour_3d(colour = "black") +
 #'   coord_3d(backend = backend_3d("hybrid", dpi = 150))
 #' @export
-backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "linear") {
+backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "linear",
+                       samples = 64L, bounces = 8L, seed = 1L, aperture = 0,
+                       focus = NULL, light_radius = 5, progressive = FALSE, batch_size = 8L) {
   stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
             is.finite(antialias), antialias >= 1, antialias == trunc(antialias))
-  list(type = match.arg(type, c("vector", "raster", "hybrid")), dpi = dpi, antialias = as.integer(antialias),
+  result <- list(type = match.arg(type, c("vector", "raster", "hybrid", "pathtrace")), dpi = dpi, antialias = as.integer(antialias),
        blend = match.arg(blend, c("linear", "srgb")))
+  if (result$type == "pathtrace") result <- c(result,
+    pathtrace_settings_3d(samples, bounces, seed, aperture, focus, light_radius, progressive, batch_size))
+  result
 }
 
 #' Exact three-dimensional panel coordinates

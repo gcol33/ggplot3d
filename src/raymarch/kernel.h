@@ -67,6 +67,15 @@ inline Vec3 point(const Vec3& o,const Vec3& d,double t) {return {o[0]+d[0]*t,o[1
 inline double norm(const Vec3& p) {return std::sqrt(engine::dot(p,p));}
 inline Vec3 unit(Vec3 p) {double n=norm(p);if(n>0) for(double& x:p)x/=n;return p;}
 struct Ray {Vec3 origin,direction;double near,far;};
+inline Ray camera_ray(const engine::Projection& p,double x,double y) {
+  const auto& c=p.resolved;double u=(2*x-1)/p.sx,v=(2*y-1)/p.sy;Ray r;
+  for(int k=0;k<3;++k) {
+    r.direction[k]=c.ray[k]+(p.camera.perspective ? u*c.right[k]+v*c.up[k]:0);
+    r.origin[k]=c.eye[k]+(p.camera.perspective ? 0:u*c.right[k]+v*c.up[k]);
+  }
+  r.direction=unit(r.direction);double forward=engine::dot(r.direction,c.forward);
+  r.near=c.near/forward;r.far=c.far/forward;return r;
+}
 inline bool clip_box(Ray& r,const Vec3& lo,const Vec3& hi) {
   for(int k=0;k<3;++k) {
     if(r.direction[k]==0) {if(r.origin[k]<lo[k] || r.origin[k]>hi[k])return false;}

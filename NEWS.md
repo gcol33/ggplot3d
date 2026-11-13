@@ -1,6 +1,7 @@
 # ggplot3d 0.0.0.9000
 
 * `geom_boxplot_3d()` draws box prisms, median faces, whiskers and outliers on x/y cells. `geom_violin_3d()` draws mirrored density walls or revolved solids. `geom_waterfall_3d()` draws curtains and `geom_area_3d()` stacks area walls through `position_stack_3d()`.
+* `backend_3d("pathtrace")` adds diffuse global illumination, distant-disk soft shadows, thin-lens depth of field and seeded progressive accumulation. Native BVH traversal shares the SDF ray kernel; batches and worker counts produce identical samples.
 
 * knitr and Quarto chunks accept `view3d = TRUE` for the HTML viewer and static vector scenes in PDF and Word. `alt_text_3d()` supplies figure descriptions, with `fig.alt` and `labs(alt = )` overrides. Patchwork and cowplot compositions retain their separate panel scenes.
 * `geom_volume_3d()` renders trilinear scalar grids with emission-absorption transfer functions, maximum-intensity projection, and per-cell cubic isosurface intersections. Overlapping media combine extinction and emission, and opaque scene depth bounds the integration.

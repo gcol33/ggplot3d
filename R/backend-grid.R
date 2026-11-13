@@ -25,7 +25,11 @@ makeContent.scene_panel_grob <- function(x) {
   outer <- panel_outer_viewport_3d(x$panel_params)
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, x$eye_group %or3d% as.list(x$frame_group))
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
-  if (identical(backend$type, "raster")) {
+  if (identical(backend$type, "pathtrace")) {
+    result <- render_pathtrace_panel_3d(x, furniture, backend)
+    scene <- result$scene
+    rendered <- result$grob
+  } else if (identical(backend$type, "raster")) {
     if (!is.null(furniture$split)) {
       x$packets <- c(x$packets, list(device_text_metrics_3d(furniture$split$scene)))
       furniture$packet <- furniture$split$fixed
@@ -64,7 +68,7 @@ makeContent.scene_panel_grob <- function(x) {
 # Physical panel size at the backend's raster resolution or device resolution.
 panel_outer_viewport_3d <- function(panel_params) {
   backend <- panel_params$coord_params$backend
-  dpi <- if (backend$type %in% c("raster", "hybrid")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
+  dpi <- if (backend$type %in% c("raster", "hybrid", "pathtrace")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
   new_scene_viewport(grid::unit(1, "npc"), grid::unit(1, "npc"), dpi)
 }
 

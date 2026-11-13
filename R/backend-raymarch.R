@@ -88,6 +88,10 @@ render_raymarch_panel_3d <- function(x, furniture, backend) {
   packet <- merge_scene_packets(x$packets, x$panel_params$panel_id)
   result <- raymarch_scene_3d(specs, packet, furniture$camera, furniture$viewport, backend,
     x$panel_params$coord_params$light)
+  raymarch_panel_grob_3d(result, packet, furniture, "scene-raymarch-3d")
+}
+
+raymarch_panel_grob_3d <- function(result, packet, furniture, name) {
   scene <- scene_compile(furniture$packet, furniture$camera, furniture$viewport)
   part <- function(partition, name) {
     selected <- scene
@@ -97,5 +101,5 @@ render_raymarch_panel_3d <- function(x, furniture, backend) {
   children <- c(list(part(c(0L, 1L), "raymarch-underlay-3d"), raster_image_grob_3d(result)),
     raster_text_3d(result, packet), list(part(2L, "raymarch-overlay-3d")))
   list(scene = scene, grob = grid::gTree(children = do.call(grid::gList, children),
-    raster_result = result, name = "scene-raymarch-3d"))
+    raster_result = result, name = name))
 }

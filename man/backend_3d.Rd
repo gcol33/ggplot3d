@@ -4,10 +4,23 @@
 \alias{backend_3d}
 \title{Select a 3D rendering backend}
 \usage{
-backend_3d(type = "vector", dpi = 144, antialias = 2L, blend = "linear")
+backend_3d(
+  type = "vector",
+  dpi = 144,
+  antialias = 2L,
+  blend = "linear",
+  samples = 64L,
+  bounces = 8L,
+  seed = 1L,
+  aperture = 0,
+  focus = NULL,
+  light_radius = 5,
+  progressive = FALSE,
+  batch_size = 8L
+)
 }
 \arguments{
-\item{type}{Backend: \code{"vector"}, \code{"raster"} or \code{"hybrid"}. A hybrid panel
+\item{type}{Backend: \code{"vector"}, \code{"raster"}, \code{"hybrid"} or \code{"pathtrace"}. A hybrid panel
 rasterises the layers created with \code{raster = TRUE} (an argument of every
 \verb{geom_*_3d()} layer and of \code{\link[=layer_3d]{layer_3d()}}) into one image at \code{dpi} and draws
 the other layers, axes, panes and text as vector graphics. Vector
@@ -22,6 +35,25 @@ lines on or behind a rasterised surface stay exact where they are seen.}
 translucent paint and averages antialiasing samples: \code{"linear"} light,
 encoded to sRGB after averaging, or \code{"srgb"}, which matches the
 compositing of vector graphics devices.}
+
+\item{samples}{Path-tracing samples per pixel added by each render.}
+
+\item{bounces}{Maximum diffuse surface interactions per path.}
+
+\item{seed}{Nonnegative integer seed for pixel and sample indexed randomness.}
+
+\item{aperture}{Thin-lens radius in aspect-scaled model units; zero is a pinhole.}
+
+\item{focus}{Focal-plane distance along the camera forward axis, in model
+units. NULL focuses on the camera target.}
+
+\item{light_radius}{Angular radius of the distant light in degrees.}
+
+\item{progressive}{Accumulate samples across redraws of the same scene.
+Changes to geometry, camera, lighting or image dimensions reset accumulation.}
+
+\item{batch_size}{Samples per native batch; accumulation is independent of
+batch size and worker count. R can interrupt between batches.}
 }
 \value{
 A backend configuration for coord_3d().
@@ -34,15 +66,26 @@ The raster backend renders 64-pixel tiles in parallel. The number
 of worker threads is the option \code{ggplot3d.threads}; the default \code{0} uses
 one thread per hardware thread, at most two when \verb{_R_CHECK_LIMIT_CORES_}
 is set. The image does not depend on the thread count.
+
+The native path tracer uses diffuse materials, a bounding-volume hierarchy,
+cosine-weighted reflection sampling and Russian roulette. The ambient light
+is a uniform environment; the diffuse light is a sampled distant disk.
+Points and paths use the solid conversion of \code{\link[=export_3d]{export_3d()}}, and SDF layers
+use the shared sphere tracer. Furniture and text remain vector graphics.
 }
 \examples{
 backend_3d("vector")
 backend_3d("raster", dpi = 144, antialias = 2)
 backend_3d("raster", blend = "srgb")
+backend_3d("pathtrace", samples = 8, seed = 1)
 d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
 d$z <- sin(pi * d$x) * cos(pi * d$y)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", colour = NA, raster = TRUE) +
   geom_contour_3d(colour = "black") +
   coord_3d(backend = backend_3d("hybrid", dpi = 150))
+}
+\references{
+Pharr, Jakob and Humphreys (2023). Physically Based Rendering,
+fourth edition. \url{https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing}
 }
