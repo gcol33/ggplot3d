@@ -470,12 +470,7 @@ pane_normals_3d <- function(frame, pane, points, camera) {
 }
 
 facing_3d <- function(normals, model_points, camera, basis) {
-  toward <- if (basis$perspective) {
-    target <- camera$target * basis$scale
-    position <- sweep(model_points, 2L, basis$scale, "*")
-    -sweep(sweep(position, 2L, target), 2L, basis$forward * basis$distance, "+")
-  } else matrix(-basis$ray, nrow(normals), 3L, byrow = TRUE)
-  facing <- rowSums(normals * toward)
+  facing <- rowSums(normals * toward_camera_3d(basis, camera, model_points))
   tolerance <- 64 * .Machine$double.eps * pmax(1, abs(facing))
   ifelse(facing > tolerance, 2L, 0L)
 }

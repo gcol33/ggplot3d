@@ -47,6 +47,7 @@ geom_text_3d(
   stat = "identity",
   position = "identity",
   ...,
+  orientation = "screen",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -65,6 +66,9 @@ geom_polygon_3d(
 }
 \arguments{
 \item{mapping, data, stat, position, ..., na.rm, show.legend, inherit.aes}{Standard ggplot2 layer arguments.}
+
+\item{orientation}{Text layers: \code{"screen"} draws labels upright on the
+page, \code{"plane"} lays them flat in the plane given by \code{plane}.}
 }
 \value{
 A ggplot2 layer emitting unprojected scene geometry.
@@ -79,6 +83,15 @@ pixel, and darkens points by eye-dome lighting, so an unlit cloud shows its
 depth structure. \code{edl} (default 1, 0 for none) sets the lighting strength.
 The vector backend draws splats as ordinary points and refuses panels with
 more markers than the option \code{ggplot3d.vector_markers} (default 50000).
+
+Text in a plane: \code{geom_text_3d(orientation = "plane", plane = "xy")} lays
+each label flat in the plane through its position spanned by two axes
+(\code{"xy"}, \code{"xz"} or \code{"yz"}), read along the first axis and turned within
+the plane by the \code{angle} aesthetic. The label is cut from the glyph
+outlines of its font (read with the 'systemfonts' package) into faces that
+the camera foreshortens and that hide and are hidden by the data; \code{size}
+is the text size at the camera target. Seen from behind the plane, a
+label reads in the turned direction instead of mirrored.
 }
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(1, 2, 4),
@@ -92,5 +105,9 @@ ggplot2::ggplot(cloud, ggplot2::aes(x, y, z = z)) +
 p + geom_path_3d() + coord_3d()
 p + geom_segment_3d(ggplot2::aes(xend = x, yend = y, zend = 0)) + coord_3d()
 p + geom_text_3d(ggplot2::aes(label = label)) + coord_3d()
+if (requireNamespace("systemfonts", quietly = TRUE)) {
+  p + geom_text_3d(ggplot2::aes(label = label), orientation = "plane", plane = "xy", size = 8) +
+    coord_3d(projection = "perspective")
+}
 p + geom_polygon_3d(fill = "steelblue", alpha = 0.5) + coord_3d()
 }

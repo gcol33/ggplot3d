@@ -192,10 +192,14 @@ glyph_limits_3d <- function(data, maps, unit, rows = rep(TRUE, nrow(data))) {
 #   maps: 3 x 3 x n linear maps. Rows with space "data" map unit coordinates to
 #     normalised scale space; rows with space "model" or "mm" map them to the
 #     aspect-scaled model space the camera sees, in model units or millimetres.
+#   unit: one unit mesh, or a list of unit meshes with `unit_index` giving
+#     the mesh of each row.
 # Glyphs stay rigid in curvilinear frames: data-space maps pass through the
 # frame's Jacobian at the centre. Millimetre glyphs are resolved at draw time,
 # when the device size is known; see resolve_glyph_packets_3d().
-emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_params) {
+emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_params, unit_index = NULL) {
+  units <- if (is.null(unit_index)) list(unit) else unit
+  if (is.null(unit_index)) unit_index <- rep.int(1L, nrow(data))
   empty <- new_scene_packet(panel_id = panel_params$panel_id)
   frame <- frame_of_3d(panel_params)
   keep <- valid_rows_3d(data, params) & apply(maps, 3L, function(m) all(is.finite(m)))
@@ -207,7 +211,10 @@ emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_param
   keep[is.na(keep)] <- FALSE
   if (!any(keep)) return(empty)
   data <- data[keep, , drop = FALSE]; maps <- maps[, , keep, drop = FALSE]; space <- space[keep]
-  n <- nrow(data); V <- nrow(unit$vertices)
+  unit_index <- unit_index[keep]
+  n <- nrow(data)
+  sizes <- vapply(units, function(u) nrow(u$vertices), integer(1))
+  V <- sizes[unit_index]
   centre <- as.matrix(data[c("x", "y", "z")])
   model_centre <- frame$map(centre)
   scale <- panel_params$camera$aspect / max(panel_params$camera$aspect)
@@ -221,9 +228,9 @@ emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_param
     }
     for (i in seq_along(data_rows)) maps[, , data_rows[i]] <- jacobian[, , i] %*% maps[, , data_rows[i]]
   }
-  instance <- rep(seq_len(n), each = V)
-  u <- unit$vertices[rep(seq_len(V), n), , drop = FALSE]
-  offset <- matrix(0, n * V, 3L)
+  instance <- rep(seq_len(n), V)
+  u <- do.call(rbind, lapply(units, `[[`, "vertices"))[sequence(V, from = cumsum(c(1L, head(sizes, -1L)))[unit_index]), , drop = FALSE]
+  offset <- matrix(0, sum(V), 3L)
   for (k in 1:3) offset[, k] <- rowSums(u * t(maps[k, , instance]))
   rigid <- space[instance] != "data"
   millimetre <- space[instance] == "mm"
@@ -234,13 +241,18 @@ emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_param
   rows <- data[instance, , drop = FALSE]
   xyz <- centres + offset
   rows$x <- xyz[, 1L]; rows$y <- xyz[, 2L]; rows$z <- xyz[, 3L]
-  base <- (seq_len(n) - 1L) * V
-  place <- function(m) {
-    out <- matrix(rep(as.vector(t(m)), n) + rep(base, each = length(m)), ncol = ncol(m), byrow = TRUE)
-    out
+  base <- cumsum(c(0L, head(V, -1L)))
+  place <- function(m, bases) matrix(rep(as.vector(t(m)), length(bases)) + rep(bases, each = length(m)), ncol = ncol(m), byrow = TRUE)
+  faces <- list(); edges <- matrix(integer(), 0L, 2L)
+  for (group in split(seq_len(n), unit_index)) {
+    mesh <- units[[unit_index[group[1L]]]]
+    for (f in mesh$faces) {
+      key <- as.character(ncol(f))
+      faces[[key]] <- rbind(faces[[key]], place(f, base[group]))
+    }
+    edges <- rbind(edges, place(mesh$edges, base[group]))
   }
-  faces <- lapply(unit$faces, place)
-  edges <- place(unit$edges)
+  faces <- unname(faces)
   packet <- packet_from_faces_edges_3d(rows, faces, edges, params, panel_params)
   scene_assert(length(packet$vertices$x) == nrow(rows), "glyph vertices must all be referenced")
   attr(packet, "model_space") <- TRUE

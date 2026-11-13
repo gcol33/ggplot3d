@@ -31,6 +31,17 @@ make_layer_3d <- function(geom, mapping, data, stat, position, params, show.lege
 #'   depth structure. `edl` (default 1, 0 for none) sets the lighting strength.
 #'   The vector backend draws splats as ordinary points and refuses panels with
 #'   more markers than the option `ggplot3d.vector_markers` (default 50000).
+#'
+#'   Text in a plane: `geom_text_3d(orientation = "plane", plane = "xy")` lays
+#'   each label flat in the plane through its position spanned by two axes
+#'   (`"xy"`, `"xz"` or `"yz"`), read along the first axis and turned within
+#'   the plane by the `angle` aesthetic. The label is cut from the glyph
+#'   outlines of its font (read with the 'systemfonts' package) into faces that
+#'   the camera foreshortens and that hide and are hidden by the data; `size`
+#'   is the text size at the camera target. Seen from behind the plane, a
+#'   label reads in the turned direction instead of mirrored.
+#' @param orientation Text layers: `"screen"` draws labels upright on the
+#'   page, `"plane"` lays them flat in the plane given by `plane`.
 #' @return A ggplot2 layer emitting unprojected scene geometry.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(1, 2, 4),
@@ -44,6 +55,10 @@ make_layer_3d <- function(geom, mapping, data, stat, position, params, show.lege
 #' p + geom_path_3d() + coord_3d()
 #' p + geom_segment_3d(ggplot2::aes(xend = x, yend = y, zend = 0)) + coord_3d()
 #' p + geom_text_3d(ggplot2::aes(label = label)) + coord_3d()
+#' if (requireNamespace("systemfonts", quietly = TRUE)) {
+#'   p + geom_text_3d(ggplot2::aes(label = label), orientation = "plane", plane = "xy", size = 8) +
+#'     coord_3d(projection = "perspective")
+#' }
 #' p + geom_polygon_3d(fill = "steelblue", alpha = 0.5) + coord_3d()
 #' @export
 geom_point_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
@@ -68,8 +83,9 @@ geom_segment_3d <- function(mapping = NULL, data = NULL, stat = "identity", posi
 #' @rdname geom_point_3d
 #' @export
 geom_text_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
-                          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  make_layer_3d(ggplot2::GeomText, mapping, data, stat, position, c(list(na.rm = na.rm), list(...)), show.legend, inherit.aes)
+                          orientation = "screen", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  geom <- switch(match.arg(orientation, c("screen", "plane")), screen = ggplot2::GeomText, plane = GeomTextPlane3D)
+  make_layer_3d(geom, mapping, data, stat, position, c(list(na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname geom_point_3d

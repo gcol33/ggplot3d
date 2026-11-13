@@ -13,7 +13,12 @@ guide_axis_3d(
   n.dodge = 1L,
   minor.ticks = FALSE,
   cap = "none",
-  order = 0L
+  order = 0L,
+  label.orientation = "screen",
+  plane = "auto",
+  title.position = "centre",
+  depth.scale = FALSE,
+  ticks = "outward"
 )
 }
 \arguments{
@@ -26,7 +31,8 @@ guide_axis_3d(
 
 \item{check.overlap}{Use extra clearance between measured label rectangles.}
 
-\item{angle}{Label rotation in degrees. Waiver keeps labels horizontal.}
+\item{angle}{Label rotation in degrees for \code{label.orientation = "screen"}.
+Waiver keeps labels horizontal.}
 
 \item{n.dodge}{Number of parallel label rows.}
 
@@ -35,6 +41,30 @@ guide_axis_3d(
 \item{cap}{Trim the lower, upper, both, or neither end to major breaks.}
 
 \item{order}{Guide ordering value.}
+
+\item{label.orientation}{\code{"screen"}, \code{"edge"} or \code{"plane"}: tick labels
+upright on the page, turned along the projected edge and kept upright, or
+lying in a pane. Titles follow the edge in every orientation and lie in
+the pane with \code{"plane"}.}
+
+\item{plane}{Pane for plane labels and in-plane ticks: \code{"auto"},
+\code{"floor"}, \code{"xy"}, \code{"xz"} or \code{"yz"}. The pane must contain the axis.}
+
+\item{title.position}{\code{"centre"} places the title beside the middle of the
+axis, beyond the tick labels; \code{"near"} places it past the end of the axis
+nearer the camera, in line with the axis, as ggcube does for axes inside
+the plot.}
+
+\item{depth.scale}{Under perspective projection, scale tick labels and
+tick lengths by their distance from the camera: \code{FALSE} (none), \code{TRUE}
+(full), or a nonnegative strength \code{s}, which maps the ratio \code{d} of the
+distance of the camera target to the distance of the tick to \code{d^s}, as
+\code{scale_depth} in ggcube. Titles are not scaled. Plane labels and in-plane
+ticks are foreshortened by the projection itself.}
+
+\item{ticks}{\code{"outward"} draws ticks on the page, perpendicular to the
+projected edge; \code{"in_plane"} draws them in the pane, perpendicular to the
+edge in three dimensions.}
 }
 \value{
 A ggplot2 guide for a three-dimensional position axis.
@@ -49,11 +79,43 @@ three dimensions; \code{coord_3d(axis_lines = "origin")} places every guide with
 position \code{"auto"} there.
 Labels are thinned automatically using their measured extents along the edge.
 }
+\details{
+Tick labels can stand upright on the page (\code{label.orientation = "screen"}),
+turn with the projected edge they label (\code{"edge"}, as \code{rotate_labels} in
+ggcube and the automatic label rotation of Makie's \code{Axis3}), or lie flat in
+one of the two box panes that meet at the edge (\code{"plane"}), drawn from the
+glyph outlines of the font so that perspective foreshortens them like the
+panes. \code{ticks = "in_plane"} points the ticks into the same pane, with a
+length that shrinks with distance from the camera. The pane is chosen with
+\code{plane}: \code{"auto"} takes the pane in which the ticks stand out furthest from
+the edge on the page, \code{"floor"} the pane normal to the vertical axis of the
+camera, and \code{"xy"}, \code{"xz"} or \code{"yz"} a pane by the two axes it spans, as
+with the edge codes of rgl's \code{axis3d()}.
+
+Plane typography needs the 'systemfonts' package, which reads the glyph
+outlines, and character labels; plotmath expressions stay on the page.
+}
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 2, 1), z = 1:3)
-ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
-  geom_point_3d() + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
-ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
-  geom_point_3d() + scale_z_continuous(guide = guide_axis_3d(position = "origin")) +
+p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d()
+p + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
+p + scale_z_continuous(guide = guide_axis_3d(position = "origin")) +
   coord_3d(origin = c(x = 2, y = 1.5))
+p + ggplot2::guides(x = guide_axis_3d(label.orientation = "edge"),
+                    y = guide_axis_3d(label.orientation = "edge")) +
+  coord_3d()
+if (requireNamespace("systemfonts", quietly = TRUE)) {
+  p + ggplot2::guides(x = guide_axis_3d(label.orientation = "plane", ticks = "in_plane"),
+                      y = guide_axis_3d(label.orientation = "plane", ticks = "in_plane")) +
+    coord_3d(projection = "perspective")
+}
+p + ggplot2::guides(z = guide_axis_3d(title.position = "near", depth.scale = TRUE)) +
+  coord_3d(projection = "perspective")
+}
+\references{
+Kling M (2025). ggcube: 3D plotting with ggplot2. \code{coord_3d()} arguments
+\code{rotate_labels}, \code{scale_depth} and \code{title_position}.
+
+Danisch S, Krumbiegel J (2021). Makie.jl: Flexible high-performance data
+visualization for Julia. Journal of Open Source Software 6(65), 3349.
 }

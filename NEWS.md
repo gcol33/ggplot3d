@@ -1,6 +1,8 @@
 # ggplot3d 0.0.0.9000
 
 * Reference and clipping planes: `geom_plane_3d()` draws planes of constant x, y or z, or of any orientation from a normal and a point (such as a fitted regression plane), cut to the panel box as one face that intersects surfaces exactly. `coord_3d(clip_planes = )` cuts every layer by `clip_plane_3d()` half-spaces set in data units, and a layer's `clip_planes` argument replaces them for that layer; `cap = TRUE` closes cut solids with faces on the plane, leaving the holes of hollow solids open.
+* `guide_axis_3d()` adds edge-following labels, glyph outlines lying in a pane, in-plane ticks, near-end titles and perspective depth scaling. Plane text and ticks participate in scene visibility. `geom_text_3d(orientation = "plane", plane = )` lays font outlines in a coordinate plane.
+
 * Networks and trees: `ggplot(graph)` fortifies an igraph graph into nodes and edges with a 3D igraph layout (`fortify(graph, layout = )`); `geom_edge_3d()` draws edges as lines, arcs or shaded tubes and `geom_node_3d()` the nodes; `stat_layers_3d()` stacks the layers of a multilayer network on z planes with inter-layer edges; `stat_dendrogram_3d()` draws an `hclust` tree in any coordinate plane, such as a wall beside a floor heatmap, with branches coloured by cluster.
 * Draw points, paths, segments, text, polygons, surfaces, contours, meshes, bands, columns and extrusions in three dimensions.
 * Train continuous, discrete and date/time z scales, with fixed or free z ranges across facets.
