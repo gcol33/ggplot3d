@@ -29,6 +29,7 @@ makeContent.scene_panel_grob <- function(x) {
     rendered <- result$grob
   } else {
     packet <- merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id)
+    vector_marker_limit_3d(packet)
     # Device text metrics are authoritative at the physical-size boundary.
     if (length(packet$text$style_id)) {
       for (i in seq_along(packet$text$style_id)) {
@@ -53,6 +54,20 @@ makeContent.scene_panel_grob <- function(x) {
   children <- c(list(background), x$underlay, list(rendered, decorations, border), x$overlay)
   x$scene <- scene; x$furniture <- decorations; x$inner_viewport <- furniture$viewport; x$outer_viewport <- outer
   grid::setChildren(x, do.call(grid::gList, children))
+}
+
+# Vector compilation and drawing grow faster than linearly in the marker
+# count: on bench/point-backends.R a 6 in, 150 dpi PNG of N points took 2.7 s
+# at 3e4, 7.8 s at 5e4 and 31 s at 1e5, against 0.3 to 0.5 s raster.
+vector_marker_limit_3d <- function(packet) {
+  limit <- getOption("ggplot3d.vector_markers", 50000)
+  n <- length(packet$markers$offset)
+  if (n > limit) stop(sprintf(paste0(
+    "The vector backend draws at most %s markers per panel and this panel has %s. ",
+    "Use coord_3d(backend = backend_3d(\"raster\")) with geom_point_3d(render = \"splat\"), ",
+    "bin the points, or raise options(ggplot3d.vector_markers = )."),
+    format(limit, big.mark = ",", scientific = FALSE), format(n, big.mark = ",", scientific = FALSE)), call. = FALSE)
+  invisible(n)
 }
 
 style_value_3d <- function(styles, name, default) {

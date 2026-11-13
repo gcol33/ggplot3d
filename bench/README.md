@@ -25,6 +25,11 @@ arguments are output file, cases, threads, antialias and repetitions.
 `raster-results-2026-11-13.csv` holds the timings of the per-pass renderer of
 commit b7a6f5f and of the tiled renderer with one and eight threads.
 
+`point-backends.R` times `ggsave()` of a 6 in, 150 dpi PNG of N normal points
+per backend (`vector`, `raster`, `splat`); `point-backends-2026-11-13.csv`
+holds the measurements behind the vector marker limit. The two raster rows at
+1e5 points come from separate runs (0.54 s and 1.15 s).
+
 The matrix runner scores every fixture diagnostically. Testthat additionally
 gates acceptance on the returned `exact_visibility` and `footprint_clipping`
 capabilities. `referee-matrix.csv` preserves both results. Each failure saves an

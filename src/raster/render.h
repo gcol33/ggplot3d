@@ -15,6 +15,9 @@ struct Paint {
   double width=0;
   bool separate=false;
   std::array<double,4> bounds;
+  // A splat is a sphere impostor: radius in mm, and depth units per mm at its
+  // centre (0 for other paint). edl is its eye-dome lighting strength.
+  double radius=0,splat=0,edl=0;
 };
 
 // Per-draw constants shared read-only by all tiles: the scene, the paints,
@@ -133,6 +136,9 @@ static inline double sample(const Shapes& shapes,const Item& item,const Paint& p
     if(ex*ex+ey*ey>radius*radius) return R_PosInf;
     if(!ignore_dash && !dash_on(paint,item.path_start+std::max(0.0,std::min(1.0,t))*length,hidden)) return R_PosInf;
     return depth_at(v[0].depth,v[1].depth,std::max(0.0,std::min(1.0,t)),scene.projection.camera.perspective);
+  } else if(item.kind==3 && paint.splat>0) {
+    double dx=x-v[0].x,dy=y-v[0].y,d2=dx*dx+dy*dy,r2=paint.radius*paint.radius;
+    return d2<=r2 ? v[0].depth-paint.splat*std::sqrt(r2-d2):R_PosInf;
   } else if(item.kind==3 && footprint(shapes,item.row,x-v[0].x,y-v[0].y)) {
     if(border) *border=paint.separate && !footprint(shapes,item.row,x-v[0].x,y-v[0].y,paint.width);
     return v[0].depth;
@@ -192,7 +198,7 @@ static inline bool before(const Scene& scene,Index a,double za,Index b,double zb
 
 static inline std::vector<Paint> paints(const Scene& scene,Rcpp::List colours,Rcpp::List dashes,bool id_pass) {
   struct Table {
-    Rcpp::NumericMatrix colour,outline; Rcpp::NumericVector width; Rcpp::LogicalVector separate; bool styled=false;
+    Rcpp::NumericMatrix colour,outline; Rcpp::NumericVector width,edl; Rcpp::LogicalVector separate,splat; bool styled=false;
   };
   std::array<Table,4> tables;
   for(int kind=1;kind<=4;++kind) {
@@ -203,6 +209,10 @@ static inline std::vector<Paint> paints(const Scene& scene,Rcpp::List colours,Rc
       t.outline=Rcpp::as<Rcpp::NumericMatrix>(t.colour.attr("outline"));
       t.width=Rcpp::as<Rcpp::NumericVector>(t.colour.attr("width_mm"));
       t.separate=Rcpp::as<Rcpp::LogicalVector>(t.colour.attr("separate"));
+    }
+    if(t.colour.hasAttribute("splat")) {
+      t.splat=Rcpp::as<Rcpp::LogicalVector>(t.colour.attr("splat"));
+      t.edl=Rcpp::as<Rcpp::NumericVector>(t.colour.attr("edl"));
     }
   }
   std::vector<std::vector<double>> dash(dashes.size()),hidden_dash(dashes.size());
@@ -221,6 +231,15 @@ static inline std::vector<Paint> paints(const Scene& scene,Rcpp::List colours,Rc
       p.outline={t.outline(0,item.row),t.outline(1,item.row),t.outline(2,item.row),t.outline(3,item.row)*table.opacity[item.row]};
       p.width=t.width[item.row];p.separate=t.separate[item.row];
       if(item.kind==1 && p.outline.a>0) {p.bounds[0]-=p.width*.5;p.bounds[1]-=p.width*.5;p.bounds[2]+=p.width*.5;p.bounds[3]+=p.width*.5;}
+    }
+    if(item.kind==3 && t.splat.size() && t.splat[item.row]) {
+      // Orthographic and perspective images scale camera x by sy/2 * height / w.
+      const auto& projection=scene.projection;
+      double w=projection.camera.perspective ? scene.vertices[item.offset].depth:1;
+      p.radius=(p.bounds[2]-p.bounds[0])*.5;
+      p.splat=w/(.5*projection.sy*projection.viewport.height_mm);
+      p.edl=t.edl[item.row];
+      p.outline=Colour();p.separate=false;
     }
     if(item.kind==2) {
       p.dash=dash[item.row];
@@ -367,8 +386,10 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
   return out;
 }
 
+// Per device pixel, rows from the top: the sum of premultiplied sample
+// colours, and the centre sample's primitive id, nearest item and depths.
 struct Buffers {
-  std::vector<std::uint32_t> image;
+  std::vector<Colour> colour;
   std::vector<int> id;
   std::vector<Index> item;
   std::vector<double> depth,opaque_depth;
@@ -395,7 +416,7 @@ static inline std::uint32_t channel_byte(double value) {
 
 static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const std::vector<Span>& spans,
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
-                               bool retained,bool translucent_strokes,bool keep_buffers,
+                               bool retained,bool translucent_strokes,
                                TileScratch& s,Buffers& out,int& passes) {
   const Scene& scene=shapes.scene;
   const auto& line=scene.packet.polylines;
@@ -461,21 +482,58 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       const auto& c=s.results[static_cast<std::size_t>(py*aa+sy-sy0)*tw+px*aa+sx-sx0].colour;
       sum.r+=c.r;sum.g+=c.g;sum.b+=c.b;sum.a+=c.a;
     }
-    double alpha=sum.a/(static_cast<double>(aa)*aa);
-    std::uint32_t packed=channel_byte(alpha)<<24;
-    if(sum.a>0) {
-      Colour c{sum.r/sum.a,sum.g/sum.a,sum.b/sum.a,0};
-      if(canvas.linear) c={srgb_encode(c.r),srgb_encode(c.g),srgb_encode(c.b),0};
-      packed|=channel_byte(c.r)|(channel_byte(c.g)<<8)|(channel_byte(c.b)<<16);
-    }
     std::size_t pixel=static_cast<std::size_t>(canvas.height-1-py)*canvas.width+px;
     const SampleResult& centre=s.results[static_cast<std::size_t>(py*aa+aa/2-sy0)*tw+px*aa+aa/2-sx0];
-    out.image[pixel]=packed;
+    out.colour[pixel]=sum;
     out.id[pixel]=centre.first<0 ? 0:scene.table(scene.items[centre.first].kind).primitive_id[scene.items[centre.first].row];
-    if(keep_buffers) {
-      out.item[pixel]=centre.first;out.depth[pixel]=centre.depth;out.opaque_depth[pixel]=centre.opaque_depth;
-    }
+    out.item[pixel]=centre.first;out.depth[pixel]=centre.depth;out.opaque_depth[pixel]=centre.opaque_depth;
   }
+}
+
+// Eye-dome lighting (Boucheny 2009, as in ParaView): a splat pixel darkens by
+// exp(-edl_scale * strength * response), where response averages, over the
+// eight neighbours one pixel away, how far each neighbour lies in front in
+// log2 of the depth normalised to the near-far range. Empty neighbours lie at
+// the far plane and never darken. ParaView scales by 300 on a perspective
+// z-buffer, which compresses depth toward the far plane; this depth is linear
+// in eye distance, so neighbouring steps are larger and the scale smaller.
+static constexpr double edl_scale=40;
+static inline void eye_dome_lighting(const Shapes& shapes,const Canvas& canvas,Buffers& b) {
+  const auto& resolved=shapes.scene.projection.resolved;
+  const double range=resolved.far-resolved.near;
+  auto level=[&](std::size_t pixel) {
+    double z=b.depth[pixel];
+    if(!std::isfinite(z)) return 0.0;
+    return std::log2(std::max(1e-6,std::min(1.0,(z-resolved.near)/range)));
+  };
+  const int width=canvas.width,height=canvas.height;
+  std::vector<double> shade(b.colour.size(),1);
+  for(int y=0;y<height;++y) for(int x=0;x<width;++x) {
+    std::size_t pixel=static_cast<std::size_t>(y)*width+x;
+    Index i=b.item[pixel];
+    if(i<0 || shapes.paint[i].splat<=0 || shapes.paint[i].edl<=0) continue;
+    double centre=level(pixel),response=0;
+    for(int dy=-1;dy<=1;++dy) for(int dx=-1;dx<=1;++dx) {
+      if(dx==0 && dy==0) continue;
+      int nx=std::max(0,std::min(width-1,x+dx)),ny=std::max(0,std::min(height-1,y+dy));
+      response+=std::max(0.0,centre-level(static_cast<std::size_t>(ny)*width+nx));
+    }
+    shade[pixel]=std::exp(-edl_scale*shapes.paint[i].edl*response/8);
+  }
+  for(std::size_t pixel=0;pixel<b.colour.size();++pixel) {
+    b.colour[pixel].r*=shade[pixel];b.colour[pixel].g*=shade[pixel];b.colour[pixel].b*=shade[pixel];
+  }
+}
+
+static inline std::uint32_t pack_pixel(const Colour& sum,const Canvas& canvas) {
+  double alpha=sum.a/(static_cast<double>(canvas.aa)*canvas.aa);
+  std::uint32_t packed=channel_byte(alpha)<<24;
+  if(sum.a>0) {
+    Colour c{sum.r/sum.a,sum.g/sum.a,sum.b/sum.a,0};
+    if(canvas.linear) c={srgb_encode(c.r),srgb_encode(c.g),srgb_encode(c.b),0};
+    packed|=channel_byte(c.r)|(channel_byte(c.g)<<8)|(channel_byte(c.b)<<16);
+  }
+  return packed;
 }
 
 static inline void check_interrupt(void*) {R_CheckUserInterrupt();}
@@ -561,6 +619,7 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
     span.nearest=R_PosInf;
     for(Index j=0;j<item.count;++j) span.nearest=std::min(span.nearest,scene.vertices[item.offset+j].depth);
     if(scene.projection.camera.perspective && !(span.nearest>0)) span.nearest=R_NegInf;
+    span.nearest-=p.splat*p.radius;
     span.samples={0,0,-1,-1};
     if(item.kind==4 || (p.colour.a==0 && p.outline.a==0)) continue;
     span.samples=canvas.samples(p.bounds);
@@ -574,8 +633,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   }
   Buffers buffers;
   std::size_t pixels=static_cast<std::size_t>(width)*height;
-  buffers.image.assign(pixels,0); buffers.id.assign(pixels,0);
-  if(keep_buffers) {buffers.item.assign(pixels,-1);buffers.depth.assign(pixels,R_PosInf);buffers.opaque_depth.assign(pixels,R_PosInf);}
+  buffers.colour.assign(pixels,Colour()); buffers.id.assign(pixels,0);
+  buffers.item.assign(pixels,-1);buffers.depth.assign(pixels,R_PosInf);buffers.opaque_depth.assign(pixels,R_PosInf);
   int tiles=canvas.tiles_x*canvas.tiles_y;
   threads=thread_count(threads,tiles);
   std::vector<TileScratch> scratch(threads);
@@ -584,13 +643,16 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   parallel_tiles(tiles,threads,[&](int worker,int tile) {
     int tx=tile%canvas.tiles_x,ty=tile/canvas.tiles_x;
     render_tile(shapes,canvas,spans,tile_items.data()+tile_start[tile],tile_start[tile+1]-tile_start[tile],
-      tx,ty,retained,translucent_strokes,keep_buffers,scratch[worker],buffers,worker_passes[worker]);
+      tx,ty,retained,translucent_strokes,scratch[worker],buffers,worker_passes[worker]);
   });
   scratch.clear();
   buffers.passes=*std::max_element(worker_passes.begin(),worker_passes.end());
   double tile_seconds=seconds(tiles_start);
+  if(std::any_of(paint.begin(),paint.end(),[](const Paint& p){return p.splat>0 && p.edl>0;}))
+    eye_dome_lighting(shapes,canvas,buffers);
   Rcpp::IntegerMatrix raster(height,width),ids(height,width);
-  std::copy(buffers.image.begin(),buffers.image.end(),reinterpret_cast<std::uint32_t*>(INTEGER(raster)));
+  std::uint32_t* packed=reinterpret_cast<std::uint32_t*>(INTEGER(raster));
+  for(std::size_t pixel=0;pixel<pixels;++pixel) packed[pixel]=pack_pixel(buffers.colour[pixel],canvas);
   for(int y=0;y<height;++y) for(int x=0;x<width;++x)
     ids(height-1-y,x)=buffers.id[static_cast<std::size_t>(height-1-y)*width+x];
   raster.attr("class")="nativeRaster";

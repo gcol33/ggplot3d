@@ -72,11 +72,23 @@ A ggplot2 layer emitting unprojected scene geometry.
 \description{
 Point, path, segment, text and polygon layers in three dimensions
 }
+\details{
+Large point clouds: \code{geom_point_3d(render = "splat")} draws each
+point in a raster backend as a sphere of the point's size, depth-tested per
+pixel, and darkens points by eye-dome lighting, so an unlit cloud shows its
+depth structure. \code{edl} (default 1, 0 for none) sets the lighting strength.
+The vector backend draws splats as ordinary points and refuses panels with
+more markers than the option \code{ggplot3d.vector_markers} (default 50000).
+}
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(1, 2, 4),
                 label = letters[1:3])
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 p + geom_point_3d(size = 3) + coord_3d()
+cloud <- data.frame(x = rnorm(2000), y = rnorm(2000), z = rnorm(2000))
+ggplot2::ggplot(cloud, ggplot2::aes(x, y, z = z)) +
+  geom_point_3d(render = "splat", size = 1) +
+  coord_3d(backend = backend_3d("raster", dpi = 96))
 p + geom_path_3d() + coord_3d()
 p + geom_segment_3d(ggplot2::aes(xend = x, yend = y, zend = 0)) + coord_3d()
 p + geom_text_3d(ggplot2::aes(label = label)) + coord_3d()

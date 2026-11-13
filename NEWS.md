@@ -13,4 +13,5 @@
 * `geom_blank()` and `expand_limits()` train scales inside `coord_3d()`.
 * The raster backend renders 64-pixel tiles on several threads (option `ggplot3d.threads`) with one fragment list per sample, keeps the exact compositing order and can return depth, id and normal buffers.
 * The raster backend composites translucent paint and averages antialiasing samples in linear light; `backend_3d(blend = "srgb")` matches vector devices.
+* `geom_point_3d(render = "splat")` draws large point clouds in the raster backend as depth-tested spheres with eye-dome lighting (`edl`); the vector backend stops above `getOption("ggplot3d.vector_markers", 50000)` markers per panel.
 * Translucent surfaces in vector output cover the shared edges inside each group of non-overlapping faces once.

@@ -127,7 +127,7 @@ scene_geom_3d <- function(parent, entry) {
     required_aes = if (entry$name == "GeomSegment") c("x", "y") else parent$required_aes,
     optional_aes = union(parent$optional_aes, c(z_aesthetics, entry$aesthetics,
       if (entry$name == "GeomSegment") c("xend", "yend"))),
-    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe")),
+    extra_params = union(parent$extra_params, c(".emitter", ".layer_id", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl")),
     handle_na = function(data, params) data,
     setup_data = function(data, params) {
       if (entry$name == "GeomSegment") {
@@ -143,14 +143,16 @@ scene_geom_3d <- function(parent, entry) {
                            lineend = "butt", linejoin = "round", linemitre = 10,
                            arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
                            size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
-                           width = NULL, depth = NULL, face = "zmin", plane = "surface") {
+                           width = NULL, depth = NULL, face = "zmin", plane = "surface",
+                           render = "marker", edl = 1) {
       if (!inherits(coord, "Coord3D")) stop("3D layers require coord_3d().", call. = FALSE)
       params <- list(.emitter = .emitter, na.rm = na.rm, occlusion = occlusion,
                      shade = shade, hidden = hidden, method = method, max_edge = max_edge,
                      wireframe = wireframe, lineend = lineend, linejoin = linejoin,
                      linemitre = linemitre, arrow = arrow, arrow.fill = arrow.fill,
                      parse = parse, check_overlap = check_overlap, size.unit = size.unit, rule = rule,
-                     base = base, cap = cap, width = width, depth = depth, face = face, plane = plane)
+                     base = base, cap = cap, width = width, depth = depth, face = face, plane = plane,
+                     render = render, edl = edl)
       scene_layer_grob(emit_scene_3d(data, params, panel_params, .layer_id))
     }
   )
@@ -165,6 +167,10 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   params$occlusion <- match.arg(params$occlusion %or3d% "depth", c("depth", "overlay"))
   params$hidden <- match.arg(params$hidden %or3d% "hide", c("hide", "dashed", "show"))
   if (entry$name %in% c("GeomPoint", "GeomText") && params$hidden != "hide") stop("Hidden-line policies require stroke geometry.", call. = FALSE)
+  params$render <- match.arg(params$render %or3d% "marker", c("marker", "splat"))
+  if (params$render == "splat" && entry$name != "GeomPoint") stop("render = \"splat\" requires a point layer.", call. = FALSE)
+  edl <- params$edl %or3d% 1
+  if (!is.numeric(edl) || length(edl) != 1L || !is.finite(edl) || edl < 0) stop("edl must be a nonnegative number.", call. = FALSE)
   packet <- entry$emit(normalise_positions_3d(data, panel_params), params, panel_params)
   validate_scene_packet(packet)
   frame_packet_3d(frame_of_3d(panel_params), packet, panel_params$camera$clip_data)
@@ -205,6 +211,10 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL) {
   }
   styles$alpha <- 1
   styles$shade <- isTRUE(params$shade)
+  if (identical(params$render, "splat")) {
+    styles$render <- "splat"
+    styles$edl <- as.double(params$edl %or3d% 1)
+  }
   styles$arrow <- I(rep(list(params$arrow), nrow(styles)))
   styles$arrow_fill <- params$arrow.fill %or3d% styles$colour
   styles$fontsize <- styles$size * switch(params$size.unit %or3d% "mm", mm = 72.27 / 25.4, pt = 1, cm = 72.27 / 2.54, "in" = 72.27, pc = 12, stop("Unsupported text size unit.", call. = FALSE))

@@ -25,6 +25,11 @@ raster_colours_3d <- function(packet, prepared, light) {
     metrics <- paint_metrics_3d(styles)
     attr(rgba, "width_mm") <- if (kind == "markers") metrics$border_mm * 2 else metrics$width_mm
     attr(rgba, "separate") <- if (kind == "markers") style_value_3d(styles, "shape", 19) %in% 21:25 else rep(FALSE, nrow(styles))
+    if (kind == "markers") {
+      attr(rgba, "splat") <- style_value_3d(styles, "render", "marker") %in% "splat"
+      edl <- as.double(style_value_3d(styles, "edl", 0))
+      attr(rgba, "edl") <- ifelse(is.na(edl), 0, edl)
+    }
     if (kind == "polylines") {
       arrows <- style_value_3d(styles, "arrow", list(NULL))
       attr(rgba, "arrows") <- t(vapply(arrows, function(a) {
