@@ -8,17 +8,26 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 5,
-  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "ragg_png")
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
+  dev.args = list(pointsize = 14))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
+         grey = "#5C6166")
+library(ggplot2)
+library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
 ```
 
 A geom draws a shape from mapped data. A stat computes new values or geometry before drawing. This article gives a small example of every three-dimensional geom and stat. Installation is covered in [Get started](ggplot3d.html).
 
 ```{r}
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 16) + theme(
-  axis.text = element_text(size = 13), legend.position = "none"))
 ```
 
 ## Points, paths, segments and text
@@ -29,18 +38,18 @@ Each row below contains a position and a label. Points draw one mark per row. Pa
 d <- data.frame(x = c(0, 1, 2), y = c(0, 2, 1), z = c(1, 3, 2),
                 label = c("a", "b", "c"))
 p <- ggplot(d, aes(x, y, z = z))
-p + geom_point_3d(size = 3, colour = "#2E6F9E") + coord_3d()
+p + geom_point_3d(size = 3, colour = PAL["blue"]) + coord_3d()
 ```
 
 ```{r paths, fig.alt="A blue path connecting the same three positions in input order."}
-p + geom_path_3d(linewidth = 0.8, colour = "#2E6F9E") + coord_3d()
+p + geom_path_3d(linewidth = 0.8, colour = PAL["blue"]) + coord_3d()
 ```
 
 Segments use a start and an endpoint from each row. Text places labels at the mapped positions. A dropline joins each position to the selected face of the data box.
 
 ```{r segments, fig.alt="Three blue segments dropping to z equal to zero."}
 p + geom_segment_3d(aes(xend = x, yend = y, zend = 0),
-                     linewidth = 0.8, colour = "#2E6F9E") + coord_3d()
+                     linewidth = 0.8, colour = PAL["blue"]) + coord_3d()
 ```
 
 ```{r text, fig.alt="The labels a, b and c at three positions."}
@@ -59,7 +68,7 @@ A polygon is an ordered ring of vertices in a plane after position transformatio
 ```{r polygon, fig.alt="A blue triangular polygon in a sloping plane."}
 triangle <- data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = c(0, 1, 1))
 ggplot(triangle, aes(x, y, z = z)) +
-  geom_polygon_3d(fill = "#2E6F9E") + coord_3d()
+  geom_polygon_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
 A band joins two boundaries. Mapping zmin and zmax produces a vertical wall along the x/y path. Six endpoint aesthetics can describe a band with boundaries that also differ in x and y.
@@ -69,7 +78,7 @@ band <- data.frame(x = seq(0, 4, length.out = 16), y = 0)
 band$low <- sin(band$x)
 band$high <- band$low + 0.5
 ggplot(band, aes(x, y, zmin = low, zmax = high)) +
-  geom_band_3d(fill = "#2E6F9E") + coord_3d()
+  geom_band_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
 ## Surfaces and contours
@@ -81,13 +90,14 @@ surface <- expand.grid(x = seq(-2, 2, length.out = 10),
                        y = seq(-2, 2, length.out = 10))
 surface$z <- with(surface, exp(-(x^2 + y^2) / 2))
 s <- ggplot(surface, aes(x, y, z = z))
-s + geom_surface_3d(fill = "#2E6F9E") + coord_3d()
+s + geom_surface_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
 The surface stat exposes the triangulation step. The computed height `z_mean` is the mean height of each triangle and can be mapped to fill after the stat has run.
 
 ```{r stat-surface, fig.alt="A curved surface coloured by each triangle's mean height."}
-s + stat_surface_3d(aes(fill = after_stat(z_mean))) + coord_3d()
+s + stat_surface_3d(aes(fill = after_stat(z_mean))) +
+  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"]) + coord_3d()
 ```
 
 Contours trace equal heights. Filled contours draw bands between height thresholds. The plane argument chooses the surface, the floor, or a fixed height in original units.
@@ -97,7 +107,9 @@ s + geom_contour_3d(bins = 4, linewidth = 0.8) + coord_3d()
 ```
 
 ```{r filled-contours, fig.alt="Filled height bands projected onto the floor of the data box."}
-s + geom_contour_filled_3d(bins = 4, plane = "floor") + coord_3d()
+s + geom_contour_filled_3d(bins = 4, plane = "floor") +
+  scale_fill_gradientn(colours = unname(PAL[c("blue", "teal", "green", "orange", "purple")])) +
+  coord_3d()
 ```
 
 ## Columns, counts and extrusions
@@ -108,23 +120,23 @@ Columns occupy cells on an x/y lattice and extend from a baseline to z. A bar la
 columns <- expand.grid(x = 1:3, y = 1:3)
 columns$z <- seq_len(nrow(columns))
 ggplot(columns, aes(x, y, z = z)) +
-  geom_col_3d(fill = "#2E6F9E") + coord_3d()
+  geom_col_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
 ```{r bars, fig.alt="Columns showing counts of cars by cylinder and gear categories."}
 counts <- ggplot(mtcars, aes(factor(cyl), factor(gear)))
-counts + geom_bar_3d(fill = "#2E6F9E") + coord_3d()
+counts + geom_bar_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
 ```{r stat-count, fig.alt="The count stat drawing counts of cars by cylinder and gear categories."}
-counts + stat_count_3d(fill = "#2E6F9E") + coord_3d()
+counts + stat_count_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
 Extrusion extends an ordered x/y polygon between two heights. The z value gives its endpoint. The `base` argument supplies the starting height; a mapped zmin overrides it. Caps close the top and bottom.
 
 ```{r extrusion, fig.alt="A blue rectangular polygon extruded to a height of two."}
 ring <- data.frame(x = c(0, 2, 2, 0), y = c(0, 0, 1, 1), z = 2)
-ggplot(ring, aes(x, y, z = z)) + geom_extrude_3d(fill = "#2E6F9E") +
+ggplot(ring, aes(x, y, z = z)) + geom_extrude_3d(fill = PAL["blue"]) +
   coord_3d()
 ```
 
@@ -133,7 +145,8 @@ Stacking accumulates column heights separately above and below zero. It requires
 ```{r positions, fig.alt="Two coloured column sections stacked at a single x/y position."}
 stack <- data.frame(x = 1, y = 1, z = c(2, 3), part = c("a", "b"))
 ggplot(stack, aes(x, y, z = z, fill = part)) +
-  geom_col_3d(position = position_stack_3d()) + coord_3d()
+  geom_col_3d(position = position_stack_3d()) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange")])) + coord_3d()
 ```
 
 ## Indexed meshes
@@ -144,7 +157,7 @@ A mesh describes vertices and faces using integer indices. Indices start at one.
 vertices <- data.frame(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1),
                        z = c(0, 0, 1, 1))
 mesh <- mesh_3d(vertices, matrix(1:4, nrow = 1))
-ggplot() + geom_mesh_3d(data = mesh, fill = "#2E6F9E") + coord_3d()
+ggplot() + geom_mesh_3d(data = mesh, fill = PAL["blue"]) + coord_3d()
 ```
 
 ## Function and fitted surfaces
@@ -188,11 +201,13 @@ Ridgelines estimate a one-dimensional density for each group and place the group
 ```{r ridge, fig.alt="Three density ridges for sepal length, one per iris species."}
 r <- ggplot(iris, aes(Sepal.Length, as.numeric(Species),
                      group = Species, fill = Species))
-r + geom_ridgeline_3d(n = 24) + coord_3d()
+r + geom_ridgeline_3d(n = 24) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) + coord_3d()
 ```
 
 ```{r stat-ridge, fig.alt="The ridgeline stat drawing the same species-specific sepal length densities."}
-r + stat_ridgeline_3d(n = 24) + coord_3d()
+r + stat_ridgeline_3d(n = 24) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) + coord_3d()
 ```
 
 ## Scalar-field level surfaces
@@ -204,11 +219,11 @@ field <- expand.grid(x = seq(-1, 1, length.out = 8),
   y = seq(-1, 1, length.out = 8), z = seq(-1, 1, length.out = 8))
 field$value <- with(field, x^2 + y^2 + z^2)
 v <- ggplot(field, aes(x, y, z = z, value = value))
-v + geom_isosurface_3d(levels = 0.6, fill = "#2E6F9E") + coord_3d()
+v + geom_isosurface_3d(levels = 0.6, fill = PAL["blue"]) + coord_3d()
 ```
 
 ```{r stat-isosurface, fig.alt="The isosurface stat extracting the same squared-distance threshold."}
-v + stat_isosurface_3d(levels = 0.6, fill = "#2E6F9E") + coord_3d()
+v + stat_isosurface_3d(levels = 0.6, fill = PAL["blue"]) + coord_3d()
 ```
 
 A function can supply field values directly. It receives transformed coordinates in all three axes. Grid resolution sets how finely the function is sampled.
@@ -250,11 +265,11 @@ A convex hull is the smallest convex shape containing the input positions. This 
 ```{r hull, fig.alt="The convex hull of the eight corners of a cube."}
 corners <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
 h <- ggplot(corners, aes(x, y, z = z))
-h + geom_hull_3d(fill = "#2E6F9E") + coord_3d()
+h + geom_hull_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
 ```{r stat-hull, fig.alt="The hull stat drawing the cube defined by the same eight corners."}
-h + stat_hull_3d(fill = "#2E6F9E") + coord_3d()
+h + stat_hull_3d(fill = PAL["blue"]) + coord_3d()
 ```
 
 ## Adapting a layer

@@ -5,16 +5,25 @@ output: github_document
 <!-- README.md is generated from README.Rmd. Please edit that file. -->
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 5,
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
   fig.height = 4.5, dpi = 144, fig.path = "man/figures/README-",
-  out.width = "100%", dev = "ragg_png")
+  out.width = "100%", dev = "svglite", fig.ext = "svg",
+  dev.args = list(pointsize = 14))
 library(ggplot2)
 library(ggplot3d)
-theme_set(theme_minimal(base_size = 16) + theme(
-  axis.text = element_text(size = 13), legend.position = "none"))
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
+         grey = "#5C6166")
 ```
 
-# ggplot3d
+# ggplot3d <img src="man/figures/logo.svg" align="right" height="139" alt="ggplot3d logo" />
 
 *three-dimensional plots with ggplot2*
 

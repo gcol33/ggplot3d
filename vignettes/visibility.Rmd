@@ -8,17 +8,26 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 5,
-  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "ragg_png")
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
+  dev.args = list(pointsize = 14))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
+         grey = "#5C6166")
+library(ggplot2)
+library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
 ```
 
 Visibility determines which parts of three-dimensional geometry can be seen from a camera. This article explains overlapping surfaces, drawing order and finite-width strokes. Installation is covered in [Get started](ggplot3d.html).
 
 ```{r}
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 16) + theme(
-  axis.text = element_text(size = 13), legend.position = "none"))
 ```
 
 ## Overlapping geometry
@@ -32,8 +41,8 @@ a$z <- a$x
 b <- a
 b$z <- -b$x
 ggplot(a, aes(x, y, z = z)) +
-  geom_surface_3d(fill = "#2E6F9E") +
-  geom_surface_3d(data = b, fill = "#9E5E0F") + coord_3d(elevation = 60)
+  geom_surface_3d(fill = PAL["blue"]) +
+  geom_surface_3d(data = b, fill = PAL["orange"]) + coord_3d(elevation = 60)
 ```
 
 Camera projection places the scene's faces, strokes, point marks and text on the page and assigns their depth along the viewing direction. Visibility refers to this represented geometry, including the triangles used to approximate a curved surface.
@@ -61,10 +70,10 @@ Point marks also have a footprint on the page. Visibility near the boundary of a
 ```{r strokes, fig.alt="A blue surface with red observations and vertical black segments extending through it."}
 points <- data.frame(x = c(-0.5, 0, 0.5), y = c(0, 0.5, 0),
                      z = c(0.6, -0.4, 0.7))
-ggplot(a, aes(x, y, z = z)) + geom_surface_3d(fill = "#2E6F9E") +
+ggplot(a, aes(x, y, z = z)) + geom_surface_3d(fill = PAL["blue"]) +
   geom_segment_3d(data = points, aes(xend = x, yend = y, zend = -1),
                   linewidth = 0.8) +
-  geom_point_3d(data = points, size = 4, colour = "#B5342B") +
+  geom_point_3d(data = points, size = 4, colour = PAL["red"]) +
   coord_3d(elevation = 60)
 ```
 
@@ -77,6 +86,9 @@ The layer adapter accepts `occlusion = "overlay"` for geometry intended to be dr
 ## References
 
 * Snyder, J. and Lengyel, J. (1998). Visibility Sorting and Compositing Without Splitting for Image Layer Decompositions. SIGGRAPH, 219-230. [doi:10.1145/280814.280878](https://doi.org/10.1145/280814.280878).
+
 * Newell, M. E., Newell, R. G. and Sancha, T. L. (1972). A Solution to the Hidden Surface Problem. ACM Annual Conference, 443-450. [doi:10.1145/800193.569954](https://doi.org/10.1145/800193.569954).
+
 * Fuchs, H., Kedem, Z. M. and Naylor, B. F. (1980). On Visible Surface Generation by A Priori Tree Structures. SIGGRAPH, 124-133. [doi:10.1145/800250.807481](https://doi.org/10.1145/800250.807481).
+
 * Nehab, D. (2020). Converting Stroked Primitives to Filled Primitives. ACM Transactions on Graphics 39(4). [doi:10.1145/3386569.3392392](https://doi.org/10.1145/3386569.3392392).

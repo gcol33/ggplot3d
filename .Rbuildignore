@@ -19,3 +19,6 @@
 ^.*\.tar\.gz$
 ^Rplots\.pdf$
 ^.*\.log$
+^build_site\.R$
+^pkgdown$
+^CITATION\.cff$

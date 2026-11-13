@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file. -->
 
-# ggplot3d
+# ggplot3d <img src="man/figures/logo.svg" align="right" height="139" alt="ggplot3d logo" />
 
 *three-dimensional plots with ggplot2*
 
@@ -84,7 +84,7 @@ ggplot(surface, aes(x, y, z = z)) +
   coord_3d()
 ```
 
-<img src="man/figures/README-surface-points-1.png" alt="A curved blue surface with red observations above and below it, partially hidden by the surface." width="100%" />
+<img src="man/figures/README-surface-points-1.svg" alt="A curved blue surface with red observations above and below it, partially hidden by the surface." width="100%" />
 
 The result is a ggplot object. Layer geometry is depth-sorted together
 within the panel, including where the surface covers a point.
@@ -106,7 +106,7 @@ ggplot(first, aes(x, y, z = z)) +
   coord_3d(azimuth = -45, elevation = 60)
 ```
 
-<img src="man/figures/README-intersections-1.png" alt="Blue and orange sloping surfaces intersect along their middle." width="100%" />
+<img src="man/figures/README-intersections-1.svg" alt="Blue and orange sloping surfaces intersect along their middle." width="100%" />
 
 ## Columns
 
@@ -122,7 +122,7 @@ ggplot(columns, aes(x, y, z = z)) +
   coord_3d()
 ```
 
-<img src="man/figures/README-columns-1.png" alt="Nine blue columns on a three-by-three grid with different heights." width="100%" />
+<img src="man/figures/README-columns-1.svg" alt="Nine blue columns on a three-by-three grid with different heights." width="100%" />
 
 ## Raster output
 
@@ -138,7 +138,7 @@ raster_plot <- ggplot(surface, aes(x, y, z = z)) +
 raster_plot
 ```
 
-<img src="man/figures/README-raster-1.png" alt="A raster rendering of the curved blue surface and red observations." width="100%" />
+<img src="man/figures/README-raster-1.svg" alt="A raster rendering of the curved blue surface and red observations." width="100%" />
 
 ``` r
 ggsave("surface.png", raster_plot, width = 5, height = 4.5, dpi = 144)

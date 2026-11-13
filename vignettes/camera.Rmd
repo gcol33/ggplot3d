@@ -8,21 +8,30 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 5,
-  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "ragg_png")
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
+  dev.args = list(pointsize = 14))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
+         grey = "#5C6166")
+library(ggplot2)
+library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
 ```
 
 Camera controls choose the direction from which a scene is viewed. Framing controls the bounds used to fit that view on the page. Installation is covered in [Get started](ggplot3d.html).
 
 ```{r}
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 16) + theme(
-  axis.text = element_text(size = 13), legend.position = "none"))
 d <- expand.grid(x = 1:3, y = 1:3)
 d$z <- c(1, 2, 4, 3, 5, 2, 4, 2, 3)
 p <- ggplot(d, aes(x, y, z = z)) +
-  geom_col_3d(fill = "#2E6F9E", width = 0.65, depth = 0.65)
+  geom_col_3d(fill = PAL["blue"], width = 0.65, depth = 0.65)
 ```
 
 ## Angles

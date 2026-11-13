@@ -2,22 +2,75 @@ url: https://gillescolling.com/ggplot3d/
 template:
   bootstrap: 5
   bootswatch: sandstone
-  light-switch: true
+  light-switch: yes
+  includes:
+    in_header: |
+      <script>
+      (function () {
+        var D = String.fromCharCode(36);
+        window.MathJax = {
+          tex: {
+            inlineMath: [[D, D], ["\\(", "\\)"]],
+            displayMath: [[D + D, D + D], ["\\[", "\\]"]]
+          },
+          chtml: { linebreaks: { automatic: true, width: "90% container" } },
+          svg: { linebreaks: { automatic: true, width: "90% container" } },
+          options: { renderActions: { addMenu: [] } }
+        };
+      })();
+      </script>
+      <style>
+      .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+      :root, [data-bs-theme="light"] {
+        --bs-link-color: #2E6F9E;
+        --bs-link-color-rgb: 46, 111, 158;
+        --bs-link-hover-color: #24577D;
+        --bs-link-hover-color-rgb: 36, 87, 125;
+      }
+      [data-bs-theme="dark"] {
+        --bs-link-color: #7FB2D9;
+        --bs-link-color-rgb: 127, 178, 217;
+        --bs-link-hover-color: #A6CCE8;
+        --bs-link-hover-color-rgb: 166, 204, 232;
+      }
+      @media (max-width: 575.98px) {
+        html body main pre.sourceCode,
+        html body main .sourceCode pre,
+        html body main pre.sourceCode code,
+        html body main .sourceCode pre code {
+          white-space: pre !important;
+          word-break: normal !important;
+          overflow-wrap: normal !important;
+          hyphens: none !important;
+        }
+        html body main pre.sourceCode,
+        html body main .sourceCode pre { overflow-x: auto !important; }
+      }
+      </style>
 figures:
-  dev: ragg::agg_png
-  fig.ext: png
-  bg: white
-  fig.width: 5
+  dev: svglite::svglite
+  fig.ext: svg
+  bg: '#F5F6F8'
+  fig.width: 6.5
   fig.height: 4.5
 home:
   title: 'ggplot3d: Three-Dimensional Plots with ggplot2'
+  sidebar:
+    structure: [links, license, community, citation, authors]
 authors:
   Gilles Colling:
     href: https://github.com/gcol33
 navbar:
   structure:
-    left: [intro, reference, articles, news]
-    right: [search, github, lightswitch]
+    left:
+    - intro
+    - reference
+    - articles
+    - news
+    right:
+    - search
+    - github
+    - lightswitch
   components:
     github:
       icon: fab fa-github
@@ -25,7 +78,9 @@ navbar:
       aria-label: GitHub
 reference:
 - title: Coordinates and lighting
-  contents: [coord_3d, light_3d]
+  contents:
+  - coord_3d
+  - light_3d
 - title: Z position scales
   contents:
   - scale_z_continuous
@@ -78,22 +133,37 @@ reference:
   - stat_hull_3d
   - probs
 - title: Positions
-  contents: [position_nudge_3d, position_stack_3d]
+  contents:
+  - position_nudge_3d
+  - position_stack_3d
 - title: Guides and themes
-  contents: [guide_axis_3d]
+  contents: guide_axis_3d
 - title: Output backends
-  contents: [backend_3d]
+  contents:
+  - backend_3d
+  - animate_3d
+  - view_3d
 - title: Mesh input and extension API
-  contents: [mesh_3d, fortify, layer_3d, register_geom_3d]
+  contents:
+  - mesh_3d
+  - fortify
+  - layer_3d
+  - register_geom_3d
+  - new_scene_packet
 - title: Package
-  contents: [ggplot3d-package]
+  contents: ggplot3d-package
 articles:
 - title: Concepts
   navbar: Concepts
-  contents: [z-scale, layers]
+  contents:
+  - z-scale
+  - layers
 - title: Workflows
   navbar: Workflows
-  contents: [camera, backends]
+  contents:
+  - camera
+  - backends
+  - motion
 - title: Background
   navbar: Background
-  contents: [visibility]
+  contents: visibility
