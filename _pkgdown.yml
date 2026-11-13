@@ -207,7 +207,11 @@ reference:
   - position_stack_3d
   - position_fill_3d
 - title: Guides and themes
-  contents: guide_axis_3d
+  contents:
+  - guide_axis_3d
+  - guide_triad_3d
+  - annotation_north_3d
+  - annotation_scale_3d
 - title: Output backends
   contents:
   - backend_3d

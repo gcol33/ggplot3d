@@ -161,5 +161,6 @@ setup_guides_3d <- function(panel_params, guides, theme) {
     }
   }
   panel_params$axis_guides <- frame_of_3d(panel_params)$guides(result, panel_params)
+  panel_params$panel_guides <- Filter(function(guide) inherits(guide, "Guide") && is.function(guide$draw_panel_3d), guides$guides)
   panel_params
 }

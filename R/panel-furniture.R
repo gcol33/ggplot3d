@@ -1219,10 +1219,15 @@ furniture_projector_3d <- function(furniture) {
 furniture_overlay_3d <- function(furniture, scene, theme) {
   meta <- furniture$overlay; fit <- meta$fit; params <- meta$params
   frame <- meta$frame %or3d% FrameBox
+  panel_guides <- lapply(names(params$panel_guides), function(name) {
+    grob <- params$panel_guides[[name]]$draw_panel_3d(furniture, theme)
+    grob$name <- paste0("panel-guide-3d-", name)
+    grob
+  })
   # Axes run along the box edges on the image; an eye inside the box sees no
   # outline for them to follow, so they are left out.
   if (!frame_in_front_3d(frame, furniture$camera, frame_basis_3d(furniture$camera, fit$viewport))) {
-    return(grid::gTree(children = grid::gList(), bounds = list(), label_layout = list(),
+    return(grid::gTree(children = do.call(grid::gList, panel_guides), bounds = list(), label_layout = list(),
       corners_mm = matrix(NA_real_, 8L, 3L), name = "furniture-3d"))
   }
   project <- furniture_projector_3d(furniture)
@@ -1234,7 +1239,7 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
   centre <- project(frame$bounds())
   page <- new_scene_viewport(fit$viewport$width_mm + sum(fit$reserve[c(2L, 4L)]),
     fit$viewport$height_mm + sum(fit$reserve[c(1L, 3L)]), fit$viewport$dpi)
-  children <- list(); bounds <- list(); occupied <- matrix(numeric(), 0, 4L); label_layout <- list()
+  children <- panel_guides; bounds <- list(); occupied <- matrix(numeric(), 0, 4L); label_layout <- list()
   add <- function(g) children[[length(children) + 1L]] <<- g
   line <- function(a, b, element) {
     if (visible_element_3d(element)) add(grid::segmentsGrob(a[, 1L], a[, 2L], b[, 1L], b[, 2L], default.units = "mm", gp = line_gp_3d(element)))

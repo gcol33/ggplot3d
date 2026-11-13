@@ -157,7 +157,7 @@ check_frame_panes_3d <- function(frame, panes) {
 bind_frame_3d <- function(frame, panel_params) {
   bound <- frame$bind(panel_params)
   up <- as.integer(panel_params$camera$up %or3d% 3L)
-  if (up != bound$up) bound <- ggplot2::ggproto(NULL, bound, up = up)
+  if (up != bound$up) return(ggplot2::ggproto(NULL, bound, up = up))
   bound
 }
 
