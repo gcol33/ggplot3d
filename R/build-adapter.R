@@ -69,9 +69,19 @@ adapt_layer_3d <- function(layer, layer_id) {
   }
   parent <- layer
   fixed <- layer$aes_params[intersect(names(layer$aes_params), c("x", "xmin", "xmax", "xend", "y", "ymin", "ymax", "yend", z_aesthetics))]
+  base_stat <- entry$stat_adapter %or3d% layer$stat
+  # The row index is internal; a stat that aggregates rows drops it silently.
+  stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, ".source"))
   result <- ggplot2::ggproto(NULL, layer,
     geom = scene_geom_3d(layer$geom, entry),
-    stat = entry$stat_adapter %or3d% layer$stat,
+    stat = stat,
+    compute_statistic = function(self, data, layout) {
+      out <- ggplot2::ggproto_parent(parent, self)$compute_statistic(data, layout)
+      # Contour stats replace z by the level of each line; a line is drawn at
+      # its own level.
+      if (!"z" %in% names(out) && "level" %in% names(out) && is.numeric(out$level)) out$z <- out$level
+      out
+    },
     aes_params = layer$aes_params[setdiff(names(layer$aes_params), names(fixed))],
     layer_data = function(self, plot_data) {
       data <- ggplot2::ggproto_parent(parent, self)$layer_data(plot_data)

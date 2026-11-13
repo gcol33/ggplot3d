@@ -200,3 +200,16 @@ test_that("the minimal panel renderer compiles every layer together once", {
   expect_equal(length(grob$children), length(grob$scene$draw_order))
   expect_setequal(c(grob$scene$source$markers$layer_id, grob$scene$source$polylines$layer_id), 1:2)
 })
+
+test_that("ggplot2 contour lines are drawn at their level without internal warnings", {
+  s <- expand.grid(x = seq(-2, 2, length.out = 15), y = seq(-2, 2, length.out = 15))
+  s$z <- with(s, exp(-(x^2 + y^2)))
+  p <- ggplot2::ggplot(s, ggplot2::aes(x, y, z = z)) + ggplot2::geom_contour(bins = 4) + coord_3d()
+  expect_no_warning(built <- ggplot2::ggplot_build(p))
+  lines <- ggplot2::layer_data(p)
+  expect_equal(lines$z, lines$level)
+  expect_no_error(ggplot2::ggplotGrob(p))
+  density <- ggplot2::ggplot(faithful, ggplot2::aes(eruptions, waiting)) + ggplot2::geom_density_2d() + coord_3d()
+  expect_no_warning(ggplot2::ggplotGrob(density))
+  expect_true(all(ggplot2::layer_data(density)$z > 0))
+})

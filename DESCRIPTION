@@ -33,6 +33,7 @@ Suggests:
     htmlwidgets,
     knitr,
     mgcv,
+    patchwork,
     ragg,
     rgl,
     rmarkdown,

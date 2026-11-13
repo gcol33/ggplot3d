@@ -431,3 +431,7 @@ register_geom_3d(ggplot2::GeomLine, emit_paths_3d)
 register_geom_3d(ggplot2::GeomSegment, emit_segments_3d,
   position_check = function(position, scales) check_position_3d(position, scales))
 register_geom_3d(ggplot2::GeomText, emit_text_3d)
+# geom_blank() and expand_limits() train scales and draw nothing.
+register_geom_3d(ggplot2::GeomBlank, function(data, params, panel_params) {
+  new_scene_packet(vertices = list(x = numeric(), y = numeric(), z = numeric()))
+})

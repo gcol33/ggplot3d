@@ -54,6 +54,50 @@ test_that("facets retain fixed panel dimensions", {
   expect_identical(a$panel_extents[[1L]], a$panel_extents[[2L]])
 })
 
+motion_time_plot <- function() {
+  grid <- expand.grid(x = seq(0, 1, length.out = 5), y = seq(0, 1, length.out = 5), t = c(0, .5, 1))
+  grid$z <- with(grid, sin(pi * x) * sin(pi * y) * cos(pi * t))
+  grid$site <- ifelse(grid$t == 1, "b", "a")
+  ggplot2::ggplot(grid, ggplot2::aes(x, y, z = z, fill = ggplot2::after_stat(z_mean))) +
+    geom_surface_3d() + coord_3d() + ggplot2::theme_minimal(base_size = 10)
+}
+
+test_that("time animation draws one subset per frame with limits from all frames", {
+  p <- motion_time_plot()
+  a <- animate_3d(p, time = "t", width = 240, height = 240, progress = FALSE)
+  on.exit(unlink(dirname(a$frames[1L]), recursive = TRUE), add = TRUE)
+  expect_identical(a$frame_count, 3L)
+  expect_equal(a$camera$value, c(0, .5, 1))
+  expect_equal(a$camera$azimuth, rep(-60, 3))
+  for (extent in a$panel_extents) expect_identical(extent, a$panel_extents[[1L]])
+  limits <- ggplot3d:::motion_frame_limits_3d(p, "t", c(0, .5, 1))
+  z <- lapply(c(0, .5, 1), function(value) {
+    built <- ggplot2::ggplot_build(ggplot3d:::motion_frame_plot_3d(p, "t", value, limits))
+    c(built$layout$panel_scales_z[[1L]]$get_limits(), built$plot$scales$get_scales("fill")$get_limits())
+  })
+  expect_equal(z[[1L]][1:2], c(-1, 1))
+  for (frame in z) expect_equal(frame, z[[1L]])
+  expect_error(animate_3d(p, time = "t", frames = 4, progress = FALSE), "3 distinct values")
+  expect_error(animate_3d(p, time = "missing", progress = FALSE), "no layer data")
+})
+
+test_that("time animation keeps free z scales per facet", {
+  p <- motion_time_plot() + ggplot2::facet_wrap(~site) + coord_3d(z_scales = "free")
+  limits <- ggplot3d:::motion_frame_limits_3d(p, "t", c(0, .5, 1))
+  built <- ggplot2::ggplot_build(ggplot3d:::motion_frame_plot_3d(p, "t", 0, limits))
+  z <- lapply(built$layout$panel_scales_z, function(scale) scale$get_limits())
+  expect_length(z, 2L)
+  expect_equal(z[[1L]], c(0, 1))
+  expect_equal(z[[2L]], c(-1, 0))
+})
+
+test_that("geom_blank and expand_limits train scales inside coord_3d", {
+  p <- motion_test_plot() + ggplot2::expand_limits(z = 5)
+  built <- ggplot2::ggplot_build(p)
+  expect_equal(max(built$layout$panel_scales_z[[1L]]$get_limits()), 5)
+  expect_no_error(ggplot2::ggplotGrob(p))
+})
+
 test_that("GIF output is encoded from the requested frames", {
   skip_if_not_installed("gifski")
   path <- tempfile(fileext = ".gif")

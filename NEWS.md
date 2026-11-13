@@ -5,3 +5,5 @@
 * Control camera angles, projection, lighting and framing with `coord_3d()`.
 * Resolve visibility across layers within each panel for vector and raster output.
 * Compute function surfaces, fitted surfaces, density surfaces, ridgelines, convex hulls and scalar-field level surfaces.
+* Animate data that change over time with `animate_3d(time = )`: one frame per value of a column, with scales trained on all frames.
+* `geom_blank()` and `expand_limits()` train scales inside `coord_3d()`.

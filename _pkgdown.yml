@@ -164,6 +164,12 @@ articles:
   - camera
   - backends
   - motion
+  - combining-2d-3d
+- title: Examples
+  navbar: Examples
+  contents:
+  - gallery
+  - pde
 - title: Background
   navbar: Background
   contents: visibility

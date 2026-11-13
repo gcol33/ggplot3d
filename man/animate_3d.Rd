@@ -2,7 +2,7 @@
 % Please edit documentation in R/animate-3d.R
 \name{animate_3d}
 \alias{animate_3d}
-\title{Render a camera path}
+\title{Render a camera path or data that change over time}
 \usage{
 animate_3d(
   plot,
@@ -18,7 +18,8 @@ animate_3d(
   height = 640L,
   dpi = 96,
   antialias = 1L,
-  progress = interactive()
+  progress = interactive(),
+  time = NULL
 )
 }
 \arguments{
@@ -26,10 +27,12 @@ animate_3d(
 
 \item{azimuth, elevation, zoom, roll}{A scalar, a numeric vector of length
 \code{frames}, or a function receiving times in seconds and returning either.
-NULL retains the plot setting, except azimuth, which makes one full turn.}
+NULL retains the plot setting, except azimuth without \code{time}, which makes
+one full turn.}
 
 \item{frames}{Number of frames, default 60. The closing view is excluded
-from the default turn so that looping repeats each view once.}
+from the default turn so that looping repeats each view once. With \code{time},
+one frame per distinct value of the time column.}
 
 \item{fps}{Frames per second, default 20.}
 
@@ -45,22 +48,32 @@ Both produce PNG frames for the encoder.}
 \item{antialias}{Raster supersampling factor, default 1.}
 
 \item{progress}{Report rendering time for each frame, default interactive().}
+
+\item{time}{Name of a data column holding the frame of each row, or NULL
+(default) for a fixed scene. Frame \code{i} draws the rows whose value equals
+the \code{i}-th sorted distinct value; layers without the column appear in
+every frame. Scales are trained on all frames, so limits, breaks and colour
+mappings are the same in each frame.}
 }
 \value{
 A ggplot3d_animation list with \code{file}, \code{frame_count}, \code{fps}, \code{camera}
-(one row per frame), \code{timings} in seconds, \code{build_seconds}, \code{frame},
+(one row per frame, with the frame's \code{value} of the time column when
+\code{time} is set), \code{timings} in seconds, \code{build_seconds}, \code{frame},
 \code{panel_extents} in millimetres, and \code{frames} (PNG paths when file is NULL).
 PNG frames returned with file = NULL belong to the caller.
 }
 \description{
-Render a fixed scene from successive camera positions. Geometry and scales
-are built once; projection, visibility and lighting are evaluated per frame.
+Render a scene from successive camera positions, or draw one subset of the
+data per frame. Projection, visibility and lighting are evaluated per frame.
 }
 \details{
 Framing is "azimuth" for constant elevation and roll, and "sphere"
 otherwise. Axis reserves and physical panel extents are fixed. Zoom remains
 an explicit magnification. GIF needs gifski; MP4 needs av. Optional packages
-are checked before rendering. Rendering streams frames to disk.
+are checked before rendering. Rendering streams frames to disk. A fixed
+scene is built once; with \code{time}, each frame is built from its subset with
+the scale limits of the full data, as in gganimate's \code{transition_manual()}
+and plotly's \code{frame} aesthetic.
 }
 \examples{
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
@@ -69,5 +82,15 @@ if (requireNamespace("gifski", quietly = TRUE)) {
   movie <- animate_3d(p, frames = 3, width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$timings
+}
+waves <- expand.grid(x = seq(0, 1, length.out = 20), y = seq(0, 1, length.out = 20),
+                     t = seq(0, 0.75, by = 0.25))
+waves$z <- sin(pi * waves$x) * sin(pi * waves$y) * cos(2 * pi * waves$t)
+wave <- ggplot2::ggplot(waves, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d() + coord_3d()
+if (requireNamespace("gifski", quietly = TRUE)) {
+  movie <- animate_3d(wave, time = "t", width = 320, height = 320,
+                      file = tempfile(fileext = ".gif"))
+  movie$camera$value
 }
 }
