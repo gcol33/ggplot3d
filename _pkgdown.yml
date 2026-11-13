@@ -154,6 +154,7 @@ reference:
   contents:
   - geom_function_3d
   - geom_smooth_3d
+  - geom_residual_3d
   - geom_ridgeline_3d
   - geom_isosurface_3d
   - geom_isofunction_3d
@@ -177,6 +178,7 @@ reference:
   - stat_bin_3d
   - stat_function_3d
   - stat_smooth_3d
+  - stat_residual_3d
   - stat_density_2d_3d
   - stat_ridgeline_3d
   - stat_isosurface_3d

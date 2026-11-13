@@ -1,7 +1,7 @@
 utils::globalVariables(c("geometry_isosurface_cpp", "geometry_isosurface_methods_cpp", "geometry_hull_cpp", "geometry_kde_cpp", "density"))
 
 GeomStatsSurface3D <- ggplot2::ggproto("GeomStatsSurface3D", GeomSurface3D,
-  optional_aes = c(".opacity", "nx", "ny", "nz", "level", "density", "surface"),
+  optional_aes = c(".opacity", "nx", "ny", "nz", "level", "density", "surface", "se"),
   default_aes = solid_defaults_3d()
 )
 
@@ -48,14 +48,142 @@ stats_triangles_3d <- function(data) {
   data <- surface_normals_3d(data)
   triangles <- surface_triangles_3d(data, "grid", Inf)
   if (!nrow(triangles)) return(data.frame())
+  stats_corners_3d(data, triangles)
+}
+
+# Corner table of a triangle mesh: one row per corner with face, corner and
+# vertex keys, the face's mean height and face means of the computed
+# variables that a fill mapping may read.
+stats_corners_3d <- function(data, triangles) {
   out <- data[as.vector(t(triangles)), , drop = FALSE]
   out$.face <- rep(seq_len(nrow(triangles)), each = 3L)
   out$.corner <- rep.int(1:3, nrow(triangles))
   out$.vertex <- as.vector(t(triangles))
   out$z_mean <- rep(rowMeans(matrix(data$z[triangles], ncol = 3L)), each = 3L)
-  for (name in intersect(c("density", "ndensity", "count"), names(out)))
+  for (name in intersect(c("density", "ndensity", "count", "se"), names(out)))
     out[[name]] <- rep(rowMeans(matrix(data[[name]][triangles], ncol = 3L)), each = 3L)
   out
+}
+
+# Rowbinds corner tables, renumbering faces so that they stay distinct.
+stats_bind_faces_3d <- function(pieces) {
+  pieces <- Filter(nrow, pieces)
+  if (!length(pieces)) return(data.frame())
+  shift <- c(0L, cumsum(vapply(pieces, nrow, integer(1)) %/% 3L))
+  for (i in seq_along(pieces)) pieces[[i]]$.face <- pieces[[i]]$.face + shift[i]
+  do.call(rbind, pieces)
+}
+
+# Evaluation mesh of a fitted surface: the full x/y grid (faces = NULL), or
+# that grid clipped to the convex hull of the observations.
+stats_mesh_3d <- function(scales, n, domain, data) {
+  axes <- stats_grid_3d(scales, n)
+  switch(domain,
+    box = list(points = expand.grid(axes), faces = NULL),
+    hull = stats_hull_mesh_3d(axes, cbind(data$x, data$y)))
+}
+
+# Triangles of a mesh from stats_mesh_3d() carrying heights z. Faces with a
+# missing height are dropped. Grid meshes take central-difference normals,
+# clipped meshes area-weighted face normals.
+stats_mesh_triangles_3d <- function(mesh, data) {
+  if (is.null(mesh$faces)) return(stats_triangles_3d(data))
+  faces <- mesh$faces[rowSums(matrix(is.finite(data$z[mesh$faces]), ncol = 3L)) == 3L, , drop = FALSE]
+  if (!nrow(faces)) return(data.frame())
+  stats_corners_3d(mesh_normals_3d(data, faces), faces)
+}
+
+# Vertex normals as the area-weighted sum of the normals of the incident faces.
+mesh_normals_3d <- function(data, faces) {
+  p <- cbind(data$x, data$y, data$z)
+  ab <- p[faces[, 2L], , drop = FALSE] - p[faces[, 1L], , drop = FALSE]
+  ac <- p[faces[, 3L], , drop = FALSE] - p[faces[, 1L], , drop = FALSE]
+  face <- ab[, c(2L, 3L, 1L), drop = FALSE] * ac[, c(3L, 1L, 2L), drop = FALSE] -
+    ab[, c(3L, 1L, 2L), drop = FALSE] * ac[, c(2L, 3L, 1L), drop = FALSE]
+  sums <- rowsum(rbind(face, face, face), as.vector(faces))
+  normal <- matrix(c(0, 0, 1), nrow(p), 3L, byrow = TRUE)
+  normal[as.integer(rownames(sums)), ] <- sums
+  size <- sqrt(rowSums(normal^2))
+  normal[size == 0, 3L] <- size[size == 0] <- 1
+  data[c("nx", "ny", "nz")] <- as.data.frame(normal / size)
+  data
+}
+
+# Clips the triangulated grid over `axes` to the convex hull of `points`
+# (Sutherland-Hodgman against each hull edge) and fans every clipped polygon
+# into triangles. Work happens in unit-square coordinates so that tolerances
+# do not depend on the axis units; shared vertices are merged afterwards.
+stats_hull_mesh_3d <- function(axes, points) {
+  points <- points[is.finite(points[, 1L]) & is.finite(points[, 2L]), , drop = FALSE]
+  lo <- vapply(axes, min, numeric(1)); span <- vapply(axes, function(a) diff(range(a)), numeric(1))
+  unit <- sweep(sweep(unique(points), 2L, lo), 2L, span, "/")
+  hull <- if (nrow(unit) >= 3L) unit[rev(grDevices::chull(unit)), , drop = FALSE] else unit
+  if (nrow(hull) < 3L || polygon_area_3d(hull) <= 1e-12)
+    stop("domain = \"hull\" requires observations spanning a two-dimensional x/y region.", call. = FALSE)
+  grid <- expand.grid(lapply(axes, function(a) (a - min(a)) / diff(range(a))))
+  triangles <- surface_triangles_3d(cbind(grid, z = 0), "grid", Inf)
+  g <- as.matrix(grid); m <- nrow(hull); nxt <- c(seq_len(m)[-1L], 1L); tol <- 1e-10
+  side <- outer(g[, 2L], hull[, 2L], "-") * rep(hull[nxt, 1L] - hull[, 1L], each = nrow(g)) -
+    outer(g[, 1L], hull[, 1L], "-") * rep(hull[nxt, 2L] - hull[, 2L], each = nrow(g))
+  inner <- rowSums(matrix((rowSums(side >= -tol) == m)[triangles], ncol = 3L)) == 3L
+  outside <- side < -tol
+  separated <- rowSums(outside[triangles[, 1L], , drop = FALSE] & outside[triangles[, 2L], , drop = FALSE] &
+    outside[triangles[, 3L], , drop = FALSE]) > 0L
+  polygons <- c(lapply(which(inner), function(t) g[triangles[t, ], , drop = FALSE]),
+    lapply(which(!inner & !separated), function(t) clip_convex_3d(g[triangles[t, ], , drop = FALSE], hull, tol)))
+  corners <- do.call(rbind, lapply(polygons, function(p) {
+    k <- nrow(p)
+    if (k < 3L) return(NULL)
+    p[as.vector(rbind(1L, seq_len(k - 2L) + 1L, seq_len(k - 2L) + 2L)), , drop = FALSE]
+  })) %or3d% matrix(numeric(), 0L, 2L)
+  ab <- corners[c(FALSE, TRUE, FALSE), , drop = FALSE] - corners[c(TRUE, FALSE, FALSE), , drop = FALSE]
+  ac <- corners[c(FALSE, FALSE, TRUE), , drop = FALSE] - corners[c(TRUE, FALSE, FALSE), , drop = FALSE]
+  area <- ab[, 1L] * ac[, 2L] - ab[, 2L] * ac[, 1L]
+  corners <- corners[rep(area > 1e-14, each = 3L), , drop = FALSE]
+  key <- paste(round(corners[, 1L] * 1e9), round(corners[, 2L] * 1e9))
+  id <- match(key, unique(key))
+  vertices <- corners[!duplicated(key), , drop = FALSE]
+  list(points = data.frame(x = lo[1L] + vertices[, 1L] * span[1L], y = lo[2L] + vertices[, 2L] * span[2L]),
+    faces = matrix(id, ncol = 3L, byrow = TRUE))
+}
+
+polygon_area_3d <- function(p) {
+  nxt <- c(seq_len(nrow(p))[-1L], 1L)
+  sum(p[, 1L] * p[nxt, 2L] - p[nxt, 1L] * p[, 2L]) / 2
+}
+
+# Keeps the part of convex polygon `poly` left of every edge of the
+# counterclockwise convex polygon `hull`.
+clip_convex_3d <- function(poly, hull, tol) {
+  m <- nrow(hull)
+  for (k in seq_len(m)) {
+    if (nrow(poly) < 3L) break
+    a <- hull[k, ]; b <- hull[k %% m + 1L, ]
+    s <- (b[1L] - a[1L]) * (poly[, 2L] - a[2L]) - (b[2L] - a[2L]) * (poly[, 1L] - a[1L])
+    inside <- s >= -tol
+    if (all(inside)) next
+    nxt <- c(seq_len(nrow(poly))[-1L], 1L)
+    out <- list()
+    for (i in seq_len(nrow(poly))) {
+      j <- nxt[i]
+      if (inside[i]) out[[length(out) + 1L]] <- poly[i, ]
+      if (inside[i] != inside[j]) {
+        t <- min(max(s[i] / (s[i] - s[j]), 0), 1)
+        out[[length(out) + 1L]] <- poly[i, ] + t * (poly[j, ] - poly[i, ])
+      }
+    }
+    poly <- if (length(out)) do.call(rbind, out) else matrix(numeric(), 0L, 2L)
+  }
+  poly
+}
+
+# Adds a default after_stat mapping unless the aesthetic is mapped or set.
+stats_default_mapping_3d <- function(mapping, extra, default) {
+  aesthetic <- names(default)
+  if (!is.null(mapping[[aesthetic]]) || !is.null(extra[[aesthetic]])) return(mapping)
+  if (is.null(mapping)) return(default)
+  mapping[[aesthetic]] <- default[[aesthetic]]
+  mapping
 }
 
 surface_normals_3d <- function(data) {
