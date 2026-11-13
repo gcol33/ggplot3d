@@ -7,12 +7,12 @@ molecule_bonds_3d <- function(atoms, scale) {
   width <- 2 * max(radius) * scale
   cell <- floor(xyz / width)
   key <- function(x) paste(x[, 1L], x[, 2L], x[, 3L], sep = ":")
-  cells <- split(seq_len(nrow(atoms)), key(cell))
+  cells <- list2env(split(seq_len(nrow(atoms)), key(cell)), hash = TRUE, parent = emptyenv())
   neighbours <- as.matrix(expand.grid(-1:1, -1:1, -1:1))
   bonds <- vector("list", nrow(atoms))
   for (i in seq_len(nrow(atoms))) {
     keys <- key(sweep(neighbours, 2L, cell[i, ], "+"))
-    j <- unlist(cells[keys], use.names = FALSE)
+    j <- unlist(mget(keys, envir = cells, ifnotfound = rep(list(NULL), length(keys)), inherits = FALSE), use.names = FALSE)
     j <- j[j > i]
     if (!length(j)) next
     distance <- sqrt(rowSums(sweep(xyz[j, , drop = FALSE], 2L, xyz[i, ], "-")^2))

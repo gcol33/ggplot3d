@@ -1,4 +1,5 @@
 ordination_scores_3d <- function(model, choices, scores_args) {
+  scene_assert(is.list(scores_args), "scores_args must be a list")
   scene_assert(is.numeric(choices) && length(choices) == 3L && !anyDuplicated(choices) &&
     all(is.finite(choices) & choices >= 1 & choices == trunc(choices)), "choices must select three distinct positive axes")
   if (inherits(model, "prcomp")) {
@@ -9,6 +10,7 @@ ordination_scores_3d <- function(model, choices, scores_args) {
     rlang::check_installed("vegan")
     scene_assert(!any(c("x", "choices", "display", "tidy") %in% names(scores_args)), "scores_args must leave choices and display to the biplot")
     scores <- do.call(vegan::scores, c(list(x = model, choices = choices, display = c("sites", "species")), scores_args))
+    if (is.matrix(scores)) scores <- list(sites = scores)
     choices <- 1:3
   }
   convert <- function(matrix, name) {
