@@ -260,6 +260,9 @@ asy_code_3d <- function(plot, panel, width, height, prc) {
 #' Asymptote writes model-space
 #' triangles, paths, marker solids, text and a camera, so it can re-render the
 #' scene from another view or produce an interactive PRC PDF.
+#' For a PRC PDF, compile with `asy -tex pdflatex -f pdf plot.asy` and install
+#' the TeX packages media9 and ocgx2. A PDF reader with PRC support supplies
+#' the interactive view.
 #' @param plot A ggplot with [coord_3d()].
 #' @param format `"tikz"` or `"asy"`.
 #' @param file Optional output path; NULL returns the code without writing.

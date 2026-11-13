@@ -41,6 +41,9 @@ rectangles using the optional png decoder. TeX selects the text font.
 Asymptote writes model-space
 triangles, paths, marker solids, text and a camera, so it can re-render the
 scene from another view or produce an interactive PRC PDF.
+For a PRC PDF, compile with \verb{asy -tex pdflatex -f pdf plot.asy} and install
+the TeX packages media9 and ocgx2. A PDF reader with PRC support supplies
+the interactive view.
 }
 \examples{
 p <- ggplot2::ggplot(data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3)),
