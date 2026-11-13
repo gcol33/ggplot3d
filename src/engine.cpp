@@ -1,22 +1,8 @@
-#include <Rcpp.h>
-#include "scene/contract.h"
-#include <algorithm>
-#include <cmath>
-#include <limits>
-#include <numeric>
+#include "scene/common.h"
 #include <set>
-#include <string>
-#include <tuple>
 
-namespace {
+namespace ggplot3d { namespace engine {
 using namespace ggplot3d;
-using Vec3 = std::array<double, 3>;
-constexpr double pi = 3.14159265358979323846;
-
-void require(bool condition, const std::string& message) {
-  if (!condition) Rcpp::stop(message);
-}
-
 void fields(const Rcpp::List& x, std::initializer_list<const char*> expected) {
   require(x.size() == static_cast<R_xlen_t>(expected.size()), "invalid table schema");
   Rcpp::CharacterVector names = x.names();
@@ -58,7 +44,8 @@ std::vector<bool> logicals(const Rcpp::List& x, const char* name, int n = -1) {
 }
 double scalar(const Rcpp::List& x, const char* name, bool automatic = false) {
   SEXP value = x[name];
-  require(TYPEOF(value) == REALSXP && Rf_xlength(value) == 1,
+  require(TYPEOF(value) == REALSXP && Rf_xlength(value) == 1 &&
+          !Rf_isObject(value) && Rf_isNull(Rf_getAttrib(value,R_DimSymbol)),
           std::string("expected double scalar: ") + name);
   const double v = Rcpp::as<double>(value);
   require(std::isfinite(v) || (automatic && R_IsNA(v)),
@@ -214,6 +201,7 @@ Camera read_camera(const Rcpp::List& x) {
   Camera c;
   SEXP projection = x["projection"];
   require(TYPEOF(projection) == STRSXP && Rf_xlength(projection) == 1 &&
+          !Rf_isObject(projection) && Rf_isNull(Rf_getAttrib(projection,R_DimSymbol)) &&
           STRING_ELT(projection, 0) != NA_STRING, "invalid projection");
   std::string mode = Rcpp::as<std::string>(projection);
   require(mode == "orthographic" || mode == "perspective", "invalid projection");
@@ -228,6 +216,7 @@ Camera read_camera(const Rcpp::List& x) {
   } else {
     SEXP distance = x["distance"];
     require(TYPEOF(distance) == REALSXP && Rf_xlength(distance) == 1 &&
+            !Rf_isObject(distance) && Rf_isNull(Rf_getAttrib(distance,R_DimSymbol)) &&
             Rcpp::as<double>(distance) == R_PosInf, "orthographic distance must be Inf");
     c.distance = R_PosInf;
   }
@@ -243,322 +232,14 @@ Camera read_camera(const Rcpp::List& x) {
   return c;
 }
 
-double dot(const Vec3& a, const Vec3& b) {
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-}
-Vec3 cross(const Vec3& a, const Vec3& b) {
-  return {a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]};
-}
-Vec3 subtract(const Vec3& a, const Vec3& b) {
-  return {a[0]-b[0], a[1]-b[1], a[2]-b[2]};
-}
-
-struct Projection {
-  Camera camera;
-  Viewport viewport;
-  ResolvedCamera resolved;
-  Vec3 scale, target;
-  double sx, sy;
-
-  Projection(const Camera& c, const Viewport& v) : camera(c), viewport(v) {
-    const double largest = *std::max_element(c.aspect.begin(), c.aspect.end());
-    double radius2 = 0;
-    for (int k = 0; k < 3; ++k) {
-      scale[k] = c.aspect[k] / largest;
-      require(scale[k] > 0, "unrepresentable camera aspect");
-      resolved.model_scale[k] = scale[k];
-      target[k] = c.target[k] * scale[k];
-      double extent = std::max(std::abs(target[k]), std::abs(scale[k]-target[k]));
-      radius2 += extent * extent;
-    }
-    const double radius = std::sqrt(radius2);
-    require(std::isfinite(radius) && radius > 0, "unrepresentable camera target or aspect");
-    resolved.tolerance = 64 * std::numeric_limits<double>::epsilon() * std::max(1.0, radius);
-    double az = std::remainder(c.azimuth, 360.0) * pi/180;
-    double el = c.elevation * pi/180, roll = std::remainder(c.roll, 360.0) * pi/180;
-    Vec3 outward{std::cos(el)*std::cos(az), std::cos(el)*std::sin(az), std::sin(el)};
-    Vec3 right{-std::sin(az), std::cos(az), 0};
-    Vec3 up{-std::sin(el)*std::cos(az), -std::sin(el)*std::sin(az), std::cos(el)};
-    for (int k = 0; k < 3; ++k) {
-      resolved.right[k] = std::cos(roll)*right[k] - std::sin(roll)*up[k];
-      resolved.up[k] = std::sin(roll)*right[k] + std::cos(roll)*up[k];
-      resolved.forward[k] = -outward[k];
-    }
-    const double ratio = v.width_mm/v.height_mm;
-    const double half_angle = std::atan(std::tan(c.fov*pi/360) * std::min(1.0, ratio));
-    resolved.distance = c.perspective ?
-      (R_IsNA(c.distance) ? radius/std::sin(half_angle) + resolved.tolerance : c.distance) :
-      2*radius + 1;
-    resolved.near = R_IsNA(c.near) ? std::max(resolved.tolerance,
-      resolved.distance - radius - resolved.tolerance) : c.near;
-    resolved.far = R_IsNA(c.far) ? resolved.distance + radius + resolved.tolerance : c.far;
-    require(std::isfinite(resolved.distance) && resolved.near < resolved.far,
-            "resolved near must be less than far");
-    resolved.view_height = 2*radius/std::min(1.0, ratio)/c.zoom;
-    sy = c.perspective ? c.zoom/std::tan(c.fov*pi/360) : 2/resolved.view_height;
-    sx = sy/ratio;
-    require(std::isfinite(sx) && std::isfinite(sy) && sx > 0 && sy > 0,
-            "unrepresentable projection scale");
-    for (int k = 0; k < 3; ++k) resolved.eye[k] = target[k] + resolved.distance*outward[k];
-    auto& view = resolved.view;
-    for (int k = 0; k < 3; ++k) {
-      view[k*4] = resolved.right[k]; view[k*4+1] = resolved.up[k];
-      view[k*4+2] = resolved.forward[k];
-    }
-    view[12] = -dot(resolved.right, resolved.eye);
-    view[13] = -dot(resolved.up, resolved.eye);
-    view[14] = -dot(resolved.forward, resolved.eye); view[15] = 1;
-    auto& proj = resolved.projection;
-    proj[0] = sx; proj[5] = sy;
-    double range = resolved.far-resolved.near;
-    proj[10] = c.perspective ? resolved.far/range : 1/range;
-    proj[14] = c.perspective ? -resolved.near*resolved.far/range : -resolved.near/range;
-    proj[11] = c.perspective ? 1 : 0; proj[15] = c.perspective ? 0 : 1;
-  }
-
-  Vec3 model(const Vec3& p) const { return {p[0]*scale[0], p[1]*scale[1], p[2]*scale[2]}; }
-  Vec3 camera_point(const Vec3& p) const {
-    Vec3 delta = subtract(model(p), target);
-    return {dot(delta, resolved.right), dot(delta, resolved.up),
-            resolved.distance + dot(delta, resolved.forward)};
-  }
-  std::array<double, 2> npc(const Vec3& c) const {
-    double w = camera.perspective ? c[2] : 1;
-    require(w > 0, "projection requires positive eye distance");
-    return {0.5 + 0.5*sx*c[0]/w, 0.5 + 0.5*sy*c[1]/w};
-  }
-};
-
-struct Vertex {
-  Vec3 xyz;
-  std::vector<std::pair<Index, double>> weights;
-};
-using Polygon = std::vector<Vertex>;
-struct Plane { Vec3 normal; double offset; };
-
-double signed_distance(const Plane& plane, const Vec3& p) {
-  return dot(plane.normal, p) + plane.offset;
-}
-Vertex interpolate(const Vertex& a, const Vertex& b, double t) {
-  Vertex out;
-  for (int k = 0; k < 3; ++k) out.xyz[k] = (1-t)*a.xyz[k] + t*b.xyz[k];
-  out.weights = a.weights;
-  for (auto& weight : out.weights) weight.second *= 1-t;
-  for (const auto& weight : b.weights) {
-    auto it = std::find_if(out.weights.begin(), out.weights.end(),
-      [&](const auto& old) { return old.first == weight.first; });
-    if (it == out.weights.end()) out.weights.push_back({weight.first, t*weight.second});
-    else it->second += t*weight.second;
-  }
-  return out;
-}
-
-std::vector<Plane> clipping_planes(const Projection& p) {
-  std::vector<Plane> planes;
-  if (p.camera.clip_data) {
-    for (int k = 0; k < 3; ++k) {
-      Vec3 n{0, 0, 0}; n[k] = 1; planes.push_back({n, 0});
-      n[k] = -1; planes.push_back({n, 1});
-    }
-  }
-  auto camera_plane = [&](const Vec3& n, double offset) {
-    Vec3 origin = p.camera_point({0, 0, 0}), coefficients{};
-    for (int k = 0; k < 3; ++k) {
-      coefficients[k] = p.scale[k]*(n[0]*p.resolved.right[k] +
-        n[1]*p.resolved.up[k] + n[2]*p.resolved.forward[k]);
-    }
-    planes.push_back({coefficients, dot(n, origin)+offset});
-  };
-  camera_plane({0, 0, 1}, -p.resolved.near);
-  camera_plane({0, 0, -1}, p.resolved.far);
-  if (p.camera.clip) {
-    double depth = p.camera.perspective ? 1 : 0;
-    double offset = p.camera.perspective ? 0 : 1;
-    camera_plane({p.sx, 0, depth}, offset); camera_plane({-p.sx, 0, depth}, offset);
-    camera_plane({0, p.sy, depth}, offset); camera_plane({0, -p.sy, depth}, offset);
-  }
-  return planes;
-}
-
-Polygon clip_polygon(Polygon polygon, const std::vector<Plane>& planes, bool& clipped) {
-  for (const Plane& plane : planes) {
-    if (polygon.empty()) break;
-    Polygon out;
-    Vertex previous = polygon.back();
-    double dp = signed_distance(plane, previous.xyz);
-    for (const Vertex& current : polygon) {
-      double dc = signed_distance(plane, current.xyz);
-      if ((dp < 0) != (dc < 0)) out.push_back(interpolate(previous, current, dp/(dp-dc)));
-      if (dc >= 0) out.push_back(current); else clipped = true;
-      previous = current; dp = dc;
-    }
-    polygon = std::move(out);
-  }
-  return polygon;
-}
-
-Vec3 area_vector(const Polygon& polygon, const Projection& projection) {
-  Vec3 normal{0, 0, 0};
-  const Vec3 origin = projection.model(polygon[0].xyz);
-  for (std::size_t i = 1; i+1 < polygon.size(); ++i) {
-    Vec3 part = cross(subtract(projection.model(polygon[i].xyz), origin),
-                      subtract(projection.model(polygon[i+1].xyz), origin));
-    for (int k = 0; k < 3; ++k) normal[k] += part[k];
-  }
-  return normal;
-}
-
-Vec3 face_normal(const Polygon& polygon, const Projection& projection) {
-  Vec3 normal = area_vector(polygon, projection);
-  const Vec3 origin = projection.model(polygon[0].xyz);
-  double length = std::sqrt(dot(normal, normal));
-  require(length > projection.resolved.tolerance, "degenerate face");
-  for (double& value : normal) value /= length;
-  for (std::size_t i = 0; i < polygon.size(); ++i) {
-    Vec3 a = projection.model(polygon[i].xyz);
-    Vec3 b = projection.model(polygon[(i+1)%polygon.size()].xyz);
-    require(std::abs(dot(subtract(a, origin), normal)) <= projection.resolved.tolerance,
-            "faces must be planar");
-    Vec3 edge = subtract(b, a);
-    require(std::sqrt(dot(edge, edge)) > projection.resolved.tolerance,
-            "face rings must have distinct consecutive corners and implicit closure");
-    for (const Vertex& vertex : polygon) {
-      require(dot(cross(edge, subtract(projection.model(vertex.xyz), a)), normal) >=
-              -projection.resolved.tolerance, "faces must be convex simple rings");
-    }
-  }
-  return normal;
-}
-
-void append_fragment(CompiledScene& out, const PrimitiveTable& source, Index row, Kind kind,
-                     const Polygon& polygon, const Projection& projection, bool clipped,
-                     Vec3 normal = {0, 0, 0}, double path_start = 0, double path_end = 0,
-                     bool arrow_start = false, bool arrow_end = false) {
-  auto& f = out.fragments;
-  require(out.vertices.x.size() + polygon.size() <= std::numeric_limits<Index>::max() &&
-          f.count.size() < std::numeric_limits<Index>::max(), "fragment index capacity exceeded");
-  f.offset.push_back(out.vertices.x.size()); f.count.push_back(polygon.size());
-  double lo = R_PosInf, hi = R_NegInf, mean = 0;
-  for (const Vertex& vertex : polygon) {
-    Index index = out.vertices.x.size();
-    Vec3 camera = projection.camera_point(vertex.xyz);
-    auto screen = projection.npc(camera);
-    require(std::isfinite(screen[0]) && std::isfinite(screen[1]) && std::isfinite(camera[2]),
-            "unrepresentable projected coordinate");
-    out.vertices.x.push_back(vertex.xyz[0]); out.vertices.y.push_back(vertex.xyz[1]);
-    out.vertices.z.push_back(vertex.xyz[2]); out.vertices.x_camera.push_back(camera[0]);
-    out.vertices.y_camera.push_back(camera[1]); out.vertices.depth.push_back(camera[2]);
-    out.vertices.x_npc.push_back(screen[0]); out.vertices.y_npc.push_back(screen[1]);
-    out.vertices.clip_w.push_back(projection.camera.perspective ? camera[2] : 1);
-    for (const auto& weight : vertex.weights) {
-      if (weight.second == 0) continue;
-      out.weights.vertex.push_back(index); out.weights.corner.push_back(weight.first);
-      out.weights.weight.push_back(weight.second);
-    }
-    lo = std::min(lo, camera[2]); hi = std::max(hi, camera[2]);
-    mean += camera[2]/polygon.size();
-  }
-  f.primitive_id.push_back(source.primitive_id[row]); f.layer_id.push_back(source.layer_id[row]);
-  f.source_row.push_back(source.source_row[row]); f.style_id.push_back(source.style_id[row]);
-  f.role.push_back(source.role[row]); f.partition.push_back(source.partition[row]);
-  f.opacity.push_back(source.opacity[row]); f.fragment_id.push_back(f.fragment_id.size()+1);
-  f.kind.push_back(static_cast<Index>(kind)); f.parent_primitive_id.push_back(source.primitive_id[row]);
-  f.source_index.push_back(row); f.mask_offset.push_back(0); f.mask_count.push_back(0);
-  f.depth_min.push_back(lo); f.depth_max.push_back(hi); f.depth_centroid.push_back(mean);
-  f.normal_x.push_back(normal[0]); f.normal_y.push_back(normal[1]); f.normal_z.push_back(normal[2]);
-  f.path_start_mm.push_back(path_start); f.path_end_mm.push_back(path_end);
-  f.clipped.push_back(clipped); f.hidden.push_back(false);
-  f.arrow_start.push_back(arrow_start); f.arrow_end.push_back(arrow_end);
-}
-
-CompiledScene compile(const ScenePacket& packet, const Projection& projection) {
-  CompiledScene out;
-  out.camera = projection.resolved;
-  const auto planes = clipping_planes(projection);
-  const PrimitiveTable* tables[] = {&packet.faces, &packet.polylines, &packet.markers, &packet.text};
-  for (int kind = 1; kind <= 4; ++kind) {
-    const auto& table = *tables[kind-1];
-    for (std::size_t row = 0; row < table.count.size(); ++row) {
-      if (row % 4096 == 0) Rcpp::checkUserInterrupt();
-      Polygon polygon;
-      for (Index j = 0; j < table.count[row]; ++j) {
-        Index corner = table.offset[row]+j, v = packet.corners.vertex[corner];
-        polygon.push_back({{packet.vertices.x[v], packet.vertices.y[v], packet.vertices.z[v]}, {{corner, 1}}});
-      }
-      if (kind == 1) {
-        Vec3 normal = face_normal(polygon, projection);
-        bool clipped = false;
-        polygon = clip_polygon(std::move(polygon), planes, clipped);
-        if (polygon.size() >= 3 && table.opacity[row] > 0) {
-          Vec3 area = area_vector(polygon, projection);
-          if (std::sqrt(dot(area, area)) > projection.resolved.tolerance)
-            append_fragment(out, table, row, Kind::face, polygon, projection, clipped, normal);
-        }
-      } else if (kind == 2) {
-        double cumulative = 0;
-        for (std::size_t j = 1; j < polygon.size(); ++j) {
-          const Vertex& a = polygon[j-1]; const Vertex& b = polygon[j];
-          double start = 0, end = 1;
-          for (const Plane& plane : planes) {
-            double da = signed_distance(plane, a.xyz), db = signed_distance(plane, b.xyz);
-            if (da < 0 && db < 0) { end = -1; break; }
-            if (da < 0) start = std::max(start, da/(da-db));
-            if (db < 0) end = std::min(end, da/(da-db));
-          }
-          // Dash arclength is measured after near/far clipping, before viewport clipping.
-          double near_start = 0, near_end = 1;
-          Vec3 ca = projection.camera_point(a.xyz), cb = projection.camera_point(b.xyz);
-          for (int sign : {1, -1}) {
-            double boundary = sign == 1 ? projection.resolved.near : projection.resolved.far;
-            double da = sign*(ca[2]-boundary), db = sign*(cb[2]-boundary);
-            if (da < 0 && db < 0) { near_end = -1; break; }
-            if (da < 0) near_start = std::max(near_start, da/(da-db));
-            if (db < 0) near_end = std::min(near_end, da/(da-db));
-          }
-          double length = 0, first = cumulative, last = cumulative;
-          if (near_start <= near_end) {
-            auto pa = projection.npc(projection.camera_point(interpolate(a,b,near_start).xyz));
-            auto pb = projection.npc(projection.camera_point(interpolate(a,b,near_end).xyz));
-            auto distance_mm = [&](const std::array<double,2>& p) {
-              return std::hypot((p[0]-pa[0])*projection.viewport.width_mm,
-                                (p[1]-pa[1])*projection.viewport.height_mm);
-            };
-            length = distance_mm(pb);
-            if (start <= end) {
-              first += distance_mm(projection.npc(projection.camera_point(interpolate(a,b,start).xyz)));
-              last += distance_mm(projection.npc(projection.camera_point(interpolate(a,b,end).xyz)));
-            }
-          }
-          if (start <= end && table.opacity[row] > 0) {
-            Polygon segment{interpolate(a,b,start), interpolate(a,b,end)};
-            append_fragment(out, table, row, Kind::polyline, segment, projection,
-              start > 0 || end < 1, {0,0,0}, first, last,
-              j == 1 && start == 0 && packet.polylines.arrow_start[row],
-              j+1 == polygon.size() && end == 1 && packet.polylines.arrow_end[row]);
-          }
-          cumulative += length;
-        }
-      } else {
-        bool visible = table.opacity[row] > 0;
-        for (const Plane& plane : planes) visible = visible && signed_distance(plane, polygon[0].xyz) >= 0;
-        if (visible) append_fragment(out, table, row, static_cast<Kind>(kind), polygon, projection, false);
-      }
-    }
-  }
-  auto& f = out.fragments;
-  out.draw_order.resize(f.count.size());
-  std::iota(out.draw_order.begin(), out.draw_order.end(), 0);
-  std::stable_sort(out.draw_order.begin(), out.draw_order.end(), [&](Index a, Index b) {
-    if (f.partition[a] != f.partition[b]) return f.partition[a] < f.partition[b];
-    if (f.partition[a] == 1 && f.depth_centroid[a] != f.depth_centroid[b])
-      return f.depth_centroid[a] > f.depth_centroid[b];
-    if (f.partition[a] != 1 && f.layer_id[a] != f.layer_id[b]) return f.layer_id[a] < f.layer_id[b];
-    return std::tie(f.role[a], f.layer_id[a], f.source_row[a], f.fragment_id[a]) <
-           std::tie(f.role[b], f.layer_id[b], f.source_row[b], f.fragment_id[b]);
-  });
-  return out;
-}
-
+} }
+#include "scene/projection.h"
+#include "scene/clipping.h"
+#include "scene/output.h"
+#include "scene/partition.h"
+#include "scene/coverage.h"
+#include "scene/compiler.h"
+namespace ggplot3d { namespace engine {
 Rcpp::IntegerVector indices(const std::vector<Index>& x, bool increment = false) {
   Rcpp::IntegerVector out(x.begin(), x.end());
   if (increment) for (int& value : out) ++value;
@@ -614,13 +295,37 @@ Rcpp::List write_result(const CompiledScene& scene, const ScenePacket& packet,
     Rcpp::Named("draw_order")=indices(scene.draw_order,true), Rcpp::Named("camera")=camera,
     Rcpp::Named("viewport")=Rcpp::List::create(Rcpp::Named("width_mm")=viewport.width_mm,
       Rcpp::Named("height_mm")=viewport.height_mm, Rcpp::Named("dpi")=viewport.dpi),
-    Rcpp::Named("capabilities")=Rcpp::List::create(Rcpp::Named("visibility")="centroid",
+    Rcpp::Named("capabilities")=Rcpp::List::create(Rcpp::Named("visibility")="bsp",
       Rcpp::Named("exact_visibility")=false, Rcpp::Named("footprint_clipping")=false));
 }
-}  // namespace
+} }  // namespace ggplot3d::engine
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::List scene_compile_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport) {
+  using namespace ggplot3d;
+  using namespace ggplot3d::engine;
+  double limit=3221225472.0;
+  SEXP budget_attribute=Rf_getAttrib(viewport,Rf_install("engine_budget_bytes"));
+  if(!Rf_isNull(budget_attribute)) {
+    require((TYPEOF(budget_attribute)==REALSXP || TYPEOF(budget_attribute)==INTSXP) &&
+            Rf_xlength(budget_attribute)==1,"engine_budget_bytes must be a positive finite scalar");
+    limit=Rcpp::as<double>(budget_attribute);
+    require(std::isfinite(limit) && limit>0,"engine_budget_bytes must be a positive finite scalar");
+  }
+  std::size_t inputs=0;
+  for(const char* name:{"faces","polylines","markers","text"}) {
+    if(packet.containsElementNamed(name)) {
+      Rcpp::List table=packet[name];
+      if(table.containsElementNamed("count")) inputs+=Rf_xlength(table["count"]);
+    }
+  }
+  ResourceBudget budget(inputs,limit);
+  budget.add(256.0*inputs);
+  for(const char* name:{"vertices","corners"}) if(packet.containsElementNamed(name)) {
+    Rcpp::List table=packet[name];
+    const char* column=std::string(name)=="vertices" ? "x" : "vertex";
+    if(table.containsElementNamed(column)) budget.add((std::string(name)=="vertices" ? 48.0:96.0)*Rf_xlength(table[column]));
+  }
   const ScenePacket scene = read_packet(packet);
   const Camera view = read_camera(camera);
   fields(viewport, {"width_mm", "height_mm", "dpi"});
@@ -628,5 +333,5 @@ Rcpp::List scene_compile_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List vi
   require(device.width_mm > 0 && device.height_mm > 0 && device.dpi > 0,
           "viewport dimensions and dpi must be positive");
   const Projection projection(view, device);
-  return write_result(compile(scene, projection), scene, device);
+  return write_result(compile(scene, projection,budget), scene, device);
 }
