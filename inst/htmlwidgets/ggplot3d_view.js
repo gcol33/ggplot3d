@@ -339,24 +339,28 @@
           const titleSize=arr(g.title_size).flat(), sizes=g.label_size || [];
           const sizeAt=i => Array.isArray(sizes[0]) ? sizes[i] : [sizes[i],sizes[i+values.length]];
           const tangent=straight ? norm(d.slice(0,2)) : null;
+          // Labels stand in dodge rows as deep as the deepest label along the normal.
+          const depths=values.map((value,i)=>{const size=sizeAt(i), n=normalAt(i);return Math.abs(n[0])*size[0]+Math.abs(n[1])*size[1];});
+          const step=(depths.length ? Math.max(...depths) : 0)+g.gap/2, band=depths.length ? g.dodge*step-g.gap/2 : 0;
           const candidates=values.map((value,i)=>{
             const a=ticks[i], size=sizeAt(i), n=normalAt(i);
-            const offset=g.tick_length+g.gap+(Math.abs(n[0])*size[0]+Math.abs(n[1])*size[1])/2+(i%g.dodge)*g.label_extent;
+            const offset=g.tick_length+g.gap+depths[i]/2+(i%g.dodge)*step;
             const xy=a.slice(0,2).map((v,j)=>v+n[j]*offset*layout.ppm);
             line(a,a.slice(0,2).map((v,j)=>v+n[j]*g.tick_length*layout.ppm),g.ticks);
             const w=size[0]*layout.ppm,h=size[1]*layout.ppm;
             return {i,xy,box:[xy[0]-w/2,xy[1]-h/2,xy[0]+w/2,xy[1]+h/2],end:tangent?dot(xy,tangent)+(Math.abs(tangent[0])*w+Math.abs(tangent[1])*h)/2:i};
           });
           if(g.minor_ticks) arr(q.c.minor).map(project).forEach(a=>line(a,a.slice(0,2).map((v,j)=>v+q.n[j]*g.tick_length/2*layout.ppm),g.ticks));
-          candidates.sort((a,b)=>a.i%g.dodge-b.i%g.dodge || a.end-b.end).forEach(c=>{
-            const b=c.box,gap=0.5*layout.ppm;
-            if(b.some(v=>!Number.isFinite(v)) || b[0]<0 || b[1]<0 || b[2]>width || b[3]>height || occupied.some(a=>a[0]<b[2]+gap && a[2]>b[0]-gap && a[1]<b[3]+gap && a[3]>b[1]-gap)) return;
+          candidates.sort((a,b)=>a.end-b.end || a.i-b.i).forEach(c=>{
+            const b=c.box,gap=(g.check_overlap ? 1 : 0.5)*layout.ppm;
+            if(b.some(v=>!Number.isFinite(v))) return;
+            if(g.thin && (b[0]<0 || b[1]<0 || b[2]>width || b[3]>height || occupied.some(a=>a[0]<b[2]+gap && a[2]>b[0]-gap && a[1]<b[3]+gap && a[3]>b[1]-gap))) return;
             occupied.push(b);text(labels[c.i],c.xy,g.text,g.angle,0.5,0.5);
           });
           const title=arr(g.title)[0];
           if(title) {
             const th=Array.isArray(titleSize[0]) ? titleSize[0][1] : titleSize[1];
-            const offset=(g.tick_length+g.gap+g.dodge*g.label_extent+g.title_gap+th/2)*layout.ppm;
+            const offset=(g.tick_length+g.gap+(g.text.visible ? band : 0)+g.title_gap+th/2)*layout.ppm;
             let anchor=q.mid, n=q.n, angle=0;
             if(q.c.title_at) {
               anchor=project(q.c.title_at);n=norm(sub(anchor.slice(0,2),centre));

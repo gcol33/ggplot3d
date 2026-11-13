@@ -11,3 +11,9 @@
 * Compute function surfaces, fitted surfaces, density surfaces, ridgelines, convex hulls and scalar-field level surfaces.
 * Animate data that change over time with `animate_3d(time = )`: one frame per value of a column, with scales trained on all frames.
 * `geom_blank()` and `expand_limits()` train scales inside `coord_3d()`.
+* `geom_label()`, `geom_rect()`, `geom_tile()`, `geom_hline()`, `geom_vline()`, `annotation_custom()` and `annotation_raster()` work inside `coord_3d()`.
+* `annotate_3d()` adds fixed annotations with z positions.
+* `stat_density_2d_3d(plane = )` draws the density flat on the floor or at a given height, filled by density.
+* The camera arguments of `coord_3d()` take one value per panel, so facets can show different views; `animate_3d()` keeps each panel's offset.
+* `labs(x = NULL)` and friends remove a 3D axis title.
+* Discrete axes keep every label unless `check.overlap = TRUE`; tick labels are thinned by their measured rectangles, `n.dodge` rows stack directly outside one another, and axis titles sit next to the tick labels.

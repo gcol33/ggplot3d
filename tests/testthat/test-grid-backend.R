@@ -374,15 +374,22 @@ test_that("view framing reports a box intersecting the eye plane", {
   expect_error(frame_camera_3d(camera, new_scene_viewport(100, 100), "azimuth"), "eye plane")
 })
 
-test_that("label intervals are separated in every dodge row", {
+test_that("thinned label rectangles are disjoint and unthinned labels are all kept", {
   locations <- cbind(seq(10, 50, length.out = 9), rep(20, 9))
   size <- cbind(rep(12, 9), rep(3, 9))
-  result <- thin_axis_labels_3d(locations, size, c(1, 0), rep(0L, 9),
+  result <- thin_axis_labels_3d(locations, size, c(1, 0),
     matrix(numeric(), 0, 4L), new_scene_viewport(60, 40))
-  kept <- result$intervals[result$keep, , drop = FALSE]
+  kept <- result$boxes[result$keep, , drop = FALSE]
   expect_lt(sum(result$keep), 9L)
   expect_gt(sum(result$keep), 1L)
-  expect_true(all(head(kept[, 2L], -1L) <= tail(kept[, 1L], -1L)))
+  expect_true(all(head(kept[, 3L], -1L) < tail(kept[, 1L], -1L)))
+  # Slanted labels whose projections along the axis overlap but whose
+  # rectangles do not are all kept.
+  slanted <- cbind(seq(10, 50, length.out = 5), seq(10, 34, length.out = 5))
+  expect_true(all(thin_axis_labels_3d(slanted, cbind(rep(20, 5), rep(3, 5)), c(0.86, 0.51),
+    matrix(numeric(), 0, 4L), new_scene_viewport(80, 60))$keep))
+  expect_true(all(thin_axis_labels_3d(locations, size, c(1, 0), matrix(numeric(), 0, 4L),
+    new_scene_viewport(60, 40), thin = FALSE)$keep))
 })
 
 test_that("small facets thin tick labels and share a frame with free labels", {
@@ -399,11 +406,6 @@ test_that("small facets thin tick labels and share a frame with free labels", {
     for (panel in panels) {
       expect_lt(sum(panel$furniture$label_layout$x$keep), 21L)
       for (layout in panel$furniture$label_layout) {
-        for (row in unique(layout$rows)) {
-          ids <- which(layout$keep & layout$rows == row)
-          ids <- ids[order(layout$intervals[ids, 1L])]
-          if (length(ids) > 1L) expect_true(all(layout$intervals[head(ids, -1L), 2L] <= layout$intervals[tail(ids, -1L), 1L]))
-        }
         boxes <- layout$occupied
         if (nrow(boxes) > 1L) for (i in seq_len(nrow(boxes) - 1L)) {
           later <- boxes[seq.int(i + 1L, nrow(boxes)), , drop = FALSE]

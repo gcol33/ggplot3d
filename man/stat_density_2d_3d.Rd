@@ -13,6 +13,7 @@ stat_density_2d_3d(
   h = NULL,
   adjust = 1,
   n = 40L,
+  plane = c("surface", "floor"),
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -28,6 +29,11 @@ stat_density_2d_3d(
 \item{adjust}{Positive automatic bandwidth multiplier, scalar or one per axis.}
 
 \item{n}{Grid resolution, a scalar or two integers.}
+
+\item{plane}{\code{"surface"} draws density as height. \code{"floor"} or a numeric z
+in original units lays the density grid flat at that height, filled by
+density unless fill is mapped or set, and unshaded unless \code{shade = TRUE}.
+The density range still trains the z scale, as for contours.}
 }
 \description{
 Uses an axis-aligned Gaussian product kernel on transformed x/y coordinates.
@@ -40,4 +46,7 @@ Computed density, ndensity and count are averaged per triangle for fill mapping.
 \examples{
 ggplot2::ggplot(faithful, ggplot2::aes(eruptions, waiting)) +
   stat_density_2d_3d(n = 20) + coord_3d()
+ggplot2::ggplot(faithful, ggplot2::aes(eruptions, waiting)) +
+  stat_density_2d_3d(n = 20, alpha = 0.6) +
+  stat_density_2d_3d(n = 40, plane = "floor") + coord_3d()
 }
