@@ -393,3 +393,64 @@ test_that("frame groups belong to an individual built gtable", {
     expect_false(identical(a[[1L]]$frame_group, b[[1L]]$frame_group))
   })
 })
+test_that("furniture facing handles poles and finite perspective eyes", {
+  viewport <- new_scene_viewport(100, 100)
+  for (elevation in c(-90, 90)) {
+    camera <- new_camera_3d(elevation = elevation)
+    partitions <- furniture_partitions_3d(camera, viewport)
+    expect_equal(unname(partitions[1:4]), rep(0L, 4))
+    expect_equal(unname(partitions[c("zmin", "zmax")]), if (elevation > 0) c(0L, 2L) else c(2L, 0L))
+  }
+  camera <- new_camera_3d("perspective", azimuth = 0, elevation = 0, distance = 3)
+  expect_equal(unname(furniture_partitions_3d(camera, viewport)), c(0L, 2L, 0L, 0L, 0L, 0L))
+  camera <- new_camera_3d("perspective", azimuth = 0, elevation = 0, distance = 3,
+    target = c(0.5, 2, 0.5), aspect = c(2, 1, 0.5))
+  expect_equal(unname(furniture_partitions_3d(camera, viewport)), c(0L, 2L, 0L, 2L, 0L, 0L))
+})
+
+test_that("pane grids and box edges share fixed furniture partitions", {
+  grid_test_device({
+    for (clip_data in c(TRUE, FALSE)) for (elevation in c(-90, 30, 90)) {
+      plot <- grid_test_plot(elevation = elevation, clip_data = clip_data,
+        panes = c("xmin", "xmax", "ymin", "ymax", "zmin", "zmax"), box = "all") +
+        ggplot2::scale_x_continuous(breaks = c(0.25, 0.75), minor_breaks = NULL) +
+        ggplot2::scale_y_continuous(breaks = c(0.25, 0.75), minor_breaks = NULL) +
+        scale_z_continuous(breaks = c(0.25, 0.75), minor_breaks = NULL)
+      params <- ggplot2::ggplot_build(plot)$layout$panel_params[[1L]]
+      furniture <- panel_furniture_3d(params, ggplot2::theme_get(), new_scene_viewport(150, 150))
+      packet <- furniture$packet
+      expected <- furniture_partitions_3d(furniture$camera, furniture$viewport)
+      expect_equal(packet$faces$partition, if (clip_data) unname(expected) else rep(1L, 6))
+      vertices <- as.matrix(as.data.frame(packet$vertices))
+      for (i in seq_along(packet$polylines$offset)) {
+        ids <- seq.int(packet$polylines$offset[i], length.out = packet$polylines$count[i])
+        xyz <- vertices[packet$corners$vertex[ids], , drop = FALSE]
+        fixed <- which(xyz[1L, ] == xyz[2L, ] & xyz[1L, ] %in% c(0, 1))
+        incident <- paste0(c("x", "y", "z")[fixed], ifelse(xyz[1L, fixed] == 0, "min", "max"))
+        id <- packet$polylines$primitive_id[i]
+        if (length(fixed) == 1L) {
+          face <- max(which(packet$faces$primitive_id < id))
+          partition <- packet$faces$partition[face]
+        } else {
+          partition <- if (!clip_data) 1L else if (any(expected[incident] == 2L)) 2L else 0L
+        }
+        expect_equal(packet$polylines$partition[i], partition,
+          info = paste("elevation", elevation, "clip_data", clip_data, "line", i, "planes", paste(incident, collapse = ",")))
+      }
+      expect_true(all(diff(packet$polylines$source_row) > 0L))
+      expect_true(all(packet$text$partition == 2L))
+    }
+  })
+})
+
+test_that("theme_bw panel border retains its stroke with transparent fill", {
+  grid_test_device({
+    plot <- grid_test_plot() + ggplot2::theme_bw()
+    panel <- grid_test_panels(grid::grid.force(ggplot2::ggplotGrob(plot)))[[1L]]
+    border <- panel$children[[length(panel$children)]]
+    expect_s3_class(border, "rect")
+    expect_true(is.na(border$gp$fill))
+    expect_false(is.na(border$gp$col))
+    expect_true(any(panel$scene$fragments$layer_id > 0L))
+  })
+})

@@ -43,7 +43,7 @@ makeContent.scene_panel_grob <- function(x) {
     just = c("left", "bottom"), clip = if (x$panel_params$camera$clip) "on" else "off", name = "scene-inner-3d")
   decorations <- furniture_overlay_3d(furniture, scene, x$theme)
   background <- ggplot2::element_render(x$theme, "panel.background")
-  border <- ggplot2::element_render(x$theme, "panel.border")
+  border <- ggplot2::element_render(x$theme, "panel.border", fill = NA)
   children <- c(list(background), x$underlay, list(rendered, decorations, border), x$overlay)
   x$scene <- scene; x$furniture <- decorations; x$inner_viewport <- furniture$viewport; x$outer_viewport <- outer
   grid::setChildren(x, do.call(grid::gList, children))

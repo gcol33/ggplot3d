@@ -136,6 +136,20 @@ frame_camera_3d <- function(camera, viewport, frame) {
   camera
 }
 
+furniture_partitions_3d <- function(camera, viewport) {
+  basis <- frame_basis_3d(camera, viewport)
+  panes <- c("xmin", "xmax", "ymin", "ymax", "zmin", "zmax")
+  axis <- rep(seq_len(3L), each = 2L)
+  side <- rep(0:1, 3L)
+  toward <- -basis$forward[axis]
+  if (basis$perspective) {
+    toward <- toward * basis$distance - (side - camera$target[axis]) * basis$scale[axis]
+  }
+  facing <- (2 * side - 1) * toward
+  tolerance <- 64 * .Machine$double.eps * max(1, abs(toward))
+  stats::setNames(ifelse(facing > tolerance, 2L, 0L), panes)
+}
+
 panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list()) {
   fit <- measure_guides_3d(panel_params, theme, viewport)
   if (length(frame_group)) {
@@ -176,9 +190,15 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
     camera$zoom <- panel_params$camera$zoom * min(magnifications)
   }
   cube <- cube_edges_3d()
+  basis <- frame_basis_3d(camera, fit$viewport)
   vertices <- cube$corners
   primitives <- list(); kinds <- character(); materials <- list(); anchor_rows <- integer()
   add <- function(xyz, kind, element = NULL, partition = 0L, anchor = FALSE) {
+    if (kind == "polylines") {
+      projected <- frame_positions_3d(xyz, camera, basis)[, 1:2, drop = FALSE]
+      # A line parallel to the sight ray has no projected stroke length.
+      if (max(abs(sweep(projected, 2L, projected[1L, ]))) <= 64 * .Machine$double.eps) return(0L)
+    }
     rows <- nrow(vertices) + seq_len(nrow(xyz))
     vertices <<- rbind(vertices, xyz)
     primitives[[length(primitives) + 1L]] <<- rows
@@ -201,12 +221,16 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
     })
   })
   cfg <- panel_params$coord_params
-  # Camera-side signs determine rear walls; projection and edge choice use engine anchors.
-  az <- panel_params$camera$azimuth * pi / 180
-  rear <- c(if (cos(az) >= 0) "xmin" else "xmax", if (sin(az) >= 0) "ymin" else "ymax")
+  partitions <- furniture_partitions_3d(camera, fit$viewport)
+  rear <- vapply(c("x", "y"), function(axis) {
+    candidates <- paste0(axis, c("min", "max"))
+    candidates[which.min(partitions[candidates])]
+  }, character(1))
   rear_edges <- vapply(seq_len(nrow(cube$edges)), function(i) {
     xyz <- cube$corners[cube$edges[i, c("a", "b")], , drop = FALSE]
-    any(vapply(rear, function(p) all(xyz[, match(substr(p, 1, 1), c("x", "y", "z"))] == as.integer(substr(p, 2, 4) == "max")), logical(1)))
+    fixed <- which(xyz[1L, ] == xyz[2L, ])
+    incident <- paste0(c("x", "y", "z")[fixed], ifelse(xyz[1L, fixed] == 0, "min", "max"))
+    all(partitions[incident] == 0L)
   }, logical(1))
   panes <- unique(c(setdiff(cfg$panes, c("back", "floor")), if ("back" %in% cfg$panes) rear, if ("floor" %in% cfg$panes) "zmin"))
   for (pane in panes) {
@@ -216,8 +240,7 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
     xyz <- matrix(0, 4L, 3L); xyz[, normal] <- side
     xyz[, other] <- rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1))
     element <- element_3d(paste0("panel.pane.", c("x", "y", "z")[normal]), theme)
-    # Floor and explicit camera-side panes participate in occlusion.
-    partition <- if (pane %in% rear && panel_params$camera$clip_data) 0L else 1L
+    partition <- if (camera$clip_data) unname(partitions[pane]) else 1L
     if (visible_element_3d(element) && !is.na(element$fill)) add(xyz, "faces", element, partition)
     for (axis in other) for (level in c("minor", "major")) {
       view <- panel_params[[c("x", "y", "z")[axis]]]
@@ -234,10 +257,13 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
     }
   }
   if (cfg$box != "none") {
-    element <- element_3d("panel.box.back", theme)
-    if (visible_element_3d(element)) for (i in seq_len(nrow(cube$edges))) {
+    for (i in seq_len(nrow(cube$edges))) {
+      if (!rear_edges[i] && cfg$box != "all") next
+      element <- element_3d(if (rear_edges[i]) "panel.box.back" else "panel.box.front", theme)
+      if (!visible_element_3d(element)) next
       e <- cube$edges[i, ]; xyz <- cube$corners[e[c("a", "b")], , drop = FALSE]
-      if (rear_edges[i]) add(xyz, "polylines", element)
+      partition <- if (!camera$clip_data) 1L else if (rear_edges[i]) 0L else 2L
+      add(xyz, "polylines", element, partition)
     }
   }
   styles <- data.frame(style_id = seq_along(primitives), colour = NA_character_, fill = NA_character_,
@@ -264,7 +290,7 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
   tables <- lapply(c("faces", "polylines", "text"), function(kind) {
     i <- which(kinds == kind)
     tab <- list(primitive_id = i, offset = offsets[i], count = counts[i], style_id = i,
-      layer_id = rep.int(0L, length(i)), source_row = rep.int(0L, length(i)),
+      layer_id = rep.int(0L, length(i)), source_row = as.integer(i),
       partition = vapply(materials[i], `[[`, integer(1), "partition"), opacity = opacity[i])
     if (kind == "polylines") tab$width_mm <- styles$linewidth[i]
     tab
@@ -409,11 +435,6 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
   add <- function(g) children[[length(children) + 1L]] <<- g
   line <- function(a, b, element) {
     if (visible_element_3d(element)) add(grid::segmentsGrob(a[, 1L], a[, 2L], b[, 1L], b[, 2L], default.units = "mm", gp = line_gp_3d(element)))
-  }
-  if (params$coord_params$box == "all") {
-    edges <- meta$cube$edges
-    front <- !meta$rear_edges
-    line(corners[edges[front, "a"], 1:2, drop = FALSE], corners[edges[front, "b"], 1:2, drop = FALSE], element_3d("panel.box.front", theme))
   }
   for (name in names(params$axis_guides)) {
     guide <- params$axis_guides[[name]]
