@@ -22,7 +22,7 @@
 #' with the edge codes of rgl's `axis3d()`.
 #'
 #' Plane typography needs the 'systemfonts' package, which reads the glyph
-#' outlines, and character labels; plotmath expressions stay on the page.
+#' outlines, and character labels. Use screen orientation for plotmath expressions.
 #' @param title Guide title, with waiver inheriting the scale or plot title.
 #' @param theme Local theme overrides.
 #' @param position "auto", a side (top, bottom, left, right), edge 1 to 4, or
@@ -41,9 +41,9 @@
 #' @param plane Pane for plane labels and in-plane ticks: `"auto"`,
 #'   `"floor"`, `"xy"`, `"xz"` or `"yz"`. The pane must contain the axis.
 #' @param title.position `"centre"` places the title beside the middle of the
-#'   axis, beyond the tick labels; `"near"` places it past the end of the axis
-#'   nearer the camera, in line with the axis, as ggcube does for axes inside
-#'   the plot.
+#'   axis, beyond the tick labels; `"near"` places it at the end nearer the
+#'   camera. Screen titles sit past that endpoint; plane titles sit inside
+#'   the pane boundary.
 #' @param depth.scale Under perspective projection, scale tick labels and
 #'   tick lengths by their distance from the camera: `FALSE` (none), `TRUE`
 #'   (full), or a nonnegative strength `s`, which maps the ratio `d` of the
@@ -51,8 +51,8 @@
 #'   `scale_depth` in ggcube. Titles are not scaled. Plane labels and in-plane
 #'   ticks are foreshortened by the projection itself.
 #' @param ticks `"outward"` draws ticks on the page, perpendicular to the
-#'   projected edge; `"in_plane"` draws them in the pane, perpendicular to the
-#'   edge in three dimensions.
+#'   projected edge; `"in_plane"` draws them into the pane, perpendicular to the
+#'   edge in three dimensions. Plane labels and ticks depth-sort with data.
 #' @return A ggplot2 guide for a three-dimensional position axis.
 #' @references
 #' Kling M (2025). ggcube: 3D plotting with ggplot2. `coord_3d()` arguments

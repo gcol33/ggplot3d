@@ -118,6 +118,11 @@ frame_eye_coordinates_3d <- function(xyz, camera, basis) {
   cbind(x = xy[, 1L], y = xy[, 2L], depth = distance + drop(delta %*% basis$forward))
 }
 
+frame_in_front_3d <- function(frame, camera, basis) {
+  eye <- frame_eye_coordinates_3d(rbind(frame$map(cube_edges_3d()$corners), frame$bounds()), camera, basis)
+  all(eye[, 3L] > 0)
+}
+
 frame_coordinates_3d <- function(xyz, camera, basis) {
   coordinates <- frame_eye_coordinates_3d(xyz, camera, basis)
   if (any(coordinates[, 3L] <= 0)) stop("The projected box crosses the eye plane; use a greater camera distance.", call. = FALSE)
@@ -374,7 +379,8 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
   }
   ctx <- typography_context_3d(frame, camera, fit$viewport, project)
   occupied <- matrix(numeric(), 0L, 4L)
-  for (name in names(panel_params$axis_guides)) {
+  box_guides <- if (frame_in_front_3d(frame, camera, basis)) names(panel_params$axis_guides) else character()
+  for (name in box_guides) {
     guide <- panel_params$axis_guides[[name]]
     if (!guide_on_box_3d(guide, panel_params)) next
     layout <- axis_layout_3d(frame, guide, project, project(frame$bounds()))
@@ -768,12 +774,13 @@ origin_axis_primitives_3d <- function(ctx, guide, metrics, origin, line = TRUE, 
     }
   }
   if (length(guide$title) && visible_element_3d(metrics$title)) {
-    end <- 1
-    if (identical(params$title.position, "near")) {
+    near <- identical(params$title.position, "near")
+    end <- 0.5
+    if (near) {
       depths <- project(frame$map(axis_candidate_points_3d(path, c(0, 1))))[, 3L]
-      if (depths[1L] < depths[2L]) end <- 0
+      end <- if (depths[1L] < depths[2L]) 0 else 1
     }
-    toward <- if (end == 1) along else -along
+    toward <- if (!near) direction else if (end == 1) along else -along
     o <- outward(end, toward)
     if (orientation == "plane") {
       a <- frame_directions_3d(ctx$frame, o$points, along, ctx$scale); b <- frame_directions_3d(ctx$frame, o$points, direction, ctx$scale)
@@ -781,11 +788,18 @@ origin_axis_primitives_3d <- function(ctx, guide, metrics, origin, line = TRUE, 
       size <- text_outline_size_3d(guide$title, metrics$title)
       along_depth <- abs(axes$u_a) * size[1L] + abs(axes$v_a) * size[2L]
       across_depth <- abs(axes$u_b) * size[1L] + abs(axes$v_b) * size[2L]
-      offset <- -sign(end - 0.5) * a[1L, ] * (metrics$title_gap + along_depth / 2) - b[1L, ] * (metrics$title_gap + across_depth / 2)
+      band <- if (length(labelled)) max(vapply(guide$labels[labelled], function(label) {
+        size <- text_outline_size_3d(label, metrics$text)
+        abs(axes$u_b) * size[1L] + abs(axes$v_b) * size[2L]
+      }, numeric(1))) else 0
+      offset <- if (near) {
+        -sign(end - 0.5) * a[1L, ] * (metrics$title_gap + along_depth / 2) + b[1L, ] * (metrics$title_gap + across_depth / 2)
+      } else b[1L, ] * (metrics$tick_length + metrics$gap + band + metrics$title_gap + across_depth / 2)
       plane_text(guide$title, metrics$title, o$base[1L, ] + offset * ctx$units() / ctx$scale, axes)
     } else {
-      angle <- if (orientation == "edge") edge_angle else 0
-      push(o$base, "text", metrics$title, origin_text_3d(guide$title, o$screen[1L, ], metrics$title_size[1L, ], metrics$title_gap, angle))
+      gap <- metrics$title_gap
+      if (!near) gap <- gap + metrics$tick_length + metrics$gap + metrics$label_extent
+      push(o$base, "text", metrics$title, origin_text_3d(guide$title, o$screen[1L, ], metrics$title_size[1L, ], gap, edge_angle))
     }
   }
   out
@@ -1207,9 +1221,7 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
   frame <- meta$frame %or3d% FrameBox
   # Axes run along the box edges on the image; an eye inside the box sees no
   # outline for them to follow, so they are left out.
-  eye <- frame_eye_coordinates_3d(rbind(frame$map(cube_edges_3d()$corners), frame$bounds()),
-    furniture$camera, frame_basis_3d(furniture$camera, fit$viewport))
-  if (any(eye[, 3L] <= 0)) {
+  if (!frame_in_front_3d(frame, furniture$camera, frame_basis_3d(furniture$camera, fit$viewport))) {
     return(grid::gTree(children = grid::gList(), bounds = list(), label_layout = list(),
       corners_mm = matrix(NA_real_, 8L, 3L), name = "furniture-3d"))
   }

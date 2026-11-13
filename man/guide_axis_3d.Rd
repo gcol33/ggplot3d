@@ -51,9 +51,9 @@ the pane with \code{"plane"}.}
 \code{"floor"}, \code{"xy"}, \code{"xz"} or \code{"yz"}. The pane must contain the axis.}
 
 \item{title.position}{\code{"centre"} places the title beside the middle of the
-axis, beyond the tick labels; \code{"near"} places it past the end of the axis
-nearer the camera, in line with the axis, as ggcube does for axes inside
-the plot.}
+axis, beyond the tick labels; \code{"near"} places it at the end nearer the
+camera. Screen titles sit past that endpoint; plane titles sit inside
+the pane boundary.}
 
 \item{depth.scale}{Under perspective projection, scale tick labels and
 tick lengths by their distance from the camera: \code{FALSE} (none), \code{TRUE}
@@ -63,8 +63,8 @@ distance of the camera target to the distance of the tick to \code{d^s}, as
 ticks are foreshortened by the projection itself.}
 
 \item{ticks}{\code{"outward"} draws ticks on the page, perpendicular to the
-projected edge; \code{"in_plane"} draws them in the pane, perpendicular to the
-edge in three dimensions.}
+projected edge; \code{"in_plane"} draws them into the pane, perpendicular to the
+edge in three dimensions. Plane labels and ticks depth-sort with data.}
 }
 \value{
 A ggplot2 guide for a three-dimensional position axis.
@@ -93,7 +93,7 @@ camera, and \code{"xy"}, \code{"xz"} or \code{"yz"} a pane by the two axes it sp
 with the edge codes of rgl's \code{axis3d()}.
 
 Plane typography needs the 'systemfonts' package, which reads the glyph
-outlines, and character labels; plotmath expressions stay on the page.
+outlines, and character labels. Use screen orientation for plotmath expressions.
 }
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 2, 1), z = 1:3)
