@@ -625,7 +625,7 @@ planar_emitter_3d <- function(geom) {
 }
 
 for (planar_geom in lapply(c("GeomBoxplot", "GeomDotplot", "GeomHex",
-    "GeomRaster", "GeomRibbon", "GeomRug", "GeomSmooth", "GeomViolin"),
+    "GeomRaster", "GeomRug", "GeomSmooth", "GeomViolin"),
     getExportedValue, ns = "ggplot2")) {
   register_geom_3d(planar_geom, planar_emitter_3d(planar_geom), parameters = geom_draw_parameters_3d(planar_geom),
     positions = c("nudge", "planar"))

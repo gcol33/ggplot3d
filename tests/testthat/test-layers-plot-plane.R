@@ -151,12 +151,12 @@ test_that("two-dimensional ggplot2 geoms draw on the plane of their height", {
   expect_gt(length(rings), 10L)
   z <- do.call(rbind, rings)[, 3L]
   expect_true(all(abs(z - z[1L]) < 1e-12))
-  dens <- stats_scene(ggplot2::ggplot(mt, ggplot2::aes(mpg, z = 2)) + ggplot2::geom_density() +
+  dens <- stats_scene(ggplot2::ggplot(mt, ggplot2::aes(mpg, z = 2)) + ggplot2::geom_density(fill = "grey70") +
     ggplot2::expand_limits(z = 0) + coord_3d())
   heights <- unique(round(do.call(rbind, face_rings(dens$packet))[, 3L], 12))
   zr <- dens$built$layout$panel_params[[1L]]$z.range
   expect_equal(heights, round((2 - zr[1L]) / diff(zr), 12))
   band <- data.frame(x = 1:5, lo = 0, hi = 1:5)
-  expect_error(stats_scene(ggplot2::ggplot(band, ggplot2::aes(x, ymin = lo, ymax = hi, z = x)) + ggplot2::geom_ribbon() + coord_3d()),
+  expect_error(stats_scene(ggplot2::ggplot(band, ggplot2::aes(x, y = lo, z = x)) + ggplot2::geom_rug() + coord_3d()),
     "constant within each group")
 })
