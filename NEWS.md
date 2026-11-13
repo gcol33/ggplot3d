@@ -14,6 +14,8 @@
 * Compute function surfaces, fitted surfaces, density surfaces, ridgelines, convex hulls and scalar-field level surfaces.
 * Bin two variables into columns: `stat_bin_2d_3d()` and its bar-style form `geom_histogram_3d()` count observations in rectangles, `geom_hex_3d()` and `stat_bin_hex_3d()` in hexagons drawn as prisms, and `stat_summary_2d_3d()` and `stat_summary_hex_3d()` summarise a mapped z in each bin. Computed variables follow ggplot2 (`count`, `density`, `ncount`, `ndensity`) plus the bin `width` and `depth`.
 * Animate data that change over time with `animate_3d(time = )`: one frame per value of a column, with scales trained on all frames.
+* Camera paths: `camera_path_3d()` interpolates keyframed views with quaternion orientation (slerp or squad), a centripetal Catmull-Rom target and log-scaled field of view, zoom and distance, with easing per segment; `orbit_3d()`, `fly_through_3d()` and `dolly_zoom_3d()` (including a perspective-to-orthographic morph at constant image scale) build common moves, and paths join with `c()`. `animate_3d(path = )` renders them and `view_3d(path = )` plays them in the browser.
+* `animate_3d()` writes WebM, animated PNG, PNG and SVG sequences and multi-page PDF besides GIF and MP4, chosen by the file extension, and draws frames in parallel with `workers`.
 * `geom_blank()` and `expand_limits()` train scales inside `coord_3d()`.
 * The raster backend renders 64-pixel tiles on several threads (option `ggplot3d.threads`) with one fragment list per sample, keeps the exact compositing order and can return depth, id and normal buffers.
 * The raster backend composites translucent paint and averages antialiasing samples in linear light; `backend_3d(blend = "srgb")` matches vector devices.

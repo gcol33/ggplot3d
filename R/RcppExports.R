@@ -65,6 +65,10 @@ parametric_face_normals_cpp <- function(tri, xyz) {
     .Call(`_ggplot3d_parametric_face_normals_cpp`, tri, xyz)
 }
 
+png_crc32_cpp <- function(bytes) {
+    .Call(`_ggplot3d_png_crc32_cpp`, bytes)
+}
+
 raster_prepare_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_raster_prepare_cpp`, packet, camera, viewport)
 }

@@ -21,10 +21,12 @@ Imports:
     grDevices,
     grid,
     isoband,
+    parallel,
     Rcpp,
     S7,
     scales,
     stats,
+    tools,
     utils
 LinkingTo: Rcpp
 Suggests:

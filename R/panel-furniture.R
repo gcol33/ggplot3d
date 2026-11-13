@@ -95,14 +95,27 @@ frame_basis_3d <- function(camera, viewport) {
     perspective = perspective, distance = distance, base = base)
 }
 
-frame_coordinates_3d <- function(xyz, camera, basis) {
+frame_eye_coordinates_3d <- function(xyz, camera, basis) {
   delta <- sweep(sweep(xyz, 2L, camera$target), 2L, basis$scale, "*")
   xy <- delta %*% basis$basis
   distance <- if (basis$perspective) basis$distance else 2 * basis$radius + 1
-  depth <- distance + drop(delta %*% basis$forward)
-  if (any(depth <= 0)) stop("The projected box crosses the eye plane; use a greater camera distance.", call. = FALSE)
-  if (basis$perspective) xy <- xy / depth
-  cbind(x = xy[, 1L], y = xy[, 2L], depth = depth)
+  cbind(x = xy[, 1L], y = xy[, 2L], depth = distance + drop(delta %*% basis$forward))
+}
+
+frame_coordinates_3d <- function(xyz, camera, basis) {
+  coordinates <- frame_eye_coordinates_3d(xyz, camera, basis)
+  if (any(coordinates[, 3L] <= 0)) stop("The projected box crosses the eye plane; use a greater camera distance.", call. = FALSE)
+  if (basis$perspective) coordinates[, 1:2] <- coordinates[, 1:2] / coordinates[, 3L]
+  coordinates
+}
+
+# A polyline whose points all lie on one sight ray has no projected stroke
+# length; the test cross-multiplies by depth, so points behind the eye count.
+sight_ray_line_3d <- function(xyz, camera, basis) {
+  eye <- frame_eye_coordinates_3d(xyz, camera, basis)
+  if (!basis$perspective) return(max(abs(sweep(eye[, 1:2, drop = FALSE], 2L, eye[1L, 1:2]))) <= 64 * .Machine$double.eps)
+  spread <- abs(eye[, 1:2, drop = FALSE] * eye[1L, 3L] - outer(eye[, 3L], eye[1L, 1:2]))
+  max(spread) <= 64 * .Machine$double.eps * max(1, abs(eye))^2
 }
 
 frame_positions_3d <- function(xyz, camera, basis) {
@@ -206,11 +219,7 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
   # primitives (zero planes, origin axes) lie inside the box and depth-sort
   # with the data.
   add <- function(xyz, kind, element = NULL, partition = 0L, anchor = FALSE, tag = NULL, text = NULL, scene = FALSE) {
-    if (kind == "polylines") {
-      projected <- frame_positions_3d(xyz, camera, basis)[, 1:2, drop = FALSE]
-      # A line parallel to the sight ray has no projected stroke length.
-      if (max(abs(sweep(projected, 2L, projected[1L, ]))) <= 64 * .Machine$double.eps) return(0L)
-    }
+    if (kind == "polylines" && sight_ray_line_3d(xyz, camera, basis)) return(0L)
     rows <- n_vertices + seq_len(nrow(xyz))
     chunks[[length(chunks) + 1L]] <<- xyz
     n_vertices <<- n_vertices + nrow(xyz)
@@ -816,6 +825,14 @@ furniture_projector_3d <- function(furniture) {
 furniture_overlay_3d <- function(furniture, scene, theme) {
   meta <- furniture$overlay; fit <- meta$fit; params <- meta$params
   frame <- meta$frame %or3d% FrameBox
+  # Axes run along the box edges on the image; an eye inside the box sees no
+  # outline for them to follow, so they are left out.
+  eye <- frame_eye_coordinates_3d(rbind(frame$map(cube_edges_3d()$corners), frame$bounds()),
+    furniture$camera, frame_basis_3d(furniture$camera, fit$viewport))
+  if (any(eye[, 3L] <= 0)) {
+    return(grid::gTree(children = grid::gList(), bounds = list(), label_layout = list(),
+      corners_mm = matrix(NA_real_, 8L, 3L), name = "furniture-3d"))
+  }
   project <- furniture_projector_3d(furniture)
   corners <- project(frame$map(cube_edges_3d()$corners))
   if (any(!is.finite(corners)) && (length(params$coord_params$axes) || params$coord_params$box == "all")) {

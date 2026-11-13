@@ -160,7 +160,7 @@ test_that("invalid paths and cameras fail before drawing", {
   expect_error(animate_3d(p, frames = 2, azimuth = 1:3), "one or frames")
   expect_error(animate_3d(p, elevation = 91), "invalid camera")
   expect_error(animate_3d(p, zoom = 0), "invalid camera")
-  expect_error(animate_3d(p, file = "movie.webm"), "gif or .mp4", fixed = TRUE)
+  expect_error(animate_3d(p, file = "movie.avi"), "file must end in", fixed = TRUE)
   expect_error(animate_3d(p, width = NA), "positive integer")
   expect_error(animate_3d(ggplot2::ggplot()), "coord_3d")
 })

@@ -19,7 +19,9 @@ animate_3d(
   dpi = 96,
   antialias = 1L,
   progress = interactive(),
-  time = NULL
+  time = NULL,
+  path = NULL,
+  workers = 1L
 )
 }
 \arguments{
@@ -27,23 +29,32 @@ animate_3d(
 
 \item{azimuth, elevation, zoom, roll}{A scalar, a numeric vector of length
 \code{frames}, or a function receiving times in seconds and returning either.
-NULL retains the plot setting, except azimuth without \code{time}, which makes
-one full turn.}
+NULL retains the plot setting, except azimuth without \code{time} or \code{path},
+which makes one full turn.}
 
 \item{frames}{Number of frames, default 60. The closing view is excluded
 from the default turn so that looping repeats each view once. With \code{time},
-one frame per distinct value of the time column.}
+one frame per distinct value of the time column. With \code{path}, the default
+samples the path at \code{fps} frames per second, and a given number of frames
+is spread evenly over the path.}
 
 \item{fps}{Frames per second, default 20.}
 
-\item{file}{Output path ending in .gif or .mp4. NULL returns PNG frame paths.}
+\item{file}{Output path, or NULL to return PNG frame paths. The extension
+selects the output: \code{.gif} (needs gifski), \code{.mp4} or \code{.webm} (need av),
+\code{.apng} (an animated PNG), \code{.png} or \code{.svg} (one file per frame; svg needs
+svglite) and \code{.pdf} (one page per frame). A file per frame takes its
+number from a \code{\link[=sprintf]{sprintf()}} pattern in the name, such as
+\code{"frames/turn-\%03d.png"}, or else gets it appended, as in
+\verb{turn-0001.png}.}
 
-\item{renderer}{Scene backend, "raster" (default) or "vector".
-Both produce PNG frames for the encoder.}
+\item{renderer}{Scene backend, "raster" (default) or "vector". Use "vector"
+for vector pages in SVG and PDF output.}
 
 \item{width, height}{Frame dimensions in pixels, default 640 each.}
 
-\item{dpi}{Device resolution, default 96 dots per inch.}
+\item{dpi}{Device resolution, default 96 dots per inch. SVG and PDF pages
+measure \code{width / dpi} by \code{height / dpi} inches.}
 
 \item{antialias}{Raster supersampling factor, default 1.}
 
@@ -54,26 +65,42 @@ Both produce PNG frames for the encoder.}
 the \code{i}-th sorted distinct value; layers without the column appear in
 every frame. Scales are trained on all frames, so limits, breaks and colour
 mappings are the same in each frame.}
+
+\item{path}{A camera path from \code{\link[=camera_path_3d]{camera_path_3d()}}, \code{\link[=orbit_3d]{orbit_3d()}},
+\code{\link[=fly_through_3d]{fly_through_3d()}} or \code{\link[=dolly_zoom_3d]{dolly_zoom_3d()}}, or NULL. A path replaces
+\code{azimuth}, \code{elevation}, \code{zoom} and \code{roll} and also moves the target,
+distance, field of view and projection.}
+
+\item{workers}{Number of processes drawing frames, default 1, or a cluster
+from \code{\link[parallel:makeCluster]{parallel::makeCluster()}} with ggplot3d loaded on its nodes. Each
+worker draws a contiguous run of frames on its own devices, so the frames
+are identical for every number of workers. Workers fork where the
+platform allows it and otherwise start socket processes, which load the
+installed ggplot3d. PDF pages are drawn in one process.}
 }
 \value{
 A ggplot3d_animation list with \code{file}, \code{frame_count}, \code{fps}, \code{camera}
-(one row per frame, with the frame's \code{value} of the time column when
-\code{time} is set), \code{timings} in seconds, \code{build_seconds}, \code{frame},
-\code{panel_extents} in millimetres, and \code{frames} (PNG paths when file is NULL).
-PNG frames returned with file = NULL belong to the caller.
+(one row per frame with the time, the camera angles, zoom, projection,
+field of view, distance (NA when automatic) and target, and the frame's
+\code{value} of the time column when \code{time} is set), \code{timings} in seconds,
+\code{build_seconds}, \code{frame}, \code{panel_extents} in millimetres, and \code{frames}
+(the PNG paths when file is NULL, the written files of a per-frame
+output). PNG frames returned with file = NULL belong to the caller.
 }
 \description{
 Render a scene from successive camera positions, or draw one subset of the
 data per frame. Projection, visibility and lighting are evaluated per frame.
 }
 \details{
-Framing is "azimuth" for constant elevation and roll, and "sphere"
-otherwise. Axis reserves and physical panel extents are fixed. Zoom remains
-an explicit magnification. GIF needs gifski; MP4 needs av. Optional packages
-are checked before rendering. Rendering streams frames to disk. A fixed
-scene is built once; with \code{time}, each frame is built from its subset with
-the scale limits of the full data, as in gganimate's \code{transition_manual()}
-and plotly's \code{frame} aesthetic.
+Framing is "azimuth" when only the azimuth and zoom change, and
+"sphere" otherwise. Axis reserves and physical panel extents are fixed.
+Zoom remains an explicit magnification. Optional packages are checked
+before rendering. Rendering streams frames to disk. A fixed scene is built
+once; with \code{time}, each frame is built from its subset with the scale
+limits of the full data, as in gganimate's \code{transition_manual()} and
+plotly's \code{frame} aesthetic. The animated PNG follows the APNG 1.0
+specification: browsers play it and viewers without APNG support show its
+first frame.
 }
 \examples{
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
@@ -82,6 +109,11 @@ if (requireNamespace("gifski", quietly = TRUE)) {
   movie <- animate_3d(p, frames = 3, width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$timings
+}
+if (requireNamespace("ragg", quietly = TRUE)) {
+  turn <- animate_3d(p, path = orbit_3d(degrees = 90, duration = 1), fps = 3,
+                     width = 240, height = 240, file = tempfile(fileext = ".apng"))
+  turn$camera$azimuth
 }
 waves <- expand.grid(x = seq(0, 1, length.out = 20), y = seq(0, 1, length.out = 20),
                      t = seq(0, 0.75, by = 0.25))
@@ -93,4 +125,8 @@ if (requireNamespace("gifski", quietly = TRUE)) {
                       file = tempfile(fileext = ".gif"))
   movie$camera$value
 }
+}
+\seealso{
+\code{\link[=camera_path_3d]{camera_path_3d()}} for keyframed camera moves, \code{\link[=view_3d]{view_3d()}} to play
+a path in the browser.
 }

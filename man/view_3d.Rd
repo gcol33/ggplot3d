@@ -10,7 +10,9 @@ view_3d(
   height = 640L,
   panel = 1L,
   elementId = NULL,
-  link = NULL
+  link = NULL,
+  path = NULL,
+  fps = 30
 )
 }
 \arguments{
@@ -30,14 +32,22 @@ page with the same \code{link} move together: an orbit, zoom or reset in one
 applies to all, azimuth, elevation and roll changes add and zoom factors
 multiply, so each viewer keeps its own view. Linking the panels of a
 \code{\link[=facet_views]{facet_views()}} plot turns the front, top and side views as one object.}
+
+\item{path}{A camera path from \code{\link[=camera_path_3d]{camera_path_3d()}}, \code{\link[=orbit_3d]{orbit_3d()}},
+\code{\link[=fly_through_3d]{fly_through_3d()}} or \code{\link[=dolly_zoom_3d]{dolly_zoom_3d()}}, or NULL (default). The viewer
+gains a Play button that moves the camera along the path with the views
+\code{\link[=animate_3d]{animate_3d()}} renders; dragging or Reset stops it.}
+
+\item{fps}{Camera views per second of the sampled path, default 30.}
 }
 \value{
 An htmlwidget of class ggplot3d_view. Its x contains schema_version
 (2), scene (schema-1 indexed model geometry and mapped materials),
 furniture (with the panes each primitive belongs to and their outward
 normals), axes (candidate placements per guide), bounds, camera, framing,
-viewport, reference, background, capabilities and link. Geometry is transferred
-once; camera interaction stays in the browser.
+viewport, reference, background, capabilities and link, and with \code{path}
+the sampled camera views. Geometry is transferred once; camera
+interaction and playback stay in the browser.
 }
 \description{
 Draw a panel in a WebGL htmlwidget, using its mapped scene and initial camera.
@@ -60,5 +70,6 @@ if (requireNamespace("htmlwidgets", quietly = TRUE)) {
   views <- p + facet_views(c("front", "isometric"))
   front <- view_3d(views, panel = 1, width = 320, height = 320, link = "cars")
   iso <- view_3d(views, panel = 2, width = 320, height = 320, link = "cars")
+  view_3d(p, path = orbit_3d(degrees = 360, duration = 6))
 }
 }

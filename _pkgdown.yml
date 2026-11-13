@@ -202,6 +202,12 @@ reference:
   - backend_3d
   - animate_3d
   - view_3d
+- title: Camera paths
+  contents:
+  - camera_path_3d
+  - orbit_3d
+  - fly_through_3d
+  - dolly_zoom_3d
 - title: Mesh input and extension API
   contents:
   - mesh_3d

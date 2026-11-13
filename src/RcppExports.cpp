@@ -236,6 +236,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// png_crc32_cpp
+double png_crc32_cpp(Rcpp::RawVector bytes);
+RcppExport SEXP _ggplot3d_png_crc32_cpp(SEXP bytesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::RawVector >::type bytes(bytesSEXP);
+    rcpp_result_gen = Rcpp::wrap(png_crc32_cpp(bytes));
+    return rcpp_result_gen;
+END_RCPP
+}
 // raster_prepare_cpp
 Rcpp::List raster_prepare_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport);
 RcppExport SEXP _ggplot3d_raster_prepare_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP) {
@@ -394,6 +404,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_parametric_edges_cpp", (DL_FUNC) &_ggplot3d_parametric_edges_cpp, 4},
     {"_ggplot3d_parametric_bisect_cpp", (DL_FUNC) &_ggplot3d_parametric_bisect_cpp, 6},
     {"_ggplot3d_parametric_face_normals_cpp", (DL_FUNC) &_ggplot3d_parametric_face_normals_cpp, 2},
+    {"_ggplot3d_png_crc32_cpp", (DL_FUNC) &_ggplot3d_png_crc32_cpp, 1},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 10},
     {"_ggplot3d_raster_occlusion_cpp", (DL_FUNC) &_ggplot3d_raster_occlusion_cpp, 8},

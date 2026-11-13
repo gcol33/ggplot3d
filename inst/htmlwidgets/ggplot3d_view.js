@@ -70,9 +70,9 @@
       canvas.tabIndex = 0;
       canvas.setAttribute('aria-label', '3D scene. Drag or use arrow keys to orbit. Wheel, pinch, plus or minus to zoom.');
       const controls = document.createElement('div'); controls.className = 'gg3d-controls';
-      const reset = document.createElement('button'), report = document.createElement('button');
-      reset.textContent = 'Reset'; report.textContent = 'Camera code';
-      reset.type = report.type = 'button'; controls.append(reset, report);
+      const play = document.createElement('button'), reset = document.createElement('button'), report = document.createElement('button');
+      play.textContent = 'Play'; reset.textContent = 'Reset'; report.textContent = 'Camera code';
+      play.type = reset.type = report.type = 'button'; play.hidden = true; controls.append(play, reset, report);
       const code = document.createElement('textarea'); code.className = 'gg3d-code'; code.hidden = true;
       code.readOnly = true; code.rows = 3; code.setAttribute('aria-label', 'Current coord_3d camera call');
       el.append(canvas, labels, controls, code);
@@ -122,16 +122,18 @@
       ['Target','Scale','Right','Up','Forward','Distance','Near','Far','Base','Perspective','Size','Origin','Pixels','Inner','Colour','Clip'].forEach(k => uniforms[k] = gl.getUniformLocation(program, 'u'+k));
       const pointLoc = gl.getAttribLocation(program, 'aPoint'), offsetLoc = gl.getAttribLocation(program, 'aOffset');
       const dynamic = gl.createBuffer();
-      let data, camera, initial, primitives = [], buffers = [], basis, layout, frameRequest, link = null;
+      let data, camera, initial, primitives = [], buffers = [], basis, layout, frameRequest, framing, playback = null, pathIndex = 0, link = null;
+      // A turn or reset, from this viewer or a linked one, stops path playback.
       const self = {
         turn(change) {
+          stop();
           if(change.azimuth) camera.azimuth+=change.azimuth;
           if(change.elevation) camera.elevation=Math.max(-90,Math.min(90,camera.elevation+change.elevation));
           if(change.roll) camera.roll+=change.roll;
           if(change.zoom) camera.zoom*=change.zoom;
           schedule();
         },
-        reset() {camera=JSON.parse(JSON.stringify(initial));schedule();}
+        reset() {stop();pathIndex=0;framing=data.framing;camera=JSON.parse(JSON.stringify(initial));schedule();}
       };
       function peers() {return link ? Array.from(linkGroups.get(link) || []) : [self];}
       function move(change) {if(data) peers().forEach(v=>v.turn(change));}
@@ -412,7 +414,7 @@
       }
       function draw() {
         frameRequest=null;if(!data) return;
-        basis=cameraBasis(camera,data.viewport,data.framing);
+        basis=cameraBasis(camera,data.viewport,framing);
         const vp=data.viewport,ppm=Math.min(width/vp.outer_width_mm,height/vp.outer_height_mm);
         layout={ppm,ox:(width-vp.outer_width_mm*ppm)/2+data.framing.origin[0]*ppm,
           oy:(height-vp.outer_height_mm*ppm)/2+data.framing.origin[1]*ppm,iw:vp.width_mm*ppm,ih:vp.height_mm*ppm};
@@ -451,6 +453,32 @@
         axes();publish();el.dataset.rendered='true';el.dataset.renderer='webgl';
       }
       function schedule() {if(!frameRequest) frameRequest=requestAnimationFrame(draw);}
+      function pathFrame(k) {
+        const p=data.path,at=key=>arr(p[key])[k];
+        pathIndex=k;
+        Object.assign(camera,{azimuth:at('azimuth'),elevation:at('elevation'),roll:at('roll'),zoom:at('zoom'),
+          fov:at('fov'),projection:at('projection'),distance:at('distance')>0?at('distance'):null,
+          target:[at('target_x'),at('target_y'),at('target_z')],shear:[at('shear_x'),at('shear_y')]});
+        framing=Object.assign({},data.framing,{zoom_scale:p.zoom_scale});
+        schedule();
+      }
+      function stop() {
+        if(playback) cancelAnimationFrame(playback.request);
+        playback=null;play.textContent='Play';
+      }
+      function tick(now) {
+        const n=arr(data.path.azimuth).length;
+        let k=Math.floor((now-playback.start)/1000/data.path.step);
+        if(data.path.loop) k%=n;
+        else if(k>=n-1) {pathFrame(n-1);stop();pathIndex=0;return;}
+        pathFrame(k);playback.request=requestAnimationFrame(tick);
+      }
+      function start() {
+        if(!data || !data.path) return;
+        stop();playback={start:performance.now()-pathIndex*data.path.step*1000};
+        play.textContent='Pause';playback.request=requestAnimationFrame(tick);
+      }
+      play.addEventListener('click',()=>playback?stop():start());
       function resize(w,h) {
         width=w;height=h;const ratio=window.devicePixelRatio || 1;
         [canvas,labels].forEach(c=>{c.width=Math.round(w*ratio);c.height=Math.round(h*ratio);});schedule();
@@ -462,7 +490,7 @@
       observer.observe(el);
       const pointers=new Map();let pinch;
       canvas.addEventListener('pointerdown',e=>{
-        canvas.focus();canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);
+        stop();canvas.focus();canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);
         const ps=Array.from(pointers.values());pinch=ps.length===2?Math.hypot(...sub(ps[0],ps[1])):null;
       });
       canvas.addEventListener('pointermove',e=>{
@@ -486,7 +514,8 @@
         renderValue: function(x) {
           if(x.schema_version!==2 || x.scene.schema_version!==1) throw Error('Unsupported ggplot3d scene schema');
           buffers.forEach(b=>gl.deleteBuffer(b));buffers=[];
-          data=x;camera=JSON.parse(JSON.stringify(x.camera));initial=JSON.parse(JSON.stringify(camera));
+          stop();pathIndex=0;data=x;framing=x.framing;play.hidden=!x.path;
+          camera=JSON.parse(JSON.stringify(x.camera));initial=JSON.parse(JSON.stringify(camera));
           joinLink(x.link);el.dataset.link=link || '';
           primitives=packetPrimitives(x.scene,false).concat(packetPrimitives(x.furniture,true));
           primitives.filter(p=>p.kind===0).forEach(p=>{
@@ -496,7 +525,7 @@
           el.ggplot3d={getCamera:()=>JSON.parse(JSON.stringify(camera)),
             getProjectedBox:()=>arr(data.bounds).map(project),
             setCamera:values=>{Object.assign(camera,values);schedule();},
-            turn:move};
+            turn:move,play:start,pause:stop,setPathFrame:pathFrame,playing:()=>playback!==null};
           draw();
         }, resize
       };

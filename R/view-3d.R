@@ -15,12 +15,18 @@
 #'   applies to all, azimuth, elevation and roll changes add and zoom factors
 #'   multiply, so each viewer keeps its own view. Linking the panels of a
 #'   [facet_views()] plot turns the front, top and side views as one object.
+#' @param path A camera path from [camera_path_3d()], [orbit_3d()],
+#'   [fly_through_3d()] or [dolly_zoom_3d()], or NULL (default). The viewer
+#'   gains a Play button that moves the camera along the path with the views
+#'   [animate_3d()] renders; dragging or Reset stops it.
+#' @param fps Camera views per second of the sampled path, default 30.
 #' @return An htmlwidget of class ggplot3d_view. Its x contains schema_version
 #'   (2), scene (schema-1 indexed model geometry and mapped materials),
 #'   furniture (with the panes each primitive belongs to and their outward
 #'   normals), axes (candidate placements per guide), bounds, camera, framing,
-#'   viewport, reference, background, capabilities and link. Geometry is transferred
-#'   once; camera interaction stays in the browser.
+#'   viewport, reference, background, capabilities and link, and with `path`
+#'   the sampled camera views. Geometry is transferred once; camera
+#'   interaction and playback stay in the browser.
 #' @details Requires htmlwidgets. Opaque geometry uses a WebGL depth buffer.
 #'   Transparent primitives are sorted back to front by centre depth; crossing
 #'   transparent surfaces can differ from the exact static vector backend.
@@ -35,10 +41,11 @@
 #'   views <- p + facet_views(c("front", "isometric"))
 #'   front <- view_3d(views, panel = 1, width = 320, height = 320, link = "cars")
 #'   iso <- view_3d(views, panel = 2, width = 320, height = 320, link = "cars")
+#'   view_3d(p, path = orbit_3d(degrees = 360, duration = 6))
 #' }
 #' @export
 view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
-                    elementId = NULL, link = NULL) {
+                    elementId = NULL, link = NULL, path = NULL, fps = 30) {
   motion_require_3d("htmlwidgets")
   motion_plot_coord_3d(plot)
   motion_dimensions_3d(width, height, 96)
@@ -46,10 +53,13 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
     panel >= 1 && panel == trunc(panel), "panel must be a positive integer")
   scene_assert(is.null(link) || (is.character(link) && length(link) == 1L && !is.na(link) && nzchar(link)),
     "link must be NULL or one group name")
-  path <- tempfile(fileext = ".png")
-  on.exit(unlink(path), add = TRUE)
-  motion_png_3d(path, width, height, 96)
-  device <- grDevices::dev.cur()
+  scene_assert(is.null(path) || inherits(path, "ggplot3d_camera_path"),
+    "path must be a camera path such as camera_path_3d() or orbit_3d()")
+  scene_assert(is.numeric(fps) && length(fps) == 1L && is.finite(fps) && fps > 0,
+    "fps must be a positive finite number")
+  scratch <- tempfile(fileext = ".png")
+  on.exit(unlink(scratch), add = TRUE)
+  device <- motion_open_device_3d("png", scratch, width, height, 96)
   on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE, after = FALSE)
   built <- ggplot2::ggplotGrob(plot)
   panels <- motion_panels_3d(built)
@@ -108,10 +118,28 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
     background = if (visible_element_3d(bg)) view_rgba_3d(bg$fill) else c(1, 1, 1, 1),
     capabilities = list(opaque_visibility = "depth-buffer",
       transparency = "primitive-centroid", text = "plain-anchor", geometry_schema = 1L))
+  if (!is.null(path)) x$path <- view_path_3d(path, fps, params, furniture$viewport, frame$bounds())
   grDevices::dev.off(device)
   htmlwidgets::createWidget("ggplot3d_view", x, width = width, height = height,
     package = "ggplot3d", elementId = elementId,
     sizingPolicy = htmlwidgets::sizingPolicy(padding = 0, browser.fill = FALSE))
+}
+
+# Camera views of a path for the viewer to play, as columns, with the frame
+# step in seconds and the magnification of the path's framing.
+view_path_3d <- function(path, fps, params, viewport, bounds) {
+  camera <- params$camera
+  context <- motion_path_context_3d(camera, params,
+    function() min(1, viewport$width_mm / viewport$height_mm))
+  sampled <- path_sample_3d(path, NULL, fps, context)
+  cameras <- lapply(sampled$steps, motion_camera_3d, base = camera)
+  fitted <- frame_camera_3d(cameras[[1L]], viewport, motion_frame_mode_3d(sampled$steps), bounds)
+  table <- motion_camera_table_3d(cameras, sampled$times)
+  table$distance[is.na(table$distance)] <- -1
+  shear <- do.call(rbind, lapply(cameras, `[[`, "shear"))
+  c(as.list(table), list(shear_x = shear[, 1L], shear_y = shear[, 2L],
+    step = if (length(sampled$times) > 1L) sampled$times[2L] else 1,
+    loop = sampled$closed, zoom_scale = fitted$zoom / cameras[[1L]]$zoom))
 }
 
 # Pane membership and outward model normals of furniture primitives, so the
