@@ -1,7 +1,10 @@
 utils::globalVariables("count")
 
 prepare_solid_3d <- function(out, data, plot, params) {
-  out <- prepare_spatial_aesthetics_3d(out, data, plot, params)
+  solid_heights_3d(prepare_spatial_aesthetics_3d(out, data, plot, params), params)
+}
+
+solid_heights_3d <- function(out, params) {
   height <- out$height %or3d% params$height
   baseline <- out$zmin %or3d% params$zmin %or3d% params$base %or3d% 0
   if (is.null(out[["z"]]) && !is.null(height)) out$z <- baseline + height

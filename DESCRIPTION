@@ -8,7 +8,7 @@ Description: Draws three-dimensional points, paths, surfaces and solids within
     the grammar of graphics provided by 'ggplot2'. Trains a third position
     scale, combines layers into a shared panel scene, and resolves visibility
     for vector and raster output. Supports camera controls, faceting,
-    statistical surfaces and indexed meshes.
+    statistical surfaces, indexed meshes, rasters and simple features.
 License: MIT + file LICENSE
 URL: https://github.com/gcol33/ggplot3d
 BugReports: https://github.com/gcol33/ggplot3d/issues
@@ -23,6 +23,7 @@ Imports:
     isoband,
     parallel,
     Rcpp,
+    rlang,
     S7,
     scales,
     stats,
@@ -36,6 +37,7 @@ Suggests:
     htmlwidgets,
     igraph,
     knitr,
+    lidR,
     mgcv,
     patchwork,
     ragg,
@@ -43,7 +45,9 @@ Suggests:
     systemfonts,
     rmarkdown,
     sf,
+    stars,
     svglite,
+    terra,
     testthat (>= 3.0.0)
 SystemRequirements: C++17
 VignetteBuilder: knitr

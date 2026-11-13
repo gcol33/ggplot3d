@@ -51,6 +51,12 @@ scales_3d <- function(parent, context) {
     transform_df = function(self, df) {
       position <- unique(unlist(lapply(Filter(function(s) any(s$aesthetics %in% c("x", "y", "z")), self$scales), `[[`, "aesthetics")))
       columns <- intersect(position, names(df))
+      # Columns holding only box-face sentinels (+/-Inf) stay out of the scale
+      # transformation, which date and time scales reject for numbers.
+      boundary <- columns[vapply(df[columns], function(v) is.numeric(v) && any(is.infinite(v)) && all(is.infinite(v) | is.na(v)), logical(1))]
+      held <- df[boundary]
+      df <- df[setdiff(names(df), boundary)]
+      columns <- setdiff(columns, boundary)
       original <- df[columns]
       for (column in columns) {
         if (is.numeric(df[[column]])) df[[column]][is.infinite(df[[column]])] <- NA
@@ -65,6 +71,7 @@ scales_3d <- function(parent, context) {
         result[[column]][invalid] <- NA_real_
         result[[column]][sentinel] <- value[sentinel]
       }
+      result[names(held)] <- held
       result
     }
   )
@@ -76,6 +83,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL
   check_position_kind_3d(layer$position, entry)
   parent <- layer
   fixed <- layer$aes_params[intersect(names(layer$aes_params), c("x", "xmin", "xmax", "xend", "y", "ymin", "ymax", "yend", z_aesthetics))]
+  hook_params <- c(layer$aes_params, layer$geom_params, layer$stat_params)
   base_stat <- entry$stat_adapter %or3d% layer$stat
   # The row index is internal; a stat that aggregates rows drops it silently.
   stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, c(".source", frame$parts)))
@@ -93,12 +101,14 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL
     aes_params = layer$aes_params[setdiff(names(layer$aes_params), names(fixed))],
     layer_data = function(self, plot_data) {
       data <- ggplot2::ggproto_parent(parent, self)$layer_data(plot_data)
+      if (!is.null(entry$prepare_data)) data <- entry$prepare_data(data)
       if (any(c(".source", ".layer") %in% names(data))) stop("Input uses reserved .source or .layer columns.", call. = FALSE)
       data$.source <- seq_len(nrow(data))
       data
     },
     compute_aesthetics = function(self, data, plot) {
       out <- ggplot2::ggproto_parent(parent, self)$compute_aesthetics(data, plot)
+      if (!is.null(entry$prepare_aesthetics)) out <- entry$prepare_aesthetics(out, data, plot, hook_params)
       for (name in names(fixed)) out[[name]] <- rep_len(fixed[[name]], nrow(out))
       out <- frame$setup_aesthetics(out)
       if (!"z" %in% names(out) && !"z" %in% names(self$computed_mapping) &&

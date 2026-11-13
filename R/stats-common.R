@@ -186,21 +186,25 @@ stats_default_mapping_3d <- function(mapping, extra, default) {
   mapping
 }
 
-surface_normals_3d <- function(data) {
-  axes <- lapply(data[c("x", "y")], function(x) sort(unique(x)))
-  if (any(lengths(axes) < 2L)) return(data)
-  key <- cbind(match(data$x, axes$x), match(data$y, axes$y))
-  z <- matrix(NA_real_, length(axes$x), length(axes$y))
-  z[key] <- data$z
-  derivative <- function(values, axis) {
-    lo <- pmax(1L, seq_along(axis) - 1L)
-    hi <- pmin(length(axis), seq_along(axis) + 1L)
-    sweep(values[hi, , drop = FALSE] - values[lo, , drop = FALSE],
-      1L, axis[hi] - axis[lo], "/")
+surface_normals_3d <- function(data, lattice = surface_lattice_3d(data)) {
+  if (max(0L, lattice$i) < 2L || max(0L, lattice$j) < 2L) return(data)
+  key <- cbind(lattice$i, lattice$j)
+  tangent <- function(axis) {
+    size <- max(key[, axis])
+    lo <- pmax(1L, key[, axis] - 1L); hi <- pmin(size, key[, axis] + 1L)
+    lo_key <- hi_key <- key
+    lo_key[, axis] <- lo; hi_key[, axis] <- hi
+    vapply(c("x", "y", "z"), function(v) {
+      values <- matrix(NA_real_, max(key[, 1L]), max(key[, 2L]))
+      values[key] <- data[[v]]
+      values[hi_key] - values[lo_key]
+    }, numeric(nrow(key)))
   }
-  normal <- cbind(-derivative(z, axes$x)[key],
-    -t(derivative(t(z), axes$y))[key], 1)
-  normal <- normal / sqrt(rowSums(normal^2))
+  u <- matrix(tangent(1L), ncol = 3L); v <- matrix(tangent(2L), ncol = 3L)
+  normal <- cbind(u[, 2L] * v[, 3L] - u[, 3L] * v[, 2L],
+                  u[, 3L] * v[, 1L] - u[, 1L] * v[, 3L],
+                  u[, 1L] * v[, 2L] - u[, 2L] * v[, 1L])
+  normal <- normal * ifelse(normal[, 3L] < 0, -1, 1) / sqrt(rowSums(normal^2))
   data[c("nx", "ny", "nz")] <- as.data.frame(normal)
   data
 }

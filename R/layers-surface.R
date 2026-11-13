@@ -37,26 +37,30 @@ stat_surface_3d <- function(mapping = NULL, data = NULL, geom = GeomSurface3D,
     c(list(method = method, max_edge = max_edge, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
-surface_triangles_3d <- function(data, method, max_edge) {
-  x_id <- match(data$x, unique(data$x)); y_id <- match(data$y, unique(data$y))
-  index <- order(x_id, y_id, method = "radix")
+surface_lattice_3d <- function(data) {
+  list(i = match(data$x, sort(unique(data$x))), j = match(data$y, sort(unique(data$y))))
+}
+
+lattice_triangles_3d <- function(lattice, z) {
+  grid <- matrix(NA_integer_, max(0L, lattice$i), max(0L, lattice$j))
+  grid[cbind(lattice$i, lattice$j)] <- seq_along(lattice$i)
+  if (nrow(grid) < 2L || ncol(grid) < 2L) return(matrix(integer(), ncol = 3L))
+  i <- rep(seq_len(nrow(grid) - 1L), each = ncol(grid) - 1L)
+  j <- rep.int(seq_len(ncol(grid) - 1L), nrow(grid) - 1L)
+  cells <- cbind(grid[cbind(i, j)], grid[cbind(i + 1L, j)],
+                 grid[cbind(i + 1L, j + 1L)], grid[cbind(i, j + 1L)])
+  good <- rowSums(matrix(is.finite(z[cells]), ncol = 4L)) == 4L
+  cells <- cells[good, , drop = FALSE]
+  matrix(as.integer(t(cbind(cells[, c(1L, 2L, 3L), drop = FALSE],
+                            cells[, c(1L, 3L, 4L), drop = FALSE]))), ncol = 3L, byrow = TRUE)
+}
+
+surface_triangles_3d <- function(data, method, max_edge, lattice = surface_lattice_3d(data)) {
+  index <- order(lattice$i, lattice$j, method = "radix")
   a <- head(index, -1L); b <- tail(index, -1L)
-  if (any(x_id[a] == x_id[b] & y_id[a] == y_id[b])) stop("Surface x/y coordinates must be unique within each group.", call. = FALSE)
+  if (any(lattice$i[a] == lattice$i[b] & lattice$j[a] == lattice$j[b])) stop("Surface x/y coordinates must be unique within each group.", call. = FALSE)
   if (method == "grid") {
-    xs <- sort(unique(data$x)); ys <- sort(unique(data$y))
-    grid <- matrix(NA_integer_, length(xs), length(ys))
-    grid[cbind(match(data$x, xs), match(data$y, ys))] <- seq_len(nrow(data))
-    triangles <- matrix(integer(), ncol = 3L)
-    if (length(xs) >= 2L && length(ys) >= 2L) {
-      i <- rep(seq_len(length(xs) - 1L), each = length(ys) - 1L)
-      j <- rep.int(seq_len(length(ys) - 1L), length(xs) - 1L)
-      cells <- cbind(grid[cbind(i, j)], grid[cbind(i + 1L, j)],
-                     grid[cbind(i + 1L, j + 1L)], grid[cbind(i, j + 1L)])
-      good <- rowSums(matrix(is.finite(data$z[cells]), ncol = 4L)) == 4L
-      cells <- cells[good, , drop = FALSE]
-      triangles <- matrix(as.integer(t(cbind(cells[, c(1L, 2L, 3L), drop = FALSE],
-                                             cells[, c(1L, 3L, 4L), drop = FALSE]))), ncol = 3L, byrow = TRUE)
-    }
+    triangles <- lattice_triangles_3d(lattice, data$z)
   } else {
     good <- which(is.finite(data$z))
     triangles <- matrix(good[delaunay_triangles_3d(as.matrix(data[good, c("x", "y")]))], ncol = 3L)

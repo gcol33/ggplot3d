@@ -100,7 +100,10 @@ extent_3d <- function(lower = NA_character_, upper, centre = NA_character_) {
 #'   Stacking and dodging read and rewrite these columns. An axis not listed
 #'   takes its own coordinate as both the interval end and the anchor.
 #' @param replace Whether to replace an existing registration.
-#' @param prepare_data,prepare_aesthetics Optional input and aesthetic preparation functions.
+#' @param prepare_data,prepare_aesthetics Optional preparation functions applied
+#'   to every layer drawing the geom inside [coord_3d()]: `prepare_data(data)`
+#'   receives the layer data, `prepare_aesthetics(out, data, plot, params)` the
+#'   evaluated aesthetics with the layer data, plot and layer parameters.
 #' @param parameters Named list of further drawing parameters the geom accepts,
 #'   with their defaults. They reach the emitter in `params`.
 #' @param default_z Height of a layer without a z mapping. The default 0

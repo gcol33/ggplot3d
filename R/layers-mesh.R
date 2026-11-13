@@ -1,5 +1,5 @@
 require_geometry_package_3d <- function(package) {
-  if (!requireNamespace(package, quietly = TRUE)) stop("Install the '", package, "' package for this geometry input.", call. = FALSE)
+  rlang::check_installed(package, reason = "for this geometry input.")
 }
 
 #' Fortify an indexed three-dimensional mesh
@@ -101,62 +101,34 @@ spatial_corners_3d <- function(data, extrusion = FALSE) {
   require_geometry_package_3d("sf")
   if (inherits(data, "sfc")) data <- sf::st_sf(geometry = data)
   geometry <- sf::st_geometry(data)
+  allowed <- if (extrusion) c("POLYGON", "MULTIPOLYGON") else c("POLYGON", "MULTIPOLYGON", "TRIANGLE", "TIN", "POLYHEDRALSURFACE")
+  types <- vapply(geometry, function(g) if (length(g)) class(g)[2L] else NA_character_, character(1))
+  unsupported <- setdiff(types[!is.na(types)], allowed)
+  if (length(unsupported)) stop("Unsupported spatial geometry: ", unsupported[1L], ".", call. = FALSE)
   validity_geometry <- lapply(geometry, function(g) {
     if (class(g)[2L] %in% c("TIN", "POLYHEDRALSURFACE")) sf::st_geometrycollection(lapply(g, sf::st_polygon)) else g
   })
   valid <- sf::st_is_valid(sf::st_sfc(validity_geometry, crs = sf::st_crs(data)))
   if (anyNA(valid) || any(!valid)) stop("Spatial geometry contains invalid features.", call. = FALSE)
-  attrs <- sf::st_drop_geometry(data)
-  chunks <- list(); face <- 0L; vertex <- 0L
-  for (feature in seq_along(geometry)) {
-    g <- geometry[[feature]]
-    if (length(g) == 0L) next
-    type <- class(g)[2L]
-    allowed <- if (extrusion) c("POLYGON", "MULTIPOLYGON") else c("POLYGON", "MULTIPOLYGON", "TRIANGLE", "TIN", "POLYHEDRALSURFACE")
-    if (!type %in% allowed) stop("Unsupported spatial geometry: ", type, ".", call. = FALSE)
-    parts <- if (type %in% c("POLYGON", "TRIANGLE")) list(g) else g
-    for (part in seq_along(parts)) {
-      face <- face + 1L
-      corner <- 0L
-      for (ring in seq_along(parts[[part]])) {
-        xyz <- parts[[part]][[ring]]
-        if (nrow(xyz) > 1L && all(xyz[1L, ] == xyz[nrow(xyz), ])) xyz <- xyz[-nrow(xyz), , drop = FALSE]
-        if (!extrusion && ncol(xyz) < 3L) stop("Spatial meshes require POLYGON Z or TIN Z coordinates.", call. = FALSE)
-        n <- nrow(xyz)
-        chunk <- attrs[rep(feature, n), , drop = FALSE]
-        chunk$.x3d <- xyz[, 1L]; chunk$.y3d <- xyz[, 2L]
-        chunk$.z3d <- if (extrusion) 0 else xyz[, 3L]
-        chunk$.feature <- feature; chunk$.part <- part; chunk$.ring <- ring
-        chunk$.mesh <- feature; chunk$.face <- face
-        chunk$.vertex <- seq_len(n) + vertex; chunk$.corner <- seq_len(n) + corner
-        vertex <- vertex + n
-        corner <- corner + n
-        chunks[[length(chunks) + 1L]] <- chunk
-      }
-    }
-  }
-  if (!length(chunks)) stop("Spatial geometry has no polygon vertices.", call. = FALSE)
-  result <- do.call(rbind, chunks)
-  attr(result, "geometry_crs_3d") <- sf::st_crs(data)
-  attr(result, "geometry_geographic_3d") <- isTRUE(sf::st_is_longlat(data))
+  result <- spatial_rows_3d(data)
+  if (!nrow(result)) stop("Spatial geometry has no polygon vertices.", call. = FALSE)
+  if (!extrusion && anyNA(result$.z3d)) stop("Spatial meshes require POLYGON Z or TIN Z coordinates.", call. = FALSE)
+  if (extrusion) result$.z3d <- 0
+  face <- match(paste(result$.feature, result$.part), unique(paste(result$.feature, result$.part)))
+  result$.kind <- NULL
+  result$.mesh <- result$.feature
+  result$.face <- face
+  result$.vertex <- seq_len(nrow(result))
+  result$.corner <- stats::ave(result$.vertex, face, FUN = seq_along)
   attr(result, "geometry_extrusion_3d") <- extrusion
   result
 }
 
-prepare_spatial_aesthetics_3d <- function(out, data, plot, params) {
+prepare_spatial_aesthetics_3d <- function(out, data, plot, params, z = !isTRUE(attr(data, "geometry_extrusion_3d"))) {
   if (".x3d" %in% names(data)) {
-    target <- plot@coordinates$config$crs
-    source <- attr(data, "geometry_crs_3d")
-    xy <- data[c(".x3d", ".y3d")]
-    if (!is.null(target)) {
-      require_geometry_package_3d("sf")
-      if (is.null(source) || is.na(source)) stop("A target CRS requires a declared source CRS.", call. = FALSE)
-      projected <- sf::st_transform(sf::st_as_sf(xy, coords = names(xy), crs = source), target)
-      if (isTRUE(sf::st_is_longlat(projected))) stop("Planar geometry requires a projected target CRS.", call. = FALSE)
-      xy[] <- as.data.frame(sf::st_coordinates(projected))
-    } else if (isTRUE(attr(data, "geometry_geographic_3d"))) stop("Geographic geometry requires coord_3d(crs = <projected CRS>).", call. = FALSE)
+    xy <- spatial_xy_3d(data[c(".x3d", ".y3d")], data, plot)
     out$x <- xy[[1L]]; out$y <- xy[[2L]]
-    if (!isTRUE(attr(data, "geometry_extrusion_3d"))) out$z <- data$.z3d
+    if (z) out$z <- data$.z3d
     out$subgroup <- data$.ring
   }
   for (key in intersect(c(".mesh", ".face", ".vertex", ".corner", ".feature", ".part"), names(data))) out[[key]] <- data[[key]]

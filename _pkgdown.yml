@@ -150,6 +150,12 @@ reference:
   - get_edges_3d
   - stat_layers_3d
   - stat_dendrogram_3d
+- title: Spatial data
+  contents:
+  - geom_spatraster_3d
+  - geom_sf_3d
+  - stat_profile_3d
+  - geom_arc_3d
 - title: Statistical layers
   contents:
   - geom_function_3d
@@ -253,6 +259,7 @@ articles:
   - backends
   - motion
   - combining-2d-3d
+  - spatial
 - title: Examples
   navbar: Examples
   contents:

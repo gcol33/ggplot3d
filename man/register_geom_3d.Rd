@@ -36,7 +36,10 @@ the position and the panel's scales that signals an error.}
 
 \item{replace}{Whether to replace an existing registration.}
 
-\item{prepare_data, prepare_aesthetics}{Optional input and aesthetic preparation functions.}
+\item{prepare_data, prepare_aesthetics}{Optional preparation functions applied
+to every layer drawing the geom inside \code{\link[=coord_3d]{coord_3d()}}: \code{prepare_data(data)}
+receives the layer data, \code{prepare_aesthetics(out, data, plot, params)} the
+evaluated aesthetics with the layer data, plot and layer parameters.}
 
 \item{parameters}{Named list of further drawing parameters the geom accepts,
 with their defaults. They reach the emitter in \code{params}.}
