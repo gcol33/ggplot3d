@@ -307,6 +307,56 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// raymarch_ops_cpp
+Rcpp::CharacterVector raymarch_ops_cpp();
+RcppExport SEXP _ggplot3d_raymarch_ops_cpp() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    rcpp_result_gen = Rcpp::wrap(raymarch_ops_cpp());
+    return rcpp_result_gen;
+END_RCPP
+}
+// raymarch_eval_cpp
+Rcpp::NumericMatrix raymarch_eval_cpp(Rcpp::List input, Rcpp::NumericMatrix points);
+RcppExport SEXP _ggplot3d_raymarch_eval_cpp(SEXP inputSEXP, SEXP pointsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type input(inputSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type points(pointsSEXP);
+    rcpp_result_gen = Rcpp::wrap(raymarch_eval_cpp(input, points));
+    return rcpp_result_gen;
+END_RCPP
+}
+// raymarch_trace_cpp
+Rcpp::List raymarch_trace_cpp(Rcpp::List input, Rcpp::NumericMatrix origins, Rcpp::NumericMatrix directions, Rcpp::NumericVector bounds, double tolerance, int max_steps, int threads);
+RcppExport SEXP _ggplot3d_raymarch_trace_cpp(SEXP inputSEXP, SEXP originsSEXP, SEXP directionsSEXP, SEXP boundsSEXP, SEXP toleranceSEXP, SEXP max_stepsSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type input(inputSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type origins(originsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type directions(directionsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type bounds(boundsSEXP);
+    Rcpp::traits::input_parameter< double >::type tolerance(toleranceSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(raymarch_trace_cpp(input, origins, directions, bounds, tolerance, max_steps, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// raymarch_rays_cpp
+Rcpp::List raymarch_rays_cpp(Rcpp::List camera, Rcpp::List viewport, int width, int height, Rcpp::NumericVector extent);
+RcppExport SEXP _ggplot3d_raymarch_rays_cpp(SEXP cameraSEXP, SEXP viewportSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP extentSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type camera(cameraSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type viewport(viewportSEXP);
+    Rcpp::traits::input_parameter< int >::type width(widthSEXP);
+    Rcpp::traits::input_parameter< int >::type height(heightSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type extent(extentSEXP);
+    rcpp_result_gen = Rcpp::wrap(raymarch_rays_cpp(camera, viewport, width, height, extent));
+    return rcpp_result_gen;
+END_RCPP
+}
 // geometry_delaunay_cpp
 Rcpp::IntegerMatrix geometry_delaunay_cpp(Rcpp::NumericMatrix xy);
 RcppExport SEXP _ggplot3d_geometry_delaunay_cpp(SEXP xySEXP) {
@@ -422,6 +472,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 10},
     {"_ggplot3d_raster_occlusion_cpp", (DL_FUNC) &_ggplot3d_raster_occlusion_cpp, 8},
+    {"_ggplot3d_raymarch_ops_cpp", (DL_FUNC) &_ggplot3d_raymarch_ops_cpp, 0},
+    {"_ggplot3d_raymarch_eval_cpp", (DL_FUNC) &_ggplot3d_raymarch_eval_cpp, 2},
+    {"_ggplot3d_raymarch_trace_cpp", (DL_FUNC) &_ggplot3d_raymarch_trace_cpp, 7},
+    {"_ggplot3d_raymarch_rays_cpp", (DL_FUNC) &_ggplot3d_raymarch_rays_cpp, 5},
     {"_ggplot3d_geometry_delaunay_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay_cpp, 1},
     {"_ggplot3d_geometry_delaunay3_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay3_cpp, 1},
     {"_ggplot3d_geometry_alpha_shape_cpp", (DL_FUNC) &_ggplot3d_geometry_alpha_shape_cpp, 2},

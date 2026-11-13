@@ -220,6 +220,11 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #'   into 2^d intervals.
 #' @param tol Geometric tolerance of the octree, relative to the diagonal of
 #'   the scale box.
+#' @param render `"mesh"` extracts triangles. `"trace"` sphere-traces an SDF
+#'   directly in the raster backend, with an opaque fill and opaque geometry.
+#'   Tracing uses transformed scale coordinates inside the panel box.
+#' @param trace_tolerance Surface tolerance in transformed scale units.
+#' @param trace_steps Maximum sphere-tracing steps per ray.
 #' @references Dowell and Jarratt (1971). A modified regula falsi method for
 #'   computing the root of an equation. BIT 11, 168-174. \doi{10.1007/BF01934364}
 #'
@@ -245,7 +250,15 @@ stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSur
                                  position = "identity", ..., fun, n = 24L, args = list(),
                                  levels = NULL, caps = FALSE, method = NULL, refine = 2L,
                                  adaptive = FALSE, depth = c(4L, 8L), tol = 0.002, simplify = NULL, clip = NULL,
-                                 na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                                 na.rm = FALSE, show.legend = NA, inherit.aes = TRUE,
+                                 render = c("mesh", "trace"), trace_tolerance = 1e-5, trace_steps = 512L) {
+  render <- match.arg(render)
+  if (render == "trace") {
+    if (!is.null(levels) && !identical(as.double(levels), 0)) stop("SDF tracing requires levels = 0.", call. = FALSE)
+    if (!is.null(clip) || caps || adaptive || !is.null(simplify) || length(args) || position != "identity")
+      stop("SDF tracing uses its expression tree and the panel clipping box.", call. = FALSE)
+    return(raymarch_sdf_layer_3d(mapping, data, fun, trace_tolerance, trace_steps, list(...), show.legend, inherit.aes))
+  }
   if (!is.null(clip)) plane_coefficients_3d(clip, "clip")
   if (!is.logical(adaptive) || length(adaptive) != 1L || is.na(adaptive)) stop("adaptive must be TRUE or FALSE.", call. = FALSE)
   method <- isosurface_method_3d(method %or3d% if (adaptive) "dual" else "cubes")

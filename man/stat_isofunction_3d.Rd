@@ -25,7 +25,10 @@ stat_isofunction_3d(
   clip = NULL,
   na.rm = FALSE,
   show.legend = NA,
-  inherit.aes = TRUE
+  inherit.aes = TRUE,
+  render = c("mesh", "trace"),
+  trace_tolerance = 1e-05,
+  trace_steps = 512L
 )
 
 geom_isofunction_3d(...)
@@ -74,6 +77,14 @@ sublevel region is also closed on the plane, as with MATLAB's
 interpolant of the field is linear, and the part of that polygon below
 the level is filled, as on the box faces. Plane caps point along the
 plane normal. The plane is in transformed position coordinates.}
+
+\item{render}{\code{"mesh"} extracts triangles. \code{"trace"} sphere-traces an SDF
+directly in the raster backend, with an opaque fill and opaque geometry.
+Tracing uses transformed scale coordinates inside the panel box.}
+
+\item{trace_tolerance}{Surface tolerance in transformed scale units.}
+
+\item{trace_steps}{Maximum sphere-tracing steps per ray.}
 }
 \description{
 Evaluates fun on transformed x/y/z scale ranges and passes the scalar field

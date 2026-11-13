@@ -85,6 +85,22 @@ raster_occlusion_cpp <- function(scene, colours, dashes, extent, width, height, 
     .Call(`_ggplot3d_raster_occlusion_cpp`, scene, colours, dashes, extent, width, height, antialias, depth)
 }
 
+raymarch_ops_cpp <- function() {
+    .Call(`_ggplot3d_raymarch_ops_cpp`)
+}
+
+raymarch_eval_cpp <- function(input, points) {
+    .Call(`_ggplot3d_raymarch_eval_cpp`, input, points)
+}
+
+raymarch_trace_cpp <- function(input, origins, directions, bounds, tolerance, max_steps, threads) {
+    .Call(`_ggplot3d_raymarch_trace_cpp`, input, origins, directions, bounds, tolerance, max_steps, threads)
+}
+
+raymarch_rays_cpp <- function(camera, viewport, width, height, extent) {
+    .Call(`_ggplot3d_raymarch_rays_cpp`, camera, viewport, width, height, extent)
+}
+
 geometry_delaunay_cpp <- function(xy) {
     .Call(`_ggplot3d_geometry_delaunay_cpp`, xy)
 }
