@@ -42,9 +42,11 @@ StatDensity3D <- ggplot2::ggproto("StatDensity3D", StatGeometry3D,
 StatIsofunction3D <- ggplot2::ggproto("StatIsofunction3D", StatGeometry3D,
   required_aes = character(),
   optional_aes = c("x", "y", "z"),
-  compute_group = function(data, scales, fun, n = 24L, args = list(), levels = NULL, caps = FALSE, method = "cubes", refine = 2L) {
+  compute_group = function(data, scales, fun, n = 24L, args = list(), levels = NULL, caps = FALSE, method = "cubes", refine = 2L,
+                           adaptive = FALSE, depth = c(4L, 8L), tol = 0.002) {
     if (!is.numeric(refine) || length(refine) != 1L || !is.finite(refine) || refine < 0 || refine != trunc(refine))
       stop("refine must be a non-negative integer.", call. = FALSE)
+    if (isTRUE(adaptive)) return(stats_adaptive_field_3d(fun, args, scales, levels, caps, method, depth, tol, as.integer(refine)))
     grid <- expand.grid(stats_grid_3d(scales, n, c("x", "y", "z")))
     value <- do.call(fun, c(grid, args))
     if (!is.numeric(value) || !(length(value) %in% c(1L, nrow(grid)))) stop("fun must return one numeric value per grid point.", call. = FALSE)

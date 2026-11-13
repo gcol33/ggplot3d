@@ -39,6 +39,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_octree_isosurface_cpp
+Rcpp::DataFrame geometry_octree_isosurface_cpp(Rcpp::NumericVector lo, Rcpp::NumericVector hi, int depth, Rcpp::IntegerMatrix boxes, Rcpp::LogicalVector empty, Rcpp::NumericVector levels, bool caps, std::string method, Rcpp::Function value, Rcpp::Nullable<Rcpp::Function> crossing, Rcpp::Nullable<Rcpp::Function> gradient);
+RcppExport SEXP _ggplot3d_geometry_octree_isosurface_cpp(SEXP loSEXP, SEXP hiSEXP, SEXP depthSEXP, SEXP boxesSEXP, SEXP emptySEXP, SEXP levelsSEXP, SEXP capsSEXP, SEXP methodSEXP, SEXP valueSEXP, SEXP crossingSEXP, SEXP gradientSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lo(loSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type hi(hiSEXP);
+    Rcpp::traits::input_parameter< int >::type depth(depthSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type boxes(boxesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type empty(emptySEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< bool >::type caps(capsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::Function> >::type crossing(crossingSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::Function> >::type gradient(gradientSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_octree_isosurface_cpp(lo, hi, depth, boxes, empty, levels, caps, method, value, crossing, gradient));
+    return rcpp_result_gen;
+END_RCPP
+}
 // geometry_isosurface_methods_cpp
 Rcpp::CharacterVector geometry_isosurface_methods_cpp();
 RcppExport SEXP _ggplot3d_geometry_isosurface_methods_cpp() {
@@ -189,6 +209,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_scene_compile_cpp", (DL_FUNC) &_ggplot3d_scene_compile_cpp, 3},
     {"_ggplot3d_geometry_isosurface_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_cpp, 8},
+    {"_ggplot3d_geometry_octree_isosurface_cpp", (DL_FUNC) &_ggplot3d_geometry_octree_isosurface_cpp, 11},
     {"_ggplot3d_geometry_isosurface_methods_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_methods_cpp, 0},
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},

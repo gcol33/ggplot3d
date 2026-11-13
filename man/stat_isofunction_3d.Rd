@@ -16,8 +16,11 @@ stat_isofunction_3d(
   args = list(),
   levels = NULL,
   caps = FALSE,
-  method = "cubes",
+  method = NULL,
   refine = 2L,
+  adaptive = FALSE,
+  depth = c(4L, 8L),
+  tol = 0.002,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -40,10 +43,20 @@ geom_isofunction_3d(...)
 
 \item{caps}{Whether to cap the sublevel region on the box faces.}
 
-\item{method}{Extraction method: \code{"cubes"}, \code{"tetra"}, \code{"dual"} or \code{"nets"}.}
+\item{method}{Extraction method: \code{"cubes"} (the default on a grid),
+\code{"tetra"}, \code{"dual"} (the default with \code{adaptive = TRUE}) or \code{"nets"}.}
 
 \item{refine}{Number of regula falsi steps per edge vertex; 0 keeps the
 linear interpolation of the gridded values.}
+
+\item{adaptive}{Whether to extract on an octree refined by interval
+arithmetic instead of a grid.}
+
+\item{depth}{Minimum and maximum octree depth; depth d splits each axis
+into 2^d intervals.}
+
+\item{tol}{Geometric tolerance of the octree, relative to the diagonal of
+the scale box.}
 }
 \description{
 Evaluates fun on transformed x/y/z scale ranges and passes the scalar field
@@ -55,6 +68,34 @@ the final vertices, with steps of 1e-5 times each axis range. Vertices that
 lie on no grid edge (merged \code{"tetra"} clusters, centre vertices of
 \code{"cubes"}) keep their position and take the normal from fun.
 }
+\details{
+\code{adaptive = TRUE} replaces the grid by an octree over the scale box
+(Plantinga and Vegter 2004). fun is evaluated on whole boxes in interval
+arithmetic, which encloses its range and gradient over each box. A box
+whose range contains no level is dropped. Every other box is split down to
+\code{depth[1]}, and further, up to \code{depth[2]}, while the inner product of its
+gradient enclosure with itself may reach zero (the small normal variation
+test: without it the level set inside the box can fold) or while the box
+diagonal times r / |c| exceeds \code{tol} times the diagonal of the scale box,
+where c and r are the centre and half diagonal of the gradient enclosure.
+Every gradient in the box then lies within asin(r / |c|) of c, so \code{tol}
+bounds how far the level set bends away from a plane inside a box.
+Gradients are measured with each axis scaled to the unit interval. The
+surface is then extracted by dual contouring on the octree (Ju et al.
+2002): each sign change on a minimal edge, an edge no smaller box
+subdivides, gives one polygon through the vertices of the three or four
+boxes around it, so boxes of different sizes join without cracks. Each box
+carries one vertex per level-curve loop on its faces, as with \code{method = "dual"} on a grid. Edge crossings are placed by \code{refine} regula falsi steps
+and their normals come from fun. Only \code{method = "dual"} (the default with
+\code{adaptive = TRUE}) and \code{"nets"} apply; \code{n} is not used.
+
+fun is evaluated on interval objects, so it may use \code{+}, \code{-}, \code{*}, \code{/},
+\code{^}, \code{abs()}, \code{sqrt()}, \code{exp()}, \code{expm1()}, \code{log()}, \code{log1p()},
+\code{log2()}, \code{log10()}, \code{sin()}, \code{cos()}, \code{sinh()}, \code{cosh()}, \code{tanh()},
+\code{atan()}, \code{min()}, \code{max()}, and \code{pmin()} and \code{pmax()} called in its own
+body. Any other operation, including comparisons and \code{ifelse()}, stops
+with an error that names the call.
+}
 \examples{
 ggplot2::ggplot() +
   geom_isofunction_3d(fun = function(x, y, z) x^2 + y^2 + z^2,
@@ -62,8 +103,19 @@ ggplot2::ggplot() +
 ggplot2::ggplot() +
   stat_isofunction_3d(fun = function(x, y, z) x^2 + y^2 + z^2,
                      n = 8, levels = 0.5) + coord_3d()
+ggplot2::ggplot() +
+  geom_isofunction_3d(fun = function(x, y, z) x^2 + y^2 + z^2,
+                     levels = 0.5, adaptive = TRUE, depth = c(2, 4)) +
+  coord_3d()
 }
 \references{
 Dowell and Jarratt (1971). A modified regula falsi method for
 computing the root of an equation. BIT 11, 168-174. \doi{10.1007/BF01934364}
+
+Plantinga and Vegter (2004). Isotopic approximation of implicit curves
+and surfaces. Symposium on Geometry Processing, 251-260.
+\url{https://diglib.eg.org/handle/10.2312/SGP.SGP04.251-260}
+
+Ju, Losasso, Schaefer and Warren (2002). Dual contouring of Hermite data.
+ACM Transactions on Graphics 21, 339-346. \doi{10.1145/566654.566586}
 }

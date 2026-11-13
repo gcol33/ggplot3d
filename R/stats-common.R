@@ -104,16 +104,50 @@ stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, arg
   key <- match(data$x, axes$x) + dims[1L] * (match(data$y, axes$y) - 1L + dims[2L] * (match(data$z, axes$z) - 1L))
   if (anyDuplicated(key)) stop("Scalar grid coordinates must be unique.", call. = FALSE)
   value <- data$value[order(key)]
-  f <- if (!is.null(fun)) function(p) {
+  f <- if (!is.null(fun)) function_evaluator_3d(fun, args)
+  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps, method,
+    if (!is.null(f)) function_gradient_3d(f, axes))
+  isosurface_finish_3d(out, axes, value, f, refine)
+}
+
+# fun as a function of an n x 3 matrix of positions, one value per row.
+function_evaluator_3d <- function(fun, args) {
+  function(p) {
     v <- do.call(fun, c(list(x = p[, 1L], y = p[, 2L], z = p[, 3L]), args))
     rep_len(as.double(v), nrow(p))
   }
-  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps, method,
-    if (!is.null(f)) function_gradient_3d(f, axes))
+}
+
+# Polishes vertices against fun when it is known and adds the face depth key.
+isosurface_finish_3d <- function(out, axes, value, f, refine) {
   if (!is.null(f)) out <- isosurface_polish_3d(out, axes, value, f, refine)
   out$.edge_a <- out$.edge_b <- NULL
   out$z_mean <- rep(colMeans(matrix(out$z, nrow = 3L)), each = 3L)
   out
+}
+
+# Parameters t in [0, 1] of the level on segments a + t (b - a) whose
+# endpoint values fa, fb (relative to the level) bracket it, after `steps`
+# Illinois regula falsi steps (each step evaluates f, relative to the level,
+# at the current iterate and moves to the next one).
+regula_falsi_3d <- function(a, b, fa, fb, f, steps) {
+  ta <- numeric(length(fa)); tb <- rep(1, length(fa)); last <- integer(length(fa))
+  secant <- function() ifelse(fb != fa, (ta * fb - tb * fa) / (fb - fa), (ta + tb) / 2)
+  t <- secant()
+  for (step in seq_len(steps)) {
+    ft <- f(a + (b - a) * t)
+    ok <- is.finite(ft)
+    low <- ok & sign(ft) == sign(fa)
+    high <- ok & !low
+    # Illinois: halve the value at an endpoint kept for a second step.
+    fb[low & last == 1L] <- fb[low & last == 1L] / 2
+    fa[high & last == -1L] <- fa[high & last == -1L] / 2
+    ta[low] <- t[low]; fa[low] <- ft[low]
+    tb[high] <- t[high]; fb[high] <- ft[high]
+    last[low] <- 1L; last[high] <- -1L
+    t <- secant()
+  }
+  pmin(pmax(t, 0), 1)
 }
 
 # Central-difference gradient of a vectorised function of an n x 3 matrix,
@@ -144,24 +178,8 @@ isosurface_polish_3d <- function(out, axes, value, f, refine) {
     grid_point <- function(id) cbind(axes$x[(id - 1L) %% n[1L] + 1L],
       axes$y[((id - 1L) %/% n[1L]) %% n[2L] + 1L], axes$z[(id - 1L) %/% (n[1L] * n[2L]) + 1L])
     a <- grid_point(ea[edge]); b <- grid_point(eb[edge]); target <- level[edge]
-    fa <- value[ea[edge]] - target; fb <- value[eb[edge]] - target
-    ta <- numeric(length(fa)); tb <- rep(1, length(fa)); last <- integer(length(fa))
-    secant <- function() ifelse(fb != fa, (ta * fb - tb * fa) / (fb - fa), (ta + tb) / 2)
-    t <- secant()
-    for (step in seq_len(refine)) {
-      ft <- f(a + (b - a) * t) - target
-      ok <- is.finite(ft)
-      low <- ok & sign(ft) == sign(fa)
-      high <- ok & !low
-      # Illinois: halve the value at an endpoint kept for a second step.
-      fb[low & last == 1L] <- fb[low & last == 1L] / 2
-      fa[high & last == -1L] <- fa[high & last == -1L] / 2
-      ta[low] <- t[low]; fa[low] <- ft[low]
-      tb[high] <- t[high]; fb[high] <- ft[high]
-      last[low] <- 1L; last[high] <- -1L
-      t <- secant()
-    }
-    p[edge, ] <- a + (b - a) * pmin(pmax(t, 0), 1)
+    t <- regula_falsi_3d(a, b, value[ea[edge]] - target, value[eb[edge]] - target, function(q) f(q) - target, refine)
+    p[edge, ] <- a + (b - a) * t
   }
   gradient <- function_gradient_3d(f, axes)(p)
   size <- sqrt(rowSums(gradient^2))

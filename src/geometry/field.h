@@ -3,6 +3,13 @@
 #include "mesh.h"
 namespace ggplot3d_geometry {
 
+// Field values within 64 machine epsilons of the level, relative to the field
+// magnitude, are snapped onto the level so coincident crossings share vertices.
+static inline double snap(double value,double level,double magnitude) {
+  double tolerance=64*std::numeric_limits<double>::epsilon()*std::max(magnitude,std::abs(level));
+  return std::abs(value-level)<=tolerance?level:value;
+}
+
 // Scalar field on a rectilinear grid, stored x fastest. Corner c of a cell
 // uses bit 0 for x, bit 1 for y and bit 2 for z.
 class ScalarGrid {
@@ -36,12 +43,7 @@ class ScalarGrid {
     }
     return g;
   }
-  // Field values within 64 machine epsilons of the level, relative to the field
-  // magnitude, are snapped onto the level so coincident crossings share grid vertices.
-  double sample(int id,double level) const {
-    double tolerance=64*std::numeric_limits<double>::epsilon()*std::max(magnitude,std::abs(level));
-    return std::abs(values[id]-level)<=tolerance?level:values[id];
-  }
+  double sample(int id,double level) const { return snap(values[id],level,magnitude); }
   bool high(int id,double level) const { return sample(id,level)>=level; }
   // Crossing parameter along the edge a -> b of a sign-changing pair.
   double crossing(int a,int b,double level) const {

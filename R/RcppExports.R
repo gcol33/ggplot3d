@@ -9,6 +9,10 @@ geometry_isosurface_cpp <- function(x, y, z, value, levels, caps, method, gradie
     .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps, method, gradient)
 }
 
+geometry_octree_isosurface_cpp <- function(lo, hi, depth, boxes, empty, levels, caps, method, value, crossing = NULL, gradient = NULL) {
+    .Call(`_ggplot3d_geometry_octree_isosurface_cpp`, lo, hi, depth, boxes, empty, levels, caps, method, value, crossing, gradient)
+}
+
 geometry_isosurface_methods_cpp <- function() {
     .Call(`_ggplot3d_geometry_isosurface_methods_cpp`)
 }
