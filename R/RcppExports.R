@@ -21,6 +21,22 @@ geometry_kde_cpp <- function(data, axes, bandwidth) {
     .Call(`_ggplot3d_geometry_kde_cpp`, data, axes, bandwidth)
 }
 
+parametric_grid_cpp <- function(n, closed, twist, xyz, u, v) {
+    .Call(`_ggplot3d_parametric_grid_cpp`, n, closed, twist, xyz, u, v)
+}
+
+parametric_edges_cpp <- function(tri, u, v, free) {
+    .Call(`_ggplot3d_parametric_edges_cpp`, tri, u, v, free)
+}
+
+parametric_bisect_cpp <- function(tri, u, v, free, xyz, marked) {
+    .Call(`_ggplot3d_parametric_bisect_cpp`, tri, u, v, free, xyz, marked)
+}
+
+parametric_face_normals_cpp <- function(tri, xyz) {
+    .Call(`_ggplot3d_parametric_face_normals_cpp`, tri, xyz)
+}
+
 raster_prepare_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_raster_prepare_cpp`, packet, camera, viewport)
 }

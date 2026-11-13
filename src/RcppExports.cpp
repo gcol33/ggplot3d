@@ -70,6 +70,60 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// parametric_grid_cpp
+Rcpp::List parametric_grid_cpp(Rcpp::IntegerVector n, Rcpp::LogicalVector closed, Rcpp::LogicalVector twist, Rcpp::NumericMatrix xyz, Rcpp::NumericVector u, Rcpp::NumericVector v);
+RcppExport SEXP _ggplot3d_parametric_grid_cpp(SEXP nSEXP, SEXP closedSEXP, SEXP twistSEXP, SEXP xyzSEXP, SEXP uSEXP, SEXP vSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type n(nSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type closed(closedSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type twist(twistSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type u(uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type v(vSEXP);
+    rcpp_result_gen = Rcpp::wrap(parametric_grid_cpp(n, closed, twist, xyz, u, v));
+    return rcpp_result_gen;
+END_RCPP
+}
+// parametric_edges_cpp
+Rcpp::List parametric_edges_cpp(Rcpp::IntegerMatrix tri, Rcpp::NumericMatrix u, Rcpp::NumericMatrix v, Rcpp::LogicalMatrix free);
+RcppExport SEXP _ggplot3d_parametric_edges_cpp(SEXP triSEXP, SEXP uSEXP, SEXP vSEXP, SEXP freeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type tri(triSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type u(uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type v(vSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalMatrix >::type free(freeSEXP);
+    rcpp_result_gen = Rcpp::wrap(parametric_edges_cpp(tri, u, v, free));
+    return rcpp_result_gen;
+END_RCPP
+}
+// parametric_bisect_cpp
+Rcpp::List parametric_bisect_cpp(Rcpp::IntegerMatrix tri, Rcpp::NumericMatrix u, Rcpp::NumericMatrix v, Rcpp::LogicalMatrix free, Rcpp::NumericMatrix xyz, Rcpp::LogicalVector marked);
+RcppExport SEXP _ggplot3d_parametric_bisect_cpp(SEXP triSEXP, SEXP uSEXP, SEXP vSEXP, SEXP freeSEXP, SEXP xyzSEXP, SEXP markedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type tri(triSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type u(uSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type v(vSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalMatrix >::type free(freeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type marked(markedSEXP);
+    rcpp_result_gen = Rcpp::wrap(parametric_bisect_cpp(tri, u, v, free, xyz, marked));
+    return rcpp_result_gen;
+END_RCPP
+}
+// parametric_face_normals_cpp
+Rcpp::NumericMatrix parametric_face_normals_cpp(Rcpp::IntegerMatrix tri, Rcpp::NumericMatrix xyz);
+RcppExport SEXP _ggplot3d_parametric_face_normals_cpp(SEXP triSEXP, SEXP xyzSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type tri(triSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    rcpp_result_gen = Rcpp::wrap(parametric_face_normals_cpp(tri, xyz));
+    return rcpp_result_gen;
+END_RCPP
+}
 // raster_prepare_cpp
 Rcpp::List raster_prepare_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport);
 RcppExport SEXP _ggplot3d_raster_prepare_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP) {
@@ -105,6 +159,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_isosurface_methods_cpp", (DL_FUNC) &_ggplot3d_geometry_isosurface_methods_cpp, 0},
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
+    {"_ggplot3d_parametric_grid_cpp", (DL_FUNC) &_ggplot3d_parametric_grid_cpp, 6},
+    {"_ggplot3d_parametric_edges_cpp", (DL_FUNC) &_ggplot3d_parametric_edges_cpp, 4},
+    {"_ggplot3d_parametric_bisect_cpp", (DL_FUNC) &_ggplot3d_parametric_bisect_cpp, 6},
+    {"_ggplot3d_parametric_face_normals_cpp", (DL_FUNC) &_ggplot3d_parametric_face_normals_cpp, 2},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 7},
     {NULL, NULL, 0}

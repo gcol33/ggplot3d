@@ -126,6 +126,7 @@ reference:
   - geom_isofunction_3d
   - geom_isodensity_3d
   - geom_hull_3d
+  - geom_parametric_3d
 - title: Statistical computations
   contents:
   - stat_surface_3d
@@ -138,6 +139,7 @@ reference:
   - stat_isofunction_3d
   - stat_density_3d
   - stat_hull_3d
+  - stat_parametric_3d
   - probs
 - title: Positions
   contents:
