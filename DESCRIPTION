@@ -13,6 +13,7 @@ License: MIT + file LICENSE
 URL: https://github.com/gcol33/ggplot3d
 BugReports: https://github.com/gcol33/ggplot3d/issues
 Encoding: UTF-8
+Depends: R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
 Imports:
@@ -26,7 +27,10 @@ Imports:
     utils
 LinkingTo: Rcpp
 Suggests:
+    av,
+    gifski,
     hms,
+    htmlwidgets,
     knitr,
     mgcv,
     ragg,

@@ -1,0 +1,9 @@
+.ggplot3d_view { position: relative; overflow: hidden; background: white; max-width: 100%; }
+.ggplot3d_view canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ggplot3d_view .gg3d-labels { pointer-events: none; }
+.ggplot3d_view .gg3d-controls { position: absolute; right: 8px; top: 8px; display: flex; gap: 4px; }
+.ggplot3d_view button { color: #222; background: #fff; border: 1px solid #777; border-radius: 3px; padding: 5px 8px; font: 12px sans-serif; cursor: pointer; }
+.ggplot3d_view .gg3d-code { position: absolute; left: 8px; bottom: 8px; width: calc(100% - 24px); color: #222; background: white; font: 12px monospace; }
+.ggplot3d_view .gg3d-surface { cursor: grab; touch-action: none; }
+.ggplot3d_view .gg3d-surface:active { cursor: grabbing; }
+.ggplot3d_view :focus-visible { outline: 2px solid #236b9b; outline-offset: 2px; }

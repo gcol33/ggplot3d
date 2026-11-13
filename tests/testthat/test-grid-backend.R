@@ -171,9 +171,9 @@ test_that("default pole furniture reaches the engine without camera perturbation
   })
 })
 
-test_that("clipped guide-query requirements are reported explicitly", {
+test_that("cropped cameras retain axis furniture", {
   grid_test_device({
-    expect_error(grid::grid.force(ggplot2::ggplotGrob(grid_test_plot(zoom = 2))), "requires unclipped cube projection queries")
+    expect_no_error(grid::grid.force(ggplot2::ggplotGrob(grid_test_plot(zoom = 2))))
     expect_no_error(grid::grid.force(ggplot2::ggplotGrob(grid_test_plot(zoom = 2, axes = character(), panes = character(), box = "none"))))
   })
 })

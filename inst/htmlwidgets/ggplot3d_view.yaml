@@ -1,0 +1,5 @@
+dependencies:
+  - name: ggplot3d-view
+    version: 1.0.0
+    src: htmlwidgets/lib/ggplot3d
+    stylesheet: viewer.css

@@ -419,13 +419,15 @@ thin_axis_labels_3d <- function(locations, size, tangent, rows, occupied, viewpo
 
 furniture_overlay_3d <- function(furniture, scene, theme) {
   meta <- furniture$overlay; fit <- meta$fit; params <- meta$params
-  # Furniture styles are unique query keys and occupy the first merged style range.
   query <- function(ids) {
-    f <- scene$fragments
-    rows <- match(ids, f$style_id)
-    v <- f$offset[rows]
-    cbind(scene$vertices$x_npc[v] * fit$viewport$width_mm + fit$origin[1L],
-          scene$vertices$y_npc[v] * fit$viewport$height_mm + fit$origin[2L], scene$vertices$depth[v])
+    packet <- furniture$packet
+    rows <- match(ids, packet$text$style_id)
+    v <- packet$corners$vertex[packet$text$offset[rows]]
+    xyz <- do.call(cbind, lapply(packet$vertices, `[`, v))
+    points <- frame_positions_3d(xyz, furniture$camera,
+      frame_basis_3d(furniture$camera, fit$viewport))
+    cbind(points[, 1L] * fit$viewport$width_mm + fit$origin[1L],
+          points[, 2L] * fit$viewport$height_mm + fit$origin[2L], points[, 3L])
   }
   corners <- query(meta$corners)
   if (any(!is.finite(corners)) && (length(params$coord_params$axes) || params$coord_params$box == "all")) {
@@ -466,7 +468,7 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
       keep <- layout$keep; occupied <- layout$occupied
       label_layout[[name]] <- layout
       bounds <- c(bounds, lapply(which(keep), function(i) layout$boxes[i, ]))
-      add(grid::textGrob(guide$labels[keep], locations[keep, 1L], locations[keep, 2L], default.units = "mm", rot = m$angle, gp = text_gp_3d(m$text)))
+      if (any(keep)) add(grid::textGrob(guide$labels[keep], locations[keep, 1L], locations[keep, 2L], default.units = "mm", rot = m$angle, gp = text_gp_3d(m$text)))
     }
     if (length(guide$title) && visible_element_3d(m$title)) {
       title <- axis_title_geometry_3d(a, b, normal, m, guide$params$n.dodge)
