@@ -37,8 +37,20 @@ raster_colours_3d <- function(packet, prepared, light) {
   })
 }
 
+# Worker threads of the tiled rasteriser: option `ggplot3d.threads`, 0 for one
+# per hardware thread, at most two under R CMD check's core limit.
+raster_threads_3d <- function() {
+  threads <- getOption("ggplot3d.threads", 0L)
+  scene_assert(is.numeric(threads) && length(threads) == 1L && is.finite(threads) &&
+                 threads >= 0 && threads == trunc(threads),
+               "option ggplot3d.threads must be a nonnegative integer")
+  limit <- tolower(Sys.getenv("_R_CHECK_LIMIT_CORES_", ""))
+  if (nzchar(limit) && limit != "false") threads <- if (threads == 0) 2L else min(threads, 2L)
+  as.integer(threads)
+}
+
 raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NULL,
-                           id_pass = FALSE) {
+                           id_pass = FALSE, buffers = FALSE) {
   validate_camera_3d(camera)
   prepared <- raster_prepare_cpp(packet[names(packet) != "styles"], camera, viewport)
   colours <- raster_colours_3d(packet, prepared, light)
@@ -50,7 +62,8 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
   pixels <- ceiling(c(viewport$width_mm, viewport$height_mm) * viewport$dpi / 25.4)
   scene_assert(all(is.finite(pixels)) && all(pixels <= .Machine$integer.max), "Unrepresentable raster dimensions.")
   result <- raster_draw_cpp(prepared$pointer, colours, dashes,
-    as.integer(pixels[1L]), as.integer(pixels[2L]), as.integer(antialias), id_pass)
+    as.integer(pixels[1L]), as.integer(pixels[2L]), as.integer(antialias), id_pass,
+    raster_threads_3d(), buffers)
   result$engine_seconds <- prepared$engine_seconds
   result$camera <- prepared$camera
   result$viewport <- viewport

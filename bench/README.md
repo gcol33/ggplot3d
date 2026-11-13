@@ -9,6 +9,22 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File bench/run-benchmarks.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File bench/run-benchmarks.ps1 -Packages ggplot3d -CellSizes 100 -Mode profile
 ```
 
+Raster pipeline timings and the pixel comparison of the rasteriser against a
+saved reference run:
+
+```powershell
+& 'C:/Program Files/R/R-4.6.1/bin/Rscript.exe' bench/raster-bench.R bench/raster-results.csv "" 8 2 3
+& 'C:/Program Files/R/R-4.6.1/bin/Rscript.exe' bench/raster-compare.R save reference.rds
+& 'C:/Program Files/R/R-4.6.1/bin/Rscript.exe' bench/raster-compare.R compare reference.rds
+```
+
+`raster-cases.R` builds the scene packets directly: 1e5 and 1e6 triangle
+surfaces, 1e6 markers, eight stacked translucent surfaces and 2000 text anchors
+over a surface, on a 150 mm square panel at 150 dpi with antialias 2. The bench
+arguments are output file, cases, threads, antialias and repetitions.
+`raster-results-2026-11-13.csv` holds the timings of the per-pass renderer of
+commit b7a6f5f and of the tiled renderer with one and eight threads.
+
 The matrix runner scores every fixture diagnostically. Testthat additionally
 gates acceptance on the returned `exact_visibility` and `footprint_clipping`
 capabilities. `referee-matrix.csv` preserves both results. Each failure saves an

@@ -19,6 +19,10 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #' @param type Backend, vector or raster.
 #' @param dpi Physical raster resolution.
 #' @param antialias Positive integer supersampling factor.
+#' @details The raster backend renders 64-pixel tiles in parallel. The number
+#'   of worker threads is the option `ggplot3d.threads`; the default `0` uses
+#'   one thread per hardware thread, at most two when `_R_CHECK_LIMIT_CORES_`
+#'   is set. The image does not depend on the thread count.
 #' @return A backend configuration for coord_3d().
 #' @examples
 #' backend_3d("vector")

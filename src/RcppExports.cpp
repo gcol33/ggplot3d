@@ -72,8 +72,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // raster_draw_cpp
-Rcpp::List raster_draw_cpp(SEXP scene, Rcpp::List colours, Rcpp::List dashes, int width, int height, int antialias, bool id_pass);
-RcppExport SEXP _ggplot3d_raster_draw_cpp(SEXP sceneSEXP, SEXP coloursSEXP, SEXP dashesSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP antialiasSEXP, SEXP id_passSEXP) {
+Rcpp::List raster_draw_cpp(SEXP scene, Rcpp::List colours, Rcpp::List dashes, int width, int height, int antialias, bool id_pass, int threads, bool buffers);
+RcppExport SEXP _ggplot3d_raster_draw_cpp(SEXP sceneSEXP, SEXP coloursSEXP, SEXP dashesSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP antialiasSEXP, SEXP id_passSEXP, SEXP threadsSEXP, SEXP buffersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type scene(sceneSEXP);
@@ -83,7 +83,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type height(heightSEXP);
     Rcpp::traits::input_parameter< int >::type antialias(antialiasSEXP);
     Rcpp::traits::input_parameter< bool >::type id_pass(id_passSEXP);
-    rcpp_result_gen = Rcpp::wrap(raster_draw_cpp(scene, colours, dashes, width, height, antialias, id_pass));
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    Rcpp::traits::input_parameter< bool >::type buffers(buffersSEXP);
+    rcpp_result_gen = Rcpp::wrap(raster_draw_cpp(scene, colours, dashes, width, height, antialias, id_pass, threads, buffers));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -94,7 +96,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
-    {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 7},
+    {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 9},
     {NULL, NULL, 0}
 };
 
