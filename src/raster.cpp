@@ -7,6 +7,15 @@ Rcpp::List raster_prepare_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List v
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::List raster_draw_cpp(SEXP scene, Rcpp::List colours, Rcpp::List dashes,
-                           int width, int height, int antialias, bool id_pass) {
-  return ggplot3d::raster::draw(scene, colours, dashes, width, height, antialias, id_pass);
+                           int width, int height, int antialias, bool id_pass,
+                           int threads, bool buffers, bool linear) {
+  return ggplot3d::raster::draw(scene, colours, dashes, width, height, antialias, id_pass,
+                                threads, buffers, linear);
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List raster_occlusion_cpp(SEXP scene, Rcpp::List colours, Rcpp::List dashes,
+                                Rcpp::NumericVector extent, int width, int height, int antialias,
+                                Rcpp::NumericMatrix depth) {
+  return ggplot3d::raster::occlusion(scene, colours, dashes, extent, width, height, antialias, depth);
 }

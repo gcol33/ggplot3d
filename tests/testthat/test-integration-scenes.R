@@ -1,14 +1,3 @@
-integration_packets <- function(plot) {
-  if (grDevices::dev.cur() == 1L) {
-    grDevices::pdf(tempfile(fileext = ".pdf"))
-    on.exit(grDevices::dev.off(), add = TRUE)
-  }
-  built <- ggplot2::ggplot_build(plot)
-  grobs <- lapply(seq_along(built$plot@layers), function(i) built$plot@layers[[i]]$draw_geom(built$data[[i]], built$layout)[[1L]])
-  collected <- collect_scene_layers(grobs, built$layout$panel_params[[1]], built$plot@theme)
-  list(packet = merge_scene_packets(collected$packets, 1L), params = built$layout$panel_params[[1]], grobs = grobs)
-}
-
 test_that("surface connectivity preserves cell order, masking and face means", {
   d <- expand.grid(x = 0:2, y = 0:2)
   d$z <- d$x + 2 * d$y
@@ -154,7 +143,7 @@ test_that("packet remapping accepts typed empty buffers and collector rejects un
   params <- list(panel_id = 1L)
   expect_error(collect_scene_layers(list(grid::rectGrob()), params, ggplot2::theme_get()), "Unsupported nonempty")
   expect_error(ggplot2::ggplot_build(ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) +
-    ggplot2::geom_tile() + coord_3d()), "No 3D emitter")
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = y, ymax = y)) + coord_3d()), "No 3D emitter")
 })
 
 test_that("concave polygon triangles conserve area and reject invalid topology", {

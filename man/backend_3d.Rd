@@ -4,14 +4,24 @@
 \alias{backend_3d}
 \title{Select a 3D rendering backend}
 \usage{
-backend_3d(type = "vector", dpi = 144, antialias = 2L)
+backend_3d(type = "vector", dpi = 144, antialias = 2L, blend = "linear")
 }
 \arguments{
-\item{type}{Backend, vector or raster.}
+\item{type}{Backend: \code{"vector"}, \code{"raster"} or \code{"hybrid"}. A hybrid panel
+rasterises the layers created with \code{raster = TRUE} (an argument of every
+\verb{geom_*_3d()} layer and of \code{\link[=layer_3d]{layer_3d()}}) into one image at \code{dpi} and draws
+the other layers, axes, panes and text as vector graphics. Vector
+geometry behind the image's opaque coverage is clipped at its pixels, so
+lines on or behind a rasterised surface stay exact where they are seen.}
 
 \item{dpi}{Physical raster resolution.}
 
 \item{antialias}{Positive integer supersampling factor.}
+
+\item{blend}{Colour space in which the raster backend composites
+translucent paint and averages antialiasing samples: \code{"linear"} light,
+encoded to sRGB after averaging, or \code{"srgb"}, which matches the
+compositing of vector graphics devices.}
 }
 \value{
 A backend configuration for coord_3d().
@@ -19,7 +29,20 @@ A backend configuration for coord_3d().
 \description{
 Select a 3D rendering backend
 }
+\details{
+The raster backend renders 64-pixel tiles in parallel. The number
+of worker threads is the option \code{ggplot3d.threads}; the default \code{0} uses
+one thread per hardware thread, at most two when \verb{_R_CHECK_LIMIT_CORES_}
+is set. The image does not depend on the thread count.
+}
 \examples{
 backend_3d("vector")
 backend_3d("raster", dpi = 144, antialias = 2)
+backend_3d("raster", blend = "srgb")
+d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
+d$z <- sin(pi * d$x) * cos(pi * d$y)
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey80", colour = NA, raster = TRUE) +
+  geom_contour_3d(colour = "black") +
+  coord_3d(backend = backend_3d("hybrid", dpi = 150))
 }

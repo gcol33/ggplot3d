@@ -132,9 +132,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     registry <- new.env(parent = emptyenv())
     current <- motion_map_panels_3d(built, function(panel) {
       params <- panel$panel_params
-      camera <- cameras[[i]]
-      camera$aspect <- params$camera$aspect
-      params$camera <- camera
+      params$camera <- motion_panel_camera_3d(cameras[[i]], params$camera, coord$camera)
       params$coord_params$backend <- backend
       params$coord_params$frame <- frame
       params$coord_params$frame_registry <- registry
@@ -283,6 +281,18 @@ motion_coord_3d <- function(coord, values, backend, frame) {
   config$frame <- match.arg(frame, c("view", "azimuth", "sphere"))
   config$frame_registry <- new.env(parent = emptyenv())
   ggplot2::ggproto(NULL, coord, camera = do.call(new_camera_3d, camera), config = config)
+}
+
+# A panel with its own view moves with the animated camera and keeps its
+# offset from the coord's first view: azimuth, elevation and roll differences
+# add, the zoom ratio multiplies.
+motion_panel_camera_3d <- function(camera, panel, base) {
+  camera$aspect <- panel$aspect
+  camera$azimuth <- camera$azimuth + panel$azimuth - base$azimuth
+  camera$elevation <- max(-90, min(90, camera$elevation + panel$elevation - base$elevation))
+  camera$roll <- camera$roll + panel$roll - base$roll
+  camera$zoom <- camera$zoom * panel$zoom / base$zoom
+  camera
 }
 
 motion_panels_3d <- function(grob) {

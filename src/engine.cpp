@@ -328,6 +328,16 @@ Rcpp::List scene_compile_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List vi
     }
   }
   ResourceBudget budget(inputs,limit);
+  budget.threads=std::max(1u,std::thread::hardware_concurrency());
+  SEXP threads_attribute=Rf_getAttrib(viewport,Rf_install("engine_threads"));
+  if(!Rf_isNull(threads_attribute)) {
+    require((TYPEOF(threads_attribute)==REALSXP || TYPEOF(threads_attribute)==INTSXP) &&
+            Rf_xlength(threads_attribute)==1,"engine_threads must be a positive whole number");
+    double threads=Rcpp::as<double>(threads_attribute);
+    require(std::isfinite(threads) && threads>=1 && threads==std::floor(threads),
+            "engine_threads must be a positive whole number");
+    budget.threads=static_cast<std::size_t>(std::min(threads,1024.0));
+  }
   budget.add(256.0*inputs);
   for(const char* name:{"vertices","corners"}) if(packet.containsElementNamed(name)) {
     Rcpp::List table=packet[name];

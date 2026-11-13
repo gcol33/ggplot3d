@@ -19,7 +19,7 @@ contour_levels_3d <- function(range, breaks, bins, binwidth) {
   seq(range[1L], range[2L], length.out = bins + 2L)[-c(1L, bins + 2L)]
 }
 
-check_contour_plane_3d <- function(plane) {
+check_plane_3d <- function(plane) {
   if (is.numeric(plane) && length(plane) == 1L && is.finite(plane)) return(plane)
   if (is.character(plane) && length(plane) >= 1L) return(match.arg(plane, c("surface", "floor")))
   stop("plane must be 'surface', 'floor' or a finite numeric z.", call. = FALSE)
@@ -164,12 +164,18 @@ StatContourFilled3D <- ggplot2::ggproto("StatContourFilled3D", StatContour3D,
   default_aes = ggplot2::aes(fill = ggplot2::after_stat(level))
 )
 
-contour_draw_data_3d <- function(data, params, panel_params) {
-  plane <- params$plane
-  if (identical(plane, "floor")) data$z <- 0
-  else if (is.numeric(plane)) {
+# A layer drawn on the floor or on a horizontal plane keeps its x and y and
+# replaces its height; vertex normals of a flattened surface point up.
+plane_draw_data_3d <- function(data, params, panel_params) {
+  plane <- params$plane %or3d% "surface"
+  if (identical(plane, "surface")) return(data)
+  if (identical(plane, "floor")) data$z <- rep(0, nrow(data))
+  else {
     value <- panel_params$z$get_transformation()$transform(plane)
-    data$z <- (value - panel_params$ranges$z[1L]) / diff(panel_params$ranges$z)
+    data$z <- rep((value - panel_params$ranges$z[1L]) / diff(panel_params$ranges$z), nrow(data))
+  }
+  if (all(c("nx", "ny", "nz") %in% names(data))) {
+    data$nx <- 0; data$ny <- 0; data$nz <- 1
   }
   data
 }
@@ -195,7 +201,7 @@ contour_draw_data_3d <- function(data, params, panel_params) {
 geom_contour_3d <- function(mapping = NULL, data = NULL, stat = StatContour3D, position = "identity", ...,
                             bins = NULL, binwidth = NULL, breaks = NULL, plane = c("surface", "floor"),
                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  plane <- check_contour_plane_3d(plane)
+  plane <- check_plane_3d(plane)
   make_layer_3d(GeomContour3D, mapping, data, stat, position,
     c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = FALSE, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
@@ -205,14 +211,14 @@ geom_contour_3d <- function(mapping = NULL, data = NULL, stat = StatContour3D, p
 geom_contour_filled_3d <- function(mapping = NULL, data = NULL, stat = StatContourFilled3D, position = "identity", ...,
                                    bins = NULL, binwidth = NULL, breaks = NULL, plane = c("surface", "floor"),
                                    na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  plane <- check_contour_plane_3d(plane)
+  plane <- check_plane_3d(plane)
   make_layer_3d(GeomContourFilled3D, mapping, data, stat, position,
     c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = TRUE, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
 register_geom_3d(GeomContour3D, function(data, params, panel_params) {
-  emit_paths_3d(contour_draw_data_3d(data, params, panel_params), params, panel_params)
+  emit_paths_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
 }, position_check = function(position, scales) check_position_3d(position, scales))
 register_geom_3d(GeomContourFilled3D, function(data, params, panel_params) {
-  emit_polygons_3d(contour_draw_data_3d(data, params, panel_params), params, panel_params)
+  emit_polygons_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
 }, position_check = function(position, scales) check_position_3d(position, scales))

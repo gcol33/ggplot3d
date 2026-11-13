@@ -8,6 +8,18 @@
 * `stat_density_3d()` and `stat_hull_3d()` gain `space = "ilr"` for compositions.
 * `camera_3d()` returns named views (isometric, dimetric, trimetric, top, front, right, and the oblique cabinet, cavalier and military views); `coord_3d()` gains `projection = "oblique"`, `oblique` and `up`.
 * Resolve visibility across layers within each panel for vector and raster output.
+* Large scenes compile faster: a 200,000-face surface takes about 2 s instead of 7 s. The occlusion graph uses several threads, set with `options(ggplot3d.threads = )`; the result is the same for every thread count. Redrawing a plot with the same panel size and view reuses the compiled scene (`options(ggplot3d.cache_bytes = )`).
 * Compute function surfaces, fitted surfaces, density surfaces, ridgelines, convex hulls and scalar-field level surfaces.
 * Animate data that change over time with `animate_3d(time = )`: one frame per value of a column, with scales trained on all frames.
 * `geom_blank()` and `expand_limits()` train scales inside `coord_3d()`.
+* The raster backend renders 64-pixel tiles on several threads (option `ggplot3d.threads`) with one fragment list per sample, keeps the exact compositing order and can return depth, id and normal buffers.
+* The raster backend composites translucent paint and averages antialiasing samples in linear light; `backend_3d(blend = "srgb")` matches vector devices.
+* `geom_point_3d(render = "splat")` draws large point clouds in the raster backend as depth-tested spheres with eye-dome lighting (`edl`); the vector backend stops above `getOption("ggplot3d.vector_markers", 50000)` markers per panel.
+* `backend_3d("hybrid")` rasterises the layers drawn with `raster = TRUE` and keeps the other layers, axes, panes and text as vector graphics, clipped where the image's opaque coverage lies in front of them.
+* Translucent surfaces in vector output cover the shared edges inside each group of non-overlapping faces once.
+* `geom_label()`, `geom_rect()`, `geom_tile()`, `geom_hline()`, `geom_vline()`, `annotation_custom()` and `annotation_raster()` work inside `coord_3d()`.
+* `annotate_3d()` adds fixed annotations with z positions.
+* `stat_density_2d_3d(plane = )` draws the density flat on the floor or at a given height, filled by density.
+* The camera arguments of `coord_3d()` take one value per panel, so facets can show different views; `animate_3d()` keeps each panel's offset.
+* `labs(x = NULL)` and friends remove a 3D axis title.
+* Discrete axes keep every label unless `check.overlap = TRUE`; tick labels are thinned by their measured rectangles, `n.dodge` rows stack directly outside one another, and axis titles sit next to the tick labels.

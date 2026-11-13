@@ -2,6 +2,7 @@ grid_capabilities_3d <- function() {
   caps <- grDevices::dev.capabilities()
   list(vector = TRUE, clipping_paths = isTRUE(caps$clippingPaths),
        masks = length(caps$masks) > 0L && !all(is.na(caps$masks)),
+       group_atop = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "atop" %in% caps$compositing,
        dash_phase = "physical segmented strokes", raster = FALSE)
 }
 
@@ -19,26 +20,20 @@ scene_panel_grob <- function(packets, panel_params, theme, underlay = list(), ov
 #' @export
 makeContent.scene_panel_grob <- function(x) {
   backend <- x$panel_params$coord_params$backend
-  dpi <- if (identical(backend$type, "raster")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
+  dpi <- if (backend$type %in% c("raster", "hybrid")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
   outer <- new_scene_viewport(grid::unit(1, "npc"), grid::unit(1, "npc"), dpi)
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, as.list(x$frame_group))
   if (identical(backend$type, "raster")) {
     result <- render_raster_panel_3d(x, furniture, backend)
     scene <- result$scene
     rendered <- result$grob
+  } else if (identical(backend$type, "hybrid")) {
+    result <- render_hybrid_panel_3d(x, furniture, backend)
+    scene <- result$scene
+    rendered <- result$grob
   } else {
-    packet <- merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id)
-    # Device text metrics are authoritative at the physical-size boundary.
-    if (length(packet$text$style_id)) {
-      for (i in seq_along(packet$text$style_id)) {
-        row <- match(packet$text$style_id[i], packet$styles$style_id)
-        if (isTRUE(packet$styles$.anchor[row])) next
-        s <- packet$styles[row, , drop = FALSE]
-        g <- grid::textGrob(text_label_3d(s), gp = material_gp_3d(s, 1, 4L))
-        packet$text$width_mm[i] <- grid::convertWidth(grid::grobWidth(g), "mm", TRUE)
-        packet$text$height_mm[i] <- grid::convertHeight(grid::grobHeight(g), "mm", TRUE)
-      }
-    }
+    packet <- device_text_metrics_3d(merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id))
+    vector_marker_limit_3d(packet)
     scene <- scene_compile(packet, furniture$camera, furniture$viewport)
     rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light)
   }
@@ -49,9 +44,38 @@ makeContent.scene_panel_grob <- function(x) {
   decorations <- furniture_overlay_3d(furniture, scene, x$theme)
   background <- ggplot2::element_render(x$theme, "panel.background")
   border <- ggplot2::element_render(x$theme, "panel.border", fill = NA)
-  children <- c(list(background), x$underlay, list(rendered, decorations, border), x$overlay)
+  project <- furniture_projector_3d(furniture)
+  overlay <- lapply(x$overlay, place_annotation_3d, project)
+  children <- c(list(background), x$underlay, list(rendered, decorations, border), overlay)
   x$scene <- scene; x$furniture <- decorations; x$inner_viewport <- furniture$viewport; x$outer_viewport <- outer
   grid::setChildren(x, do.call(grid::gList, children))
+}
+
+# Device text metrics are authoritative at the physical-size boundary.
+device_text_metrics_3d <- function(packet) {
+  if (!length(packet$text$style_id)) return(packet)
+  rows <- match(packet$text$style_id, packet$styles$style_id)
+  measured <- which(!(packet$styles$.anchor[rows] %in% TRUE))
+  if (length(measured)) {
+    extent <- text_extent_mm_3d(packet$styles[rows[measured], , drop = FALSE])
+    packet$text$width_mm[measured] <- extent[, 1L]
+    packet$text$height_mm[measured] <- extent[, 2L]
+  }
+  packet
+}
+
+# Vector compilation and drawing grow faster than linearly in the marker
+# count: on bench/point-backends.R a 6 in, 150 dpi PNG of N points took 2.7 s
+# at 3e4, 7.8 s at 5e4 and 31 s at 1e5, against 0.3 to 0.5 s raster.
+vector_marker_limit_3d <- function(packet) {
+  limit <- getOption("ggplot3d.vector_markers", 50000)
+  n <- length(packet$markers$offset)
+  if (n > limit) stop(sprintf(paste0(
+    "The vector backend draws at most %s markers per panel and this panel has %s. ",
+    "Use coord_3d(backend = backend_3d(\"raster\")) or backend_3d(\"hybrid\") with geom_point_3d(render = \"splat\", raster = TRUE), ",
+    "bin the points, or raise options(ggplot3d.vector_markers = )."),
+    format(limit, big.mark = ",", scientific = FALSE), format(n, big.mark = ",", scientific = FALSE)), call. = FALSE)
+  invisible(n)
 }
 
 style_value_3d <- function(styles, name, default) {
@@ -61,7 +85,8 @@ style_value_3d <- function(styles, name, default) {
     if (length(x) == 1L && is.atomic(x) && is.na(x)) return(default[[1L]])
     x
   }))
-  value[is.na(value)] <- default
+  missing <- is.na(value)
+  value[missing] <- if (length(default) == length(value)) default[missing] else default
   value
 }
 
@@ -69,6 +94,53 @@ text_label_3d <- function(styles) {
   label <- style_value_3d(styles, "label", "")
   if (is.list(label)) label <- as.expression(lapply(label, function(x) if (is.expression(x)) x[[1L]] else x))
   label
+}
+
+label_padding_3d <- function(styles) {
+  padding <- style_value_3d(styles, "label_padding", NA_real_)
+  ifelse(is.finite(padding), padding, 0)
+}
+
+# Measured width and height in mm of each text style, label box included.
+text_extent_mm_3d <- function(styles) {
+  if (!nrow(styles)) return(matrix(numeric(), 0L, 2L))
+  padding <- label_padding_3d(styles)
+  t(vapply(seq_len(nrow(styles)), function(i) {
+    s <- styles[i, , drop = FALSE]
+    g <- grid::textGrob(text_label_3d(s), gp = material_gp_3d(s, 1, 4L))
+    c(grid::convertWidth(grid::grobWidth(g), "mm", TRUE), grid::convertHeight(grid::grobHeight(g), "mm", TRUE)) + 2 * padding[i]
+  }, numeric(2)))
+}
+
+# Text at npc anchors. A label is a viewport of the measured box, turned by the
+# text angle about its justified anchor, holding a rounded rectangle and the
+# text inset by the padding.
+text_grob_3d <- function(styles, x, y, hjust, vjust, rot, opacity) {
+  gp <- material_gp_3d(styles, opacity, 4L)
+  label <- text_label_3d(styles)
+  boxed <- is.finite(style_value_3d(styles, "label_padding", NA_real_))
+  if (!any(boxed)) return(grid::textGrob(label, x, y, hjust = hjust, vjust = vjust, rot = rot, gp = gp))
+  n <- length(x)
+  hjust <- rep_len(hjust, n); vjust <- rep_len(vjust, n); rot <- rep_len(rot, n); opacity <- rep_len(opacity, n)
+  extent <- text_extent_mm_3d(styles)
+  padding <- label_padding_3d(styles)
+  radius <- style_value_3d(styles, "label_r", 0)
+  border <- style_value_3d(styles, "border_colour", NA_character_)
+  linewidth <- style_value_3d(styles, "linewidth", 0)
+  children <- lapply(seq_len(n), function(i) {
+    s <- styles[i, , drop = FALSE]
+    text_gp <- material_gp_3d(s, opacity[i], 4L)
+    if (!boxed[i]) return(grid::textGrob(label[i], x[i], y[i], hjust = hjust[i], vjust = vjust[i], rot = rot[i], gp = text_gp))
+    box <- grid::roundrectGrob(r = grid::unit(radius[i], "mm"), gp = grid::gpar(fill = s$fill, col = if (linewidth[i] > 0) border[i] else NA,
+      lwd = linewidth[i] * 72.27 / 25.4, lty = text_gp$lty, alpha = opacity[i]))
+    inner <- extent[i, ] - 2 * padding[i]
+    text <- grid::textGrob(label[i], grid::unit(padding[i] + hjust[i] * inner[1L], "mm"),
+      grid::unit(padding[i] + vjust[i] * inner[2L], "mm"), hjust = hjust[i], vjust = vjust[i], gp = text_gp)
+    grid::gTree(children = grid::gList(box, text), vp = grid::viewport(x[i], y[i],
+      width = grid::unit(extent[i, 1L], "mm"), height = grid::unit(extent[i, 2L], "mm"),
+      just = c(hjust[i], vjust[i]), angle = rot[i]))
+  })
+  grid::gTree(children = do.call(grid::gList, children))
 }
 
 material_gp_3d <- function(styles, opacity, kind, fill = NULL) {
@@ -113,6 +185,28 @@ seam_underlay_3d <- function(x, y, id, fill) {
   order <- order(path, method = "radix")
   grid::gList(union, grid::pathGrob(x[order], y[order], id = id[order], pathId = path[order],
     rule = "winding", gp = grid::gpar(fill = colours, col = NA)))
+}
+
+# A translucent seam group must cover each pixel once, with the coverage of
+# the union of its faces. Faces painted over their union cover an edge pixel
+# twice, so the group is painted from the compound paths alone. One colour: the
+# union at the group's opacity. Several colours, on a device with Porter-Duff
+# groups and alpha masks: the colour paths composited atop the union inside an
+# isolated group, which keeps the union's coverage, and the group composited
+# once through a uniform alpha mask. Otherwise each colour path at the group's
+# opacity, which blends twice only where two colours meet.
+translucent_seam_3d <- function(paths, opacity, caps) {
+  if (length(paths) == 1L) {
+    paths[[1L]]$gp$alpha <- opacity
+    return(paths[[1L]])
+  }
+  if (!isTRUE(caps$group_atop)) {
+    paths[[2L]]$gp$alpha <- opacity
+    return(paths[[2L]])
+  }
+  group <- getExportedValue("grid", "groupGrob")(paths[[2L]], op = "atop", dst = paths[[1L]])
+  mask <- grid::rectGrob(gp = grid::gpar(fill = grDevices::rgb(0, 0, 0, opacity), col = NA))
+  grid::grobTree(group, vp = grid::viewport(mask = mask))
 }
 
 mask_path_3d <- function(scene, rows) {
@@ -196,7 +290,19 @@ arrow_heads_3d <- function(scene, rows, styles, viewport) {
   } else grid::polylineGrob(xx, yy, default.units = "mm", id = id, gp = gp)
 }
 
-render_scene_grid <- function(scene, viewport, light = NULL) {
+# Clips a run's grob to its fragment mask, to a region, or to both: the mask
+# as clipping path and the region as alpha mask, since a nested clipping path
+# replaces the outer one instead of intersecting it.
+clip_grob_3d <- function(g, clip = NULL, region = NULL) {
+  if (is.null(clip) && is.null(region)) return(g)
+  vp <- if (is.null(region)) grid::viewport(clip = clip) else if (is.null(clip)) grid::viewport(clip = region) else
+    grid::viewport(clip = clip, mask = region)
+  if (is.null(g$vp)) { g$vp <- vp; g } else grid::grobTree(g, vp = vp)
+}
+
+# `regions`: optional list(id, grobs). Fragment i is clipped to grobs[[id[i]]]
+# when id[i] > 0.
+render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   f <- scene$fragments; order <- scene$draw_order
   styles <- scene$styles[match(f$style_id, scene$styles$style_id), , drop = FALSE]
   if (is.null(styles$colour)) styles$colour <- rep(NA_character_, nrow(styles))
@@ -230,8 +336,11 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   masked_lines <- intersect(glyphs, lines)
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
-  seam <- face & f$layer_id > 0L & f$opacity == 1 & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
-  key[face] <- paste(key[face], seam[face], ifelse(seam[face], paste(f$layer_id[face], f$seam_group[face]), 0L), sep = ":")
+  seam <- face & f$layer_id > 0L & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
+  key[face] <- paste(key[face], seam[face],
+    ifelse(seam[face], paste(f$layer_id[face], f$seam_group[face], f$opacity[face]), 0L), sep = ":")
+  region_id <- if (is.null(regions)) integer(length(key)) else regions$id
+  key <- paste(key, region_id, sep = ":region:")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   grobs <- lapply(seq_along(runs), function(run) {
@@ -251,7 +360,12 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
       g <- grid::polygonGrob(x, y, id = id, gp = gp)
-      if (all(seam[rows]) && length(rows) > 1L) g <- grid::grobTree(children = grid::gList(seam_underlay_3d(x, y, id, fill), g))
+      if (all(seam[rows]) && length(rows) > 1L) {
+        paths <- seam_underlay_3d(x, y, id, fill)
+        opacity <- f$opacity[rows[1L]]
+        g <- if (opacity == 1) grid::grobTree(children = grid::gList(paths, g)) else
+          translucent_seam_3d(paths, opacity, caps)
+      }
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]
       lty <- style_value_3d(s, "linetype", 1)
@@ -296,10 +410,10 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
       g <- grid::pointsGrob(x, y, default.units = "npc", pch = style_value_3d(s, "shape", 19), gp = gp)
     } else {
       tab <- scene$source$text; source <- f$source_index[rows]
-      label <- text_label_3d(s)
-      g <- grid::textGrob(label, x, y, hjust = tab$hjust[source], vjust = tab$vjust[source], rot = tab$angle[source[1L]], gp = gp)
+      g <- text_grob_3d(s, x, y, tab$hjust[source], tab$vjust[source], tab$angle[source[1L]], f$opacity[rows])
     }
-    if (!is.null(clip)) g$vp <- grid::viewport(clip = clip)
+    region <- if (region_id[rows[1L]] > 0L) regions$grobs[[region_id[rows[1L]]]] else NULL
+    g <- clip_grob_3d(g, clip, region)
     g$name <- paste0("scene-run-", run)
     g
   })

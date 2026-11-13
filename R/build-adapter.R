@@ -63,7 +63,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
   entry <- find_emitter_3d(layer$geom)
   if (is.null(entry)) stop("No 3D emitter registered for ", class(layer$geom)[1L], ".", call. = FALSE)
   supported_position <- inherits(layer$position, "PositionIdentity") ||
-    (entry$name %in% c("GeomPoint", "GeomPath", "GeomLine", "GeomText") &&
+    (entry$name %in% c("GeomPoint", "GeomPath", "GeomLine", "GeomText", "GeomLabel") &&
        any(c("PositionNudge", "PositionJitter", "PositionDodge", "PositionDodge2", "PositionJitterdodge") %in% class(layer$position)))
   if (!supported_position && is.null(entry$position_check)) {
     stop("Unsupported 3D position: ", class(layer$position)[1L], ".", call. = FALSE)
@@ -95,7 +95,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
       for (name in names(fixed)) out[[name]] <- rep_len(fixed[[name]], nrow(out))
       out <- frame$setup_aesthetics(out)
       if (!"z" %in% names(out) && !"z" %in% names(self$computed_mapping) &&
-          !"z" %in% names(self$stat$default_aes) && !"z" %in% self$geom$required_aes) out$z <- rep(0, nrow(out))
+          !"z" %in% names(self$stat$default_aes) && !"z" %in% self$geom$required_aes) out$z <- rep(entry$default_z %or3d% 0, nrow(out))
       out$.source <- if (nrow(out) == nrow(data)) data$.source else seq_len(nrow(out))
       out$.layer <- rep.int(as.integer(layer_id), nrow(out))
       plot@scales$add_defaults(out[intersect(names(out), c("x", "y", z_aesthetics))], plot@plot_env)

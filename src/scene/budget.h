@@ -4,7 +4,7 @@
 namespace ggplot3d { namespace engine {
 struct ResourceBudget {
   double limit, estimated = 0;
-  std::size_t inputs, intersections = 0, fragments = 0;
+  std::size_t inputs, intersections = 0, fragments = 0, threads = 1;
   explicit ResourceBudget(std::size_t n, double bytes)
     : limit(bytes), inputs(n) {}
   void add(double bytes) {

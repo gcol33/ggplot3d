@@ -74,6 +74,7 @@ view_3d <- function(plot, width = 640L, height = 640L, panel = 1L,
       title_gap = m$title_gap, label_extent = m$label_extent,
       label_size = unname(m$label), title_size = unname(m$title_size),
       dodge = guide$params$n.dodge, minor_ticks = isTRUE(guide$params$minor.ticks),
+      thin = thin_labels_of_3d(guide), check_overlap = isTRUE(guide$params$check.overlap),
       cap = guide$params$cap)
   })
   bg <- element_3d("panel.background", selected$theme)

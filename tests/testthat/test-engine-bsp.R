@@ -351,6 +351,38 @@ test_that("the resource budget rejects growth with actionable scene counts", {
   expect_error(native(),"positive finite")
 })
 
+test_that("the compiled scene does not depend on the thread count", {
+  packet <- engine_grid(1500L)
+  camera <- ggplot3d:::new_camera_3d(azimuth = 30, elevation = 20)
+  old <- options(ggplot3d.threads = 1L, ggplot3d.cache_bytes = 0); on.exit(options(old))
+  serial <- engine_compile(packet, camera)
+  options(ggplot3d.threads = 3L)
+  expect_identical(engine_compile(packet, camera), serial)
+  options(ggplot3d.threads = 0)
+  expect_error(engine_compile(packet, camera), "positive whole number")
+  view <- ggplot3d:::new_scene_viewport(100,100)
+  attr(view,"engine_threads") <- 1.5
+  expect_error(ggplot3d:::scene_compile_cpp(packet[names(packet)!="styles"], camera, view),
+               "positive whole number")
+})
+
+test_that("repeated compiles reuse the cached scene within the byte limit", {
+  packet <- engine_grid(200L)
+  camera <- ggplot3d:::new_camera_3d(azimuth = 30, elevation = 20)
+  old <- options(ggplot3d.cache_bytes = 256 * 2^20); on.exit(options(old))
+  first <- engine_compile(packet, camera)
+  testthat::local_mocked_bindings(scene_compile_cpp = function(...) stop("engine called"),
+                                  .package = "ggplot3d")
+  expect_identical(engine_compile(packet, camera), first)
+  expect_error(engine_compile(packet, camera, width = 120), "engine called")
+  moved <- packet; moved$vertices$z[1] <- moved$vertices$z[1] + .01
+  expect_error(engine_compile(moved, camera), "engine called")
+  options(ggplot3d.cache_bytes = 0)
+  expect_error(engine_compile(packet, camera), "engine called")
+  options(ggplot3d.cache_bytes = -1)
+  expect_error(engine_compile(packet, camera), "non-negative")
+})
+
 test_that("ellipse and holed polygon footprints reject empty carrier intersections", {
   for(kind in 1:2) {
     packet <- ggplot3d:::new_scene_packet(

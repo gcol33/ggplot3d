@@ -25,7 +25,7 @@ test_that("depth peeling matches the vector translucent stack", {
     compiled <- ggplot3d:::scene_compile(f$packet, f$camera, f$viewport)
     vector <- ref_rasterise(compiled, f$packet, 80L)
     oracle <- ref_render(f$packet, f$camera, f$viewport, 80L)
-    raster <- ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, 1L)
+    raster <- ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, 1L, blend = "srgb")
     image <- matrix(as.integer(raster$image), 80L, 80L, byrow = TRUE)
     pixels <- as.vector(t(image[80:1L, , drop = FALSE]))
     channels <- vapply(c(0L, 8L, 16L, 24L), function(shift)
@@ -94,7 +94,7 @@ test_that("device-rendered translucent colours agree at shared interior samples"
   f$packet$markers$style_id <- 2:3
   f$viewport$dpi <- 400 * 25.4 / 100
   compiled <- ggplot3d:::scene_compile(f$packet, f$camera, f$viewport)
-  result <- ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, 2L)
+  result <- ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, 2L, blend = "srgb")
   capture <- function(grob) {
     read <- ragg::agg_capture(width = 400, height = 400, res = f$viewport$dpi, background = "white")
     on.exit(grDevices::dev.off())

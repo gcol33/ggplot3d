@@ -77,15 +77,31 @@ geom_smooth_3d <- function(...) stat_smooth_3d(...)
 #' @inheritParams stat_function_3d
 #' @param h Positive bandwidth, scalar or one per axis; NULL estimates it.
 #' @param adjust Positive automatic bandwidth multiplier, scalar or one per axis.
+#' @param plane `"surface"` draws density as height. `"floor"` or a numeric z
+#'   in original units lays the density grid flat at that height, filled by
+#'   density unless fill is mapped or set, and unshaded unless `shade = TRUE`.
+#'   The density range still trains the z scale, as for contours.
 #' @export
 #' @examples
 #' ggplot2::ggplot(faithful, ggplot2::aes(eruptions, waiting)) +
 #'   stat_density_2d_3d(n = 20) + coord_3d()
+#' ggplot2::ggplot(faithful, ggplot2::aes(eruptions, waiting)) +
+#'   stat_density_2d_3d(n = 20, alpha = 0.6) +
+#'   stat_density_2d_3d(n = 40, plane = "floor") + coord_3d()
 stat_density_2d_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                 position = "identity", ..., h = NULL, adjust = 1, n = 40L,
+                                plane = c("surface", "floor"),
                                 na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  plane <- check_plane_3d(plane)
+  extra <- list(...)
+  flat <- !identical(plane, "surface")
+  if (flat && is.null(mapping$fill) && is.null(extra$fill)) {
+    density_fill <- ggplot2::aes(fill = ggplot2::after_stat(density))
+    if (is.null(mapping)) mapping <- density_fill else mapping[["fill"]] <- density_fill[["fill"]]
+  }
   make_layer_3d(geom, mapping, data, StatDensity2D3D, position,
-    stats_params_3d(list(h = h, adjust = adjust, n = n, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+    stats_params_3d(list(h = h, adjust = adjust, n = n, plane = plane, na.rm = na.rm, shade = !flat), extra),
+    show.legend, inherit.aes)
 }
 
 #' Grouped one-dimensional density ridges
