@@ -22,6 +22,7 @@ animate_3d(
   time = NULL,
   path = NULL,
   workers = 1L,
+  tween = NULL,
   ...
 )
 }
@@ -84,6 +85,10 @@ are identical for every number of workers. Workers fork where the
 platform allows it and otherwise start socket processes, which load the
 installed ggplot3d. PDF pages are drawn in one process.}
 
+\item{tween}{A \code{\link[=tween_3d]{tween_3d()}} specification for in-between data frames, or NULL
+for one frame per state. Requires \code{time}. The number of frames is then
+\verb{(number of states - 1) * (tween$n + 1) + 1}.}
+
 \item{...}{Arguments to \code{\link[=export_3d]{export_3d()}} for glTF output: \code{furniture}, \code{lines},
 \code{points} and \code{size}.}
 }
@@ -92,6 +97,8 @@ A ggplot3d_animation list with \code{file}, \code{frame_count}, \code{fps}, \cod
 (one row per frame with the time, the camera angles, zoom, projection,
 field of view, distance (NA when automatic) and target, and the frame's
 \code{value} of the time column when \code{time} is set), \code{timings} in seconds,
+\code{transition} (source state, destination state and eased fraction when
+tweening),
 \code{build_seconds}, \code{frame}, \code{panel_extents} in millimetres, and \code{frames}
 (the PNG paths when file is NULL, the written files of a per-frame
 output). PNG frames returned with file = NULL belong to the caller.
@@ -110,6 +117,10 @@ limits of the full data, as in gganimate's \code{transition_manual()} and
 plotly's \code{frame} aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show its
 first frame.
+
+gganimate's \code{transition_states()} and \code{transition_time()} use a separate
+build pipeline. These transitions produce guidance to use
+\code{animate_3d(time = , tween = tween_3d())} for a 3D plot.
 }
 \examples{
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
