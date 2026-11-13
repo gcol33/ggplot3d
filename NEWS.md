@@ -1,6 +1,7 @@
 # ggplot3d 0.0.0.9000
 
 * knitr and Quarto chunks accept `view3d = TRUE` for the HTML viewer and static vector scenes in PDF and Word. `alt_text_3d()` supplies figure descriptions, with `fig.alt` and `labs(alt = )` overrides. Patchwork and cowplot compositions retain their separate panel scenes.
+* `geom_volume_3d()` renders trilinear scalar grids with emission-absorption transfer functions, maximum-intensity projection, and per-cell cubic isosurface intersections. Overlapping media combine extinction and emission, and opaque scene depth bounds the integration.
 
 * `animate_3d(time = , tween = tween_3d())` interpolates built layer data between states. Marks match by group or source row, paths resample by arc length, fixed meshes morph by face keys, and changing connectivity cross-fades. Direct gganimate transitions give guidance to use the 3D animation pipeline.
 

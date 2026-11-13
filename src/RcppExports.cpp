@@ -357,6 +357,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// raymarch_volume_cpp
+Rcpp::List raymarch_volume_cpp(Rcpp::List inputs, Rcpp::NumericMatrix origins, Rcpp::NumericMatrix directions, Rcpp::NumericVector limit, int threads);
+RcppExport SEXP _ggplot3d_raymarch_volume_cpp(SEXP inputsSEXP, SEXP originsSEXP, SEXP directionsSEXP, SEXP limitSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type inputs(inputsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type origins(originsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type directions(directionsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type limit(limitSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(raymarch_volume_cpp(inputs, origins, directions, limit, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // geometry_delaunay_cpp
 Rcpp::IntegerMatrix geometry_delaunay_cpp(Rcpp::NumericMatrix xy);
 RcppExport SEXP _ggplot3d_geometry_delaunay_cpp(SEXP xySEXP) {
@@ -476,6 +490,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_raymarch_eval_cpp", (DL_FUNC) &_ggplot3d_raymarch_eval_cpp, 2},
     {"_ggplot3d_raymarch_trace_cpp", (DL_FUNC) &_ggplot3d_raymarch_trace_cpp, 7},
     {"_ggplot3d_raymarch_rays_cpp", (DL_FUNC) &_ggplot3d_raymarch_rays_cpp, 5},
+    {"_ggplot3d_raymarch_volume_cpp", (DL_FUNC) &_ggplot3d_raymarch_volume_cpp, 5},
     {"_ggplot3d_geometry_delaunay_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay_cpp, 1},
     {"_ggplot3d_geometry_delaunay3_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay3_cpp, 1},
     {"_ggplot3d_geometry_alpha_shape_cpp", (DL_FUNC) &_ggplot3d_geometry_alpha_shape_cpp, 2},

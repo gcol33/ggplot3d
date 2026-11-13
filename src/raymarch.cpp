@@ -1,4 +1,5 @@
 #include "raymarch/kernel.h"
+#include "raymarch/volume.h"
 using namespace ggplot3d::raymarch;
 
 // [[Rcpp::export(rng = false)]]
@@ -49,4 +50,29 @@ Rcpp::List raymarch_rays_cpp(Rcpp::List camera,Rcpp::List viewport,int width,int
   }
   return Rcpp::List::create(Rcpp::Named("origin")=origins,Rcpp::Named("direction")=directions,
     Rcpp::Named("near")=c.near,Rcpp::Named("far")=c.far);
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List raymarch_volume_cpp(Rcpp::List inputs,Rcpp::NumericMatrix origins,Rcpp::NumericMatrix directions,
+                              Rcpp::NumericVector limit,int threads) {
+  require(origins.ncol()==3 && directions.ncol()==3 && origins.nrow()==directions.nrow() && limit.size()==origins.nrow(),"Invalid volume rays");
+  std::vector<Volume> volumes;for(SEXP input:inputs)volumes.emplace_back(Rcpp::as<Rcpp::List>(input));
+  require(!volumes.empty(),"No volumes supplied");
+  bool absorption=volumes[0].mode==0;for(const auto& v:volumes)require((v.mode==0)==absorption,"Separate surface and absorption passes");
+  std::size_t n=origins.nrow();std::vector<Ray> rays(n);std::vector<Medium> media(n);std::vector<VolumeHit> hits(n);std::vector<Vec3> rgb(n);
+  for(std::size_t i=0;i<n;++i)rays[i]={{origins(i,0),origins(i,1),origins(i,2)},unit({directions(i,0),directions(i,1),directions(i,2)}),0,limit[i]};
+  ggplot3d::engine::parallel_blocks((n+127)/128,threads==0 ? std::max(1u,std::thread::hardware_concurrency()):threads,[&](std::size_t block){
+    for(std::size_t i=block*128;i<std::min(n,(block+1)*128);++i) {
+      if(absorption)media[i]=absorb(volumes,rays[i]);
+      else for(const auto& v:volumes) {
+        auto h=volume_surface(v,rays[i]);if(h.hit.found && (!hits[i].hit.found || h.hit.t<hits[i].hit.t)) {hits[i]=h;rgb[i]=v.transfer(h.value).first;}
+      }
+    }
+  });
+  Rcpp::NumericVector distance(n,NA_REAL),alpha(n),value(n,NA_REAL);Rcpp::NumericMatrix colour(n,3),normal(n,3);
+  for(std::size_t i=0;i<n;++i) {
+    if(absorption) {alpha[i]=media[i].alpha;if(std::isfinite(media[i].entry))distance[i]=media[i].entry;for(int k=0;k<3;++k)colour(i,k)=media[i].colour[k];}
+    else if(hits[i].hit.found){distance[i]=hits[i].hit.t;alpha[i]=1;value[i]=hits[i].value;for(int k=0;k<3;++k){colour(i,k)=rgb[i][k];normal(i,k)=hits[i].hit.normal[k];}}
+  }
+  return Rcpp::List::create(Rcpp::Named("distance")=distance,Rcpp::Named("normal")=normal,Rcpp::Named("colour")=colour,Rcpp::Named("alpha")=alpha,Rcpp::Named("value")=value);
 }

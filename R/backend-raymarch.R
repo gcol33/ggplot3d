@@ -1,4 +1,29 @@
-utils::globalVariables("raymarch_rays_cpp")
+utils::globalVariables(c("raymarch_rays_cpp", "raymarch_volume_cpp"))
+
+raymarch_surface_handlers_3d <- list(
+  sdf = function(spec, rays, limit) raymarch_trace_cpp(spec$tape, rays$origin, rays$direction,
+    unlist(spec$ranges, use.names = FALSE), spec$tolerance, spec$max_steps, raster_threads_3d()),
+  volume = function(spec, rays, limit) raymarch_volume_cpp(list(spec), rays$origin, rays$direction, limit, raster_threads_3d())
+)
+
+raymarch_paint_3d <- function(result, colour, alpha, pixels) {
+  if (!length(pixels)) return(result)
+  index <- arrayInd(pixels, c(result$height, result$width))
+  native <- (index[, 1L] - 1L) * result$width + index[, 2L]
+  packed <- as.double(result$image[native])
+  packed[is.na(packed)] <- 2^31
+  packed[packed < 0] <- packed[packed < 0] + 2^32
+  rgba <- vapply(0:3, function(k) (packed %/% 256^k) %% 256 / 255, numeric(length(packed)))
+  rgba <- matrix(rgba, ncol = 4L)
+  a <- alpha + (1 - alpha) * rgba[, 4L]
+  rgb <- colour + (1 - alpha) * rgba[, 4L] * srgb_decode_3d(rgba[, 1:3, drop = FALSE])
+  rgb <- srgb_encode_3d(rgb / pmax(a, .Machine$double.eps))
+  rgba <- round(pmin(pmax(cbind(rgb, a), 0), 1) * 255)
+  packed <- drop(rgba %*% 256^(0:3))
+  packed[packed >= 2^31] <- packed[packed >= 2^31] - 2^32
+  result$image[native] <- as.integer(packed)
+  result
+}
 
 raymarch_rays_3d <- function(camera, viewport, result, ranges) {
   rays <- raymarch_rays_cpp(camera, viewport, as.integer(result$width), as.integer(result$height), result$extent)
@@ -17,11 +42,13 @@ raymarch_scene_3d <- function(specs, packet, camera, viewport, backend, light) {
   if (any(packet$faces$opacity < 1) || any(packet$polylines$opacity < 1) || any(packet$markers$opacity < 1))
     stop("Mixed ray-marched scenes require opaque raster geometry.", call. = FALSE)
   depth <- result$buffers$depth
-  for (j in seq_along(specs)) {
+  absorption <- vapply(specs, function(s) identical(s$kind, "volume") && s$mode == 0L, logical(1))
+  for (j in which(!absorption)) {
     spec <- specs[[j]]
     rays <- raymarch_rays_3d(camera, viewport, result, spec$ranges)
-    hit <- raymarch_trace_cpp(spec$tape, rays$origin, rays$direction,
-      unlist(spec$ranges, use.names = FALSE), spec$tolerance, spec$max_steps, raster_threads_3d())
+    limit <- (pmin(rays$far, ifelse(is.na(depth), Inf, depth)) - rays$near) * rays$length
+    kind <- spec$kind %or3d% "sdf"
+    hit <- raymarch_surface_handlers_3d[[kind]](spec, rays, as.vector(limit))
     z <- rays$near + hit$distance / rays$length
     take <- which(is.finite(z) & z <= rays$far & (is.na(depth) | z < depth))
     if (!length(take)) next
@@ -29,17 +56,28 @@ raymarch_scene_3d <- function(specs, packet, camera, viewport, backend, light) {
     normal <- sweep(hit$normal, 2L, span / result$camera$model_scale, "*")
     normal <- normal / pmax(sqrt(rowSums(normal^2)), .Machine$double.eps)
     fragments <- list(normal_x = normal[, 1L], normal_y = normal[, 2L], normal_z = normal[, 3L])
-    fill <- rep(spec$fill, length(z))
-    rgba <- colour_channels_3d(shade_fill_3d(fill[take], fragments, take, result$camera, light), alpha = TRUE)
-    packed <- colSums(rgba * 256^(0:3))
-    packed[packed >= 2^31] <- packed[packed >= 2^31] - 2^32
-    pixel <- arrayInd(take, dim(depth))
-    result$image[(pixel[, 1L] - 1L) * result$width + pixel[, 2L]] <- as.integer(packed)
+    fill <- if (is.null(hit$colour)) rep(spec$fill, length(z)) else {
+      rgb <- srgb_encode_3d(hit$colour)
+      grDevices::rgb(rgb[, 1L], rgb[, 2L], rgb[, 3L])
+    }
+    lighting <- if (identical(spec$mode, 1L)) NULL else light
+    rgb <- t(colour_channels_3d(shade_fill_3d(fill[take], fragments, take, result$camera, lighting))) / 255
+    result <- raymarch_paint_3d(result, srgb_decode_3d(rgb), rep(1, length(take)), take)
     depth[take] <- z[take]
     result$buffers$opaque_depth[take] <- z[take]
     result$buffers$kind[take] <- 1L
     result$buffers$row[take] <- j
     for (k in 1:3) result$buffers$normal[[k]][take] <- normal[take, k]
+  }
+  if (any(absorption)) {
+    volumes <- specs[absorption]
+    rays <- raymarch_rays_3d(camera, viewport, result, volumes[[1L]]$ranges)
+    limit <- (pmin(rays$far, ifelse(is.na(depth), Inf, depth)) - rays$near) * rays$length
+    medium <- raymarch_volume_cpp(volumes, rays$origin, rays$direction, as.vector(limit), raster_threads_3d())
+    take <- which(medium$alpha > 0)
+    result <- raymarch_paint_3d(result, medium$colour[take, , drop = FALSE], medium$alpha[take], take)
+    z <- rays$near + medium$distance / rays$length
+    depth[take] <- pmin(z[take], ifelse(is.na(depth[take]), Inf, depth[take]))
   }
   result$buffers$depth <- depth
   result

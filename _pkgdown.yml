@@ -139,6 +139,7 @@ reference:
   - geom_hex_3d
   - geom_extrude_3d
   - geom_voxel_3d
+  - geom_volume_3d
   - geom_tube_3d
   - geom_ribbon_3d
   - geom_sphere_3d
