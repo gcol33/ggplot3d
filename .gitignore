@@ -7,3 +7,4 @@ src/*.dll
 *.Rcheck/
 *.tar.gz
 dev_notes/agents/logs/*.log
+tests/testthat/Rplots.pdf

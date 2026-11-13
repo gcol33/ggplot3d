@@ -14,10 +14,16 @@ Roxygen: list(markdown = TRUE)
 Config/testthat/edition: 3
 Imports:
     ggplot2,
+    grDevices,
     grid,
-    Rcpp
+    Rcpp,
+    S7,
+    stats,
+    utils
 LinkingTo: Rcpp
 Suggests:
+    ragg,
+    svglite,
     testthat (>= 3.0.0)
 SystemRequirements: C++17
 Config/roxygen2/version: 8.1.0

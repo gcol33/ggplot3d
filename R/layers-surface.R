@@ -1,0 +1,145 @@
+#' Triangulated surfaces in three dimensions
+#' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard ggplot2 layer arguments.
+#' @param method Grid connectivity or Delaunay triangulation.
+#' @param max_edge Maximum triangle edge length in transformed x/y units.
+#' @param shade Whether to apply lighting.
+#' @param wireframe Whether to draw triangle edges.
+#' @param hidden Hidden stroke policy.
+#' @export
+geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
+                             position = "identity", ..., method = "grid", max_edge = Inf,
+                             shade = TRUE, wireframe = FALSE, hidden = "hide",
+                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  make_layer_3d(GeomSurface3D, mapping, data, stat, position,
+    c(list(method = method, max_edge = max_edge, shade = shade, wireframe = wireframe,
+           hidden = hidden, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+}
+
+#' @rdname geom_surface_3d
+#' @param geom Geom prototype used to draw the computed triangles.
+#' @export
+stat_surface_3d <- function(mapping = NULL, data = NULL, geom = GeomSurface3D,
+                             position = "identity", ..., method = "grid", max_edge = Inf,
+                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  make_layer_3d(geom, mapping, data, StatSurface3D, position,
+    c(list(method = method, max_edge = max_edge, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+}
+
+surface_triangles_3d <- function(data, method, max_edge) {
+  if (anyDuplicated(data[c("x", "y")])) stop("Surface x/y coordinates must be unique within each group.", call. = FALSE)
+  if (method == "grid") {
+    xs <- sort(unique(data$x)); ys <- sort(unique(data$y))
+    grid <- matrix(NA_integer_, length(xs), length(ys))
+    grid[cbind(match(data$x, xs), match(data$y, ys))] <- seq_len(nrow(data))
+    triangles <- list()
+    if (length(xs) >= 2L && length(ys) >= 2L) {
+      for (i in seq_len(length(xs) - 1L)) for (j in seq_len(length(ys) - 1L)) {
+        cell <- grid[cbind(c(i, i + 1L, i + 1L, i), c(j, j, j + 1L, j + 1L))]
+        if (anyNA(cell) || any(!is.finite(data$z[cell]))) next
+        triangles <- c(triangles, list(cell[c(1L, 2L, 3L)], cell[c(1L, 3L, 4L)]))
+      }
+    }
+  } else {
+    good <- which(is.finite(data$z))
+    triangles <- lapply(delaunay_triangles_3d(as.matrix(data[good, c("x", "y")])), function(i) good[i])
+  }
+  Filter(function(ids) {
+    xy <- as.matrix(data[ids, c("x", "y")])
+    all(sqrt(rowSums((xy - xy[c(2L, 3L, 1L), , drop = FALSE])^2)) <= max_edge)
+  }, triangles)
+}
+
+StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
+  required_aes = c("x", "y"),
+  optional_aes = c("z", "fill"),
+  extra_params = c("na.rm", "method", "max_edge"),
+  setup_params = function(data, params) {
+    if (is.null(data$z)) stop("A surface requires a z aesthetic.", call. = FALSE)
+    params$method <- match.arg(params$method %or3d% "grid", c("grid", "delaunay"))
+    params$max_edge <- params$max_edge %or3d% Inf
+    if (length(params$max_edge) != 1L || is.na(params$max_edge) || params$max_edge <= 0) stop("max_edge must be positive.", call. = FALSE)
+    params
+  },
+  compute_group = function(data, scales, method = "grid", max_edge = Inf) {
+    if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Surfaces require continuous x/y/z scales.", call. = FALSE)
+    triangles <- surface_triangles_3d(data, method, max_edge)
+    if (!length(triangles)) return(data.frame())
+    rows <- unlist(triangles, use.names = FALSE)
+    out <- data[rows, , drop = FALSE]
+    out$.face <- rep(seq_along(triangles), each = 3L)
+    out$.corner <- rep.int(1:3, length(triangles))
+    out$z_mean <- rep(vapply(triangles, function(i) mean(data$z[i]), numeric(1)), each = 3L)
+    if ("fill" %in% names(data)) {
+      if (is.numeric(data$fill)) out$fill <- rep(vapply(triangles, function(i) mean(data$fill[i]), numeric(1)), each = 3L)
+      else for (i in triangles) if (length(unique(data$fill[i])) != 1L) stop("Non-numeric surface fill must be constant on each triangle.", call. = FALSE)
+    }
+    out
+  }
+)
+
+GeomSurface3D <- ggplot2::ggproto("GeomSurface3D", ggplot2::GeomPolygon,
+  required_aes = c("x", "y", "z", ".face", ".corner"),
+  default_aes = ggplot2::aes(colour = NA, fill = "grey70", linewidth = 0.3, linetype = 1, alpha = NA)
+)
+
+emit_surface_3d <- function(data, params, panel_params) {
+  keys <- interaction(data$group, data$.face, drop = TRUE, lex.order = TRUE)
+  faces <- lapply(split(seq_len(nrow(data)), keys), function(rows) rows[order(data$.corner[rows])])
+  faces <- Filter(function(i) all(valid_rows_3d(data[i, , drop = FALSE], params)), faces)
+  for (rows in faces) {
+    if (length(rows) != 3L || anyDuplicated(data$.corner[rows])) stop("Surface faces require three keyed corners.", call. = FALSE)
+    for (name in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
+      if (length(unique(data[[name]][rows])) > 1L) stop("Surface materials must be constant per face; use fill = after_stat(z_mean).", call. = FALSE)
+    }
+  }
+  kinds <- rep("faces", length(faces))
+  if (isTRUE(params$wireframe)) {
+    edges <- list(); seen <- character()
+    for (face in faces) for (pair in list(face[c(1, 2)], face[c(2, 3)], face[c(3, 1)])) {
+      key <- paste(sort(data$.source[pair]), collapse = ":")
+      if (!key %in% seen) { edges[[length(edges) + 1L]] <- pair; seen <- c(seen, key) }
+    }
+    faces <- edges; kinds <- rep("polylines", length(edges))
+    if (all(is.na(data$colour))) data$colour <- "grey30"
+  }
+  packet_from_primitives_3d(data, faces, kinds, params, panel_params$panel_id)
+}
+
+# Bowyer-Watson insertion removes triangles whose circumcircles contain the new vertex.
+# Boundary edges of that cavity form the replacement triangles in counterclockwise order.
+delaunay_triangles_3d <- function(xy) {
+  n <- nrow(xy)
+  if (n < 3L) return(list())
+  index <- order(xy[, 1L], xy[, 2L])
+  xy <- xy[index, , drop = FALSE]
+  span <- max(apply(xy, 2L, function(x) diff(range(x))))
+  if (!is.finite(span) || span == 0) stop("Delaunay surface coordinates are collinear.", call. = FALSE)
+  xy <- sweep(xy, 2L, colMeans(xy)) / span
+  xy <- rbind(xy, c(-32, -16), c(32, -16), c(0, 32))
+  triangles <- list(as.integer(n + 1:3))
+  for (i in seq_len(n)) {
+    inside <- vapply(triangles, function(t) {
+      p <- sweep(xy[t, , drop = FALSE], 2L, xy[i, ])
+      s <- rowSums(p^2)
+      determinant <- s[1] * cross2_3d(p[2, ], p[3, ]) - s[2] * cross2_3d(p[1, ], p[3, ]) + s[3] * cross2_3d(p[1, ], p[2, ])
+      determinant > 64 * .Machine$double.eps * max(s)^2
+    }, logical(1))
+    edges <- do.call(rbind, lapply(triangles[inside], function(t) rbind(t[c(1, 2)], t[c(2, 3)], t[c(3, 1)])))
+    triangles <- triangles[!inside]
+    if (is.null(edges)) stop("Delaunay insertion produced no containing cavity.", call. = FALSE)
+    keys <- apply(edges, 1L, function(e) paste(sort(e), collapse = ":"))
+    edges <- edges[!(duplicated(keys) | duplicated(keys, fromLast = TRUE)), , drop = FALSE]
+    for (j in seq_len(nrow(edges))) {
+      t <- c(edges[j, ], i)
+      orient <- cross2_3d(xy[t[2], ] - xy[t[1], ], xy[t[3], ] - xy[t[1], ])
+      if (abs(orient) <= 64 * .Machine$double.eps) next
+      if (orient < 0) t <- t[c(2, 1, 3)]
+      triangles[[length(triangles) + 1L]] <- as.integer(t)
+    }
+  }
+  triangles <- Filter(function(t) all(t <= n), triangles)
+  if (!length(triangles)) stop("Delaunay surface coordinates are collinear.", call. = FALSE)
+  lapply(triangles, function(t) as.integer(index[t]))
+}
+
+register_geom_3d(GeomSurface3D, emit_surface_3d)
