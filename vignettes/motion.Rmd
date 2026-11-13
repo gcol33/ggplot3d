@@ -16,7 +16,7 @@ PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
          grey = "#5C6166")
 ```
 
-Camera motion shows a fixed scene from several directions. This article saves a camera path and opens a panel with orbit controls. Installation is covered in [Get started](ggplot3d.html). Movie output uses [gifski](https://r-rlib.github.io/gifski/) for GIF files or [av](https://docs.ropensci.org/av/) for MP4 files; the viewer uses [htmlwidgets](https://www.htmlwidgets.org/).
+Camera motion shows a fixed scene from several directions. This article saves a camera path and opens a panel with orbit controls. Installation is covered in [Get started](ggplot3d.html). Movie output uses [gifski](https://r-rust.r-universe.dev/gifski) for GIF files or [av](https://docs.ropensci.org/av/) for MP4 files; the viewer uses [htmlwidgets](https://www.htmlwidgets.org/).
 
 1. **Build** the scene with `coord_3d()`.
 

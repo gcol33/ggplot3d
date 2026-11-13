@@ -18,7 +18,7 @@ PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
 has_gifski <- requireNamespace("gifski", quietly = TRUE)
 ```
 
-The transport, heat, wave and Laplace equations are the four linear partial differential equations (PDEs) with explicit solution formulas that Evans (2010) treats first. This article evaluates each formula on a grid of positions and times, draws the solution as a surface, and renders one frame per time with `animate_3d()`. Each section ends on an animated GIF. Installation is covered in [Get started](ggplot3d.html); the GIF files need [gifski](https://r-rlib.github.io/gifski/).
+The transport, heat, wave and Laplace equations are the four linear partial differential equations (PDEs) with explicit solution formulas that Evans (2010) treats first. This article evaluates each formula on a grid of positions and times, draws the solution as a surface, and renders one frame per time with `animate_3d()`. Each section ends on an animated GIF. Installation is covered in [Get started](ggplot3d.html); the GIF files need [gifski](https://r-rust.r-universe.dev/gifski).
 
 1. **Tabulate** the solution $u(x, y, t)$ in a data frame with one row per position and time.
 
