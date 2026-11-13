@@ -349,43 +349,32 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
     }
   }
   const std::size_t n=pieces.size();
-  std::vector<ProjectedPiece> projected;projected.reserve(n);
-  for(const auto& piece:pieces) projected.push_back(project_piece(piece,p));
+  std::vector<ProjectedPiece> projected(n);
+  parallel_for(n,budget.threads,[&](std::size_t i) {projected[i]=project_piece(pieces[i],p);});
   BoundsIndex<ProjectedPiece> index(projected);
   std::vector<std::pair<Index,Index>> edges;
   auto edge=[&](std::size_t a,std::size_t b) {
     budget.add(32);edges.emplace_back(a,b);++stats.edges;
   };
-  // Pairs are classified in parallel blocks of pieces and merged in piece
-  // order, so edges, statistics and budget failures match a serial sweep. A
-  // wave of blocks bounds the work done before the budget sees its edges.
+  // Pairs are classified in parallel and merged in piece order, so edges,
+  // statistics and budget failures match a serial sweep.
   struct Relation {Index a,b;int relation;};
-  const std::size_t block_size=256,wave_blocks=std::max<std::size_t>(16,4*budget.threads);
-  const std::size_t blocks=(n+block_size-1)/block_size;
-  std::vector<std::vector<Relation>> found(std::min(blocks,wave_blocks));
-  std::vector<std::size_t> pairs(found.size());
-  for(std::size_t first=0;first<blocks;first+=wave_blocks) {
-    Rcpp::checkUserInterrupt();
-    const std::size_t count=std::min(wave_blocks,blocks-first);
-    parallel_blocks(count,budget.threads,[&](std::size_t slot) {
-      auto& out=found[slot];out.clear();pairs[slot]=0;
-      const std::size_t begin=(first+slot)*block_size,end=std::min(n,begin+block_size);
-      for(std::size_t i=begin;i<end;++i) index.query(projected[i].bounds,i+1,[&](std::size_t j) {
-        ++pairs[slot];
-        int relation=occlusion_relation(pieces[i],pieces[j],projected[i],projected[j],packet,p);
-        if(relation) out.push_back({static_cast<Index>(i),static_cast<Index>(j),relation});
-      });
+  struct Found {std::vector<Relation> relations;std::size_t pairs=0;};
+  parallel_ordered<Found>(n,256,budget.threads,[&](std::size_t begin,std::size_t end,Found& out) {
+    out.relations.clear();out.pairs=0;
+    for(std::size_t i=begin;i<end;++i) index.query(projected[i].bounds,i+1,[&](std::size_t j) {
+      ++out.pairs;
+      int relation=occlusion_relation(pieces[i],pieces[j],projected[i],projected[j],packet,p);
+      if(relation) out.relations.push_back({static_cast<Index>(i),static_cast<Index>(j),relation});
     });
-    for(std::size_t slot=0;slot<count;++slot) {
-      stats.pairs+=pairs[slot];
-      for(const auto& r:found[slot]) {
-        if(r.relation==3) ++budget.intersections;
-        if(r.relation&1) edge(r.a,r.b);
-        if(r.relation&2) edge(r.b,r.a);
-      }
+  },[&](Found& out) {
+    stats.pairs+=out.pairs;
+    for(const auto& r:out.relations) {
+      if(r.relation==3) ++budget.intersections;
+      if(r.relation&1) edge(r.a,r.b);
+      if(r.relation&2) edge(r.b,r.a);
     }
-  }
-  found.clear();found.shrink_to_fit();
+  });
   std::vector<std::size_t> offsets(n+1,0);
   for(const auto& e:edges) ++offsets[e.first+1];
   std::partial_sum(offsets.begin(),offsets.end(),offsets.begin());

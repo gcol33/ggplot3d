@@ -1,11 +1,13 @@
 #pragma once
 #include "clipping.h"
+#include "parallel.h"
 #include <unordered_map>
 
 namespace ggplot3d { namespace engine {
 // Closed opaque components cannot expose outward back faces to an exterior eye.
 static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,const Projection& p,
-                                               std::vector<Index>& components,std::vector<Vec3>& normals) {
+                                               std::vector<Index>& components,std::vector<Vec3>& normals,
+                                               std::size_t threads) {
   const auto& f=packet.faces;std::size_t n=f.count.size();
   std::vector<bool> culled(n,false);
   components.assign(n,-1);
@@ -34,19 +36,24 @@ static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,const 
   std::vector<double> volume(n,0);
   std::vector<Vec3> origin(n);
   std::vector<Polygon> polygons(n);
-  auto planes=clipping_planes(p);if(p.camera.clip) planes.resize(planes.size()-4);
-  for(Index i=0;i<static_cast<Index>(n);++i) {
-    Index r=root(i);if(!closed[i]) closed[r]=false;
+  parallel_for(n,threads,[&](std::size_t i) {
     auto& polygon=polygons[i];
     for(Index k=0;k<f.count[i];++k) {
       Index v=packet.corners.vertex[f.offset[i]+k];
-      Vec3 xyz{packet.vertices.x[v],packet.vertices.y[v],packet.vertices.z[v]};
-      polygon.push_back({xyz,{}});auto m=p.model(xyz);
+      polygon.push_back({{packet.vertices.x[v],packet.vertices.y[v],packet.vertices.z[v]},{}});
+    }
+    normals[i]=face_normal(polygon,p);
+  });
+  auto planes=clipping_planes(p);if(p.camera.clip) planes.resize(planes.size()-4);
+  for(Index i=0;i<static_cast<Index>(n);++i) {
+    Index r=root(i);if(!closed[i]) closed[r]=false;
+    const auto& polygon=polygons[i];
+    for(const auto& vertex:polygon) {
+      const Vec3& xyz=vertex.xyz;auto m=p.model(xyz);
       if(!std::isfinite(lo[r][0])) origin[r]=m;
       for(const auto& plane:planes) if(signed_distance(plane,xyz)<0) closed[r]=false;
       for(int a=0;a<3;++a) {lo[r][a]=std::min(lo[r][a],m[a]);hi[r][a]=std::max(hi[r][a],m[a]);}
     }
-    normals[i]=face_normal(polygon,p);
     auto a=subtract(p.model(polygon[0].xyz),origin[r]);
     for(std::size_t k=1;k+1<polygon.size();++k)
       volume[r]+=dot(a,cross(subtract(p.model(polygon[k].xyz),origin[r]),subtract(p.model(polygon[k+1].xyz),origin[r])));
