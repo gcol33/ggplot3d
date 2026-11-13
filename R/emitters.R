@@ -143,14 +143,15 @@ scene_geom_3d <- function(parent, entry) {
                            lineend = "butt", linejoin = "round", linemitre = 10,
                            arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
                            size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
-                           width = NULL, depth = NULL, face = "zmin", plane = "surface") {
+                           width = NULL, depth = NULL, height = NULL, greedy = TRUE, face = "zmin", plane = "surface") {
       if (!inherits(coord, "Coord3D")) stop("3D layers require coord_3d().", call. = FALSE)
       params <- list(.emitter = .emitter, na.rm = na.rm, occlusion = occlusion,
                      shade = shade, hidden = hidden, method = method, max_edge = max_edge,
                      wireframe = wireframe, lineend = lineend, linejoin = linejoin,
                      linemitre = linemitre, arrow = arrow, arrow.fill = arrow.fill,
                      parse = parse, check_overlap = check_overlap, size.unit = size.unit, rule = rule,
-                     base = base, cap = cap, width = width, depth = depth, face = face, plane = plane)
+                     base = base, cap = cap, width = width, depth = depth, height = height, greedy = greedy,
+                     face = face, plane = plane)
       scene_layer_grob(emit_scene_3d(data, params, panel_params, .layer_id))
     }
   )

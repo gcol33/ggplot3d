@@ -152,6 +152,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// voxel_faces_cpp
+Rcpp::IntegerMatrix voxel_faces_cpp(Rcpp::IntegerVector n, Rcpp::IntegerVector material, Rcpp::LogicalVector translucent, bool greedy);
+RcppExport SEXP _ggplot3d_voxel_faces_cpp(SEXP nSEXP, SEXP materialSEXP, SEXP translucentSEXP, SEXP greedySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type n(nSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type material(materialSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalVector >::type translucent(translucentSEXP);
+    Rcpp::traits::input_parameter< bool >::type greedy(greedySEXP);
+    rcpp_result_gen = Rcpp::wrap(voxel_faces_cpp(n, material, translucent, greedy));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_scene_compile_cpp", (DL_FUNC) &_ggplot3d_scene_compile_cpp, 3},
@@ -165,6 +178,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_parametric_face_normals_cpp", (DL_FUNC) &_ggplot3d_parametric_face_normals_cpp, 2},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 7},
+    {"_ggplot3d_voxel_faces_cpp", (DL_FUNC) &_ggplot3d_voxel_faces_cpp, 4},
     {NULL, NULL, 0}
 };
 

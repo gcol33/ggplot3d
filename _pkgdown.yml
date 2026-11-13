@@ -117,6 +117,7 @@ reference:
   - geom_col_3d
   - geom_bar_3d
   - geom_extrude_3d
+  - geom_voxel_3d
 - title: Statistical layers
   contents:
   - geom_function_3d
@@ -131,6 +132,7 @@ reference:
   contents:
   - stat_surface_3d
   - stat_count_3d
+  - stat_bin_3d
   - stat_function_3d
   - stat_smooth_3d
   - stat_density_2d_3d

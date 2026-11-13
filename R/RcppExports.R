@@ -45,3 +45,7 @@ raster_draw_cpp <- function(scene, colours, dashes, width, height, antialias, id
     .Call(`_ggplot3d_raster_draw_cpp`, scene, colours, dashes, width, height, antialias, id_pass)
 }
 
+voxel_faces_cpp <- function(n, material, translucent, greedy) {
+    .Call(`_ggplot3d_voxel_faces_cpp`, n, material, translucent, greedy)
+}
+
