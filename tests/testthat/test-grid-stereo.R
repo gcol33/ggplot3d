@@ -200,7 +200,7 @@ test_that("view_3d() and mono_plot_3d() use the central camera", {
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("ragg")
   widget <- view_3d(p)
-  expect_equal(widget$x$camera$azimuth, -60)
+  expect_equal(widget$x$panels[[1L]]$camera$azimuth, -60)
 })
 
 test_that("animate_3d() draws stereo frames", {
