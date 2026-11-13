@@ -117,18 +117,68 @@ test_that("stroke joins have round, mitre and bevel physical footprints", {
   expect_identical(covered, c(TRUE, TRUE, FALSE))
 })
 
-test_that("unsupported raster policies produce explicit capability errors", {
+test_that("raster styles include retained hidden strokes, outlines, arrows and an extended canvas", {
   f <- ref_fixture("thick_line", "pole")
   f$packet$styles$fill <- "red"
+  f$packet$styles$colour <- "blue"
+  f$viewport$dpi <- 50.8
+  render <- function() ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, 1L)
+  count_blue <- function(x) sum(bitwAnd(bitwShiftR(as.integer(x$image),16L),255L) > 200L)
+  hide <- render()
+  f$packet$polylines$hidden[] <- 2L
+  show <- render()
   f$packet$polylines$hidden[] <- 1L
-  expect_error(ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport), "hidden-line overrides")
+  dashed <- render()
+  expect_gte(count_blue(show), count_blue(dashed))
+  expect_gte(count_blue(dashed), count_blue(hide))
   f$packet$polylines$hidden[] <- 0L
+  f$packet$styles$arrow <- I(rep(list(grid::arrow(length = grid::unit(8, "mm"), type = "closed")), nrow(f$packet$styles)))
   f$packet$polylines$arrow_end[] <- TRUE
-  expect_error(ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport), "arrowheads")
-  f$packet$polylines$arrow_end[] <- FALSE
+  arrow <- render()
+  expect_gt(count_blue(arrow), count_blue(hide))
   f$camera$clip <- FALSE
-  expect_error(ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport), "extended raster canvas")
-  f$camera$clip <- TRUE
-  f$packet$styles$colour <- "black"
-  expect_error(ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport), "boundary strokes")
+  f$camera$zoom <- 4
+  extended <- render()
+  expect_true(any(extended$extent[c(1L, 2L)] < 0) || any(extended$extent[c(3L, 4L)] > 1))
+  expect_gt(length(extended$image), length(hide$image))
+})
+
+test_that("marker fill and border retain their separate device colours", {
+  data <- data.frame(x=.5, y=.5, z=.5, size=8, stroke=2, shape=21L,
+    colour="black", fill="red", alpha=1, .layer=1L, .source=1L)
+  packet <- ggplot3d:::emit_points_3d(data, list(), list(panel_id=1L))
+  viewport <- ggplot3d:::new_scene_viewport(40,40,254)
+  camera <- ref_cameras()$pole
+  compiled <- ggplot3d:::scene_compile(packet,camera,viewport)
+  native <- ggplot3d:::raster_scene_3d(packet,camera,viewport,4L)
+  capture <- function(grob) {
+    pixels <- ragg::agg_capture(width=400,height=400,res=254,background="white")
+    on.exit(grDevices::dev.off())
+    grid::pushViewport(grid::viewport(xscale=c(0,1),yscale=c(0,1)))
+    grid::grid.draw(grob)
+    pixels()
+  }
+  vector <- capture(ggplot3d:::render_scene_grid(compiled,viewport))
+  raster <- capture(grid::rasterGrob(native$image,interpolate=FALSE))
+  radius <- packet$footprints$radius_x_mm
+  width <- ggplot3d:::paint_metrics_3d(data)$border_mm * 2
+  columns <- 200L + round(c(0,radius-width/2,radius+1)*10)
+  expect_equal(grDevices::col2rgb(raster[200L,columns]),grDevices::col2rgb(c("red","black","white")))
+  expect_equal(grDevices::col2rgb(raster[200L,columns]),grDevices::col2rgb(vector[200L,columns]))
+})
+
+test_that("an arrowhead fill covers its own line body", {
+  packet <- ref_packet(lines=list(rbind(c(.2,.5,.5),c(.8,.5,.5))),line_width=2)
+  packet$styles$colour <- "blue"
+  packet$styles$arrow <- I(list(grid::arrow(length=grid::unit(10,"mm"),type="closed")))
+  packet$styles$arrow_fill <- "red"
+  packet$polylines$arrow_end <- TRUE
+  viewport <- ggplot3d:::new_scene_viewport(100,100,101.6)
+  camera <- ref_cameras()$pole
+  result <- ggplot3d:::raster_scene_3d(packet,camera,viewport,1L)
+  tip <- ref_project(rbind(c(.8,.5,.5)),ref_camera(camera,viewport))
+  pixel <- c(400L-floor(tip[1,2L]*400),1L+floor(tip[1,1L]*400)-20L)
+  packed <- as.integer(result$image)[(pixel[1L]-1L)*400L+pixel[2L]]
+  rgb <- bitwAnd(bitwShiftR(packed,c(0L,8L,16L)),255L)
+  expect_equal(rgb,c(255L,0L,0L))
 })

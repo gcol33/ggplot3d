@@ -3,6 +3,8 @@
 #include "output.h"
 #include "coverage.h"
 #include "ordering.h"
+#include "stroke.h"
+#include "solid.h"
 
 namespace ggplot3d { namespace engine {
 static inline CompiledScene compile(const ScenePacket& packet, const Projection& projection,
@@ -19,26 +21,72 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
                       clipped, arrow_start, arrow_end, pieces.size()});
   };
   const auto planes = clipping_planes(projection);
+  std::vector<Index> solid_components;
+  std::vector<Vec3> face_normals;
+  const auto backfaces=solid_backfaces(packet,projection,solid_components,face_normals);
   const PrimitiveTable* tables[] = {&packet.faces, &packet.polylines, &packet.markers, &packet.text};
   for (int kind = 1; kind <= 4; ++kind) {
     const auto& table = *tables[kind-1];
     for (std::size_t row = 0; row < table.count.size(); ++row) {
       if (row % 4096 == 0) Rcpp::checkUserInterrupt();
+      if(kind==1 && backfaces[row]) continue;
       Polygon polygon;
       for (Index j = 0; j < table.count[row]; ++j) {
         Index corner = table.offset[row]+j, v = packet.corners.vertex[corner];
         polygon.push_back({{packet.vertices.x[v], packet.vertices.y[v], packet.vertices.z[v]}, {{corner, 1}}});
       }
       if (kind == 1) {
-        Vec3 normal = face_normal(polygon, projection);
+        Vec3 normal = face_normals[row];
         bool clipped = false;
         polygon = clip_polygon(std::move(polygon), planes, clipped);
         if (polygon.size() >= 3 && table.opacity[row] > 0) {
           Vec3 area = area_vector(polygon, projection);
-          if (std::sqrt(dot(area, area)) > projection.resolved.tolerance*projection.resolved.tolerance)
+          if (std::sqrt(dot(area, area)) > projection.resolved.tolerance*projection.resolved.tolerance) {
             emit(table, row, Kind::face, polygon, clipped, normal);
+            pieces.back().solid=solid_components[row];
+          }
         }
       } else if (kind == 2) {
+        bool area_path=polygon.size()>2 && packet.polylines.width_mm[row]>0 && table.partition[row]==1;
+        const std::size_t centre_planes=planes.size()-(projection.camera.clip ? 4:0);
+        const std::size_t slab_begin=projection.camera.clip_data ? 6:0;
+        bool inside_slab=true;
+        for(const auto& v:polygon) for(std::size_t k=slab_begin;k<centre_planes;++k)
+          inside_slab=inside_slab && signed_distance(planes[k],v.xyz)>=0;
+        bool varying=false;
+        for(const auto& v:polygon) varying=varying || std::abs(projection.camera_point(v.xyz)[2]-
+          projection.camera_point(polygon.front().xyz)[2])>projection.resolved.tolerance;
+        if(area_path && varying && table.opacity[row]>0) {
+          if(!inside_slab) {
+            Polygon run;double cumulative=0,first=0;bool original_start=false;
+            auto flush=[&](bool original_end) {
+              if(run.size()<2) {run.clear();return;}
+              emit(table,row,Kind::polyline,run,true,{0,0,0},first,cumulative,
+                   original_start && packet.polylines.arrow_start[row],original_end && packet.polylines.arrow_end[row]);
+              Piece source=std::move(pieces.back());pieces.pop_back();
+              source.cap_start=original_start;source.cap_end=original_end;
+              for(auto& cell:stroke_area(std::move(source),packet,projection,budget)) pieces.push_back(std::move(cell));
+              run.clear();
+            };
+            for(std::size_t j=1;j<polygon.size();++j) {
+              const auto& a=polygon[j-1];const auto& b=polygon[j];
+              auto slab=clip_segment_range(a,b,planes,slab_begin,centre_planes);
+              if(slab.first>slab.second) {flush(false);continue;}
+              auto start=interpolate(a,b,slab.first),end=interpolate(a,b,slab.second);
+              if(run.empty()) {first=cumulative;original_start=j==1 && slab.first==0;run.push_back(start);}
+              run.push_back(end);cumulative+=projected_length(start,end,projection);
+              if(slab.second<1 || j+1==polygon.size()) flush(j+1==polygon.size() && slab.second==1);
+            }
+            continue;
+          }
+          double length=0;
+          for(std::size_t j=1;j<polygon.size();++j) length+=projected_length(polygon[j-1],polygon[j],projection);
+          emit(table,row,Kind::polyline,polygon,false,{0,0,0},0,length,
+               packet.polylines.arrow_start[row],packet.polylines.arrow_end[row]);
+          Piece source=std::move(pieces.back());pieces.pop_back();
+          for(auto& cell:stroke_area(std::move(source),packet,projection,budget)) pieces.push_back(std::move(cell));
+          continue;
+        }
         const bool ordered_partition=table.partition[row]!=1;
         bool complete_path=(polygon.size()>2 || ordered_partition) && packet.polylines.width_mm[row]>0;
         double depth=projection.camera_point(polygon[0].xyz)[2];
@@ -110,7 +158,9 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
                 Polygon bounds=stroke_bounds(piece,packet,projection,piece.normal,sector);
                 if(!bounds.empty()) {
                   piece.anchor=piece.polygon;
-                  piece.polygon=clip_polygon(std::move(bounds),planes,piece.clipped);
+                  std::vector<Plane> screen_planes;
+                  if(projection.camera.clip) screen_planes.assign(planes.end()-4,planes.end());
+                  piece.polygon=clip_polygon(std::move(bounds),screen_planes,piece.clipped);
                   if(caps && !piece.clipped) piece.whole_stroke_parts=3;
                   piece.clipped=piece.clipped || caps;
                   if(piece.polygon.size()<3) continue;
@@ -152,7 +202,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
   bool needs_coverage=false;
   for(const Piece& piece:pieces) if(piece.source->partition[piece.row]==1)
     needs_coverage=needs_coverage || piece.kind==Kind::text ||
-      (piece.kind==Kind::polyline && packet.polylines.hidden[piece.row]!=static_cast<Index>(Hidden::hide));
+      piece.kind==Kind::polyline;
   if(needs_coverage) {
     CoverageIndex coverage(pieces,projection);
     pieces.erase(std::remove_if(pieces.begin(),pieces.end(),[&](const Piece& piece) {

@@ -55,6 +55,7 @@ static inline ProjectedPiece project_piece(const Piece& piece,const Projection& 
   }
   out.first_depth=p.camera_point(piece.polygon.front().xyz)[2];
   out.last_depth=p.camera_point(piece.polygon.back().xyz)[2];
+  if(!piece.members.empty()) return out;
   if(out.ring.size()>=3) {
     long double area=ring_area(out.ring);
     out.area=area!=0;
@@ -218,8 +219,54 @@ static inline int marker_coverage(const Piece& piece,const ScenePacket& packet,c
 static inline int occlusion_relation(const Piece& a,const Piece& b,const ProjectedPiece& x,
                                     const ProjectedPiece& y,const ScenePacket& packet,const Projection& p) {
   if(!bounds_overlap(x.bounds,y.bounds)) return 0;
+  if(!a.members.empty() || !b.members.empty()) {
+    for(const Piece* object:{&a,&b}) {
+      auto separate=[&](const Piece& face) {
+        if(face.kind!=Kind::face) return 0;
+        auto plane=supporting_plane(face,p);
+        int sa=classify(a,plane,p),sb=classify(b,plane,p);
+        if(!((sa==1 && sb==2)||(sa==2 && sb==1))) return 0;
+        double eye=p.camera.perspective ? dot(plane.normal,subtract(p.resolved.eye,plane.origin)):
+          -dot(plane.normal,p.resolved.forward);
+        return (eye>=0 ? sa==2:sa==1) ? 1:2;
+      };
+      if(object->members.empty()) {int relation=separate(*object);if(relation) return relation;}
+      else for(const auto& face:object->members) {int relation=separate(face);if(relation) return relation;}
+    }
+    return 3;
+  }
+  if(a.kind==Kind::face && b.kind==Kind::face && x.area && y.area) {
+    int sign=0;
+    for(double u:{std::max(x.bounds[0],y.bounds[0]),std::min(x.bounds[2],y.bounds[2])})
+      for(double v:{std::max(x.bounds[1],y.bounds[1]),std::min(x.bounds[3],y.bounds[3])}) {
+        double d=projected_depth(x,{u,v},p.camera.perspective)-projected_depth(y,{u,v},p.camera.perspective);
+        sign|=d>p.resolved.tolerance ? 1 : (d<-p.resolved.tolerance ? 2:3);
+      }
+    if(sign==1 || sign==2) {
+      for(const auto* ring:{&x.ring,&y.ring}) {
+        const auto& other=ring==&x.ring ? y.ring:x.ring;
+        for(std::size_t k=0;k<ring->size();++k) {
+          bool outside=true;
+          for(const auto& q:other) if(orient2((*ring)[k],(*ring)[(k+1)%ring->size()],q)>0) {outside=false;break;}
+          if(outside) return 0;
+        }
+      }
+      return sign;
+    }
+  }
   Ring2 overlap=projected_overlap(x,y,p);
   if(overlap.empty()) return 0;
+  // A boundary stroke inherits the supporting face's coplanar paint order.
+  const Piece* line=a.kind==Kind::polyline ? &a : (b.kind==Kind::polyline ? &b : nullptr);
+  const Piece* face=a.kind==Kind::face ? &a : (b.kind==Kind::face ? &b : nullptr);
+  if(line && face && !line->hidden) {
+    const Polygon& path=line->anchor.empty() ? line->polygon : line->anchor;
+    auto plane=supporting_plane(*face,p);
+    bool coplanar=true;
+    for(const auto& vertex:path)
+      coplanar=coplanar && std::abs(plane_distance(plane,vertex,p))<=p.resolved.tolerance;
+    if(coplanar) return tie_less(a,b) ? 1:2;
+  }
   if(a.kind==Kind::marker && b.kind!=Kind::marker) overlap=glyph_overlap(overlap,a,y,packet,p);
   else if(b.kind==Kind::marker && a.kind!=Kind::marker) overlap=glyph_overlap(overlap,b,x,packet,p);
   if(overlap.empty()) return 0;
@@ -271,7 +318,23 @@ static inline bool single_cut_component(std::vector<Piece>& pieces,const ScenePa
 }
 
 static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const ScenePacket& packet,const Projection& p,
-                                            PartitionStats& stats,ResourceBudget& budget) {
+                                            PartitionStats& stats,ResourceBudget& budget,bool group_solids=true) {
+  if(group_solids) {
+    std::map<Index,std::vector<Piece>> solids;
+    std::vector<Piece> ungrouped;
+    for(auto& piece:pieces) {
+      if(piece.solid>=0 && piece.kind==Kind::face) solids[piece.solid].push_back(std::move(piece));
+      else ungrouped.push_back(std::move(piece));
+    }
+    pieces=std::move(ungrouped);
+    for(auto& entry:solids) {
+      auto& members=entry.second;
+      if(members.size()==1) {pieces.push_back(std::move(members.front()));continue;}
+      Piece group=members.front();group.polygon.clear();
+      for(const auto& member:members) group.polygon.insert(group.polygon.end(),member.polygon.begin(),member.polygon.end());
+      group.members=std::move(members);pieces.push_back(std::move(group));
+    }
+  }
   const std::size_t n=pieces.size();
   std::vector<ProjectedPiece> projected;projected.reserve(n);
   for(const auto& piece:pieces) projected.push_back(project_piece(piece,p));
@@ -347,12 +410,17 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   std::vector<Piece> ordered;ordered.reserve(n);
   while(!ready.empty()) {
     Index c=ready.top();ready.pop();auto& group=components[c];
-    if(group.size()==1) ordered.push_back(std::move(pieces[group.front()]));
+    if(group.size()==1 && pieces[group.front()].members.empty()) ordered.push_back(std::move(pieces[group.front()]));
     else {
       std::sort(group.begin(),group.end());
       std::vector<Piece> local;local.reserve(group.size());
-      for(Index i:group) local.push_back(std::move(pieces[i]));
-      if(!single_cut_component(local,packet,p,stats,budget)) local=partition_scene(std::move(local),p,stats,budget);
+      bool compound=false;
+      for(Index i:group) {
+        if(pieces[i].members.empty()) local.push_back(std::move(pieces[i]));
+        else {compound=true;for(auto& member:pieces[i].members) local.push_back(std::move(member));}
+      }
+      if(compound) local=order_scene(std::move(local),packet,p,stats,budget,false);
+      else if(!single_cut_component(local,packet,p,stats,budget)) local=partition_scene(std::move(local),p,stats,budget);
       for(auto& piece:local) ordered.push_back(std::move(piece));
     }
     for(Index v:group) for(std::size_t e=offsets[v];e<offsets[v+1];++e) {

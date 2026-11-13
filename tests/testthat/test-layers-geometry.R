@@ -16,7 +16,8 @@ test_that("columns emit outward closed prisms with original row provenance", {
   scene <- geometry_scene(geometry_plot(d, geom_col_3d(colour = "black", width = 1, depth = 0.5)))
   p <- scene$packet; b <- scene$built$data[[1L]]
   expect_equal(b$xmax - b$xmin, c(1, 1)); expect_equal(b$ymax - b$ymin, c(0.5, 0.5))
-  expect_length(p$faces$primitive_id, 24L); expect_length(p$polylines$primitive_id, 24L)
+  expect_length(p$faces$primitive_id, 12L); expect_length(p$polylines$primitive_id, 24L)
+  expect_true(all(p$faces$count == 4L))
   expect_equal(sort(unique(p$corners$source_row)), 1:2)
   expect_true(all(is.na(p$styles$colour[p$faces$style_id])))
   expect_true(all(!is.na(p$styles$colour[p$polylines$style_id])))
@@ -51,7 +52,7 @@ test_that("counts aggregate weights by explicit lattice keys and stack signed he
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, weight = w)) + geom_bar_3d() + coord_3d()
   s <- geometry_scene(p)
   expect_equal(s$built$data[[1L]]$count, c(6, 4)); expect_equal(s$built$data[[1L]]$z, c(6, 4))
-  expect_length(s$packet$faces$primitive_id, 24L)
+  expect_length(s$packet$faces$primitive_id, 12L)
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + stat_count_3d() + coord_3d()
   expect_equal(sort(ggplot2::ggplot_build(p)$data[[1L]]$count), c(1, 3))
   d <- data.frame(x = 1, y = 1, z = c(2, 3, -2, -4), part = letters[1:4])
@@ -121,10 +122,10 @@ test_that("extrusions preserve hole area, cap choice and boundary wall strokes",
     ring = rep(1:2, each = 4))
   p <- geometry_plot(d, geom_extrude_3d(colour = "black"), ggplot2::aes(x, y, z = z, subgroup = ring))
   s <- geometry_scene(p); q <- s$packet
-  expect_length(q$faces$primitive_id, 32L); expect_length(q$polylines$primitive_id, 24L)
+  expect_length(q$faces$primitive_id, 24L); expect_length(q$polylines$primitive_id, 24L)
   for (cap in c("top", "bottom", "none")) {
     s <- geometry_scene(geometry_plot(d, geom_extrude_3d(cap = cap), ggplot2::aes(x, y, z = z, subgroup = ring)))
-    expect_length(s$packet$faces$primitive_id, if (cap == "none") 16L else 24L)
+    expect_length(s$packet$faces$primitive_id, if (cap == "none") 8L else 16L)
   }
   d$z <- -2
   expect_silent(validate_scene_packet(geometry_scene(geometry_plot(d, geom_extrude_3d(), ggplot2::aes(x, y, z = z, subgroup = ring)))$packet))
@@ -142,7 +143,7 @@ test_that("sf polygons, multipolygons and polygon Z meshes retain feature identi
   p <- ggplot2::ggplot(sf) + geom_extrude_3d(ggplot2::aes(height = height), colour = "black") + coord_3d(crs = 3857)
   s <- geometry_scene(p)
   expect_equal(sort(unique(s$packet$corners$source_row)), 1:2)
-  expect_length(s$packet$faces$primitive_id, 56L)
+  expect_length(s$packet$faces$primitive_id, 40L)
   expect_equal(sort(unique(s$built$data[[1L]]$z)), c(-1, 2))
   geographic <- sf::st_transform(sf, 4326)
   expect_error(ggplot2::ggplot_build(ggplot2::ggplot(geographic) + geom_extrude_3d(ggplot2::aes(z = height)) + coord_3d()), "projected")
@@ -221,8 +222,11 @@ test_that("negative extrusions select endpoint caps and zero heights emit no deg
   d <- data.frame(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1), z = -2)
   p <- geometry_plot(d, geom_extrude_3d(cap = "top"))
   s <- geometry_scene(p); q <- s$packet
-  starts <- q$faces$offset[1:2]
-  expect_true(all(q$vertices$z[q$corners$vertex[unlist(lapply(starts, function(i) seq.int(i, length.out = 3L)))]] == 0))
+  levels <- lapply(seq_along(q$faces$count), function(i) {
+    corners <- seq.int(q$faces$offset[i], length.out = q$faces$count[i])
+    unique(q$vertices$z[q$corners$vertex[corners]])
+  })
+  expect_equal(unlist(levels[lengths(levels) == 1L], use.names = FALSE), 0)
   d$z <- 0
   expect_length(geometry_scene(geometry_plot(d, geom_extrude_3d()))$packet$faces$primitive_id, 0L)
   expect_length(geometry_scene(geometry_plot(d[1L, ], geom_col_3d()))$packet$faces$primitive_id, 0L)

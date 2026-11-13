@@ -25,9 +25,10 @@ std::vector<T> column(const Rcpp::List& table, const char* name, int n = -1) {
   require(n < 0 || x.size() == n, std::string("column length mismatch: ") + name);
   std::vector<T> out;
   out.reserve(x.size());
+  const std::string nonfinite = std::string("non-finite column: ") + name;
   for (auto v : x) {
     require(!Rcpp::Vector<RTYPE>::is_na(v) && std::isfinite(static_cast<double>(v)),
-            std::string("non-finite column: ") + name);
+            nonfinite);
     out.push_back(static_cast<T>(v));
   }
   return out;
@@ -296,7 +297,7 @@ Rcpp::List write_result(const CompiledScene& scene, const ScenePacket& packet,
     Rcpp::Named("viewport")=Rcpp::List::create(Rcpp::Named("width_mm")=viewport.width_mm,
       Rcpp::Named("height_mm")=viewport.height_mm, Rcpp::Named("dpi")=viewport.dpi),
     Rcpp::Named("capabilities")=Rcpp::List::create(Rcpp::Named("visibility")="bsp",
-      Rcpp::Named("exact_visibility")=false, Rcpp::Named("footprint_clipping")=false));
+      Rcpp::Named("exact_visibility")=true, Rcpp::Named("footprint_clipping")=true));
 }
 } }  // namespace ggplot3d::engine
 

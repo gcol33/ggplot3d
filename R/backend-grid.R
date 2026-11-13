@@ -79,9 +79,10 @@ material_gp_3d <- function(styles, opacity, kind, fill = NULL) {
     number <- match(lty, as.character(0:6))
     lty[!is.na(number)] <- c("blank", "solid", "dashed", "dotted", "dotdash", "longdash", "twodash")[number[!is.na(number)]]
   }
+  metrics <- paint_metrics_3d(styles)
   grid::gpar(col = colour, fill = fill, alpha = opacity,
-    lwd = style_value_3d(styles, if (kind == 3L) "stroke" else "linewidth", 0.5) * 72.27 / 25.4,
-    lty = lty, fontsize = style_value_3d(styles, "fontsize", 11),
+    lwd = if (kind == 3L) metrics$point_lwd else metrics$line_lwd,
+    lty = lty, fontsize = if (kind == 3L) metrics$fontsize else style_value_3d(styles, "fontsize", 11),
     fontfamily = style_value_3d(styles, "family", ""), fontface = style_value_3d(styles, "fontface", 1))
 }
 
@@ -105,7 +106,7 @@ dash_pattern_3d <- function(lty, width_mm) {
   chars <- strsplit(toupper(key), "", fixed = TRUE)[[1L]]
   digits <- match(chars, c(as.character(0:9), LETTERS[1:6])) - 1L
   if (anyNA(digits) || length(digits) %% 2L || any(digits == 0)) stop("Invalid line dash pattern.", call. = FALSE)
-  digits * if (width_mm > 0) width_mm * 72.27 / 96 else 25.4 / 96
+  digits * if (width_mm > 0) width_mm else 25.4 / 96
 }
 
 dash_segments_3d <- function(x, y, start, pattern, viewport) {
@@ -195,8 +196,10 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   # Adjacent pieces of one glyph share one paint operation over their disjoint masks.
   masked <- which(f$mask_count > 0L)
   key[masked] <- paste0(key[masked], ":mask:", f$mask_offset[masked], ":", f$mask_count[masked])
-  glyphs <- which(f$mask_count > 0L & f$kind %in% 3:4)
+  glyphs <- which(f$mask_count > 0L & f$kind %in% 2:4)
   key[glyphs] <- paste(f$kind[glyphs], "glyph", f$parent_primitive_id[glyphs], f$style_id[glyphs], f$source_index[glyphs], sep = ":")
+  masked_lines <- intersect(glyphs, lines)
+  key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
   seam <- face & f$layer_id > 0L & f$opacity == 1 & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
   key[face] <- paste(key[face], seam[face], sep = ":")
@@ -204,7 +207,7 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
   runs <- unname(split(order, run_id))
   grobs <- lapply(seq_along(runs), function(run) {
     masks <- runs[[run]]
-    rows <- if (f$kind[masks[1L]] %in% 3:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
+    rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
     kind <- f$kind[rows[1L]]; s <- styles[rows, , drop = FALSE]
     counts <- f$count[rows]; starts <- cumsum(c(1L, head(counts, -1L)))
     indices <- rep(f$offset[rows], counts) + sequence(counts) - 1L
@@ -230,7 +233,7 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
       } else {
         paths <- lapply(seq_along(rows), function(j) {
           i <- seq.int(starts[j], length.out = counts[j])
-          pattern <- if (f$hidden[rows[j]]) "dashed" else lty[j]
+          pattern <- if (f$hidden[rows[j]] && tab$hidden[source[j]] == 1L) "dashed" else lty[j]
           dash_segments_3d(x[i], y[i], f$path_start_mm[rows[j]], dash_pattern_3d(pattern, tab$width_mm[source[j]]), viewport)
         })
         npaths <- vapply(paths, function(p) length(p$count), integer(1))
@@ -238,16 +241,19 @@ render_scene_grid <- function(scene, viewport, light = NULL) {
         path_counts <- unlist(lapply(paths, `[[`, "count"))
         gp <- material_gp_3d(s[rep(seq_along(rows), npaths), , drop = FALSE], rep(f$opacity[rows], npaths), kind)
       }
-      gp$lty <- 1; gp$lwd <- rep(tab$width_mm[source] * 72.27 / 25.4, npaths)
+      gp$lty <- 1; gp$lwd <- rep(tab$width_mm[source] * 96 / 25.4, npaths)
       gp$lineend <- c("butt", "round", "square")[tab$cap[source[1L]] + 1L]
       gp$linejoin <- c("round", "mitre", "bevel")[tab$join[source[1L]] + 1L]
       gp$linemitre <- tab$mitre_limit[source[1L]]
       g <- if (!sum(npaths)) grid::nullGrob() else grid::polylineGrob(
-        path_x, path_y, id = rep(seq_len(sum(npaths)), path_counts), gp = gp)
-      heads <- arrow_heads_3d(scene, rows, s, viewport)
-      if (!inherits(heads, "null")) g <- grid::grobTree(g, heads)
+        path_x, path_y, default.units = "npc", id = rep(seq_len(sum(npaths)), path_counts), gp = gp)
+      heads <- arrow_heads_3d(scene, masks, styles[masks, , drop = FALSE], viewport)
+      if (!inherits(heads, "null")) {
+        if (!is.null(clip)) { g$vp <- grid::viewport(clip = clip); clip <- NULL }
+        g <- grid::grobTree(g, heads)
+      }
     } else if (kind == 3L) {
-      g <- grid::pointsGrob(x, y, pch = style_value_3d(s, "shape", 19), size = grid::unit(style_value_3d(s, "size", 1.5), "mm"), gp = gp)
+      g <- grid::pointsGrob(x, y, default.units = "npc", pch = style_value_3d(s, "shape", 19), gp = gp)
     } else {
       tab <- scene$source$text; source <- f$source_index[rows]
       label <- text_label_3d(s)

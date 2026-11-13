@@ -14,7 +14,8 @@ namespace ggplot3d { namespace engine {
 using Vec3 = std::array<double, 3>;
 constexpr double pi = 3.14159265358979323846;
 
-static inline void require(bool condition, const std::string& message) {
+template <typename Message>
+static inline void require(bool condition, const Message& message) {
   if (!condition) Rcpp::stop(message);
 }
 } }

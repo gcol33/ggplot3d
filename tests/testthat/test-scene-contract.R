@@ -59,8 +59,8 @@ test_that("empty packets preserve the complete typed contract", {
   expect_identical(result$vertices$x_npc, double())
   expect_identical(result$schema_version, 1L)
   expect_identical(result$capabilities$visibility, "bsp")
-  expect_false(result$capabilities$exact_visibility)
-  expect_false(result$capabilities$footprint_clipping)
+  expect_true(result$capabilities$exact_visibility)
+  expect_true(result$capabilities$footprint_clipping)
   expect_s3_class(ggplot3d:::scene_layer_grob(packet), "zeroGrob")
 })
 

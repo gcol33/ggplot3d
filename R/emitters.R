@@ -2,6 +2,64 @@
 
 solid_defaults_3d <- function() ggplot2::aes(colour = NA, fill = "grey70", linewidth = 0.3, linetype = 1, alpha = 1)
 
+paint_metrics_3d <- function(styles) {
+  point_lwd <- style_value_3d(styles, "stroke", 0.5) * 96 / 25.4 / 2
+  fontsize <- style_value_3d(styles, "size", 1.5) * 72.27 / 25.4 + point_lwd
+  line_lwd <- style_value_3d(styles, "linewidth", 0.5) * 72.27 / 25.4
+  shape <- style_value_3d(styles, "shape", 19)
+  radius <- fontsize * 25.4 / 72 * ifelse(shape == 20, .25, .375)
+  border <- point_lwd * 25.4 / 192 * !(shape %in% 15:18)
+  if (!is.null(styles$colour)) border[is.na(styles$colour)] <- 0
+  list(point_lwd = point_lwd, fontsize = fontsize, line_lwd = line_lwd,
+       width_mm = line_lwd * 25.4 / 96,
+       radius_mm = radius + border, body_radius_mm = radius, border_mm = border)
+}
+
+marker_footprints_3d <- function(styles) {
+  metrics <- paint_metrics_3d(styles)
+  shapes <- style_value_3d(styles, "shape", 19)
+  keys <- paste(shapes, metrics$body_radius_mm, metrics$border_mm, sep = ":")
+  chosen <- which(!duplicated(keys)); index <- match(keys, keys[chosen])
+  shapes <- shapes[chosen]
+  radii <- metrics$radius_mm[chosen]
+  footprint <- list(kind = rep.int(1L, length(chosen)), offset = rep.int(1L, length(chosen)),
+    count = rep.int(0L, length(chosen)), radius_x_mm = radii, radius_y_mm = radii, angle = rep(0, length(chosen)))
+  vertices <- list(x_mm = numeric(), y_mm = numeric(), ring = integer())
+  for (i in which(shapes %in% c(0,2,5,6,15,17,18,22:25))) {
+    shape <- shapes[i]; r <- metrics$body_radius_mm[chosen[i]]; border <- metrics$border_mm[chosen[i]]
+    if (shape %in% c(0,15,22)) {
+      r <- r * if (shape == 22) sqrt(pi / 4) else 1
+      xy <- cbind(c(-1,1,1,-1), c(-1,-1,1,1)) * r
+    } else if (shape %in% c(5,18,23)) {
+      r <- r * if (shape == 23) sqrt(pi / 2) else if (shape == 5) sqrt(2) else 1
+      xy <- cbind(c(0,1,0,-1),c(-1,0,1,0)) * r
+    } else {
+      r <- r * sqrt(4 * pi / (3 * sqrt(3)))
+      xy <- cbind(c(0,-sqrt(3)/2,sqrt(3)/2),c(1,-.5,-.5)) * r
+      if (shape %in% c(6,25)) xy[,2L] <- -xy[,2L]
+    }
+    centre <- colMeans(xy)
+    area <- sum(xy[,1L] * xy[c(2:nrow(xy),1L),2L] - xy[,2L] * xy[c(2:nrow(xy),1L),1L])
+    if (area < 0) xy <- xy[nrow(xy):1L,,drop=FALSE]
+    next_xy <- xy[c(2:nrow(xy),1L),,drop=FALSE]
+    delta <- next_xy-xy; lengths <- sqrt(rowSums(delta^2))
+    normals <- cbind(delta[,2L],-delta[,1L])/lengths
+    previous <- normals[c(nrow(xy),seq_len(nrow(xy)-1L)),,drop=FALSE]
+    offsets <- (normals + previous) / (1 + rowSums(normals * previous))
+    outer <- xy + border * offsets
+    rings <- list(outer)
+    if (shape %in% c(0,2,5,6)) {
+      inner <- xy - border * offsets
+      if (all(rowSums((inner-centre) * (xy-centre)) > 0)) rings[[2L]] <- inner
+    }
+    polygon <- do.call(rbind,rings)
+    footprint$kind[i] <- 2L; footprint$offset[i] <- length(vertices$x_mm)+1L; footprint$count[i] <- nrow(polygon)
+    vertices$x_mm <- c(vertices$x_mm,polygon[,1L]); vertices$y_mm <- c(vertices$y_mm,polygon[,2L])
+    vertices$ring <- c(vertices$ring,rep(seq_along(rings),vapply(rings,nrow,integer(1))))
+  }
+  list(index=index,footprints=footprint,vertices=vertices)
+}
+
 #' Register a geometry emitter
 #' @param geom A ggplot2 geom prototype.
 #' @param emit Function accepting data, params and panel_params.
@@ -107,7 +165,7 @@ styles_3d <- function(data, rows, kinds, params) {
   chosen <- ifelse(kinds == "faces", styles$fill[index], styles$colour[index])
   filled <- kinds == "markers" & styles$shape[index] %in% 21:25 & !is.na(styles$fill[index])
   chosen[filled] <- styles$fill[index[filled]]
-  rgba <- grDevices::col2rgb(chosen, alpha = TRUE)
+  rgba <- colour_channels_3d(chosen, alpha = TRUE)
   opacity <- as.double(styles$alpha[index] * rgba[4L, ] / 255)
   for (name in c("colour", "fill")) {
     rgb <- grDevices::col2rgb(styles[[name]], alpha = TRUE)
@@ -139,7 +197,7 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
       source_row = as.integer(data$.source[rows[i]]), style_id = style, offset = offsets[i], count = counts[i],
       partition = rep.int(if (identical(params$occlusion, "overlay")) 2L else 1L, length(i)), opacity = material$opacity[i])
     if (kind == "polylines") {
-      tables[[kind]]$width_mm <- material$styles$linewidth[style]
+      tables[[kind]]$width_mm <- paint_metrics_3d(material$styles)$width_mm[style]
       tables[[kind]]$cap <- rep.int(match(params$lineend %or3d% "butt", c("butt", "round", "square")) - 1L, length(i))
       tables[[kind]]$join <- rep.int(match(params$linejoin %or3d% "round", c("round", "mitre", "bevel")) - 1L, length(i))
       tables[[kind]]$mitre_limit <- rep(params$linemitre %or3d% 10, length(i))
@@ -159,11 +217,10 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
   if ("markers" %in% kinds) {
     i <- which(kinds == "markers")
     style <- material$index[i]
-    radius <- material$styles$size[style] / 2 + material$styles$stroke[style] / 2
-    radii <- unique(radius)
-    tables$markers$footprint_id <- match(radius, radii)
-    tables$footprints <- list(kind = rep.int(1L, length(radii)), offset = rep.int(1L, length(radii)), count = rep.int(0L, length(radii)),
-                              radius_x_mm = radii, radius_y_mm = radii, angle = rep(0, length(radii)))
+    footprints <- marker_footprints_3d(material$styles)
+    tables$markers$footprint_id <- footprints$index[style]
+    tables$footprints <- footprints$footprints
+    tables$footprint_vertices <- footprints$vertices
   }
   do.call(new_scene_packet, c(list(vertices = vertices, corners = corners), tables,
                              list(styles = material$styles, panel_id = panel_id)))
@@ -190,15 +247,17 @@ unique_edges_3d <- function(edges, vertex, mesh = rep.int(1L, length(vertex))) {
 }
 
 packet_from_faces_edges_3d <- function(data, faces, edges, params, panel_params) {
+  if (is.matrix(faces)) faces <- list(faces)
   if (isTRUE(params$wireframe)) {
-    faces <- matrix(integer(), ncol = 3L)
+    faces <- list()
     if (all(is.na(data$colour))) data$colour <- "grey30"
   }
-  faces <- faces[!is.na(data$fill[faces[, 1L]]), , drop = FALSE]
+  faces <- lapply(faces, function(f) f[!is.na(data$fill[f[, 1L]]), , drop = FALSE])
   edges <- edges[!is.na(data$colour[edges[, 1L]]), , drop = FALSE]
-  packet_from_primitives_3d(data, c(as.vector(t(faces)), as.vector(t(edges))),
-    c(rep("faces", nrow(faces)), rep("polylines", nrow(edges))), params, panel_params$panel_id,
-    c(rep.int(3L, nrow(faces)), rep.int(2L, nrow(edges))))
+  counts <- unlist(lapply(faces, function(f) rep.int(ncol(f), nrow(f))), use.names = FALSE)
+  packet_from_primitives_3d(data, c(unlist(lapply(faces, function(f) as.vector(t(f))), use.names = FALSE), as.vector(t(edges))),
+    c(rep("faces", length(counts)), rep("polylines", nrow(edges))), params, panel_params$panel_id,
+    c(counts, rep.int(2L, nrow(edges))))
 }
 
 emit_points_3d <- function(data, params, panel_params) {

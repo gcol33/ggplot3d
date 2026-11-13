@@ -111,27 +111,26 @@ prism_topology_3d <- function(data, rings) {
 }
 
 # Directed boundaries put the solid on their left, including hole boundaries.
-emit_prism_buffers_3d <- function(data, triangles, edges, params, panel_params) {
+emit_prism_buffers_3d <- function(data, base_faces, edges, params, panel_params) {
   n <- nrow(data)
   endpoint <- data$zmax %or3d% data$z
-  upper <- data
-  upper$z <- pmax(data$zmin, data$zmax %or3d% data$z)
-  data$z <- pmin(data$zmin, data$zmax %or3d% data$z)
-  all <- rbind(data, upper)
-  lower <- triangles[, c(1L, 3L, 2L), drop = FALSE]
-  top <- triangles + n
+  all <- structure(lapply(data, rep, times = 2L), class = "data.frame", row.names = .set_row_names(2L * n))
+  all$z <- c(pmin(data$zmin, endpoint), pmax(data$zmin, endpoint))
   a <- edges[, 1L]; b <- edges[, 2L]
-  walls <- rbind(cbind(a, b, b + n), cbind(a, b + n, a + n))
+  walls <- cbind(a, b, b + n, a + n)
   cap <- params$cap %or3d% "both"
-  caps <- matrix(integer(), ncol = 3L)
   upward <- endpoint >= data$zmin
-  if (cap %in% c("both", "top")) caps <- rbind(caps, if (cap == "both") top else {
-    rows <- upward[triangles[, 1L]]; result <- lower; result[rows, ] <- top[rows, ]; result
+  if (is.matrix(base_faces)) base_faces <- list(base_faces)
+  caps <- if (cap == "none") list() else lapply(base_faces, function(ids) {
+    lower <- ids[, rev(seq_len(ncol(ids))), drop = FALSE]
+    top <- ids + n
+    if (cap == "both") return(rbind(top, lower))
+    rows <- upward[ids[, 1L]]
+    if (cap == "bottom") rows <- !rows
+    lower[rows, ] <- top[rows, , drop = FALSE]
+    lower
   })
-  if (cap %in% c("both", "bottom")) caps <- rbind(caps, if (cap == "both") lower else {
-    rows <- upward[triangles[, 1L]]; result <- top; result[rows, ] <- lower[rows, ]; result
-  })
-  faces <- rbind(caps, walls)
+  faces <- c(caps, list(walls))
   strokes <- rbind(edges, edges + n, cbind(unique(as.vector(edges)), unique(as.vector(edges)) + n))
   packet_from_faces_edges_3d(all, faces, strokes, params, panel_params)
 }
@@ -145,10 +144,9 @@ emit_columns_3d <- function(data, params, panel_params) {
   corners <- data[rep(seq_len(n), each = 4L), , drop = FALSE]
   corners$x <- as.vector(t(cbind(data$xmin, data$xmax, data$xmax, data$xmin)))
   corners$y <- as.vector(t(cbind(data$ymin, data$ymin, data$ymax, data$ymax)))
-  offsets <- rep((seq_len(n) - 1L) * 4L, each = 2L)
-  triangles <- matrix(rep(c(1L, 2L, 3L, 1L, 3L, 4L), n), ncol = 3L, byrow = TRUE) + offsets
+  faces <- matrix(seq_len(4L * n), ncol = 4L, byrow = TRUE)
   edges <- cbind(seq_len(4L * n), rep(c(2L, 3L, 4L, 1L), n) + rep((seq_len(n) - 1L) * 4L, each = 4L))
-  emit_prism_buffers_3d(corners, triangles, edges, params, panel_params)
+  emit_prism_buffers_3d(corners, faces, edges, params, panel_params)
 }
 
 GeomExtrude3D <- ggplot2::ggproto("GeomExtrude3D", ggplot2::Geom,
@@ -181,17 +179,31 @@ geom_extrude_3d <- function(mapping = NULL, data = NULL, stat = "identity", posi
 
 emit_extrusions_3d <- function(data, params, panel_params) {
   valid <- valid_rows_3d(data, params, c("x", "y", "z", "zmin"))
-  groups <- interaction(data$group, data$.feature %or3d% 1L, data$.part %or3d% 1L, drop = TRUE)
+  keys <- data[c("group", intersect(c(".feature", ".part"), names(data)))]
+  groups <- match(do.call(paste, c(keys, sep = ":")), unique(do.call(paste, c(keys, sep = ":"))))
+  rows <- split(seq_len(nrow(data)), groups)
+  first <- vapply(rows, `[`, integer(1), 1L)
+  group_index <- match(groups, as.integer(names(rows)))
+  valid_group <- vapply(rows, function(r) all(valid[r]), logical(1))
+  for (field in c("z", "zmin", intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data)))) {
+    value <- match(data[[field]], unique(data[[field]]))
+    if (any(value != value[first[group_index]] & valid_group[group_index])) stop(if (field %in% c("z", "zmin"))
+      "Extrusion heights must be constant within each feature." else
+      "Extrusion materials must be constant within each feature.", call. = FALSE)
+  }
+  keep <- valid_group & data$z[first] != data$zmin[first]
+  keep[is.na(keep)] <- FALSE
+  rows <- rows[keep]
+  if (!length(rows)) return(new_scene_packet(panel_id = panel_params$panel_id))
+  topology <- convex_prisms_3d(data, rows)
+  if (!is.null(topology)) return(emit_prism_buffers_3d(data, topology$faces, topology$edges, params, panel_params))
+  groups <- factor(groups)
   chunks <- triangles <- edges <- vector("list", nlevels(groups))
   offset <- 0L; i <- 0L
   for (rows in split(seq_len(nrow(data)), groups)) {
     if (!all(valid[rows])) next
     d <- data[rows, , drop = FALSE]
-    if (length(unique(d$z)) != 1L || length(unique(d$zmin)) != 1L) stop("Extrusion heights must be constant within each feature.", call. = FALSE)
     if (d$z[1L] == d$zmin[1L]) next
-    for (field in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(d))) {
-      if (length(unique(d[[field]])) != 1L) stop("Extrusion materials must be constant within each feature.", call. = FALSE)
-    }
     topology <- prism_topology_3d(d, split(seq_len(nrow(d)), d$subgroup %or3d% rep(1L, nrow(d))))
     i <- i + 1L; chunks[[i]] <- d
     triangles[[i]] <- topology$triangles + offset; edges[[i]] <- topology$edges + offset
@@ -200,6 +212,37 @@ emit_extrusions_3d <- function(data, params, panel_params) {
   if (!i) return(new_scene_packet(panel_id = panel_params$panel_id))
   emit_prism_buffers_3d(do.call(rbind, chunks[seq_len(i)]), do.call(rbind, triangles[seq_len(i)]),
     do.call(rbind, edges[seq_len(i)]), params, panel_params)
+}
+
+# Convex single-ring features share vectorised half-plane validation and cap topology.
+convex_prisms_3d <- function(data, rows) {
+  faces <- edges <- list()
+  for (size in unique(lengths(rows))) {
+    if (size < 3L) return(NULL)
+    ids <- matrix(unlist(rows[lengths(rows) == size], use.names = FALSE), ncol = size, byrow = TRUE)
+    x <- matrix(data$x[ids], nrow(ids)); y <- matrix(data$y[ids], nrow(ids))
+    if (!is.null(data$subgroup) && any(matrix(data$subgroup[ids], nrow(ids)) != data$subgroup[ids[, 1L]])) return(NULL)
+    closed <- x[, 1L] == x[, size] & y[, 1L] == y[, size]
+    if (any(closed) && !all(closed)) return(NULL)
+    if (all(closed)) { ids <- ids[, -size, drop = FALSE]; x <- x[, -size, drop = FALSE]; y <- y[, -size, drop = FALSE]; size <- size - 1L }
+    if (size < 3L) return(NULL)
+    for (j in seq_len(size - 1L)) for (k in seq.int(j + 1L, size))
+      if (any(x[,j] == x[,k] & y[,j] == y[,k])) stop("Polygon rings require at least three distinct vertices.", call. = FALSE)
+    next_id <- c(seq.int(2L, size), 1L)
+    area <- rowSums(x * y[, next_id, drop = FALSE] - y * x[, next_id, drop = FALSE])
+    sign <- sign(area)
+    tolerance <- 256 * .Machine$double.eps
+    if (any(area == 0)) return(NULL)
+    for (j in seq_len(size)) {
+      cross <- (x[, next_id[j]] - x[, j]) * (y - y[, j]) - (y[, next_id[j]] - y[, j]) * (x - x[, j])
+      if (any(cross * sign < -tolerance)) return(NULL)
+    }
+    reverse <- area < 0
+    ids[reverse, ] <- ids[reverse, rev(seq_len(size)), drop = FALSE]
+    edges[[length(edges) + 1L]] <- cbind(as.vector(t(ids)), as.vector(t(ids[, next_id, drop = FALSE])))
+    faces[[length(faces) + 1L]] <- ids
+  }
+  list(faces = faces, edges = do.call(rbind, edges))
 }
 
 register_geom_3d(GeomCol3D, emit_columns_3d, prepare_aesthetics = prepare_solid_3d,

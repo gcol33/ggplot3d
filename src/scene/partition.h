@@ -19,6 +19,9 @@ struct Piece {
   Polygon mask;
   bool mask_required = true;
   std::size_t whole_stroke_parts = 0;
+  bool cap_start = true, cap_end = true;
+  Index solid = -1;
+  std::vector<Piece> members;
 };
 
 struct SplitPlane { Vec3 normal, origin; };

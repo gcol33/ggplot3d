@@ -29,9 +29,11 @@ as_z_scale <- function(scale, position) {
 #' d$time <- as.POSIXct("2026-01-01", tz = "UTC") + (0:2) * 3600
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = time)) +
 #'   geom_point_3d() + scale_z_datetime() + coord_3d()
-#' d$elapsed <- as.difftime(1:3, units = "hours")
-#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = elapsed)) +
-#'   geom_point_3d() + scale_z_time() + coord_3d()
+#' if (requireNamespace("hms", quietly = TRUE)) {
+#'   d$elapsed <- as.difftime(1:3, units = "hours")
+#'   ggplot2::ggplot(d, ggplot2::aes(x, y, z = elapsed)) +
+#'     geom_point_3d() + scale_z_time() + coord_3d()
+#' }
 #' @export
 scale_z_continuous <- function(..., position = "auto") {
   as_z_scale(ggplot2::scale_x_continuous(...), position)
