@@ -155,6 +155,7 @@ reference:
 - title: Mesh input and extension API
   contents:
   - mesh_3d
+  - read_mesh_3d
   - fortify
   - layer_3d
   - register_geom_3d
