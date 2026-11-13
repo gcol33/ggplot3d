@@ -22,9 +22,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// raster_prepare_cpp
+Rcpp::List raster_prepare_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport);
+RcppExport SEXP _ggplot3d_raster_prepare_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type packet(packetSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type camera(cameraSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type viewport(viewportSEXP);
+    rcpp_result_gen = Rcpp::wrap(raster_prepare_cpp(packet, camera, viewport));
+    return rcpp_result_gen;
+END_RCPP
+}
+// raster_draw_cpp
+Rcpp::List raster_draw_cpp(SEXP scene, Rcpp::List colours, Rcpp::List dashes, int width, int height, int antialias, bool id_pass);
+RcppExport SEXP _ggplot3d_raster_draw_cpp(SEXP sceneSEXP, SEXP coloursSEXP, SEXP dashesSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP antialiasSEXP, SEXP id_passSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type scene(sceneSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type colours(coloursSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type dashes(dashesSEXP);
+    Rcpp::traits::input_parameter< int >::type width(widthSEXP);
+    Rcpp::traits::input_parameter< int >::type height(heightSEXP);
+    Rcpp::traits::input_parameter< int >::type antialias(antialiasSEXP);
+    Rcpp::traits::input_parameter< bool >::type id_pass(id_passSEXP);
+    rcpp_result_gen = Rcpp::wrap(raster_draw_cpp(scene, colours, dashes, width, height, antialias, id_pass));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_scene_compile_cpp", (DL_FUNC) &_ggplot3d_scene_compile_cpp, 3},
+    {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
+    {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 7},
     {NULL, NULL, 0}
 };
 

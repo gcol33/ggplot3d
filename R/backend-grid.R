@@ -19,24 +19,29 @@ scene_panel_grob <- function(packets, panel_params, theme, underlay = list(), ov
 #' @export
 makeContent.scene_panel_grob <- function(x) {
   backend <- x$panel_params$coord_params$backend
-  if (!identical(backend$type, "vector")) stop("The grid backend supports vector output; raster output requires the frustumR backend adapter.", call. = FALSE)
-  dpi <- mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
+  dpi <- if (identical(backend$type, "raster")) backend$dpi else mean(grDevices::dev.size("px") / grDevices::dev.size("in"))
   outer <- new_scene_viewport(grid::unit(1, "npc"), grid::unit(1, "npc"), dpi)
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, as.list(x$frame_group))
-  packet <- merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id)
-  # Device text metrics are authoritative at the physical-size boundary.
-  if (length(packet$text$style_id)) {
-    for (i in seq_along(packet$text$style_id)) {
-      row <- match(packet$text$style_id[i], packet$styles$style_id)
-      if (isTRUE(packet$styles$.anchor[row])) next
-      s <- packet$styles[row, , drop = FALSE]
-      g <- grid::textGrob(text_label_3d(s), gp = material_gp_3d(s, 1, 4L))
-      packet$text$width_mm[i] <- grid::convertWidth(grid::grobWidth(g), "mm", TRUE)
-      packet$text$height_mm[i] <- grid::convertHeight(grid::grobHeight(g), "mm", TRUE)
+  if (identical(backend$type, "raster")) {
+    result <- render_raster_panel_3d(x, furniture, backend)
+    scene <- result$scene
+    rendered <- result$grob
+  } else {
+    packet <- merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id)
+    # Device text metrics are authoritative at the physical-size boundary.
+    if (length(packet$text$style_id)) {
+      for (i in seq_along(packet$text$style_id)) {
+        row <- match(packet$text$style_id[i], packet$styles$style_id)
+        if (isTRUE(packet$styles$.anchor[row])) next
+        s <- packet$styles[row, , drop = FALSE]
+        g <- grid::textGrob(text_label_3d(s), gp = material_gp_3d(s, 1, 4L))
+        packet$text$width_mm[i] <- grid::convertWidth(grid::grobWidth(g), "mm", TRUE)
+        packet$text$height_mm[i] <- grid::convertHeight(grid::grobHeight(g), "mm", TRUE)
+      }
     }
+    scene <- scene_compile(packet, furniture$camera, furniture$viewport)
+    rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light)
   }
-  scene <- scene_compile(packet, furniture$camera, furniture$viewport)
-  rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light)
   fit <- furniture$overlay$fit
   rendered$vp <- grid::viewport(x = grid::unit(fit$origin[1L], "mm"), y = grid::unit(fit$origin[2L], "mm"),
     width = grid::unit(furniture$viewport$width_mm, "mm"), height = grid::unit(furniture$viewport$height_mm, "mm"),
@@ -78,25 +83,6 @@ material_gp_3d <- function(styles, opacity, kind, fill = NULL) {
     lwd = style_value_3d(styles, if (kind == 3L) "stroke" else "linewidth", 0.5) * 72.27 / 25.4,
     lty = lty, fontsize = style_value_3d(styles, "fontsize", 11),
     fontfamily = style_value_3d(styles, "family", ""), fontface = style_value_3d(styles, "fontface", 1))
-}
-
-shade_fill_3d <- function(fill, fragments, rows, camera, light) {
-  if (is.null(light) || !length(rows)) return(fill)
-  normal <- cbind(fragments$normal_x[rows], fragments$normal_y[rows], fragments$normal_z[rows])
-  direction <- light$direction
-  if (light$space == "camera") direction <- camera$right * direction[1L] + camera$up * direction[2L] - camera$forward * direction[3L]
-  if (light$space == "data") direction <- direction * camera$model_scale
-  direction <- direction / sqrt(sum(direction^2))
-  toward <- -camera$forward
-  normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, ] <- -normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, , drop = FALSE]
-  brightness <- light$ambient + light$diffuse * pmax(0, drop(normal %*% direction))
-  rgb <- t(grDevices::col2rgb(fill)) / 255
-  linear <- ifelse(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055)^2.4)
-  linear <- if (light$mode == "multiply") linear * brightness else 1 - (1 - linear) * brightness
-  rgb <- ifelse(linear <= 0.0031308, 12.92 * linear, 1.055 * linear^(1 / 2.4) - 0.055)
-  result <- grDevices::rgb(pmin(1, pmax(0, rgb[, 1L])), pmin(1, pmax(0, rgb[, 2L])), pmin(1, pmax(0, rgb[, 3L])))
-  result[is.na(fill)] <- NA_character_
-  result
 }
 
 mask_path_3d <- function(scene, rows) {
