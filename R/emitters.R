@@ -60,13 +60,36 @@ marker_footprints_3d <- function(styles) {
   list(index=index,footprints=footprint,vertices=vertices)
 }
 
+# Kinds of adjustment an emitter accepts: "nudge", "jitter", "dodge",
+# "stack" (stack and fill) and "planar" (ggplot2's own x/y adjustments).
+position_kinds_3d <- c("nudge", "jitter", "dodge", "stack", "planar")
+
+# Columns holding a geometry's interval along one axis: lower (NA when the
+# interval starts at zero), upper, and the anchor position (NA when absent).
+extent_3d <- function(lower = NA_character_, upper, centre = NA_character_) {
+  stopifnot(is.character(upper), length(upper) == 1L, !is.na(upper),
+            length(lower) == 1L, length(centre) == 1L)
+  c(lower = as.character(lower), upper = upper, centre = as.character(centre))
+}
+
 #' Register a geometry emitter
 #' @param geom A ggplot2 geom prototype.
 #' @param emit Function accepting data, params and panel_params.
 #' @param aesthetics Additional supported aesthetics.
 #' @param setup_data Optional geometry setup function.
 #' @param stat_adapter Optional stat prototype.
-#' @param position_check Optional position validation function.
+#' @param position_check Optional extra position validation, a function of
+#'   the position and the panel's scales that signals an error.
+#' @param positions Position adjustments the geometry accepts besides
+#'   identity: any of `"nudge"` ([position_nudge_3d()]), `"jitter"`
+#'   ([position_jitter_3d()]), `"dodge"` ([position_dodge_3d()]), `"stack"`
+#'   ([position_stack_3d()], [position_fill_3d()]) and `"planar"` (ggplot2's
+#'   own nudge, jitter and dodge, which move x and y only).
+#' @param extents Named list, by axis `"x"`, `"y"`, `"z"`, of the columns
+#'   holding the geometry's interval along that axis, as character vectors
+#'   `c(lower = , upper = , centre = )`; `lower` or `centre` may be `NA`.
+#'   Stacking and dodging read and rewrite these columns. An axis not listed
+#'   takes its own coordinate as both the interval end and the anchor.
 #' @param replace Whether to replace an existing registration.
 #' @param prepare_data,prepare_aesthetics Optional input and aesthetic preparation functions.
 #' @param parameters Named list of further drawing parameters the geom accepts,
@@ -107,8 +130,11 @@ marker_footprints_3d <- function(styles) {
 register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = NULL,
                              stat_adapter = NULL, position_check = NULL, replace = FALSE,
                              prepare_data = NULL, prepare_aesthetics = NULL, parameters = list(),
-                             default_z = 0) {
+                             default_z = 0, positions = "nudge", extents = list()) {
   stopifnot(inherits(geom, "Geom"), is.function(emit), is.list(parameters),
+            is.character(positions), all(positions %in% position_kinds_3d),
+            is.list(extents), all(names(extents) %in% c("x", "y", "z")),
+            all(vapply(extents, function(e) is.character(e) && setequal(names(e), c("lower", "upper", "centre")), logical(1))),
             !length(parameters) || !is.null(names(parameters)),
             is.numeric(default_z), length(default_z) == 1L, !is.na(default_z))
   name <- class(geom)[1L]
@@ -116,7 +142,8 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
   .emitters_3d[[name]] <- list(name = name, emit = emit, aesthetics = aesthetics,
                               setup_data = setup_data, stat_adapter = stat_adapter, position_check = position_check,
                               prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics,
-                              parameters = parameters, default_z = default_z)
+                              parameters = parameters, default_z = default_z,
+                              positions = positions, extents = extents)
   invisible(NULL)
 }
 
@@ -462,13 +489,14 @@ collect_scene_layers <- function(panel, panel_params, theme) {
   result
 }
 
-register_geom_3d(ggplot2::GeomPoint, emit_points_3d)
-register_geom_3d(ggplot2::GeomPath, emit_paths_3d)
-register_geom_3d(ggplot2::GeomLine, emit_paths_3d)
-register_geom_3d(ggplot2::GeomSegment, emit_segments_3d,
-  position_check = function(position, scales) check_position_3d(position, scales))
-register_geom_3d(ggplot2::GeomText, emit_text_3d)
+# Marks placed by one coordinate per row accept every adjustment.
+mark_positions_3d <- c("nudge", "jitter", "dodge", "stack", "planar")
+register_geom_3d(ggplot2::GeomPoint, emit_points_3d, positions = mark_positions_3d)
+register_geom_3d(ggplot2::GeomPath, emit_paths_3d, positions = mark_positions_3d)
+register_geom_3d(ggplot2::GeomLine, emit_paths_3d, positions = mark_positions_3d)
+register_geom_3d(ggplot2::GeomSegment, emit_segments_3d, positions = c("nudge", "jitter", "dodge"))
+register_geom_3d(ggplot2::GeomText, emit_text_3d, positions = mark_positions_3d)
 # geom_blank() and expand_limits() train scales and draw nothing.
 register_geom_3d(ggplot2::GeomBlank, function(data, params, panel_params) {
   new_scene_packet(vertices = list(x = numeric(), y = numeric(), z = numeric()))
-})
+}, positions = mark_positions_3d)

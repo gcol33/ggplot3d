@@ -218,7 +218,7 @@ geom_contour_filled_3d <- function(mapping = NULL, data = NULL, stat = StatConto
 
 register_geom_3d(GeomContour3D, function(data, params, panel_params) {
   emit_paths_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
-}, position_check = function(position, scales) check_position_3d(position, scales))
+})
 register_geom_3d(GeomContourFilled3D, function(data, params, panel_params) {
   emit_polygons_3d(plane_draw_data_3d(data, params, panel_params), params, panel_params)
-}, position_check = function(position, scales) check_position_3d(position, scales))
+})

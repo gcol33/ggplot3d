@@ -62,12 +62,7 @@ scales_3d <- function(parent, context) {
 adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
   entry <- find_emitter_3d(layer$geom)
   if (is.null(entry)) stop("No 3D emitter registered for ", class(layer$geom)[1L], ".", call. = FALSE)
-  supported_position <- inherits(layer$position, "PositionIdentity") ||
-    (entry$name %in% c("GeomPoint", "GeomPath", "GeomLine", "GeomText", "GeomLabel") &&
-       any(c("PositionNudge", "PositionJitter", "PositionDodge", "PositionDodge2", "PositionJitterdodge") %in% class(layer$position)))
-  if (!supported_position && is.null(entry$position_check)) {
-    stop("Unsupported 3D position: ", class(layer$position)[1L], ".", call. = FALSE)
-  }
+  check_position_kind_3d(layer$position, entry)
   parent <- layer
   fixed <- layer$aes_params[intersect(names(layer$aes_params), c("x", "xmin", "xmax", "xend", "y", "ymin", "ymax", "yend", z_aesthetics))]
   base_stat <- entry$stat_adapter %or3d% layer$stat
@@ -75,6 +70,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
   stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, c(".source", frame$parts)))
   result <- ggplot2::ggproto(NULL, layer,
     geom = scene_geom_3d(layer$geom, entry),
+    position = bind_position_3d(layer$position, entry),
     stat = stat,
     compute_statistic = function(self, data, layout) {
       out <- ggplot2::ggproto_parent(parent, self)$compute_statistic(data, layout)
@@ -102,8 +98,10 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox) {
       out
     },
     compute_position = function(self, data, layout) {
-      if (!is.null(entry$position_check)) {
-        for (panel in unique(data$PANEL)) entry$position_check(self$position, layout$get_scales(panel))
+      for (panel in unique(data$PANEL)) {
+        scales <- layout$get_scales(panel)
+        check_position_scales_3d(self$position, scales)
+        if (!is.null(entry$position_check)) entry$position_check(self$position, scales)
       }
       ggplot2::ggproto_parent(parent, self)$compute_position(data, layout)
     }

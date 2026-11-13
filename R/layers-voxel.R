@@ -67,8 +67,7 @@ emit_voxels_3d <- function(data, params, panel_params) {
 }
 
 register_geom_3d(GeomVoxel3D, emit_voxels_3d,
-  parameters = list(height = NULL, greedy = TRUE),
-  position_check = function(position, scales) check_position_3d(position, scales))
+  parameters = list(height = NULL, greedy = TRUE))
 
 #' Voxels
 #'

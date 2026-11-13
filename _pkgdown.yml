@@ -147,7 +147,10 @@ reference:
 - title: Positions
   contents:
   - position_nudge_3d
+  - position_jitter_3d
+  - position_dodge_3d
   - position_stack_3d
+  - position_fill_3d
 - title: Guides and themes
   contents: guide_axis_3d
 - title: Output backends
