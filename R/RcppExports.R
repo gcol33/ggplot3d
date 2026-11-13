@@ -85,6 +85,14 @@ raster_occlusion_cpp <- function(scene, colours, dashes, extent, width, height, 
     .Call(`_ggplot3d_raster_occlusion_cpp`, scene, colours, dashes, extent, width, height, antialias, depth)
 }
 
+raymarch_geodesic_cpp <- function(type, origin, direction, times, transport = TRUE) {
+    .Call(`_ggplot3d_raymarch_geodesic_cpp`, type, origin, direction, times, transport)
+}
+
+raymarch_curved_cpp <- function(inputs, directions, settings, threads) {
+    .Call(`_ggplot3d_raymarch_curved_cpp`, inputs, directions, settings, threads)
+}
+
 raymarch_ops_cpp <- function() {
     .Call(`_ggplot3d_raymarch_ops_cpp`)
 }

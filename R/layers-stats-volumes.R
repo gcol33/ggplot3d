@@ -221,8 +221,10 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #' @param tol Geometric tolerance of the octree, relative to the diagonal of
 #'   the scale box.
 #' @param render `"mesh"` extracts triangles. `"trace"` sphere-traces an SDF
-#'   directly in the raster backend, with an opaque fill and opaque geometry.
-#'   Tracing uses transformed scale coordinates inside the panel box.
+#'   directly in the raster, pathtrace, or intrinsic raymarch backend, with
+#'   an opaque fill. Raster compositing requires opaque geometry.
+#'   Tracing uses transformed scale coordinates inside the panel box; these
+#'   are geometry chart coordinates for the intrinsic backend.
 #' @param trace_tolerance Surface tolerance in transformed scale units.
 #' @param trace_steps Maximum sphere-tracing steps per ray.
 #' @references Dowell and Jarratt (1971). A modified regula falsi method for

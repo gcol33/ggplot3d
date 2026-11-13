@@ -79,8 +79,10 @@ the level is filled, as on the box faces. Plane caps point along the
 plane normal. The plane is in transformed position coordinates.}
 
 \item{render}{\code{"mesh"} extracts triangles. \code{"trace"} sphere-traces an SDF
-directly in the raster backend, with an opaque fill and opaque geometry.
-Tracing uses transformed scale coordinates inside the panel box.}
+directly in the raster, pathtrace, or intrinsic raymarch backend, with
+an opaque fill. Raster compositing requires opaque geometry.
+Tracing uses transformed scale coordinates inside the panel box; these
+are geometry chart coordinates for the intrinsic backend.}
 
 \item{trace_tolerance}{Surface tolerance in transformed scale units.}
 

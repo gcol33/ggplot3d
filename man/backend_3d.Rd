@@ -16,11 +16,21 @@ backend_3d(
   focus = NULL,
   light_radius = 5,
   progressive = FALSE,
-  batch_size = 8L
+  batch_size = 8L,
+  geometry = "e3",
+  observer = c(0, 0, 0),
+  facing = diag(3),
+  fov = 70,
+  max_distance = 10,
+  tolerance = 1e-05,
+  max_steps = 2048L,
+  quotient = NULL,
+  light_size = 0.1
 )
 }
 \arguments{
-\item{type}{Backend: \code{"vector"}, \code{"raster"}, \code{"hybrid"} or \code{"pathtrace"}. A hybrid panel
+\item{type}{Backend: \code{"vector"}, \code{"raster"}, \code{"hybrid"}, \code{"pathtrace"}, or
+\code{"raymarch"} (an intrinsic view in a Thurston geometry). A hybrid panel
 rasterises the layers created with \code{raster = TRUE} (an argument of every
 \verb{geom_*_3d()} layer and of \code{\link[=layer_3d]{layer_3d()}}) into one image at \code{dpi} and draws
 the other layers, axes, panes and text as vector graphics. Vector
@@ -54,6 +64,25 @@ Changes to geometry, camera, lighting or image dimensions reset accumulation.}
 
 \item{batch_size}{Samples per native batch; accumulation is independent of
 batch size and worker count. R can interrupt between batches.}
+
+\item{geometry}{Intrinsic geometry for the raymarch backend; see \code{\link[=geodesic_3d]{geodesic_3d()}}.}
+
+\item{observer}{Observer coordinates in that geometry's chart.}
+
+\item{facing}{Orthonormal 3 by 3 matrix whose columns are the camera's right,
+up and forward tangent vectors in the observer's orthonormal frame.}
+
+\item{fov}{Vertical intrinsic field of view in degrees.}
+
+\item{max_distance}{Maximum intrinsic ray arc length.}
+
+\item{tolerance}{Surface residual and quotient-boundary tolerance.}
+
+\item{max_steps}{Maximum steps per intrinsic ray.}
+
+\item{quotient}{List of paired \code{\link[=thurston_portal_3d]{thurston_portal_3d()}} domain faces.}
+
+\item{light_size}{Positive point-light softening radius for intrinsic views.}
 }
 \value{
 A backend configuration for coord_3d().
@@ -72,6 +101,16 @@ cosine-weighted reflection sampling and Russian roulette. The ambient light
 is a uniform environment; the diffuse light is a sampled distant disk.
 Points and paths use the solid conversion of \code{\link[=export_3d]{export_3d()}}, and SDF layers
 use the shared sphere tracer. Furniture and text remain vector graphics.
+
+The raymarch backend traces geodesics from an observer inside the geometry.
+Use \code{\link[=geom_thurston_3d]{geom_thurston_3d()}} for balls, cylinders and half-spaces, or traced SDF
+layers for chart-defined CSG. It draws a full-panel perspective image;
+Euclidean plot axes and exterior-camera settings have no intrinsic meaning.
+Lighting is an isotropic point light at the observer, with the ambient and
+diffuse strengths from \code{\link[=light_3d]{light_3d()}}. Irradiance divides by the area density
+of geodesic spheres plus \code{light_size^2}. Each visible geodesic supplies its
+own light path, including paths through quotient faces. Intrinsic surfaces
+are opaque. See \code{\link[=geodesic_3d]{geodesic_3d()}} for charts and numerical accuracy details.
 }
 \examples{
 backend_3d("vector")

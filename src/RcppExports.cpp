@@ -307,6 +307,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// raymarch_geodesic_cpp
+Rcpp::List raymarch_geodesic_cpp(std::string type, Rcpp::NumericVector origin, Rcpp::NumericVector direction, Rcpp::NumericVector times, bool transport);
+RcppExport SEXP _ggplot3d_raymarch_geodesic_cpp(SEXP typeSEXP, SEXP originSEXP, SEXP directionSEXP, SEXP timesSEXP, SEXP transportSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type origin(originSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type direction(directionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type times(timesSEXP);
+    Rcpp::traits::input_parameter< bool >::type transport(transportSEXP);
+    rcpp_result_gen = Rcpp::wrap(raymarch_geodesic_cpp(type, origin, direction, times, transport));
+    return rcpp_result_gen;
+END_RCPP
+}
+// raymarch_curved_cpp
+Rcpp::List raymarch_curved_cpp(Rcpp::List inputs, Rcpp::NumericMatrix directions, Rcpp::List settings, int threads);
+RcppExport SEXP _ggplot3d_raymarch_curved_cpp(SEXP inputsSEXP, SEXP directionsSEXP, SEXP settingsSEXP, SEXP threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type inputs(inputsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type directions(directionsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type settings(settingsSEXP);
+    Rcpp::traits::input_parameter< int >::type threads(threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(raymarch_curved_cpp(inputs, directions, settings, threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // raymarch_ops_cpp
 Rcpp::CharacterVector raymarch_ops_cpp();
 RcppExport SEXP _ggplot3d_raymarch_ops_cpp() {
@@ -539,6 +566,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 10},
     {"_ggplot3d_raster_occlusion_cpp", (DL_FUNC) &_ggplot3d_raster_occlusion_cpp, 8},
+    {"_ggplot3d_raymarch_geodesic_cpp", (DL_FUNC) &_ggplot3d_raymarch_geodesic_cpp, 5},
+    {"_ggplot3d_raymarch_curved_cpp", (DL_FUNC) &_ggplot3d_raymarch_curved_cpp, 4},
     {"_ggplot3d_raymarch_ops_cpp", (DL_FUNC) &_ggplot3d_raymarch_ops_cpp, 0},
     {"_ggplot3d_raymarch_eval_cpp", (DL_FUNC) &_ggplot3d_raymarch_eval_cpp, 2},
     {"_ggplot3d_raymarch_trace_cpp", (DL_FUNC) &_ggplot3d_raymarch_trace_cpp, 7},

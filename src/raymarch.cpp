@@ -1,7 +1,90 @@
 #include "raymarch/kernel.h"
 #include "raymarch/volume.h"
 #include "raymarch/path.h"
+#include "raymarch/thurston-scene.h"
 using namespace ggplot3d::raymarch;
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List raymarch_geodesic_cpp(std::string type, Rcpp::NumericVector origin, Rcpp::NumericVector direction,
+                                 Rcpp::NumericVector times, bool transport = true) {
+  require(origin.size() == 3 && direction.size() == 3, "Geodesics need three-coordinate points and tangents");
+  Geometry g = geometry(type);
+  Geodesic ray(g, {origin[0], origin[1], origin[2]}, {direction[0], direction[1], direction[2]});
+  Rcpp::NumericMatrix position(times.size(), 3), velocity(times.size(), 3),
+      coordinate_velocity(times.size(), 3), Q(times.size(), 9);
+  Rcpp::NumericVector area(times.size());
+  for (int i = 0; i < times.size(); ++i) {
+    Flow f = ray.at(times[i], transport);
+    Vec3 v = mv(frame(g, f.p), f.u);
+    for (int j = 0; j < 3; ++j) {
+      position(i, j) = f.p[j];
+      velocity(i, j) = f.u[j];
+      coordinate_velocity(i, j) = v[j];
+      for (int k = 0; k < 3; ++k)
+        Q(i, j + 3 * k) = f.transport[j][k];
+    }
+    if (transport)
+      area[i] = area_density(ray, times[i]);
+  }
+  return Rcpp::List::create(Rcpp::Named("position") = position, Rcpp::Named("velocity") = velocity,
+                            Rcpp::Named("coordinate_velocity") = coordinate_velocity,
+                            Rcpp::Named("transport") = Q, Rcpp::Named("area") = area);
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List raymarch_curved_cpp(Rcpp::List inputs, Rcpp::NumericMatrix directions, Rcpp::List settings,
+                               int threads) {
+  require(directions.ncol() == 3, "Intrinsic rays need three tangent components");
+  Geometry g = geometry(Rcpp::as<std::string>(settings["geometry"]));
+  Rcpp::NumericVector o = settings["observer"];
+  Vec3 origin{o[0], o[1], o[2]};
+  double far = Rcpp::as<double>(settings["max_distance"]),
+         tolerance = Rcpp::as<double>(settings["tolerance"]);
+  int steps = Rcpp::as<int>(settings["max_steps"]);
+  std::vector<GeometricField> fields;
+  for (SEXP input : inputs)
+    fields.emplace_back(Rcpp::as<Rcpp::List>(input));
+  std::vector<Portal> portals;
+  Rcpp::List domain = settings["quotient"];
+  for (SEXP face : domain)
+    portals.emplace_back(Rcpp::as<Rcpp::List>(face));
+  for (const auto &portal : portals)
+    require(portal.value(g, origin) < -tolerance, "The observer must be inside the fundamental domain");
+  std::size_t n = directions.nrow();
+  std::vector<Vec3> rays(n);
+  std::vector<CurvedHit> hits(n);
+  for (std::size_t i = 0; i < n; ++i)
+    rays[i] = unit({directions(i, 0), directions(i, 1), directions(i, 2)});
+  ggplot3d::engine::parallel_blocks(
+      (n + 31) / 32, threads == 0 ? std::max(1u, std::thread::hardware_concurrency()) : threads,
+      [&](std::size_t block) {
+        for (std::size_t i = block * 32; i < std::min(n, (block + 1) * 32); ++i)
+          hits[i] = curved_trace(g, origin, rays[i], fields, portals, far, tolerance, steps);
+      });
+  Rcpp::NumericVector distance(n, NA_REAL), area(n);
+  Rcpp::IntegerVector count(n), crossings(n), object(n, NA_INTEGER);
+  Rcpp::NumericMatrix normal(n, 3), position(n, 3), colour(n, 3), incoming(n, 3);
+  for (std::size_t i = 0; i < n; ++i) {
+    const auto &h = hits[i];
+    count[i] = h.hit.steps;
+    crossings[i] = h.portals;
+    if (h.hit.found) {
+      distance[i] = h.hit.t;
+      area[i] = h.area;
+      object[i] = h.object + 1;
+      for (int j = 0; j < 3; ++j) {
+        normal(i, j) = h.hit.normal[j];
+        position(i, j) = h.position[j];
+        colour(i, j) = h.colour[j];
+        incoming(i, j) = h.incoming[j];
+      }
+    }
+  }
+  return Rcpp::List::create(
+      Rcpp::Named("distance") = distance, Rcpp::Named("area") = area, Rcpp::Named("normal") = normal,
+      Rcpp::Named("position") = position, Rcpp::Named("colour") = colour, Rcpp::Named("incoming") = incoming,
+      Rcpp::Named("steps") = count, Rcpp::Named("crossings") = crossings, Rcpp::Named("object") = object);
+}
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::CharacterVector raymarch_ops_cpp() {
