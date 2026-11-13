@@ -121,23 +121,35 @@ triangulate_polygon_3d <- function(data, rings) {
 
 emit_polygons_3d <- function(data, params, panel_params) {
   valid <- valid_rows_3d(data, params)
-  primitives <- list(); kinds <- character()
+  primitives <- vector("list", length(unique(data$group)))
+  kinds <- counts <- primitives
+  feature_id <- 0L
   for (group in unique(data$group)) {
     rows <- which(data$group == group)
     if (!all(valid[rows])) next
     feature <- data[rows, , drop = FALSE]
     ring_id <- feature$subgroup %or3d% rep.int(1L, nrow(feature))
     topology <- triangulate_polygon_3d(feature, split(seq_len(nrow(feature)), ring_id))
-    faces <- lapply(topology$triangles, function(i) rows[i])
+    feature_id <- feature_id + 1L
+    faces <- rows[unlist(topology$triangles, use.names = FALSE)]
+    vertices <- integer(); sizes <- integer(); types <- character()
     if (!all(is.na(feature$fill))) {
-      primitives <- c(primitives, faces); kinds <- c(kinds, rep("faces", length(faces)))
+      vertices <- faces
+      sizes <- rep.int(3L, length(topology$triangles))
+      types <- rep("faces", length(sizes))
     }
     if (!all(is.na(feature$colour))) {
       boundaries <- lapply(topology$rings, function(i) rows[c(i, i[1L])])
-      primitives <- c(primitives, boundaries); kinds <- c(kinds, rep("polylines", length(boundaries)))
+      vertices <- c(vertices, unlist(boundaries, use.names = FALSE))
+      sizes <- c(sizes, lengths(boundaries))
+      types <- c(types, rep("polylines", length(boundaries)))
     }
+    primitives[[feature_id]] <- vertices
+    counts[[feature_id]] <- sizes
+    kinds[[feature_id]] <- types
   }
-  packet_from_primitives_3d(data, primitives, kinds, params, panel_params$panel_id)
+  packet_from_primitives_3d(data, unlist(primitives, use.names = FALSE), unlist(kinds, use.names = FALSE),
+                            params, panel_params$panel_id, unlist(counts, use.names = FALSE))
 }
 
 register_geom_3d(ggplot2::GeomPolygon, emit_polygons_3d)

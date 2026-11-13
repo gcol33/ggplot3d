@@ -82,41 +82,55 @@ styles_3d <- function(data, rows, kinds, params) {
   styles <- data.frame(style_id = seq_along(rows))
   for (name in names(defaults)) styles[[name]] <- if (name %in% names(data)) data[[name]][rows] else rep(defaults[[name]], length(rows))
   styles$alpha[is.na(styles$alpha)] <- 1
-  chosen <- ifelse(kinds == "faces", styles$fill, styles$colour)
-  chosen[kinds == "markers" & styles$shape %in% 21:25 & !is.na(styles$fill)] <- styles$fill[kinds == "markers" & styles$shape %in% 21:25 & !is.na(styles$fill)]
+  keys <- lapply(styles[names(defaults)], function(x) match(x, unique(x)))
+  order <- do.call(order, c(keys, list(method = "radix")))
+  a <- head(order, -1L); b <- tail(order, -1L)
+  changed <- rep(FALSE, length(a))
+  for (key in keys) changed <- changed | key[a] != key[b]
+  first <- c(TRUE, changed)
+  group <- integer(length(rows)); group[order] <- cumsum(first)
+  representatives <- sort(order[first], method = "radix")
+  lookup <- integer(length(representatives))
+  lookup[group[representatives]] <- seq_along(representatives)
+  index <- lookup[group]
+  styles <- styles[representatives, , drop = FALSE]
+  styles$style_id <- seq_len(nrow(styles))
+  chosen <- ifelse(kinds == "faces", styles$fill[index], styles$colour[index])
+  filled <- kinds == "markers" & styles$shape[index] %in% 21:25 & !is.na(styles$fill[index])
+  chosen[filled] <- styles$fill[index[filled]]
   rgba <- grDevices::col2rgb(chosen, alpha = TRUE)
-  opacity <- as.double(styles$alpha * rgba[4L, ] / 255)
+  opacity <- as.double(styles$alpha[index] * rgba[4L, ] / 255)
   for (name in c("colour", "fill")) {
     rgb <- grDevices::col2rgb(styles[[name]], alpha = TRUE)
     styles[[name]] <- ifelse(is.na(styles[[name]]), NA_character_, grDevices::rgb(rgb[1, ], rgb[2, ], rgb[3, ], maxColorValue = 255))
   }
   styles$alpha <- 1
   styles$shade <- isTRUE(params$shade)
-  styles$arrow <- I(rep(list(params$arrow), length(rows)))
+  styles$arrow <- I(rep(list(params$arrow), nrow(styles)))
   styles$arrow_fill <- params$arrow.fill %or3d% styles$colour
   styles$fontsize <- styles$size * switch(params$size.unit %or3d% "mm", mm = 72.27 / 25.4, pt = 1, cm = 72.27 / 2.54, "in" = 72.27, pc = 12, stop("Unsupported text size unit.", call. = FALSE))
   if (isTRUE(params$parse)) styles$label <- I(lapply(as.character(styles$label), function(x) parse(text = x)))
-  list(styles = styles, opacity = opacity)
+  list(styles = styles, opacity = opacity, index = index)
 }
 
-packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id) {
+packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id, counts) {
   if (!length(primitives)) return(new_scene_packet(panel_id = panel_id))
-  rows <- vapply(primitives, `[`, integer(1), 1L)
-  material <- styles_3d(data, rows, kinds, params)
-  counts <- lengths(primitives)
   offsets <- cumsum(c(1L, counts[-length(counts)]))
-  used <- sort(unique(unlist(primitives, use.names = FALSE)))
+  rows <- primitives[offsets]
+  material <- styles_3d(data, rows, kinds, params)
+  used <- which(tabulate(primitives, nrow(data)) > 0L)
   vertices <- lapply(data[used, c("x", "y", "z"), drop = FALSE], as.double)
-  corners <- list(vertex = match(unlist(primitives, use.names = FALSE), used),
-                  source_row = as.integer(data$.source[unlist(primitives, use.names = FALSE)]))
+  corners <- list(vertex = match(primitives, used),
+                  source_row = as.integer(data$.source[primitives]))
   tables <- list()
   for (kind in unique(kinds)) {
     i <- which(kinds == kind)
+    style <- material$index[i]
     tables[[kind]] <- list(primitive_id = i, layer_id = data$.layer[rows[i]],
-      source_row = as.integer(data$.source[rows[i]]), style_id = i, offset = offsets[i], count = counts[i],
+      source_row = as.integer(data$.source[rows[i]]), style_id = style, offset = offsets[i], count = counts[i],
       partition = rep.int(if (identical(params$occlusion, "overlay")) 2L else 1L, length(i)), opacity = material$opacity[i])
     if (kind == "polylines") {
-      tables[[kind]]$width_mm <- material$styles$linewidth[i]
+      tables[[kind]]$width_mm <- material$styles$linewidth[style]
       tables[[kind]]$cap <- rep.int(match(params$lineend %or3d% "butt", c("butt", "round", "square")) - 1L, length(i))
       tables[[kind]]$join <- rep.int(match(params$linejoin %or3d% "round", c("round", "mitre", "bevel")) - 1L, length(i))
       tables[[kind]]$mitre_limit <- rep(params$linemitre %or3d% 10, length(i))
@@ -125,19 +139,22 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id)
       tables[[kind]]$arrow_start <- rep(!is.null(arrow) && arrow$ends %in% c(1L, 3L), length(i))
       tables[[kind]]$arrow_end <- rep(!is.null(arrow) && arrow$ends %in% c(2L, 3L), length(i))
     }
-    if (kind == "markers") tables[[kind]]$footprint_id <- seq_along(i)
     if (kind == "text") {
-      for (key in c("hjust", "vjust", "angle")) tables[[kind]][[key]] <- material$styles[[key]][i]
-      metrics <- lapply(i, function(j) grid::textGrob(material$styles$label[j], gp = grid::gpar(fontsize = material$styles$fontsize[j], fontfamily = material$styles$family[j], fontface = material$styles$fontface[j])))
-      tables[[kind]]$width_mm <- vapply(metrics, function(g) grid::convertWidth(grid::grobWidth(g), "mm", TRUE), numeric(1))
-      tables[[kind]]$height_mm <- vapply(metrics, function(g) grid::convertHeight(grid::grobHeight(g), "mm", TRUE), numeric(1))
+      for (key in c("hjust", "vjust", "angle")) tables[[kind]][[key]] <- material$styles[[key]][style]
+      measured <- unique(style)
+      metrics <- lapply(measured, function(j) grid::textGrob(material$styles$label[j], gp = grid::gpar(fontsize = material$styles$fontsize[j], fontfamily = material$styles$family[j], fontface = material$styles$fontface[j])))
+      tables[[kind]]$width_mm <- vapply(metrics, function(g) grid::convertWidth(grid::grobWidth(g), "mm", TRUE), numeric(1))[match(style, measured)]
+      tables[[kind]]$height_mm <- vapply(metrics, function(g) grid::convertHeight(grid::grobHeight(g), "mm", TRUE), numeric(1))[match(style, measured)]
     }
   }
   if ("markers" %in% kinds) {
     i <- which(kinds == "markers")
-    radius <- material$styles$size[i] / 2 + material$styles$stroke[i] / 2
-    tables$footprints <- list(kind = rep.int(1L, length(i)), offset = rep.int(1L, length(i)), count = rep.int(0L, length(i)),
-                              radius_x_mm = radius, radius_y_mm = radius, angle = rep(0, length(i)))
+    style <- material$index[i]
+    radius <- material$styles$size[style] / 2 + material$styles$stroke[style] / 2
+    radii <- unique(radius)
+    tables$markers$footprint_id <- match(radius, radii)
+    tables$footprints <- list(kind = rep.int(1L, length(radii)), offset = rep.int(1L, length(radii)), count = rep.int(0L, length(radii)),
+                              radius_x_mm = radii, radius_y_mm = radii, angle = rep(0, length(radii)))
   }
   do.call(new_scene_packet, c(list(vertices = vertices, corners = corners), tables,
                              list(styles = material$styles, panel_id = panel_id)))
@@ -155,35 +172,34 @@ emit_points_3d <- function(data, params, panel_params) {
     data$shape <- ggplot2::GeomPoint$draw_panel(data, panel_params, identity_coord)$pch
   }
   rows <- which(valid_rows_3d(data, params))
-  packet_from_primitives_3d(data, as.list(rows), rep("markers", length(rows)), params, panel_params$panel_id)
+  packet_from_primitives_3d(data, rows, rep("markers", length(rows)), params, panel_params$panel_id, rep.int(1L, length(rows)))
 }
 
 emit_text_3d <- function(data, params, panel_params) {
   rows <- which(valid_rows_3d(data, params) & !is.na(data$label))
-  packet_from_primitives_3d(data, as.list(rows), rep("text", length(rows)), params, panel_params$panel_id)
+  packet_from_primitives_3d(data, rows, rep("text", length(rows)), params, panel_params$panel_id, rep.int(1L, length(rows)))
 }
 
 emit_paths_3d <- function(data, params, panel_params) {
   valid <- valid_rows_3d(data, params)
-  primitives <- list()
   fields <- intersect(c("colour", "linewidth", "alpha", "linetype"), names(data))
-  materials <- if (length(fields)) do.call(paste, c(data[fields], sep = "\r")) else rep("", nrow(data))
-  for (group in unique(data$group)) {
-    rows <- which(data$group == group)
-    run <- integer()
-    for (j in seq_len(max(0L, length(rows) - 1L))) {
-      pair <- rows[c(j, j + 1L)]
-      connected <- all(valid[pair])
-      same <- length(run) && connected && materials[pair[1L]] == materials[run[1L]]
-      if (length(run) && !same) {
-        primitives[[length(primitives) + 1L]] <- run
-        run <- integer()
-      }
-      if (connected) run <- if (length(run)) c(run, pair[2L]) else pair
-    }
-    if (length(run)) primitives[[length(primitives) + 1L]] <- run
+  rows <- order(match(data$group, unique(data$group)), seq_len(nrow(data)))
+  a <- head(rows, -1L); b <- tail(rows, -1L)
+  good <- data$group[a] == data$group[b] & valid[a] & valid[b]
+  a <- a[good]; b <- b[good]
+  same <- rep(TRUE, max(0L, length(a) - 1L))
+  for (field in fields) {
+    ids <- match(data[[field]], unique(data[[field]]))
+    same <- same & ids[head(a, -1L)] == ids[tail(a, -1L)]
   }
-  packet_from_primitives_3d(data, primitives, rep("polylines", length(primitives)), params, panel_params$panel_id)
+  start <- c(TRUE, head(b, -1L) != tail(a, -1L) | !same)[seq_along(a)]
+  counts <- diff(c(which(start), length(a) + 1L)) + 1L
+  counts <- counts[seq_len(sum(start))]
+  positions <- seq_along(a) + cumsum(start)
+  primitives <- integer(length(a) + sum(start))
+  primitives[positions] <- b
+  primitives[positions[start] - 1L] <- a[start]
+  packet_from_primitives_3d(data, primitives, rep("polylines", length(counts)), params, panel_params$panel_id, counts)
 }
 
 emit_segments_3d <- function(data, params, panel_params) {
@@ -193,45 +209,67 @@ emit_segments_3d <- function(data, params, panel_params) {
   ends[c("x", "y", "z")] <- data[c("xend", "yend", "zend")]
   all <- rbind(data, ends)
   n <- nrow(data)
-  primitives <- lapply(seq_len(n), function(i) c(i, i + n))
-  packet_from_primitives_3d(all, primitives, rep("polylines", n), params, panel_params$panel_id)
+  primitives <- as.vector(rbind(seq_len(n), seq_len(n) + n))
+  packet_from_primitives_3d(all, primitives, rep("polylines", n), params, panel_params$panel_id, rep.int(2L, n))
 }
 
 merge_scene_packets <- function(packets, panel_id) {
   if (!length(packets)) return(new_scene_packet(panel_id = panel_id))
   lapply(packets, validate_scene_packet)
-  result <- new_scene_packet(panel_id = panel_id)
-  primitive_next <- 0L
-  for (packet in packets) {
-    shift <- c(vertex = length(result$vertices$x), corner = length(result$corners$vertex),
-               footprint = length(result$footprints$kind), footprint_vertex = length(result$footprint_vertices$x_mm),
-               style = nrow(result$styles))
-    packet$corners$vertex <- packet$corners$vertex + shift[["vertex"]]
-    packet$footprints$offset <- ifelse(packet$footprints$count == 0L, 1L, packet$footprints$offset + shift[["footprint_vertex"]])
-    packet$footprints$offset <- as.integer(packet$footprints$offset)
-    ids <- unlist(lapply(packet[c("faces", "polylines", "markers", "text")], `[[`, "primitive_id"), use.names = FALSE)
+  schema <- scene_schemas()
+  sizes <- vapply(packets, function(p) c(vertex = length(p$vertices$x),
+    corner = length(p$corners$vertex), footprint = length(p$footprints$kind),
+    footprint_vertex = length(p$footprint_vertices$x_mm), style = nrow(p$styles),
+    primitive = sum(vapply(p[c("faces", "polylines", "markers", "text")],
+                           function(t) length(t$primitive_id), integer(1)))), numeric(6))
+  totals <- rowSums(sizes)
+  scene_assert(all(totals <= .Machine$integer.max), "merged packet exceeds integer index capacity")
+  shifts <- sizes
+  for (key in rownames(sizes)) shifts[key, ] <- c(0, head(cumsum(sizes[key, ]), -1L))
+  for (j in seq_along(packets)) {
+    packet <- packets[[j]]
+    shift <- shifts[, j]
+    packet$corners$vertex <- as.integer(packet$corners$vertex + shift[["vertex"]])
+    packet$footprints$offset <- as.integer(ifelse(packet$footprints$count == 0L, 1L,
+      packet$footprints$offset + shift[["footprint_vertex"]]))
+    next_id <- shift[["primitive"]]
     for (kind in c("faces", "polylines", "markers", "text")) {
       tab <- packet[[kind]]
-      tab$primitive_id <- as.integer(match(tab$primitive_id, ids) + primitive_next)
+      tab$primitive_id <- as.integer(seq_along(tab$primitive_id) + next_id)
+      next_id <- next_id + length(tab$primitive_id)
       tab$offset <- as.integer(tab$offset + shift[["corner"]])
-      tab$style_id <- as.integer(match(tab$style_id, packet$styles$style_id) + shift[["style"]])
+      tab$style_id <- as.integer(tab$style_id + shift[["style"]])
       if (kind == "markers") tab$footprint_id <- as.integer(tab$footprint_id + shift[["footprint"]])
       packet[[kind]] <- tab
     }
-    primitive_next <- primitive_next + length(ids)
-    for (kind in names(scene_schemas())) {
-      for (column in names(result[[kind]])) result[[kind]][[column]] <- c(result[[kind]][[column]], packet[[kind]][[column]])
-    }
-    packet$styles$style_id <- as.integer(seq_len(nrow(packet$styles)) + shift[["style"]])
-    if (!nrow(result$styles)) result$styles <- packet$styles
-    else if (nrow(packet$styles)) {
-      columns <- union(names(result$styles), names(packet$styles))
-      for (column in setdiff(columns, names(result$styles))) result$styles[[column]] <- NA
-      for (column in setdiff(columns, names(packet$styles))) packet$styles[[column]] <- NA
-      result$styles <- rbind(result$styles[columns], packet$styles[columns])
-    }
+    packet$styles$style_id <- as.integer(packet$styles$style_id + shift[["style"]])
+    packets[[j]] <- packet
   }
-  result$style_count <- as.integer(nrow(result$styles))
+  tables <- lapply(names(schema), function(kind) {
+    columns <- lapply(names(schema[[kind]]), function(column)
+      unlist(lapply(packets, function(p) p[[kind]][[column]]), use.names = FALSE))
+    names(columns) <- names(schema[[kind]])
+    columns
+  })
+  names(tables) <- names(schema)
+  styles <- lapply(packets, `[[`, "styles")
+  columns <- unique(unlist(lapply(styles, names), use.names = FALSE))
+  styles <- lapply(styles, function(s) {
+    for (column in setdiff(columns, names(s))) s[[column]] <- rep(NA, nrow(s))
+    s[columns]
+  })
+  material <- lapply(columns, function(column) {
+    values <- lapply(styles, `[[`, column)
+    value <- do.call(c, values)
+    if (any(vapply(values, inherits, logical(1), "AsIs"))) value <- I(value)
+    value
+  })
+  names(material) <- columns
+  material <- structure(material, class = "data.frame", row.names = .set_row_names(as.integer(totals[["style"]])))
+  result <- c(list(schema_version = 1L, panel_id = as.integer(panel_id),
+                   style_count = as.integer(totals[["style"]])), tables,
+              list(styles = material))
+  class(result) <- "ggplot3d_scene_packet"
   validate_scene_packet(result)
   result
 }

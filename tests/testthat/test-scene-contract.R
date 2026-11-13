@@ -1,5 +1,42 @@
 empty_scene <- function() ggplot3d:::new_scene_packet()
 
+test_that("footprint ring validation scopes rings to each referenced range", {
+  p <- new_scene_packet(
+    footprints = list(kind = c(2L, 2L), offset = c(1L, 4L), count = c(6L, 3L),
+      radius_x_mm = c(0, 0), radius_y_mm = c(0, 0), angle = c(0, 0)),
+    footprint_vertices = list(x_mm = rep(0, 6), y_mm = rep(0, 6), ring = rep(1:2, each = 3L)))
+  expect_silent(validate_scene_packet(p))
+  p$footprints$offset[2L] <- 3L
+  expect_error(validate_scene_packet(p), "rings")
+  p <- new_scene_packet(
+    footprints = list(kind = 2L, offset = 1L, count = 9L,
+      radius_x_mm = 0, radius_y_mm = 0, angle = 0),
+    footprint_vertices = list(x_mm = rep(0, 9), y_mm = rep(0, 9), ring = rep(1:3, each = 3L)))
+  p$footprint_vertices$ring[7:9] <- 1L
+  expect_error(validate_scene_packet(p), "rings")
+})
+
+test_that("shared footprint ranges agree with ring run definitions", {
+  rings <- list(rep(c(1L, 2L, 1L, 3L), each = 3L), rep(1L, 12L),
+                rep(c(1L, 2L, 3L, 1L), c(4L, 2L, 3L, 4L)))
+  for (ring in rings) {
+    ranges <- expand.grid(lo = seq_len(length(ring)), hi = seq_len(length(ring)))
+    ranges <- ranges[ranges$hi - ranges$lo >= 2L, ]
+    expected <- actual <- logical(nrow(ranges))
+    for (i in seq_len(nrow(ranges))) {
+      lo <- ranges$lo[i]; hi <- ranges$hi[i]
+      runs <- rle(ring[lo:hi])
+      expected[i] <- all(runs$lengths >= 3L) && !anyDuplicated(runs$values)
+      actual[i] <- !inherits(tryCatch(new_scene_packet(
+        footprints = list(kind = 2L, offset = lo, count = hi - lo + 1L,
+          radius_x_mm = 0, radius_y_mm = 0, angle = 0),
+        footprint_vertices = list(x_mm = rep(0, length(ring)), y_mm = rep(0, length(ring)), ring = ring)),
+        error = identity), "error")
+    }
+    expect_identical(actual, expected)
+  }
+})
+
 face_scene <- function(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1),
                        z = c(0.5, 0.5, 0.5, 0.5)) {
   ggplot3d:::new_scene_packet(

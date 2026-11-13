@@ -9,6 +9,73 @@ integration_packets <- function(plot) {
   list(packet = merge_scene_packets(collected$packets, 1L), params = built$layout$panel_params[[1]], grobs = grobs)
 }
 
+test_that("surface connectivity preserves cell order, masking and face means", {
+  d <- expand.grid(x = 0:2, y = 0:2)
+  d$z <- d$x + 2 * d$y
+  expected <- rbind(c(1L, 2L, 5L), c(1L, 5L, 4L), c(4L, 5L, 8L), c(4L, 8L, 7L),
+                    c(2L, 3L, 6L), c(2L, 6L, 5L), c(5L, 6L, 9L), c(5L, 9L, 8L))
+  expect_identical(surface_triangles_3d(d, "grid", Inf), expected)
+  expect_equal(nrow(surface_triangles_3d(d, "grid", 1)), 0L)
+  scales <- setNames(rep(list(ggplot2::scale_x_continuous()), 3L), c("x", "y", "z"))
+  out <- StatSurface3D$compute_group(d, scales, "grid", Inf)
+  expect_equal(out$z_mean, rep(rowMeans(matrix(d$z[expected], ncol = 3L)), each = 3L))
+  d$z[1L] <- NA
+  expect_identical(surface_triangles_3d(d, "grid", Inf), expected[-(1:2), ])
+  d <- d[-1L, ]
+  expect_equal(nrow(surface_triangles_3d(d, "grid", Inf)), 6L)
+})
+
+test_that("surface emission checks keyed materials and deduplicates wireframe edges", {
+  d <- expand.grid(x = 0:1, y = 0:1); d$z <- 0
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_surface_3d(wireframe = TRUE) + coord_3d()
+  packet <- integration_packets(p)$packet
+  expect_length(packet$polylines$primitive_id, 5L)
+  expect_equal(packet$polylines$count, rep(2L, 5L))
+  expect_length(packet$faces$primitive_id, 0L)
+  d$fill <- c("red", "blue", "red", "red")
+  scales <- setNames(rep(list(ggplot2::scale_x_continuous()), 3L), c("x", "y", "z"))
+  expect_error(StatSurface3D$compute_group(d, scales, "grid", Inf), "constant")
+})
+
+test_that("columnar paths preserve material splits across interleaved groups", {
+  d <- data.frame(x = 1:8, y = 1:8, z = 1:8, group = rep(1:2, 4),
+                  colour = c("red", "black", "red", "black", "blue", "black", "blue", "black"),
+                  .source = 1:8, .layer = 1L)
+  p <- emit_paths_3d(d, list(na.rm = TRUE), list(panel_id = 1L))
+  expect_identical(p$polylines$count, c(3L, 2L, 4L))
+  expect_identical(p$corners$source_row, c(1L, 3L, 5L, 5L, 7L, 2L, 4L, 6L, 8L))
+  d$z[c(3L, 6L)] <- NA
+  p <- emit_paths_3d(d, list(na.rm = TRUE), list(panel_id = 1L))
+  expect_identical(p$corners$source_row, c(5L, 7L, 2L, 4L))
+})
+
+test_that("collector offsets shared buffers and arbitrary primitive identities", {
+  p <- new_scene_packet(vertices = list(x = 0, y = 0, z = 0), corners = list(vertex = 1L),
+    markers = list(primitive_id = 91L, offset = 1L, footprint_id = 1L),
+    footprints = list(kind = 1L, offset = 1L, count = 0L, radius_x_mm = 1, radius_y_mm = 1, angle = 0),
+    styles = data.frame(style_id = 1L))
+  one <- merge_scene_packets(list(p), 1L)
+  expect_identical(one$markers$primitive_id, 1L)
+  both <- merge_scene_packets(list(p, new_scene_packet(), p), 1L)
+  expect_identical(both$corners$vertex, 1:2)
+  expect_identical(both$markers$offset, 1:2)
+  expect_identical(both$markers$style_id, 1:2)
+  expect_identical(both$markers$footprint_id, 1:2)
+  expect_identical(both$footprints$offset, c(1L, 1L))
+})
+
+test_that("emission interns complete materials while retaining primitive opacity", {
+  d <- data.frame(x = 1:4, y = 1:4, z = 1:4, .source = 1:4, .layer = 1L,
+    colour = c("red", "blue", "red", "blue"), alpha = 0.5)
+  p <- emit_points_3d(d, list(), list(panel_id = 1L))
+  expect_equal(nrow(p$styles), 2L)
+  expect_identical(p$markers$style_id, c(1L, 2L, 1L, 2L))
+  expect_equal(p$markers$opacity, rep(0.5, 4L))
+  expect_identical(p$markers$source_row, 1:4)
+  expect_identical(p$markers$footprint_id, rep(1L, 4L))
+  expect_length(p$footprints$kind, 1L)
+})
+
 test_that("all supported geometries merge into one packet with provenance", {
   points <- data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1))
   surface <- expand.grid(x = 0:1, y = 0:1); surface$z <- 0.5

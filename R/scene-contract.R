@@ -71,7 +71,7 @@ new_scene_packet <- function(vertices = list(), corners = list(),
   tables <- list(vertices = vertices, corners = corners, faces = faces,
                  polylines = polylines, markers = markers, text = text,
                  footprints = footprints, footprint_vertices = footprint_vertices)
-  next_id <- 1L
+  next_id <- 1
   for (name in names(tables)) {
     n <- if (length(tables[[name]])) length(tables[[name]][[1L]]) else 0L
     kind <- match(name, c("faces", "polylines", "markers", "text"))
@@ -168,9 +168,25 @@ validate_scene_packet <- function(packet) {
                  all(fp$offset[polygon] >= 1L &
                        as.double(fp$offset[polygon]) + fp$count[polygon] - 1 <= length(fv$ring)),
                "invalid footprint ranges")
-  for (i in which(polygon)) {
-    runs <- rle(fv$ring[seq.int(fp$offset[i], length.out = fp$count[i])])
-    scene_assert(all(runs$lengths >= 3L) && !anyDuplicated(runs$values),
+  if (any(polygon)) {
+    runs <- rle(fv$ring)
+    end <- cumsum(runs$lengths)
+    start <- end - runs$lengths + 1L
+    run <- rep.int(seq_along(end), runs$lengths)
+    lo <- fp$offset[polygon]
+    hi <- as.double(lo) + fp$count[polygon] - 1
+    first <- run[lo]; last <- run[hi]
+    short <- c(0L, cumsum(runs$lengths < 3L))
+    index <- order(runs$values, method = "radix")
+    repeated <- c(FALSE, diff(runs$values[index]) == 0L)
+    previous_end <- integer(length(end))
+    previous_end[index[repeated]] <- end[head(index, -1L)[repeated[-1L]]]
+    # A repeated ring intersects a range when its preceding run ends inside it.
+    duplicate_end <- cummax(previous_end)
+    scene_assert(all(pmin(end[first], hi) - lo + 1L >= 3L) &&
+                   all(hi - pmax(start[last], lo) + 1L >= 3L) &&
+                   all(first == last | short[last] == short[first + 1L]) &&
+                   all(duplicate_end[last] < lo),
                  "footprint rings must be contiguous with at least three vertices")
   }
   scene_assert(all(packet$markers$footprint_id >= 1L &
