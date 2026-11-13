@@ -25,6 +25,11 @@
 #'   number from a [sprintf()] pattern in the name, such as
 #'   `"frames/turn-%03d.png"`, or else gets it appended, as in
 #'   `turn-0001.png`.
+#'   `.glb` and `.gltf` hold the first panel as an animated 3D scene for
+#'   Blender and other glTF software: camera translation, rotation and zoom
+#'   tracks, with per-frame visibility tracks for changing geometry.
+#'   Each glTF animation uses one projection type; export perspective and
+#'   orthographic paths separately.
 #' @param renderer Scene backend, "raster" (default) or "vector". Use "vector"
 #'   for vector pages in SVG and PDF output.
 #' @param width,height Frame dimensions in pixels, default 640 each.
@@ -42,6 +47,8 @@
 #'   are identical for every number of workers. Workers fork where the
 #'   platform allows it and otherwise start socket processes, which load the
 #'   installed ggplot3d. PDF pages are drawn in one process.
+#' @param ... Arguments to [export_3d()] for glTF output: `furniture`, `lines`,
+#'   `points` and `size`.
 #' @return A ggplot3d_animation list with `file`, `frame_count`, `fps`, `camera`
 #'   (one row per frame with the time, the camera angles, zoom, projection,
 #'   field of view, distance (NA when automatic) and target, and the frame's
@@ -89,7 +96,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        renderer = c("raster", "vector"), roll = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
-                       path = NULL, workers = 1L) {
+                       path = NULL, workers = 1L, ...) {
   renderer <- match.arg(renderer)
   motion_dimensions_3d(width, height, dpi)
   coord <- motion_plot_coord_3d(plot)
@@ -117,6 +124,8 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   workers <- motion_workers_3d(workers)
   backend <- backend_3d(renderer, dpi, antialias)
   output <- motion_output_3d(file)
+  scene_assert(!...length() || output$kind == "scene", "Further arguments apply to .glb and .gltf output only")
+  options <- if (output$kind == "scene") motion_export_options_3d(...)
   if (is.null(path)) {
     times <- (seq_len(frames) - 1) / fps
     steps <- motion_track_steps_3d(coord, list(azimuth = if (is.null(azimuth) && is.null(time))
@@ -149,6 +158,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   }
   grDevices::dev.off(device)
   paths <- switch(output$kind, sequence = motion_sequence_paths_3d(file, frames), pages = file,
+    scene = file.path(directory, sprintf("scene-%06d.pdf", seq_len(frames))),
     file.path(directory, sprintf("frame-%06d.png", seq_len(frames))))
   # Repelled labels start each frame where the previous frame of the same
   # worker left them.
@@ -156,8 +166,14 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     cameras = cameras, base = coord$camera, backend = backend, frame = motion_frame_mode_3d(steps),
     device = output$device, per_file = output$kind != "pages", paths = paths, frames = frames,
     width = width, height = height, dpi = dpi, label_state = new.env(parent = emptyenv()),
+    export = if (output$kind == "scene") list(options = options, layer_names = export_layer_names_3d(plot)),
     progress = progress && is.null(workers$cluster) && workers$count == 1L)
-  rendered <- motion_render_3d(job, workers)
+  if (output$kind == "scene") {
+    rendered <- motion_render_frames_3d(1L, job)
+    job$export$mm <- rendered[[1L]]$scene$mm
+    rendered <- c(rendered, motion_render_3d(job, workers, seq_len(frames)[-1L]))
+    output$write(lapply(rendered, `[[`, "scene"), file, options, fps)
+  } else rendered <- motion_render_3d(job, workers)
   if (output$kind == "encode") output$encode(paths, file, width, height, fps, progress)
   complete <- TRUE
   camera <- motion_camera_table_3d(cameras, times)
@@ -260,18 +276,26 @@ motion_panel_grob_3d <- function(panel, camera, base, backend, frame, registry, 
   scene_panel_grob(panel$packets, params, panel$theme, panel$underlay, panel$overlay)
 }
 
-motion_draw_frame_3d <- function(job, i) {
+motion_frame_grob_3d <- function(job, i) {
   built <- if (is.null(job$time) || i == 1L) job$built else
     ggplot2::ggplotGrob(motion_frame_plot_3d(job$plot, job$time, job$values[[i]], job$limits))
   registry <- new.env(parent = emptyenv())
-  current <- motion_map_panels_3d(built, function(panel) {
+  motion_map_panels_3d(built, function(panel) {
     motion_panel_grob_3d(panel, job$cameras[[i]], job$base, job$backend, job$frame, registry, job$label_state)
   })
+}
+
+motion_draw_frame_3d <- function(job, i) {
+  current <- motion_frame_grob_3d(job, i)
+  if (!is.null(job$export)) {
+    scene <- export_capture_3d(current, 1L, job$export$options, job$export$layer_names, job$export$mm)
+    return(list(extents = list(unlist(scene$viewport[c("width_mm", "height_mm")])), scene = scene))
+  }
   forced <- grid::grid.force(current)
   grid::grid.draw(forced)
-  lapply(motion_panels_3d(forced), function(panel) {
+  list(extents = lapply(motion_panels_3d(forced), function(panel) {
     c(width_mm = panel$inner_viewport$width_mm, height_mm = panel$inner_viewport$height_mm)
-  })
+  }))
 }
 
 motion_render_frames_3d <- function(indices, job) {
@@ -281,23 +305,23 @@ motion_render_frames_3d <- function(indices, job) {
       device <- motion_open_device_3d(job$device, job$paths[i], job$width, job$height, job$dpi)
       on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device))
     } else if (i > indices[1L]) grid::grid.newpage()
-    extents <- motion_draw_frame_3d(job, i)
+    drawn <- motion_draw_frame_3d(job, i)
     if (job$per_file) grDevices::dev.off(device)
     timing <- proc.time()[["elapsed"]] - start
     if (job$progress) message(sprintf("Frame %d/%d: %.3f s", i, job$frames, timing))
-    list(timing = timing, extents = extents)
+    list(timing = timing, extents = drawn$extents, scene = drawn$scene)
   })
 }
 
 # Frames split into one contiguous run per worker; results return in frame order.
-motion_render_3d <- function(job, workers) {
-  indices <- seq_len(job$frames)
+motion_render_3d <- function(job, workers, indices = seq_len(job$frames)) {
+  if (!length(indices)) return(list())
   if (!job$per_file) {
     device <- motion_open_device_3d(job$device, job$paths, job$width, job$height, job$dpi)
     on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE)
     return(motion_render_frames_3d(indices, job))
   }
-  count <- min(workers$count, job$frames)
+  count <- min(workers$count, length(indices))
   if (count == 1L) return(motion_render_frames_3d(indices, job))
   chunks <- unname(split(indices, cut(indices, count, labels = FALSE)))
   if (is.null(workers$cluster) && .Platform$OS.type == "unix") {
@@ -396,6 +420,17 @@ motion_frame_plot_3d <- function(plot, time, value, limits) {
   mapping <- lapply(intersect(c("x", "y", "z"), names(limits$blank)), as.name)
   names(mapping) <- intersect(c("x", "y", "z"), names(limits$blank))
   plot + ggplot2::geom_blank(data = limits$blank, mapping = do.call(ggplot2::aes, mapping), inherit.aes = FALSE)
+}
+
+motion_export_options_3d <- function(...) {
+  allowed <- c("furniture", "lines", "points", "size")
+  dots <- list(...)
+  scene_assert(!length(dots) || (!is.null(names(dots)) && all(names(dots) %in% allowed)),
+    paste("Further arguments for glTF output must be named", paste(allowed, collapse = ", ")))
+  defaults <- lapply(formals(export_3d)[allowed], eval)
+  args <- utils::modifyList(defaults, dots)
+  export_options_3d(args$furniture, match.arg(args$lines, defaults$lines),
+    match.arg(args$points, defaults$points), args$size)
 }
 
 motion_require_3d <- function(package) {

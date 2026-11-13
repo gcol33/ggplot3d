@@ -21,7 +21,8 @@ animate_3d(
   progress = interactive(),
   time = NULL,
   path = NULL,
-  workers = 1L
+  workers = 1L,
+  ...
 )
 }
 \arguments{
@@ -46,7 +47,12 @@ selects the output: \code{.gif} (needs gifski), \code{.mp4} or \code{.webm} (nee
 svglite) and \code{.pdf} (one page per frame). A file per frame takes its
 number from a \code{\link[=sprintf]{sprintf()}} pattern in the name, such as
 \code{"frames/turn-\%03d.png"}, or else gets it appended, as in
-\verb{turn-0001.png}.}
+\verb{turn-0001.png}.
+\code{.glb} and \code{.gltf} hold the first panel as an animated 3D scene for
+Blender and other glTF software: camera translation, rotation and zoom
+tracks, with per-frame visibility tracks for changing geometry.
+Each glTF animation uses one projection type; export perspective and
+orthographic paths separately.}
 
 \item{renderer}{Scene backend, "raster" (default) or "vector". Use "vector"
 for vector pages in SVG and PDF output.}
@@ -77,6 +83,9 @@ worker draws a contiguous run of frames on its own devices, so the frames
 are identical for every number of workers. Workers fork where the
 platform allows it and otherwise start socket processes, which load the
 installed ggplot3d. PDF pages are drawn in one process.}
+
+\item{...}{Arguments to \code{\link[=export_3d]{export_3d()}} for glTF output: \code{furniture}, \code{lines},
+\code{points} and \code{size}.}
 }
 \value{
 A ggplot3d_animation list with \code{file}, \code{frame_count}, \code{fps}, \code{camera}

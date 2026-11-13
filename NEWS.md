@@ -1,5 +1,6 @@
 # ggplot3d 0.0.0.9000
 
+* `export_3d()` writes glTF/GLB, OBJ, PLY and binary STL scenes with layer nodes, mapped colours and cameras. `animate_3d()` exports camera and geometry tracks to glTF. rgl mesh and plotting methods and `as_rayrender_3d()` connect scenes to other renderers.
 * `geom_refline_3d()` draws axis-aligned reference lines and `geom_abline_3d()` draws lines through a point in any direction. `geom_bracket_3d()` adds brackets and dimension lines. Reference lines share box clipping and bend with curvilinear frames.
 * `annotation_plot_3d()` places a whole 2D ggplot on a panel plane through vector or raster rendering. `facet_slices_3d()` draws small multiples in depth, with statistics computed per slice. Additional 2D ggplot2 layers draw in horizontal planes.
 * `guide_colourbar_3d(along = "z")` places a colourbar beside the matching position axis, sharing its ticks and labels. `guide_legend_3d()` lights shaded-layer facet keys with the scene light and can display their shading range.

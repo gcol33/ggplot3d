@@ -123,7 +123,7 @@ read_ply_3d <- function(path) {
   raw <- readBin(path, "raw", size)
   stop_at <- grepRaw("end_header\r?\n", raw)
   if (!length(stop_at) || !identical(rawToChar(raw[1:3]), "ply")) stop("Not a PLY file.", call. = FALSE)
-  header_end <- stop_at + attr(regexpr("end_header\r?\n", rawToChar(raw[stop_at:min(size, stop_at + 12L)])), "match.length") - 1L
+  header_end <- stop_at + length(grepRaw("end_header\r?\n", raw, value = TRUE)) - 1L
   header <- strsplit(trimws(strsplit(rawToChar(raw[seq_len(header_end)]), "\r?\n")[[1L]]), "[[:space:]]+")
   format <- NULL; elements <- list()
   for (line in header) {

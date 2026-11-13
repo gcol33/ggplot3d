@@ -241,6 +241,11 @@ reference:
   - orbit_3d
   - fly_through_3d
   - dolly_zoom_3d
+- title: Export to 3D software
+  contents:
+  - export_3d
+  - rgl-bridge-3d
+  - as_rayrender_3d
 - title: Mesh input and extension API
   contents:
   - mesh_3d

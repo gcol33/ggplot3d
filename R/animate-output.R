@@ -1,9 +1,10 @@
 # Animation outputs keyed by file extension. `device` names the graphics device
 # each frame is drawn on; `kind` is "encode" (frames drawn to temporary PNG
 # files and encoded into `file`), "sequence" (one file per frame, named from
-# `file`) or "pages" (every frame a page of `file`, drawn in one process).
+# `file`), "pages" (every frame a page of `file`, drawn in one process), or
+# "scene" (captured geometry and camera tracks written to one model file).
 # Without a file, frames stay as temporary PNG files ("frames").
-motion_outputs_3d <- list(
+motion_outputs_3d <- list2env(list(
   gif = list(device = "png", kind = "encode", packages = "gifski",
     encode = function(paths, file, width, height, fps, progress) {
       gifski::gifski(paths, gif_file = file, width = width, height = height,
@@ -18,7 +19,7 @@ motion_outputs_3d <- list(
   png = list(device = "png", kind = "sequence", packages = character()),
   svg = list(device = "svg", kind = "sequence", packages = "svglite"),
   pdf = list(device = "pdf", kind = "pages", packages = character())
-)
+), parent = emptyenv())
 motion_outputs_3d$webm <- motion_outputs_3d$mp4
 
 motion_devices_3d <- list(
@@ -41,8 +42,8 @@ motion_output_3d <- function(file) {
   scene_assert(is.character(file) && length(file) == 1L && !is.na(file) && nzchar(file),
     "file must be a single output path")
   extension <- tolower(tools::file_ext(file))
-  scene_assert(extension %in% names(motion_outputs_3d),
-    paste0("file must end in ", paste0(".", sort(names(motion_outputs_3d)), collapse = ", ")))
+  scene_assert(extension %in% ls(motion_outputs_3d),
+    paste0("file must end in ", paste0(".", ls(motion_outputs_3d), collapse = ", ")))
   output <- motion_outputs_3d[[extension]]
   for (package in c(output$packages, if (output$device == "png") "ragg")) motion_require_3d(package)
   scene_assert(dir.exists(dirname(file)), "The output directory does not exist")
