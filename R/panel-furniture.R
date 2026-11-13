@@ -983,7 +983,7 @@ tick_ends_3d <- function(points, normals, length) {
   if (is.matrix(normals)) points + normals * length else points + outer(length * rep_len(1, nrow(points)), normals)
 }
 
-rows_of_3d <- function(normal, n) if (is.matrix(normal)) normal else matrix(normal, n, 2L, byrow = TRUE)
+rows_of_3d <- function(normal, n) if (is.matrix(normal)) normal else matrix(rep_len(normal, 2L * n), n, 2L, byrow = TRUE)
 
 # The scale-space direction entering the box inside the pane of a box axis
 # that plane typography and in-plane ticks use: along a coordinate held at

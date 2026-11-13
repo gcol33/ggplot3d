@@ -91,8 +91,8 @@ test_that("zero planes and zero lines sit at transformed value zero when it is i
     expect_equal(nrow(furniture_test_rows(furniture$packet, "polylines", ring)), 5L)
     expect_false(is.null(furniture$split))
     expect_equal(furniture$split$scene$faces$layer_id, scene_furniture_layer_3d)
-    away <- furniture_test_build(furniture_test_plot(data.frame(x = 1:3, y = 1:3, z = 4:6), panes = "floor"),
-      ggplot2::theme(panel.zero.z = ggplot2::element_rect()))
+    expect_no_warning(away <- furniture_test_build(furniture_test_plot(data.frame(x = 1:3, y = 1:3, z = 4:6), panes = "floor"),
+      ggplot2::theme(panel.zero.z = ggplot2::element_rect())))
     expect_false(any(away$packet$faces$layer_id == scene_furniture_layer_3d))
     lines <- furniture_test_build(plot, ggplot2::theme(panel.zero.line = ggplot2::element_line(colour = "red")))
     expect_equal(furniture_test_lines(lines, "zmin") - furniture_test_lines(plain, "zmin"), 2L)
