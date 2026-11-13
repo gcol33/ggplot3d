@@ -94,18 +94,31 @@ isosurface_method_3d <- function(method) {
   match.arg(method[1L], methods)
 }
 
-stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, args = list(), refine = 0L, simplify = NULL) {
-  if (!is.logical(caps) || length(caps) != 1L || is.na(caps)) stop("caps must be TRUE or FALSE.", call. = FALSE)
-  method <- isosurface_method_3d(method)
+# Axes and values (x fastest) of a complete rectilinear x/y/z grid in data.
+stats_scalar_grid_3d <- function(data) {
   axes <- lapply(data[c("x", "y", "z")], function(x) sort(unique(x)))
   dims <- lengths(axes)
-  if (any(dims < 2L) || prod(dims) != nrow(data)) stop("An isosurface requires a complete rectilinear x/y/z grid.", call. = FALSE)
+  if (any(dims < 2L) || prod(dims) != nrow(data)) stop("A scalar field requires a complete rectilinear x/y/z grid.", call. = FALSE)
   key <- match(data$x, axes$x) + dims[1L] * (match(data$y, axes$y) - 1L + dims[2L] * (match(data$z, axes$z) - 1L))
   if (anyDuplicated(key)) stop("Scalar grid coordinates must be unique.", call. = FALSE)
-  value <- data$value[order(key)]
+  list(axes = axes, value = as.double(data$value[order(key)]))
+}
+
+# Normal and point of a plane given by sdf_plane(), as six numbers.
+plane_coefficients_3d <- function(plane, name = "plane") {
+  node <- if (inherits(plane, "ggplot3d_sdf")) sdf_node_3d(plane)
+  if (is.null(node) || node$op != "plane") stop(name, " must be a plane made with sdf_plane().", call. = FALSE)
+  c(node$params$normal, node$params$point)
+}
+
+stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, args = list(), refine = 0L, simplify = NULL, clip = NULL) {
+  if (!is.logical(caps) || length(caps) != 1L || is.na(caps)) stop("caps must be TRUE or FALSE.", call. = FALSE)
+  method <- isosurface_method_3d(method)
+  field <- stats_scalar_grid_3d(data)
+  axes <- field$axes; value <- field$value
   f <- if (!is.null(fun)) function_evaluator_3d(fun, args)
-  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, as.double(value), stats_levels_3d(value, levels), caps, method,
-    if (!is.null(f)) function_gradient_3d(f, axes))
+  out <- geometry_isosurface_cpp(axes$x, axes$y, axes$z, value, stats_levels_3d(value, levels), caps, method,
+    if (!is.null(f)) function_gradient_3d(f, axes), if (!is.null(clip)) plane_coefficients_3d(clip, "clip"))
   isosurface_finish_3d(out, axes, value, f, refine, simplify)
 }
 

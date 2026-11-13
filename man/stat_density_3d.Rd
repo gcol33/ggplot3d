@@ -19,6 +19,7 @@ stat_density_3d(
   space = "data",
   method = "cubes",
   simplify = NULL,
+  clip = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -39,7 +40,8 @@ geom_isodensity_3d(...)
 
 \item{levels}{Numeric scalar-field thresholds; NULL uses pretty levels.}
 
-\item{caps}{Whether to cap the sublevel region on the box faces.}
+\item{caps}{Whether to cap the sublevel region on the box faces (and on
+the clipping plane).}
 
 \item{space}{\code{"data"} estimates in the position scales. \code{"ilr"} estimates a
 composition mapped with \code{a}, \code{b}, \code{c} (and \code{d}) in isometric log-ratio
@@ -52,6 +54,14 @@ the surface back into the simplex. With three parts, z stays as it is.}
 faces) to which the surface is reduced by quadric edge collapse
 (\code{\link[=mesh_decimate]{mesh_decimate()}}). Normals are then recomputed from the decimated
 faces, or from \code{fun} in stat_isofunction_3d().}
+
+\item{clip}{NULL, or a plane made with \code{\link[=sdf_plane]{sdf_plane()}}. The surface keeps the
+part on the side the plane normal points away from. With \code{caps = TRUE} the
+sublevel region is also closed on the plane, as with MATLAB's
+\code{isocaps}: each grid cell is split into the six tetrahedra of \code{method = "tetra"}, the plane cuts each in a triangle or quad on which the linear
+interpolant of the field is linear, and the part of that polygon below
+the level is filled, as on the box faces. Plane caps point along the
+plane normal. The plane is in transformed position coordinates.}
 }
 \description{
 Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z scale

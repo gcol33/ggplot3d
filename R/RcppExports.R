@@ -5,8 +5,12 @@ scene_compile_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_scene_compile_cpp`, packet, camera, viewport)
 }
 
-geometry_isosurface_cpp <- function(x, y, z, value, levels, caps, method, gradient = NULL) {
-    .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps, method, gradient)
+geometry_isosurface_cpp <- function(x, y, z, value, levels, caps, method, gradient = NULL, clip = NULL) {
+    .Call(`_ggplot3d_geometry_isosurface_cpp`, x, y, z, value, levels, caps, method, gradient, clip)
+}
+
+geometry_slice_cpp <- function(x, y, z, value, plane, n) {
+    .Call(`_ggplot3d_geometry_slice_cpp`, x, y, z, value, plane, n)
 }
 
 geometry_octree_isosurface_cpp <- function(lo, hi, depth, boxes, empty, levels, caps, method, value, crossing = NULL, gradient = NULL) {

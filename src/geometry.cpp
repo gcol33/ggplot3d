@@ -28,14 +28,51 @@ ggplot3d_geometry::dual::GradientFunction gradient_function(Rcpp::Nullable<Rcpp:
     for(V& g:out) for(double& x:g) if(!std::isfinite(x)) x=0;
   };
 }
+
+// Plane from a unit normal and a point given as six numbers.
+ggplot3d_geometry::Plane plane_from(Rcpp::NumericVector plane) {
+  if(plane.size()!=6) Rcpp::stop("A plane needs a normal and a point.");
+  for(double x:plane) if(!std::isfinite(x)) Rcpp::stop("Plane coordinates must be finite.");
+  V normal=ggplot3d_geometry::unit(V{plane[0],plane[1],plane[2]});
+  if(ggplot3d_geometry::norm(normal)==0) Rcpp::stop("The plane normal must be nonzero.");
+  return {normal,V{plane[3],plane[4],plane[5]}};
+}
 }
 
+// clip, when given, is a plane (normal, point) whose positive side is cut away.
 // [[Rcpp::export(rng = false)]]
 Rcpp::DataFrame geometry_isosurface_cpp(Rcpp::NumericVector x,Rcpp::NumericVector y,Rcpp::NumericVector z,
                                        Rcpp::NumericVector value,Rcpp::NumericVector levels,bool caps,std::string method,
-                                       Rcpp::Nullable<Rcpp::Function> gradient = R_NilValue) {
+                                       Rcpp::Nullable<Rcpp::Function> gradient = R_NilValue,
+                                       Rcpp::Nullable<Rcpp::NumericVector> clip = R_NilValue) {
   ggplot3d_geometry::ScalarGrid grid(x,y,z,value);
-  return ggplot3d_geometry::extract_isosurface(grid,levels,caps,method,gradient_function(gradient));
+  if(clip.isNull()) return ggplot3d_geometry::extract_isosurface(grid,levels,caps,method,gradient_function(gradient));
+  ggplot3d_geometry::Plane plane=plane_from(Rcpp::NumericVector(clip));
+  return ggplot3d_geometry::extract_isosurface(grid,levels,caps,method,gradient_function(gradient),&plane);
+}
+
+// Section of a gridded field by a plane (normal, point): triangle corners
+// with positions, trilinear values and the plane normal. n is the lattice
+// size per side for planes that are not axis-aligned.
+// [[Rcpp::export(rng = false)]]
+Rcpp::DataFrame geometry_slice_cpp(Rcpp::NumericVector x,Rcpp::NumericVector y,Rcpp::NumericVector z,
+                                   Rcpp::NumericVector value,Rcpp::NumericVector plane,int n) {
+  if(n<2) Rcpp::stop("n must be at least two.");
+  ggplot3d_geometry::ScalarGrid grid(x,y,z,value);
+  ggplot3d_geometry::Plane p=plane_from(plane);
+  ggplot3d_geometry::Section s=ggplot3d_geometry::slice_grid(grid,p,n);
+  int m=3*s.triangles.size();
+  Rcpp::NumericVector px(m),py(m),pz(m),pv(m),nx(m),ny(m),nz(m);
+  Rcpp::IntegerVector face(m),corner(m),vertex(m);
+  for(int i=0;i<m;++i) {
+    int id=s.triangles[i/3][i%3];
+    px[i]=s.points[id][0]; py[i]=s.points[id][1]; pz[i]=s.points[id][2]; pv[i]=s.values[id];
+    nx[i]=p.normal[0]; ny[i]=p.normal[1]; nz[i]=p.normal[2];
+    face[i]=i/3+1; corner[i]=i%3+1; vertex[i]=id+1;
+  }
+  return Rcpp::DataFrame::create(Rcpp::Named("x")=px,Rcpp::Named("y")=py,Rcpp::Named("z")=pz,Rcpp::Named("value")=pv,
+    Rcpp::Named("nx")=nx,Rcpp::Named("ny")=ny,Rcpp::Named("nz")=nz,
+    Rcpp::Named(".face")=face,Rcpp::Named(".corner")=corner,Rcpp::Named(".vertex")=vertex);
 }
 
 // Dual contouring on the terminal boxes of an octree over [lo, hi]. boxes
