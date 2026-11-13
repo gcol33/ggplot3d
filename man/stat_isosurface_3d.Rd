@@ -14,6 +14,7 @@ stat_isosurface_3d(
   levels = NULL,
   caps = FALSE,
   method = "cubes",
+  simplify = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -31,6 +32,11 @@ geom_isosurface_3d(...)
 \item{caps}{Whether to cap the sublevel region on the box faces.}
 
 \item{method}{Extraction method: \code{"cubes"}, \code{"tetra"}, \code{"dual"} or \code{"nets"}.}
+
+\item{simplify}{NULL, or a target face count (or fraction of the extracted
+faces) to which the surface is reduced by quadric edge collapse
+(\code{\link[=mesh_decimate]{mesh_decimate()}}). Normals are then recomputed from the decimated
+faces, or from \code{fun} in stat_isofunction_3d().}
 }
 \description{
 Requires a complete rectilinear x/y/z grid with a numeric value aesthetic.

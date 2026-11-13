@@ -21,6 +21,10 @@ geometry_kde_cpp <- function(data, axes, bandwidth) {
     .Call(`_ggplot3d_geometry_kde_cpp`, data, axes, bandwidth)
 }
 
+mesh_process_cpp <- function(xyz, tri, parent, channels, verb, args) {
+    .Call(`_ggplot3d_mesh_process_cpp`, xyz, tri, parent, channels, verb, args)
+}
+
 parametric_grid_cpp <- function(n, closed, twist, xyz, u, v) {
     .Call(`_ggplot3d_parametric_grid_cpp`, n, closed, twist, xyz, u, v)
 }

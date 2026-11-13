@@ -159,6 +159,7 @@ reference:
   contents:
   - mesh_3d
   - read_mesh_3d
+  - mesh_processing
   - fortify
   - layer_3d
   - register_geom_3d

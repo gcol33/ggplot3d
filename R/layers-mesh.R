@@ -183,7 +183,9 @@ prepare_mesh_aesthetics_3d <- function(out, data, plot, params) {
 
 StatMesh3D <- ggplot2::ggproto("StatMesh3D", ggplot2::Stat,
   required_aes = c("x", "y", "z", ".mesh", ".face", ".corner", ".vertex"),
-  compute_panel = function(data, scales) {
+  compute_panel = function(data, scales, subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L,
+                           curvature = FALSE, crease = NULL) {
+    data <- mesh_pipeline_3d(data, subdivide, remesh, decimate, smooth, curvature, crease)
     rows <- order(data$.mesh, data$.face, data$.corner)
     first <- c(TRUE, diff(data$.mesh[rows]) != 0L | diff(data$.face[rows]) != 0L)
     ids <- integer(nrow(data)); ids[rows] <- cumsum(first)
@@ -202,6 +204,23 @@ StatMesh3D <- ggplot2::ggproto("StatMesh3D", ggplot2::Stat,
   }
 )
 
+# Mesh verbs applied in a fixed order: refine, resample, coarsen, smooth,
+# then annotate. A rebuilt mesh no longer maps to input rows.
+mesh_pipeline_3d <- function(data, subdivide, remesh, decimate, smooth, curvature, crease) {
+  subdivide <- mesh_count_3d(subdivide, "subdivide"); smooth <- mesh_count_3d(smooth, "smooth")
+  remesh <- if (isFALSE(remesh)) NULL else remesh
+  rebuilt <- subdivide > 0L || !is.null(remesh) || !is.null(decimate) || smooth > 0L
+  if (subdivide > 0L) data <- mesh_subdivide(data, subdivide)
+  if (isTRUE(remesh)) data <- mesh_remesh(data)
+  else if (!is.null(remesh)) data <- mesh_remesh(data, remesh)
+  if (!is.null(decimate)) data <- mesh_decimate(data, decimate)
+  if (smooth > 0L) data <- mesh_smooth(data, smooth)
+  if (isTRUE(curvature)) data <- mesh_curvature(data)
+  if (!is.null(crease)) data <- mesh_normals(data, crease)
+  if (rebuilt) data$.source <- NULL
+  data
+}
+
 GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
   required_aes = c("x", "y", "z", ".mesh", ".face", ".vertex", ".corner"),
   optional_aes = c("subgroup", ".origin", ".feature", ".part"),
@@ -215,16 +234,37 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 #' @param shade Whether to apply lighting.
 #' @param wireframe Draw original mesh edges with shared edges deduplicated.
 #' @param hidden Hidden stroke policy.
+#' @param subdivide,smooth Rounds of [mesh_subdivide()] and iterations of
+#'   [mesh_smooth()].
+#' @param remesh Target edge length for [mesh_remesh()], or TRUE for the mean
+#'   edge length.
+#' @param decimate Target face count or fraction for [mesh_decimate()].
+#' @param curvature Whether to add the computed variables of
+#'   [mesh_curvature()], for use with `after_stat()`.
+#' @param crease Crease angle for [mesh_normals()]; NULL keeps the input's
+#'   normals.
 #' @details Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
 #'   POLYGON Z or TIN Z objects. Numeric vertex fill is averaged per face before
 #'   colour scaling. Other materials must be constant within each face.
+#'
+#'   The mesh parameters run the [mesh processing][mesh_processing] verbs on
+#'   each mesh of a panel, in transformed position units, in the order
+#'   subdivide, remesh, decimate, smooth, curvature, crease.
 #' @return A ggplot2 layer.
 #' @examples
 #' v <- data.frame(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1), z = c(0, 0, 1, 1))
 #' ggplot2::ggplot() + geom_mesh_3d(vertices = v, faces = matrix(1:4, 1)) + coord_3d()
+#' cube <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
+#' quads <- rbind(c(1, 3, 4, 2), c(5, 6, 8, 7), c(1, 2, 6, 5), c(3, 7, 8, 4),
+#'   c(1, 5, 7, 3), c(2, 4, 8, 6))
+#' ggplot2::ggplot() +
+#'   geom_mesh_3d(ggplot2::aes(fill = ggplot2::after_stat(mean_curvature)),
+#'     vertices = cube, faces = quads, subdivide = 3, curvature = TRUE) +
+#'   coord_3d()
 #' @export
 geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, position = "identity", ...,
                          vertices = NULL, faces = NULL, shade = TRUE, wireframe = FALSE, hidden = "hide",
+                         subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L, curvature = FALSE, crease = NULL,
                          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.null(vertices) || !is.null(faces)) {
     if (!is.null(data) && !is.null(vertices)) stop("Supply data or vertices/faces.", call. = FALSE)
@@ -232,7 +272,9 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
   }
   if (inherits(data, "mesh3d")) data <- ggplot2::fortify(data)
   make_layer_3d(GeomMesh3D, mapping, data, stat, position,
-    c(list(shade = shade, wireframe = wireframe, hidden = hidden, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+    c(list(shade = shade, wireframe = wireframe, hidden = hidden, subdivide = subdivide, remesh = remesh,
+      decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, na.rm = na.rm), list(...)),
+    show.legend, inherit.aes)
 }
 
 emit_mesh_3d <- function(data, params, panel_params) {
@@ -258,24 +300,28 @@ emit_mesh_3d <- function(data, params, panel_params) {
     r <- groups[[i]]
     if (anyDuplicated(data$.corner[r]) || anyDuplicated(data$.vertex[r])) stop("Mesh face corners and vertices must be unique.", call. = FALSE)
     rings <- split(seq_along(r), data$subgroup[r] %or3d% rep(1L, length(r)))
-    if (length(r) == 3L && length(rings) == 1L) triangles[[i]] <- matrix(r, nrow = 1L)
-    else {
-      topology <- triangulate_polygon_3d(data[r, , drop = FALSE], rings)
-      t <- matrix(r[unlist(topology$triangles)], ncol = 3L, byrow = TRUE)
-      xyz <- as.matrix(data[r[rings[[1L]]], c("x", "y", "z")]); next_xyz <- xyz[c(seq.int(2L, nrow(xyz)), 1L), , drop = FALSE]
-      normal <- c(sum((xyz[, 2] - next_xyz[, 2]) * (xyz[, 3] + next_xyz[, 3])),
-        sum((xyz[, 3] - next_xyz[, 3]) * (xyz[, 1] + next_xyz[, 1])), sum((xyz[, 1] - next_xyz[, 1]) * (xyz[, 2] + next_xyz[, 2])))
-      a <- as.numeric(data[t[1L, 2L], c("x", "y", "z")] - data[t[1L, 1L], c("x", "y", "z")])
-      b <- as.numeric(data[t[1L, 3L], c("x", "y", "z")] - data[t[1L, 1L], c("x", "y", "z")])
-      cross <- c(a[2] * b[3] - a[3] * b[2], a[3] * b[1] - a[1] * b[3], a[1] * b[2] - a[2] * b[1])
-      if (sum(cross * normal) < 0) t <- t[, c(1L, 3L, 2L), drop = FALSE]
-      triangles[[i]] <- t
-    }
+    triangles[[i]] <- mesh_face_triangles_3d(data, r, rings)
     edges[[i]] <- do.call(rbind, lapply(rings, function(ids) cbind(r[ids], r[c(ids[-1L], ids[1L])])))
   }
   e <- unique_edges_3d(do.call(rbind, edges), data$.vertex, data$.mesh)
   t <- do.call(rbind, triangles)
   packet_from_faces_edges_3d(data, t, e, params, panel_params)
+}
+
+# Triangles (rows of data) of the polygon face on rows r with rings given as
+# positions in r, wound like the first ring.
+mesh_face_triangles_3d <- function(data, r, rings) {
+  if (length(r) == 3L && length(rings) == 1L) return(matrix(r, nrow = 1L))
+  topology <- triangulate_polygon_3d(data[r, , drop = FALSE], rings)
+  t <- matrix(r[unlist(topology$triangles)], ncol = 3L, byrow = TRUE)
+  xyz <- as.matrix(data[r[rings[[1L]]], c("x", "y", "z")]); next_xyz <- xyz[c(seq.int(2L, nrow(xyz)), 1L), , drop = FALSE]
+  normal <- c(sum((xyz[, 2] - next_xyz[, 2]) * (xyz[, 3] + next_xyz[, 3])),
+    sum((xyz[, 3] - next_xyz[, 3]) * (xyz[, 1] + next_xyz[, 1])), sum((xyz[, 1] - next_xyz[, 1]) * (xyz[, 2] + next_xyz[, 2])))
+  a <- as.numeric(data[t[1L, 2L], c("x", "y", "z")] - data[t[1L, 1L], c("x", "y", "z")])
+  b <- as.numeric(data[t[1L, 3L], c("x", "y", "z")] - data[t[1L, 1L], c("x", "y", "z")])
+  cross <- c(a[2] * b[3] - a[3] * b[2], a[3] * b[1] - a[1] * b[3], a[1] * b[2] - a[2] * b[1])
+  if (sum(cross * normal) < 0) t <- t[, c(1L, 3L, 2L), drop = FALSE]
+  t
 }
 
 register_geom_3d(GeomMesh3D, emit_mesh_3d,

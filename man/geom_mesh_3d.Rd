@@ -15,6 +15,12 @@ geom_mesh_3d(
   shade = TRUE,
   wireframe = FALSE,
   hidden = "hide",
+  subdivide = 0L,
+  remesh = NULL,
+  decimate = NULL,
+  smooth = 0L,
+  curvature = FALSE,
+  crease = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -31,6 +37,20 @@ With faces supplied, data may hold the vertices.}
 \item{wireframe}{Draw original mesh edges with shared edges deduplicated.}
 
 \item{hidden}{Hidden stroke policy.}
+
+\item{subdivide, smooth}{Rounds of \code{\link[=mesh_subdivide]{mesh_subdivide()}} and iterations of
+\code{\link[=mesh_smooth]{mesh_smooth()}}.}
+
+\item{remesh}{Target edge length for \code{\link[=mesh_remesh]{mesh_remesh()}}, or TRUE for the mean
+edge length.}
+
+\item{decimate}{Target face count or fraction for \code{\link[=mesh_decimate]{mesh_decimate()}}.}
+
+\item{curvature}{Whether to add the computed variables of
+\code{\link[=mesh_curvature]{mesh_curvature()}}, for use with \code{after_stat()}.}
+
+\item{crease}{Crease angle for \code{\link[=mesh_normals]{mesh_normals()}}; NULL keeps the input's
+normals.}
 }
 \value{
 A ggplot2 layer.
@@ -42,8 +62,19 @@ Draw an external triangle or polygon mesh
 Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
 POLYGON Z or TIN Z objects. Numeric vertex fill is averaged per face before
 colour scaling. Other materials must be constant within each face.
+
+The mesh parameters run the \link[=mesh_processing]{mesh processing} verbs on
+each mesh of a panel, in transformed position units, in the order
+subdivide, remesh, decimate, smooth, curvature, crease.
 }
 \examples{
 v <- data.frame(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1), z = c(0, 0, 1, 1))
 ggplot2::ggplot() + geom_mesh_3d(vertices = v, faces = matrix(1:4, 1)) + coord_3d()
+cube <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
+quads <- rbind(c(1, 3, 4, 2), c(5, 6, 8, 7), c(1, 2, 6, 5), c(3, 7, 8, 4),
+  c(1, 5, 7, 3), c(2, 4, 8, 6))
+ggplot2::ggplot() +
+  geom_mesh_3d(ggplot2::aes(fill = ggplot2::after_stat(mean_curvature)),
+    vertices = cube, faces = quads, subdivide = 3, curvature = TRUE) +
+  coord_3d()
 }

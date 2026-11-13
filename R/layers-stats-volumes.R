@@ -65,6 +65,10 @@ probs <- function(...) {
 #' @param levels Numeric scalar-field thresholds; NULL uses pretty levels.
 #' @param caps Whether to cap the sublevel region on the box faces.
 #' @param method Extraction method: `"cubes"`, `"tetra"`, `"dual"` or `"nets"`.
+#' @param simplify NULL, or a target face count (or fraction of the extracted
+#'   faces) to which the surface is reduced by quadric edge collapse
+#'   ([mesh_decimate()]). Normals are then recomputed from the decimated
+#'   faces, or from `fun` in stat_isofunction_3d().
 #' @references Lewiner, Lopes, Vieira and Tavares (2003). Efficient
 #'   implementation of Marching Cubes' cases with topological guarantees.
 #'   Journal of Graphics Tools 8, 1-15. \doi{10.1080/10867651.2003.10487582}
@@ -101,9 +105,9 @@ probs <- function(...) {
 #'   stat_isosurface_3d(levels = 0.6) + coord_3d()
 stat_isosurface_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                 position = "identity", ..., levels = NULL, caps = FALSE,
-                                method = "cubes", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                                method = "cubes", simplify = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, data, StatIsosurface3D, position,
-    stats_params_3d(list(levels = levels, caps = caps, method = isosurface_method_3d(method), na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+    stats_params_3d(list(levels = levels, caps = caps, method = isosurface_method_3d(method), simplify = simplify, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname stat_isosurface_3d
@@ -136,10 +140,10 @@ geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
 #'   stat_density_3d(h = 0.6, levels = 0.02, n = 8) + coord_3d()
 stat_density_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                              position = "identity", ..., h = NULL, adjust = 1, n = 32L,
-                             levels = NULL, caps = FALSE, space = "data", method = "cubes",
+                             levels = NULL, caps = FALSE, space = "data", method = "cubes", simplify = NULL,
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, data, StatDensity3D, position,
-    stats_params_3d(list(h = h, adjust = adjust, n = n, levels = levels, caps = caps, method = isosurface_method_3d(method),
+    stats_params_3d(list(h = h, adjust = adjust, n = n, levels = levels, caps = caps, method = isosurface_method_3d(method), simplify = simplify,
       space = match.arg(space, c("data", "ilr")), na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
@@ -175,10 +179,10 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #'                      n = 8, levels = 0.5) + coord_3d()
 stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                  position = "identity", ..., fun, n = 24L, args = list(),
-                                 levels = NULL, caps = FALSE, method = "cubes", refine = 2L,
+                                 levels = NULL, caps = FALSE, method = "cubes", refine = 2L, simplify = NULL,
                                  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsofunction3D, position,
-    stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = isosurface_method_3d(method), refine = refine,
+    stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = isosurface_method_3d(method), refine = refine, simplify = simplify,
       na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 

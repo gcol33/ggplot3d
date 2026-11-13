@@ -18,6 +18,7 @@ stat_density_3d(
   caps = FALSE,
   space = "data",
   method = "cubes",
+  simplify = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -46,6 +47,11 @@ coordinates, where a Gaussian kernel respects relative scale, and maps
 the surface back into the simplex. With three parts, z stays as it is.}
 
 \item{method}{Extraction method: \code{"cubes"}, \code{"tetra"}, \code{"dual"} or \code{"nets"}.}
+
+\item{simplify}{NULL, or a target face count (or fraction of the extracted
+faces) to which the surface is reduced by quadric edge collapse
+(\code{\link[=mesh_decimate]{mesh_decimate()}}). Normals are then recomputed from the decimated
+faces, or from \code{fun} in stat_isofunction_3d().}
 }
 \description{
 Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z scale

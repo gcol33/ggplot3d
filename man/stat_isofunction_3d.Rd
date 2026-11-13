@@ -18,6 +18,7 @@ stat_isofunction_3d(
   caps = FALSE,
   method = "cubes",
   refine = 2L,
+  simplify = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -44,6 +45,11 @@ geom_isofunction_3d(...)
 
 \item{refine}{Number of regula falsi steps per edge vertex; 0 keeps the
 linear interpolation of the gridded values.}
+
+\item{simplify}{NULL, or a target face count (or fraction of the extracted
+faces) to which the surface is reduced by quadric edge collapse
+(\code{\link[=mesh_decimate]{mesh_decimate()}}). Normals are then recomputed from the decimated
+faces, or from \code{fun} in stat_isofunction_3d().}
 }
 \description{
 Evaluates fun on transformed x/y/z scale ranges and passes the scalar field

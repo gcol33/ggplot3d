@@ -95,7 +95,7 @@ isosurface_method_3d <- function(method) {
   match.arg(method[1L], methods)
 }
 
-stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, args = list(), refine = 0L) {
+stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, args = list(), refine = 0L, simplify = NULL) {
   if (!is.logical(caps) || length(caps) != 1L || is.na(caps)) stop("caps must be TRUE or FALSE.", call. = FALSE)
   method <- isosurface_method_3d(method)
   axes <- lapply(data[c("x", "y", "z")], function(x) sort(unique(x)))
@@ -112,6 +112,7 @@ stats_field_3d <- function(data, levels, caps, method = "cubes", fun = NULL, arg
     if (!is.null(f)) function_gradient_3d(f, axes))
   if (!is.null(f)) out <- isosurface_polish_3d(out, axes, value, f, refine)
   out$.edge_a <- out$.edge_b <- NULL
+  if (!is.null(simplify) && length(out$x)) out <- isosurface_simplify_3d(out, simplify, if (!is.null(f)) function_gradient_3d(f, axes))
   out$z_mean <- rep(colMeans(matrix(out$z, nrow = 3L)), each = 3L)
   out
 }
@@ -173,6 +174,22 @@ isosurface_polish_3d <- function(out, axes, value, f, refine) {
   out$nx[surface] <- normal[row[surface], 1L]
   out$ny[surface] <- normal[row[surface], 2L]
   out$nz[surface] <- normal[row[surface], 3L]
+  out
+}
+
+# Quadric decimation of an extracted isosurface to `target` faces (or a
+# fraction of them). Normals are recomputed from the decimated faces, or
+# from the gradient of the field function when there is one; cap faces keep
+# their face normals.
+isosurface_simplify_3d <- function(out, target, gradient = NULL) {
+  out <- mesh_decimate(out, target)
+  if (!is.null(gradient)) {
+    surface <- out$cap == 0L
+    g <- gradient(cbind(out$x, out$y, out$z)[surface, , drop = FALSE])
+    size <- sqrt(rowSums(g^2)); good <- is.finite(size) & size > 0
+    rows <- which(surface)[good]
+    out[rows, c("nx", "ny", "nz")] <- g[good, , drop = FALSE] / size[good]
+  }
   out
 }
 
