@@ -297,6 +297,15 @@ test_that("frames drawn by several workers equal the serial frames", {
   expect_identical(split$frame_count, serial$frame_count)
   expect_identical(unname(tools::md5sum(split$frames)), unname(tools::md5sum(serial$frames)))
   expect_identical(split$panel_extents, serial$panel_extents)
+  files <- c(tempfile(fileext = ".glb"), tempfile(fileext = ".glb"))
+  on.exit(unlink(files), add = TRUE)
+  a <- animate_3d(p, path = orbit_3d(90, 1), fps = 4, width = 160, height = 160,
+    file = files[1L], progress = FALSE)
+  b <- animate_3d(p, path = orbit_3d(90, 1), fps = 4, width = 160, height = 160,
+    file = files[2L], progress = FALSE, workers = workers)
+  expect_identical(readBin(files[1L], "raw", file.size(files[1L])), readBin(files[2L], "raw", file.size(files[2L])))
+  expect_identical(a$camera, b$camera)
+  expect_identical(a$panel_extents, b$panel_extents)
   expect_error(animate_3d(p, workers = 0), "workers")
 })
 

@@ -190,6 +190,8 @@ gltf_projection_3d <- function(camera) {
 
 gltf_camera_node_3d <- function(b, cameras, up) {
   first <- cameras[[1L]]
+  scene_assert(all(vapply(cameras, `[[`, character(1), "projection") == first$projection),
+    "glTF animation requires one projection type; export each projection separately")
   b$cameras <- list(gltf_projection_3d(first))
   poses <- lapply(cameras, gltf_camera_pose_3d, up)
   translation <- do.call(rbind, lapply(poses, `[[`, "translation"))
@@ -203,15 +205,13 @@ gltf_camera_node_3d <- function(b, cameras, up) {
     varies <- function(x) max(abs(sweep(as.matrix(x), 2L, as.matrix(x)[1L, ]))) > 1e-9
     if (varies(translation)) gltf_channel_3d(b, node, "translation", translation, "LINEAR")
     if (varies(rotation)) gltf_channel_3d(b, node, "rotation", rotation, "LINEAR")
-    ymag <- vapply(cameras, `[[`, numeric(1), "ymag")
-    if (varies(ymag)) {
-      if (first$projection == "perspective") {
-        gltf_channel_3d(b, node, NULL, vapply(cameras, `[[`, numeric(1), "yfov"), "LINEAR",
-          pointer = "/cameras/0/perspective/yfov")
-      } else {
-        gltf_channel_3d(b, node, NULL, ymag, "LINEAR", pointer = "/cameras/0/orthographic/ymag")
-        gltf_channel_3d(b, node, NULL, ymag * first$aspect, "LINEAR", pointer = "/cameras/0/orthographic/xmag")
-      }
+    properties <- if (first$projection == "perspective") list(yfov = function(camera) camera$yfov) else
+      list(ymag = function(camera) camera$ymag, xmag = function(camera) camera$ymag * camera$aspect)
+    properties <- c(properties, list(znear = function(camera) camera$near, zfar = function(camera) camera$far))
+    for (name in names(properties)) {
+      values <- vapply(cameras, properties[[name]], numeric(1))
+      if (varies(values)) gltf_channel_3d(b, node, NULL, values, "LINEAR",
+        pointer = paste0("/cameras/0/", first$projection, "/", name))
     }
   }
   node

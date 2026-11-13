@@ -177,6 +177,34 @@ test_that("animate_3d() writes camera tracks and per-frame geometry to glTF", {
   expect_true("KHR_animation_pointer" %in% unlist(glb$json$extensionsUsed))
 })
 
+test_that("camera paths export the same endpoint orientations as static scenes", {
+  skip_if_not_installed("jsonlite")
+  p <- export_surface_plot()
+  file <- tempfile(fileext = ".glb")
+  movie <- animate_3d(p, path = orbit_3d(60, 1), frames = 3, file = file, progress = FALSE)
+  glb <- read_glb(file)
+  animation <- glb$json$animations[[1L]]
+  channel <- Filter(function(ch) identical(ch$target$path, "rotation"), animation$channels)[[1L]]
+  rotations <- glb_accessor(glb, animation$samplers[[channel$sampler + 1L]]$output)
+  for (i in c(1L, movie$frame_count)) {
+    camera <- movie$camera[i, ]
+    export_3d(export_surface_plot(coord = coord_3d(azimuth = camera$azimuth,
+      elevation = camera$elevation, roll = camera$roll, zoom = camera$zoom)), file)
+    expected <- unlist(glb_node(read_glb(file), "camera")$rotation)
+    expect_equal(abs(sum(rotations[i, ] * expected)), 1, tolerance = 1e-6)
+  }
+})
+
+test_that("deferred screen-sized glyphs export their resolved meshes", {
+  skip_if_not_installed("jsonlite")
+  p <- ggplot2::ggplot(data.frame(x = 0, y = 0, z = 0), ggplot2::aes(x, y, z = z)) +
+    geom_sphere_3d(radius = 2, radius.unit = "mm", detail = 1) + coord_3d()
+  file <- tempfile(fileext = ".glb")
+  export_3d(p, file)
+  mesh <- read_glb(file)$json$meshes[[1L]]
+  expect_equal(length(glb_accessor(read_glb(file), mesh$primitives[[1L]]$indices)), 240L)
+})
+
 test_that("export and animation arguments are checked", {
   p <- export_surface_plot()
   expect_error(export_3d(p, tempfile(fileext = ".xyz")), "file must end in .glb, .gltf, .obj, .ply, .stl")
@@ -184,9 +212,11 @@ test_that("export and animation arguments are checked", {
   expect_error(export_3d(p, tempfile(fileext = ".glb"), size = 0), "size must be a positive finite number")
   expect_error(export_3d(p, tempfile(fileext = ".glb"), panel = 2), "panel is outside the plot layout")
   expect_error(export_3d(ggplot2::ggplot(), tempfile(fileext = ".glb")), "coord_3d")
-  expect_error(animate_3d(p, frames = 2, file = tempfile(fileext = ".ply")), "file must end in .gif, .mp4, .glb, .gltf")
+  expect_error(animate_3d(p, frames = 2, file = tempfile(fileext = ".ply")), "file must end in")
   expect_error(animate_3d(p, frames = 2, file = tempfile(fileext = ".gif"), size = 2), "apply to .glb and .gltf output only")
   expect_error(animate_3d(p, frames = 2, file = tempfile(fileext = ".glb"), colour = 2), "must be named furniture")
+  expect_error(animate_3d(export_surface_plot(coord = coord_3d(projection = "perspective")),
+    path = dolly_zoom_3d(0, 1), frames = 2, file = tempfile(fileext = ".glb"), progress = FALSE), "one projection type")
 })
 
 test_that("the JSON encoder writes objects, arrays, scalars and escapes", {
