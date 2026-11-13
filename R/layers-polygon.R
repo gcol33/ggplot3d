@@ -85,4 +85,4 @@ emit_polygons_3d <- function(data, params, panel_params, strict = TRUE) {
                             params, panel_params$panel_id, unlist(counts, use.names = FALSE))
 }
 
-register_geom_3d(ggplot2::GeomPolygon, emit_polygons_3d)
+register_geom_3d(ggplot2::GeomPolygon, emit_polygons_3d, tween = "polygon")

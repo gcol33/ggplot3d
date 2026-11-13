@@ -66,7 +66,7 @@ emit_voxels_3d <- function(data, params, panel_params) {
 }
 
 register_geom_3d(GeomVoxel3D, emit_voxels_3d,
-  parameters = list(height = NULL, greedy = TRUE))
+  parameters = list(height = NULL, greedy = TRUE), tween = "row")
 
 #' Voxels
 #'

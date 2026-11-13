@@ -250,7 +250,7 @@ convex_prisms_3d <- function(data, rows) {
 register_geom_3d(GeomCol3D, emit_columns_3d, prepare_aesthetics = prepare_solid_3d,
   positions = c("nudge", "jitter", "dodge", "stack"),
   extents = list(x = extent_3d("xmin", "xmax", "x"), y = extent_3d("ymin", "ymax", "y"),
-                 z = extent_3d("zmin", "zmax", "z")))
+                 z = extent_3d("zmin", "zmax", "z")), tween = "row")
 register_geom_3d(GeomExtrude3D, emit_extrusions_3d,
   prepare_data = function(data) spatial_corners_3d(data, extrusion = TRUE),
   prepare_aesthetics = prepare_solid_3d)

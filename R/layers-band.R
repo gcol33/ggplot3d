@@ -98,4 +98,5 @@ emit_droplines_3d <- function(data, params, panel_params) {
 register_geom_3d(ggplot2::GeomRibbon, emit_ribbons_3d,
   parameters = list(flipped_aes = FALSE, outline.type = "both"))
 
-register_geom_3d(GeomDropline3D, emit_droplines_3d, positions = c("nudge", "jitter", "dodge", "stack"))
+register_geom_3d(GeomDropline3D, emit_droplines_3d, positions = c("nudge", "jitter", "dodge", "stack"),
+  tween = "row")

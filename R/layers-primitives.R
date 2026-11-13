@@ -6,9 +6,14 @@ make_layer_3d <- function(geom, mapping, data, stat, position, params, show.lege
              if (inherits(stat, "Stat")) stat$parameters(TRUE))
   unknown <- setdiff(names(params), known)
   if (length(unknown)) stop("Unknown 3D layer arguments: ", paste(unknown, collapse = ", "), call. = FALSE)
-  constructor(geom = scene_geom_3d(geom, entry), mapping = mapping, data = data,
+  parent <- constructor(geom = scene_geom_3d(geom, entry), mapping = mapping, data = data,
               stat = stat, position = position, params = params,
               show.legend = show.legend, inherit.aes = inherit.aes)
+  ggplot2::ggproto(NULL, parent,
+    compute_statistic = function(self, data, layout) {
+      if (inherits(layout$coord, "Coord3D")) check_3d_build(inherits(layout, "Layout3D"))
+      ggplot2::ggproto_parent(parent, self)$compute_statistic(data, layout)
+    })
 }
 
 #' Point, path, segment, text and polygon layers in three dimensions

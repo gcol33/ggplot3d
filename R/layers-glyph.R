@@ -71,7 +71,8 @@ emit_spheres_3d <- function(data, params, panel_params) {
   emit_glyph_instances_3d(data, maps, space, glyph_mesh_3d("sphere", params$detail), params, panel_params)
 }
 
-register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = "data", detail = 2L))
+register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = "data", detail = 2L),
+  tween = "row")
 
 #' Spheres
 #'
@@ -168,7 +169,8 @@ emit_glyphs_3d <- function(data, params, panel_params) {
   emit_glyph_instances_3d(data, maps, rep(unit, nrow(data)), mesh, params, panel_params)
 }
 
-register_geom_3d(GeomGlyph3D, emit_glyphs_3d, parameters = list(glyph = "sphere", detail = 2L))
+register_geom_3d(GeomGlyph3D, emit_glyphs_3d, parameters = list(glyph = "sphere", detail = 2L),
+  tween = "row")
 
 #' One solid glyph per observation
 #'
@@ -303,8 +305,7 @@ emit_ellipsoids_3d <- function(data, params, panel_params) {
   packet
 }
 
-register_geom_3d(GeomEllipsoid3D, emit_ellipsoids_3d, parameters = list(detail = 2L, axes = FALSE))
-
+register_geom_3d(GeomEllipsoid3D, emit_ellipsoids_3d, parameters = list(detail = 2L, axes = FALSE), tween = "row")
 #' Ellipsoids
 #'
 #' Draws one solid ellipsoid per row, centred on x, y, z. Give either the

@@ -54,4 +54,4 @@ emit_text_plane_3d <- function(data, params, panel_params) {
 }
 
 register_geom_3d(GeomTextPlane3D, emit_text_plane_3d, parameters = list(plane = "xy"),
-  positions = mark_positions_3d)
+  positions = mark_positions_3d, tween = "row")

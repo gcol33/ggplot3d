@@ -24,12 +24,18 @@ ggplot_build.ggplot3d <- function(plot, ...) {
   context$key_context <- new.env(parent = emptyenv())
   context$key_context$camera <- plot@coordinates$camera
   context$key_context$light <- plot@coordinates$config$light
-  working@layers <- lapply(seq_along(plot@layers), function(i) adapt_layer_3d(plot@layers[[i]], i, frame, context$key_context))
+  working@layers <- lapply(seq_along(plot@layers), function(i) adapt_layer_3d(plot@layers[[i]], i, frame,
+    context$key_context, isTRUE(plot@coordinates$config$tween)))
   working@scales <- scales_3d(plot@scales, context)
   working@layout <- ggplot2::ggproto(NULL, Layout3D, context = context)
   built <- parent_build(working, ...)
   stereo_colour_warning_3d(plot@coordinates, context$scales)
   built
+}
+
+check_3d_build <- function(valid) {
+  if (!isTRUE(valid)) stop("coord_3d() needs its 3D build pipeline. For gganimate transitions, use a regular 3D plot with animate_3d(time = , tween = tween_3d()).", call. = FALSE)
+  invisible(NULL)
 }
 
 scales_3d <- function(parent, context) {
@@ -77,7 +83,7 @@ scales_3d <- function(parent, context) {
   )
 }
 
-adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL) {
+adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL, tweening = FALSE) {
   entry <- find_emitter_3d(layer$geom)
   if (is.null(entry)) stop("No 3D emitter registered for ", class(layer$geom)[1L], ".", call. = FALSE)
   check_position_kind_3d(layer$position, entry)
@@ -86,7 +92,7 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL
   hook_params <- c(layer$aes_params, layer$geom_params, layer$stat_params)
   base_stat <- entry$stat_adapter %or3d% layer$stat
   # The row index is internal; a stat that aggregates rows drops it silently.
-  stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, c(".source", interactive_aesthetics_3d, frame$parts)))
+  stat <- ggplot2::ggproto(NULL, base_stat, dropped_aes = union(base_stat$dropped_aes, c(".source", ".tween_group", interactive_aesthetics_3d, frame$parts)))
   result <- ggplot2::ggproto(NULL, layer,
     geom = scene_geom_3d(layer$geom, entry),
     position = bind_position_3d(layer$position, entry),
@@ -125,6 +131,10 @@ adapt_layer_3d <- function(layer, layer_id, frame = FrameBox, key_context = NULL
           !"z" %in% names(self$stat$default_aes) && !"z" %in% self$geom$required_aes) out$z <- rep(entry$default_z %or3d% 0, nrow(out))
       out$.source <- if (nrow(out) == nrow(data)) data$.source else seq_len(nrow(out))
       out$.layer <- rep.int(as.integer(layer_id), nrow(out))
+      if (tweening && is.null(out$.tween_group)) {
+        discrete <- names(out)[vapply(out, function(x) is.factor(x) || is.character(x) || is.logical(x), logical(1))]
+        out$.tween_group <- tween_keys_3d(out, setdiff(discrete, c("label", "PANEL")))
+      }
       plot@scales$add_defaults(out[intersect(names(out), c("x", "y", z_aesthetics))], plot@plot_env)
       out
     },

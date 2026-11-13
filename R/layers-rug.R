@@ -95,4 +95,4 @@ prepare_rug_3d <- function(out, data, plot, params) {
 }
 
 register_geom_3d(GeomRug3D, emit_rugs_3d, prepare_aesthetics = prepare_rug_3d,
-  parameters = list(sides = c("floor:x", "floor:y"), length = 0.03))
+  parameters = list(sides = c("floor:x", "floor:y"), length = 0.03), tween = "row")

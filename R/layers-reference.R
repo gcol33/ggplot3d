@@ -209,15 +209,15 @@ emit_ablines_3d <- function(data, params, panel_params) {
   emit_box_lines_3d(data, as.matrix(normal), direction, params, panel_params, "lines")
 }
 
-register_geom_3d(GeomRefline3D, emit_reflines_3d, default_z = -Inf)
+register_geom_3d(GeomRefline3D, emit_reflines_3d, default_z = -Inf, tween = "row")
 register_geom_3d(GeomAbline3D, emit_ablines_3d, parameters = list(point = c(0, 0, 0)),
-  default_z = -Inf, positions = character())
+  default_z = -Inf, positions = character(), tween = "row")
 register_geom_3d(ggplot2::GeomHline, function(data, params, panel_params) {
   emit_axis_lines_3d(data, c(y = "yintercept", z = "z"), params, panel_params)
-}, default_z = -Inf)
+}, default_z = -Inf, tween = "row")
 register_geom_3d(ggplot2::GeomVline, function(data, params, panel_params) {
   emit_axis_lines_3d(data, c(x = "xintercept", z = "z"), params, panel_params)
-}, default_z = -Inf)
+}, default_z = -Inf, tween = "row")
 
 emit_floor_ablines_3d <- function(data, params, panel_params) {
   x <- panel_params$ranges$x; y <- panel_params$ranges$y
@@ -227,4 +227,4 @@ emit_floor_ablines_3d <- function(data, params, panel_params) {
   emit_box_lines_3d(data, point, direction, params, panel_params, "reference lines")
 }
 
-register_geom_3d(ggplot2::GeomAbline, emit_floor_ablines_3d, default_z = -Inf)
+register_geom_3d(ggplot2::GeomAbline, emit_floor_ablines_3d, default_z = -Inf, tween = "row")

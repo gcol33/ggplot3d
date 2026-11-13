@@ -116,6 +116,13 @@ extent_3d <- function(lower = NA_character_, upper, centre = NA_character_) {
 #'   with their defaults. They reach the emitter in `params`.
 #' @param default_z Height of a layer without a z mapping. The default 0
 #'   trains the z scale; `-Inf` places the layer on the floor without training it.
+#' @param tween How [tween_3d()] pairs the layer's rows between two states.
+#'   `"row"`: each row is one mark (points, text, columns), paired by group
+#'   and order. `"path"` and `"polygon"`: the rows of a group form an open or
+#'   closed line, resampled by arc length when the two states differ in
+#'   length. `"group"` (default): the rows of a group form one shape (a
+#'   surface, a mesh) that morphs row by row when its row count is unchanged
+#'   and cross-fades otherwise.
 #' @return NULL invisibly. Registers the emitter for subsequent layers.
 #' @details
 #' The emitter receives scale-transformed positions normalised to the panel box.
@@ -150,7 +157,9 @@ extent_3d <- function(lower = NA_character_, upper, centre = NA_character_) {
 register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = NULL,
                              stat_adapter = NULL, position_check = NULL, replace = FALSE,
                              prepare_data = NULL, prepare_aesthetics = NULL, parameters = list(),
-                             default_z = 0, positions = "nudge", extents = list()) {
+                             default_z = 0, positions = "nudge", extents = list(),
+                             tween = c("group", "row", "path", "polygon")) {
+  tween <- match.arg(tween)
   stopifnot(inherits(geom, "Geom"), is.function(emit), is.list(parameters),
             is.character(positions), all(positions %in% position_kinds_3d),
             is.list(extents), all(names(extents) %in% c("x", "y", "z")),
@@ -163,7 +172,7 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
                               setup_data = setup_data, stat_adapter = stat_adapter, position_check = position_check,
                               prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics,
                               parameters = parameters, default_z = default_z,
-                              positions = positions, extents = extents)
+                              positions = positions, extents = extents, tween = tween)
   invisible(NULL)
 }
 
@@ -192,7 +201,7 @@ scene_geom_3d <- function(parent, entry) {
   ggplot2::ggproto(NULL, parent,
     scene_entry = entry,
     required_aes = if (entry$name == "GeomSegment") c("x", "y") else parent$required_aes,
-    optional_aes = union(parent$optional_aes, c(z_aesthetics, interactive_aesthetics_3d, entry$aesthetics,
+    optional_aes = union(parent$optional_aes, c(z_aesthetics, interactive_aesthetics_3d, entry$aesthetics, ".tween_group",
       if (entry$name == "GeomSegment") c("xend", "yend"))),
     extra_params = union(parent$extra_params, c(".emitter", ".layer_id", ".project", ".key_context", "occlusion", "shade", "hidden", "method", "max_edge", "wireframe", "render", "edl", "raster", "clip_planes")),
     handle_na = function(data, params) data,
@@ -227,6 +236,7 @@ scene_draw_panel_3d <- function(entry) {
 
 # An emitter returns a scene packet, or an annotation grob drawn over the scene.
 emit_scene_3d <- function(data, params, panel_params, layer_id) {
+  check_3d_build(!is.null(panel_params$camera) && !is.null(panel_params$ranges$z))
   entry <- .emitters_3d[[params$.emitter]]
   if (is.null(entry)) stop("Unknown 3D emitter: ", params$.emitter, call. = FALSE)
   if (is.null(data$.source)) data$.source <- seq_len(nrow(data))
@@ -527,11 +537,11 @@ collect_scene_layers <- function(panel, panel_params, theme) {
 
 # Marks placed by one coordinate per row accept every adjustment.
 mark_positions_3d <- c("nudge", "jitter", "dodge", "stack", "planar")
-register_geom_3d(ggplot2::GeomPoint, emit_points_3d, positions = mark_positions_3d)
-register_geom_3d(ggplot2::GeomPath, emit_paths_3d, positions = mark_positions_3d)
-register_geom_3d(ggplot2::GeomLine, emit_paths_3d, positions = mark_positions_3d)
-register_geom_3d(ggplot2::GeomSegment, emit_segments_3d, positions = c("nudge", "jitter", "dodge"))
-register_geom_3d(ggplot2::GeomText, emit_text_3d, positions = mark_positions_3d)
+register_geom_3d(ggplot2::GeomPoint, emit_points_3d, positions = mark_positions_3d, tween = "row")
+register_geom_3d(ggplot2::GeomPath, emit_paths_3d, positions = mark_positions_3d, tween = "path")
+register_geom_3d(ggplot2::GeomLine, emit_paths_3d, positions = mark_positions_3d, tween = "path")
+register_geom_3d(ggplot2::GeomSegment, emit_segments_3d, positions = c("nudge", "jitter", "dodge"), tween = "row")
+register_geom_3d(ggplot2::GeomText, emit_text_3d, positions = mark_positions_3d, tween = "row")
 # geom_blank() and expand_limits() train scales and draw nothing.
 register_geom_3d(ggplot2::GeomBlank, function(data, params, panel_params) {
   new_scene_packet(vertices = list(x = numeric(), y = numeric(), z = numeric()))

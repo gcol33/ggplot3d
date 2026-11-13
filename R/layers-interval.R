@@ -375,7 +375,7 @@ crossbar_parameters_3d <- list(cap.plane = "auto", fatten = 2.5, middle_gp = NUL
 
 register_interval_3d <- function(geom, emit, parameters = list(cap.plane = "auto"), caps = FALSE) {
   register_geom_3d(geom, emit, aesthetics = interval_aes_3d, setup_data = setup_interval_3d(caps),
-    parameters = parameters, default_z = -Inf, positions = interval_positions_3d)
+    parameters = parameters, default_z = -Inf, positions = interval_positions_3d, tween = "row")
 }
 
 register_interval_3d(GeomLinerange3D, emit_linerange_3d)

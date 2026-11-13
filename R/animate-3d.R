@@ -49,10 +49,15 @@
 #'   installed ggplot3d. PDF pages are drawn in one process.
 #' @param ... Arguments to [export_3d()] for glTF output: `furniture`, `lines`,
 #'   `points` and `size`.
+#' @param tween A [tween_3d()] specification for in-between data frames, or NULL
+#'   for one frame per state. Requires `time`. The number of frames is then
+#'   `(number of states - 1) * (tween$n + 1) + 1`.
 #' @return A ggplot3d_animation list with `file`, `frame_count`, `fps`, `camera`
 #'   (one row per frame with the time, the camera angles, zoom, projection,
 #'   field of view, distance (NA when automatic) and target, and the frame's
 #'   `value` of the time column when `time` is set), `timings` in seconds,
+#'   `transition` (source state, destination state and eased fraction when
+#'   tweening),
 #'   `build_seconds`, `frame`, `panel_extents` in millimetres, and `frames`
 #'   (the PNG paths when file is NULL, the written files of a per-frame
 #'   output). PNG frames returned with file = NULL belong to the caller.
@@ -65,6 +70,10 @@
 #'   plotly's `frame` aesthetic. The animated PNG follows the APNG 1.0
 #'   specification: browsers play it and viewers without APNG support show its
 #'   first frame.
+#'
+#'   gganimate's `transition_states()` and `transition_time()` use a separate
+#'   build pipeline. These transitions produce guidance to use
+#'   `animate_3d(time = , tween = tween_3d())` for a 3D plot.
 #' @seealso [camera_path_3d()] for keyframed camera moves, [view_3d()] to play
 #'   a path in the browser.
 #' @examples
@@ -96,10 +105,15 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        renderer = c("raster", "vector"), roll = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
-                       path = NULL, workers = 1L, ...) {
+                       path = NULL, workers = 1L, tween = NULL, ...) {
   renderer <- match.arg(renderer)
   motion_dimensions_3d(width, height, dpi)
   coord <- motion_plot_coord_3d(plot)
+  if (!is.null(tween)) {
+    scene_assert(inherits(tween, "ggplot3d_tween") && !is.null(time), "tween must be a tween_3d() specification with time set")
+    plot <- tween_plot_3d(plot)
+    coord <- plot@coordinates
+  }
   if (!is.null(path)) {
     scene_assert(inherits(path, "ggplot3d_camera_path"),
       "path must be a camera path such as camera_path_3d() or orbit_3d()")
@@ -108,12 +122,19 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   }
   frames_given <- !missing(frames)
   values <- NULL
+  states <- NULL; schedule <- NULL
   if (!is.null(time)) {
-    values <- motion_time_values_3d(plot, time)
+    states <- motion_time_values_3d(plot, time)
+    if (!is.null(tween)) {
+      schedule <- tween_schedule_3d(states, tween)
+      values <- if (is.numeric(states)) states[schedule$from] * (1 - schedule$fraction) + states[schedule$to] * schedule$fraction
+        else states[ifelse(schedule$fraction < 0.5, schedule$from, schedule$to)]
+    } else values <- states
     if (!frames_given) frames <- length(values)
     frames_given <- TRUE
     scene_assert(identical(as.numeric(frames), as.numeric(length(values))),
-      sprintf("frames must equal the %d distinct values of '%s'", length(values), time))
+      if (is.null(tween)) sprintf("frames must equal the %d distinct values of '%s'", length(values), time)
+        else sprintf("frames must equal the %d scheduled data frames", length(values)))
   }
   scene_assert(is.numeric(frames) && length(frames) == 1L && is.finite(frames) &&
     frames >= 1 && frames == trunc(frames), "frames must be a positive integer")
@@ -142,8 +163,12 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   device <- motion_open_device_3d(output$device, file.path(directory, paste0("measure.", output$device)),
     width, height, dpi)
   on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE, after = FALSE)
-  limits <- if (is.null(time)) NULL else motion_frame_limits_3d(plot, time, values)
-  built <- ggplot2::ggplotGrob(if (is.null(time)) plot else motion_frame_plot_3d(plot, time, values[[1L]], limits))
+  limits <- if (is.null(time)) NULL else motion_frame_limits_3d(plot, time, states)
+  keyframes <- if (is.null(tween)) NULL else lapply(states, function(value) {
+    ggplot2::ggplot_build(motion_frame_plot_3d(plot, time, value, limits))
+  })
+  built <- if (!is.null(keyframes)) ggplot2::ggplot_gtable(keyframes[[1L]]) else
+    ggplot2::ggplotGrob(if (is.null(time)) plot else motion_frame_plot_3d(plot, time, values[[1L]], limits))
   panels <- motion_panels_3d(built)
   scene_assert(length(panels) > 0L, "plot has no 3D scene panels")
   build_seconds <- proc.time()[["elapsed"]] - start
@@ -163,6 +188,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   # Repelled labels start each frame where the previous frame of the same
   # worker left them.
   job <- list(built = built, plot = plot, time = time, values = values, limits = limits,
+    keyframes = keyframes, schedule = schedule, tween = tween,
     cameras = cameras, base = coord$camera, backend = backend, frame = motion_frame_mode_3d(steps),
     device = output$device, per_file = output$kind != "pages", paths = paths, frames = frames,
     width = width, height = height, dpi = dpi, label_state = new.env(parent = emptyenv()),
@@ -181,6 +207,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   structure(list(file = file, frame_count = as.integer(frames), fps = fps, camera = camera,
     timings = vapply(rendered, `[[`, numeric(1), "timing"), build_seconds = build_seconds,
     frame = job$frame, panel_extents = lapply(rendered, `[[`, "extents"),
+    transition = if (is.null(schedule)) NULL else data.frame(from = states[schedule$from], to = states[schedule$to], fraction = schedule$fraction),
     frames = if (is.null(file) || output$kind == "sequence") paths else character()),
     class = "ggplot3d_animation")
 }
@@ -277,7 +304,8 @@ motion_panel_grob_3d <- function(panel, camera, base, backend, frame, registry, 
 }
 
 motion_frame_grob_3d <- function(job, i) {
-  built <- if (is.null(job$time) || i == 1L) job$built else
+  built <- if (!is.null(job$tween)) motion_tween_build_3d(job$keyframes, job$schedule, i, job$tween) else
+    if (is.null(job$time) || i == 1L) job$built else
     ggplot2::ggplotGrob(motion_frame_plot_3d(job$plot, job$time, job$values[[i]], job$limits))
   registry <- new.env(parent = emptyenv())
   motion_map_panels_3d(built, function(panel) {

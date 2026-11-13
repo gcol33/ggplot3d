@@ -17,7 +17,8 @@ register_geom_3d(
   parameters = list(),
   default_z = 0,
   positions = "nudge",
-  extents = list()
+  extents = list(),
+  tween = c("group", "row", "path", "polygon")
 )
 }
 \arguments{
@@ -58,6 +59,14 @@ holding the geometry's interval along that axis, as character vectors
 \code{c(lower = , upper = , centre = )}; \code{lower} or \code{centre} may be \code{NA}.
 Stacking and dodging read and rewrite these columns. An axis not listed
 takes its own coordinate as both the interval end and the anchor.}
+
+\item{tween}{How \code{\link[=tween_3d]{tween_3d()}} pairs the layer's rows between two states.
+\code{"row"}: each row is one mark (points, text, columns), paired by group
+and order. \code{"path"} and \code{"polygon"}: the rows of a group form an open or
+closed line, resampled by arc length when the two states differ in
+length. \code{"group"} (default): the rows of a group form one shape (a
+surface, a mesh) that morphs row by row when its row count is unchanged
+and cross-fades otherwise.}
 }
 \value{
 NULL invisibly. Registers the emitter for subsequent layers.

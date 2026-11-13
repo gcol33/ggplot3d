@@ -286,7 +286,7 @@ place_overlay_3d.scene_repel_grob <- function(grob, context) {
 }
 
 register_geom_3d(GeomTextRepel3D, repel_emitter_3d(FALSE), aesthetics = repel_aesthetics_3d,
-  parameters = repel_parameters_3d())
+  parameters = repel_parameters_3d(), tween = "row")
 register_geom_3d(GeomLabelRepel3D, repel_emitter_3d(TRUE), aesthetics = repel_aesthetics_3d,
   parameters = c(repel_parameters_3d(), list(label.padding = grid::unit(0.25, "lines"),
-    label.r = grid::unit(0.15, "lines"), border.colour = NULL, text.colour = NULL)))
+    label.r = grid::unit(0.15, "lines"), border.colour = NULL, text.colour = NULL)), tween = "row")

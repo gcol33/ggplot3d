@@ -212,5 +212,6 @@ prepare_contour_aesthetics_3d <- function(out, data, plot, params) {
 }
 
 register_geom_3d(GeomContour3D, emit_paths_3d,
-  prepare_data = prepare_contour_data_3d, prepare_aesthetics = prepare_contour_aesthetics_3d)
-register_geom_3d(GeomContourFilled3D, function(data, params, panel_params) emit_polygons_3d(data, params, panel_params))
+  prepare_data = prepare_contour_data_3d, prepare_aesthetics = prepare_contour_aesthetics_3d, tween = "path")
+register_geom_3d(GeomContourFilled3D, function(data, params, panel_params) emit_polygons_3d(data, params, panel_params),
+  tween = "polygon")

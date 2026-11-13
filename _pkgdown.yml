@@ -234,6 +234,7 @@ reference:
   contents:
   - backend_3d
   - animate_3d
+  - tween_3d
   - view_3d
 - title: Camera paths
   contents:

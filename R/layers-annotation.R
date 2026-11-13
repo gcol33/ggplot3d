@@ -120,10 +120,10 @@ annotate_3d <- function(geom, x = NULL, y = NULL, z = NULL, xmin = NULL, xmax = 
   layer
 }
 
-register_geom_3d(ggplot2::GeomRect, emit_rects_3d)
+register_geom_3d(ggplot2::GeomRect, emit_rects_3d, tween = "row")
 register_geom_3d(ggplot2::GeomLabel, emit_labels_3d,
   parameters = list(label.padding = grid::unit(0.25, "lines"), label.r = grid::unit(0.15, "lines"),
-    border.colour = NULL, text.colour = NULL), positions = mark_positions_3d)
+    border.colour = NULL, text.colour = NULL), positions = mark_positions_3d, tween = "row")
 register_geom_3d(ggplot2::GeomCustomAnn,
   annotation_emitter_3d(function(params) params$grob),
   parameters = list(grob = NULL, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),

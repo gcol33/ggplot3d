@@ -361,6 +361,7 @@ normalise_positions_3d <- function(data, panel_params) {
 }
 
 project_positions_3d <- function(data, panel_params) {
+  check_3d_build(!is.null(panel_params$camera) && !is.null(panel_params$ranges$z))
   if (is.null(data$z)) data$z <- rep(0, nrow(data))
   normal <- normalise_positions_3d(data, panel_params)
   coordinates <- normal[c("x", "y", "z")]
