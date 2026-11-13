@@ -121,6 +121,14 @@ reference:
   - geom_hex_3d
   - geom_extrude_3d
   - geom_voxel_3d
+- title: Network and tree layers
+  contents:
+  - geom_edge_3d
+  - geom_node_3d
+  - fortify.igraph
+  - get_edges_3d
+  - stat_layers_3d
+  - stat_dendrogram_3d
 - title: Statistical layers
   contents:
   - geom_function_3d
