@@ -1,6 +1,6 @@
 ---
 title: "Implicit surfaces"
-description: "Algebraic surfaces, triply periodic minimal surfaces and shapes built from signed distance functions, drawn as level sets with geom_isofunction_3d()."
+description: "Draw level sets from functions, reconstruct surfaces from point clouds and triangulate scattered height measurements."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Implicit surfaces}
@@ -19,6 +19,11 @@ PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
 ```{r packages, message=FALSE}
 library(ggplot2)
 library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
 ```
 
 An implicit surface is the set of points where a function of x, y and z
@@ -26,6 +31,10 @@ takes one value. `geom_isofunction_3d()` samples the function on a grid over
 the position scales, extracts the level set and then moves every vertex onto
 the exact level along its grid edge, so a coarse grid still gives a surface
 that lies on the function's zero set.
+
+Point clouds can also supply a surface through an alpha shape or a fitted
+implicit function. The reconstruction examples below use small samples;
+installation is covered in [Get started](ggplot3d.html).
 
 ```{r box}
 cube <- function(k) list(xlim(-k, k), ylim(-k, k), scale_z_continuous(limits = c(-k, k)))
@@ -38,7 +47,7 @@ have. The polynomial below is the one of PyVista's contouring example; points
 outside the sphere of radius sqrt(3.1) are set to `NA`, which masks their
 grid cells.
 
-```{r barth}
+```{r barth, fig.alt="Barth's sextic surface clipped to a sphere, with its repeated lobes and singular intersections."}
 phi <- (1 + sqrt(5)) / 2
 barth <- function(x, y, z) {
   x2 <- x^2; y2 <- y^2; z2 <- z^2
@@ -54,7 +63,7 @@ ggplot() +
 The Clebsch diagonal cubic contains all 27 lines a smooth cubic surface can
 carry, each one real.
 
-```{r clebsch}
+```{r clebsch, fig.alt="The Clebsch diagonal cubic as an orange algebraic surface."}
 clebsch <- function(x, y, z) {
   81 * (x^3 + y^3 + z^3) - 189 * (x^2 * (y + z) + y^2 * (z + x) + z^2 * (x + y)) +
     54 * x * y * z + 126 * (x * y + y * z + z * x) - 9 * (x^2 + y^2 + z^2) -
@@ -70,7 +79,7 @@ ggplot() +
 The Schwarz P surface is close to the zero set of cos x + cos y + cos z. Two
 level sets on either side of zero bound a wall around it.
 
-```{r schwarz}
+```{r schwarz, fig.alt="Two level surfaces of the Schwarz P approximation surrounding its periodic openings."}
 schwarz <- function(x, y, z) cos(x) + cos(y) + cos(z)
 ggplot() +
   geom_isofunction_3d(aes(fill = after_stat(factor(level))),
@@ -89,7 +98,7 @@ them, and `|`, `&`, `-`, `sdf_blend()`, `sdf_offset()`, `sdf_shell()` and
 z, so it goes straight into `geom_isofunction_3d()`, which extracts its zero
 set by default and takes the normals from its exact gradient.
 
-```{r csg}
+```{r csg, fig.alt="A rounded solid with three intersecting cylindrical passages through it."}
 part <- sdf_box(size = c(2, 2, 2), radius = 0.15) & sdf_sphere(radius = 1.3)
 drill <- sdf_capsule(c(-2, 0, 0), c(2, 0, 0), 0.5) |
   sdf_capsule(c(0, -2, 0), c(0, 2, 0), 0.5) |
@@ -105,7 +114,7 @@ at most `k` where the shapes meet. A gyroid sheet cut by a sphere shows a
 second use of the same algebra: `sdf_shell()` turns the gyroid's zero set
 into a wall of given thickness.
 
-```{r blend}
+```{r blend, fig.alt="A red gyroid sheet with finite thickness, cut to a spherical boundary."}
 blob <- sdf_blend(sdf_sphere(c(-0.6, 0, 0), 0.6),
   sdf_torus(c(0.5, 0, 0), major = 0.6, minor = 0.2), k = 0.15)
 sheet <- sdf_shell(sdf_gyroid(period = 1.2), 0.08) & sdf_sphere(radius = 1.2)
@@ -118,10 +127,100 @@ Because the expression tree of a distance function can also be evaluated on
 whole boxes in interval arithmetic, `adaptive = TRUE` refines an octree only
 near the surface and near its sharp edges.
 
-```{r adaptive}
+```{r adaptive, fig.alt="A sphere smoothly joined to a torus, extracted with adaptive refinement."}
 ggplot() +
   geom_isofunction_3d(fun = blob, adaptive = TRUE, depth = c(3, 6),
     fill = PAL[["purple"]]) +
   xlim(-1.3, 1.4) + ylim(-0.9, 0.9) + scale_z_continuous(limits = c(-0.7, 0.7)) +
   coord_3d()
 ```
+
+## Scattered height measurements
+
+A height surface has one height at each horizontal position. Sample 200
+locations from the built-in volcano matrix and join their x/y positions
+with a Delaunay triangulation. The triangles interpolate their three
+measured heights; their edges are visible here to show the irregular mesh.
+
+```{r scattered-heights, fig.alt="A triangular height surface reconstructed from 200 scattered volcano elevations, with mesh edges visible."}
+terrain <- expand.grid(x = seq_len(nrow(volcano)), y = seq_len(ncol(volcano)))
+terrain$z <- as.vector(volcano)
+set.seed(12)
+samples <- terrain[sample(seq_len(nrow(terrain)), 200), ]
+ggplot(samples, aes(x, y, z = z)) +
+  geom_surface_3d(method = "delaunay", fill = PAL["green"],
+                   colour = "grey40", linewidth = 0.15) +
+  coord_3d(aspect = c(1.4, 1, 0.7))
+```
+
+This surface ends at the convex hull of the sampled horizontal positions.
+For an object with several surface heights at the same x/y position, use
+three-dimensional reconstruction.
+
+## Alpha shapes
+
+An alpha shape selects local connections between points using a radius
+threshold. Sample a torus with major radius 1 and tube radius 0.35. This
+gives a point cloud whose reconstructed surface can retain a central hole.
+
+```{r torus-sample}
+set.seed(6)
+u <- runif(400, 0, 2 * pi)
+v <- runif(400, 0, 2 * pi)
+torus <- data.frame(x = (1 + 0.35 * cos(v)) * cos(u),
+                    y = (1 + 0.35 * cos(v)) * sin(u), z = 0.35 * sin(v))
+shape <- ggplot(torus, aes(x, y, z = z))
+```
+
+The radius threshold uses transformed position units. A smaller threshold
+can leave disconnected pieces, while a sufficiently large one fills the
+convex hull. The opacity argument controls transparency independently of
+the reconstruction radius.
+
+```{r alpha-shape, fig.alt="An alpha-shape surface around sampled torus points, retaining the hole through its centre."}
+shape + geom_alpha_shape_3d(radius = 0.4, fill = PAL["teal"], alpha = 0.7) +
+  geom_point_3d(size = 0.4) + coord_3d(aspect = "data", elevation = 50)
+```
+
+```{r alpha-hull, fig.alt="The convex hull of the same torus sample, spanning the central hole."}
+shape + geom_alpha_shape_3d(radius = Inf, fill = PAL["orange"]) +
+  coord_3d(aspect = "data", elevation = 50)
+```
+
+With an automatic threshold, the stat chooses the smallest radius at which
+the selected tetrahedra touch every point. See
+[geom_alpha_shape_3d()](../reference/stat_alpha_shape_3d.html) for the
+boundary triangles and computed variables.
+
+## Fitting an implicit function to points
+
+A radial basis function fit estimates a scalar field whose zero set passes
+through the sample. It also constrains points a small distance to either
+side of the surface, using supplied or estimated normals. The fit below
+uses 80 sampled points on an ellipsoid with vertical semi-axis 0.6 and
+supplies its analytical normal directions.
+
+```{r reconstruction-data}
+set.seed(2)
+unit <- matrix(rnorm(240), ncol = 3)
+unit <- unit / sqrt(rowSums(unit^2))
+shell <- data.frame(x = unit[, 1], y = unit[, 2], z = 0.6 * unit[, 3])
+shell$nx <- shell$x
+shell$ny <- shell$y
+shell$nz <- shell$z / 0.6^2
+```
+
+The grid resolution controls extraction of the fitted zero set. The
+smoothing parameter controls the fit itself. A dense linear solve limits
+this method to 2,000 input points; use a small representative sample.
+
+```{r rbf-fit, fig.alt="A smooth blue surface fitted through 80 ellipsoid samples, shown with the input points."}
+ggplot(shell, aes(x, y, z = z, nx = nx, ny = ny, nz = nz)) +
+  stat_implicit_fit_3d(method = "rbf", n = 18,
+                        fill = PAL["blue"], alpha = 0.65) +
+  geom_point_3d(size = 0.7) + coord_3d(aspect = "data")
+```
+
+Omit the three normal mappings to estimate normals from neighbouring
+points. The neighbourhood size and smoothing arguments are described in
+[stat_implicit_fit_3d()](../reference/stat_implicit_fit_3d.html).
