@@ -9,6 +9,17 @@
 #' @param wireframe Whether to draw triangle edges.
 #' @param hidden Hidden stroke policy.
 #' @param outline Feature lines from [outline_3d()], or NULL for none.
+#' @param alpha_mode How a translucent surface composites in vector output.
+#'   `"face"` blends every face over what lies behind it, so a surface seen
+#'   through itself darkens where it folds over. `"surface"` paints each sheet
+#'   (a connected set of faces sharing vertices, such as one isosurface level)
+#'   as one translucent film: other sheets show through it, its own pieces
+#'   behind its nearer pieces do not. A sheet of several fill colours needs a
+#'   device with Porter-Duff groups and alpha masks (ragg, cairo_pdf, svg);
+#'   other devices, pdf() among them, paint it as `"face"`. The layers that
+#'   draw surfaces ([stat_isosurface_3d()], [stat_parametric_3d()],
+#'   [geom_mesh_3d()] and others) accept it too. Raster backends composite per
+#'   face.
 #' @return A ggplot2 layer.
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 6),
@@ -21,10 +32,11 @@
 geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
                              position = "identity", ..., method = "grid", max_edge = Inf,
                              shade = TRUE, wireframe = FALSE, hidden = "hide", outline = NULL,
-                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                             alpha_mode = "face", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSurface3D, mapping, data, stat, position,
     c(list(method = method, max_edge = max_edge, shade = shade, wireframe = wireframe,
-           hidden = hidden, outline = outline, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+           hidden = hidden, outline = outline, alpha_mode = alpha_mode_3d(alpha_mode), na.rm = na.rm), list(...)),
+    show.legend, inherit.aes)
 }
 
 #' @rdname geom_surface_3d
@@ -149,4 +161,4 @@ delaunay_triangles_3d <- function(xy) {
   triangles
 }
 
-register_geom_3d(GeomSurface3D, emit_surface_3d, parameters = list(outline = NULL))
+register_geom_3d(GeomSurface3D, emit_surface_3d, parameters = surface_parameters_3d)

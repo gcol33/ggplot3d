@@ -10,7 +10,7 @@ emit_stats_surface_3d <- function(data, params, panel_params) {
   emit_surface_3d(data, params, panel_params)
 }
 
-register_geom_3d(GeomStatsSurface3D, emit_stats_surface_3d, parameters = list(outline = NULL))
+register_geom_3d(GeomStatsSurface3D, emit_stats_surface_3d, parameters = surface_parameters_3d)
 
 stats_seed_data_3d <- function(data) {
   if (is.null(data)) function(d) if (is.data.frame(d) && nrow(d) > 0L) d else data.frame(.grid = 1) else data

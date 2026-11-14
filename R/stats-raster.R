@@ -84,7 +84,7 @@ prepare_raster_aesthetics_3d <- function(out, data, plot, params) {
   out
 }
 
-register_geom_3d(GeomSpatRaster3D, emit_stats_surface_3d,
+register_geom_3d(GeomSpatRaster3D, emit_stats_surface_3d, parameters = surface_parameters_3d,
   prepare_aesthetics = prepare_raster_aesthetics_3d)
 
 #' Rasters as height surfaces

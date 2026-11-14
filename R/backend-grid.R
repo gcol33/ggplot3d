@@ -3,6 +3,7 @@ grid_capabilities_3d <- function() {
   list(vector = TRUE, clipping_paths = isTRUE(caps$clippingPaths),
        masks = length(caps$masks) > 0L && !all(is.na(caps$masks)),
        group_atop = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "atop" %in% caps$compositing,
+       group_over = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "over" %in% caps$compositing,
        dash_phase = "physical segmented strokes", raster = FALSE)
 }
 
@@ -197,13 +198,7 @@ material_gp_3d <- function(styles, opacity, kind, fill = NULL) {
 # union right after, so a shared edge blends the two faces' colours with at
 # most a sixteenth of the mean colour and nothing of what lies behind.
 seam_underlay_3d <- function(x, y, id, fill) {
-  nxt <- unlist(lapply(split(seq_along(id), id), function(i) c(i[-1L], i[1L])), use.names = FALSE)
-  area <- rowsum(x * y[nxt] - x[nxt] * y, id)[, 1L]
-  flip <- id %in% which(area < 0)
-  if (any(flip)) {
-    reversed <- unlist(lapply(split(which(flip), id[flip]), rev), use.names = FALSE)
-    x[flip] <- x[reversed]; y[flip] <- y[reversed]
-  }
+  ring <- counter_clockwise_3d(x, y, id); x <- ring$x; y <- ring$y
   colours <- unique(fill)
   mean_fill <- grDevices::rgb(t(rowMeans(grDevices::col2rgb(fill))), maxColorValue = 255)
   union <- grid::pathGrob(x, y, id = id, rule = "winding", gp = grid::gpar(fill = mean_fill, col = NA))
@@ -215,6 +210,73 @@ seam_underlay_3d <- function(x, y, id, fill) {
   order <- order(path, method = "radix")
   grid::gList(union, grid::pathGrob(x[order], y[order], id = id[order], pathId = path[order],
     rule = "winding", gp = grid::gpar(fill = colours, col = NA)))
+}
+
+# Rings `id` (consecutive vertices, ids 1..n) rewound counter-clockwise, so a
+# nonzero-winding compound path of them fills their union.
+counter_clockwise_3d <- function(x, y, id) {
+  nxt <- unlist(lapply(split(seq_along(id), id), function(i) c(i[-1L], i[1L])), use.names = FALSE)
+  area <- rowsum(x * y[nxt] - x[nxt] * y, id)[, 1L]
+  flip <- id %in% which(area < 0)
+  if (any(flip)) {
+    reversed <- unlist(lapply(split(which(flip), id[flip]), rev), use.names = FALSE)
+    x[flip] <- x[reversed]; y[flip] <- y[reversed]
+  }
+  list(x = x, y = y)
+}
+
+# Faces k of a face run as polygon x/y/id, ids renumbered 1..length(k).
+select_faces_3d <- function(x, y, id, k) {
+  keep <- id %in% k
+  list(x = x[keep], y = y[keep], id = match(id[keep], k))
+}
+
+# One seam group of a face run: opaque faces over their two-tier underlay, or
+# a translucent group from its compound paths alone.
+seam_group_grob_3d <- function(x, y, id, fill, gp, opacity, caps) {
+  faces <- grid::polygonGrob(x, y, id = id, gp = gp)
+  if (max(id) < 2L) return(faces)
+  paths <- seam_underlay_3d(x, y, id, fill)
+  if (opacity == 1) grid::grobTree(children = grid::gList(paths, faces)) else translucent_seam_3d(paths, opacity, caps)
+}
+
+# alpha_mode = "surface": each sheet (a connected set of faces of the layer,
+# such as one isosurface level) is painted as one translucent film, which
+# hides its own pieces behind its nearer pieces and lets the other sheets show
+# through. A sheet of one colour is the union of its faces as one compound
+# path at the layer's opacity, on every device. A sheet of several colours is
+# painted opaque, seam group by seam group in draw order, inside an isolated
+# group that is composited once through a uniform alpha mask (Murrell 2021, R
+# Journal RJ-2023-072); devices without the Porter-Duff "over" group or alpha
+# masks, pdf() among them, paint it face by face. Sheets are composited in the
+# order in which their last faces are drawn, the painter's position of their
+# nearest piece.
+translucent_sheets_3d <- function(x, y, id, fill, seam_group, sheet, opacity, caps) {
+  sheets <- unique(sheet)
+  sheets <- sheets[order(vapply(sheets, function(s) max(which(sheet == s)), integer(1)))]
+  grobs <- lapply(sheets, function(s) {
+    k <- which(sheet == s)
+    faces <- select_faces_3d(x, y, id, k)
+    colours <- unique(fill[k])
+    if (length(colours) == 1L) {
+      ring <- counter_clockwise_3d(faces$x, faces$y, faces$id)
+      return(grid::pathGrob(ring$x, ring$y, id = faces$id, rule = "winding",
+        gp = grid::gpar(fill = colours, col = NA, alpha = opacity)))
+    }
+    isolated <- isTRUE(caps$group_over)
+    paint_opacity <- if (isolated) 1 else opacity
+    segment <- cumsum(c(TRUE, diff(seam_group[k]) != 0L))
+    parts <- lapply(split(seq_along(k), segment), function(j) {
+      part <- select_faces_3d(faces$x, faces$y, faces$id, j)
+      seam_group_grob_3d(part$x, part$y, part$id, fill[k[j]],
+        grid::gpar(fill = fill[k[j]], col = NA, alpha = paint_opacity), paint_opacity, caps)
+    })
+    painted <- grid::gTree(children = do.call(grid::gList, unname(parts)))
+    if (!isolated) return(painted)
+    mask <- grid::rectGrob(gp = grid::gpar(fill = grDevices::rgb(0, 0, 0, opacity), col = NA))
+    grid::grobTree(getExportedValue("grid", "groupGrob")(painted), vp = grid::viewport(mask = mask))
+  })
+  grid::gTree(children = do.call(grid::gList, grobs))
 }
 
 # A translucent seam group must cover each pixel once, with the coverage of
@@ -367,8 +429,9 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
   seam <- face & f$layer_id > 0L & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
-  key[face] <- paste(key[face], seam[face],
-    ifelse(seam[face], paste(f$layer_id[face], f$seam_group[face], f$opacity[face]), 0L), sep = ":")
+  surface <- seam & f$opacity < 1 & style_value_3d(styles, "alpha_mode", "face") == "surface"
+  key[face] <- paste(key[face], seam[face], ifelse(seam[face],
+    paste(f$layer_id[face], ifelse(surface[face], "surface", f$seam_group[face]), f$opacity[face]), 0L), sep = ":")
   region_id <- if (is.null(regions)) integer(length(key)) else regions$id
   key <- paste(key, region_id, sep = ":region:")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
@@ -389,13 +452,10 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
       if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light, s[shade, , drop = FALSE])
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
-      g <- grid::polygonGrob(x, y, id = id, gp = gp)
-      if (all(seam[rows]) && length(rows) > 1L) {
-        paths <- seam_underlay_3d(x, y, id, fill)
-        opacity <- f$opacity[rows[1L]]
-        g <- if (opacity == 1) grid::grobTree(children = grid::gList(paths, g)) else
-          translucent_seam_3d(paths, opacity, caps)
-      }
+      g <- if (all(surface[rows])) translucent_sheets_3d(x, y, id, fill, f$seam_group[rows],
+          style_value_3d(s, "sheet", 1L), f$opacity[rows[1L]], caps) else
+        if (all(seam[rows])) seam_group_grob_3d(x, y, id, fill, gp, f$opacity[rows[1L]], caps) else
+          grid::polygonGrob(x, y, id = id, gp = gp)
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]
       lty <- style_value_3d(s, "linetype", 1)
