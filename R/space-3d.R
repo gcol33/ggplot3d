@@ -12,6 +12,7 @@ Space3D <- ggplot2::ggproto("Space3D", NULL,
   geodesic = function(X, Y, s) stop("Space must implement geodesic().", call. = FALSE),
   act = function(g, X) stop("Space must implement act() for an isometry.", call. = FALSE),
   chart_is_projective = function(model) FALSE,
+  style_packet = function(packet, context) packet,
   model_ranges = function(model, panel_params) panel_params$ranges
 )
 

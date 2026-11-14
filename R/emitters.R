@@ -271,6 +271,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   if (!is.null(panel_params$space_context) && !isTRUE(attr(packet, "space_mapped")) && !isTRUE(attr(packet, "model_space"))) {
     packet <- space_packet_3d(packet, panel_params$space_context)
   }
+  if (!is.null(panel_params$space_context)) packet <- panel_params$space_context$space$style_packet(packet, panel_params$space_context)
   validate_scene_packet(packet)
   if (raster && nrow(packet$styles)) packet$styles$raster <- TRUE
   frame <- frame_of_3d(panel_params)

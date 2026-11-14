@@ -6,9 +6,12 @@
 \usage{
 coord_hyperbolic_3d(
   input = c("poincare", "klein", "halfspace", "hyperboloid_sheet"),
-  model = input,
+  model = "klein",
   extent = 3,
   references = character(),
+  curvature = -1,
+  centre = NULL,
+  distance_breaks = NULL,
   ...
 )
 }
@@ -18,6 +21,15 @@ coord_hyperbolic_3d(
 \item{extent}{Hyperbolic radius setting display bounds of unbounded models.}
 
 \item{references}{Reference circles for hyperboloid_sheet: "klein", "poincare".}
+
+\item{curvature}{Negative sectional curvature. Ball coordinates are unitless;
+intrinsic distances are scaled by 1/sqrt(-curvature).}
+
+\item{centre}{A point in the input chart, or a future Lorentz isometry.
+Points are moved to the origin before display.}
+
+\item{distance_breaks}{Optional increasing nonnegative distances for a radial
+distance guide, in intrinsic units.}
 
 \item{...}{Arguments to \code{\link[=coord_3d]{coord_3d()}}, including isometry.}
 }
@@ -32,11 +44,22 @@ z=0 disk to (X1,X2,X0). Its reference circles are the Klein disk at X0=1
 and the Poincare disk at X0=0. Half-space has positive z. All input points
 are finite and strictly interior to their charts.
 }
+\details{
+Klein is the default display. Poincare is the default input for
+compatibility with hyperbolic layout statistics. Half-space is truncated
+to the finite display box set by extent. Geodesic faces and arcs use the
+common screen-error sampler. Position scales must be identity transforms.
+Klein lighting transports Minkowski plane normals to the origin.
+}
 \examples{
 d <- data.frame(x=c(-.7,.7),y=c(.2,.2),z=0)
 ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+coord_hyperbolic_3d()
+ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+
+  coord_hyperbolic_3d(model="poincare",curvature=-4,distance_breaks=c(0,.5,1))
 }
 \references{
 Nickel and Kiela (2017). Poincare embeddings.
 \url{https://arxiv.org/abs/1705.08039}.
+Phillips and Gunn (1992). Visualizing hyperbolic space.
+\url{https://graphics.stanford.edu/papers/webviz/webviz/node2.html}.
 }

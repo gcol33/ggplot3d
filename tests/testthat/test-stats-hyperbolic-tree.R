@@ -18,7 +18,7 @@ test_that("hyperbolic chart conversions agree on finite points", {
 test_that("network edges are munched as ball geodesics", {
   d <- data.frame(x=-.5,y=.2,z=0,xend=.5,yend=.2,zend=0)
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z,xend=xend,yend=yend,zend=zend))+
-    geom_segment_3d()+coord_hyperbolic_3d()
+    geom_segment_3d()+coord_hyperbolic_3d(model="poincare")
   packet <- stats_scene(p)$packet
   xyz <- do.call(cbind,packet$vertices[c("x","y","z")])*2-1
   expect_gt(nrow(xyz),2)

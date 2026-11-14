@@ -1,5 +1,10 @@
 # ggplot3d 0.0.0.9000
 
+* Hyperbolic coordinates default to Klein display, support negative curvature,
+  observer centring, intrinsic radial distance guides and transported Minkowski
+  normals for lighting. Poincare and upper half-space geodesics share adaptive
+  munching; half-space output clips to a finite panel box (#14).
+
 * Project 4D and n-D data with `stat_project_3d()`, all six SO(4) plane
   rotations and quaternion double rotations, finite perspective and adaptive
   stereographic surfaces. `tour_grand()` drives Grassmann-interpolated

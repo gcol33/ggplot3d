@@ -20,7 +20,9 @@ shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL) {
   normal <- cbind(fragments$normal_x[rows], fragments$normal_y[rows], fragments$normal_z[rows])
   if (all(c("normal_x", "normal_y", "normal_z") %in% names(styles))) {
     supplied <- as.matrix(styles[c("normal_x", "normal_y", "normal_z")])
+    intrinsic <- styles$intrinsic_normal %in% TRUE
     supplied <- sweep(supplied, 2L, camera$model_scale, "/")
+    if(length(intrinsic)) supplied[intrinsic,] <- as.matrix(styles[intrinsic,c("normal_x","normal_y","normal_z")])
     lengths <- sqrt(rowSums(supplied^2))
     valid <- is.finite(lengths) & lengths > 0
     normal[valid, ] <- supplied[valid, , drop = FALSE] / lengths[valid]
