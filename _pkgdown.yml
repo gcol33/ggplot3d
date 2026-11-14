@@ -310,6 +310,7 @@ reference:
   - layer_3d
   - register_geom_3d
   - new_scene_packet
+  - normalise_homogeneous_3d
 - title: Package
   contents: ggplot3d-package
 articles:

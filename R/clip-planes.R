@@ -173,8 +173,8 @@ clip_packet_planes_3d <- function(packet, planes) {
 }
 
 clip_packet_plane_3d <- function(packet, plane, eps = 1e-12) {
-  xyz <- do.call(cbind, packet$vertices)
-  distance <- as.vector(xyz %*% plane$normal) + plane$offset
+  xyzw <- scene_vertex_matrix_3d(packet$vertices)
+  distance <- as.vector(xyzw[, 1:3, drop = FALSE] %*% plane$normal) + plane$offset * xyzw[, 4L]
   distance[abs(distance) < eps] <- 0
   parent <- list()
   faces <- clip_faces_plane_3d(packet, distance, plane)
@@ -202,9 +202,11 @@ clip_packet_plane_3d <- function(packet, plane, eps = 1e-12) {
   packet
 }
 
-# Points where edges cross the plane, one per edge: the edge is oriented by
-# its endpoint coordinates, so faces sharing an edge get the same point.
-# Axis-aligned planes put the point exactly on the plane.
+# Points where edges cross the plane, one per edge, as homogeneous rows
+# (x, y, z, w): the crossing is linear in (x, y, z, w), so edges through
+# infinity are cut before any division. The edge is oriented by its endpoint
+# coordinates, so faces sharing an edge get the same point. Axis-aligned planes
+# put the point exactly on the plane.
 edge_crossings_3d <- function(xyz, a, b, distance, plane) {
   pa <- xyz[a, , drop = FALSE]; pb <- xyz[b, , drop = FALSE]
   swap <- pa[, 1L] > pb[, 1L] | (pa[, 1L] == pb[, 1L] & (pa[, 2L] > pb[, 2L] | (pa[, 2L] == pb[, 2L] & pa[, 3L] > pb[, 3L])))
@@ -212,21 +214,34 @@ edge_crossings_3d <- function(xyz, a, b, distance, plane) {
   t <- distance[lo] / (distance[lo] - distance[hi])
   point <- xyz[lo, , drop = FALSE] + t * (xyz[hi, , drop = FALSE] - xyz[lo, , drop = FALSE])
   axis <- which(plane$normal != 0)
-  if (length(axis) == 1L) point[, axis] <- -plane$offset / plane$normal[axis]
+  if (length(axis) == 1L) point[, axis] <- -plane$offset * point[, 4L] / plane$normal[axis]
   point
 }
 
 append_vertices_3d <- function(packet, points) {
   start <- length(packet$vertices$x)
-  packet$vertices <- list(x = c(packet$vertices$x, as.double(points[, 1L])),
-    y = c(packet$vertices$y, as.double(points[, 2L])), z = c(packet$vertices$z, as.double(points[, 3L])))
+  added <- scene_vertices_3d(points)
+  packet$vertices <- Map(c, packet$vertices, added[names(packet$vertices)])
   list(packet = packet, ids = start + seq_len(nrow(points)))
 }
 
-append_corners_3d <- function(packet, vertex, source_row) {
-  start <- length(packet$corners$vertex)
-  packet$corners <- list(vertex = c(packet$corners$vertex, as.integer(vertex)),
-    source_row = c(packet$corners$source_row, as.integer(source_row)))
+# Appends corners. Optional corner attributes come from corner `from`, or lie
+# between corners `from` and `to` at the homogeneous parameter t, interpolated
+# affinely in the Euclidean point.
+append_corners_3d <- function(packet, vertex, source_row, from, to = from, t = 0) {
+  corners <- packet$corners
+  start <- length(corners$vertex)
+  extra <- setdiff(names(corners), c("vertex", "source_row"))
+  if (length(extra)) {
+    pa <- (1 - t) * packet$vertices$w[corners$vertex[from]]
+    pb <- t * packet$vertices$w[corners$vertex[to]]
+    beta <- ifelse(pa + pb > 0, pb / (pa + pb), t)
+    for (name in extra) corners[[name]] <- c(corners[[name]],
+      (1 - beta) * corners[[name]][from] + beta * corners[[name]][to])
+  }
+  corners$vertex <- c(corners$vertex, as.integer(vertex))
+  corners$source_row <- c(corners$source_row, as.integer(source_row))
+  packet$corners <- corners[c("vertex", "source_row", extra)]
   list(packet = packet, start = start)
 }
 
@@ -236,7 +251,7 @@ append_corners_3d <- function(packet, vertex, source_row) {
 clip_faces_plane_3d <- function(packet, distance, plane) {
   faces <- packet$faces
   n <- length(faces$offset)
-  empty_cut <- list(face = integer(), faces = faces, xyz = matrix(numeric(), 0L, 3L))
+  empty_cut <- list(face = integer(), faces = faces, xyz = matrix(numeric(), 0L, 4L))
   if (!n) return(list(packet = packet, parent = integer(), cut = empty_cut))
   face <- rep.int(seq_len(n), faces$count)
   position <- sequence(faces$count)
@@ -247,7 +262,7 @@ clip_faces_plane_3d <- function(packet, distance, plane) {
   negative <- tabulate(face[d < 0], n); positive <- tabulate(face[d > 0], n)
   if (!any(negative > 0)) return(list(packet = packet, parent = seq_len(n), cut = empty_cut))
   crossing <- (d > 0 & dn < 0) | (d < 0 & dn > 0)
-  xyz <- do.call(cbind, packet$vertices)
+  xyz <- scene_vertex_matrix_3d(packet$vertices)
   edge_key <- paste(pmin(vertex, next_vertex), pmax(vertex, next_vertex))
   crossed <- which(crossing & !duplicated(ifelse(crossing, edge_key, NA_character_), incomparables = NA))
   points <- edge_crossings_3d(xyz, vertex[crossed], next_vertex[crossed], distance, plane)
@@ -260,10 +275,14 @@ clip_faces_plane_3d <- function(packet, distance, plane) {
   keep_vertex <- rows[d[rows] >= 0]; keep_crossing <- rows[crossing[rows]]
   entries <- c(keep_vertex, keep_crossing)
   out_vertex <- c(vertex[keep_vertex], crossing_vertex[keep_crossing])
+  out_to <- c(corner[keep_vertex], following[keep_crossing])
+  out_t <- c(numeric(length(keep_vertex)), d[keep_crossing] / (d[keep_crossing] - dn[keep_crossing]))
   ordering <- order(c(2L * keep_vertex, 2L * keep_crossing + 1L))
   entries <- entries[ordering]; out_vertex <- out_vertex[ordering]
+  out_to <- out_to[ordering]; out_t <- out_t[ordering]
   owner <- face[entries]
-  appended <- append_corners_3d(packet, out_vertex, packet$corners$source_row[corner[entries]])
+  appended <- append_corners_3d(packet, out_vertex, packet$corners$source_row[corner[entries]],
+    corner[entries], out_to, out_t)
   packet <- appended$packet
   counts <- tabulate(owner, n)
   starts <- appended$start + match(seq_len(n), owner)
@@ -272,7 +291,7 @@ clip_faces_plane_3d <- function(packet, distance, plane) {
   kept <- which(negative == 0L | (cut_faces & faces$count >= 3L))
   on_plane <- (negative > 0)[face] & (d == 0 | crossing)
   cut <- list(face = face[on_plane], faces = faces,
-    xyz = do.call(cbind, packet$vertices)[ifelse(d[on_plane] == 0, vertex[on_plane], crossing_vertex[on_plane]), , drop = FALSE])
+    xyz = scene_vertex_matrix_3d(packet$vertices)[ifelse(d[on_plane] == 0, vertex[on_plane], crossing_vertex[on_plane]), , drop = FALSE])
   faces$primitive_id <- seq_len(n)
   packet$faces <- lapply(faces, function(column) column[kept])
   packet <- clean_flat_faces_3d(packet)
@@ -296,7 +315,7 @@ clip_polylines_plane_3d <- function(packet, distance, plane) {
   crossing <- !last & ((d[rows] > 0 & dn < 0) | (d[rows] < 0 & dn > 0))
   vertex <- packet$corners$vertex[corner[rows]]
   next_vertex <- packet$corners$vertex[corner[pmin(rows + 1L, length(d))]]
-  xyz <- do.call(cbind, packet$vertices)
+  xyz <- scene_vertex_matrix_3d(packet$vertices)
   added <- append_vertices_3d(packet, edge_crossings_3d(xyz, vertex[crossing], next_vertex[crossing], distance, plane))
   packet <- added$packet
   index <- seq_along(rows)
@@ -305,8 +324,12 @@ clip_polylines_plane_3d <- function(packet, distance, plane) {
   ref_vertex <- c(vertex, added$ids)
   ref_owner <- c(owner[rows], owner[rows][crossing])
   ref_source <- packet$corners$source_row[corner[c(rows, rows[crossing])]]
+  ref_from <- corner[c(rows, rows[crossing])]
+  ref_to <- c(corner[rows], corner[pmin(rows + 1L, length(d))][crossing])
+  ref_t <- c(numeric(length(rows)), d[rows][crossing] / (d[rows][crossing] - dn[crossing]))
   ordering <- order(key)
   kind <- kind[ordering]; ref_vertex <- ref_vertex[ordering]; ref_owner <- ref_owner[ordering]; ref_source <- ref_source[ordering]
+  ref_from <- ref_from[ordering]; ref_to <- ref_to[ordering]; ref_t <- ref_t[ordering]
   run <- cumsum(kind == 0L | c(TRUE, ref_owner[-1L] != ref_owner[-length(ref_owner)]))
   emitted <- kind != 0L
   run <- run[emitted]
@@ -314,7 +337,8 @@ clip_polylines_plane_3d <- function(packet, distance, plane) {
   long <- unique(run)[sizes >= 2L]
   emitted_rows <- which(emitted)[run %in% long]
   run <- run[run %in% long]
-  appended <- append_corners_3d(packet, ref_vertex[emitted_rows], ref_source[emitted_rows])
+  appended <- append_corners_3d(packet, ref_vertex[emitted_rows], ref_source[emitted_rows],
+    ref_from[emitted_rows], ref_to[emitted_rows], ref_t[emitted_rows])
   packet <- appended$packet
   run_owner <- ref_owner[emitted_rows][!duplicated(run)]
   run_count <- tabulate(match(run, unique(run)))
@@ -339,9 +363,10 @@ clip_polylines_plane_3d <- function(packet, distance, plane) {
 # takes the style of the faces most of its outer ring was cut from.
 cap_packet_3d <- function(packet, cut, plane) {
   none <- list(packet = packet, source = integer())
-  key <- paste(sprintf("%.17g", cut$xyz[, 1L]), sprintf("%.17g", cut$xyz[, 2L]), sprintf("%.17g", cut$xyz[, 3L]))
+  cut_xyz <- homogeneous_xyz_3d(cut$xyz)
+  key <- paste(sprintf("%.17g", cut_xyz[, 1L]), sprintf("%.17g", cut_xyz[, 2L]), sprintf("%.17g", cut_xyz[, 3L]))
   point <- match(key, unique(key))
-  xyz <- cut$xyz[!duplicated(key), , drop = FALSE]
+  xyz <- cut_xyz[!duplicated(key), , drop = FALSE]
   pairs <- unique(data.frame(face = cut$face, point = point))
   sizes <- tabulate(pairs$face, max(c(0L, pairs$face)))
   pairs <- pairs[sizes[pairs$face] == 2L, , drop = FALSE]
@@ -368,8 +393,15 @@ cap_packet_3d <- function(packet, cut, plane) {
   added <- append_vertices_3d(packet, xyz)
   packet <- added$packet
   corner_vertex <- added$ids[as.vector(t(triangles[, 3:1, drop = FALSE]))]
-  appended <- append_corners_3d(packet, corner_vertex, rep(cut$faces$source_row[source], each = 3L))
+  appended <- append_corners_3d(packet, corner_vertex, rep(cut$faces$source_row[source], each = 3L),
+    rep(cut$faces$offset[source], each = 3L))
   packet <- appended$packet
+  # A cap corner faces out of the kept side, against the plane normal.
+  if (!is.null(packet$corners$normal_x)) {
+    added <- appended$start + seq_along(corner_vertex)
+    outward <- -plane$normal / sqrt(sum(plane$normal^2))
+    for (k in 1:3) packet$corners[[c("normal_x", "normal_y", "normal_z")[k]]][added] <- outward[k]
+  }
   styles <- packet$styles
   style <- cut$faces$style_id[source]
   normals <- c("normal_x", "normal_y", "normal_z")

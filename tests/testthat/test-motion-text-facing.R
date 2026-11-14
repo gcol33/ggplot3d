@@ -25,7 +25,7 @@ test_that("viewer outline buffers follow camera movement and match static geomet
         vp <- w$x$panels[[1L]]$viewport
         viewport <- new_scene_viewport(vp$width_mm, vp$height_mm, vp$dpi)
         packet <- resolve_glyph_packets_3d(list(s$packet), camera, viewport)[[1L]]
-        xyz <- do.call(cbind, packet$vertices)[packet$corners$vertex, , drop = FALSE]
+        xyz <- scene_vertices_xyz_3d(packet$vertices)[packet$corners$vertex, , drop = FALSE]
         expect_equal(unname(actual), unname(xyz), tolerance = 2e-6)
         hits <- viewer_hits(b, "text-follow", step = 4)
         expect_gt(length(hits), 0L)

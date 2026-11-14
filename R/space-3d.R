@@ -70,13 +70,9 @@ space_packet_coordinates_3d <- function(X, context, homogeneous = FALSE) {
   xyz <- space_matrix_3d(context$space$from_canonical(X, context$model), nrow(X), "from_canonical()")
   if (!ncol(xyz) %in% c(3L, 4L)) stop("A space model must return x, y, z and optional homogeneous w.", call. = FALSE)
   w <- if (ncol(xyz) == 4L) xyz[, 4L] else rep(1, nrow(xyz))
-  if (homogeneous) {
-    if (!exists("normalise_homogeneous_3d", mode = "function")) stop("Homogeneous space models require scene schema 2 (#16).", call. = FALSE)
-    normalise <- get("normalise_homogeneous_3d", mode = "function")
-    return(normalise(xyz[, 1L], xyz[, 2L], xyz[, 3L], w, context$ranges))
-  }
-  if (any(w != 1)) stop("Homogeneous space models and ideal points require scene schema 2 (#16).", call. = FALSE)
-  out <- lapply(seq_len(3L), function(j) as.double((xyz[, j] - context$ranges[[j]][1L]) / diff(context$ranges[[j]])))
+  if (homogeneous) return(normalise_homogeneous_3d(xyz[, 1L], xyz[, 2L], xyz[, 3L], w, context$ranges))
+  if (any(w <= 0)) stop("Points at infinity (w = 0) of a space model need homogeneous packet coordinates.", call. = FALSE)
+  out <- lapply(seq_len(3L), function(j) as.double((xyz[, j] / w - context$ranges[[j]][1L]) / diff(context$ranges[[j]])))
   names(out) <- c("x", "y", "z")
   out
 }

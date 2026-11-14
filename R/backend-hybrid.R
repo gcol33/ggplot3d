@@ -13,6 +13,7 @@ raster_occlusion_3d <- function(packet, camera, viewport, result) {
   pixel <- max(diff(result$extent[c(1L, 3L)]) * viewport$width_mm / result$width,
                diff(result$extent[c(2L, 4L)]) * viewport$height_mm / result$height)
   packet$polylines$width_mm <- packet$polylines$width_mm + 2 * pixel
+  packet$polylines$mask_width_mm <- packet$polylines$mask_width_mm + 2 * pixel
   ellipse <- packet$footprints$kind == 1L
   for (axis in c("radius_x_mm", "radius_y_mm"))
     packet$footprints[[axis]][ellipse] <- packet$footprints[[axis]][ellipse] + pixel

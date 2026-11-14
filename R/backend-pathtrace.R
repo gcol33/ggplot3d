@@ -21,7 +21,8 @@ pathtrace_scene_3d <- function(packet, specs, camera, viewport, backend, light) 
   resolved <- scene_compile(new_scene_packet(), camera, viewport)$camera
   scale <- resolved$model_scale
   mm <- export_camera_3d(resolved, camera, viewport, 1)$mm_per_unit
-  nodes <- export_nodes_3d(packet, scale, NULL, mm, function(tab) rep("scene", length(tab$offset)))
+  nodes <- export_nodes_3d(scene_finite_packet_3d(packet, camera$pre), scale, NULL, mm,
+    function(tab) rep("scene", length(tab$offset)))
   mesh <- export_merged_3d(list(nodes = nodes, up = 3L), export_options_3d(FALSE, "tube", "mesh", 1))
   mesh$colour[, 1:3] <- srgb_decode_3d(mesh$colour[, 1:3, drop = FALSE])
   fields <- lapply(specs, function(spec) {

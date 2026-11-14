@@ -205,7 +205,7 @@ test_that("opaque silhouettes preserve whole hidden lines and subdivide retained
     corners=list(vertex=1:6),faces=list(offset=1L,count=4L),
     polylines=list(offset=5L,arrow_start=TRUE,arrow_end=TRUE),styles=data.frame(style_id=1L))
   for (width in c(0,4)) {
-    packet$polylines$width_mm <- width
+    packet$polylines$width_mm <- packet$polylines$mask_width_mm <- width
     for (policy in 0:2) {
       packet$polylines$hidden <- as.integer(policy)
       result <- engine_compile(packet)

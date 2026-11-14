@@ -102,19 +102,24 @@ struct Projection {
   }
 };
 
+// A clipped vertex is a homogeneous point (xyz, w) of the box after camera pre;
+// every vertex the clipper has not produced from input corners has w = 1.
 struct Vertex {
   Vec3 xyz;
   std::vector<std::pair<Index, double>> weights;
+  double w = 1;
 };
 using Polygon = std::vector<Vertex>;
+// The half space normal . xyz + offset * w >= 0 (Blinn and Newell 1978).
 struct Plane { Vec3 normal; double offset; };
 
-static inline double signed_distance(const Plane& plane, const Vec3& p) {
-  return dot(plane.normal, p) + plane.offset;
+static inline double signed_distance(const Plane& plane, const Vertex& v) {
+  return dot(plane.normal, v.xyz) + plane.offset*v.w;
 }
 static inline Vertex interpolate(const Vertex& a, const Vertex& b, double t) {
   Vertex out;
   for (int k = 0; k < 3; ++k) out.xyz[k] = (1-t)*a.xyz[k] + t*b.xyz[k];
+  out.w = (1-t)*a.w + t*b.w;
   out.weights = a.weights;
   for (auto& weight : out.weights) weight.second *= 1-t;
   for (const auto& weight : b.weights) {
@@ -124,6 +129,51 @@ static inline Vertex interpolate(const Vertex& a, const Vertex& b, double t) {
     else it->second += t*weight.second;
   }
   return out;
+}
+
+// Euclidean box fractions of a clipped vertex. Weights are divided with the
+// coordinates, so that sum weight * w over the source corners is one.
+static inline Vertex dehomogenised(Vertex v) {
+  require(v.w > 0, "unbounded geometry: a point at infinity survives clipping");
+  if (v.w != 1) {
+    for (double& x : v.xyz) x /= v.w;
+    for (auto& weight : v.weights) weight.second /= v.w;
+    v.w = 1;
+  }
+  return v;
+}
+static inline void dehomogenise(Polygon& polygon) {
+  for (Vertex& v : polygon) v = dehomogenised(std::move(v));
+}
+// True when some vertex lies at infinity or, after camera pre, behind it (w < 0);
+// such a chain is divided only after clipping against w >= 0.
+static inline bool outside_chart(const Polygon& polygon) {
+  for (const Vertex& v : polygon) if (!(v.w > 0)) return true;
+  return false;
+}
+
+// Packet vertices mapped by the camera pre matrix, still homogeneous; the map
+// may send points to w < 0, which the w >= 0 clip removes.
+using Point4 = std::array<double, 4>;
+static inline std::vector<Point4> homogeneous_points(const Vertices& v, const Projection& p) {
+  const auto& m = p.camera.pre;
+  bool identity = true;
+  for (int i = 0; i < 16; ++i) identity = identity && m[i] == (i % 5 == 0 ? 1 : 0);
+  std::vector<Point4> out(v.x.size());
+  for (std::size_t i = 0; i < out.size(); ++i) {
+    const Point4 x{v.x[i], v.y[i], v.z[i], v.w[i]};
+    if (identity) {out[i] = x; continue;}
+    for (int r = 0; r < 4; ++r) out[i][r] = m[r]*x[0] + m[4+r]*x[1] + m[8+r]*x[2] + m[12+r]*x[3];
+    require(std::isfinite(out[i][0]) && std::isfinite(out[i][1]) && std::isfinite(out[i][2]) &&
+            std::isfinite(out[i][3]), "camera pre maps a vertex to a non-finite point");
+    require(out[i][3] > 0 || out[i][0] != 0 || out[i][1] != 0 || out[i][2] != 0,
+            "camera pre maps a vertex to the zero vector");
+  }
+  return out;
+}
+static inline Vertex corner_vertex(const std::vector<Point4>& points, Index corner, Index vertex) {
+  const Point4& x = points[vertex];
+  return {{x[0], x[1], x[2]}, {{corner, 1}}, x[3]};
 }
 
 

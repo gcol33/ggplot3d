@@ -21,19 +21,22 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
                       clipped, arrow_start, arrow_end, pieces.size()});
   };
   const auto planes = clipping_planes(projection);
+  const auto points = homogeneous_points(packet.vertices, projection);
   std::vector<Index> solid_components;
   std::vector<Vec3> face_normals;
-  const auto backfaces=solid_backfaces(packet,projection,solid_components,face_normals,budget.threads);
+  const auto backfaces=solid_backfaces(packet,points,projection,solid_components,face_normals,budget.threads);
+  // Corner polygons are homogeneous; they are divided once they have been
+  // clipped (or shown to lie inside the clipping planes).
   auto corner_polygon=[&](const PrimitiveTable& table,std::size_t row) {
     Polygon polygon;
     for (Index j = 0; j < table.count[row]; ++j) {
-      Index corner = table.offset[row]+j, v = packet.corners.vertex[corner];
-      polygon.push_back({{packet.vertices.x[v], packet.vertices.y[v], packet.vertices.z[v]}, {{corner, 1}}});
+      Index corner = table.offset[row]+j;
+      polygon.push_back(corner_vertex(points, corner, packet.corners.vertex[corner]));
     }
     return polygon;
   };
   // Faces are clipped in parallel and emitted in row order.
-  struct ClippedFace {Index row;Polygon polygon;bool clipped;};
+  struct ClippedFace {Index row;Polygon polygon;bool clipped;Vec3 normal;};
   const auto& faces=packet.faces;
   parallel_ordered<std::vector<ClippedFace>>(faces.count.size(),1024,budget.threads,
     [&](std::size_t begin,std::size_t end,std::vector<ClippedFace>& out) {
@@ -41,16 +44,25 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       for(std::size_t row=begin;row<end;++row) {
         if(backfaces[row] || faces.opacity[row]<=0) continue;
         bool clipped=false;
-        Polygon polygon=clip_polygon(corner_polygon(faces,row),planes,clipped);
+        Polygon polygon=corner_polygon(faces,row);
+        const bool unbounded=outside_chart(polygon);
+        polygon=clip_polygon(std::move(polygon),planes,clipped);
         if(polygon.size()<3) continue;
+        dehomogenise(polygon);
         Vec3 area=area_vector(polygon,projection);
-        if(std::sqrt(dot(area,area))>projection.resolved.tolerance*projection.resolved.tolerance)
-          out.push_back({static_cast<Index>(row),std::move(polygon),clipped});
+        if(std::sqrt(dot(area,area))<=projection.resolved.tolerance*projection.resolved.tolerance) continue;
+        Vec3 normal=face_normals[row];
+        if(unbounded) {
+          bool degenerate=false;
+          normal=face_normal(polygon,projection,&degenerate);
+          if(degenerate) continue;
+        }
+        out.push_back({static_cast<Index>(row),std::move(polygon),clipped,normal});
       }
     },
     [&](std::vector<ClippedFace>& out) {
       for(auto& face:out) {
-        emit(faces,face.row,Kind::face,std::move(face.polygon),face.clipped,face_normals[face.row]);
+        emit(faces,face.row,Kind::face,std::move(face.polygon),face.clipped,face.normal);
         pieces.back().solid=solid_components[face.row];
       }
       out.clear();
@@ -62,15 +74,23 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       if (row % 4096 == 0) Rcpp::checkUserInterrupt();
       Polygon polygon = corner_polygon(table, row);
       if (kind == 2) {
-        bool area_path=polygon.size()>2 && packet.polylines.width_mm[row]>0 && table.partition[row]==1;
+        // Occlusion geometry uses the mask width; backends stroke at width_mm.
+        const double mask_mm=packet.polylines.mask_width_mm[row];
+        bool area_path=polygon.size()>2 && mask_mm>0 && table.partition[row]==1;
+        // A chain through infinity is cut by the box planes as well before any
+        // division; a finite chain leaves them to the stroke clipper.
+        const bool unbounded=outside_chart(polygon);
         const std::size_t centre_planes=planes.size()-(projection.camera.clip ? 4:0);
-        const std::size_t slab_begin=projection.camera.clip_data ? 6:0;
+        const std::size_t slab_begin=projection.camera.clip_data && !unbounded ? 6:0;
         bool inside_slab=true;
         for(const auto& v:polygon) for(std::size_t k=slab_begin;k<centre_planes;++k)
-          inside_slab=inside_slab && signed_distance(planes[k],v.xyz)>=0;
-        bool varying=false;
-        for(const auto& v:polygon) varying=varying || std::abs(projection.camera_point(v.xyz)[2]-
-          projection.camera_point(polygon.front().xyz)[2])>projection.resolved.tolerance;
+          inside_slab=inside_slab && signed_distance(planes[k],v)>=0;
+        bool varying=unbounded;
+        if(!unbounded) {
+          const double front=projection.camera_point(dehomogenised(polygon.front()).xyz)[2];
+          for(const auto& v:polygon) varying=varying ||
+            std::abs(projection.camera_point(dehomogenised(v).xyz)[2]-front)>projection.resolved.tolerance;
+        }
         if(area_path && varying && table.opacity[row]>0) {
           if(!inside_slab) {
             Polygon run;double cumulative=0,first=0;bool original_start=false;
@@ -87,13 +107,14 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
               const auto& a=polygon[j-1];const auto& b=polygon[j];
               auto slab=clip_segment_range(a,b,planes,slab_begin,centre_planes);
               if(slab.first>slab.second) {flush(false);continue;}
-              auto start=interpolate(a,b,slab.first),end=interpolate(a,b,slab.second);
+              auto start=dehomogenised(interpolate(a,b,slab.first)),end=dehomogenised(interpolate(a,b,slab.second));
               if(run.empty()) {first=cumulative;original_start=j==1 && slab.first==0;run.push_back(start);}
               run.push_back(end);cumulative+=projected_length(start,end,projection);
               if(slab.second<1 || j+1==polygon.size()) flush(j+1==polygon.size() && slab.second==1);
             }
             continue;
           }
+          dehomogenise(polygon);
           double length=0;
           for(std::size_t j=1;j<polygon.size();++j) length+=projected_length(polygon[j-1],polygon[j],projection);
           emit(table,row,Kind::polyline,polygon,false,{0,0,0},0,length,
@@ -103,18 +124,23 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
           continue;
         }
         const bool ordered_partition=table.partition[row]!=1;
-        bool complete_path=(polygon.size()>2 || ordered_partition) && packet.polylines.width_mm[row]>0;
-        double depth=projection.camera_point(polygon[0].xyz)[2];
+        bool complete_path=(polygon.size()>2 || ordered_partition) && mask_mm>0;
         const std::size_t slab_planes=planes.size()-(projection.camera.clip ? 4:0);
-        for(const auto& v:polygon) {
-          complete_path=complete_path && (ordered_partition ||
+        for(const auto& v:polygon)
+          for(std::size_t j=0;j<slab_planes;++j) complete_path=complete_path && signed_distance(planes[j],v)>=0;
+        if(complete_path) {
+          Polygon chart=polygon;
+          dehomogenise(chart);
+          double depth=projection.camera_point(chart[0].xyz)[2];
+          for(const auto& v:chart) complete_path=complete_path && (ordered_partition ||
             std::abs(projection.camera_point(v.xyz)[2]-depth)<=projection.resolved.tolerance);
-          for(std::size_t j=0;j<slab_planes;++j) complete_path=complete_path && signed_distance(planes[j],v.xyz)>=0;
+          if(complete_path) polygon=std::move(chart);
         }
         if(complete_path && table.opacity[row]>0) {
+          double depth=projection.camera_point(polygon[0].xyz)[2];
           double length=0;
           for(std::size_t j=1;j<polygon.size();++j) length+=projected_length(polygon[j-1],polygon[j],projection);
-          double extent=packet.polylines.width_mm[row]*.5;
+          double extent=mask_mm*.5;
           if(packet.polylines.join[row]==static_cast<Index>(Join::mitre)) extent*=packet.polylines.mitre_limit[row];
           Bounds2 bounds{R_PosInf,R_PosInf,R_NegInf,R_NegInf};
           for(const auto& v:polygon) {
@@ -142,28 +168,33 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
         for (std::size_t j = 1; j < polygon.size(); ++j) {
           const Vertex& a = polygon[j-1]; const Vertex& b = polygon[j];
           std::size_t centre_planes=planes.size() -
-            (packet.polylines.width_mm[row]>0 && projection.camera.clip ? 4 : 0);
+            (mask_mm>0 && projection.camera.clip ? 4 : 0);
           auto interval=clip_segment_range(a,b,planes,0,centre_planes);
           double start=interval.first,end=interval.second;
-          // Dash arclength is measured after near/far clipping, before viewport clipping.
+          // Dash arclength is measured after near/far clipping, before viewport
+          // clipping; a ray to infinity has none, so its dashes start where the
+          // clipped segment starts.
           std::size_t slab_begin=projection.camera.clip_data ? 6 : 0;
           auto slab=clip_segment_range(a,b,planes,slab_begin,slab_begin+2);
+          if (slab.first <= slab.second && (!(interpolate(a,b,slab.first).w > 0) ||
+                                            !(interpolate(a,b,slab.second).w > 0)))
+            slab=interval;
           double length = 0, first = cumulative, last = cumulative;
           if (slab.first <= slab.second) {
-            Vertex origin=interpolate(a,b,slab.first);
-            length=projected_length(origin,interpolate(a,b,slab.second),projection);
+            Vertex origin=dehomogenised(interpolate(a,b,slab.first));
+            length=projected_length(origin,dehomogenised(interpolate(a,b,slab.second)),projection);
             if (start <= end) {
-              first+=projected_length(origin,interpolate(a,b,start),projection);
-              last+=projected_length(origin,interpolate(a,b,end),projection);
+              first+=projected_length(origin,dehomogenised(interpolate(a,b,start)),projection);
+              last+=projected_length(origin,dehomogenised(interpolate(a,b,end)),projection);
             }
           }
           if (start <= end && table.opacity[row] > 0) {
-            Polygon segment{interpolate(a,b,start), interpolate(a,b,end)};
+            Polygon segment{dehomogenised(interpolate(a,b,start)), dehomogenised(interpolate(a,b,end))};
             emit(table, row, Kind::polyline, segment,
               start > 0 || end < 1, {0,0,0}, first, last,
               j == 1 && start == 0 && packet.polylines.arrow_start[row],
               j+1 == polygon.size() && end == 1 && packet.polylines.arrow_end[row]);
-            if(packet.polylines.width_mm[row]>0) {
+            if(mask_mm>0) {
               Piece source=std::move(pieces.back());pieces.pop_back();
               bool caps=packet.polylines.cap[row]!=static_cast<Index>(Cap::butt) &&
                 std::abs(projection.camera_point(source.polygon[0].xyz)[2]-
@@ -191,8 +222,9 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
         bool visible = table.opacity[row] > 0;
         std::size_t anchor_planes = planes.size() - (projection.camera.clip ? 4 : 0);
         for (std::size_t j=0;j<anchor_planes;++j)
-          visible = visible && signed_distance(planes[j],polygon[0].xyz)>=0;
+          visible = visible && signed_distance(planes[j],polygon[0])>=0;
         if (visible) {
+          dehomogenise(polygon);
           emit(table, row, static_cast<Kind>(kind), polygon, false);
           if (kind==3) {
             pieces.back().anchor=polygon;
@@ -219,7 +251,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
     needs_coverage=needs_coverage || piece.kind==Kind::text ||
       piece.kind==Kind::polyline;
   if(needs_coverage) {
-    CoverageIndex coverage(pieces,projection);
+    CoverageIndex coverage(pieces,packet,projection);
     pieces.erase(std::remove_if(pieces.begin(),pieces.end(),[&](const Piece& piece) {
       return piece.kind==Kind::text && piece.source->partition[piece.row]==1 &&
         coverage.hidden(piece.polygon[0]);

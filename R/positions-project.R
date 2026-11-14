@@ -209,8 +209,8 @@ project_data_3d <- function(data, target, axes) {
 place_planar_packet_3d <- function(packet, axes, target) {
   slots <- c(match(axes, c("x", "y", "z")), target$axis)
   vertices <- packet$vertices
-  placed <- list(vertices$x, vertices$y, rep(target$value, length(vertices$x)))
-  packet$vertices <- stats::setNames(placed[order(slots)], c("x", "y", "z"))
+  placed <- list(vertices$x, vertices$y, target$value * vertices$w)
+  packet$vertices <- c(stats::setNames(placed[order(slots)], c("x", "y", "z")), list(w = vertices$w))
   normals <- c("normal_x", "normal_y", "normal_z")
   if (all(normals %in% names(packet$styles))) packet$styles[normals] <- packet$styles[normals][order(slots)]
   packet
@@ -223,7 +223,7 @@ pane_partition_packet_3d <- function(packet, pane, panel_params) {
   if (!isTRUE(camera$clip_data)) return(packet)
   frame <- frame_of_3d(panel_params)
   basis <- frame_basis_3d(camera, emit_viewport_3d(panel_params))
-  vertices <- do.call(cbind, packet$vertices)
+  vertices <- scene_vertices_xyz_3d(packet$vertices)
   for (kind in c("faces", "polylines", "markers", "text")) {
     tab <- packet[[kind]]
     depth_sorted <- which(tab$partition == 1L)
@@ -238,7 +238,8 @@ pane_partition_packet_3d <- function(packet, pane, panel_params) {
 # Flattening collapses faces perpendicular to the target and repeats corners
 # along edges perpendicular to it. Repeated consecutive corners are dropped;
 # faces left without area are removed. Newell's area vector of the ring is
-# unchanged by dropping a corner that coincides with its successor.
+# unchanged by dropping a corner that coincides with its successor. Faces with
+# a corner at infinity are kept for later clipping.
 clean_flat_faces_3d <- function(packet, eps = 1e-9) {
   faces <- packet$faces
   n <- length(faces$offset)
@@ -247,13 +248,16 @@ clean_flat_faces_3d <- function(packet, eps = 1e-9) {
   position <- sequence(faces$count)
   corner <- faces$offset[face] + position - 1L
   following <- faces$offset[face] + position %% faces$count[face]
-  xyz <- do.call(cbind, packet$vertices)
+  xyzw <- scene_vertex_matrix_3d(packet$vertices)
+  finite <- xyzw[, 4L] > 0
+  xyz <- xyzw[, 1:3, drop = FALSE] / ifelse(finite, xyzw[, 4L], 1)
   p <- xyz[packet$corners$vertex[corner], , drop = FALSE]
   q <- xyz[packet$corners$vertex[following], , drop = FALSE]
-  distinct <- rowSums(abs(q - p)) > eps
+  unbounded <- tabulate(face[!finite[packet$corners$vertex[corner]]], n) > 0L
+  distinct <- rowSums(abs(q - p)) > eps | unbounded[face]
   area <- sqrt(rowSums(rowsum(cross_rows_3d(p, q), face, reorder = TRUE)^2))
   kept <- tabulate(face[distinct], n)
-  good <- kept >= 3L & area > eps
+  good <- kept >= 3L & (area > eps | unbounded)
   changed <- good & kept < faces$count
   if (any(changed)) {
     rows <- distinct & changed[face]

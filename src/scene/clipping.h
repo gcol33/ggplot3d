@@ -2,6 +2,8 @@
 #include "projection.h"
 
 namespace ggplot3d { namespace engine {
+// Box planes (six, with clip_data), near, far, w >= 0, then the four screen
+// planes (with clip). All are linear in (x, y, z, w) and act before division.
 static inline std::vector<Plane> clipping_planes(const Projection& p) {
   std::vector<Plane> planes;
   if (p.camera.clip_data) {
@@ -20,6 +22,7 @@ static inline std::vector<Plane> clipping_planes(const Projection& p) {
   };
   camera_plane({0, 0, 1}, -p.resolved.near);
   camera_plane({0, 0, -1}, p.resolved.far);
+  planes.push_back({{0, 0, 0}, 1});
   if (p.camera.clip) {
     double depth = p.camera.perspective ? 1 : 0;
     double offset = p.camera.perspective ? 0 : 1;
@@ -33,13 +36,13 @@ static inline Polygon clip_polygon(Polygon polygon, const std::vector<Plane>& pl
   for (const Plane& plane : planes) {
     if (polygon.empty()) break;
     bool inside = true;
-    for (const Vertex& v : polygon) inside = inside && signed_distance(plane, v.xyz) >= 0;
+    for (const Vertex& v : polygon) inside = inside && signed_distance(plane, v) >= 0;
     if (inside) continue;
     Polygon out;
     Vertex previous = polygon.back();
-    double dp = signed_distance(plane, previous.xyz);
+    double dp = signed_distance(plane, previous);
     for (const Vertex& current : polygon) {
-      double dc = signed_distance(plane, current.xyz);
+      double dc = signed_distance(plane, current);
       if ((dp < 0 && dc > 0) || (dp > 0 && dc < 0))
         out.push_back(interpolate(previous, current, dp/(dp-dc)));
       if (dc >= 0) out.push_back(current); else clipped = true;
@@ -55,7 +58,7 @@ static inline std::pair<double,double> clip_segment_range(const Vertex& a,const 
                                                          std::size_t begin,std::size_t end) {
   double first=0,last=1;
   for(std::size_t i=begin;i<end;++i) {
-    double da=signed_distance(planes[i],a.xyz),db=signed_distance(planes[i],b.xyz);
+    double da=signed_distance(planes[i],a),db=signed_distance(planes[i],b);
     if(da<0 && db<0) return {0,-1};
     if(da<0) first=std::max(first,da/(da-db));
     if(db<0) last=std::min(last,da/(da-db));
@@ -74,7 +77,10 @@ static inline Vec3 area_vector(const Polygon& polygon, const Projection& project
   return normal;
 }
 
-static inline Vec3 face_normal(const Polygon& polygon, const Projection& projection) {
+// A degenerate ring raises an error unless `degenerate` is given, which is then
+// set and a zero normal returned.
+static inline Vec3 face_normal(const Polygon& polygon, const Projection& projection,
+                               bool* degenerate = nullptr) {
   Vec3 normal = area_vector(polygon, projection);
   const Vec3 origin = projection.model(polygon[0].xyz);
   double length = std::sqrt(dot(normal, normal));
@@ -83,7 +89,12 @@ static inline Vec3 face_normal(const Polygon& polygon, const Projection& project
     Vec3 delta=subtract(projection.model(v.xyz),origin);
     extent=std::max(extent,std::sqrt(dot(delta,delta)));
   }
-  require(std::isfinite(length) && length > projection.resolved.tolerance*extent, "degenerate face");
+  const bool flat = !(std::isfinite(length) && length > projection.resolved.tolerance*extent);
+  if (degenerate) {
+    *degenerate = flat;
+    if (flat) return Vec3{0, 0, 0};
+  }
+  require(!flat, "degenerate face");
   for (double& value : normal) value /= length;
   for (std::size_t i = 0; i < polygon.size(); ++i) {
     Vec3 a = projection.model(polygon[i].xyz);

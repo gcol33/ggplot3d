@@ -16,6 +16,17 @@
   sheets front to back in linear light, so a sheet folding over itself does
   not darken and nested isosurfaces still show through each other (#58).
 
+* Scene schema 2: packet vertices are homogeneous `x, y, z, w` (`w` defaults
+  to 1; `w = 0` is a point at infinity), and the engine clips in homogeneous
+  coordinates before dividing (Blinn and Newell 1978), so ideal polyhedra and
+  half-space cells clip at the panel box. `normalise_homogeneous_3d()` maps
+  homogeneous data positions to box fractions. Cameras take a 4 x 4 `pre`
+  map applied inside the engine (boosts and projective maps without
+  re-emitting). Corners take optional normals, colours and texture
+  coordinates carried by the vertex weights; styles an optional `texture_id`;
+  polylines a `mask_width_mm` for haloed lines (Appel 1967); and packets a
+  `quadrics` table that the engine does not compile yet (#16).
+
 * Hyperbolic and spherical coordinates accept `inside = TRUE`, finite observer
   points or isometries, and optional inverse-geodesic-area depth cues. The
   vector backend views Klein or gnomonic geometry from the model origin;

@@ -59,7 +59,7 @@ test_that("munching keeps shared edges watertight and within tolerance", {
   xyz <- rbind(c(0, 0.2, 0.1), c(0.7, 0.2, 0.1), c(0.7, 1, 0.9), c(0, 1, 0.9))
   packet <- face_packet_3d(xyz, list(c(1L, 2L, 3L), c(1L, 3L, 4L)))
   munched <- munch_packet_3d(frame, packet)
-  model <- do.call(cbind, munched$vertices)
+  model <- scene_vertices_xyz_3d(munched$vertices)
   scale <- attr(munched, "scale")
   parent <- attr(munched, "parent")$faces
   on_diagonal <- function(rows) {

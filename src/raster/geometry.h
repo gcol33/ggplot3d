@@ -29,7 +29,7 @@ struct Scene {
     return *tables[kind-1];
   }
   Screen project(const Vertex& v) const {
-    auto c=projection.camera_point(v.xyz); auto xy=projection.npc(c);
+    auto c=projection.camera_point(dehomogenised(v).xyz); auto xy=projection.npc(c);
     return {xy[0]*projection.viewport.width_mm,xy[1]*projection.viewport.height_mm,c[2]};
   }
   void append(int kind, Index row, const Polygon& polygon, double start=0) {
@@ -70,6 +70,7 @@ static inline void prepare_geometry(Scene& scene) {
   auto planes=clipping_planes(p);
   const std::size_t slab_begin=p.camera.clip_data ? 6:0;
   const std::size_t centre_end=planes.size()-(p.camera.clip ? 4:0);
+  const auto points=homogeneous_points(scene.packet.vertices,p);
   scene.normals.resize(scene.packet.faces.count.size());
   for(int kind=1;kind<=4;++kind) {
     const auto& table=scene.table(kind);
@@ -78,26 +79,42 @@ static inline void prepare_geometry(Scene& scene) {
       if(table.opacity[row]==0) continue;
       Polygon polygon; polygon.reserve(table.count[row]);
       for(Index j=0;j<table.count[row];++j) {
-        Index v=scene.packet.corners.vertex[table.offset[row]+j];
-        polygon.push_back({{scene.packet.vertices.x[v],scene.packet.vertices.y[v],scene.packet.vertices.z[v]}, {}});
+        Index corner=table.offset[row]+j;
+        polygon.push_back(corner_vertex(points,corner,scene.packet.corners.vertex[corner]));
+        polygon.back().weights.clear();
       }
       if(kind==1) {
-        scene.normals[row]=face_normal(polygon,p);
+        // A face through infinity takes its normal from its clipped ring.
+        const bool unbounded=outside_chart(polygon);
+        if(!unbounded) {
+          Polygon chart=polygon;
+          dehomogenise(chart);
+          scene.normals[row]=face_normal(chart,p);
+        }
         bool outside=false,clipped=false;
         for(const auto& plane:planes) for(const auto& v:polygon)
-          outside=outside || signed_distance(plane,v.xyz)<0;
+          outside=outside || signed_distance(plane,v)<0;
         if(outside) polygon=clip_polygon(std::move(polygon),planes,clipped);
-        if(polygon.size()>=3) scene.append(kind,row,polygon);
+        if(polygon.size()<3) continue;
+        dehomogenise(polygon);
+        if(unbounded) {
+          bool degenerate=false;
+          scene.normals[row]=face_normal(polygon,p,&degenerate);
+          if(degenerate) continue;
+        }
+        scene.append(kind,row,polygon);
       } else if(kind==2) {
         double cumulative=0;
         for(std::size_t j=1;j<polygon.size();++j) {
           const auto& a=polygon[j-1]; const auto& b=polygon[j];
+          auto range=clip_segment_range(a,b,planes,0,centre_end);
           auto slab=clip_segment_range(a,b,planes,slab_begin,slab_begin+2);
+          if(slab.first<=slab.second && (!(interpolate(a,b,slab.first).w>0) || !(interpolate(a,b,slab.second).w>0)))
+            slab=range;
           if(slab.first>slab.second) continue;
           Screen origin=scene.project(interpolate(a,b,slab.first));
           Screen end=scene.project(interpolate(a,b,slab.second));
           double length=std::hypot(end.x-origin.x,end.y-origin.y);
-          auto range=clip_segment_range(a,b,planes,0,centre_end);
           if(range.first<=range.second) {
             Polygon segment{interpolate(a,b,range.first),interpolate(a,b,range.second)};
             auto first=scene.project(segment[0]);
@@ -114,7 +131,7 @@ static inline void prepare_geometry(Scene& scene) {
         }
       } else {
         bool visible=true;
-        for(std::size_t j=0;j<centre_end;++j) visible=visible && signed_distance(planes[j],polygon[0].xyz)>=0;
+        for(std::size_t j=0;j<centre_end;++j) visible=visible && signed_distance(planes[j],polygon[0])>=0;
         if(visible) scene.append(kind,row,polygon);
       }
     }

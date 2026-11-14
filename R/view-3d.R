@@ -243,7 +243,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
   packets <- resolve_draw_packets_3d(selected$packets, furniture$camera, furniture$viewport)
   packets <- resolve_glyph_packets_3d(packets, furniture$camera, furniture$viewport)
   packet <- merge_scene_packets(packets, params$panel_id)
-  furniture_view <- view_packet_3d(all_furniture$packet)
+  furniture_view <- view_packet_3d(all_furniture$packet, params$camera$pre)
   furniture_view$materials <- view_furniture_tags_3d(frame, all_furniture, furniture_view$materials)
   axes <- lapply(names(params$axis_guides), function(name) {
     guide <- params$axis_guides[[name]]
@@ -269,7 +269,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
   # Automatic camera values use JSON null; finite resolved values travel separately.
   raw_camera[c("distance", "near", "far")] <- lapply(raw_camera[c("distance", "near", "far")],
     function(value) if (is.na(value) || !is.finite(value)) NULL else value)
-  list(id = params$panel_id, scene = view_packet_3d(packet), glyphs = view_glyphs_3d(packets),
+  list(id = params$panel_id, scene = view_packet_3d(packet, params$camera$pre), glyphs = view_glyphs_3d(packets),
     furniture = furniture_view, axes = unname(axes),
     bounds = unname(lapply(seq_len(nrow(frame$bounds())), function(i) unname(frame$bounds()[i, ]))),
     camera = raw_camera,
@@ -399,8 +399,10 @@ view_line_style_3d <- function(element) {
     width = element$linewidth %or3d% 0.5)
 }
 
-view_packet_3d <- function(packet) {
-  validate_scene_packet(packet)
+# The viewer has no homogeneous clipper: it receives finite vertices with the
+# camera pre already applied.
+view_packet_3d <- function(packet, pre = diag(4)) {
+  packet <- scene_finite_packet_3d(packet, pre)
   styles <- packet$styles
   metrics <- paint_metrics_3d(styles)
   materials <- lapply(seq_len(nrow(styles)), function(i) {

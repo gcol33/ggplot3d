@@ -64,7 +64,7 @@ test_that("data-unit spheres have their radius on every axis and train the scale
   expect_equal(b$xmin, d$x - d$r); expect_equal(b$zmax, d$z + d$r)
   ranges <- s$built$layout$panel_params[[1L]]$ranges
   expect_true(ranges$y[1L] <= -1 && ranges$y[2L] >= 3)
-  v <- do.call(cbind, s$packet$vertices)
+  v <- scene_vertices_xyz_3d(s$packet$vertices)
   nv <- nrow(ggplot3d:::glyph_mesh_3d("sphere", 1L)$vertices)
   expect_equal(nrow(v), 2L * nv)
   expect_length(s$packet$faces$primitive_id, 2L * 80L)
@@ -103,7 +103,7 @@ test_that("glyphs follow u, v, w and scale with size", {
     geom_glyph_3d(glyph = "cone", size = 4, size.unit = "data", detail = 0) +
     ggplot2::lims(x = c(-4, 4), y = c(-4, 4)) + zlim(-4, 4) + coord_3d(expand = FALSE)
   s <- stats_scene(p)
-  v <- do.call(cbind, s$packet$vertices)
+  v <- scene_vertices_xyz_3d(s$packet$vertices)
   apex <- unname(v[nrow(v), ])
   expect_equal(apex, c(0.5 + 2 / 8, 0.5, 0.5))
   expect_equal(range(v[, 1L]), c(0.25, 0.75))
@@ -123,7 +123,7 @@ test_that("ellipsoids follow semi-axes, rotations and shape matrices", {
   s <- stats_scene(p)
   ranges <- s$built$layout$panel_params[[1L]]$ranges
   span <- vapply(ranges, diff, numeric(1)); low <- vapply(ranges, `[`, numeric(1), 1L)
-  v <- sweep(sweep(do.call(cbind, s$packet$vertices), 2L, span, "*"), 2L, low, "+")
+  v <- sweep(sweep(scene_vertices_xyz_3d(s$packet$vertices), 2L, span, "*"), 2L, low, "+")
   expect_equal(rowSums((v %*% solve(sigma)) * v), rep(1, nrow(v)), tolerance = 1e-10)
   b <- s$built$data[[1L]]
   expect_equal(c(b$xmax, b$ymax, b$zmax), sqrt(diag(sigma)))

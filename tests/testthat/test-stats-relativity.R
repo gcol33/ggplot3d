@@ -70,7 +70,7 @@ test_that("space adapters apply boosts to finite event packets", {
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_point_3d()+
     coord_spacetime_3d(isometry=B,xlim=c(-2,2),ylim=c(-2,2),zlim=c(-2,2),expand=FALSE,axes=character(),panes=character(),box="none")
   packet <- stats_scene(p)$packet
-  got <- do.call(cbind,packet$vertices)*4-2
+  got <- scene_vertices_xyz_3d(packet$vertices)*4-2
   expected <- as.matrix(d)%*%t(B)
   expect_equal(unname(got),unname(expected),tolerance=1e-12)
 })

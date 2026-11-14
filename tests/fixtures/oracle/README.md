@@ -1,7 +1,8 @@
 # Independent visibility oracle
 
-`reference.R` uses the schema-1 contract and base R. It derives the model scale,
-eye, right/up/depth basis, pole orientation, roll, sphere framing, automatic
+`reference.R` uses packets with every `w = 1` (the affine subset of scene
+schema 2) and base R. It derives the model scale, eye, right/up/depth basis,
+pole orientation, roll, sphere framing, automatic
 distance and clipping planes from the camera specification. It uses no engine
 matrix, clipping, intersection, ordering or visibility routine.
 

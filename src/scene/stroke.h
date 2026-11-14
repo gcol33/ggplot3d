@@ -20,7 +20,7 @@ static inline std::vector<Piece> stroke_area(Piece source,const ScenePacket& pac
     path.push_back(vertex);
   }
   const auto& line=packet.polylines;
-  double radius=line.width_mm[source.row]*.5;
+  double radius=line.mask_width_mm[source.row]*.5;
   std::vector<Point2> xy;
   std::vector<double> depths;
   for(const auto& v:path) {
@@ -117,7 +117,7 @@ static inline std::vector<Piece> stroke_area(Piece source,const ScenePacket& pac
   std::vector<Plane> viewport_planes;
   bool box_clipped=false;
   if(p.camera.clip_data) for(const auto& v:path) for(std::size_t k=0;k<6;++k)
-    box_clipped=box_clipped || signed_distance(planes[k],v.xyz)<0;
+    box_clipped=box_clipped || signed_distance(planes[k],v)<0;
   if(box_clipped) viewport_planes.assign(planes.begin(),planes.begin()+6);
   if(p.camera.clip) viewport_planes.insert(viewport_planes.end(),planes.end()-4,planes.end());
   bool trimmed=false;

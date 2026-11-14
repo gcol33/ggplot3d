@@ -25,7 +25,7 @@ test_that("viewer serializes one mapped model scene with furniture and camera", 
   schemas <- ggplot3d:::scene_schemas()
   for (name in c("scene", "furniture")) {
     scene <- panel[[name]]
-    expect_identical(scene$schema_version, 1L)
+    expect_identical(scene$schema_version, 2L)
     expect_length(scene$materials, scene$style_count)
     expect_null(scene$styles)
     for (table in names(schemas)) {

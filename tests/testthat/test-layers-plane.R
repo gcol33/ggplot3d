@@ -11,7 +11,7 @@ plane_layer_packet <- function(plot) {
 
 ring_xyz <- function(packet, tab, i) {
   rows <- seq.int(tab$offset[i], length.out = tab$count[i])
-  do.call(cbind, packet$vertices)[packet$corners$vertex[rows], , drop = FALSE]
+  scene_vertices_xyz_3d(packet$vertices)[packet$corners$vertex[rows], , drop = FALSE]
 }
 
 test_that("intercept planes fill the box section as one face", {

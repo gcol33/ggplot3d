@@ -32,7 +32,7 @@ test_that("back walls follow the camera like the back panes", {
     out <- projected_layer(project_plot(geom_point_3d(position = position_project_3d("back")),
       coord_3d(azimuth = azimuth)))
     back <- frame_of_3d(out$params)$back_panes(pane_partitions_3d(out$params))
-    v <- do.call(cbind, out$packet$vertices)
+    v <- scene_vertices_xyz_3d(out$packet$vertices)
     on_pane <- vapply(back, function(name) {
       axis <- match(substr(name, 1L, 1L), c("x", "y", "z")); value <- as.double(endsWith(name, "max"))
       sum(v[, axis] == value)

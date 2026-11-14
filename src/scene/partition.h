@@ -22,6 +22,7 @@ struct Piece {
   bool cap_start = true, cap_end = true;
   Index solid = -1;
   Index seam_group = 0;
+  bool behind_halo = false;
   std::vector<Piece> members;
 };
 

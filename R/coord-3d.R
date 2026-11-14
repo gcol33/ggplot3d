@@ -177,8 +177,8 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' parameter per row, from zero to one. Input positions are scale-transformed
 #' chart coordinates. Model output has three columns in model axis units;
 #' `model_ranges(model, panel_params)` supplies named x, y, z bounds.
-#' Four-column output with w = 1 is also accepted. Other homogeneous weights
-#' and ideal points require scene schema 2.
+#' Four-column homogeneous output (x, y, z, w) with w > 0 is also accepted;
+#' points at infinity (w = 0) need homogeneous packet coordinates.
 #'
 #' `chart_is_projective(model)` declares straight geodesic images and planar
 #' faces, allowing subdivision to be omitted. Other models share the frame

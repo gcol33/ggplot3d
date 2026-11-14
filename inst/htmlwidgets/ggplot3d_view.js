@@ -1319,7 +1319,7 @@
           const svg = chrome.querySelector('svg');
           if (svg) { svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); }
           views = arr(x.panels).map(panel => {
-            if (panel.scene.schema_version !== 1) throw Error('Unsupported ggplot3d scene schema');
+            if (panel.scene.schema_version !== 2) throw Error('Unsupported ggplot3d scene schema');
             const scene = buildScene(gl, panel), entries = new Map(), crosstalkKeys = new Set();
             arr(panel.layers).forEach(l => {
               const rows = arr(l.rows), keys = arr(l.key), tips = arr(l.tooltip), map = new Map();

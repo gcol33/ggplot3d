@@ -14,19 +14,31 @@ new_scene_packet(
   footprints = list(),
   footprint_vertices = list(),
   styles = data.frame(style_id = integer()),
-  panel_id = 1L
+  panel_id = 1L,
+  quadrics = list()
 )
 }
 \arguments{
-\item{vertices}{List with x, y and z positions in normalised panel coordinates.}
+\item{vertices}{List with x, y, z and optional w: homogeneous positions in
+normalised panel coordinates, see \code{\link[=normalise_homogeneous_3d]{normalise_homogeneous_3d()}}. \code{w}
+defaults to 1, must be nonnegative, and \code{w = 0} places an ideal point (a
+direction) at infinity. Geometry through an ideal point is clipped by the
+panel box, the near and far planes or the viewport before it is drawn.}
 
-\item{corners}{List with vertex indices and source_row input indices.}
+\item{corners}{List with vertex indices and source_row input indices, and
+optional per-corner attributes normal_x, normal_y, normal_z, red, green,
+blue, alpha (colour channels in [0, 1]) and u, v (texture coordinates),
+in that order; NA marks a corner without the attribute. Compiled vertex
+weights carry them through clipping.}
 
 \item{faces, polylines, markers, text}{Primitive tables. Each requires offset
 into corners. Faces default to three corners, polylines to two, and markers
 and text to one. Common columns include count, primitive_id, layer_id,
 source_row, style_id, role, partition and opacity. Markers also require
-footprint_id. Text sizes use width_mm and height_mm.}
+footprint_id. Text sizes use width_mm and height_mm. Polylines take an
+optional mask_width_mm, at least width_mm and by default equal to it: the
+width of the band in which the line hides what lies behind it, while the
+line itself is drawn at width_mm (a haloed line, Appel 1967).}
 
 \item{footprints}{Marker shapes: kind (1 for ellipse, 2 for polygon), offset,
 count, radius_x_mm, radius_y_mm and angle.}
@@ -35,9 +47,16 @@ count, radius_x_mm, radius_y_mm and angle.}
 
 \item{styles}{Data frame with contiguous integer style_id keys, fill, colour
 and other rendering properties. Face lighting uses shade and optional
-normal_x, normal_y, normal_z in normalised panel coordinates.}
+normal_x, normal_y, normal_z in normalised panel coordinates. An optional
+integer texture_id (NA for none) names a texture held on the R side.}
 
 \item{panel_id}{Positive integer panel identifier.}
+
+\item{quadrics}{Analytic primitives: kind (1 sphere, 2 cylinder, 3 cone),
+centre_x, centre_y, centre_z, the unit axis axis_x, axis_y, axis_z
+(default the z axis), radius_a, radius_b (cone end radius, default 0) and
+length, with the common primitive_id, layer_id, source_row, style_id,
+partition and opacity columns.}
 }
 \value{
 A validated ggplot3d_scene_packet containing geometry and styles.
@@ -49,4 +68,11 @@ Indices start at one. Empty lists represent unused geometry kinds.
 }
 \examples{
 new_scene_packet()
+# A triangle with one corner at infinity in the x direction.
+new_scene_packet(
+  vertices = list(x = c(0.2, 0.2, 1), y = c(0.2, 0.8, 0), z = c(0.5, 0.5, 0),
+                  w = c(1, 1, 0)),
+  corners = list(vertex = 1:3),
+  faces = list(offset = 1L),
+  styles = data.frame(style_id = 1L, fill = "grey60"))
 }

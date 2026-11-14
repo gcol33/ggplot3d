@@ -567,7 +567,7 @@ merge_scene_packets <- function(packets, panel_id) {
   sizes <- vapply(packets, function(p) c(vertex = length(p$vertices$x),
     corner = length(p$corners$vertex), footprint = length(p$footprints$kind),
     footprint_vertex = length(p$footprint_vertices$x_mm), style = nrow(p$styles),
-    primitive = sum(vapply(p[c("faces", "polylines", "markers", "text")],
+    primitive = sum(vapply(p[c("faces", "polylines", "markers", "text", "quadrics")],
                            function(t) length(t$primitive_id), integer(1)))), numeric(6))
   totals <- rowSums(sizes)
   scene_assert(all(totals <= .Machine$integer.max), "merged packet exceeds integer index capacity")
@@ -589,13 +589,22 @@ merge_scene_packets <- function(packets, panel_id) {
       if (kind == "markers") tab$footprint_id <- as.integer(tab$footprint_id + shift[["footprint"]])
       packet[[kind]] <- tab
     }
+    quadric <- packet$quadrics
+    quadric$primitive_id <- as.integer(seq_along(quadric$primitive_id) + next_id)
+    quadric$style_id <- as.integer(quadric$style_id + shift[["style"]])
+    packet$quadrics <- quadric
     packet$styles$style_id <- as.integer(packet$styles$style_id + shift[["style"]])
     packets[[j]] <- packet
   }
+  # An optional column supplied by some packets is NA (not supplied) in the others.
+  optional <- scene_optional_schemas()
   tables <- lapply(names(schema), function(kind) {
-    columns <- lapply(names(schema[[kind]]), function(column)
-      unlist(lapply(packets, function(p) p[[kind]][[column]]), use.names = FALSE))
-    names(columns) <- names(schema[[kind]])
+    extra <- names(optional[[kind]])
+    extra <- extra[extra %in% unlist(lapply(packets, function(p) names(p[[kind]])))]
+    columns <- lapply(c(names(schema[[kind]]), extra), function(column)
+      unlist(lapply(packets, function(p) p[[kind]][[column]] %or3d%
+        rep(NA_real_, length(p[[kind]][[1L]]))), use.names = FALSE))
+    names(columns) <- c(names(schema[[kind]]), extra)
     columns
   })
   names(tables) <- names(schema)
@@ -613,7 +622,7 @@ merge_scene_packets <- function(packets, panel_id) {
   })
   names(material) <- columns
   material <- structure(material, class = "data.frame", row.names = .set_row_names(as.integer(totals[["style"]])))
-  result <- c(list(schema_version = 1L, panel_id = as.integer(panel_id),
+  result <- c(list(schema_version = scene_schema_version, panel_id = as.integer(panel_id),
                    style_count = as.integer(totals[["style"]])), tables,
               list(styles = material))
   class(result) <- "ggplot3d_scene_packet"

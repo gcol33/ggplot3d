@@ -169,7 +169,8 @@ export_capture_3d <- function(grob, panel, options, layer_names, mm = NULL) {
     ifelse(known, layer_names[pmax(1L, pmin(length(layer_names), table$layer_id))],
       paste0("layer", table$layer_id))
   }
-  nodes <- export_nodes_3d(packet, scale, light, mm, layer_key)
+  pre <- params$camera$pre
+  nodes <- export_nodes_3d(scene_finite_packet_3d(packet, pre), scale, light, mm, layer_key)
   if (options$furniture) {
     tags <- furniture$tags
     furniture_key <- function(table) {
@@ -177,7 +178,8 @@ export_capture_3d <- function(grob, panel, options, layer_names, mm = NULL) {
       if (identical(attr(table, "kind"), "faces")) return(rep("panes", length(type)))
       ifelse(type == "edge", "box", "grid")
     }
-    nodes <- c(nodes, export_nodes_3d(furniture$packet, scale, NULL, mm, furniture_key, parent = "furniture"))
+    nodes <- c(nodes, export_nodes_3d(scene_finite_packet_3d(furniture$packet, pre), scale, NULL, mm,
+      furniture_key, parent = "furniture"))
   }
   list(nodes = nodes, camera = camera, up = as.integer(params$camera$up), mm = mm, viewport = furniture$viewport,
     box = scale, furniture_layout = furniture)
@@ -213,8 +215,8 @@ export_rgba_3d <- function(colour, opacity) {
 # triangle soup (three rows per triangle), paths (consecutive rows sharing a
 # path id), markers and text anchors, with sRGB colours and alpha in [0, 1].
 export_nodes_3d <- function(packet, scale, light, mm, key, parent = NULL) {
-  v <- packet$vertices
-  model <- cbind(v$x * scale[1L], v$y * scale[2L], v$z * scale[3L])
+  xyz <- scene_vertices_xyz_3d(packet$vertices)
+  model <- cbind(xyz[, 1L] * scale[1L], xyz[, 2L] * scale[2L], xyz[, 3L] * scale[3L])
   styles <- packet$styles
   vertex <- packet$corners$vertex
   table_key <- function(kind) {

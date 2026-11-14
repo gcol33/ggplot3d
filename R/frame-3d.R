@@ -381,12 +381,22 @@ triangle_level_3d <- function(frame, p0, p1, p2, level, max_level) {
 
 # Maps a scale-space packet through a frame. Linear frames map vertices; other
 # frames clip to the panel box in scale space, then subdivide faces and
-# strokes so curved images stay within tolerance.
+# strokes so curved images stay within tolerance. A linear (affine) frame maps
+# a direction (w = 0) d to map(d) - map(0); other frames need finite vertices,
+# which clipping to the panel box leaves.
 munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
   validate_scene_packet(packet)
   if (frame$linear) {
-    xyz <- frame$map(coordinates %or3d% do.call(cbind, packet$vertices))
-    packet$vertices <- list(x = as.double(xyz[, 1L]), y = as.double(xyz[, 2L]), z = as.double(xyz[, 3L]))
+    xyzw <- if (is.null(coordinates)) scene_vertex_matrix_3d(packet$vertices) else cbind(coordinates, 1)
+    finite <- xyzw[, 4L] > 0
+    out <- xyzw
+    if (any(finite)) {
+      out[finite, 1:3] <- frame$map(xyzw[finite, 1:3, drop = FALSE] / xyzw[finite, 4L])
+      out[finite, 4L] <- 1
+    }
+    if (any(!finite)) out[!finite, 1:3] <- frame$map(xyzw[!finite, 1:3, drop = FALSE]) -
+      frame$map(matrix(0, sum(!finite), 3L))
+    packet$vertices <- scene_vertices_3d(out)
     validate_scene_packet(packet)
     return(packet)
   }
@@ -395,7 +405,7 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
     packet <- clip_packet_planes_3d(packet, unit_box_planes_3d())
     clipped <- attr(packet, "parent")
   }
-  scale_xyz <- coordinates %or3d% do.call(cbind, packet$vertices)
+  scale_xyz <- coordinates %or3d% scene_vertices_xyz_3d(packet$vertices)
   corner_xyz <- function(rows) scale_xyz[packet$corners$vertex[rows], , drop = FALSE]
   out_xyz <- list(); out_rows <- list(); out_scale <- list(); n_points <- 0L
   emit <- function(model, source_row, scale) {
@@ -479,7 +489,7 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
     next_id <- next_id + length(tab$offset)
     packet[[kind]] <- tab
   }
-  packet$vertices <- list(x = as.double(model[used, 1L]), y = as.double(model[used, 2L]), z = as.double(model[used, 3L]))
+  packet$vertices <- scene_vertices_3d(model[used, , drop = FALSE])
   packet$corners <- list(vertex = as.integer(vertex_of[corner_ids]), source_row = as.integer(source_rows[corner_ids]))
   if (all(c("normal_x", "normal_y", "normal_z") %in% names(packet$styles))) {
     packet$styles$normal_x <- NA_real_; packet$styles$normal_y <- NA_real_; packet$styles$normal_z <- NA_real_

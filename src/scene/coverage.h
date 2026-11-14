@@ -87,7 +87,7 @@ static inline Polygon stroke_bounds(const Piece& piece, const ScenePacket& packe
   if(p.camera.perspective) model_per_mm*=std::min(a[2],b[2]);
   if(length*model_per_mm<=p.resolved.tolerance) return {};
   double ux=dx/length, uy=dy/length;
-  double extent=line.width_mm[piece.row]*0.5;
+  double extent=line.mask_width_mm[piece.row]*0.5;
   if(line.count[piece.row]>2 && line.join[piece.row]==static_cast<Index>(Join::mitre))
     extent*=line.mitre_limit[piece.row];
   bool constant_depth=std::abs(a[2]-b[2])<=p.resolved.tolerance;
@@ -128,11 +128,17 @@ static inline bool screen_contains(const Polygon& polygon,const Vertex& anchor,c
   return !(positive && negative);
 }
 
+// An occluder of lines: an opaque or translucent face, or the occlusion band
+// of a haloed line (mask_width_mm > width_mm), which removes the parts of
+// other lines behind it whatever their hidden policy (Appel 1967).
 struct CoverageFace {
   Polygon polygon;
   SplitPlane plane;
   std::array<double,4> bounds;
   bool opaque;
+  bool halo = false;
+  const PrimitiveTable* source = nullptr;
+  Index row = -1;
 };
 
 static inline double face_ray_parameter(const CoverageFace& face,const Vertex& vertex,
@@ -164,9 +170,14 @@ class CoverageIndex {
   const Projection& projection;
 
 public:
-  CoverageIndex(const std::vector<Piece>& pieces,const Projection& p):projection(p) {
-    for (const Piece& piece:pieces) if (piece.kind==Kind::face && piece.source->partition[piece.row]==1) {
-      CoverageFace f{piece.polygon,supporting_plane(piece,p),{R_PosInf,R_PosInf,R_NegInf,R_NegInf},piece.source->opacity[piece.row]==1};
+  CoverageIndex(const std::vector<Piece>& pieces,const ScenePacket& packet,const Projection& p):projection(p) {
+    for (const Piece& piece:pieces) {
+      if (piece.source->partition[piece.row]!=1) continue;
+      const bool halo=piece.kind==Kind::polyline && piece.polygon.size()>=3 &&
+        packet.polylines.mask_width_mm[piece.row]>packet.polylines.width_mm[piece.row];
+      if (piece.kind!=Kind::face && !halo) continue;
+      CoverageFace f{piece.polygon,supporting_plane(piece,p),{R_PosInf,R_PosInf,R_NegInf,R_NegInf},
+                     halo || piece.source->opacity[piece.row]==1,halo,piece.source,piece.row};
       for(const Vertex& v:piece.polygon) {
         auto s=p.npc(p.camera_point(v.xyz));
         for(int k=0;k<2;++k) {f.bounds[k]=std::min(f.bounds[k],s[k]);f.bounds[k+2]=std::max(f.bounds[k+2],s[k]);}
@@ -189,7 +200,7 @@ public:
     Vec3 model=projection.model(anchor.xyz);
     Vec3 ray=projection.camera.perspective ? subtract(model,projection.resolved.eye) : projection.resolved.ray;
     for(const CoverageFace* face:query({s[0],s[1],s[0],s[1]})) {
-      if(!face->opaque) continue;
+      if(!face->opaque || face->halo) continue;
       double t=face_ray_parameter(*face,anchor,projection);
       if(t>=-projection.resolved.tolerance/std::sqrt(dot(ray,ray))) continue;
       Vec3 hit=model;
@@ -220,12 +231,15 @@ public:
         for(int k=0;k<2;++k) {bounds[k]=std::min(bounds[k],s[k]);bounds[k+2]=std::max(bounds[k+2],s[k]);}
       }
       auto candidates=query(bounds);
+      const PrimitiveTable* source=piece.source;const Index row=piece.row;
       std::vector<Piece> cells; cells.push_back(std::move(piece));
       for(const CoverageFace* face:candidates) {
+        if(face->halo && face->source==source && face->row==row) continue;
         const Polygon& path=cells.empty() ? piece.polygon : (cells[0].anchor.empty() ? cells[0].polygon:cells[0].anchor);
         bool coplanar=!path.empty();
         for(const auto& v:path) coplanar=coplanar && std::abs(plane_distance(face->plane,v,projection))<=projection.resolved.tolerance;
-        if(!coplanar && (!face->opaque || packet.polylines.hidden[piece.row]==static_cast<Index>(Hidden::hide))) continue;
+        if(!coplanar && !face->halo &&
+           (!face->opaque || packet.polylines.hidden[piece.row]==static_cast<Index>(Hidden::hide))) continue;
         std::vector<SplitPlane> boundaries{face->plane};
         for(std::size_t i=0;i<face->polygon.size();++i) {
           Vec3 a=projection.model(face->polygon[i].xyz);
@@ -254,7 +268,9 @@ public:
           if(!screen_contains(face->polygon,centre,projection)) continue;
           double t=face_ray_parameter(*face,centre,projection);
           Vec3 ray=projection.camera.perspective ? subtract(projection.model(centre.xyz),projection.resolved.eye) : projection.resolved.ray;
-          if(coplanar || t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray))) {
+          if(face->halo) {
+            if(!coplanar && t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray))) cell.behind_halo=true;
+          } else if(coplanar || t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray))) {
             bool hidden=cell.hidden;
             lift_coverage(cell,*face,projection);
             if(coplanar) cell.hidden=hidden;
@@ -262,6 +278,7 @@ public:
         }
       }
       for(Piece& cell:cells) {
+        if(cell.behind_halo) continue;
         if(!cell.hidden || packet.polylines.hidden[cell.row]!=static_cast<Index>(Hidden::hide))
           result.push_back(std::move(cell));
       }

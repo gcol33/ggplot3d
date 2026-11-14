@@ -3,8 +3,12 @@
 
 namespace ggplot3d { namespace engine {
 using namespace ggplot3d;
-void fields(const Rcpp::List& x, std::initializer_list<const char*> expected) {
-  require(x.size() == static_cast<R_xlen_t>(expected.size()), "invalid table schema");
+// Required fields come first in order, then any subset of the optional fields
+// in their canonical order. Returns the optional fields present.
+std::vector<std::string> fields(const Rcpp::List& x, std::initializer_list<const char*> expected,
+                                std::initializer_list<const char*> optional = {}) {
+  require(x.size() >= static_cast<R_xlen_t>(expected.size()) &&
+          x.size() <= static_cast<R_xlen_t>(expected.size() + optional.size()), "invalid table schema");
   Rcpp::CharacterVector names = x.names();
   require(names.size() == x.size(), "all fields must be named");
   int i = 0;
@@ -13,6 +17,17 @@ void fields(const Rcpp::List& x, std::initializer_list<const char*> expected) {
             std::string("expected field: ") + name);
     ++i;
   }
+  std::vector<std::string> present;
+  auto next = optional.begin();
+  for (; i < names.size(); ++i) {
+    require(names[i] != NA_STRING, "all fields must be named");
+    const std::string name = Rcpp::as<std::string>(names[i]);
+    while (next != optional.end() && name != *next) ++next;
+    require(next != optional.end(), std::string("unexpected or misordered field: ") + name);
+    present.push_back(name);
+    ++next;
+  }
+  return present;
 }
 
 template <int RTYPE, typename T>
@@ -89,7 +104,8 @@ PrimitiveTable read_common(const Rcpp::List& x, int minimum, int nc, int styles,
 
 ScenePacket read_packet(const Rcpp::List& x) {
   fields(x, {"schema_version", "panel_id", "style_count", "vertices", "corners",
-             "faces", "polylines", "markers", "text", "footprints", "footprint_vertices"});
+             "faces", "polylines", "markers", "text", "quadrics", "footprints",
+             "footprint_vertices"});
   ScenePacket p;
   p.schema_version = integer_scalar(x, "schema_version");
   p.panel_id = integer_scalar(x, "panel_id");
@@ -97,15 +113,36 @@ ScenePacket read_packet(const Rcpp::List& x) {
   require(p.schema_version == scene_schema_version, "unsupported scene schema version");
   require(p.panel_id > 0 && p.style_count >= 0, "invalid panel or style count");
   Rcpp::List v = x["vertices"], c = x["corners"];
-  fields(v, {"x", "y", "z"});
+  fields(v, {"x", "y", "z", "w"});
   p.vertices.x = doubles(v, "x");
   int nv = p.vertices.x.size();
   p.vertices.y = doubles(v, "y", nv);
   p.vertices.z = doubles(v, "z", nv);
-  fields(c, {"vertex", "source_row"});
+  p.vertices.w = doubles(v, "w", nv);
+  for (int i = 0; i < nv; ++i) {
+    require(p.vertices.w[i] >= 0, "vertex w must be nonnegative");
+    require(p.vertices.w[i] > 0 || p.vertices.x[i] != 0 || p.vertices.y[i] != 0 ||
+            p.vertices.z[i] != 0, "ideal vertices must have a nonzero direction");
+  }
+  // Optional corner attributes travel with the vertex weights; the engine only
+  // checks them.
+  auto attributes = fields(c, {"vertex", "source_row"},
+    {"normal_x", "normal_y", "normal_z", "red", "green", "blue", "alpha", "u", "v"});
   p.corners.vertex = integers(c, "vertex");
   int nc = p.corners.vertex.size();
   p.corners.source_row = integers(c, "source_row", nc);
+  for (const auto& name : attributes) {
+    SEXP column = c[name];
+    require(TYPEOF(column) == REALSXP && Rf_xlength(column) == nc && !Rf_isObject(column) &&
+            Rf_isNull(Rf_getAttrib(column, R_DimSymbol)), "invalid corner attribute: " + name);
+    const bool colour = name == "red" || name == "green" || name == "blue" || name == "alpha";
+    const double* values = REAL(column);
+    for (int i = 0; i < nc; ++i) {
+      if (R_IsNA(values[i])) continue;
+      require(std::isfinite(values[i]) && (!colour || (values[i] >= 0 && values[i] <= 1)),
+              "corner attributes must be finite or NA, colours in [0, 1]: " + name);
+    }
+  }
   for (int i = 0; i < nc; ++i) {
     require(p.corners.vertex[i] >= 1 && p.corners.vertex[i] <= nv &&
             p.corners.source_row[i] >= 0, "invalid corner references");
@@ -117,7 +154,7 @@ ScenePacket read_packet(const Rcpp::List& x) {
              "role", "partition", "opacity"});
   fields(l, {"primitive_id", "layer_id", "source_row", "style_id", "offset", "count",
              "role", "partition", "opacity", "width_mm", "mitre_limit", "cap", "join",
-             "hidden", "arrow_start", "arrow_end"});
+             "hidden", "arrow_start", "arrow_end", "mask_width_mm"});
   fields(m, {"primitive_id", "layer_id", "source_row", "style_id", "offset", "count",
              "role", "partition", "opacity", "footprint_id"});
   fields(t, {"primitive_id", "layer_id", "source_row", "style_id", "offset", "count",
@@ -134,12 +171,45 @@ ScenePacket read_packet(const Rcpp::List& x) {
   p.polylines.hidden = integers(l, "hidden", nl);
   p.polylines.arrow_start = logicals(l, "arrow_start", nl);
   p.polylines.arrow_end = logicals(l, "arrow_end", nl);
+  p.polylines.mask_width_mm = doubles(l, "mask_width_mm", nl);
   for (int i = 0; i < nl; ++i) {
     require(p.polylines.width_mm[i] >= 0 && p.polylines.mitre_limit[i] >= 1 &&
+            p.polylines.mask_width_mm[i] >= p.polylines.width_mm[i] &&
             p.polylines.cap[i] >= 0 && p.polylines.cap[i] <= 2 &&
             p.polylines.join[i] >= 0 && p.polylines.join[i] <= 2 &&
             p.polylines.hidden[i] >= 0 && p.polylines.hidden[i] <= 2,
             "invalid polyline footprint or policy");
+  }
+  Rcpp::List q = x["quadrics"];
+  fields(q, {"primitive_id", "layer_id", "source_row", "style_id", "partition", "opacity",
+             "kind", "centre_x", "centre_y", "centre_z", "axis_x", "axis_y", "axis_z",
+             "radius_a", "radius_b", "length"});
+  auto& quadric = p.quadrics;
+  quadric.primitive_id = integers(q, "primitive_id");
+  int nq = quadric.primitive_id.size();
+  quadric.layer_id = integers(q, "layer_id", nq);
+  quadric.source_row = integers(q, "source_row", nq);
+  quadric.style_id = integers(q, "style_id", nq);
+  quadric.partition = integers(q, "partition", nq);
+  quadric.opacity = doubles(q, "opacity", nq);
+  quadric.kind = integers(q, "kind", nq);
+  quadric.centre_x = doubles(q, "centre_x", nq); quadric.centre_y = doubles(q, "centre_y", nq);
+  quadric.centre_z = doubles(q, "centre_z", nq);
+  quadric.axis_x = doubles(q, "axis_x", nq); quadric.axis_y = doubles(q, "axis_y", nq);
+  quadric.axis_z = doubles(q, "axis_z", nq);
+  quadric.radius_a = doubles(q, "radius_a", nq); quadric.radius_b = doubles(q, "radius_b", nq);
+  quadric.length = doubles(q, "length", nq);
+  for (int i = 0; i < nq; ++i) {
+    require(quadric.primitive_id[i] > 0 && ids.insert(quadric.primitive_id[i]).second,
+            "primitive_id must be positive and globally unique");
+    require(quadric.layer_id[i] >= 0 && quadric.source_row[i] >= 0 &&
+            quadric.style_id[i] >= 1 && quadric.style_id[i] <= p.style_count &&
+            quadric.partition[i] >= 0 && quadric.partition[i] <= 2 &&
+            quadric.opacity[i] >= 0 && quadric.opacity[i] <= 1 &&
+            quadric.kind[i] >= 1 && quadric.kind[i] <= 3 &&
+            quadric.radius_a[i] >= 0 && quadric.radius_b[i] >= 0 && quadric.length[i] >= 0,
+            "invalid quadric");
+    --quadric.style_id[i];
   }
   Rcpp::List fp = x["footprints"], fv = x["footprint_vertices"];
   fields(fp, {"kind", "offset", "count", "radius_x_mm", "radius_y_mm", "angle"});
@@ -198,7 +268,7 @@ ScenePacket read_packet(const Rcpp::List& x) {
 
 Camera read_camera(const Rcpp::List& x) {
   fields(x, {"projection", "azimuth", "elevation", "roll", "distance", "fov", "zoom",
-             "target", "aspect", "near", "far", "clip_data", "clip", "up", "shear"});
+             "target", "aspect", "near", "far", "clip_data", "clip", "up", "shear", "pre"});
   Camera c;
   SEXP projection = x["projection"];
   require(TYPEOF(projection) == STRSXP && Rf_xlength(projection) == 1 &&
@@ -237,6 +307,8 @@ Camera read_camera(const Rcpp::List& x) {
   require(std::isfinite(shear[0]) && std::isfinite(shear[1]), "camera shear must be finite");
   require(!c.perspective || (shear[0] == 0 && shear[1] == 0), "oblique shear requires a parallel projection");
   c.shear = {shear[0], shear[1]};
+  auto pre = doubles(x, "pre", 16);
+  std::copy(pre.begin(), pre.end(), c.pre.begin());
   return c;
 }
 
@@ -350,6 +422,7 @@ Rcpp::List scene_compile_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List vi
   const Viewport device{scalar(viewport,"width_mm"), scalar(viewport,"height_mm"), scalar(viewport,"dpi")};
   require(device.width_mm > 0 && device.height_mm > 0 && device.dpi > 0,
           "viewport dimensions and dpi must be positive");
+  require(scene.quadrics.primitive_id.empty(), "the engine does not compile quadric primitives");
   const Projection projection(view, device);
   return write_result(compile(scene, projection,budget), scene, device);
 }

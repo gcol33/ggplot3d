@@ -70,7 +70,7 @@ test_that("spherical polygon faces and boundaries reach both renderers", {
   expect_gt(length(reference$faces$offset), 1)
   expect_true(all(reference$faces$count == 3L))
   expect_gt(reference$polylines$count[1], 4)
-  xyz <- do.call(cbind, reference$vertices) * 2 - 1
+  xyz <- scene_vertices_xyz_3d(reference$vertices) * 2 - 1
   # Boundary lattice points lie on the shared chord subdivision.
   boundary <- rowSums(abs(xyz) < 1e-12) > 0
   expect_equal(rowSums(xyz[!boundary, , drop = FALSE]^2), rep(1, sum(!boundary)), tolerance = 1e-12)
@@ -99,8 +99,12 @@ test_that("canonical dimension, charts, projectivity and homogeneous guard are i
   context <- result$params$space_context
   expect_equal(space_packet_coordinates_3d(matrix(c(0, 0, 0, 1), 1), context), list(x = 1/22, y = 1/22, z = 1/22))
   context$space <- ggplot2::ggproto(NULL, lifted, from_canonical = function(X, model) X)
-  expect_error(space_packet_coordinates_3d(matrix(c(1, 0, 0, 0), 1), context), "schema 2")
-  expect_error(space_packet_coordinates_3d(matrix(c(1, 0, 0, 2), 1), context), "schema 2")
+  expect_error(space_packet_coordinates_3d(matrix(c(1, 0, 0, 0), 1), context), "infinity")
+  expect_equal(space_packet_coordinates_3d(matrix(c(1, 0, 0, 2), 1), context),
+               space_packet_coordinates_3d(matrix(c(0.5, 0, 0, 1), 1), context))
+  ideal <- space_packet_coordinates_3d(matrix(c(1, 0, 0, 0), 1), context, homogeneous = TRUE)
+  expect_identical(ideal$w, 0)
+  expect_equal(ideal$x, 1 / diff(context$ranges$x))
   sphere <- test_sphere_space()
   expect_equal(sphere$to_canonical(data.frame(x = 0, y = 0, z = 0), "lonlat"), matrix(c(1, 0, 0), 1))
 })
@@ -128,7 +132,7 @@ test_that("screen tolerance responds to zoom and perspective at drawing time", {
 test_that("geodesic face boundaries agree with their stroked edges", {
   result <- integration_packets(space_test_plot())
   packet <- result$packet
-  xyz <- do.call(cbind, packet$vertices)
+  xyz <- scene_vertices_xyz_3d(packet$vertices)
   line <- packet$polylines
   edge <- xyz[packet$corners$vertex[seq.int(line$offset[1], length.out = line$count[1])], , drop = FALSE]
   face <- xyz[unique(packet$corners$vertex[unlist(lapply(packet$faces$offset, function(k) k + 0:2))]), , drop = FALSE]
@@ -164,7 +168,7 @@ test_that("continuous paint and custom packets share the coordinate adapter", {
     styles = data.frame(style_id = 1L, colour = "black"))
   mapped <- space_packet_3d(p, params$space_context)
   expect_gt(mapped$polylines$count, 2)
-  expect_equal(rowSums((do.call(cbind, mapped$vertices) * 2 - 1)^2), rep(1, length(mapped$vertices$x)), tolerance = 1e-12)
+  expect_equal(rowSums((scene_vertices_xyz_3d(mapped$vertices) * 2 - 1)^2), rep(1, length(mapped$vertices$x)), tolerance = 1e-12)
 })
 
 test_that("input charts and isometries act before display projection", {
@@ -173,7 +177,7 @@ test_that("input charts and isometries act before display projection", {
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
     coord_3d(space = test_sphere_space(), input = "lonlat", isometry = rotate)
   result <- integration_packets(p)
-  xyz <- do.call(cbind, result$packet$vertices)
+  xyz <- scene_vertices_xyz_3d(result$packet$vertices)
   expect_equal(unname(xyz), rbind(c(0.5, 1, 0.5), c(0, 0.5, 0.5)), tolerance = 1e-12)
   projected <- result$params$space_context$space$to_canonical(d, "lonlat")
   expect_equal(projected[1, ], c(1, 0, 0))

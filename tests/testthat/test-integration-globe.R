@@ -14,7 +14,7 @@ test_that("globe paths follow the surface and furniture shares the adapter", {
   p <- ggplot2::ggplot(d, ggplot2::aes(x,y,z=z)) + geom_path_3d() +
     coord_globe_3d(inner = FALSE, graticule = c(0,0), zlim = c(0,.1))
   out <- stats_scene(p)$packet
-  xyz <- do.call(cbind,out$vertices) * 2.2 - 1.1
+  xyz <- scene_vertices_xyz_3d(out$vertices) * 2.2 - 1.1
   expect_gt(nrow(xyz),2)
   expect_equal(sqrt(rowSums(xyz^2)), rep(1.05,nrow(xyz)), tolerance = 1e-10)
   expect_true(all(xyz[,1] < -1))

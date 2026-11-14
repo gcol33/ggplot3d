@@ -131,7 +131,8 @@ emit_planes_3d <- function(data, params, panel_params) {
   vertex <- cut$corners$vertex[ring]
   owner <- rep.int(faces$source_row, faces$count)
   points <- data[owner, setdiff(names(data), c("nx", "ny", "nz")), drop = FALSE]
-  points$x <- cut$vertices$x[vertex]; points$y <- cut$vertices$y[vertex]; points$z <- cut$vertices$z[vertex]
+  xyz <- scene_vertices_xyz_3d(cut$vertices)[vertex, , drop = FALSE]
+  points$x <- xyz[, 1L]; points$y <- xyz[, 2L]; points$z <- xyz[, 3L]
   start <- cumsum(c(0L, faces$count[-length(faces$count)]))
   filled <- which(!is.na(data$fill[faces$source_row]))
   stroked <- which(!is.na(data$colour[faces$source_row]))

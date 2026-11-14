@@ -7,9 +7,10 @@
 
 namespace ggplot3d {
 
-inline constexpr int scene_schema_version = 1;
+inline constexpr int scene_schema_version = 2;
 using Index = std::int32_t;
 enum class Kind : Index { face = 1, polyline = 2, marker = 3, text = 4 };
+enum class QuadricKind : Index { sphere = 1, cylinder = 2, cone = 3 };
 enum class Role : Index { fill = 0, stroke = 1, marker = 2, text = 3 };
 enum class Partition : Index { underlay = 0, depth = 1, overlay = 2 };
 enum class FootprintKind : Index { ellipse = 1, polygon = 2 };
@@ -17,8 +18,12 @@ enum class Hidden : Index { hide = 0, dashed = 1, show = 2 };
 enum class Cap : Index { butt = 0, round = 1, square = 2 };
 enum class Join : Index { round = 0, mitre = 1, bevel = 2 };
 
-struct Vertices {
+struct Points {
   std::vector<double> x, y, z;
+};
+// Homogeneous box fractions (x, y, z, w) with w >= 0; w == 0 is an ideal point.
+struct Vertices : Points {
+  std::vector<double> w;
 };
 
 // Indices and offsets are zero-based in C++; the R wire format is one-based.
@@ -33,8 +38,9 @@ struct PrimitiveTable {
 };
 
 struct Faces : PrimitiveTable {};
+// mask_width_mm >= width_mm is the occlusion width; backends draw width_mm.
 struct Polylines : PrimitiveTable {
-  std::vector<double> width_mm, mitre_limit;
+  std::vector<double> width_mm, mitre_limit, mask_width_mm;
   std::vector<Index> cap, join, hidden;
   std::vector<bool> arrow_start, arrow_end;
 };
@@ -43,6 +49,13 @@ struct Markers : PrimitiveTable {
 };
 struct TextAnchors : PrimitiveTable {
   std::vector<double> width_mm, height_mm, hjust, vjust, angle;
+};
+
+// Analytic primitives; the axis is a unit vector for cylinders and cones.
+struct Quadrics {
+  std::vector<Index> primitive_id, layer_id, source_row, style_id, partition, kind;
+  std::vector<double> opacity, centre_x, centre_y, centre_z, axis_x, axis_y, axis_z;
+  std::vector<double> radius_a, radius_b, length;
 };
 
 // Polygon rings use the even-odd rule; ellipses use radii and angle only.
@@ -63,6 +76,7 @@ struct ScenePacket {
   Polylines polylines;
   Markers markers;
   TextAnchors text;
+  Quadrics quadrics;
   Footprints footprints;
   FootprintVertices footprint_vertices;
 };
@@ -75,6 +89,8 @@ struct Camera {
   std::array<double, 2> shear{0, 0};
   double distance, fov = 35, zoom = 1, near, far;
   std::array<double, 3> target{0.5, 0.5, 0.5}, aspect{1, 1, 1};
+  // Column-major 4x4 map of homogeneous box fractions applied before aspect.
+  std::array<double, 16> pre{1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
 };
 struct Viewport {
   double width_mm, height_mm, dpi = 144;
@@ -88,11 +104,12 @@ struct ResolvedCamera {
   double distance, near, far, view_height, tolerance;
 };
 
-struct ProjectedVertices : Vertices {
+struct ProjectedVertices : Points {
   std::vector<double> x_camera, y_camera, depth, x_npc, y_npc, clip_w;
 };
 
-// Each output vertex is an affine combination of corners of its source primitive.
+// Each output vertex is a linear combination of the homogeneous corners (after
+// camera pre) of its source primitive, normalised so that sum weight * w = 1.
 struct VertexWeights {
   std::vector<Index> vertex, corner;
   std::vector<double> weight;

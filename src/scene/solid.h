@@ -5,7 +5,11 @@
 
 namespace ggplot3d { namespace engine {
 // Closed opaque components cannot expose outward back faces to an exterior eye.
-static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,const Projection& p,
+// A face with a corner at infinity or behind it (after camera pre) belongs to no
+// closed component; its normal is left zero for the caller to take from its
+// clipped ring.
+static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,
+                                               const std::vector<Point4>& points,const Projection& p,
                                                std::vector<Index>& components,std::vector<Vec3>& normals,
                                                std::size_t threads) {
   const auto& f=packet.faces;std::size_t n=f.count.size();
@@ -39,19 +43,22 @@ static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,const 
   parallel_for(n,threads,[&](std::size_t i) {
     auto& polygon=polygons[i];
     for(Index k=0;k<f.count[i];++k) {
-      Index v=packet.corners.vertex[f.offset[i]+k];
-      polygon.push_back({{packet.vertices.x[v],packet.vertices.y[v],packet.vertices.z[v]},{}});
+      Index corner=f.offset[i]+k;
+      polygon.push_back(corner_vertex(points,corner,packet.corners.vertex[corner]));
     }
+    if(outside_chart(polygon)) {polygon.clear();normals[i]=Vec3{0,0,0};return;}
+    dehomogenise(polygon);
     normals[i]=face_normal(polygon,p);
   });
   auto planes=clipping_planes(p);if(p.camera.clip) planes.resize(planes.size()-4);
   for(Index i=0;i<static_cast<Index>(n);++i) {
     Index r=root(i);if(!closed[i]) closed[r]=false;
     const auto& polygon=polygons[i];
+    if(polygon.empty()) {closed[r]=false;continue;}
     for(const auto& vertex:polygon) {
-      const Vec3& xyz=vertex.xyz;auto m=p.model(xyz);
+      auto m=p.model(vertex.xyz);
       if(!std::isfinite(lo[r][0])) origin[r]=m;
-      for(const auto& plane:planes) if(signed_distance(plane,xyz)<0) closed[r]=false;
+      for(const auto& plane:planes) if(signed_distance(plane,vertex)<0) closed[r]=false;
       for(int a=0;a<3;++a) {lo[r][a]=std::min(lo[r][a],m[a]);hi[r][a]=std::max(hi[r][a],m[a]);}
     }
     auto a=subtract(p.model(polygon[0].xyz),origin[r]);

@@ -457,7 +457,7 @@ test_that("pane grids and box edges share fixed furniture partitions", {
       packet <- furniture$packet
       expected <- furniture_partitions_3d(furniture$camera, furniture$viewport)
       expect_equal(packet$faces$partition, if (clip_data) unname(expected) else rep(1L, 6))
-      vertices <- as.matrix(as.data.frame(packet$vertices))
+      vertices <- scene_vertices_xyz_3d(packet$vertices)
       for (i in seq_along(packet$polylines$offset)) {
         ids <- seq.int(packet$polylines$offset[i], length.out = packet$polylines$count[i])
         xyz <- vertices[packet$corners$vertex[ids], , drop = FALSE]

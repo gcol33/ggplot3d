@@ -57,7 +57,7 @@ test_that("empty packets preserve the complete typed contract", {
   expect_identical(result$draw_order, integer())
   expect_identical(result$fragments$clipped, logical())
   expect_identical(result$vertices$x_npc, double())
-  expect_identical(result$schema_version, 1L)
+  expect_identical(result$schema_version, 2L)
   expect_identical(result$capabilities$visibility, "bsp")
   expect_true(result$capabilities$exact_visibility)
   expect_true(result$capabilities$footprint_clipping)
@@ -99,7 +99,7 @@ test_that("native entry validates independently of the R wrapper", {
   expect_error(native(broken), "corner range")
   broken <- packet; broken$vertices$x <- 1
   expect_error(native(broken), "length mismatch")
-  broken <- packet; broken$schema_version <- 2L
+  broken <- packet; broken$schema_version <- 3L
   expect_error(native(broken), "schema version")
   broken <- packet; broken$faces$opacity <- NA_real_
   expect_error(native(broken), "non-finite")

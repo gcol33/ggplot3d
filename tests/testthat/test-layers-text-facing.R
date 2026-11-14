@@ -6,7 +6,7 @@ test_that("arbitrary normals place all glyph vertices in the specified plane", {
     glyph <- attr(s$packet, "glyph_mm")
     for (viewport in list(new_scene_viewport(100, 80), new_scene_viewport(160, 120))) {
       resolved <- resolve_glyph_packets_3d(list(s$packet), s$camera, viewport)[[1L]]
-      offset <- do.call(cbind, resolved$vertices) - glyph$centre
+      offset <- scene_vertices_xyz_3d(resolved$vertices) - glyph$centre
       expect_equal(drop(offset %*% c(1, 1, 1)), rep(0, nrow(offset)), tolerance = 1e-10)
       scaled <- text_facing_scene(normal = c(1e200, 1e200, 1e200), up = c(0, 0, 1), angle = 27,
         coord = coord_3d(aspect = aspect))
@@ -76,7 +76,7 @@ test_that("camera-facing outlines use the actual eye and panel viewport at draw 
         camera <- s$camera; camera$azimuth <- azimuth
         basis <- frame_basis_3d(camera, viewport)
         resolved <- resolve_glyph_packets_3d(list(s$packet), camera, viewport)[[1L]]
-        offset <- sweep(do.call(cbind, resolved$vertices) - glyph$centre, 2L, basis$scale, "*")
+        offset <- sweep(scene_vertices_xyz_3d(resolved$vertices) - glyph$centre, 2L, basis$scale, "*")
         normal <- if (facing == "camera_point") toward_camera_3d(basis, camera, glyph$centre) else
           matrix(if (basis$perspective) -basis$forward else -basis$ray, nrow(offset), 3L, byrow = TRUE)
         expect_equal(rowSums(offset * unit_rows_3d(normal)), rep(0, nrow(offset)), tolerance = 1e-10)
@@ -102,7 +102,7 @@ test_that("all static backends resolve camera-facing outlines before drawing", {
       packet <- panel$packets[[1L]]
       glyph <- attr(packet, "glyph_mm")
       basis <- frame_basis_3d(s$camera, panel$inner_viewport)
-      offset <- sweep(do.call(cbind, packet$vertices) - glyph$centre, 2L, basis$scale, "*")
+      offset <- sweep(scene_vertices_xyz_3d(packet$vertices) - glyph$centre, 2L, basis$scale, "*")
       toward <- unit_rows_3d(toward_camera_3d(basis, s$camera, glyph$centre))
       expect_equal(rowSums(offset * toward), rep(0, nrow(offset)), tolerance = 1e-10)
       expect_false(isTRUE(all.equal(packet$vertices, s$packet$vertices)))

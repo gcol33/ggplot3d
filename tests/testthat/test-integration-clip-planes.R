@@ -1,6 +1,6 @@
 face_corners_xyz <- function(packet, faces = seq_along(packet$faces$offset)) {
   rows <- unlist(lapply(faces, function(f) seq.int(packet$faces$offset[f], length.out = packet$faces$count[f])))
-  do.call(cbind, packet$vertices)[packet$corners$vertex[rows], , drop = FALSE]
+  scene_vertices_xyz_3d(packet$vertices)[packet$corners$vertex[rows], , drop = FALSE]
 }
 
 face_area_3d <- function(packet, faces) {

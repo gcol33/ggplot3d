@@ -308,7 +308,7 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
     munched <- munch_packet_3d(frame, polygon, clip = FALSE)
     tri <- matrix(munched$corners$vertex, nrow = 3L)
     if (!ncol(tri)) return(invisible())
-    model <- do.call(cbind, munched$vertices); scale <- attr(munched, "scale")
+    model <- scene_vertices_xyz_3d(munched$vertices); scale <- attr(munched, "scale")
     centres <- (scale[tri[1L, ], , drop = FALSE] + scale[tri[2L, ], , drop = FALSE] + scale[tri[3L, ], , drop = FALSE]) / 3
     class <- classify(centres)
     for (k in which(!is.na(class))) add(model[tri[, k], , drop = FALSE], "faces", element, class[k], tag = pane_tag(centres[k, ]), scene = scene)
@@ -523,7 +523,6 @@ furniture_packet_3d <- function(vertices, primitives, kinds, materials, styles, 
   packet <- do.call(new_scene_packet, c(list(vertices = geometry,
     corners = list(vertex = as.integer(unlist(primitives[selected])), source_row = rep.int(0L, sum(counts))), styles = styles,
     panel_id = panel_id), tables))
-  names(packet$vertices) <- c("x", "y", "z")
   packet
 }
 
