@@ -19,24 +19,37 @@ hyperbolic_distance_3d <- function(X,Y) {
   out
 }
 
-# Geodesics with an ideal endpoint follow the projective (Klein) line, which
-# stays inside the future cone; the interior is lifted to the hyperboloid.
-hyperbolic_geodesic_3d <- function(X,Y,s) {
-  ideal <- hyperbolic_ideal_3d(X)|hyperbolic_ideal_3d(Y)
-  if(!any(ideal)) return(hyperbolic_slerp_3d(X,Y,s))
-  s <- rep_len(s,nrow(X)); n <- ncol(X)
-  out <- matrix(0,nrow(X),n)
-  if(any(!ideal)) out[!ideal,] <- hyperbolic_slerp_3d(X[!ideal,,drop=FALSE],Y[!ideal,,drop=FALSE],s[!ideal])
-  k <- which(ideal)
-  Z <- (1-s[k])*X[k,,drop=FALSE]/X[k,n]+s[k]*Y[k,,drop=FALSE]/Y[k,n]
+# Geodesic simplices with an ideal corner are parametrised in the Klein model
+# with squared barycentric weights, mu_i = lambda_i^2 / sum(lambda^2): the
+# distance to the boundary then vanishes quadratically at an ideal corner, so
+# the Poincare image, whose chart map has a square-root singularity there, is
+# a smooth function of the parameters. Interior points are lifted to the
+# hyperboloid; simplices without ideal corners return NA rows.
+hyperbolic_ideal_blend_3d <- function(corners,weights) {
+  n <- ncol(corners[[1L]])
+  ideal <- Reduce(`|`,lapply(corners,hyperbolic_ideal_3d))
+  out <- matrix(NA_real_,nrow(corners[[1L]]),n)
+  if(!any(ideal)) return(out)
+  mu <- weights[ideal,,drop=FALSE]^2; mu <- mu/rowSums(mu)
+  Z <- Reduce(`+`,lapply(seq_along(corners),function(i) mu[,i]*corners[[i]][ideal,,drop=FALSE]/corners[[i]][ideal,n]))
   q <- -lorentz_dot_3d(Z,Z)
   interior <- q>1e-12*Z[,n]^2
   Z[interior,] <- Z[interior,,drop=FALSE]/sqrt(q[interior])
-  out[k,] <- Z
-  out[k[s[k]==0],] <- X[k[s[k]==0],,drop=FALSE]
-  out[k[s[k]==1],] <- Y[k[s[k]==1],,drop=FALSE]
+  out[ideal,] <- Z
   out
 }
+
+hyperbolic_geodesic_3d <- function(X,Y,s) {
+  s <- rep_len(s,nrow(X))
+  out <- hyperbolic_ideal_blend_3d(list(X,Y),cbind(1-s,s))
+  finite <- is.na(out[,1L])
+  if(any(finite)) out[finite,] <- hyperbolic_slerp_3d(X[finite,,drop=FALSE],Y[finite,,drop=FALSE],s[finite])
+  out[s==0,] <- X[s==0,,drop=FALSE]
+  out[s==1,] <- Y[s==1,,drop=FALSE]
+  out
+}
+
+hyperbolic_triangle_3d <- function(P0,P1,P2,a,b) hyperbolic_ideal_blend_3d(list(P0,P1,P2),cbind(1-a-b,a,b))
 
 # Homogeneous ball coordinates: Klein (X, X0); Poincare (X, X0 + 1), which is
 # (X, X0) at an ideal point. Both are positively homogeneous in X.
@@ -114,6 +127,7 @@ SpaceHyperbolicFinite <- ggplot2::ggproto("SpaceHyperbolicFinite",Space3D,
   },
   distance=function(self,X,Y) hyperbolic_distance_3d(X,Y)/sqrt(-self$curvature),
   geodesic=function(X,Y,s) hyperbolic_geodesic_3d(X,Y,s),
+  triangle=function(P0,P1,P2,a,b) hyperbolic_triangle_3d(P0,P1,P2,a,b),
   act=function(g,X) {
     check_lorentz_matrix_3d(g,3L)
     X%*%t(g)

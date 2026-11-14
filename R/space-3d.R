@@ -10,6 +10,7 @@ Space3D <- ggplot2::ggproto("Space3D", NULL,
   from_canonical = function(X, model) stop("Space must implement from_canonical().", call. = FALSE),
   distance = function(X, Y) stop("Space must implement distance().", call. = FALSE),
   geodesic = function(X, Y, s) stop("Space must implement geodesic().", call. = FALSE),
+  triangle = NULL,
   act = function(g, X) stop("Space must implement act() for an isometry.", call. = FALSE),
   chart_is_projective = function(model) FALSE,
   projective_action = function(g, model) NULL,
@@ -156,6 +157,7 @@ space_subdivision_3d <- function(context) {
   # Edge snapping and interior interpolation share the screen-error budget.
   list(tolerance = context$tolerance / 2, strict = TRUE, max_level = context$max_depth, cull = cull,
     projective = isTRUE(context$space$chart_is_projective(context$model)) && isTRUE(context$frame$linear),
+    triangle = if (is.function(context$space$triangle)) function(P0, P1, P2, a, b) context$space$triangle(P0, P1, P2, a, b),
     interpolate = function(X, Y, s) {
       out <- space_matrix_3d(context$space$geodesic(X, Y, s), nrow(X), "geodesic()")
       if (ncol(out) != ncol(X)) stop("Space geodesic() changed canonical dimension.", call. = FALSE)

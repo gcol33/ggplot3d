@@ -28,6 +28,13 @@ test_that("ideal vertices are light-cone points on the boundary of the Klein bal
   xyz <- scene_vertices_xyz_3d(packet$vertices) * 2 - 1
   expect_equal(max(sqrt(rowSums(xyz^2))), 1, tolerance = 1e-9)
   expect_silent(validate_scene_packet(packet))
+  ball <- suppressMessages(stats_scene(p + stat_honeycomb_3d(schlafli = c(3, 3, 6), radius = 0, what = "faces", model = "poincare"))$packet)
+  expect_silent(validate_scene_packet(ball))
+  X <- s$vertices[1, , drop = FALSE]; Y <- out$vertices[1:2, , drop = FALSE]
+  Z <- hyperbolic_geodesic_3d(matrix(c(0, 0, 0, 1), 2, 4, byrow = TRUE), Y, c(0.25, 0.75))
+  expect_equal(-lorentz_dot_3d(Z, Z), c(1, 1), tolerance = 1e-12)
+  P <- space_model_xyz_3d(hyperbolic_geodesic_3d(Y[c(1, 1, 1), ], Y[c(2, 2, 2), ], c(1e-4, 2e-4, 3e-4)), SpaceHyperbolicFinite, "poincare")
+  expect_equal(P[3, ] - P[2, ], P[2, ] - P[1, ], tolerance = 1e-3)
   tiling <- suppressMessages(coxeter_cells_3d(c(5, Inf), 0, 1L))
   expect_equal(coxeter_lorentz_3d(tiling$vertices, tiling$simplex), rep(0, 5), tolerance = 1e-9)
 })
@@ -74,7 +81,15 @@ test_that("non-compact cells are generated face by face within radius", {
   expect_error(suppressMessages(coxeter_cells_3d(c(6, 3, 3), 3, 5L)), "max_cells")
   edges <- suppressMessages(coxeter_cells_3d(c(Inf, 3), 2, 2000L))
   expect_true(all(vapply(edges$pieces, function(piece) nrow(piece$X), integer(1)) == 2L))
-  expect_error(coxeter_pieces_3d(edges, "faces"), "edges")
+  triangles <- coxeter_pieces_3d(edges, "faces")
+  expect_equal(length(triangles), 2L * length(edges$pieces))
+  centre <- t(vapply(triangles, function(piece) piece$X[3, ], numeric(3)))
+  expect_equal(coxeter_lorentz_3d(centre, edges$simplex), rep(0, nrow(centre)), tolerance = 1e-9)
+  p <- ggplot2::ggplot() + stat_tiling_3d(schlafli = c(Inf, 3), radius = 1.5, what = "faces") +
+    coord_3d(axes = character(), panes = character(), box = "none")
+  packet <- suppressMessages(stats_scene(p)$packet)
+  expect_gt(length(packet$faces$offset), 0L)
+  expect_silent(validate_scene_packet(packet))
   for (what in c("edges", "faces", "cells")) for (model in c("klein", "poincare")) {
     p <- ggplot2::ggplot() + stat_honeycomb_3d(schlafli = c(6, 3, 3), radius = 0.8, what = what, model = model) +
       coord_3d(axes = character(), panes = character(), box = "none")

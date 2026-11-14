@@ -228,22 +228,25 @@ coxeter_faces_3d <- function(simplex,radius,max_cells) {
     orbit <- coxeter_transforms_3d(centre,simplex$mirrors,simplex,inside,max_cells,overflow)
     for(i in seq_along(orbit$transforms)) {
       T <- orbit$transforms[[i]]
+      cells <- t(vapply(piece$cells,function(x) coxeter_normalise_3d(drop(T%*%x),simplex),numeric(rank)))
       out[[length(out)+1L]] <- list(X=t(apply(piece$X%*%t(T),1L,coxeter_normalise_3d,simplex)),
-        cells=vapply(piece$cells,function(x) coxeter_key_3d(coxeter_normalise_3d(drop(T%*%x),simplex)),character(1)),
-        depth=orbit$depth[i],edge=piece$edge)
+        cells=apply(cells,1L,coxeter_key_3d),centres=cells,depth=orbit$depth[i],edge=piece$edge)
     }
   }
   message(length(out)," ",if(d==2L) "edges" else "faces"," in ",simplex$kind," ",d,"-space")
   list(simplex=simplex,pieces=out,mode="faces")
 }
 
-# Polygons of a tiling with their cell identities and depths.
+# Polygons of a tiling with their cell identities and depths. An apeirogonal
+# cell of a tiling is the union of the ideal triangles spanned by its edges
+# and its ideal centre.
 coxeter_pieces_3d <- function(tiling,what) {
   if(tiling$mode=="faces") {
-    if(what!="edges"&&any(vapply(tiling$pieces,`[[`,logical(1),"edge"))) stop("Apeirogonal cells have no finite faces; use what = \"edges\".",call.=FALSE)
     keys <- unique(unlist(lapply(tiling$pieces,`[[`,"cells")))
     return(unlist(lapply(tiling$pieces,function(piece) {
       cells <- match(piece$cells,keys)
+      if(piece$edge&&what!="edges") return(lapply(seq_along(cells),function(k)
+        list(X=rbind(piece$X,piece$centres[k,]),cell=cells[k],depth=piece$depth,edge=FALSE)))
       if(what!="cells") cells <- cells[1L]
       lapply(cells,function(cell) list(X=piece$X,cell=cell,depth=piece$depth,edge=piece$edge))
     }),recursive=FALSE))
@@ -279,6 +282,7 @@ SpaceCoxeter3D <- ggplot2::ggproto("SpaceCoxeter3D",Space3D,
     hyperbolic_geodesic_3d(X,Y,s)
   },
   chart_is_projective=function(self,model) self$kind=="euclidean"||(self$kind=="hyperbolic"&&model=="klein"),
+  triangle=function(self,P0,P1,P2,a,b) if(self$kind=="hyperbolic") hyperbolic_triangle_3d(P0,P1,P2,a,b) else matrix(NA_real_,nrow(P0),ncol(P0)),
   model_ranges=function(self,model,panel_params) {
     if(self$kind=="euclidean") return(panel_params$ranges)
     stats::setNames(rep(list(c(-self$bound,self$bound)),3L),c("x","y","z"))
@@ -372,7 +376,11 @@ register_geom_3d(GeomCoxeter3D,emit_coxeter_3d,positions=character(),parameters=
 #' faces (edges for tilings with apeirogonal cells) are then generated one by
 #' one and retained within radius of the seed face, depth counts reflections
 #' from the seed face, and what = "cells" draws each face once for each of its
-#' two cells. The message then reports faces or edges instead of cells.
+#' two cells. An apeirogonal tiling cell is filled by the ideal triangles from
+#' its edges to its ideal centre. The message then reports faces or edges
+#' instead of cells. Faces with ideal vertices are exact in the Klein model;
+#' in the Poincare model their cusps are sampled to the screen tolerance,
+#' which can take deep subdivision.
 #'
 #' Hyperbolic output uses the Klein model by default; Poincare output is
 #' adaptively tessellated. Spherical tiles lie on S^2. Spherical honeycombs

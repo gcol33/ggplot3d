@@ -263,11 +263,19 @@ frame_map_homogeneous_3d <- function(frame, xyzw) {
   out
 }
 
+# Points of a geodesic triangle at barycentric (1 - a - b, a, b): nested
+# geodesics, unless the frame's triangle() parametrises a row (non-NA).
 triangle_points_3d <- function(frame, p0, p1, p2, a, b) {
   if (!is.function(frame$interpolate)) return((1 - a - b) * p0 + a * p1 + b * p2)
-  total <- a + b
-  edge <- subdivision_points_3d(frame, p1, p2, ifelse(total > 0, b / total, 0))
-  subdivision_points_3d(frame, p0, edge, total)
+  a <- rep_len(a, nrow(p0)); b <- rep_len(b, nrow(p0))
+  out <- if (is.function(frame$triangle)) frame$triangle(p0, p1, p2, a, b) else matrix(NA_real_, nrow(p0), ncol(p0))
+  nested <- which(is.na(out[, 1L]))
+  if (length(nested)) {
+    total <- a[nested] + b[nested]
+    edge <- subdivision_points_3d(frame, p1[nested, , drop = FALSE], p2[nested, , drop = FALSE], ifelse(total > 0, b[nested] / total, 0))
+    out[nested, ] <- subdivision_points_3d(frame, p0[nested, , drop = FALSE], edge, total)
+  }
+  out
 }
 
 # Distance of mapped midpoints from the line through the mapped endpoints: a

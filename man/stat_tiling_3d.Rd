@@ -72,7 +72,11 @@ compact. When the cell centre is ideal or hyperideal the cells are infinite;
 faces (edges for tilings with apeirogonal cells) are then generated one by
 one and retained within radius of the seed face, depth counts reflections
 from the seed face, and what = "cells" draws each face once for each of its
-two cells. The message then reports faces or edges instead of cells.
+two cells. An apeirogonal tiling cell is filled by the ideal triangles from
+its edges to its ideal centre. The message then reports faces or edges
+instead of cells. Faces with ideal vertices are exact in the Klein model;
+in the Poincare model their cusps are sampled to the screen tolerance,
+which can take deep subdivision.
 }
 \details{
 Hyperbolic output uses the Klein model by default; Poincare output is
