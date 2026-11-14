@@ -251,7 +251,7 @@ register_geom_3d(GeomCoxeter3D,emit_coxeter_3d,positions=character(),parameters=
 #' space sampler. what="faces" deduplicates shared faces, what="cells"
 #' retains each cell's boundary, and what="edges" deduplicates shared edges.
 #' @inheritParams stat_parametric_3d
-#' @param schlafli Two entries {p,q} for tilings, three {p,q,r} for honeycombs.
+#' @param schlafli Two entries \{p,q\} for tilings, three \{p,q,r\} for honeycombs.
 #' @param radius Centre distance cutoff in intrinsic units (radians on spheres).
 #' @param what Geometry to emit: edges, faces or cells.
 #' @param max_cells Explicit orbit resource limit; exceeding it raises an error.

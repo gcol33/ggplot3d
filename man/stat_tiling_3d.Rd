@@ -42,7 +42,7 @@ stat_honeycomb_3d(
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
 
-\item{schlafli}{Two entries {p,q} for tilings, three {p,q,r} for honeycombs.}
+\item{schlafli}{Two entries \{p,q\} for tilings, three \{p,q,r\} for honeycombs.}
 
 \item{radius}{Centre distance cutoff in intrinsic units (radians on spheres).}
 
