@@ -12,6 +12,7 @@ stat_biplot_3d(
   loading_scale = 1,
   point_size = 1.5,
   label_loadings = TRUE,
+  label_size = 4,
   level = 0.95,
   scores_args = list()
 )
@@ -32,6 +33,8 @@ frame with id and group columns. Its row order is arbitrary.}
 \item{point_size}{Site marker size in millimetres.}
 
 \item{label_loadings}{Whether to label arrow tips.}
+
+\item{label_size}{Arrow-tip label size, in ggplot2 text size units (mm).}
 
 \item{level}{Ellipsoid coverage level.}
 

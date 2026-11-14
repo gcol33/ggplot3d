@@ -57,6 +57,13 @@ test_that("biplots preserve source scores and join groups by identifier", {
       loading_scale = 2) + coord_3d()
     expect_silent(ggplot2::ggplotGrob(p))
   }
+  label_layer <- function(...) {
+    layers <- stat_biplot_3d(fit, ...)
+    Filter(function(l) inherits(l$geom, "GeomText"), layers)[[1L]]
+  }
+  expect_equal(label_layer()$aes_params$size, 4)
+  expect_equal(label_layer(label_size = 5.5)$aes_params$size, 5.5)
+  expect_error(stat_biplot_3d(fit, label_size = -1), "label_size")
 })
 
 test_that("vegan ordinations use the scores generic and its scaling", {

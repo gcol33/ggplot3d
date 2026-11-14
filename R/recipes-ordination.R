@@ -53,6 +53,7 @@ ordination_groups_3d <- function(sites, groups) {
 #' @param loading_scale Explicit multiplier of variable/species scores.
 #' @param point_size Site marker size in millimetres.
 #' @param label_loadings Whether to label arrow tips.
+#' @param label_size Arrow-tip label size, in ggplot2 text size units (mm).
 #' @param level Ellipsoid coverage level.
 #' @param scores_args Additional arguments to vegan's scores method.
 #' @return A list of layers to add to a ggplot with coord_3d().
@@ -63,9 +64,9 @@ ordination_groups_3d <- function(sites, groups) {
 #'   region = "ellipsoid", loading_scale = 2) + coord_3d()
 #' @export
 stat_biplot_3d <- function(model, choices = 1:3, groups = NULL, region = c("none", "ellipsoid", "hull"),
-                           loading_scale = 1, point_size = 1.5, label_loadings = TRUE, level = 0.95, scores_args = list()) {
+                           loading_scale = 1, point_size = 1.5, label_loadings = TRUE, label_size = 4, level = 0.95, scores_args = list()) {
   region <- match.arg(region)
-  for (name in c("loading_scale", "point_size")) {
+  for (name in c("loading_scale", "point_size", "label_size")) {
     value <- get(name)
     scene_assert(is.numeric(value) && length(value) == 1L && is.finite(value) && value >= 0, paste(name, "must be nonnegative"))
   }
@@ -85,7 +86,7 @@ stat_biplot_3d <- function(model, choices = 1:3, groups = NULL, region = c("none
     layers <- c(layers, list(geom_quiver_3d(ggplot2::aes(x, y, z = z, u = u, v = v, w = w),
       data = arrows, inherit.aes = FALSE, colour = "grey25", fill = "grey25", head_length = 0.12, head_width = 0.04)))
     if (label_loadings) layers <- c(layers, list(geom_text_3d(ggplot2::aes(x = u, y = v, z = w, label = id),
-      data = arrows, inherit.aes = FALSE, size = 3, vjust = -0.4)))
+      data = arrows, inherit.aes = FALSE, size = label_size, vjust = -0.4)))
   }
   layers
 }
