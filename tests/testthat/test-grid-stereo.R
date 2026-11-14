@@ -167,6 +167,7 @@ test_that("anaglyphs composite per channel without device blending and with the 
     panel <- stereo_drawn(p, case$device)[[1L]]
     image <- as.list(panel$children)[[1L]]
     expect_s3_class(image, "rastergrob")
+    expect_true(image$interpolate)
     expect_equal(dim(image$raster), c(6, 6) * 40, tolerance = 0.05)
     rgb <- grDevices::col2rgb(as.vector(image$raster), alpha = TRUE)
     expect_true(any(rgb["red", ] != rgb["green", ]))

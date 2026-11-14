@@ -181,7 +181,7 @@ anaglyph_raster_3d <- function(eyes, filters, dpi) {
   raster <- matrix(grDevices::rgb(colour[1L, ], colour[2L, ], colour[3L, ], alpha),
     nrow = pixels[2L], ncol = pixels[1L])
   grid::rasterGrob(raster, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
-    interpolate = FALSE, name = "scene-anaglyph-3d")
+    interpolate = TRUE, name = "scene-anaglyph-3d")
 }
 
 # RGBA (4 x pixels, in [0, 1], column-major over the image rows) of a grob
