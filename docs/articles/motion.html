@@ -732,13 +732,12 @@ starting angle so a loop repeats each view once. The result records the
 rendering time of each frame in seconds.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"gifski"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".gif"</span><span class="op">)</span></span>
-<span>  <span class="va">movie</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, frames <span class="op">=</span> <span class="fl">12</span>, fps <span class="op">=</span> <span class="fl">6</span>, file <span class="op">=</span> <span class="va">path</span>,</span>
+<span>  <span class="va">movie</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, frames <span class="op">=</span> <span class="fl">12</span>, fps <span class="op">=</span> <span class="fl">6</span>, format <span class="op">=</span> <span class="st">"gif"</span>,</span>
 <span>                     width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>frames <span class="op">=</span> <span class="va">movie</span><span class="op">$</span><span class="va">frame_count</span>, fps <span class="op">=</span> <span class="va">movie</span><span class="op">$</span><span class="va">fps</span>,</span>
 <span>             file_written <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">movie</span><span class="op">$</span><span class="va">file</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">movie</span><span class="op">$</span><span class="va">timings</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">movie</span><span class="op">$</span><span class="va">file</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Camera arguments accept a scalar, a vector with one value per frame,
 or a function of time in seconds. This path raises the camera while it
@@ -764,15 +763,14 @@ bounds for arbitrary rotation.</p>
 <span><span class="co">#&gt;  37.08663  37.08663</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">dirname</a></span><span class="op">(</span><span class="va">frames</span><span class="op">$</span><span class="va">frames</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Raster rendering is the default. Selecting vector rendering uses the
-exact vector scene backend to produce each PNG frame, and an output
-filename ending in <code>.mp4</code> selects the video encoder.</p>
+exact vector scene backend to produce each PNG frame, and
+<code>format = "mp4"</code> selects the video encoder.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"av"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span></span>
-<span>  <span class="va">movie</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, frames <span class="op">=</span> <span class="fl">3</span>, fps <span class="op">=</span> <span class="fl">6</span>, file <span class="op">=</span> <span class="va">path</span>,</span>
+<span>  <span class="va">movie</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, frames <span class="op">=</span> <span class="fl">3</span>, fps <span class="op">=</span> <span class="fl">6</span>, format <span class="op">=</span> <span class="st">"mp4"</span>,</span>
 <span>                     width <span class="op">=</span> <span class="fl">320</span>, height <span class="op">=</span> <span class="fl">320</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">movie</span><span class="op">$</span><span class="va">file</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">movie</span><span class="op">$</span><span class="va">file</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
 <div class="section level3">

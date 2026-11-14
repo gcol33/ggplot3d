@@ -149,6 +149,7 @@ data per frame. Projection, visibility and lighting are evaluated per frame.</p>
 <span>  isometry <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tour <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  stable_partition <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  format <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -181,7 +182,7 @@ is spread evenly over the path.</p></dd>
 
 
 <dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
-<dd><p>Output path, or NULL to return PNG frame paths. The extension
+<dd><p>Output path, or NULL to use <code>format</code>. The extension
 selects the output: <code>.gif</code> (needs gifski), <code>.mp4</code> or <code>.webm</code> (need av),
 <code>.apng</code> (an animated PNG), <code>.png</code> or <code>.svg</code> (one file per frame; svg needs
 svglite) and <code>.pdf</code> (one page per frame). A file per frame takes its
@@ -291,6 +292,15 @@ refined for every viewing direction at the camera's distance and zoom.
 Applies to scenes the vector and hybrid renderers draw.</p></dd>
 
 
+<dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
+<dd><p>Output format as an extension name supported by <code>file</code>, such
+as <code>"gif"</code>, <code>"mp4"</code>, <code>"webm"</code> or <code>"apng"</code>, or NULL (default). With
+<code>file = NULL</code>, a format writes to a session temporary path. <code>"png"</code> and
+<code>"svg"</code> write numbered frame sequences; <code>"apng"</code> writes one animated PNG.
+When both <code>file</code> and <code>format</code> are supplied, the extension must agree with
+the format. With both NULL, returns temporary PNG frame paths.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Arguments to <code><a href="export_3d.html">export_3d()</a></code> for glTF output: <code>furniture</code>, <code>lines</code>,
 <code>points</code> and <code>size</code>.</p></dd>
@@ -305,8 +315,8 @@ field of view, distance (NA when automatic) and target, and the frame's
 <code>transition</code> (source state, destination state and eased fraction when
 tweening),
 <code>build_seconds</code>, <code>frame</code>, <code>panel_extents</code> in millimetres, and <code>frames</code>
-(the PNG paths when file is NULL, the written files of a per-frame
-output). PNG frames returned with file = NULL belong to the caller.
+(the PNG paths when <code>file</code> and <code>format</code> are NULL, the written files of a
+per-frame output). Returned files and frame paths belong to the caller.
 <code>width</code> and <code>height</code> give the frame dimensions in pixels.</p>
     </div>
     <div class="section level2">
@@ -321,10 +331,18 @@ limits of the full data, as in gganimate's <code>transition_manual()</code> and
 plotly's <code>frame</code> aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show its
 first frame.</p>
+<p><code>renderer</code> selects the scene backend; <code>format</code> selects the encoded file
+type or frame layout, and <code>file</code> sets its location. gganimate selects
+encoding through <code>animate(renderer = ...)</code>; its <code>gifski_renderer()</code> and
+<code>av_renderer()</code> create temporary files when their <code>file</code> is NULL.
+Here, <code>format</code> selects an entry in the output registry and supplies a
+temporary path to the encoder. gifski writes a GIF to that path; av
+infers the video container from its extension.</p>
 <p>In knitr HTML documents, a returned GIF or APNG embeds as an image and
 MP4 or WebM embeds as a looping, muted, autoplaying inline video. The file
 is copied under the chunk's figure path, with a URL relative to the output
-document. <code>fig.alt</code> supplies the image description or the video's
+document. Use <code>format = "mp4"</code> or <code>format = "gif"</code> to embed an animation
+without naming a file. <code>fig.alt</code> supplies the image description or the video's
 accessible label and fallback text. <code>out.width</code> sets the displayed width,
 capped at the frame width and the available page width.</p>
 <p>gganimate's <code>transition_states()</code> and <code>transition_time()</code> use a separate

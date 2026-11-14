@@ -86,7 +86,7 @@ p <- ggplot(moving, aes(fill = after_stat(z_mean))) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  file = tempfile(fileext = ".mp4"), progress = FALSE)
+  format = "mp4", progress = FALSE)
 #> Ignoring unknown labels:
 #> • z : "u"
 #> Ignoring unknown labels:
@@ -185,7 +185,7 @@ p <- ggplot(cooling, aes(fill = after_stat(z_mean))) +
   coord_3d(azimuth = -50, elevation = 25) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  file = tempfile(fileext = ".mp4"), progress = FALSE)
+  format = "mp4", progress = FALSE)
 #> Ignoring unknown labels:
 #> • z : "u"
 #> Ignoring unknown labels:
@@ -278,7 +278,7 @@ p <- ggplot(membrane, aes(fill = after_stat(z_mean))) +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  file = tempfile(fileext = ".mp4"), progress = FALSE)
+  format = "mp4", progress = FALSE)
 #> Ignoring unknown labels:
 #> • z : "u"
 #> Ignoring unknown labels:
@@ -376,7 +376,7 @@ p <- ggplot(saddle, aes(fill = after_stat(z_mean))) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  file = tempfile(fileext = ".mp4"), progress = FALSE)
+  format = "mp4", progress = FALSE)
 #> Ignoring unknown labels:
 #> • z : "u"
 #> Ignoring unknown labels:
@@ -509,7 +509,7 @@ p <- ggplot(crossing, aes(fill = after_stat(z_mean))) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  file = tempfile(fileext = ".mp4"), progress = FALSE)
+  format = "mp4", progress = FALSE)
 #> Ignoring unknown labels:
 #> • z : "u"
 #> Ignoring unknown labels:
@@ -643,7 +643,7 @@ p <- ggplot(kinks, aes(fill = after_stat(z_mean))) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  file = tempfile(fileext = ".mp4"), progress = FALSE)
+  format = "mp4", progress = FALSE)
 #> Ignoring unknown labels:
 #> • z : "u"
 #> Ignoring unknown labels:
@@ -756,7 +756,7 @@ p <- ggplot(invasion, aes(fill = after_stat(z_mean))) +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  file = tempfile(fileext = ".mp4"), progress = FALSE)
+  format = "mp4", progress = FALSE)
 #> Ignoring unknown labels:
 #> • z : "u"
 #> Ignoring unknown labels:
@@ -1030,7 +1030,7 @@ p <- ggplot(current, aes(x, y, z = value, fill = after_stat(z_mean))) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "j")
 animate_3d(p, time = "t", fps = 8, width = 480, height = 480,
-  file = tempfile(fileext = ".mp4"), progress = FALSE)
+  format = "mp4", progress = FALSE)
 ```
 
 Animation of current density in the incompressible Orszag-Tang vortex,

@@ -30,6 +30,7 @@ animate_3d(
   isometry = NULL,
   tour = NULL,
   stable_partition = FALSE,
+  format = NULL,
   ...
 )
 ```
@@ -61,11 +62,11 @@ animate_3d(
 
 - file:
 
-  Output path, or NULL to return PNG frame paths. The extension selects
-  the output: `.gif` (needs gifski), `.mp4` or `.webm` (need av),
-  `.apng` (an animated PNG), `.png` or `.svg` (one file per frame; svg
-  needs svglite) and `.pdf` (one page per frame). A file per frame takes
-  its number from a [`sprintf()`](https://rdrr.io/r/base/sprintf.html)
+  Output path, or NULL to use `format`. The extension selects the
+  output: `.gif` (needs gifski), `.mp4` or `.webm` (need av), `.apng`
+  (an animated PNG), `.png` or `.svg` (one file per frame; svg needs
+  svglite) and `.pdf` (one page per frame). A file per frame takes its
+  number from a [`sprintf()`](https://rdrr.io/r/base/sprintf.html)
   pattern in the name, such as `"frames/turn-%03d.png"`, or else gets it
   appended, as in `turn-0001.png`. `.glb` and `.gltf` hold the first
   panel as an animated 3D scene for Blender and other glTF software:
@@ -181,6 +182,16 @@ animate_3d(
   for every viewing direction at the camera's distance and zoom. Applies
   to scenes the vector and hybrid renderers draw.
 
+- format:
+
+  Output format as an extension name supported by `file`, such as
+  `"gif"`, `"mp4"`, `"webm"` or `"apng"`, or NULL (default). With
+  `file = NULL`, a format writes to a session temporary path. `"png"`
+  and `"svg"` write numbered frame sequences; `"apng"` writes one
+  animated PNG. When both `file` and `format` are supplied, the
+  extension must agree with the format. With both NULL, returns
+  temporary PNG frame paths.
+
 - ...:
 
   Arguments to
@@ -195,9 +206,9 @@ field of view, distance (NA when automatic) and target, and the frame's
 `value` of the time column when `time` is set), `timings` in seconds,
 `transition` (source state, destination state and eased fraction when
 tweening), `build_seconds`, `frame`, `panel_extents` in millimetres, and
-`frames` (the PNG paths when file is NULL, the written files of a
-per-frame output). PNG frames returned with file = NULL belong to the
-caller. `width` and `height` give the frame dimensions in pixels.
+`frames` (the PNG paths when `file` and `format` are NULL, the written
+files of a per-frame output). Returned files and frame paths belong to
+the caller. `width` and `height` give the frame dimensions in pixels.
 
 ## Details
 
@@ -212,12 +223,22 @@ plotly's `frame` aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show
 its first frame.
 
+`renderer` selects the scene backend; `format` selects the encoded file
+type or frame layout, and `file` sets its location. gganimate selects
+encoding through `animate(renderer = ...)`; its `gifski_renderer()` and
+`av_renderer()` create temporary files when their `file` is NULL. Here,
+`format` selects an entry in the output registry and supplies a
+temporary path to the encoder. gifski writes a GIF to that path; av
+infers the video container from its extension.
+
 In knitr HTML documents, a returned GIF or APNG embeds as an image and
 MP4 or WebM embeds as a looping, muted, autoplaying inline video. The
 file is copied under the chunk's figure path, with a URL relative to the
-output document. `fig.alt` supplies the image description or the video's
-accessible label and fallback text. `out.width` sets the displayed
-width, capped at the frame width and the available page width.
+output document. Use `format = "mp4"` or `format = "gif"` to embed an
+animation without naming a file. `fig.alt` supplies the image
+description or the video's accessible label and fallback text.
+`out.width` sets the displayed width, capped at the frame width and the
+available page width.
 
 gganimate's `transition_states()` and `transition_time()` use a separate
 build pipeline. These transitions produce guidance to use
