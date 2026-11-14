@@ -1,5 +1,9 @@
 # ggplot3d 0.0.0.9000
 
+* Vector texture lighting uses colour-correct multiply and screen groups for
+  coloured light and specular highlights, with continuous images across each
+  face run. Devices with limited compositing support use hybrid rendering (#64).
+
 * Textured faces carry explicit opaque-coverage metadata for solid culling
   and occlusion; their opacity retains the layer's actual alpha (#64).
 

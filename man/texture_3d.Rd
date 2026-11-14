@@ -40,7 +40,7 @@ transparent image region shows the fill.
 The raster backend and the \code{\link[=view_3d]{view_3d()}} viewer sample the image per
 sample, perspective-correctly, in linear light: bilinearly where the image
 is magnified and from a mipmap (Williams 1983) where it is minified. The
-vector backend draws the image once per face triangle through an affine
+vector backend draws unlit images once per face triangle through an affine
 group transformation clipped to the triangle (R >= 4.2 groups, Murrell
 2021). Under an orthographic camera every triangle maps the image affinely,
 which is exact; under perspective, triangles are split until the affine
@@ -49,6 +49,10 @@ resample the image with their own filter, in encoded sRGB. svglite writes
 transformation matrices with two significant digits, which can misplace
 the image by about 1\% of its size; ragg, pdf(), cairo_pdf() and svg() keep
 it in place.
+Lit faces use the shared texture sampler and linear-light shading kernel
+to build colour-correct multiply and screen layers in one clipped group
+per face run. The hybrid renderer handles devices with limited compositing
+support. Text and labels are drawn over the scene.
 \code{\link[=view_3d]{view_3d()}} and glTF export (\code{\link[=export_3d]{export_3d()}}) carry the image and the
 texture coordinates.
 }

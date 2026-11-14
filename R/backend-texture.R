@@ -125,22 +125,12 @@ texture_use_transform_3d <- function(UV, T, side) {
   }
 }
 
-# Grob of a run of textured face fragments `rows` sharing one texture, face
-# by face in draw order: its fill (where set), the texture over each of its
-# triangles, then its darkening where lit. The image group is defined before,
-# outside any compositing group that uses it. `uv` holds
-# the texture coordinates at the scene's output vertices. Lit faces are
-# darkened by their shading of white (per vertex where corner normals exist,
-# see fragment_vertex_linear_3d()): black at alpha 1 - g over a colour c
-# leaves c g, the product the raster backend forms, taken on encoded values,
-# which approximates it in linear light since the sRGB curve is close to a
-# power law; g is the mean of the shading's channels, so coloured light
-# tints nothing and highlights do not brighten. Where the image has
-# transparent texels and no fill lies under them, the darkening is drawn
-# atop the painted faces inside a group so that they stay transparent.
+# A textured face run: affine image triangles for unlit faces, colour-correct
+# compositing layers for lit faces. The image definition precedes its uses.
 textured_faces_grob_3d <- function(scene, rows, styles, opacity, uv, texture, viewport, caps, name,
-                                   attributes = NULL, light = NULL) {
-  if (!texture_device_ok_3d()) stop("Textured faces in the vector backend need R >= 4.2 and a device with affine transformations and clipping paths (ragg, png(type = \"cairo\"), pdf(), cairo_pdf(), svg()); use coord_3d(backend = backend_3d(\"raster\")) otherwise.", call. = FALSE)
+                                   light = NULL) {
+  lit <- !is.null(light) & style_value_3d(styles, "shade", FALSE) %in% TRUE
+  if (any(lit) || !texture_device_ok_3d()) return(texture_lighting_grob_3d(scene, rows, viewport, light, name))
   f <- scene$fragments
   counts <- f$count[rows]
   index <- rep(f$offset[rows], counts) + sequence(counts) - 1L
@@ -180,32 +170,13 @@ textured_faces_grob_3d <- function(scene, rows, styles, opacity, uv, texture, vi
     getExportedValue("grid", "useGrob")(group, transform = texture_use_transform_3d(corners, target, side),
       vp = grid::viewport(x = 0, y = 0, width = 1, height = 1, just = c(0, 0), clip = region))
   }
-  lit <- !is.null(light) & style_value_3d(styles, "shade", FALSE) %in% TRUE
-  shade <- NULL
-  if (any(lit)) {
-    white <- styles
-    white$fill <- "#FFFFFF"
-    vertex <- fragment_vertex_linear_3d(scene, rows, white, attributes, light)
-    shade <- smooth_face_paint_3d(x, y, id, vertex$linear, caps$gradients)
-    shade$flat <- darkening_3d(shade$flat)
-    shade$paint <- lapply(shade$paint, function(p) if (is.null(p)) p else { p$colours <- darkening_3d(p$colours); p })
-  }
-  atop <- !(texture$opaque || all(filled)) && "atop" %in% grDevices::dev.capabilities()$compositing
   triangles <- split(seq_along(owner), factor(owner, levels = seq_along(rows)))
   faces <- lapply(seq_along(rows), function(j) {
     parts <- list()
     if (filled[j]) parts[[1L]] <- grid::polygonGrob(x[id == j] / viewport$width_mm, y[id == j] / viewport$height_mm,
       gp = grid::gpar(fill = fill[j], col = NA))
     parts <- c(parts, lapply(triangles[[j]], use))
-    painted <- grid::gTree(children = do.call(grid::gList, parts))
-    if (is.null(shade) || !lit[j]) return(painted)
-    k <- which(shade$face == j)
-    keep <- shade$id %in% k
-    darkening <- smooth_face_grob_3d(list(x_mm = shade$x_mm[keep], y_mm = shade$y_mm[keep], id = match(shade$id[keep], k),
-      face = rep(1L, length(k)), flat = shade$flat[k], gradient = shade$gradient[k], paint = shade$paint[k]),
-      white[j, , drop = FALSE], 1, viewport, FALSE, caps)
-    if (atop) getExportedValue("grid", "groupGrob")(darkening, op = "atop", dst = painted) else
-      if (texture$opaque || filled[j]) grid::gTree(children = grid::gList(painted, darkening)) else painted
+    grid::gTree(children = do.call(grid::gList, parts))
   })
   painted <- grid::gTree(children = do.call(grid::gList, faces))
   alpha <- opacity[1L]
@@ -214,11 +185,4 @@ textured_faces_grob_3d <- function(scene, rows, styles, opacity, uv, texture, vi
     painted <- grid::grobTree(getExportedValue("grid", "groupGrob")(painted), vp = grid::viewport(mask = mask))
   }
   grid::gTree(children = grid::gList(definition, painted))
-}
-
-# Black with the alpha that darkens a colour as multiplying by `colour`'s
-# mean encoded channel would.
-darkening_3d <- function(colour) {
-  grey <- colMeans(grDevices::col2rgb(colour)) / 255
-  grDevices::rgb(0, 0, 0, 1 - grey)
 }

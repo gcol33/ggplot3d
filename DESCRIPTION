@@ -90,6 +90,7 @@ Collate:
     'backend-raster.R'
     'backend-raymarch.R'
     'backend-shading.R'
+    'backend-texture-lighting.R'
     'backend-texture.R'
     'backend-thurston.R'
     'base64.R'
