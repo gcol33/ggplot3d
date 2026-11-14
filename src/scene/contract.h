@@ -39,7 +39,10 @@ struct PrimitiveTable {
   std::vector<double> opacity;
 };
 
-struct Faces : PrimitiveTable {};
+struct Faces : PrimitiveTable {
+  std::vector<bool> coverage_opaque;
+  bool opaque(Index row) const { return opacity[row]==1 && coverage_opaque[row]; }
+};
 // mask_width_mm >= width_mm is the occlusion width; backends draw width_mm.
 struct Polylines : PrimitiveTable {
   std::vector<double> width_mm, mitre_limit, mask_width_mm;

@@ -167,12 +167,6 @@ panel_textures_3d <- function(styles) {
   list(textures = textures, index = index)
 }
 
-# Opacity just below one: the engine and the backends treat a face below full
-# opacity as one that does not hide what lies behind it, and the difference
-# is far below 8-bit colour resolution. Textured faces that may show through
-# (a transparent image or no fill under it) carry it.
-translucent_opacity_3d <- 1 - 2^-24
-
 # Texture coordinates of a textured layer's rows, before positions are
 # normalised: kept where a stat or mesh supplied .texture_u/.texture_v, else
 # the u/v aesthetics, else the x and y positions in transformed scale units.
@@ -211,11 +205,11 @@ texture_corners_3d <- function(data, primitives, kinds, counts, texture) {
 
 # Styles and face opacities of a textured layer: every style names texture
 # 1; a face without a fill keeps the layer alpha as its opacity. A face that
-# may show through (a transparent image, or no fill where a corner lies
-# outside the image) carries at most translucent_opacity_3d.
+# may show through carries coverage_opaque = FALSE.
 texture_styles_3d <- function(material, data, rows, kinds, counts, texture, uv) {
   material$styles$texture_id <- rep(1L, nrow(material$styles))
   material$styles$texture <- I(rep(list(texture), nrow(material$styles)))
+  material$coverage_opaque <- rep(TRUE, length(kinds))
   face <- which(kinds == "faces")
   if (length(face)) {
     fill <- material$styles$fill[material$index[face]]
@@ -226,8 +220,7 @@ texture_styles_3d <- function(material, data, rows, kinds, counts, texture, uv) 
     owner <- rep.int(seq_along(counts), counts)
     outside <- !is.finite(uv$u) | !is.finite(uv$v) | uv$u < 0 | uv$u > 1 | uv$v < 0 | uv$v > 1
     leaves <- as.vector(rowsum(as.integer(outside), owner, reorder = TRUE))[face] > 0L
-    through <- !texture$opaque | (bare & leaves)
-    material$opacity[face[through]] <- pmin(material$opacity[face[through]], translucent_opacity_3d)
+    material$coverage_opaque[face] <- !bare | (texture$opaque & !leaves)
   }
   material
 }

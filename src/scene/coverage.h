@@ -194,7 +194,7 @@ public:
         packet.polylines.mask_width_mm[piece.row]>packet.polylines.width_mm[piece.row];
       if (piece.kind!=Kind::face && !halo) continue;
       CoverageFace f{piece.polygon,supporting_plane(piece,p),{R_PosInf,R_PosInf,R_NegInf,R_NegInf},
-                     halo || piece.source->opacity[piece.row]==1,halo,piece.source,piece.row};
+                     halo || packet.faces.opaque(piece.row),halo,piece.source,piece.row};
       for(const Vertex& v:piece.polygon) {
         auto s=p.npc(p.camera_point(v.xyz));
         for(int k=0;k<2;++k) {f.bounds[k]=std::min(f.bounds[k],s[k]);f.bounds[k+2]=std::max(f.bounds[k+2],s[k]);}

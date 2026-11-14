@@ -164,7 +164,7 @@ textured_faces_grob_3d <- function(scene, rows, styles, opacity, uv, texture, vi
   usable <- if (length(pieces$owner)) is.finite(rowSums(texture_affine_3d(pieces$P, pieces$UV))) else logical()
   P <- lapply(pieces$P, function(m) m[usable, , drop = FALSE]); UV <- lapply(pieces$UV, function(m) m[usable, , drop = FALSE])
   owner <- pieces$owner[usable]
-  opaque <- texture$opaque && all(opacity >= translucent_opacity_3d)
+  opaque <- texture$opaque && all(opacity == 1)
   clip <- if (length(owner)) dilate_triangles_3d(P, if (opaque) pixel / 2 else 0) else P
   group <- paste0(name, "-texture")
   side <- min(viewport$width_mm, viewport$height_mm) / 25.4
@@ -209,7 +209,7 @@ textured_faces_grob_3d <- function(scene, rows, styles, opacity, uv, texture, vi
   })
   painted <- grid::gTree(children = do.call(grid::gList, faces))
   alpha <- opacity[1L]
-  if (alpha < translucent_opacity_3d && isTRUE(caps$group_over)) {
+  if (alpha < 1 && isTRUE(caps$group_over)) {
     mask <- grid::rectGrob(gp = grid::gpar(fill = grDevices::rgb(0, 0, 0, alpha), col = NA))
     painted <- grid::grobTree(getExportedValue("grid", "groupGrob")(painted), vp = grid::viewport(mask = mask))
   }

@@ -47,13 +47,18 @@ test_that("draped surfaces emit texture coordinates from x and y over the textur
   expect_identical(length(inside$faces$offset), length(placed$faces$offset))
   expect_true(all(inside$faces$opacity == 1))
   bare <- stats_scene(p + geom_surface_3d(texture = texture_3d(tex, extent = c(2, 6, 0, 2)), fill = NA) + coord_3d())$packet
-  expect_true(any(bare$faces$opacity < 1) && any(bare$faces$opacity == 1))
+  expect_true(all(bare$faces$opacity == 1))
+  expect_true(any(!bare$faces$coverage_opaque) && any(bare$faces$coverage_opaque))
   mapped <- stats_scene(ggplot2::ggplot(transform(d, s = x / 8, t = y / 4), ggplot2::aes(x, y, z = z, u = s, v = t)) +
     geom_surface_3d(texture = texture_3d(tex, extent = c(0, 1, 0, 1))) + coord_3d())$packet
   expect_equal(range(mapped$corners$u), c(0, 0.5))
   expect_equal(range(mapped$corners$v), c(0, 0.5))
   holed <- stats_scene(p + geom_surface_3d(texture = texture_3d(matrix(c("red", NA), 1L))) + coord_3d())$packet
-  expect_true(all(holed$faces$opacity < 1 & holed$faces$opacity > 0.999))
+  expect_true(all(holed$faces$opacity == 1))
+  expect_true(all(holed$faces$coverage_opaque))
+  bare_holed <- stats_scene(p + geom_surface_3d(texture = texture_3d(matrix(c("red", NA), 1L)), fill = NA) + coord_3d())$packet
+  expect_true(all(bare_holed$faces$opacity == 1))
+  expect_true(all(!bare_holed$faces$coverage_opaque))
 })
 
 test_that("parametric surfaces drape by their parameters, seams included", {

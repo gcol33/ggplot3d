@@ -40,7 +40,9 @@ weights carry them through clipping.}
 into corners. Faces default to three corners, polylines to two, and markers
 and text to one. Common columns include count, primitive_id, layer_id,
 source_row, style_id, role, partition and opacity. Markers also require
-footprint_id. Text sizes use width_mm and height_mm. Polylines take an
+footprint_id. Faces may carry logical coverage_opaque (default TRUE):
+whether their entire area is opaque when opacity is 1. Text sizes use
+width_mm and height_mm. Polylines take an
 optional mask_width_mm, at least width_mm and by default equal to it: the
 width of the band in which the line hides what lies behind it, while the
 line itself is drawn at width_mm (a haloed line, Appel 1967).}

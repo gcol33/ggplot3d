@@ -150,7 +150,7 @@ ScenePacket read_packet(const Rcpp::List& x) {
   std::set<Index> ids;
   Rcpp::List f = x["faces"], l = x["polylines"], m = x["markers"], t = x["text"];
   fields(f, {"primitive_id", "layer_id", "source_row", "style_id", "offset", "count",
-             "role", "partition", "opacity"});
+             "role", "partition", "opacity"}, {"coverage_opaque"});
   fields(l, {"primitive_id", "layer_id", "source_row", "style_id", "offset", "count",
              "role", "partition", "opacity", "width_mm", "mitre_limit", "cap", "join",
              "hidden", "arrow_start", "arrow_end", "mask_width_mm"});
@@ -159,6 +159,8 @@ ScenePacket read_packet(const Rcpp::List& x) {
   fields(t, {"primitive_id", "layer_id", "source_row", "style_id", "offset", "count",
              "role", "partition", "opacity", "width_mm", "height_mm", "hjust", "vjust", "angle"});
   static_cast<PrimitiveTable&>(p.faces) = read_common(f, 3, nc, p.style_count, ids);
+  p.faces.coverage_opaque = f.containsElementNamed("coverage_opaque") ?
+    logicals(f, "coverage_opaque", p.faces.count.size()) : std::vector<bool>(p.faces.count.size(), true);
   static_cast<PrimitiveTable&>(p.polylines) = read_common(l, 2, nc, p.style_count, ids);
   static_cast<PrimitiveTable&>(p.markers) = read_common(m, 1, nc, p.style_count, ids);
   static_cast<PrimitiveTable&>(p.text) = read_common(t, 1, nc, p.style_count, ids);

@@ -22,7 +22,7 @@ static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,
   std::unordered_map<std::uint64_t,Edge> edges;edges.reserve(n*2);
   std::vector<bool> closed(n,true);
   for(Index i=0;i<static_cast<Index>(n);++i) {
-    if(f.opacity[i]!=1 || f.partition[i]!=1) {closed[i]=false;continue;}
+    if(!f.opaque(i) || f.partition[i]!=1) {closed[i]=false;continue;}
     for(Index k=0;k<f.count[i];++k) {
       Index a=packet.corners.vertex[f.offset[i]+k],b=packet.corners.vertex[f.offset[i]+(k+1)%f.count[i]];
       auto key=(static_cast<std::uint64_t>(std::min(a,b))<<32)|static_cast<std::uint32_t>(std::max(a,b));

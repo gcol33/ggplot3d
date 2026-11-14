@@ -1,5 +1,8 @@
 # ggplot3d 0.0.0.9000
 
+* Textured faces carry explicit opaque-coverage metadata for solid culling
+  and occlusion; their opacity retains the layer's actual alpha (#64).
+
 * Textures: `texture_3d()` wraps an image (nativeRaster, colour matrix,
   numeric array or PNG file) that `texture =` drapes over the faces of
   `geom_surface_3d()`, `geom_mesh_3d()`, `stat_parametric_3d()` and the other

@@ -501,6 +501,7 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     tables[[kind]] <- list(primitive_id = i, layer_id = data$.layer[rows[i]],
       source_row = as.integer(data$.source[rows[i]]), style_id = style, offset = offsets[i], count = counts[i],
       partition = rep.int(if (identical(params$occlusion, "overlay")) 2L else 1L, length(i)), opacity = material$opacity[i])
+    if (kind == "faces" && !is.null(texture)) tables[[kind]]$coverage_opaque <- material$coverage_opaque[i]
     if (kind == "polylines") {
       tables[[kind]]$width_mm <- paint_metrics_3d(material$styles)$width_mm[style]
       tables[[kind]]$cap <- rep.int(match(params$lineend %or3d% "butt", c("butt", "round", "square")) - 1L, length(i))
@@ -665,14 +666,14 @@ merge_scene_packets <- function(packets, panel_id) {
     if (!is.null(packet$styles$texture_id)) packet$styles$texture_id <- as.integer(packet$styles$texture_id + texture_shift[j])
     packets[[j]] <- packet
   }
-  # An optional column supplied by some packets is NA (not supplied) in the others.
+  # Missing coverage guarantees default to TRUE; corner attributes to NA.
   optional <- scene_optional_schemas()
   tables <- lapply(names(schema), function(kind) {
     extra <- names(optional[[kind]])
     extra <- extra[extra %in% unlist(lapply(packets, function(p) names(p[[kind]])))]
     columns <- lapply(c(names(schema[[kind]]), extra), function(column)
       unlist(lapply(packets, function(p) p[[kind]][[column]] %or3d%
-        rep(NA_real_, length(p[[kind]][[1L]]))), use.names = FALSE))
+        rep(if (column == "coverage_opaque") TRUE else NA_real_, length(p[[kind]][[1L]]))), use.names = FALSE))
     names(columns) <- c(names(schema[[kind]]), extra)
     columns
   })
