@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* `view_3d(panel = )` sizes the selected facet and its axis furniture for the widget, preserving the panel aspect. knitr and Quarto round figure dimensions to whole pixels for HTML viewers.
+
 * Domain recipes cover symmetric tensor glyphs, ordination biplots, molecular ball-and-stick views and sampled Lab colour gamuts. `geom_tensor_3d()` adds Kindlmann superquadrics through shared glyph instancing, `stat_biplot_3d()` composes score points, quivers and group regions, and `fortify.pdb()` joins atoms and bonds by serial number.
 
 * `save_svg_3d()` writes native depth-ordered SVG with layer and row identities, tooltips and linked hover highlighting. `export_code_3d()` writes editable TikZ paths or model-space Asymptote scenes with camera and optional PRC output.

@@ -129,12 +129,12 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
   count <- length(motion_panels_3d(table))
   scene_assert(count > 0L, "plot has no 3D scene panels")
   scene_assert(is.null(panel) || panel <= count, "panel is outside the plot layout")
+  if (!is.null(panel)) table <- view_panel_layout_3d(table, panel)
   # Furniture layout supplies authoritative physical margins and text metrics.
   forced <- motion_panels_3d(grid::grid.force(table))
   device_mm <- unname(grDevices::dev.size("in") * 25.4)
   layers <- view_layers_3d(built, shared, tooltip)
-  chosen <- if (is.null(panel)) seq_along(forced) else panel
-  panels <- lapply(chosen, function(i) {
+  panels <- lapply(seq_along(forced), function(i) {
     selected <- forced[[i]]
     view <- view_panel_3d(selected, path, fps)
     size <- c(selected$outer_viewport$width_mm, selected$outer_viewport$height_mm)
@@ -158,6 +158,22 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
     package = "ggplot3d", elementId = elementId,
     dependencies = if (is.null(shared)) NULL else crosstalk::crosstalkLibs(),
     sizingPolicy = htmlwidgets::sizingPolicy(padding = 0, browser.fill = FALSE))
+}
+
+# A standalone panel retains its layout aspect and measures furniture at the
+# widget size, with its own guides and camera supplying the framing group.
+view_panel_layout_3d <- function(table, panel) {
+  cells <- which(vapply(table$grobs, function(g) length(motion_panels_3d(g)) > 0L, logical(1)))
+  cell <- table$layout[cells[panel], ]
+  selected <- table[cell$t:cell$b, cell$l:cell$r]
+  selected$grobs <- lapply(selected$grobs, function(g) {
+    if (!length(motion_panels_3d(g))) return(grid::nullGrob())
+    motion_map_panels_3d(g, function(p) {
+      p$frame_group <- list(list(params = p$panel_params, theme = p$theme))
+      p
+    })
+  })
+  selected
 }
 
 # One panel of the viewer: its scene, furniture for every camera, axis

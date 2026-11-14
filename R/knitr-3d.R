@@ -57,7 +57,7 @@ knit_print.ggplot3d <- function(x, ..., options = knitr::opts_current$get(), inl
   if (is.null(alt) || is.na(alt) || !nzchar(alt)) alt <- alt_text_3d(x)
   options$fig.alt <- alt
   if (isTRUE(options$view3d) && knitr::is_html_output()) {
-    widget <- view_3d(x, width = options$fig.width * 96, height = options$fig.height * 96)
+    widget <- view_3d(x, width = round(options$fig.width * 96), height = round(options$fig.height * 96))
     result <- knitr::knit_print(widget, options = options, ...)
     result[] <- paste0('<div role="group" aria-label="', knit_escape_3d(alt), '">', result, '</div>')
     return(result)

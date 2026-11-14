@@ -92,22 +92,21 @@ panels <- p + facet_wrap(~am, ncol = 1,
 view_3d(panels, width = 624, height = 576, link = TRUE)
 ```
 
-Set `link = FALSE` to move the panel under the pointer alone. An index in `panel` selects one facet without the surrounding plot elements.
-In a short widget, extracting a panel from vertically stacked facets can
-produce compressed geometry and oversized axis labels. The linked viewers
-below each use a complete plot. A shared string links their camera changes
-on the same page.
+Set `link = FALSE` to move the panel under the pointer alone. An index in
+`panel` selects one facet without the surrounding plot elements. The viewers
+below show automatic and manual cars separately. A shared string links
+their camera changes on the same page.
 
-```{r separate-panels, fig.alt="A complete motor-car plot linked by camera group to the second view below."}
-view_3d(p, link = "cars-cameras", width = 624, height = 432)
+```{r separate-panels, fig.alt="Automatic cars in a selected facet linked by camera group to the manual-car view below."}
+view_3d(panels, panel = 1, link = "cars-cameras", width = 624, height = 432)
 ```
 
 The second viewer uses the same link name. Orbit, zoom and reset changes
 travel between the two, with angle changes added and zoom factors multiplied.
 
-```{r linked-panel, fig.alt="A second camera view of all motor cars sharing changes with the viewer above."}
-other <- p + coord_3d(azimuth = 30)
-view_3d(other, link = "cars-cameras", width = 624, height = 432)
+```{r linked-panel, fig.alt="Manual cars in a selected facet sharing camera changes with the automatic-car viewer above."}
+other <- panels + coord_3d(azimuth = 30)
+view_3d(other, panel = 2, link = "cars-cameras", width = 624, height = 432)
 ```
 
 ## Linking data with crosstalk

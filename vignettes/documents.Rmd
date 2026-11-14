@@ -52,12 +52,9 @@ p
 Set the chunk option `view3d = TRUE` to embed the interactive viewer in HTML.
 The following chunk runs that switch. The figure dimensions are in inches,
 and become widget dimensions at 96 pixels per inch. Facet panels, titles,
-strips and legends follow the plot's layout. Set `fig.asp = NULL` to keep
-the explicit dimensions when the document supplies a default figure aspect
-ratio, as pkgdown does. An automatic ratio can produce fractional pixel
-dimensions, which the viewer currently rejects.
+strips and legends follow the plot's layout.
 
-```{r interactive, view3d=TRUE, fig.width=6.5, fig.height=4.5, fig.asp=NULL, fig.alt="Interactive motor-car scatterplot with weight, fuel economy and horsepower axes."}
+```{r interactive, view3d=TRUE, fig.width=6.5, fig.height=4.5, fig.alt="Interactive motor-car scatterplot with weight, fuel economy and horsepower axes."}
 p
 ```
 
@@ -74,7 +71,6 @@ plot object created above.
 #| view3d: true
 #| fig-width: 6.5
 #| fig-height: 4.5
-#| fig-asp: null
 #| fig-alt: "Motor cars by weight, fuel economy and horsepower."
 p
 ```
