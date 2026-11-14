@@ -502,23 +502,22 @@ face_fill_3d <- function(scene, rows, styles, light) {
   fill
 }
 
-# Pieces of one opaque primitive split across several runs (a face or quadric
-# cut by the ordering, with other primitives drawn between its pieces): the
-# run that draws the primitive's first piece also paints its later pieces
+# Opaque paint split across several runs, with other primitives between its
+# pieces: the first run of a primitive, or of a smooth surface layer, paints its later pieces
 # underneath, which the later runs paint over again. A later piece's
 # antialiased edges then blend with the primitive's own colour instead of
 # opening a seam onto what lies behind; the extra paint is always covered,
 # since a piece drawn later lies in front of everything drawn before it.
-# `eligible` marks fragments whose primitive may be painted ahead.
-split_underlays_3d <- function(f, runs, eligible) {
+# `eligible` marks fragments that may be painted ahead; `key` identifies
+# fragments sharing one continuous underlay.
+split_underlays_3d <- function(f, runs, eligible, key = paste(f$kind, f$parent_primitive_id)) {
   out <- vector("list", length(runs))
   run_of <- integer(length(f$kind))
   for (i in seq_along(runs)) run_of[runs[[i]]] <- i
   rows <- unlist(runs, use.names = FALSE)
   rows <- rows[eligible[rows]]
   if (!length(rows)) return(out)
-  key <- paste(f$kind[rows], f$parent_primitive_id[rows])
-  first <- stats::ave(run_of[rows], key, FUN = min)
+  first <- stats::ave(run_of[rows], key[rows], FUN = min)
   later <- run_of[rows] > first
   groups <- split(rows[later], first[later])
   out[as.integer(names(groups))] <- unname(groups)
@@ -760,8 +759,13 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   seam <- face & (f$layer_id > 0L | sheet_style) & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill) &
     !(smooth & f$opacity < 1) & !textured
   surface <- seam & surface_sheets_3d(styles, f$layer_id, f$opacity) > 0L
+  smooth_run <- seam & smooth & f$opacity >= 1 & smooth_vector_mode_3d() == "auto"
+  smooth_layer <- ifelse(smooth_run, f$layer_id, NA_integer_)
+  image_run <- smooth_run & (duplicated(smooth_layer) | duplicated(smooth_layer, fromLast = TRUE))
   key[face] <- paste(key[face], seam[face], ifelse(seam[face],
-    paste(f$layer_id[face], ifelse(surface[face], "surface", f$seam_group[face]), f$opacity[face]), 0L), sep = ":")
+    paste(ifelse(smooth_run[face], "smooth", f$layer_id[face]),
+      ifelse(surface[face], "surface", ifelse(smooth_run[face], "smooth", f$seam_group[face])),
+      f$opacity[face]), 0L), sep = ":")
   key[textured] <- paste(key[textured], "texture", textures$index[textured], sep = ":")
   region_id <- if (is.null(regions)) integer(length(key)) else regions$id
   key <- paste(key, region_id, sep = ":region:")
@@ -777,7 +781,8 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   path_cache <- new.env(parent = emptyenv())
-  underlay <- split_underlays_3d(f, runs, (f$kind == 5L & f$opacity >= 1) | (seam & !surface & f$opacity >= 1))
+  underlay_key <- ifelse(smooth_run, paste("smooth", f$layer_id), paste(f$kind, f$parent_primitive_id))
+  underlay <- split_underlays_3d(f, runs, (f$kind == 5L & f$opacity >= 1) | (seam & !surface & f$opacity >= 1), underlay_key)
   geometry <- function(masks) {
     rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
     counts <- f$count[rows]
@@ -815,6 +820,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
         clip <- NULL
       }
     } else if (kind == 1L) {
+      later <- underlay[[run]]
       fill <- face_fill_3d(scene, rows, styles, light)
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
@@ -822,14 +828,19 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
         vertex <- fragment_vertex_linear_3d(scene, rows, s, attributes, light)
         x_mm <- x * viewport$width_mm; y_mm <- y * viewport$height_mm
         bordered <- any(!is.na(s$colour))
-        if (smooth_image_needed_3d(x_mm, y_mm, id, vertex$linear, caps$gradients)) {
+        if (any(image_run[rows]) || smooth_image_needed_3d(x_mm, y_mm, id, vertex$linear, caps$gradients)) {
           outer <- if (!is.null(clip)) clip else if (region_id[rows[1L]] > 0L) regions$grobs[[region_id[rows[1L]]]]
-          image <- function(k) {
-            i <- id %in% k
-            smooth_image_grob_3d(x[i], y[i], match(id[i], k), vertex$linear[i, , drop = FALSE], f$opacity[rows[k]],
-              viewport, outer, caps)
+          if (!bordered && length(later)) {
+            paint_rows <- c(later, rows)
+            paint_geometry <- geometry(paint_rows)
+            paint_vertex <- fragment_vertex_linear_3d(scene, paint_rows, styles[paint_rows, , drop = FALSE], attributes, light)
+            g <- smooth_image_faces_3d(paint_geometry$x, paint_geometry$y,
+              rep(seq_along(paint_rows), paint_geometry$counts), paint_vertex, f$opacity[paint_rows], viewport, outer, caps)
+            later <- integer()
+          } else {
+            image <- function(k) smooth_image_faces_3d(x, y, id, vertex, f$opacity[rows], viewport, outer, caps, k)
+            g <- if (bordered) bordered_smooth_faces_3d(x, y, id, s, f$opacity[rows], image) else image(seq_along(rows))
           }
-          g <- if (bordered) bordered_smooth_faces_3d(x, y, id, s, f$opacity[rows], image) else image(seq_along(rows))
         } else {
           painted <- smooth_face_paint_3d(x_mm, y_mm, id, vertex$linear, caps$gradients, pixel_mm = 25.4 / viewport$dpi)
           g <- if (bordered) bordered_smooth_faces_3d(x, y, id, s, f$opacity[rows],
@@ -842,7 +853,6 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
           grid::polygonGrob(x, y, id = id, gp = gp)
       hatched <- hatch_face_grob_3d(scene, rows, styles, light, x, y, id)
       if (!is.null(hatched)) g <- grid::grobTree(g, hatched)
-      later <- underlay[[run]]
       if (length(later)) {
         n <- f$count[later]
         at <- rep(f$offset[later], n) + sequence(n) - 1L

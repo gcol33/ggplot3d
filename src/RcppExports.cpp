@@ -171,9 +171,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// grid_union_paths_cpp
+Rcpp::List grid_union_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id);
+RcppExport SEXP _ggplot3d_grid_union_paths_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type id(idSEXP);
+    rcpp_result_gen = Rcpp::wrap(grid_union_paths_cpp(x, y, id));
+    return rcpp_result_gen;
+END_RCPP
+}
 // smooth_faces_raster_cpp
-Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id, Rcpp::NumericMatrix linear, Rcpp::NumericVector alpha, int width, int height, double reach);
-RcppExport SEXP _ggplot3d_smooth_faces_raster_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP, SEXP linearSEXP, SEXP alphaSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP reachSEXP) {
+Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id, Rcpp::NumericMatrix linear, Rcpp::NumericVector alpha, int width, int height, double reach, Rcpp::Nullable<Rcpp::List> shading);
+RcppExport SEXP _ggplot3d_smooth_faces_raster_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP, SEXP linearSEXP, SEXP alphaSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP reachSEXP, SEXP shadingSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
@@ -184,7 +196,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type width(widthSEXP);
     Rcpp::traits::input_parameter< int >::type height(heightSEXP);
     Rcpp::traits::input_parameter< double >::type reach(reachSEXP);
-    rcpp_result_gen = Rcpp::wrap(smooth_faces_raster_cpp(x, y, id, linear, alpha, width, height, reach));
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type shading(shadingSEXP);
+    rcpp_result_gen = Rcpp::wrap(smooth_faces_raster_cpp(x, y, id, linear, alpha, width, height, reach, shading));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -884,7 +897,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_geometry_triangulate_rings_cpp", (DL_FUNC) &_ggplot3d_geometry_triangulate_rings_cpp, 4},
     {"_ggplot3d_grid_clip_paths_cpp", (DL_FUNC) &_ggplot3d_grid_clip_paths_cpp, 14},
-    {"_ggplot3d_smooth_faces_raster_cpp", (DL_FUNC) &_ggplot3d_smooth_faces_raster_cpp, 8},
+    {"_ggplot3d_grid_union_paths_cpp", (DL_FUNC) &_ggplot3d_grid_union_paths_cpp, 3},
+    {"_ggplot3d_smooth_faces_raster_cpp", (DL_FUNC) &_ggplot3d_smooth_faces_raster_cpp, 9},
     {"_ggplot3d_grid_stroke_intervals_cpp", (DL_FUNC) &_ggplot3d_grid_stroke_intervals_cpp, 12},
     {"_ggplot3d_geometry_intersections_cpp", (DL_FUNC) &_ggplot3d_geometry_intersections_cpp, 4},
     {"_ggplot3d_mesh_process_cpp", (DL_FUNC) &_ggplot3d_mesh_process_cpp, 6},

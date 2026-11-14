@@ -12,6 +12,10 @@
   to select its transparency pass. Texture corner attributes retain contract
   order during ambient-occlusion setup (#64).
 
+* Vector smooth surfaces share one clipped image per drawing-order run,
+  with perspective-correct per-sample lighting and sixteen samples per pixel.
+  Shared triangle edges carry continuous paint across lighting gradients.
+
 * Inside-view animations retain sphere framing and rotate the camera about
   the observer's fixed eye, including angle tracks and orbit paths (#15).
 

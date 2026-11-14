@@ -24,14 +24,14 @@
 #' @param shading `"flat"` lights and fills each face uniformly; `"smooth"`
 #'   interpolates vertex normals and vertex fills across faces. The raster
 #'   backend and the [view_3d()] viewer interpolate per sample, perspective
-#'   correctly. The vector backend draws a triangle whose colour varies along
-#'   one direction as one linear gradient, with stops that follow the sRGB
+#'   correctly. The vector backend draws an isolated triangle whose colour
+#'   varies along one direction as one linear gradient, with stops that follow the sRGB
 #'   curve within the option `ggplot3d.shading_tolerance` (default 2 / 255 in
 #'   encoded sRGB), and a triangle whose colour stays within that tolerance as
-#'   one flat polygon. A run of faces that holds a triangle whose colour
-#'   varies in two directions by more than the tolerance, which no gradient
-#'   of R graphics can paint, is drawn as one image clipped to the faces'
-#'   outline, in its place in the drawing order, at the device resolution
+#'   one flat polygon. Adjacent smooth triangles and triangles whose colour
+#'   varies in two directions are drawn as one image per drawing-order run,
+#'   with per-sample lighting, clipped to the faces' union. The image uses
+#'   sixteen samples per pixel, at the device resolution
 #'   and at least `options(ggplot3d.smooth_dpi)` (default 150) dots per inch.
 #'   `options(ggplot3d.smooth_vector = "subdivide")` splits such triangles
 #'   into flat overlapping pieces instead, at most four times (256 pieces per

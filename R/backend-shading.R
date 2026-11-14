@@ -1,3 +1,5 @@
+utils::globalVariables("grid_union_paths_cpp")
+
 # Smooth shading of compiled faces: colours at fragment vertices from the
 # interpolated corner attributes, and their vector rendering.
 
@@ -90,7 +92,11 @@ fragment_vertex_linear_3d <- function(scene, rows, styles, attributes, light) {
     ok <- rowSums(is.finite(rgb)) == 3L
     linear[ok, ] <- rgb[ok, , drop = FALSE]
   }
-  lit <- !is.null(light) & (style_value_3d(styles, "shade", FALSE) %in% TRUE)[owner]
+  base <- linear
+  normal <- position <- matrix(0, length(index), 3L)
+  lit_face <- !is.null(light) & style_value_3d(styles, "shade", FALSE) %in% TRUE
+  lit <- lit_face[owner]
+  accessibility <- NULL
   if (any(lit)) {
     normal <- face_shading_normals_3d(f, rows, scene$camera, styles)[owner, , drop = FALSE]
     if (all(c("normal_x", "normal_y", "normal_z") %in% columns)) {
@@ -100,18 +106,25 @@ fragment_vertex_linear_3d <- function(scene, rows, styles, attributes, light) {
     }
     position <- sweep(cbind(scene$vertices$x[index], scene$vertices$y[index], scene$vertices$z[index]), 2L,
       scene$camera$model_scale, "*")
+    if (!is.null(light$occlusion)) {
+      accessibility <- matrix(1, length(index), 2L)
+      accessibility[lit, 1L] <- ambient_occlusion_cpp(light$occlusion, position[lit, , drop = FALSE], normal[lit, , drop = FALSE])
+      accessibility[lit, 2L] <- ambient_occlusion_cpp(light$occlusion, position[lit, , drop = FALSE], -normal[lit, , drop = FALSE])
+    }
     linear[lit, ] <- shade_linear_3d(linear[lit, , drop = FALSE], normal[lit, , drop = FALSE], scene$camera, light,
       position[lit, , drop = FALSE], material_index_3d(styles)[owner][lit], scene$materials)
   }
-  list(linear = pmin(pmax(linear, 0), 1), owner = owner)
+  list(linear = pmin(pmax(linear, 0), 1), owner = owner,
+    shading = list(base = base, normal = normal, position = position, accessibility = accessibility,
+      depth = if (camera_perspective_3d(scene$camera)) scene$vertices$depth[index] else rep(1, length(index)),
+      lit = lit_face, material = material_index_3d(styles), materials = kernel_materials_3d(scene$materials),
+      lights = if (any(lit)) resolved_light_3d(light, scene$camera), view = kernel_view_3d(scene$camera)))
 }
 
-# How the vector backend paints a run of smooth faces whose colour a single
-# linear gradient cannot follow: "auto" draws the run as one image clipped
-# to the faces' outline when any triangle's colour varies over two screen
-# directions by more than the tolerance, or the run mixes flat and gradient
-# faces; "subdivide" splits such triangles
-# into flat pieces.
+# How the vector backend paints smooth faces: "auto" draws adjacent varied
+# triangles as one image clipped to their union, with per-sample lighting.
+# A single triangle whose colour varies along one direction uses a gradient.
+# "subdivide" splits triangles into flat pieces.
 smooth_vector_mode_3d <- function() {
   mode <- getOption("ggplot3d.smooth_vector", "auto")
   scene_assert(is.character(mode) && length(mode) == 1L && mode %in% c("auto", "subdivide"),
@@ -178,7 +191,8 @@ midrange_rgb_3d <- function(L) {
 smooth_image_needed_3d <- function(x_mm, y_mm, id, linear, gradients, tolerance = shading_tolerance_3d()) {
   if (smooth_vector_mode_3d() != "auto") return(FALSE)
   fan <- smooth_fan_3d(x_mm, y_mm, id, linear, gradients)
-  any(!fan$gradient & fan$range > tolerance) || (any(fan$flat_face) && any(fan$gradient))
+  (max(id) > 1L && any(abs(sweep(linear, 2L, linear[1L, ])) > 1e-12)) ||
+    length(fan$face) > 1L || any(!fan$gradient & fan$range > tolerance)
 }
 
 # Vector paint of faces with per-vertex linear colours. Each face is
@@ -243,16 +257,16 @@ smooth_face_paint_3d <- function(x_mm, y_mm, id, linear, gradients, tolerance = 
        paint = unlist(shapes$paint, recursive = FALSE)[order])
 }
 
-# Image of a run of smooth faces at the colours of smooth_faces_raster_cpp(),
-# clipped to the union of the faces, for runs whose colour no linear
-# gradient follows. Rasterising Gouraud shading in vector output follows
+# Image of a run of smooth faces, clipped to their union. Corner colours,
+# normals and positions interpolate perspective-correctly at each sample,
+# which is lit by the shared shading kernel. Rasterising smooth shading follows
 # matplotlib's Agg path and stands in for the mesh shadings (PDF shading
 # types 4 to 7, used by Asymptote, pgfplots and matplotlib's PDF backend)
 # that R graphics cannot emit. x, y are vertex positions in npc of the
 # viewport, id numbers faces 1..n with consecutive vertices, opacity is per
 # face. `outer` is a clip region that the image's own clipping path would
 # replace; it is applied as an alpha mask instead.
-smooth_image_grob_3d <- function(x, y, id, linear, opacity, viewport, outer = NULL, caps = grid_capabilities_3d()) {
+smooth_image_grob_3d <- function(x, y, id, linear, opacity, viewport, outer = NULL, caps = grid_capabilities_3d(), shading = NULL) {
   if (!caps$clipping_paths) stop("The vector device does not support clipping paths required by smooth shading.", call. = FALSE)
   pixel <- 25.4 / smooth_image_dpi_3d(viewport)
   x_mm <- x * viewport$width_mm; y_mm <- y * viewport$height_mm
@@ -260,9 +274,9 @@ smooth_image_grob_3d <- function(x, y, id, linear, opacity, viewport, outer = NU
   lo <- c(floor(min(x_mm) / pixel) - reach, floor(min(y_mm) / pixel) - reach) * pixel
   size <- pmax(1L, as.integer(ceiling((c(max(x_mm), max(y_mm)) - lo) / pixel) + reach))
   image <- smooth_faces_raster_cpp((x_mm - lo[1L]) / pixel, (y_mm - lo[2L]) / pixel, as.integer(id), linear,
-    as.numeric(opacity), size[1L], size[2L], reach)
-  ring <- counter_clockwise_3d(x, y, id)
-  outline <- grid::pathGrob(ring$x, ring$y, id = id, rule = "winding")
+    as.numeric(opacity), size[1L], size[2L], reach, shading)
+  ring <- grid_union_paths_cpp(x, y, as.integer(id))
+  outline <- grid::pathGrob(ring$x, ring$y, id = ring$id, rule = "winding")
   vp <- if (is.null(outer)) grid::viewport(clip = outline) else {
     if (is.null(caps$mask_type)) stop("The vector device does not support the masks required by clipped smooth shading.", call. = FALSE)
     outer$gp <- grid::gpar(fill = "white", col = NA, alpha = 1)
@@ -271,6 +285,18 @@ smooth_image_grob_3d <- function(x, y, id, linear, opacity, viewport, outer = NU
   grid::rasterGrob(image, x = lo[1L] / viewport$width_mm, y = lo[2L] / viewport$height_mm,
     width = size[1L] * pixel / viewport$width_mm, height = size[2L] * pixel / viewport$height_mm,
     just = c("left", "bottom"), interpolate = TRUE, vp = vp)
+}
+
+# Selected faces of a smooth run, with the same per-sample paint data.
+smooth_image_faces_3d <- function(x, y, id, vertex, opacity, viewport, outer, caps, k = seq_along(opacity)) {
+  i <- id %in% k
+  shading <- vertex$shading
+  for (name in c("base", "normal", "position")) shading[[name]] <- shading[[name]][i, , drop = FALSE]
+  shading$depth <- shading$depth[i]
+  if (!is.null(shading$accessibility)) shading$accessibility <- shading$accessibility[i, , drop = FALSE]
+  for (name in c("lit", "material")) shading[[name]] <- shading[[name]][k]
+  smooth_image_grob_3d(x[i], y[i], match(id[i], k), vertex$linear[i, , drop = FALSE], opacity[k],
+    viewport, outer, caps, shading)
 }
 
 # Grob of painted smooth shapes (smooth_face_paint_3d()) of faces with styles

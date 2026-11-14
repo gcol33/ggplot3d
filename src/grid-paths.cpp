@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include "clipper2/clipper.h"
+#include "shade/read.h"
 #include <unordered_map>
 #include <algorithm>
 #include <cmath>
@@ -182,6 +183,21 @@ Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcp
                             Rcpp::Named("supported") = paint->supported);
 }
 
+// Boundary rings of the union of filled faces, with internal edges removed.
+// [[Rcpp::export(rng = false)]]
+Rcpp::List grid_union_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id) {
+  using namespace Clipper2Lib;
+  PathsD paths = grid_paths(x, y, id);
+  for (auto& ring : paths) if (!IsPositive(ring)) std::reverse(ring.begin(), ring.end());
+  paths = Union(paths, FillRule::NonZero, 8);
+  std::vector<double> xx, yy;
+  std::vector<int> ring_id;
+  for (std::size_t k = 0; k < paths.size(); ++k) for (const auto& p : paths[k]) {
+    xx.push_back(p.x); yy.push_back(p.y); ring_id.push_back(k + 1);
+  }
+  return Rcpp::List::create(Rcpp::Named("x") = xx, Rcpp::Named("y") = yy, Rcpp::Named("id") = ring_id);
+}
+
 namespace {
 inline double srgb_encode_unit(double v) {
   v = std::min(1.0, std::max(0.0, v));
@@ -190,9 +206,9 @@ inline double srgb_encode_unit(double v) {
 }
 
 // Image of faces with per-vertex linear-light colours, painted in order:
-// each face is fan-triangulated and every pixel centre inside a triangle takes
-// the linear-light interpolation of its corner colours, sRGB-encoded and
-// composited over the earlier faces with the face's alpha. Pixel centres
+// each face is fan-triangulated and sixteen samples per pixel take
+// the linear-light interpolation of its corner colours, composited over the
+// earlier faces with the face's alpha and averaged in linear light. Samples
 // outside every face but within `reach` pixels of one take that face's
 // colour at the nearest point of its triangle, so an image clipped to the
 // faces' outline keeps their colours under its antialiased edge. x and y
@@ -201,13 +217,40 @@ inline double srgb_encode_unit(double v) {
 // [[Rcpp::export(rng = false)]]
 Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id,
                                             Rcpp::NumericMatrix linear, Rcpp::NumericVector alpha,
-                                            int width, int height, double reach) {
+                                            int width, int height, double reach, Rcpp::Nullable<Rcpp::List> shading = R_NilValue) {
+  using namespace ggplot3d::shade;
   const R_xlen_t n = x.size();
   if (y.size() != n || id.size() != n || linear.nrow() != n || linear.ncol() != 3 || width <= 0 || height <= 0 ||
       !R_finite(reach) || reach < 0)
     Rcpp::stop("Invalid smooth face raster arrays.");
+  Rcpp::NumericMatrix base = linear, normals, positions, accessibility;
+  Rcpp::NumericVector depth(n, 1.0), material;
+  Rcpp::LogicalVector lit(alpha.size(), false);
+  std::vector<Material> materials;
+  Lights lights;
+  View view;
+  if (shading.isNotNull()) {
+    Rcpp::List s(shading);
+    base = Rcpp::as<Rcpp::NumericMatrix>(s["base"]);
+    normals = Rcpp::as<Rcpp::NumericMatrix>(s["normal"]);
+    positions = Rcpp::as<Rcpp::NumericMatrix>(s["position"]);
+    if (!Rf_isNull(s["accessibility"])) accessibility = Rcpp::as<Rcpp::NumericMatrix>(s["accessibility"]);
+    depth = Rcpp::as<Rcpp::NumericVector>(s["depth"]);
+    lit = Rcpp::as<Rcpp::LogicalVector>(s["lit"]);
+    material = Rcpp::as<Rcpp::NumericVector>(s["material"]);
+    materials = read_materials(s["materials"]);
+    view = read_view(s["view"]);
+    if (Rcpp::is_true(Rcpp::any(lit))) lights = read_lights(s["lights"]);
+    if (base.nrow() != n || base.ncol() != 3 || normals.nrow() != n || normals.ncol() != 3 ||
+        positions.nrow() != n || positions.ncol() != 3 || depth.size() != n ||
+        lit.size() != alpha.size() || material.size() != alpha.size())
+      Rcpp::stop("Invalid smooth face shading arrays.");
+    if (accessibility.size() && (accessibility.nrow() != n || accessibility.ncol() != 2))
+      Rcpp::stop("Invalid smooth face accessibility arrays.");
+  }
   const std::size_t pixels = static_cast<std::size_t>(width) * height;
   std::vector<double> colour(3 * pixels, 0.0), cover(pixels, 0.0);
+  std::vector<double> total(3 * pixels, 0.0), alpha_sum(pixels, 0.0);
   std::vector<int> state(pixels, 0), owner(pixels, 0);
   struct Triangle { R_xlen_t v[3]; int face; };
   std::vector<Triangle> triangles;
@@ -218,7 +261,7 @@ Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::Numeric
     for (R_xlen_t k = start + 1; k + 1 < end; ++k) triangles.push_back({{start, k, k + 1}, id[start]});
     start = end;
   }
-  auto paint = [&](bool exact) {
+  auto paint = [&](bool exact, double sx, double sy) {
     for (const Triangle& t : triangles) {
       const double x0 = x[t.v[0]], y0 = y[t.v[0]], x1 = x[t.v[1]], y1 = y[t.v[1]], x2 = x[t.v[2]], y2 = y[t.v[2]];
       const double area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
@@ -231,12 +274,13 @@ Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::Numeric
       const double e[3] = {std::hypot(x2 - x1, y2 - y1), std::hypot(x0 - x2, y0 - y2), std::hypot(x1 - x0, y1 - y0)};
       const double a = alpha[t.face - 1];
       for (int r = r0; r <= r1; ++r) for (int c = c0; c <= c1; ++c) {
-        const double px = c + 0.5, py = r + 0.5;
+        const double px = c + sx, py = r + sy;
         double b[3] = {((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py)) / area,
                        ((x2 - px) * (y0 - py) - (x0 - px) * (y2 - py)) / area,
                        ((x0 - px) * (y1 - py) - (x1 - px) * (y0 - py)) / area};
         const bool inside = b[0] >= -1e-12 && b[1] >= -1e-12 && b[2] >= -1e-12;
         const std::size_t pixel = static_cast<std::size_t>(height - 1 - r) * width + c;
+        if (!exact && (inside || state[pixel] == 2)) continue;
         if (exact != inside) {
           if (exact || state[pixel] == 2) continue;
           double outside = 0;
@@ -244,13 +288,30 @@ Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::Numeric
           if (outside > reach) continue;
         }
         double sum = 0;
-        for (int k = 0; k < 3; ++k) { b[k] = std::max(0.0, b[k]); sum += b[k]; }
+        for (int k = 0; k < 3; ++k) { b[k] = std::max(0.0, b[k]) / depth[t.v[k]]; sum += b[k]; }
+        for (double& w : b) w /= sum;
         double src[3];
         for (int ch = 0; ch < 3; ++ch) {
           double v = 0;
-          for (int k = 0; k < 3; ++k) v += b[k] * linear(t.v[k], ch);
-          src[ch] = srgb_encode_unit(v / sum);
+          for (int k = 0; k < 3; ++k) v += b[k] * base(t.v[k], ch);
+          src[ch] = v;
         }
+        if (lit[t.face - 1]) {
+          vec3 normal{0, 0, 0}, position{0, 0, 0};
+          for (int k = 0; k < 3; ++k) {
+            normal = normal + row3(normals, t.v[k]) * b[k];
+            position = position + row3(positions, t.v[k]) * b[k];
+          }
+          normal = normalize(normal);
+          const vec3 toward = view.at(position);
+          const int side = dot(normal, toward) < 0 ? 1 : 0;
+          double visibility = accessibility.size() ? 0 : 1;
+          if (accessibility.size()) for (int k = 0; k < 3; ++k) visibility += b[k] * accessibility(t.v[k], side);
+          const vec3 shaded = shade(normal, position, toward, vec3(src[0], src[1], src[2]),
+            materials[material[t.face - 1]], lights, -2, visibility);
+          src[0] = shaded.x; src[1] = shaded.y; src[2] = shaded.z;
+        }
+        for (double& v : src) v = std::min(1.0, std::max(0.0, v));
         double* dst = &colour[3 * pixel];
         if (exact && state[pixel] == 2 && owner[pixel] == t.face) continue;
         if (!exact || state[pixel] != 2) {
@@ -265,14 +326,24 @@ Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::Numeric
       }
     }
   };
-  paint(false);
-  paint(true);
+  constexpr int samples = 4;
+  for (int sy = 0; sy < samples; ++sy) for (int sx = 0; sx < samples; ++sx) {
+    std::fill(state.begin(), state.end(), 0);
+    paint(true, (sx + 0.5) / samples, (sy + 0.5) / samples);
+    paint(false, (sx + 0.5) / samples, (sy + 0.5) / samples);
+    for (std::size_t pixel = 0; pixel < pixels; ++pixel) if (state[pixel]) {
+      alpha_sum[pixel] += cover[pixel];
+      for (int ch = 0; ch < 3; ++ch) total[3 * pixel + ch] += colour[3 * pixel + ch] * cover[pixel];
+    }
+  }
   Rcpp::IntegerMatrix raster(height, width);
   std::uint32_t* packed = reinterpret_cast<std::uint32_t*>(INTEGER(raster));
   auto byte = [](double v) { return static_cast<std::uint32_t>(std::lround(std::min(1.0, std::max(0.0, v)) * 255)); };
   for (std::size_t pixel = 0; pixel < pixels; ++pixel) {
-    const double* c = &colour[3 * pixel];
-    packed[pixel] = state[pixel] ? byte(c[0]) | byte(c[1]) << 8 | byte(c[2]) << 16 | byte(cover[pixel]) << 24 : 0u;
+    const double a = alpha_sum[pixel];
+    const double* c = &total[3 * pixel];
+    packed[pixel] = a > 0 ? byte(srgb_encode_unit(c[0] / a)) | byte(srgb_encode_unit(c[1] / a)) << 8 |
+      byte(srgb_encode_unit(c[2] / a)) << 16 | byte(a / (samples * samples)) << 24 : 0u;
   }
   raster.attr("class") = "nativeRaster";
   return raster;

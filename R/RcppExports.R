@@ -45,8 +45,12 @@ grid_clip_paths_cpp <- function(x, y, id, mask_x, mask_y, mask_id, width, cap, j
     .Call(`_ggplot3d_grid_clip_paths_cpp`, x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii, simplify)
 }
 
-smooth_faces_raster_cpp <- function(x, y, id, linear, alpha, width, height, reach) {
-    .Call(`_ggplot3d_smooth_faces_raster_cpp`, x, y, id, linear, alpha, width, height, reach)
+grid_union_paths_cpp <- function(x, y, id) {
+    .Call(`_ggplot3d_grid_union_paths_cpp`, x, y, id)
+}
+
+smooth_faces_raster_cpp <- function(x, y, id, linear, alpha, width, height, reach, shading = NULL) {
+    .Call(`_ggplot3d_smooth_faces_raster_cpp`, x, y, id, linear, alpha, width, height, reach, shading)
 }
 
 grid_stroke_intervals_cpp <- function(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, pieces = FALSE, reach = 0) {
