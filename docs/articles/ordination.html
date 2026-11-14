@@ -32,6 +32,10 @@
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -89,6 +93,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -324,13 +329,13 @@ regions.</p>
 <text x='390.04' y='155.93' style='font-size: 1.7em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>Group</text>
 <rect x='390.04' y='166.19' width='17.28' height='17.28' style='stroke-width: 1.65; stroke: none;' />
 <circle cx='398.68' cy='174.83' r='2.15' style='stroke-width: 1.10; stroke: #F8766D; fill: #F8766D;' />
-<circle cx='398.68' cy='174.83' r='6.57' style='stroke-width: 0.64; stroke: #F8766D; fill: #F8766D; fill-opacity: 0.20;' />
+<circle cx='398.68' cy='174.83' r='4.25' style='stroke-width: 0.64; stroke: #F8766D; fill: #F8766D; fill-opacity: 0.20;' />
 <rect x='390.04' y='183.47' width='17.28' height='17.28' style='stroke-width: 1.65; stroke: none;' />
 <circle cx='398.68' cy='192.11' r='2.15' style='stroke-width: 1.10; stroke: #00BA38; fill: #00BA38;' />
-<circle cx='398.68' cy='192.11' r='6.57' style='stroke-width: 0.64; stroke: #00BA38; fill: #00BA38; fill-opacity: 0.20;' />
+<circle cx='398.68' cy='192.11' r='4.25' style='stroke-width: 0.64; stroke: #00BA38; fill: #00BA38; fill-opacity: 0.20;' />
 <rect x='390.04' y='200.75' width='17.28' height='17.28' style='stroke-width: 1.65; stroke: none;' />
 <circle cx='398.68' cy='209.39' r='2.15' style='stroke-width: 1.10; stroke: #619CFF; fill: #619CFF;' />
-<circle cx='398.68' cy='209.39' r='6.57' style='stroke-width: 0.64; stroke: #619CFF; fill: #619CFF; fill-opacity: 0.20;' />
+<circle cx='398.68' cy='209.39' r='4.25' style='stroke-width: 0.64; stroke: #619CFF; fill: #619CFF; fill-opacity: 0.20;' />
 <text x='415.79' y='179.70' style='font-size: 1.36em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>setosa</text>
 <text x='415.79' y='196.98' style='font-size: 1.36em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>versicolor</text>
 <text x='415.79' y='214.26' style='font-size: 1.36em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>virginica</text>
@@ -834,7 +839,7 @@ and <code>species</code> score matrices directly.</p>
 </g>
 <defs>
   <clipPath id='cp-0'>
-    <path d='M 290.65 212.36 L 290.29 211.81 L 301.37 229.72 ZM 281.57 222.09 L 281.93 222.64 L 301.37 229.72 ZM 290.29 211.81 L 289.30 212.08 L 301.37 229.72 ZM 281.91 220.80 L 281.57 222.09 L 301.37 229.72 ZM 289.30 212.08 L 287.82 213.14 L 301.37 229.72 ZM 282.88 218.97 L 281.91 220.80 L 301.37 229.72 ZM 287.82 213.14 L 286.08 214.82 L 301.37 229.72 ZM 284.35 216.87 L 282.88 218.97 L 301.37 229.72 ZM 286.08 214.82 L 284.35 216.87 L 301.37 229.72 Z'/>
+    <path d='M 290.65 212.36 L 290.29 211.81 L 301.37 229.72 ZM 286.08 214.82 L 284.35 216.87 L 301.37 229.72 ZM 281.57 222.09 L 281.93 222.64 L 301.37 229.72 ZM 281.91 220.80 L 281.57 222.09 L 301.37 229.72 ZM 282.88 218.97 L 281.91 220.80 L 301.37 229.72 ZM 284.35 216.87 L 282.88 218.97 L 301.37 229.72 ZM 287.82 213.14 L 286.08 214.82 L 301.37 229.72 ZM 289.30 212.08 L 287.82 213.14 L 301.37 229.72 ZM 290.29 211.81 L 289.30 212.08 L 301.37 229.72 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-0)'>
@@ -844,7 +849,7 @@ and <code>species</code> score matrices directly.</p>
 </g>
 <defs>
   <clipPath id='cp-1'>
-    <path d='M 287.87 188.94 L 288.64 189.68 L 307.09 190.24 ZM 293.31 177.66 L 292.18 177.84 L 307.09 190.24 ZM 287.57 187.40 L 287.87 188.94 L 307.09 190.24 ZM 292.18 177.84 L 290.87 178.91 L 307.09 190.24 ZM 287.78 185.30 L 287.57 187.40 L 307.09 190.24 ZM 290.87 178.91 L 289.57 180.70 L 307.09 190.24 ZM 288.49 182.94 L 287.78 185.30 L 307.09 190.24 ZM 289.57 180.70 L 288.49 182.94 L 307.09 190.24 Z'/>
+    <path d='M 287.87 188.94 L 288.64 189.68 L 307.09 190.24 ZM 289.57 180.70 L 288.49 182.94 L 307.09 190.24 ZM 288.49 182.94 L 287.78 185.30 L 307.09 190.24 ZM 287.57 187.40 L 287.87 188.94 L 307.09 190.24 ZM 287.78 185.30 L 287.57 187.40 L 307.09 190.24 ZM 290.87 178.91 L 289.57 180.70 L 307.09 190.24 ZM 292.18 177.84 L 290.87 178.91 L 307.09 190.24 ZM 293.31 177.66 L 292.18 177.84 L 307.09 190.24 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-1)'>
@@ -854,7 +859,7 @@ and <code>species</code> score matrices directly.</p>
 </g>
 <defs>
   <clipPath id='cp-2'>
-    <path d='M 102.19 188.49 L 101.26 189.07 L 88.20 203.37 ZM 107.65 201.16 L 108.58 200.58 L 88.20 203.37 ZM 103.54 188.87 L 102.19 188.49 L 88.20 203.37 ZM 108.58 200.58 L 108.96 199.12 L 88.20 203.37 ZM 105.10 190.16 L 103.54 188.87 L 88.20 203.37 ZM 108.96 199.12 L 108.72 197.00 L 88.20 203.37 ZM 106.63 192.15 L 105.10 190.16 L 88.20 203.37 ZM 108.72 197.00 L 107.90 194.56 L 88.20 203.37 ZM 107.90 194.56 L 106.63 192.15 L 88.20 203.37 Z'/>
+    <path d='M 102.19 188.49 L 101.26 189.07 L 88.20 203.37 ZM 107.90 194.56 L 106.63 192.15 L 88.20 203.37 ZM 103.54 188.87 L 102.19 188.49 L 88.20 203.37 ZM 105.10 190.16 L 103.54 188.87 L 88.20 203.37 ZM 106.63 192.15 L 105.10 190.16 L 88.20 203.37 ZM 108.72 197.00 L 107.90 194.56 L 88.20 203.37 ZM 108.96 199.12 L 108.72 197.00 L 88.20 203.37 ZM 108.58 200.58 L 108.96 199.12 L 88.20 203.37 ZM 107.65 201.16 L 108.58 200.58 L 88.20 203.37 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-2)'>
@@ -864,7 +869,7 @@ and <code>species</code> score matrices directly.</p>
 </g>
 <defs>
   <clipPath id='cp-3'>
-    <path d='M 263.55 148.58 L 266.23 146.66 L 272.67 140.82 ZM 263.06 134.68 L 259.89 134.74 L 272.67 140.82 ZM 260.38 148.64 L 263.55 148.58 L 272.67 140.82 ZM 259.89 134.74 L 257.21 136.66 L 272.67 140.82 ZM 257.57 146.83 L 260.38 148.64 L 272.67 140.82 ZM 257.21 136.66 L 255.74 139.91 L 272.67 140.82 ZM 255.87 143.64 L 257.57 146.83 L 272.67 140.82 ZM 255.74 139.91 L 255.87 143.64 L 272.67 140.82 Z'/>
+    <path d='M 263.55 148.58 L 266.23 146.66 L 272.67 140.82 ZM 255.74 139.91 L 255.87 143.64 L 272.67 140.82 ZM 257.57 146.83 L 260.38 148.64 L 272.67 140.82 ZM 255.87 143.64 L 257.57 146.83 L 272.67 140.82 ZM 257.21 136.66 L 255.74 139.91 L 272.67 140.82 ZM 259.89 134.74 L 257.21 136.66 L 272.67 140.82 ZM 263.06 134.68 L 259.89 134.74 L 272.67 140.82 ZM 260.38 148.64 L 263.55 148.58 L 272.67 140.82 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-3)'>

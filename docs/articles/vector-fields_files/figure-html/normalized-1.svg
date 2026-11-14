@@ -156,7 +156,7 @@
 </g>
 <defs>
   <clipPath id='cp-0'>
-    <path d='M 161.48 167.74 L 161.98 167.47 L 153.75 164.44 ZM 162.12 161.64 L 161.64 161.02 L 153.75 164.44 ZM 161.98 167.47 L 162.37 166.36 L 153.75 164.44 ZM 162.45 163.00 L 162.12 161.64 L 153.75 164.44 ZM 162.37 166.36 L 162.54 164.73 L 153.75 164.44 ZM 162.54 164.73 L 162.45 163.00 L 153.75 164.44 Z'/>
+    <path d='M 161.48 167.74 L 161.98 167.47 L 153.75 164.44 ZM 162.54 164.73 L 162.45 163.00 L 153.75 164.44 ZM 162.37 166.36 L 162.54 164.73 L 153.75 164.44 ZM 162.12 161.64 L 161.64 161.02 L 153.75 164.44 ZM 162.45 163.00 L 162.12 161.64 L 153.75 164.44 ZM 161.98 167.47 L 162.37 166.36 L 153.75 164.44 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-0)'>
@@ -209,7 +209,7 @@
 </g>
 <defs>
   <clipPath id='cp-1'>
-    <path d='M 131.86 191.29 L 130.01 192.60 L 128.71 196.76 ZM 133.56 198.07 L 135.41 196.76 L 128.71 196.76 ZM 134.20 191.97 L 131.86 191.29 L 128.71 196.76 ZM 135.41 196.76 L 135.67 194.24 L 128.71 196.76 ZM 135.67 194.24 L 134.20 191.97 L 128.71 196.76 Z'/>
+    <path d='M 131.86 191.29 L 130.01 192.60 L 128.71 196.76 ZM 135.67 194.24 L 134.20 191.97 L 128.71 196.76 ZM 134.20 191.97 L 131.86 191.29 L 128.71 196.76 ZM 135.41 196.76 L 135.67 194.24 L 128.71 196.76 ZM 133.56 198.07 L 135.41 196.76 L 128.71 196.76 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-1)'>
@@ -262,7 +262,7 @@
 </g>
 <defs>
   <clipPath id='cp-2'>
-    <path d='M 161.48 54.64 L 161.98 54.36 L 153.75 51.33 ZM 162.12 48.54 L 161.64 47.91 L 153.75 51.33 ZM 161.98 54.36 L 162.37 53.26 L 153.75 51.33 ZM 162.45 49.89 L 162.12 48.54 L 153.75 51.33 ZM 162.37 53.26 L 162.54 51.62 L 153.75 51.33 ZM 162.54 51.62 L 162.45 49.89 L 153.75 51.33 Z'/>
+    <path d='M 161.48 54.64 L 161.98 54.36 L 153.75 51.33 ZM 162.54 51.62 L 162.45 49.89 L 153.75 51.33 ZM 162.37 53.26 L 162.54 51.62 L 153.75 51.33 ZM 162.12 48.54 L 161.64 47.91 L 153.75 51.33 ZM 162.45 49.89 L 162.12 48.54 L 153.75 51.33 ZM 161.98 54.36 L 162.37 53.26 L 153.75 51.33 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-2)'>
@@ -315,7 +315,7 @@
 </g>
 <defs>
   <clipPath id='cp-3'>
-    <path d='M 196.53 202.30 L 196.53 201.42 L 193.27 194.79 ZM 190.00 201.42 L 190.00 202.30 L 193.27 194.79 ZM 195.66 203.05 L 196.53 202.30 L 193.27 194.79 ZM 190.00 202.30 L 190.88 203.05 L 193.27 194.79 ZM 194.14 203.49 L 195.66 203.05 L 193.27 194.79 ZM 190.88 203.05 L 192.39 203.49 L 193.27 194.79 ZM 192.39 203.49 L 194.14 203.49 L 193.27 194.79 Z'/>
+    <path d='M 196.53 202.30 L 196.53 201.42 L 193.27 194.79 ZM 192.39 203.49 L 194.14 203.49 L 193.27 194.79 ZM 190.88 203.05 L 192.39 203.49 L 193.27 194.79 ZM 190.00 202.30 L 190.88 203.05 L 193.27 194.79 ZM 190.00 201.42 L 190.00 202.30 L 193.27 194.79 ZM 195.66 203.05 L 196.53 202.30 L 193.27 194.79 ZM 194.14 203.49 L 195.66 203.05 L 193.27 194.79 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-3)'>
@@ -368,7 +368,7 @@
 </g>
 <defs>
   <clipPath id='cp-4'>
-    <path d='M 104.53 226.84 L 107.13 226.84 L 108.24 226.71 ZM 109.16 225.06 L 109.42 222.53 L 108.24 226.71 ZM 102.88 225.06 L 104.53 226.84 L 108.24 226.71 ZM 109.42 222.53 L 107.77 220.74 L 108.24 226.71 ZM 103.15 222.53 L 102.88 225.06 L 108.24 226.71 ZM 107.77 220.74 L 105.17 220.74 L 108.24 226.71 ZM 105.17 220.74 L 103.15 222.53 L 108.24 226.71 Z'/>
+    <path d='M 104.53 226.84 L 107.13 226.84 L 108.24 226.71 ZM 105.17 220.74 L 103.15 222.53 L 108.24 226.71 ZM 107.77 220.74 L 105.17 220.74 L 108.24 226.71 ZM 102.88 225.06 L 104.53 226.84 L 108.24 226.71 ZM 103.15 222.53 L 102.88 225.06 L 108.24 226.71 ZM 109.42 222.53 L 107.77 220.74 L 108.24 226.71 ZM 109.16 225.06 L 109.42 222.53 L 108.24 226.71 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-4)'>
@@ -421,7 +421,7 @@
 </g>
 <defs>
   <clipPath id='cp-5'>
-    <path d='M 131.86 78.19 L 130.01 79.50 L 128.71 83.65 ZM 133.56 84.96 L 135.41 83.65 L 128.71 83.65 ZM 134.20 78.86 L 131.86 78.19 L 128.71 83.65 ZM 135.41 83.65 L 135.67 81.13 L 128.71 83.65 ZM 135.67 81.13 L 134.20 78.86 L 128.71 83.65 Z'/>
+    <path d='M 131.86 78.19 L 130.01 79.50 L 128.71 83.65 ZM 135.67 81.13 L 134.20 78.86 L 128.71 83.65 ZM 134.20 78.86 L 131.86 78.19 L 128.71 83.65 ZM 135.41 83.65 L 135.67 81.13 L 128.71 83.65 ZM 133.56 84.96 L 135.41 83.65 L 128.71 83.65 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-5)'>
@@ -474,7 +474,7 @@
 </g>
 <defs>
   <clipPath id='cp-6'>
-    <path d='M 168.34 234.64 L 167.43 234.51 L 174.48 238.44 ZM 166.76 241.00 L 167.66 241.13 L 174.48 238.44 ZM 167.43 234.51 L 166.55 235.27 L 174.48 238.44 ZM 166.06 240.02 L 166.76 241.00 L 174.48 238.44 ZM 166.55 235.27 L 165.95 236.71 L 174.48 238.44 ZM 165.77 238.45 L 166.06 240.02 L 174.48 238.44 ZM 165.95 236.71 L 165.77 238.45 L 174.48 238.44 Z'/>
+    <path d='M 168.34 234.64 L 167.43 234.51 L 174.48 238.44 ZM 165.95 236.71 L 165.77 238.45 L 174.48 238.44 ZM 166.76 241.00 L 167.66 241.13 L 174.48 238.44 ZM 166.06 240.02 L 166.76 241.00 L 174.48 238.44 ZM 165.77 238.45 L 166.06 240.02 L 174.48 238.44 ZM 166.55 235.27 L 165.95 236.71 L 174.48 238.44 ZM 167.43 234.51 L 166.55 235.27 L 174.48 238.44 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-6)'>
@@ -527,7 +527,7 @@
 </g>
 <defs>
   <clipPath id='cp-7'>
-    <path d='M 196.53 89.19 L 196.53 88.31 L 193.27 81.68 ZM 190.00 88.31 L 190.00 89.19 L 193.27 81.68 ZM 195.66 89.95 L 196.53 89.19 L 193.27 81.68 ZM 190.00 89.19 L 190.88 89.95 L 193.27 81.68 ZM 194.14 90.38 L 195.66 89.95 L 193.27 81.68 ZM 190.88 89.95 L 192.39 90.38 L 193.27 81.68 ZM 192.39 90.38 L 194.14 90.38 L 193.27 81.68 Z'/>
+    <path d='M 196.53 89.19 L 196.53 88.31 L 193.27 81.68 ZM 192.39 90.38 L 194.14 90.38 L 193.27 81.68 ZM 190.88 89.95 L 192.39 90.38 L 193.27 81.68 ZM 190.00 89.19 L 190.88 89.95 L 193.27 81.68 ZM 190.00 88.31 L 190.00 89.19 L 193.27 81.68 ZM 195.66 89.95 L 196.53 89.19 L 193.27 81.68 ZM 194.14 90.38 L 195.66 89.95 L 193.27 81.68 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-7)'>
@@ -580,7 +580,7 @@
 </g>
 <defs>
   <clipPath id='cp-8'>
-    <path d='M 104.53 113.74 L 107.13 113.74 L 108.24 113.60 ZM 109.16 111.95 L 109.42 109.42 L 108.24 113.60 ZM 102.88 111.95 L 104.53 113.74 L 108.24 113.60 ZM 109.42 109.42 L 107.77 107.64 L 108.24 113.60 ZM 103.15 109.42 L 102.88 111.95 L 108.24 113.60 ZM 107.77 107.64 L 105.17 107.64 L 108.24 113.60 ZM 105.17 107.64 L 103.15 109.42 L 108.24 113.60 Z'/>
+    <path d='M 104.53 113.74 L 107.13 113.74 L 108.24 113.60 ZM 105.17 107.64 L 103.15 109.42 L 108.24 113.60 ZM 107.77 107.64 L 105.17 107.64 L 108.24 113.60 ZM 102.88 111.95 L 104.53 113.74 L 108.24 113.60 ZM 103.15 109.42 L 102.88 111.95 L 108.24 113.60 ZM 109.42 109.42 L 107.77 107.64 L 108.24 113.60 ZM 109.16 111.95 L 109.42 109.42 L 108.24 113.60 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-8)'>
@@ -633,7 +633,7 @@
 </g>
 <defs>
   <clipPath id='cp-9'>
-    <path d='M 168.34 121.53 L 167.43 121.40 L 174.48 125.33 ZM 166.76 127.89 L 167.66 128.02 L 174.48 125.33 ZM 167.43 121.40 L 166.55 122.16 L 174.48 125.33 ZM 166.06 126.91 L 166.76 127.89 L 174.48 125.33 ZM 166.55 122.16 L 165.95 123.60 L 174.48 125.33 ZM 165.77 125.34 L 166.06 126.91 L 174.48 125.33 ZM 165.95 123.60 L 165.77 125.34 L 174.48 125.33 Z'/>
+    <path d='M 168.34 121.53 L 167.43 121.40 L 174.48 125.33 ZM 165.95 123.60 L 165.77 125.34 L 174.48 125.33 ZM 166.76 127.89 L 167.66 128.02 L 174.48 125.33 ZM 166.06 126.91 L 166.76 127.89 L 174.48 125.33 ZM 165.77 125.34 L 166.06 126.91 L 174.48 125.33 ZM 166.55 122.16 L 165.95 123.60 L 174.48 125.33 ZM 167.43 121.40 L 166.55 122.16 L 174.48 125.33 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-9)'>
@@ -685,7 +685,7 @@
 </g>
 <defs>
   <clipPath id='cp-10'>
-    <path d='M 217.38 180.21 L 217.20 179.38 L 212.05 173.88 ZM 219.98 174.27 L 219.10 175.03 L 218.20 176.39 L 217.50 177.98 L 217.20 179.38 L 217.38 180.21 L 217.99 180.26 L 218.87 179.50 L 219.77 178.14 L 220.47 176.55 L 220.77 175.15 L 220.59 174.32 ZM 219.10 175.03 L 219.98 174.27 L 212.05 173.88 ZM 217.20 179.38 L 217.50 177.98 L 212.05 173.88 ZM 218.20 176.39 L 219.10 175.03 L 212.05 173.88 ZM 217.50 177.98 L 218.20 176.39 L 212.05 173.88 Z'/>
+    <path d='M 217.38 180.21 L 217.20 179.38 L 212.05 173.88 ZM 219.10 175.03 L 219.98 174.27 L 212.05 173.88 ZM 218.20 176.39 L 219.10 175.03 L 212.05 173.88 ZM 217.50 177.98 L 218.20 176.39 L 212.05 173.88 ZM 217.20 179.38 L 217.50 177.98 L 212.05 173.88 ZM 219.98 174.27 L 219.10 175.03 L 218.20 176.39 L 217.50 177.98 L 217.20 179.38 L 217.38 180.21 L 217.99 180.26 L 218.87 179.50 L 219.77 178.14 L 220.47 176.55 L 220.77 175.15 L 220.59 174.32 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-10)'>
@@ -747,7 +747,7 @@
 </g>
 <defs>
   <clipPath id='cp-12'>
-    <path d='M 219.10 175.03 L 219.98 174.27 L 212.05 173.88 ZM 217.20 179.38 L 217.50 177.98 L 212.05 173.88 ZM 218.20 176.39 L 219.10 175.03 L 212.05 173.88 ZM 217.50 177.98 L 218.20 176.39 L 212.05 173.88 Z'/>
+    <path d='M 281.36 189.27 L 283.39 190.27 L 278.29 187.19 ZM 278.76 189.91 L 281.36 189.27 L 278.29 187.19 ZM 277.11 191.83 L 278.76 189.91 L 278.29 187.19 ZM 281.36 189.27 L 278.76 189.91 L 277.11 191.83 L 277.37 193.89 L 279.40 194.90 L 282.00 194.26 L 283.65 192.34 L 283.39 190.27 Z'/>
   </clipPath>
 </defs>
 <g clip-path='url(#cp-12)'>
@@ -755,121 +755,69 @@
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
 <defs>
-<linearGradient id='pat-11' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='216.94' y1='172.66' x2='214.10' y2='178.48'>
-  <stop offset='0.00' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.032' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.065' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.097' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.13' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.16' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.19' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.23' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.26' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.29' stop-color='#688DAF' stop-opacity='1.00'/>
-  <stop offset='0.32' stop-color='#6B91B4' stop-opacity='1.00'/>
-  <stop offset='0.35' stop-color='#6D93B7' stop-opacity='1.00'/>
-  <stop offset='0.39' stop-color='#6E95B9' stop-opacity='1.00'/>
-  <stop offset='0.42' stop-color='#6F95B9' stop-opacity='1.00'/>
-  <stop offset='0.45' stop-color='#6F96BA' stop-opacity='1.00'/>
-  <stop offset='0.48' stop-color='#6E95B9' stop-opacity='1.00'/>
-  <stop offset='0.52' stop-color='#6E94B8' stop-opacity='1.00'/>
-  <stop offset='0.55' stop-color='#6D93B6' stop-opacity='1.00'/>
-  <stop offset='0.58' stop-color='#6B91B4' stop-opacity='1.00'/>
-  <stop offset='0.61' stop-color='#698FB1' stop-opacity='1.00'/>
-  <stop offset='0.65' stop-color='#678BAD' stop-opacity='1.00'/>
-  <stop offset='0.68' stop-color='#6386A7' stop-opacity='1.00'/>
-  <stop offset='0.71' stop-color='#5E7F9E' stop-opacity='1.00'/>
-  <stop offset='0.74' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.77' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.81' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.84' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.87' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.90' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.94' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.97' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='1.00' stop-color='#54728F' stop-opacity='1.00'/>
+<linearGradient id='pat-11' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='282.33' y1='188.36' x2='276.34' y2='190.92'>
+  <stop offset='0.00' stop-color='#215378' stop-opacity='1.00'/>
+  <stop offset='0.032' stop-color='#215378' stop-opacity='1.00'/>
+  <stop offset='0.065' stop-color='#215378' stop-opacity='1.00'/>
+  <stop offset='0.097' stop-color='#215378' stop-opacity='1.00'/>
+  <stop offset='0.13' stop-color='#215378' stop-opacity='1.00'/>
+  <stop offset='0.16' stop-color='#215378' stop-opacity='1.00'/>
+  <stop offset='0.19' stop-color='#215378' stop-opacity='1.00'/>
+  <stop offset='0.23' stop-color='#215378' stop-opacity='1.00'/>
+  <stop offset='0.26' stop-color='#245B82' stop-opacity='1.00'/>
+  <stop offset='0.29' stop-color='#265E87' stop-opacity='1.00'/>
+  <stop offset='0.32' stop-color='#27618B' stop-opacity='1.00'/>
+  <stop offset='0.35' stop-color='#28638D' stop-opacity='1.00'/>
+  <stop offset='0.39' stop-color='#29648F' stop-opacity='1.00'/>
+  <stop offset='0.42' stop-color='#296590' stop-opacity='1.00'/>
+  <stop offset='0.45' stop-color='#2A6692' stop-opacity='1.00'/>
+  <stop offset='0.48' stop-color='#2A6792' stop-opacity='1.00'/>
+  <stop offset='0.52' stop-color='#2A6793' stop-opacity='1.00'/>
+  <stop offset='0.55' stop-color='#2A6794' stop-opacity='1.00'/>
+  <stop offset='0.58' stop-color='#2A6894' stop-opacity='1.00'/>
+  <stop offset='0.61' stop-color='#2B6894' stop-opacity='1.00'/>
+  <stop offset='0.65' stop-color='#2A6894' stop-opacity='1.00'/>
+  <stop offset='0.68' stop-color='#2A6793' stop-opacity='1.00'/>
+  <stop offset='0.71' stop-color='#2A6692' stop-opacity='1.00'/>
+  <stop offset='0.74' stop-color='#296590' stop-opacity='1.00'/>
+  <stop offset='0.77' stop-color='#27618A' stop-opacity='1.00'/>
+  <stop offset='0.81' stop-color='#27618A' stop-opacity='1.00'/>
+  <stop offset='0.84' stop-color='#27618A' stop-opacity='1.00'/>
+  <stop offset='0.87' stop-color='#27618A' stop-opacity='1.00'/>
+  <stop offset='0.90' stop-color='#27618A' stop-opacity='1.00'/>
+  <stop offset='0.94' stop-color='#27618A' stop-opacity='1.00'/>
+  <stop offset='0.97' stop-color='#27618A' stop-opacity='1.00'/>
+  <stop offset='1.00' stop-color='#27618A' stop-opacity='1.00'/>
 </linearGradient>
 </defs>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
 <g clip-path='url(#cp-12)'>
-<polygon points='212.05,173.88 217.44,180.11 217.69,180.23 218.03,180.15 218.43,179.88 218.87,179.42 219.32,178.82 219.75,178.11 220.12,177.35 220.42,176.57 220.62,175.85 220.71,175.22 220.68,174.73 220.53,174.42 220.28,174.29 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-11);' />
+<polygon points='277.24,192.86 277.43,193.48 277.82,194.00 278.39,194.40 279.09,194.63 279.88,194.70 280.70,194.58 281.50,194.29 282.23,193.86 282.83,193.30 283.26,192.66 283.50,191.98 283.52,191.31 283.33,190.69 282.94,190.16 282.37,189.77 278.29,187.19 277.26,192.19 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-11);' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
   <clipPath id='cp-13'>
-    <path d='M 281.36 189.27 L 283.39 190.27 L 278.29 187.19 ZM 277.11 191.83 L 278.76 189.91 L 278.29 187.19 ZM 278.76 189.91 L 281.36 189.27 L 278.29 187.19 ZM 281.36 189.27 L 278.76 189.91 L 277.11 191.83 L 277.37 193.89 L 279.40 194.90 L 282.00 194.26 L 283.65 192.34 L 283.39 190.27 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-13)'>
-</g>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-</g>
-<defs>
-<linearGradient id='pat-12' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='282.33' y1='188.36' x2='276.34' y2='190.92'>
-  <stop offset='0.00' stop-color='#215378' stop-opacity='1.00'/>
-  <stop offset='0.032' stop-color='#215378' stop-opacity='1.00'/>
-  <stop offset='0.065' stop-color='#215378' stop-opacity='1.00'/>
-  <stop offset='0.097' stop-color='#215378' stop-opacity='1.00'/>
-  <stop offset='0.13' stop-color='#215378' stop-opacity='1.00'/>
-  <stop offset='0.16' stop-color='#215378' stop-opacity='1.00'/>
-  <stop offset='0.19' stop-color='#215378' stop-opacity='1.00'/>
-  <stop offset='0.23' stop-color='#215378' stop-opacity='1.00'/>
-  <stop offset='0.26' stop-color='#245B82' stop-opacity='1.00'/>
-  <stop offset='0.29' stop-color='#265E87' stop-opacity='1.00'/>
-  <stop offset='0.32' stop-color='#27618B' stop-opacity='1.00'/>
-  <stop offset='0.35' stop-color='#28638D' stop-opacity='1.00'/>
-  <stop offset='0.39' stop-color='#29648F' stop-opacity='1.00'/>
-  <stop offset='0.42' stop-color='#296590' stop-opacity='1.00'/>
-  <stop offset='0.45' stop-color='#2A6692' stop-opacity='1.00'/>
-  <stop offset='0.48' stop-color='#2A6792' stop-opacity='1.00'/>
-  <stop offset='0.52' stop-color='#2A6793' stop-opacity='1.00'/>
-  <stop offset='0.55' stop-color='#2A6794' stop-opacity='1.00'/>
-  <stop offset='0.58' stop-color='#2A6894' stop-opacity='1.00'/>
-  <stop offset='0.61' stop-color='#2B6894' stop-opacity='1.00'/>
-  <stop offset='0.65' stop-color='#2A6894' stop-opacity='1.00'/>
-  <stop offset='0.68' stop-color='#2A6793' stop-opacity='1.00'/>
-  <stop offset='0.71' stop-color='#2A6692' stop-opacity='1.00'/>
-  <stop offset='0.74' stop-color='#296590' stop-opacity='1.00'/>
-  <stop offset='0.77' stop-color='#27618A' stop-opacity='1.00'/>
-  <stop offset='0.81' stop-color='#27618A' stop-opacity='1.00'/>
-  <stop offset='0.84' stop-color='#27618A' stop-opacity='1.00'/>
-  <stop offset='0.87' stop-color='#27618A' stop-opacity='1.00'/>
-  <stop offset='0.90' stop-color='#27618A' stop-opacity='1.00'/>
-  <stop offset='0.94' stop-color='#27618A' stop-opacity='1.00'/>
-  <stop offset='0.97' stop-color='#27618A' stop-opacity='1.00'/>
-  <stop offset='1.00' stop-color='#27618A' stop-opacity='1.00'/>
-</linearGradient>
-</defs>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-</g>
-<g clip-path='url(#cp-13)'>
-<polygon points='277.24,192.86 277.43,193.48 277.82,194.00 278.39,194.40 279.09,194.63 279.88,194.70 280.70,194.58 281.50,194.29 282.23,193.86 282.83,193.30 283.26,192.66 283.50,191.98 283.52,191.31 283.33,190.69 282.94,190.16 282.37,189.77 278.29,187.19 277.26,192.19 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-12);' />
-</g>
-<g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
-</g>
-<defs>
-  <clipPath id='cp-14'>
     <path d='M 281.36 189.27 L 278.76 189.91 L 277.11 191.83 L 277.37 193.89 L 279.40 194.90 L 282.00 194.26 L 283.65 192.34 L 283.39 190.27 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-14)'>
+<g clip-path='url(#cp-13)'>
 <polygon points='277.24,192.86 277.43,193.48 277.82,194.00 278.39,194.40 279.09,194.63 279.88,194.70 280.70,194.58 281.50,194.29 282.23,193.86 282.83,193.30 283.26,192.66 283.50,191.98 283.52,191.31 283.33,190.69 282.94,190.16 282.37,189.77 278.29,187.19 277.26,192.19 ' style='stroke-width: 0.75; stroke: none; fill: #205276;' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-15'>
-    <path d='M 217.38 67.10 L 217.20 66.27 L 212.05 60.77 ZM 219.98 61.16 L 219.10 61.92 L 218.20 63.28 L 217.50 64.87 L 217.20 66.27 L 217.38 67.10 L 217.99 67.15 L 218.87 66.39 L 219.77 65.03 L 220.47 63.44 L 220.77 62.04 L 220.59 61.21 ZM 219.10 61.92 L 219.98 61.16 L 212.05 60.77 ZM 217.20 66.27 L 217.50 64.87 L 212.05 60.77 ZM 218.20 63.28 L 219.10 61.92 L 212.05 60.77 ZM 217.50 64.87 L 218.20 63.28 L 212.05 60.77 Z'/>
+  <clipPath id='cp-14'>
+    <path d='M 217.38 67.10 L 217.20 66.27 L 212.05 60.77 ZM 219.10 61.92 L 219.98 61.16 L 212.05 60.77 ZM 218.20 63.28 L 219.10 61.92 L 212.05 60.77 ZM 217.50 64.87 L 218.20 63.28 L 212.05 60.77 ZM 217.20 66.27 L 217.50 64.87 L 212.05 60.77 ZM 219.98 61.16 L 219.10 61.92 L 218.20 63.28 L 217.50 64.87 L 217.20 66.27 L 217.38 67.10 L 217.99 67.15 L 218.87 66.39 L 219.77 65.03 L 220.47 63.44 L 220.77 62.04 L 220.59 61.21 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-15)'>
+<g clip-path='url(#cp-14)'>
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
 <defs>
-<linearGradient id='pat-13' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='216.94' y1='59.55' x2='214.10' y2='65.37'>
+<linearGradient id='pat-12' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='216.94' y1='59.55' x2='214.10' y2='65.37'>
   <stop offset='0.00' stop-color='#6184A4' stop-opacity='1.00'/>
   <stop offset='0.032' stop-color='#6184A4' stop-opacity='1.00'/>
   <stop offset='0.065' stop-color='#6184A4' stop-opacity='1.00'/>
@@ -906,84 +854,32 @@
 </defs>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
-<g clip-path='url(#cp-15)'>
-<polygon points='212.05,60.77 217.44,67.00 217.69,67.13 218.03,67.05 218.43,66.77 218.87,66.31 219.32,65.71 219.75,65.00 220.12,64.24 220.42,63.47 220.62,62.74 220.71,62.11 220.68,61.63 220.53,61.31 220.28,61.19 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-13);' />
+<g clip-path='url(#cp-14)'>
+<polygon points='212.05,60.77 217.44,67.00 217.69,67.13 218.03,67.05 218.43,66.77 218.87,66.31 219.32,65.71 219.75,65.00 220.12,64.24 220.42,63.47 220.62,62.74 220.71,62.11 220.68,61.63 220.53,61.31 220.28,61.19 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-12);' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-16'>
+  <clipPath id='cp-15'>
     <path d='M 219.98 61.16 L 219.10 61.92 L 218.20 63.28 L 217.50 64.87 L 217.20 66.27 L 217.38 67.10 L 217.99 67.15 L 218.87 66.39 L 219.77 65.03 L 220.47 63.44 L 220.77 62.04 L 220.59 61.21 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-16)'>
+<g clip-path='url(#cp-15)'>
 <polygon points='212.05,60.77 217.44,67.00 217.69,67.13 218.03,67.05 218.43,66.77 218.87,66.31 219.32,65.71 219.75,65.00 220.12,64.24 220.42,63.47 220.62,62.74 220.71,62.11 220.68,61.63 220.53,61.31 220.28,61.19 ' style='stroke-width: 0.75; stroke: none; fill: #435C73;' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-17'>
-    <path d='M 219.10 61.92 L 219.98 61.16 L 212.05 60.77 ZM 217.20 66.27 L 217.50 64.87 L 212.05 60.77 ZM 218.20 63.28 L 219.10 61.92 L 212.05 60.77 ZM 217.50 64.87 L 218.20 63.28 L 212.05 60.77 Z'/>
+  <clipPath id='cp-16'>
+    <path d='M 251.52 217.98 L 252.74 217.69 L 257.82 215.55 ZM 252.74 217.69 L 254.26 218.13 L 257.82 215.55 ZM 256.56 220.55 L 256.74 221.89 L 257.82 215.55 ZM 255.66 219.17 L 256.56 220.55 L 257.82 215.55 ZM 254.26 218.13 L 255.66 219.17 L 257.82 215.55 ZM 254.26 218.13 L 252.74 217.69 L 251.52 217.98 L 250.91 218.92 L 251.08 220.25 L 251.99 221.63 L 253.38 222.68 L 254.90 223.12 L 256.13 222.83 L 256.74 221.89 L 256.56 220.55 L 255.66 219.17 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-17)'>
+<g clip-path='url(#cp-16)'>
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
 <defs>
-<linearGradient id='pat-14' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='216.94' y1='59.55' x2='214.10' y2='65.37'>
-  <stop offset='0.00' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.032' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.065' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.097' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.13' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.16' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.19' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.23' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.26' stop-color='#6184A4' stop-opacity='1.00'/>
-  <stop offset='0.29' stop-color='#688DAF' stop-opacity='1.00'/>
-  <stop offset='0.32' stop-color='#6B91B4' stop-opacity='1.00'/>
-  <stop offset='0.35' stop-color='#6D93B7' stop-opacity='1.00'/>
-  <stop offset='0.39' stop-color='#6E95B9' stop-opacity='1.00'/>
-  <stop offset='0.42' stop-color='#6F95B9' stop-opacity='1.00'/>
-  <stop offset='0.45' stop-color='#6F96BA' stop-opacity='1.00'/>
-  <stop offset='0.48' stop-color='#6E95B9' stop-opacity='1.00'/>
-  <stop offset='0.52' stop-color='#6E94B8' stop-opacity='1.00'/>
-  <stop offset='0.55' stop-color='#6D93B6' stop-opacity='1.00'/>
-  <stop offset='0.58' stop-color='#6B91B4' stop-opacity='1.00'/>
-  <stop offset='0.61' stop-color='#698FB1' stop-opacity='1.00'/>
-  <stop offset='0.65' stop-color='#678BAD' stop-opacity='1.00'/>
-  <stop offset='0.68' stop-color='#6386A7' stop-opacity='1.00'/>
-  <stop offset='0.71' stop-color='#5E7F9E' stop-opacity='1.00'/>
-  <stop offset='0.74' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.77' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.81' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.84' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.87' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.90' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.94' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='0.97' stop-color='#54728F' stop-opacity='1.00'/>
-  <stop offset='1.00' stop-color='#54728F' stop-opacity='1.00'/>
-</linearGradient>
-</defs>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-</g>
-<g clip-path='url(#cp-17)'>
-<polygon points='212.05,60.77 217.44,67.00 217.69,67.13 218.03,67.05 218.43,66.77 218.87,66.31 219.32,65.71 219.75,65.00 220.12,64.24 220.42,63.47 220.62,62.74 220.71,62.11 220.68,61.63 220.53,61.31 220.28,61.19 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-14);' />
-</g>
-<g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
-</g>
-<defs>
-  <clipPath id='cp-18'>
-    <path d='M 251.52 217.98 L 252.74 217.69 L 257.82 215.55 ZM 256.56 220.55 L 256.74 221.89 L 257.82 215.55 ZM 252.74 217.69 L 254.26 218.13 L 257.82 215.55 ZM 255.66 219.17 L 256.56 220.55 L 257.82 215.55 ZM 254.26 218.13 L 255.66 219.17 L 257.82 215.55 ZM 254.26 218.13 L 252.74 217.69 L 251.52 217.98 L 250.91 218.92 L 251.08 220.25 L 251.99 221.63 L 253.38 222.68 L 254.90 223.12 L 256.13 222.83 L 256.74 221.89 L 256.56 220.55 L 255.66 219.17 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-18)'>
-</g>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-</g>
-<defs>
-<linearGradient id='pat-15' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='258.34' y1='220.05' x2='253.31' y2='215.90'>
+<linearGradient id='pat-13' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='258.34' y1='220.05' x2='253.31' y2='215.90'>
   <stop offset='0.00' stop-color='#435C73' stop-opacity='1.00'/>
   <stop offset='0.032' stop-color='#435C73' stop-opacity='1.00'/>
   <stop offset='0.065' stop-color='#435C73' stop-opacity='1.00'/>
@@ -1020,32 +916,32 @@
 </defs>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
-<g clip-path='url(#cp-18)'>
-<polygon points='250.99,219.59 251.17,220.26 251.53,220.94 252.05,221.59 252.69,222.16 253.40,222.60 254.14,222.90 254.86,223.02 255.51,222.97 256.05,222.74 256.43,222.36 256.64,221.84 257.82,215.55 252.13,217.83 251.60,218.06 251.21,218.45 251.01,218.97 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-15);' />
+<g clip-path='url(#cp-16)'>
+<polygon points='250.99,219.59 251.17,220.26 251.53,220.94 252.05,221.59 252.69,222.16 253.40,222.60 254.14,222.90 254.86,223.02 255.51,222.97 256.05,222.74 256.43,222.36 256.64,221.84 257.82,215.55 252.13,217.83 251.60,218.06 251.21,218.45 251.01,218.97 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-13);' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-19'>
+  <clipPath id='cp-17'>
     <path d='M 254.26 218.13 L 252.74 217.69 L 251.52 217.98 L 250.91 218.92 L 251.08 220.25 L 251.99 221.63 L 253.38 222.68 L 254.90 223.12 L 256.13 222.83 L 256.74 221.89 L 256.56 220.55 L 255.66 219.17 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-19)'>
+<g clip-path='url(#cp-17)'>
 <polygon points='250.99,219.59 251.17,220.26 251.53,220.94 252.05,221.59 252.69,222.16 253.40,222.60 254.14,222.90 254.86,223.02 255.51,222.97 256.05,222.74 256.43,222.36 256.64,221.84 257.82,215.55 252.13,217.83 251.60,218.06 251.21,218.45 251.01,218.97 ' style='stroke-width: 0.75; stroke: none; fill: #5B7C9A;' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-20'>
-    <path d='M 281.36 76.16 L 283.39 77.17 L 278.29 74.08 ZM 277.11 78.72 L 278.76 76.80 L 278.29 74.08 ZM 278.76 76.80 L 281.36 76.16 L 278.29 74.08 ZM 281.36 76.16 L 278.76 76.80 L 277.11 78.72 L 277.37 80.79 L 279.40 81.79 L 282.00 81.15 L 283.65 79.23 L 283.39 77.17 Z'/>
+  <clipPath id='cp-18'>
+    <path d='M 281.36 76.16 L 283.39 77.17 L 278.29 74.08 ZM 278.76 76.80 L 281.36 76.16 L 278.29 74.08 ZM 277.11 78.72 L 278.76 76.80 L 278.29 74.08 ZM 281.36 76.16 L 278.76 76.80 L 277.11 78.72 L 277.37 80.79 L 279.40 81.79 L 282.00 81.15 L 283.65 79.23 L 283.39 77.17 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-20)'>
+<g clip-path='url(#cp-18)'>
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
 <defs>
-<linearGradient id='pat-16' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='282.33' y1='75.25' x2='276.34' y2='77.81'>
+<linearGradient id='pat-14' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='282.33' y1='75.25' x2='276.34' y2='77.81'>
   <stop offset='0.00' stop-color='#215378' stop-opacity='1.00'/>
   <stop offset='0.032' stop-color='#215378' stop-opacity='1.00'/>
   <stop offset='0.065' stop-color='#215378' stop-opacity='1.00'/>
@@ -1082,32 +978,32 @@
 </defs>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
-<g clip-path='url(#cp-20)'>
-<polygon points='277.24,79.75 277.43,80.37 277.82,80.90 278.39,81.29 279.09,81.53 279.88,81.59 280.70,81.47 281.50,81.19 282.23,80.75 282.83,80.19 283.26,79.55 283.50,78.87 283.52,78.20 283.33,77.58 282.94,77.06 282.37,76.66 278.29,74.08 277.26,79.08 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-16);' />
+<g clip-path='url(#cp-18)'>
+<polygon points='277.24,79.75 277.43,80.37 277.82,80.90 278.39,81.29 279.09,81.53 279.88,81.59 280.70,81.47 281.50,81.19 282.23,80.75 282.83,80.19 283.26,79.55 283.50,78.87 283.52,78.20 283.33,77.58 282.94,77.06 282.37,76.66 278.29,74.08 277.26,79.08 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-14);' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-21'>
+  <clipPath id='cp-19'>
     <path d='M 281.36 76.16 L 278.76 76.80 L 277.11 78.72 L 277.37 80.79 L 279.40 81.79 L 282.00 81.15 L 283.65 79.23 L 283.39 77.17 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-21)'>
+<g clip-path='url(#cp-19)'>
 <polygon points='277.24,79.75 277.43,80.37 277.82,80.90 278.39,81.29 279.09,81.53 279.88,81.59 280.70,81.47 281.50,81.19 282.23,80.75 282.83,80.19 283.26,79.55 283.50,78.87 283.52,78.20 283.33,77.58 282.94,77.06 282.37,76.66 278.29,74.08 277.26,79.08 ' style='stroke-width: 0.75; stroke: none; fill: #205276;' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-22'>
-    <path d='M 224.08 248.25 L 224.41 248.48 L 232.78 249.46 ZM 224.90 249.52 L 224.41 248.48 L 224.08 248.25 L 223.99 248.89 L 224.16 250.22 L 224.55 251.90 L 225.06 253.47 L 225.54 254.51 L 225.87 254.74 L 225.96 254.11 L 225.79 252.77 L 225.40 251.09 ZM 225.96 254.11 L 225.87 254.74 L 232.78 249.46 ZM 224.41 248.48 L 224.90 249.52 L 232.78 249.46 ZM 225.79 252.77 L 225.96 254.11 L 232.78 249.46 ZM 224.90 249.52 L 225.40 251.09 L 232.78 249.46 ZM 225.40 251.09 L 225.79 252.77 L 232.78 249.46 Z'/>
+  <clipPath id='cp-20'>
+    <path d='M 224.08 248.25 L 224.41 248.48 L 232.78 249.46 ZM 224.41 248.48 L 224.90 249.52 L 232.78 249.46 ZM 225.96 254.11 L 225.87 254.74 L 232.78 249.46 ZM 225.79 252.77 L 225.96 254.11 L 232.78 249.46 ZM 225.40 251.09 L 225.79 252.77 L 232.78 249.46 ZM 224.90 249.52 L 225.40 251.09 L 232.78 249.46 ZM 224.90 249.52 L 224.41 248.48 L 224.08 248.25 L 223.99 248.89 L 224.16 250.22 L 224.55 251.90 L 225.06 253.47 L 225.54 254.51 L 225.87 254.74 L 225.96 254.11 L 225.79 252.77 L 225.40 251.09 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-22)'>
+<g clip-path='url(#cp-20)'>
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
 <defs>
-<linearGradient id='pat-17' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='229.70' y1='253.63' x2='228.06' y2='247.33'>
+<linearGradient id='pat-15' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='229.70' y1='253.63' x2='228.06' y2='247.33'>
   <stop offset='0.00' stop-color='#194361' stop-opacity='1.00'/>
   <stop offset='0.032' stop-color='#194361' stop-opacity='1.00'/>
   <stop offset='0.065' stop-color='#194361' stop-opacity='1.00'/>
@@ -1144,84 +1040,32 @@
 </defs>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
-<g clip-path='url(#cp-22)'>
-<polygon points='224.03,248.97 224.08,249.55 224.19,250.27 224.36,251.06 224.57,251.89 224.80,252.69 225.05,253.40 225.30,253.99 225.52,254.41 225.70,254.63 225.84,254.63 232.78,249.46 224.25,248.36 224.11,248.36 224.04,248.57 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-17);' />
+<g clip-path='url(#cp-20)'>
+<polygon points='224.03,248.97 224.08,249.55 224.19,250.27 224.36,251.06 224.57,251.89 224.80,252.69 225.05,253.40 225.30,253.99 225.52,254.41 225.70,254.63 225.84,254.63 232.78,249.46 224.25,248.36 224.11,248.36 224.04,248.57 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-15);' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-23'>
+  <clipPath id='cp-21'>
     <path d='M 224.90 249.52 L 224.41 248.48 L 224.08 248.25 L 223.99 248.89 L 224.16 250.22 L 224.55 251.90 L 225.06 253.47 L 225.54 254.51 L 225.87 254.74 L 225.96 254.11 L 225.79 252.77 L 225.40 251.09 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-23)'>
+<g clip-path='url(#cp-21)'>
 <polygon points='224.03,248.97 224.08,249.55 224.19,250.27 224.36,251.06 224.57,251.89 224.80,252.69 225.05,253.40 225.30,253.99 225.52,254.41 225.70,254.63 225.84,254.63 232.78,249.46 224.25,248.36 224.11,248.36 224.04,248.57 ' style='stroke-width: 0.75; stroke: none; fill: #23587F;' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-24'>
-    <path d='M 225.96 254.11 L 225.87 254.74 L 232.78 249.46 ZM 224.41 248.48 L 224.90 249.52 L 232.78 249.46 ZM 225.79 252.77 L 225.96 254.11 L 232.78 249.46 ZM 224.90 249.52 L 225.40 251.09 L 232.78 249.46 ZM 225.40 251.09 L 225.79 252.77 L 232.78 249.46 Z'/>
+  <clipPath id='cp-22'>
+    <path d='M 251.52 104.87 L 252.74 104.58 L 257.82 102.44 ZM 252.74 104.58 L 254.26 105.02 L 257.82 102.44 ZM 256.56 107.44 L 256.74 108.78 L 257.82 102.44 ZM 255.66 106.07 L 256.56 107.44 L 257.82 102.44 ZM 254.26 105.02 L 255.66 106.07 L 257.82 102.44 ZM 254.26 105.02 L 252.74 104.58 L 251.52 104.87 L 250.91 105.81 L 251.08 107.15 L 251.99 108.52 L 253.38 109.57 L 254.90 110.01 L 256.13 109.72 L 256.74 108.78 L 256.56 107.44 L 255.66 106.07 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-24)'>
+<g clip-path='url(#cp-22)'>
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
 <defs>
-<linearGradient id='pat-18' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='229.70' y1='253.63' x2='228.06' y2='247.33'>
-  <stop offset='0.00' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.032' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.065' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.097' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.13' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.16' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.19' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.23' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.26' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.29' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.32' stop-color='#1A4666' stop-opacity='1.00'/>
-  <stop offset='0.35' stop-color='#1E4D70' stop-opacity='1.00'/>
-  <stop offset='0.39' stop-color='#205377' stop-opacity='1.00'/>
-  <stop offset='0.42' stop-color='#22577D' stop-opacity='1.00'/>
-  <stop offset='0.45' stop-color='#245A82' stop-opacity='1.00'/>
-  <stop offset='0.48' stop-color='#255D86' stop-opacity='1.00'/>
-  <stop offset='0.52' stop-color='#276089' stop-opacity='1.00'/>
-  <stop offset='0.55' stop-color='#27618B' stop-opacity='1.00'/>
-  <stop offset='0.58' stop-color='#28638D' stop-opacity='1.00'/>
-  <stop offset='0.61' stop-color='#29648E' stop-opacity='1.00'/>
-  <stop offset='0.65' stop-color='#29648F' stop-opacity='1.00'/>
-  <stop offset='0.68' stop-color='#28638E' stop-opacity='1.00'/>
-  <stop offset='0.71' stop-color='#28628C' stop-opacity='1.00'/>
-  <stop offset='0.74' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.77' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.81' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.84' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.87' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.90' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.94' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.97' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='1.00' stop-color='#255D85' stop-opacity='1.00'/>
-</linearGradient>
-</defs>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-</g>
-<g clip-path='url(#cp-24)'>
-<polygon points='224.03,248.97 224.08,249.55 224.19,250.27 224.36,251.06 224.57,251.89 224.80,252.69 225.05,253.40 225.30,253.99 225.52,254.41 225.70,254.63 225.84,254.63 232.78,249.46 224.25,248.36 224.11,248.36 224.04,248.57 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-18);' />
-</g>
-<g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
-</g>
-<defs>
-  <clipPath id='cp-25'>
-    <path d='M 251.52 104.87 L 252.74 104.58 L 257.82 102.44 ZM 256.56 107.44 L 256.74 108.78 L 257.82 102.44 ZM 252.74 104.58 L 254.26 105.02 L 257.82 102.44 ZM 255.66 106.07 L 256.56 107.44 L 257.82 102.44 ZM 254.26 105.02 L 255.66 106.07 L 257.82 102.44 ZM 254.26 105.02 L 252.74 104.58 L 251.52 104.87 L 250.91 105.81 L 251.08 107.15 L 251.99 108.52 L 253.38 109.57 L 254.90 110.01 L 256.13 109.72 L 256.74 108.78 L 256.56 107.44 L 255.66 106.07 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-25)'>
-</g>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-</g>
-<defs>
-<linearGradient id='pat-19' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='258.34' y1='106.94' x2='253.31' y2='102.80'>
+<linearGradient id='pat-16' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='258.34' y1='106.94' x2='253.31' y2='102.80'>
   <stop offset='0.00' stop-color='#435C73' stop-opacity='1.00'/>
   <stop offset='0.032' stop-color='#435C73' stop-opacity='1.00'/>
   <stop offset='0.065' stop-color='#435C73' stop-opacity='1.00'/>
@@ -1258,32 +1102,32 @@
 </defs>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
-<g clip-path='url(#cp-25)'>
-<polygon points='250.99,106.48 251.17,107.15 251.53,107.84 252.05,108.48 252.69,109.05 253.40,109.49 254.14,109.79 254.86,109.92 255.51,109.86 256.05,109.64 256.43,109.25 256.64,108.73 257.82,102.44 252.13,104.72 251.60,104.95 251.21,105.34 251.01,105.86 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-19);' />
+<g clip-path='url(#cp-22)'>
+<polygon points='250.99,106.48 251.17,107.15 251.53,107.84 252.05,108.48 252.69,109.05 253.40,109.49 254.14,109.79 254.86,109.92 255.51,109.86 256.05,109.64 256.43,109.25 256.64,108.73 257.82,102.44 252.13,104.72 251.60,104.95 251.21,105.34 251.01,105.86 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-16);' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-26'>
+  <clipPath id='cp-23'>
     <path d='M 254.26 105.02 L 252.74 104.58 L 251.52 104.87 L 250.91 105.81 L 251.08 107.15 L 251.99 108.52 L 253.38 109.57 L 254.90 110.01 L 256.13 109.72 L 256.74 108.78 L 256.56 107.44 L 255.66 106.07 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-26)'>
+<g clip-path='url(#cp-23)'>
 <polygon points='250.99,106.48 251.17,107.15 251.53,107.84 252.05,108.48 252.69,109.05 253.40,109.49 254.14,109.79 254.86,109.92 255.51,109.86 256.05,109.64 256.43,109.25 256.64,108.73 257.82,102.44 252.13,104.72 251.60,104.95 251.21,105.34 251.01,105.86 ' style='stroke-width: 0.75; stroke: none; fill: #5B7C9A;' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-27'>
-    <path d='M 224.08 135.14 L 224.41 135.37 L 232.78 136.35 ZM 224.90 136.41 L 224.41 135.37 L 224.08 135.14 L 223.99 135.78 L 224.16 137.11 L 224.55 138.79 L 225.06 140.36 L 225.54 141.40 L 225.87 141.64 L 225.96 141.00 L 225.79 139.66 L 225.40 137.98 ZM 225.96 141.00 L 225.87 141.64 L 232.78 136.35 ZM 224.41 135.37 L 224.90 136.41 L 232.78 136.35 ZM 225.79 139.66 L 225.96 141.00 L 232.78 136.35 ZM 224.90 136.41 L 225.40 137.98 L 232.78 136.35 ZM 225.40 137.98 L 225.79 139.66 L 232.78 136.35 Z'/>
+  <clipPath id='cp-24'>
+    <path d='M 224.08 135.14 L 224.41 135.37 L 232.78 136.35 ZM 224.41 135.37 L 224.90 136.41 L 232.78 136.35 ZM 225.96 141.00 L 225.87 141.64 L 232.78 136.35 ZM 225.79 139.66 L 225.96 141.00 L 232.78 136.35 ZM 225.40 137.98 L 225.79 139.66 L 232.78 136.35 ZM 224.90 136.41 L 225.40 137.98 L 232.78 136.35 ZM 224.90 136.41 L 224.41 135.37 L 224.08 135.14 L 223.99 135.78 L 224.16 137.11 L 224.55 138.79 L 225.06 140.36 L 225.54 141.40 L 225.87 141.64 L 225.96 141.00 L 225.79 139.66 L 225.40 137.98 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-27)'>
+<g clip-path='url(#cp-24)'>
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
 <defs>
-<linearGradient id='pat-20' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='229.70' y1='140.52' x2='228.06' y2='134.22'>
+<linearGradient id='pat-17' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='229.70' y1='140.52' x2='228.06' y2='134.22'>
   <stop offset='0.00' stop-color='#194361' stop-opacity='1.00'/>
   <stop offset='0.032' stop-color='#194361' stop-opacity='1.00'/>
   <stop offset='0.065' stop-color='#194361' stop-opacity='1.00'/>
@@ -1320,70 +1164,18 @@
 </defs>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
-<g clip-path='url(#cp-27)'>
-<polygon points='224.03,135.87 224.08,136.45 224.19,137.16 224.36,137.95 224.57,138.78 224.80,139.58 225.05,140.30 225.30,140.88 225.52,141.30 225.70,141.52 225.84,141.53 232.78,136.35 224.25,135.26 224.11,135.25 224.04,135.46 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-20);' />
+<g clip-path='url(#cp-24)'>
+<polygon points='224.03,135.87 224.08,136.45 224.19,137.16 224.36,137.95 224.57,138.78 224.80,139.58 225.05,140.30 225.30,140.88 225.52,141.30 225.70,141.52 225.84,141.53 232.78,136.35 224.25,135.26 224.11,135.25 224.04,135.46 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-17);' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 </g>
 <defs>
-  <clipPath id='cp-28'>
+  <clipPath id='cp-25'>
     <path d='M 224.90 136.41 L 224.41 135.37 L 224.08 135.14 L 223.99 135.78 L 224.16 137.11 L 224.55 138.79 L 225.06 140.36 L 225.54 141.40 L 225.87 141.64 L 225.96 141.00 L 225.79 139.66 L 225.40 137.98 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-28)'>
+<g clip-path='url(#cp-25)'>
 <polygon points='224.03,135.87 224.08,136.45 224.19,137.16 224.36,137.95 224.57,138.78 224.80,139.58 225.05,140.30 225.30,140.88 225.52,141.30 225.70,141.52 225.84,141.53 232.78,136.35 224.25,135.26 224.11,135.25 224.04,135.46 ' style='stroke-width: 0.75; stroke: none; fill: #23587F;' />
-</g>
-<g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
-</g>
-<defs>
-  <clipPath id='cp-29'>
-    <path d='M 225.96 141.00 L 225.87 141.64 L 232.78 136.35 ZM 224.41 135.37 L 224.90 136.41 L 232.78 136.35 ZM 225.79 139.66 L 225.96 141.00 L 232.78 136.35 ZM 224.90 136.41 L 225.40 137.98 L 232.78 136.35 ZM 225.40 137.98 L 225.79 139.66 L 232.78 136.35 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-29)'>
-</g>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-</g>
-<defs>
-<linearGradient id='pat-21' gradientUnits='userSpaceOnUse' spreadMethod='pad' x1='229.70' y1='140.52' x2='228.06' y2='134.22'>
-  <stop offset='0.00' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.032' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.065' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.097' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.13' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.16' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.19' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.23' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.26' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.29' stop-color='#194361' stop-opacity='1.00'/>
-  <stop offset='0.32' stop-color='#1A4666' stop-opacity='1.00'/>
-  <stop offset='0.35' stop-color='#1E4D70' stop-opacity='1.00'/>
-  <stop offset='0.39' stop-color='#205377' stop-opacity='1.00'/>
-  <stop offset='0.42' stop-color='#22577D' stop-opacity='1.00'/>
-  <stop offset='0.45' stop-color='#245A82' stop-opacity='1.00'/>
-  <stop offset='0.48' stop-color='#255D86' stop-opacity='1.00'/>
-  <stop offset='0.52' stop-color='#276089' stop-opacity='1.00'/>
-  <stop offset='0.55' stop-color='#27618B' stop-opacity='1.00'/>
-  <stop offset='0.58' stop-color='#28638D' stop-opacity='1.00'/>
-  <stop offset='0.61' stop-color='#29648E' stop-opacity='1.00'/>
-  <stop offset='0.65' stop-color='#29648F' stop-opacity='1.00'/>
-  <stop offset='0.68' stop-color='#28638E' stop-opacity='1.00'/>
-  <stop offset='0.71' stop-color='#28628C' stop-opacity='1.00'/>
-  <stop offset='0.74' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.77' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.81' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.84' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.87' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.90' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.94' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='0.97' stop-color='#255D85' stop-opacity='1.00'/>
-  <stop offset='1.00' stop-color='#255D85' stop-opacity='1.00'/>
-</linearGradient>
-</defs>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-</g>
-<g clip-path='url(#cp-29)'>
-<polygon points='224.03,135.87 224.08,136.45 224.19,137.16 224.36,137.95 224.57,138.78 224.80,139.58 225.05,140.30 225.30,140.88 225.52,141.30 225.70,141.52 225.84,141.53 232.78,136.35 224.25,135.26 224.11,135.25 224.04,135.46 ' style='stroke-width: 0.75; stroke: none; fill: url(#pat-21);' />
 </g>
 <g clip-path='url(#cpNjMuNTl8MzIyLjk0fDE2LjQ0fDI4OC4zMQ==)'>
 <polyline points='239.78,187.43 218.99,177.26 ' style='stroke-width: 1.07; stroke: #404040; stroke-linecap: butt;' />
@@ -1397,7 +1189,6 @@
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 <text x='90.74' y='268.28' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-1.0</text>
-<text x='119.02' y='276.44' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.5</text>
 <text x='147.47' y='284.00' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>
 <text x='175.75' y='292.16' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.5</text>
 <text x='204.02' y='300.32' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>1.0</text>

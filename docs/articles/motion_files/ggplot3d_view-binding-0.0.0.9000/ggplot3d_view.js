@@ -11,9 +11,12 @@
   // Viewers in one link group share every orbit, zoom and reset: angle
   // changes add and zoom factors multiply, so each keeps its offset.
   const linkGroups = new Map();
-  const FACE = 0, STROKE = 1, MARKER = 2, TEXT = 3, DISC = 4, KINDS = [FACE, STROKE, MARKER, TEXT, DISC];
-  const DRAW_KINDS = [FACE, STROKE, MARKER, DISC];
-  const INSTANCED = new Set([DISC]);
+  const FACE = 0, STROKE = 1, MARKER = 2, TEXT = 3, DISC = 4, QUADRIC = 5, KINDS = [FACE, STROKE, MARKER, TEXT, DISC, QUADRIC];
+  const DRAW_KINDS = [FACE, STROKE, MARKER, DISC, QUADRIC];
+  const INSTANCED = new Set([DISC, QUADRIC]);
+  // Kinds lit by the shading kernel, whose programs compile once the widget
+  // data has supplied its GLSL.
+  const SHADED = new Set([FACE, QUADRIC]);
   const MAX_SHEET_PASSES = 32;
 
   // Table columns arrive as base64 little-endian typed arrays.
@@ -50,6 +53,15 @@
     return {scale, radius, right, up, forward, ray, orthoRight, orthoUp, distance, perspective, base,
       near: c.near == null ? Math.max(tolerance, distance-radius-tolerance) : c.near,
       far: c.far == null ? distance+radius+tolerance : c.far};
+  }
+
+  // The inverse of the matrix whose rows are the screen right, screen up and
+  // forward vectors, column-major: it carries camera offsets back to
+  // aspect-scaled model offsets, as RayFrame in src/scene/quadric.h.
+  function frameInverse(b) {
+    const a = b.right, u = b.up, f = b.forward, d = dot(a, cross(u, f));
+    const x = cross(u, f), y = cross(f, a), z = cross(a, u);
+    return new Float32Array([...x, ...y, ...z].map(v => v/d));
   }
 
   // Fog weight of depth_cue_3d(), depth_cue_weight_3d() in R: the camera
@@ -100,26 +112,29 @@
     out vec4 outColour;
     ${COLOUR_SPACE}
     ${FOG}
-    float eyeDepth() { return uDistance+dot((vModel-uTarget)*uScale, uForward); }
-    void clipData() {
-      if (uClipData > 0.5 && vClip > 0.5 && (any(lessThan(vModel, vec3(0.0))) || any(greaterThan(vModel, vec3(1.0))))) discard;
+    float eyeDepth(vec3 m) { return uDistance+dot((m-uTarget)*uScale, uForward); }
+    bool outsideData(vec3 m) {
+      return uClipData > 0.5 && vClip > 0.5 && (any(lessThan(m, vec3(0.0))) || any(greaterThan(m, vec3(1.0))));
     }
-    void emit(vec4 c) {
+    void clipData() { if (outsideData(vModel)) discard; }
+    // Colour c of the fragment at model point m and window depth z.
+    void emitAt(vec4 c, vec3 m, float z) {
     #if defined(PICK)
       outColour = vec4(float(vId & 255u), float((vId >> 8) & 255u), float((vId >> 16) & 255u), float((vId >> 24) & 255u))/255.0;
     #elif defined(DEPTH)
       if (c.a <= 0.0) discard;
-      outColour = vec4(eyeDepth(), 0.0, 0.0, 1.0);
+      outColour = vec4(eyeDepth(m), 0.0, 0.0, 1.0);
     #else
       if (c.a <= 0.0) discard;
-      if (uFog.a > 0.0 && vClip > 0.5) c.rgb = toSrgb(clamp(mix(toLinear(c.rgb), uFog.rgb, uFog.a*fogWeight(eyeDepth())), 0.0, 1.0));
+      if (uFog.a > 0.0 && vClip > 0.5) c.rgb = toSrgb(clamp(mix(toLinear(c.rgb), uFog.rgb, uFog.a*fogWeight(eyeDepth(m))), 0.0, 1.0));
       if (uOitPass == 1) {
-        float weight = clamp(pow(c.a+0.01, 3.0)*1000.0*pow(1.0-gl_FragCoord.z*0.9, 3.0), 0.01, 30.0);
+        float weight = clamp(pow(c.a+0.01, 3.0)*1000.0*pow(1.0-z*0.9, 3.0), 0.01, 30.0);
         outColour = vec4(toLinear(c.rgb)*c.a, c.a)*weight;
       } else if (uOitPass == 2) outColour = vec4(c.a);
       else outColour = c;
     #endif
-    }`;
+    }
+    void emit(vec4 c) { emitAt(c, vModel, gl_FragCoord.z); }`;
   const VARYINGS = 'out vec3 vModel; out vec4 vColour; flat out uint vId; flat out float vClip;';
 
   // Vertex layouts: one interleaved buffer per kind. A per-vertex state
@@ -135,9 +150,73 @@
       ['aColour', 4, 'u8n'], ['aOutline', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
     [DISC]: [['aPos', 3, 'f32'], ['aAngle', 1, 'f32'], ['aShape', 3, 'f32'],
       ['aColour', 4, 'u8n'], ['aOutline', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'], ['aState', 1, 'f32']],
-    [TEXT]: [['aPos', 3, 'f32'], ['aCorner', 2, 'f32'], ['aBox', 4, 'f32'], ['aAngle', 1, 'f32'], ['aId', 1, 'u32']]
+    [TEXT]: [['aPos', 3, 'f32'], ['aCorner', 2, 'f32'], ['aBox', 4, 'f32'], ['aAngle', 1, 'f32'], ['aId', 1, 'u32']],
+    [QUADRIC]: [['aBox0', 4, 'f32'], ['aBox1', 4, 'f32'], ['aBox2', 4, 'f32'], ['aBox3', 4, 'f32'],
+      ['aLocal0', 4, 'f32'], ['aLocal1', 4, 'f32'], ['aLocal2', 4, 'f32'], ['aLocal3', 4, 'f32'], ['aShape', 4, 'f32'],
+      ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'], ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32'], ['aState', 1, 'f32']]
   };
-  const STREAMS = {[FACE]: ['aState'], [STROKE]: ['aState', 'aDashStart'], [MARKER]: ['aState'], [TEXT]: ['aState'], [DISC]: []};
+  const STREAMS = {[FACE]: ['aState'], [STROKE]: ['aState', 'aDashStart'], [MARKER]: ['aState'], [TEXT]: ['aState'], [DISC]: [], [QUADRIC]: []};
+
+  // Where the sight ray a + tb, in homogeneous local coordinates of a unit
+  // sphere (kind 1), cylinder (2) or cone (3) along local z in [0, 1] whose
+  // radius at z = 1 is ratio times that at z = 0, enters and leaves the solid
+  // (curved surface and end planes): (t, part) of each, part 0 the curved
+  // surface, 1 and 2 the end planes, -1 none. The candidates are the roots of
+  // each constraint and the plane at infinity; the inside of each span between
+  // them is decided at its midpoint, as in src/scene/quadric.h, so cones whose
+  // sight lines cross both nappes and projective camera pre maps need no
+  // special case.
+  const QUADRIC_CAST = `
+    float quadricForm(vec2 shape, vec4 a, vec4 b) {
+      if (shape.x < 1.5) return dot(a.xyz, b.xyz)-a.w*b.w;
+      float c = shape.y-1.0;
+      return a.x*b.x+a.y*b.y-(a.w+c*a.z)*(b.w+c*b.z);
+    }
+    bool quadricInside(vec2 shape, vec4 x) {
+      if (!(abs(x.w) > 0.0) || quadricForm(shape, x, x) > 0.0) return false;
+      if (shape.x < 1.5) return true;
+      float z = x.z/x.w;
+      return z >= 0.0 && z <= 1.0;
+    }
+    vec4 quadricCast(vec2 shape, vec4 a, vec4 b) {
+      float t[5], part[5]; int n = 0;
+      float qa = quadricForm(shape, b, b), qb = quadricForm(shape, a, b), qc = quadricForm(shape, a, a);
+      float scale = max(abs(qa), max(abs(qb), abs(qc)));
+      if (scale > 0.0) {
+        if (abs(qa) <= 1e-6*scale) {
+          if (qb != 0.0) { t[n] = -qc/(2.0*qb); part[n] = 0.0; n++; }
+        } else if (qb*qb-qa*qc >= 0.0) {
+          float q = -(qb+(qb >= 0.0 ? 1.0 : -1.0)*sqrt(qb*qb-qa*qc));
+          t[n] = q/qa; part[n] = 0.0; n++;
+          if (q != 0.0) { t[n] = qc/q; part[n] = 0.0; n++; }
+        }
+      }
+      if (shape.x > 1.5) {
+        if (b.z != 0.0) { t[n] = -a.z/b.z; part[n] = 1.0; n++; }
+        if (b.w != b.z) { t[n] = -(a.w-a.z)/(b.w-b.z); part[n] = 2.0; n++; }
+      }
+      if (b.w != 0.0) { t[n] = -a.w/b.w; part[n] = -1.0; n++; }
+      for (int i = 1; i < 5; i++) {
+        if (i >= n) break;
+        for (int j = i; j > 0; j--) {
+          if (t[j-1] < t[j] || (t[j-1] == t[j] && part[j-1] <= part[j])) break;
+          float x = t[j]; t[j] = t[j-1]; t[j-1] = x;
+          x = part[j]; part[j] = part[j-1]; part[j-1] = x;
+        }
+      }
+      vec4 span = vec4(0.0, -1.0, 0.0, -1.0); bool first = true;
+      for (int i = 0; i <= 5; i++) {
+        if (i > n) break;
+        bool low = i > 0, high = i < n;
+        float lo = low ? t[i-1] : 0.0, hi = high ? t[i] : 0.0;
+        if (low && high && lo == hi) continue;
+        float mid = n == 0 ? 0.0 : !low ? hi-1.0-abs(hi) : !high ? lo+1.0+abs(lo) : 0.5*(lo+hi);
+        if (!quadricInside(shape, a+mid*b)) continue;
+        if (first) { span.xy = low ? vec2(lo, part[i-1]) : vec2(0.0, -1.0); first = false; }
+        span.zw = high ? vec2(hi, part[i]) : vec2(0.0, -1.0);
+      }
+      return span;
+    }`;
 
   const SHADERS = {
     // Faces interpolate the model-space normal and the linear-light colour
@@ -270,11 +349,105 @@
       }`, `
       void main() { emit(vColour); }`]
   };
+  // Quadrics are ray cast (Sigg, Weyrich, Botsch and Gross 2006): an instance
+  // per quadric covers the screen rectangle of its projected bounding box, or
+  // the whole canvas when the box reaches behind the eye, and each fragment
+  // intersects its sight ray with the canonical primitive through the inverse
+  // placement, writing the exact depth and lighting the exact normal with the
+  // shading kernel. uSide 0 keeps the nearest drawn hit (opaque drawing,
+  // picking, depth); 1 and 2 keep the near and the far side for weighted
+  // transparency, so a translucent quadric shows both, as in the static
+  // backends. A hit outside the near-far range or, for data, the panel box
+  // gives way to the far side, which shows where the quadric is cut.
+  SHADERS[QUADRIC] = [`
+    in vec4 aBox0; in vec4 aBox1; in vec4 aBox2; in vec4 aBox3;
+    in vec4 aLocal0; in vec4 aLocal1; in vec4 aLocal2; in vec4 aLocal3;
+    in vec4 aShape; in vec4 aColour; in uint aId; in vec4 aFlags; in vec4 aMaterial; in vec4 aMaterial2; in float aState;
+    ${VARYINGS}
+    flat out mat4 vToLocal; flat out vec4 vShape; flat out vec3 vLinear; flat out float vShade;
+    flat out vec4 vMaterial; flat out vec4 vMaterial2;
+    ${COLOUR_SPACE}
+    void main() {
+      mat4 toBox = mat4(aBox0, aBox1, aBox2, aBox3);
+      float r = max(1.0, aShape.y), z0 = aShape.x < 1.5 ? -1.0 : 0.0;
+      vec2 lo = vec2(1e30), hi = vec2(-1e30);
+      bool whole = false;
+      for (int i = 0; i < 8; i++) {
+        vec4 c = toBox*vec4((i & 1) == 0 ? -r : r, (i & 2) == 0 ? -r : r, (i & 4) == 0 ? z0 : 1.0, 1.0);
+        float d; vec4 p = project(c.xyz/c.w, d);
+        if (!(c.w > 0.0) || (uPerspective > 0.5 && d <= 0.0)) whole = true;
+        lo = min(lo, p.xy); hi = max(hi, p.xy);
+      }
+      vec2 corner = vec2((gl_VertexID & 1) == 0 ? 0.0 : 1.0, (gl_VertexID & 2) == 0 ? 0.0 : 1.0);
+      lo = whole ? vec2(0.0) : clamp(lo-1.0, vec2(0.0), uSize); hi = whole ? uSize : clamp(hi+1.0, vec2(0.0), uSize);
+      gl_Position = vec4(2.0*mix(lo, hi, corner)/uSize-1.0, 0.0, 1.0);
+      vec4 centre = toBox*vec4(0.0, 0.0, aShape.x < 1.5 ? 0.0 : 0.5, 1.0);
+      vModel = centre.xyz/centre.w; vId = aId; vClip = aFlags.y;
+      vColour = vec4(aColour.rgb, aColour.a*aState); vLinear = toLinear(aColour.rgb); vShade = aFlags.x;
+      vToLocal = mat4(aLocal0, aLocal1, aLocal2, aLocal3); vShape = aShape;
+      vMaterial = aMaterial; vMaterial2 = aMaterial2;
+    }`, `
+    uniform float uLight, uPerspective, uNear, uFar, uBase, uRatio; uniform vec3 uRay; uniform vec2 uOrigin, uInner;
+    uniform mat3 uFrame; uniform int uSide;
+    flat in mat4 vToLocal; flat in vec4 vShape; flat in vec3 vLinear; flat in float vShade;
+    flat in vec4 vMaterial; flat in vec4 vMaterial2;
+    ${QUADRIC_CAST}
+    SHADE_GLSL
+    void main() {
+      // The sight ray through this pixel in box coordinates, its parameter
+      // the camera depth.
+      vec2 ab = ((gl_FragCoord.xy/uRatio-uOrigin)/uInner-0.5)/(vec2(uInner.y/uInner.x, 1.0)*0.5*uBase);
+      vec3 origin = uFrame*(uPerspective > 0.5 ? vec3(0.0, 0.0, -uDistance) : vec3(ab, -uDistance));
+      vec3 direction = uFrame*(uPerspective > 0.5 ? vec3(ab, 1.0) : vec3(0.0, 0.0, 1.0));
+      origin = uTarget+origin/uScale; direction /= uScale;
+      vec4 a = vToLocal*vec4(origin, 1.0), b = vToLocal*vec4(direction, 0.0);
+      // Parameters count from the ray's point nearest the primitive's centre,
+      // where the quadratic loses the least precision.
+      vec3 centre = vec3(0.0, 0.0, vShape.x < 1.5 ? 0.0 : 0.5), p0 = a.xyz-centre*a.w, p1 = b.xyz-centre*b.w;
+      float shift = dot(p1, p1) > 0.0 ? -dot(p0, p1)/dot(p1, p1) : 0.0;
+      a += shift*b;
+      vec4 span = quadricCast(vShape.xy, a, b);
+      vec2 hit = vec2(0.0, -1.0);
+      for (int side = 0; side < 2; side++) {
+        vec2 h = side == 0 ? span.xy : span.zw;
+        if ((uSide == 1 && side == 1) || (uSide == 2 && side == 0) || h.y < -0.5 || hit.y > -0.5) continue;
+        if ((h.y > 0.5 && h.y < 1.5 && vShape.z < 0.5) || (h.y > 1.5 && vShape.w < 0.5)) continue;
+        float d = shift+h.x;
+        if (d < uNear || d > uFar || outsideData(origin+d*direction)) continue;
+        hit = h;
+      }
+      if (hit.y < -0.5) discard;
+      float depth = shift+hit.x;
+      vec3 m = origin+depth*direction;
+      float z = uPerspective > 0.5 ? (uFar+uNear)/(uFar-uNear)-2.0*uFar*uNear/((uFar-uNear)*depth) : 2.0*(depth-uNear)/(uFar-uNear)-1.0;
+      gl_FragDepth = clamp(0.5*z+0.5, 0.0, 1.0);
+      vec3 l = clamp(vLinear, 0.0, 1.0);
+      if (vShade > 0.5 && uLight > 0.5) {
+        // Outward normal: the gradient of the curved surface's form or of the
+        // end plane's coordinate, carried to box space by the transposed
+        // inverse placement.
+        vec4 x = a+hit.x*b, g;
+        if (hit.y < 0.5) {
+          float c = vShape.y-1.0, w = x.w+c*x.z;
+          g = vShape.x < 1.5 ? vec4(x.xyz, -x.w) : vec4(x.x, x.y, -c*w, -w);
+        } else {
+          float s = hit.y < 1.5 ? -1.0 : 1.0;
+          g = vec4(0.0, 0.0, s/x.w, -s*x.z/(x.w*x.w));
+        }
+        vec3 n = (g*vToLocal).xyz/uScale;
+        if (dot(n, n) > 0.0) {
+          vec3 q = (m-uTarget)*uScale;
+          vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
+          l = clamp(shade(normalize(n), q, v, l, vMaterial, vMaterial2), 0.0, 1.0);
+        }
+      }
+      emitAt(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a), m, gl_FragDepth);
+    }`];
   SHADERS[DISC] = SHADERS[MARKER];
 
   // mode: false for colour, true for pick ids, 'depth' for camera depth.
-  // The shading kernel's GLSL; face programs compile once the widget data
-  // has supplied it.
+  // The shading kernel's GLSL; programs of SHADED kinds compile once the
+  // widget data has supplied it.
   let shadeGlsl = '';
   const MAX_LIGHTS = 8;
   function compile(gl, kind, mode) {
@@ -513,8 +686,8 @@
   }
 
   function packetPrimitives(packet, furniture, glyphs = new Map()) {
-    ['vertices','corners','faces','polylines','markers','text','footprints','footprint_vertices'].forEach(name => {
-      Object.keys(packet[name]).forEach(key => { packet[name][key] = column(packet[name][key]); });
+    ['vertices','corners','faces','polylines','markers','text','footprints','footprint_vertices','quadrics'].forEach(name => {
+      if (packet[name]) Object.keys(packet[name]).forEach(key => { packet[name][key] = column(packet[name][key]); });
     });
     const sheet = packet.face_sheet = column(packet.face_sheet);
     const vx = packet.vertices.x, vy = packet.vertices.y, vz = packet.vertices.z, corner = packet.corners.vertex;
@@ -547,13 +720,27 @@
         result.push(p);
       }
     });
+    // Ray-cast quadrics: placement into the box and its inverse (16
+    // column-major entries each), and the shape (kind, radius ratio, whether
+    // each end disk is drawn).
+    const q = packet.quadrics;
+    for (let i = 0; q && q.kind && i < q.kind.length; i++) {
+      const toBox = Array.from(q.to_box.subarray(16*i, 16*i+16)), toLocal = Array.from(q.to_local.subarray(16*i, 16*i+16));
+      const kind = q.kind[i], ratio = kind === 3 ? q.radius_ratio[i] : 1, z = kind === 1 ? 0 : 0.5;
+      const w = z*toBox[11]+toBox[15];
+      result.push({kind: QUADRIC, toBox, toLocal, material: packet.materials[q.style_id[i]-1], opacity: q.opacity[i],
+        shape: [kind, ratio, kind !== 1 && q.cap_0[i] === 1 ? 1 : 0, kind !== 1 && q.cap_1[i] === 1 && ratio > 0 ? 1 : 0],
+        points: [[0, 1, 2].map(k => (z*toBox[8+k]+toBox[12+k])/w)],
+        partition: q.partition[i], furniture, row: i, table: q, packet, primitiveId: q.primitive_id[i],
+        layer: q.layer_id[i], source: q.source_row[i], sheet: 0});
+    }
     return result;
   }
 
   // Paint colour of a primitive before lighting and selection.
   function baseColour(p) {
     const m = p.material;
-    const c = (p.kind === FACE ? m.fill : (p.kind === MARKER || p.kind === DISC) && Number(m.shape) >= 21 ? m.fill : m.colour).slice();
+    const c = (p.kind === FACE || p.kind === QUADRIC ? m.fill : (p.kind === MARKER || p.kind === DISC) && Number(m.shape) >= 21 ? m.fill : m.colour).slice();
     c[3] = c[3] > 0 ? p.opacity : 0;
     return c;
   }
@@ -609,6 +796,13 @@
           segments.push(start);
         }
         if (row) dashed.push({p, segments, period: pattern.reduce((s, v) => s+v, 0)});
+      } else if (p.kind === QUADRIC) {
+        const b = p.toBox, l = p.toLocal;
+        V.add({aBox0: b.slice(0, 4), aBox1: b.slice(4, 8), aBox2: b.slice(8, 12), aBox3: b.slice(12, 16),
+          aLocal0: l.slice(0, 4), aLocal1: l.slice(4, 8), aLocal2: l.slice(8, 12), aLocal3: l.slice(12, 16), aShape: p.shape,
+          aColour: p.colour, aId: id, aFlags: [p.material.shade ? 1 : 0, clip, 0, 0], aState: [1],
+          aMaterial: p.material.material || [1, 1, 0, 10], aMaterial2: p.material.material2 || [1, -1, 0, 0]});
+        E.push(p.vertexStart);
       } else if (p.kind === MARKER || p.kind === DISC) {
         markerGeometry(p, V, E, id, clip);
       } else if (p.kind === TEXT) {
@@ -761,7 +955,7 @@
         return {renderValue: function () {}, resize: function () {}};
       }
       const programs = {}, pickPrograms = {};
-      KINDS.forEach(k => { if (k !== FACE) { programs[k] = compile(gl, k, false); pickPrograms[k] = compile(gl, k, true); } });
+      KINDS.forEach(k => { if (!SHADED.has(k)) { programs[k] = compile(gl, k, false); pickPrograms[k] = compile(gl, k, true); } });
       const pickTarget = {framebuffer: gl.createFramebuffer(), colour: gl.createRenderbuffer(), depth: gl.createRenderbuffer(), panel: -1};
       let transparency = null, eyeDome = null, depthPrograms = null;
       let data, views = [], frame, active = 0, frameRequest, pickRequest, hovered = null;
@@ -943,6 +1137,7 @@
         set1('uDistance', b.distance); set1('uNear', b.near); set1('uFar', b.far); set1('uBase', b.base);
         set1('uPerspective', b.perspective ? 1 : 0); set1('uPpm', L.ppm); set1('uRatio', canvas.width/width);
         set1('uClipData', V.camera.clip_data ? 1 : 0);
+        gl.uniformMatrix3fv(prog.uniform('uFrame'), false, V.frame);
         gl.uniform2f(prog.uniform('uSize'), width, height); gl.uniform2f(prog.uniform('uOrigin'), L.ox, L.oy);
         gl.uniform2f(prog.uniform('uInner'), L.iw, L.ih);
         const light = V.data.light;
@@ -1004,7 +1199,11 @@
         if (g.instanced) {
           gl.bindVertexArray(g.vao); gl.bindBuffer(gl.ARRAY_BUFFER, g[buffer]);
           bindAttributes(gl, g.vertices, range[0], 1);
-          gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, range[1]);
+          // Translucent quadrics accumulate their near and far sides.
+          (kind === QUADRIC && oitPass > 0 ? [1, 2] : [0]).forEach(side => {
+            gl.uniform1i(set[kind].uniform('uSide'), side);
+            gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, range[1]);
+          });
           return;
         }
         gl.bindVertexArray(g.vao); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g[buffer]);
@@ -1223,6 +1422,7 @@
         views.forEach(V => {
           const vp = V.data.viewport, r = V.data.rect_mm, ppm = F.ppm;
           V.basis = cameraBasis(V.camera, vp, V.framing);
+          V.frame = frameInverse(V.basis);
           V.fogDepth = boxDepth(V);
           updateGlyphs(gl, V);
           const px = F.x+r[0]*ppm, py = F.y+r[1]*ppm;
@@ -1461,7 +1661,7 @@
           if (x.schema_version !== 4) throw Error('Unsupported ggplot3d viewer schema');
           if (x.shade_glsl !== shadeGlsl || !programs[FACE]) {
             shadeGlsl = x.shade_glsl;
-            programs[FACE] = compile(gl, FACE, false); pickPrograms[FACE] = compile(gl, FACE, true);
+            SHADED.forEach(k => { programs[k] = compile(gl, k, false); pickPrograms[k] = compile(gl, k, true); });
             depthPrograms = null;
           }
           stop(); pathIndex = 0;

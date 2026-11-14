@@ -26,6 +26,10 @@ markers of geom_point_3d()."><meta property="og:image" content="https://gillesco
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -189,9 +193,10 @@ spheres stay round whatever the box proportions. Rows without a radius get
 <p>Spheres with an edge <code>colour</code>, or drawn as wireframes, are icospheres that
 show their edges: an icosahedron subdivided <code>detail</code> times, 20 * 4^detail
 triangles. In curvilinear frames each sphere is placed at its mapped centre
-and keeps its shape. The interactive viewer and the exporters receive an
-inscribed mesh of every analytic sphere (<code>options(ggplot3d.quadric_segments)</code>
-points around the equator, 32 by default).</p>
+and keeps its shape. The interactive viewer intersects each pixel's ray
+with every analytic sphere as well; the exporters receive an inscribed mesh
+of it (<code>options(ggplot3d.quadric_segments)</code> points around the equator, 32 by
+default).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
