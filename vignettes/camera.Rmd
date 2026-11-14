@@ -1,5 +1,6 @@
 ---
 title: "Camera and framing"
+description: "Set camera angles, projection, framing and stereo output for static scenes."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Camera and framing}
@@ -74,3 +75,43 @@ Lighting changes the colours used to draw surface faces. Its direction can be ex
 ```{r light, fig.alt="Blue columns lit from the upper right of the view."}
 p + coord_3d(light = light_3d(direction = c(1, 1, 2), space = "camera"))
 ```
+
+## Stereo pairs
+
+Stereo output renders the scene from two eye directions. Each eye turns by
+half the separation about the image's vertical axis while looking at the
+same target. The target lies in the page plane, with nearer geometry
+appearing in front of it. Both eyes share the same magnification.
+
+```{r stereo-pair, fig.height=3.6, fig.alt="Left-eye and right-eye views of the columns placed side by side for parallel stereo viewing."}
+p + coord_3d(axes = character(), panes = character(), box = "none",
+  stereo = stereo_3d("pair", separation = 5))
+```
+
+Pair mode places the left-eye image on the left for parallel viewing or a
+stereoscope. Cross mode reverses their order for cross-eyed viewing. Each
+facet gets its own eye pair. The separation is an angle in degrees.
+
+```{r stereo-cross, fig.height=3.6, fig.alt="The column scene with the right-eye image on the left and the left-eye image on the right for cross-eyed viewing."}
+p + coord_3d(axes = character(), panes = character(), box = "none",
+  stereo = stereo_3d("cross", separation = 5))
+```
+
+## Anaglyphs
+
+An anaglyph combines the two views into colour channels for coloured glasses.
+The default filters are red for the left eye and cyan for the right.
+Each eye image is reduced to luminance, so mapped colour scales communicate
+brightness in this mode. A plot with a colour or fill scale produces a warning.
+
+```{r stereo-anaglyph, fig.alt="Red-cyan anaglyph of the column scene for viewing through coloured glasses."}
+p + coord_3d(stereo = stereo_3d("anaglyph", separation = 5),
+  backend = backend_3d("raster", dpi = 80, antialias = 1))
+```
+
+Vector and hybrid output use device multiply compositing when available.
+Raster output composites the two eye images per channel; devices without
+multiply support also use that raster composite and require ragg.
+[Interactive viewing](viewer.html) uses the central camera in a browser.
+Intrinsic stereo needs separately configured observers and orientations for
+each eye in [Inside the Thurston geometries](thurston-geometries.html).
