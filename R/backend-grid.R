@@ -1,7 +1,10 @@
+utils::globalVariables("grid_clip_paths_cpp")
+
 grid_capabilities_3d <- function() {
   caps <- grDevices::dev.capabilities()
   list(vector = TRUE, clipping_paths = isTRUE(caps$clippingPaths),
        masks = length(caps$masks) > 0L && !all(is.na(caps$masks)),
+       mask_type = if ("alpha" %in% caps$masks) "alpha" else if ("luminance" %in% caps$masks) "luminance" else NULL,
        group_atop = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "atop" %in% caps$compositing,
        group_over = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "over" %in% caps$compositing,
        gradients = getRversion() >= "4.1.0" && "LinearGradient" %in% caps$patterns,
@@ -344,6 +347,45 @@ mask_path_3d <- function(scene, rows) {
     id = match(ring, unique(ring)), rule = "evenodd")
 }
 
+# Closed painted paths clipped to a visible footprint, in physical units.
+clipped_path_grob_3d <- function(x, y, id, clip, viewport, gp, width = 0, cap = 0L, join = 0L, mitre = 10,
+                                 cache = NULL, key = NULL, radii = NULL) {
+  outline <- if (!is.null(cache)) cache[[key]] else NULL
+  paths <- grid_clip_paths_cpp(x * viewport$width_mm, y * viewport$height_mm, as.integer(id),
+    as.numeric(clip$x) * viewport$width_mm, as.numeric(clip$y) * viewport$height_mm, as.integer(clip$id),
+    width, as.integer(cap), as.integer(join), mitre, 25.4 / (viewport$dpi * 4096), outline, radii)
+  if (!is.null(cache)) cache[[key]] <- paths$outline
+  if (!paths$supported) return(NULL)
+  if (!length(paths$x)) return(grid::nullGrob())
+  grid::pathGrob(paths$x / viewport$width_mm, paths$y / viewport$height_mm, id = paths$id,
+    pathId = paths$path_id, rule = "winding", gp = grid::gpar(fill = gp$col[1L], col = NA, alpha = gp$alpha[1L]))
+}
+
+# Filled point footprints use the same physical outlines as scene visibility.
+masked_marker_grob_3d <- function(styles, x, y, clip, viewport, gp, cache = NULL, key = NULL) {
+  shape <- style_value_3d(styles, "shape", 19)[1L]
+  if (!is.numeric(shape) || !shape %in% c(1, 15:21)) return(NULL)
+  footprint <- marker_footprints_3d(styles)
+  if (footprint$footprints$kind[1L] == 1L) {
+    radius <- footprint$footprints$radius_x_mm[1L]
+    if (radius == 0) return(grid::nullGrob())
+    metrics <- paint_metrics_3d(styles)
+    body <- metrics$body_radius_mm[1L]; border <- metrics$border_mm[1L]
+    draw <- function(outer, inner, suffix, colour = gp$col[1L]) {
+      paint <- gp; paint$col <- colour
+      clipped_path_grob_3d(x, y, 1L, clip, viewport, paint,
+        cache = cache, key = paste0(key, suffix), radii = c(outer, inner))
+    }
+    colour <- if (shape == 1) NA_character_ else if (shape == 21) gp$fill[1L] else gp$col[1L]
+    fill <- if (is.na(colour)) grid::nullGrob() else draw(body, 0, ":body", colour)
+    if (border == 0) return(fill)
+    return(grid::grobTree(fill, draw(body + border, max(0, body - border), ":border")))
+  }
+  xy <- cbind(footprint$vertices$x_mm, footprint$vertices$y_mm)
+  clipped_path_grob_3d(x + xy[, 1L] / viewport$width_mm,
+    y + xy[, 2L] / viewport$height_mm, rep(1L, nrow(xy)), clip, viewport, gp, cache = cache, key = key)
+}
+
 dash_pattern_3d <- function(lty, width_mm) {
   named <- c(blank = "0", solid = "1", dashed = "44", dotted = "13", dotdash = "1343", longdash = "73", twodash = "2262")
   key <- as.character(lty)
@@ -418,8 +460,9 @@ arrow_heads_3d <- function(scene, rows, styles, viewport) {
 # Clips a run's grob to its fragment mask, to a region, or to both: the mask
 # as clipping path and the region as alpha mask, since a nested clipping path
 # replaces the outer one instead of intersecting it.
-clip_grob_3d <- function(g, clip = NULL, region = NULL) {
+clip_grob_3d <- function(g, clip = NULL, region = NULL, caps = grid_capabilities_3d()) {
   if (is.null(clip) && is.null(region)) return(g)
+  if (!caps$clipping_paths) stop("The vector device does not support clipping paths required by scene fragment masks.", call. = FALSE)
   vp <- if (is.null(region)) grid::viewport(clip = clip) else if (is.null(clip)) grid::viewport(clip = region) else
     grid::viewport(clip = clip, mask = region)
   if (is.null(g$vp)) { g$vp <- vp; g } else grid::grobTree(g, vp = vp)
@@ -435,11 +478,10 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   anchors <- if (is.null(styles$.anchor)) rep(FALSE, nrow(styles)) else !is.na(styles$.anchor) & styles$.anchor
   order <- order[!anchors[order]]
   caps <- grid_capabilities_3d()
-  if (any(f$mask_count[order] > 0L) && !caps$clipping_paths) stop("The vector device does not support clipping paths required by scene fragment masks.", call. = FALSE)
+  lines <- which(f$kind == 2L)
   if (!length(order)) return(grid::gTree(children = grid::gList(), fragment_runs = list(), capabilities = caps))
   # Properties that grid cannot vectorise terminate a compatible run.
   key <- as.character(f$kind)
-  lines <- which(f$kind == 2L)
   if (length(lines)) {
     source <- f$source_index[lines]; tab <- scene$source$polylines
     arrows <- style_value_3d(scene$styles, "arrow", list(NULL))
@@ -474,6 +516,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   key <- paste(key, region_id, sep = ":region:")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
+  path_cache <- new.env(parent = emptyenv())
   grobs <- lapply(seq_along(runs), function(run) {
     masks <- runs[[run]]
     rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
@@ -534,19 +577,35 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
       gp$linemitre <- tab$mitre_limit[source[1L]]
       g <- if (!sum(npaths)) grid::nullGrob() else grid::polylineGrob(
         path_x, path_y, default.units = "npc", id = rep(seq_len(sum(npaths)), path_counts), gp = gp)
+      if (!is.null(clip) && (inherits(g, "null") || tab$width_mm[source[1L]] > 0)) {
+        if (inherits(g, "null")) clip <- NULL else {
+          painted <- clipped_path_grob_3d(as.numeric(g$x), as.numeric(g$y), g$id,
+            clip, viewport, gp, tab$width_mm[source[1L]], tab$cap[source[1L]],
+            tab$join[source[1L]], tab$mitre_limit[source[1L]], path_cache, key[rows[1L]])
+          if (!is.null(painted)) { g <- painted; clip <- NULL } else if (!is.null(caps$mask_type)) {
+            clip$gp <- grid::gpar(fill = "white", col = NA, alpha = 1)
+            g <- grid::grobTree(g, vp = grid::viewport(mask = grid::as.mask(clip, type = caps$mask_type)))
+            clip <- NULL
+          }
+        }
+      }
       heads <- arrow_heads_3d(scene, masks, styles[masks, , drop = FALSE], viewport)
       if (!inherits(heads, "null")) {
-        if (!is.null(clip)) { g$vp <- grid::viewport(clip = clip); clip <- NULL }
+        if (!is.null(clip)) { g <- clip_grob_3d(g, clip, caps = caps); clip <- NULL }
         g <- grid::grobTree(g, heads)
       }
     } else if (kind == 3L) {
       g <- grid::pointsGrob(x, y, default.units = "npc", pch = style_value_3d(s, "shape", 19), gp = gp)
+      if (!is.null(clip)) {
+        marker <- masked_marker_grob_3d(s, x, y, clip, viewport, gp, path_cache, key[rows[1L]])
+        if (!is.null(marker)) { g <- marker; clip <- NULL }
+      }
     } else {
       tab <- scene$source$text; source <- f$source_index[rows]
       g <- text_grob_3d(s, x, y, tab$hjust[source], tab$vjust[source], tab$angle[source[1L]], f$opacity[rows])
     }
     region <- if (region_id[rows[1L]] > 0L) regions$grobs[[region_id[rows[1L]]]] else NULL
-    g <- clip_grob_3d(g, clip, region)
+    g <- clip_grob_3d(g, clip, region, caps)
     g$name <- paste0("scene-run-", run)
     g
   })

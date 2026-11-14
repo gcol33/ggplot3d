@@ -41,6 +41,10 @@ geometry_triangulate_rings_cpp <- function(xy, ring, tolerance = 0, strict = FAL
     .Call(`_ggplot3d_geometry_triangulate_rings_cpp`, xy, ring, tolerance, strict)
 }
 
+grid_clip_paths_cpp <- function(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline = NULL, radii = NULL) {
+    .Call(`_ggplot3d_grid_clip_paths_cpp`, x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii)
+}
+
 geometry_intersections_cpp <- function(xyz, faces, parent, tolerance) {
     .Call(`_ggplot3d_geometry_intersections_cpp`, xyz, faces, parent, tolerance)
 }

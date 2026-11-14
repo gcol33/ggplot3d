@@ -45,7 +45,7 @@ geom_ribbon_3d(
 
 \item{radius, width}{Cross-section size where the aesthetic is not mapped.}
 
-\item{radius.unit, width.unit}{Unit of the cross-section size: \code{"data"}
+\item{radius.unit}{Unit of the cross-section size: \code{"data"}
 (transformed position units) or \code{"mm"} (millimetres on the page).}
 
 \item{cap}{End caps of a tube on an open curve: \code{"round"}, \code{"flat"} or \code{"none"}.}
@@ -55,6 +55,8 @@ geom_ribbon_3d(
 \item{spline}{NULL, or a \code{\link[=stat_spline_3d]{stat_spline_3d()}} type to smooth the path first.}
 
 \item{n}{Number of spline samples.}
+
+\item{width.unit}{Unit of ribbon width, with the same choices as \code{radius.unit}.}
 
 \item{normal}{Direction the first cross section is oriented towards: the
 ribbon's surface normal, or the profile's first axis in stat_sweep_3d().}

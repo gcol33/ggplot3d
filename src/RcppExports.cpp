@@ -148,6 +148,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// grid_clip_paths_cpp
+Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id, Rcpp::NumericVector mask_x, Rcpp::NumericVector mask_y, Rcpp::IntegerVector mask_id, double width, int cap, int join, double mitre, double tolerance, SEXP outline, Rcpp::Nullable<Rcpp::NumericVector> radii);
+RcppExport SEXP _ggplot3d_grid_clip_paths_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP, SEXP mask_xSEXP, SEXP mask_ySEXP, SEXP mask_idSEXP, SEXP widthSEXP, SEXP capSEXP, SEXP joinSEXP, SEXP mitreSEXP, SEXP toleranceSEXP, SEXP outlineSEXP, SEXP radiiSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type id(idSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mask_x(mask_xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mask_y(mask_ySEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type mask_id(mask_idSEXP);
+    Rcpp::traits::input_parameter< double >::type width(widthSEXP);
+    Rcpp::traits::input_parameter< int >::type cap(capSEXP);
+    Rcpp::traits::input_parameter< int >::type join(joinSEXP);
+    Rcpp::traits::input_parameter< double >::type mitre(mitreSEXP);
+    Rcpp::traits::input_parameter< double >::type tolerance(toleranceSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type outline(outlineSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type radii(radiiSEXP);
+    rcpp_result_gen = Rcpp::wrap(grid_clip_paths_cpp(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii));
+    return rcpp_result_gen;
+END_RCPP
+}
 // geometry_intersections_cpp
 Rcpp::DataFrame geometry_intersections_cpp(Rcpp::NumericMatrix xyz, Rcpp::IntegerMatrix faces, Rcpp::IntegerVector parent, double tolerance);
 RcppExport SEXP _ggplot3d_geometry_intersections_cpp(SEXP xyzSEXP, SEXP facesSEXP, SEXP parentSEXP, SEXP toleranceSEXP) {
@@ -687,6 +709,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_geometry_triangulate_rings_cpp", (DL_FUNC) &_ggplot3d_geometry_triangulate_rings_cpp, 4},
+    {"_ggplot3d_grid_clip_paths_cpp", (DL_FUNC) &_ggplot3d_grid_clip_paths_cpp, 13},
     {"_ggplot3d_geometry_intersections_cpp", (DL_FUNC) &_ggplot3d_geometry_intersections_cpp, 4},
     {"_ggplot3d_mesh_process_cpp", (DL_FUNC) &_ggplot3d_mesh_process_cpp, 6},
     {"_ggplot3d_mesh_geodesic_path_cpp", (DL_FUNC) &_ggplot3d_mesh_geodesic_path_cpp, 5},

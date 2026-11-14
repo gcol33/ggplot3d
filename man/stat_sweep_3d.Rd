@@ -36,6 +36,9 @@ geom_sweep_3d(...)
 
 \item{radius}{Scale factor for the profile, also available as an aesthetic.}
 
+\item{radius.unit}{Unit of the cross-section size: \code{"data"}
+(transformed position units) or \code{"mm"} (millimetres on the page).}
+
 \item{cap}{End caps of a tube on an open curve: \code{"round"}, \code{"flat"} or \code{"none"}.}
 
 \item{normal}{Direction the first cross section is oriented towards: the

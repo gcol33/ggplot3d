@@ -36,8 +36,9 @@
 #' @inheritParams stat_function_3d
 #' @param sides Number of points on the tube's circle.
 #' @param radius,width Cross-section size where the aesthetic is not mapped.
-#' @param radius.unit,width.unit Unit of the cross-section size: `"data"`
+#' @param radius.unit Unit of the cross-section size: `"data"`
 #'   (transformed position units) or `"mm"` (millimetres on the page).
+#' @param width.unit Unit of ribbon width, with the same choices as `radius.unit`.
 #' @param cap End caps of a tube on an open curve: `"round"`, `"flat"` or `"none"`.
 #' @param normal Direction the first cross section is oriented towards: the
 #'   ribbon's surface normal, or the profile's first axis in stat_sweep_3d().

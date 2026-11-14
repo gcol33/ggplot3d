@@ -1,0 +1,5 @@
+args <- commandArgs(TRUE)
+examples <- normalizePath(if (length(args)) args[1L] else "x.Rcheck/ggplot3d.Rcheck/ggplot3d-Ex.R", winslash = "/")
+pkgload::load_all()
+setwd("dev_notes/check-pdf-crash")
+source(examples, echo = FALSE, print.eval = TRUE)

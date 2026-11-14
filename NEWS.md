@@ -62,6 +62,9 @@
   polylines a `mask_width_mm` for haloed lines (Appel 1967); and packets a
   `quadrics` table that the engine does not compile yet (#16).
 
+* The grid backend paints clipped stroke and filled marker outlines as compound
+  paths, reducing PDF clipping definitions while preserving surface underlays.
+
 * Hyperbolic and spherical coordinates accept `inside = TRUE`, finite observer
   points or isometries, and optional inverse-geodesic-area depth cues. The
   vector backend views Klein or gnomonic geometry from the model origin;
