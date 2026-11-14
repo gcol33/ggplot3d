@@ -1,14 +1,29 @@
-# Explore a scene with orbit controls
+# Explore a plot with orbit controls, tooltips and selection
 
-Draw a panel in a WebGL htmlwidget, using its mapped scene and initial
-camera. Drag to orbit, use the wheel or pinch to zoom, and select Camera
-code to copy the current angles into a coord_3d() call. Arrow keys
-orbit; + and - zoom.
+Draw a plot in a WebGL htmlwidget, using its mapped scenes and initial
+cameras. Drag to orbit, use the wheel or pinch to zoom, and select
+Camera code to copy the current angles into a coord_3d() call. Arrow
+keys orbit;
+
+- and - zoom. Hovering a primitive shows its tooltip; clicking selects
+  it.
 
 ## Usage
 
 ``` r
-view_3d(plot, width = 640L, height = 640L, panel = 1L, elementId = NULL)
+view_3d(
+  plot,
+  data = NULL,
+  width = 640L,
+  height = 640L,
+  panel = NULL,
+  link = TRUE,
+  selection = c("multiple", "single", "none"),
+  tooltip = TRUE,
+  elementId = NULL,
+  path = NULL,
+  fps = 30
+)
 ```
 
 ## Arguments
@@ -18,44 +33,153 @@ view_3d(plot, width = 640L, height = 640L, panel = 1L, elementId = NULL)
   A ggplot with
   [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
 
+- data:
+
+  Optional crosstalk `SharedData` whose `origData()` the plot draws,
+  default NULL. Layers that draw these rows take their selection keys
+  from it, share selections with the other crosstalk widgets of its
+  group, and hide rows that a crosstalk filter removes.
+
 - width, height:
 
   Widget dimensions in pixels, default 640 each.
 
 - panel:
 
-  Panel index in layout order, default 1. Facet strips, legends, plot
-  titles and ordinary two-dimensional annotation grobs stay in the
-  static plot. Each widget displays one panel.
+  NULL (default) shows the whole plot: every panel is live, and facet
+  strips, legends, titles and the other parts outside the panels are
+  embedded as SVG around them (requires svglite). A panel index in
+  layout order shows that panel alone.
+
+- link:
+
+  Linked cameras, default TRUE: orbiting or zooming one panel turns
+  every panel by the same amount, keeping their offsets. FALSE moves the
+  panel under the pointer alone. A group name links the panels and also
+  links this viewer with the other viewers on the page that carry the
+  same name: an orbit, zoom or reset in one applies to all, azimuth,
+  elevation and roll changes add and zoom factors multiply, so each
+  viewer keeps its own view. Linking the panels of a
+  [`facet_views()`](https://gillescolling.com/ggplot3d/reference/facet_views.md)
+  plot shown in separate viewers turns the front, top and side views as
+  one object.
+
+- selection:
+
+  `"multiple"` (default) lets shift- or control-click add and remove
+  keys, `"single"` keeps one key, `"none"` disables selection.
+  Unselected primitives are dimmed while a selection exists.
+
+- tooltip:
+
+  Default tooltips listing mapped values, default TRUE. A mapped
+  `tooltip` aesthetic is always shown.
 
 - elementId:
 
   Optional HTML element identifier, default NULL. In Shiny, camera
-  changes set the input named paste0(elementId, "\_camera").
+  changes set the input named `paste0(elementId, "_camera")` and
+  selections set `paste0(elementId, "_selected")` to the selected keys.
+
+- path:
+
+  A camera path from
+  [`camera_path_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md),
+  [`orbit_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md),
+  [`fly_through_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
+  or
+  [`dolly_zoom_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md),
+  or NULL (default). The viewer gains a Play button that moves every
+  panel's camera along the path with the views
+  [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+  renders; dragging or Reset stops it.
+
+- fps:
+
+  Camera views per second of the sampled path, default 30.
 
 ## Value
 
-An htmlwidget of class ggplot3d_view. Its x contains schema_version,
-scene (schema-1 indexed model geometry and mapped materials), furniture,
-axes, camera, framing, viewport, reference, background and capabilities.
-Geometry is transferred once; camera interaction stays in the browser.
+An htmlwidget of class ggplot3d_view. Its x contains schema_version (4),
+frame (the plot size in mm), chrome (the SVG of everything outside the
+panels, or NULL), panels, link (whether the panels share camera moves),
+link_group (the group name, or NULL), selection settings and
+capabilities. Each panel holds its rectangle in the frame, scene and
+furniture (schema-1 geometry whose table columns are base64
+little-endian arrays, with mapped materials, the alpha_mode sheet key of
+every face, and quadric rows with their placement after camera pre and
+its inverse), axes, bounds, camera, framing, viewport, light,
+background, layers (the source rows, keys and tooltips of its
+primitives) and, with `path`, the sampled camera views. Geometry is
+transferred once; camera interaction and playback stay in the browser.
 
 ## Details
 
-Requires htmlwidgets. Opaque geometry uses a WebGL depth buffer.
-Transparent primitives are sorted back to front by centre depth;
-crossing transparent surfaces can differ from the exact static vector
-backend. Text uses plain browser text, with whole-anchor visibility for
-scene labels. Lighting uses the same linear-light colour calculation as
-static output. Furniture and its labels rotate with the camera. No
-external scripts load.
+Interaction follows [ggiraph](https://davidgohel.github.io/ggiraph/) for
+aesthetics, [deck.gl](https://deck.gl/docs/api-reference/core/layer) for
+picking and [crosstalk](https://rstudio.github.io/crosstalk/) for linked
+selection. Every `_3d` layer accepts two extra aesthetics: `tooltip`,
+the text shown on hover, and `data_id`, the selection key; rows that
+share a key are selected together, across layers. Without a `tooltip`
+mapping, the tooltip lists the mapped aesthetics of the row under the
+pointer. Without a `data_id`, each row of each layer is its own key,
+written `"<layer>:<row>"`. Map these aesthetics in
+[`ggplot2::ggplot()`](https://ggplot2.tidyverse.org/reference/ggplot.html)
+when a layer comes from ggplot2 itself, whose layer constructors do not
+know them.
+
+The browser holds one interleaved vertex buffer per primitive kind
+(faces, stroke segments, marker footprints) and identifies the primitive
+under the pointer from an offscreen id image, by the same `primitive_id`
+the raster backend returns in its id buffer.
+
+Requires htmlwidgets and a browser with WebGL 2. Opaque geometry uses a
+depth buffer. Transparent geometry uses weighted blended
+order-independent transparency in linear light, an approximation
+requiring WebGL 2's `EXT_color_buffer_float` extension. Faces drawn with
+`alpha_mode = "surface"` enter it once per sheet: a depth pass per sheet
+keeps only the nearest fragment of each sheet, so a sheet folding over
+itself does not darken while other sheets show through it. Sheets whose
+screen extents do not overlap share a pass; past 32 passes, the
+remaining sheets blend face by face. Spheres, cylinders and cones are
+ray cast (Sigg et al. 2006): each pixel's ray meets the exact surface,
+which writes its own depth and is lit at its exact normal; a translucent
+one enters the transparency once per side. Strokes and markers widen to
+their physical size in the vertex shader, and face lighting uses the
+same linear-light colour calculation as static output. Text uses plain
+browser text drawn over the scene, hidden only when its anchor is
+clipped. Furniture and its labels rotate with the camera. The widget
+element receives `ggplot3d:camera`, `ggplot3d:hover` and
+`ggplot3d:select` events. No external scripts load.
+
+A discrete `tooltip` or `data_id` mapping does not split groups, so
+paths and surfaces keep their shape.
 
 ## Examples
 
 ``` r
+if (requireNamespace("htmlwidgets", quietly = TRUE) &&
+    requireNamespace("svglite", quietly = TRUE)) {
+  cars <- data.frame(mtcars, model = rownames(mtcars))
+  p <- ggplot2::ggplot(cars, ggplot2::aes(wt, mpg, z = hp,
+      colour = factor(cyl), tooltip = model, data_id = model)) +
+    geom_point_3d(size = 3) + coord_3d() + ggplot2::facet_wrap(~am)
+  view_3d(p, width = 720, height = 400)
+}
+if (requireNamespace("htmlwidgets", quietly = TRUE) &&
+    requireNamespace("crosstalk", quietly = TRUE) &&
+    requireNamespace("svglite", quietly = TRUE)) {
+  shared <- crosstalk::SharedData$new(mtcars)
+  p <- ggplot2::ggplot(shared$origData(), ggplot2::aes(wt, mpg, z = hp)) +
+    geom_point_3d() + coord_3d()
+  view_3d(p, data = shared)
+}
 if (requireNamespace("htmlwidgets", quietly = TRUE)) {
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
     geom_point_3d(size = 3) + coord_3d()
-  view_3d(p)
+  views <- p + facet_views(c("front", "isometric"))
+  front <- view_3d(views, panel = 1, width = 320, height = 320, link = "cars")
+  iso <- view_3d(views, panel = 2, width = 320, height = 320, link = "cars")
+  view_3d(p, panel = 1, path = orbit_3d(degrees = 360, duration = 6))
 }
 ```

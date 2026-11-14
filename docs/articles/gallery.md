@@ -1,46 +1,146 @@
 # Gallery
 
-This article draws three-dimensional versions of common ggplot2 charts:
-curves, function plots, histograms, grouped bars, pie charts, time
-series, fitted surfaces, densities and contour lines. Each section names
-the ggplot2 layer it corresponds to and shows which variables move to
-the z axis.
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.md) gives a
-minimal example of every geom and stat; installation is covered in [Get
+This article draws familiar charts and solid geometry from small
+datasets. Each example gives the data and the code that draws it.
+[Layers](https://gillescolling.com/ggplot3d/articles/layers.md) explains
+the data layers, and [Vector
+fields](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
+develops the streamtube example. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+
+## Domain recipes
+
+[Tensor glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md)
+draw symmetric tensors as ellipsoids or superquadrics. [Ordination
+biplots](https://gillescolling.com/ggplot3d/articles/ordination.md)
+combine site scores, variable arrows and group regions. [Molecular
+views](https://gillescolling.com/ggplot3d/articles/molecules.md) draw
+atoms and bonds from bio3d records. [Colour
+gamuts](https://gillescolling.com/ggplot3d/articles/colour-gamuts.md)
+place sampled colours and their convex hull in Lab coordinates.
 
 ## Parametric curves
 
-In ggplot2,
-[`geom_path()`](https://ggplot2.tidyverse.org/reference/geom_path.html)
-joins rows in the order they appear in the data.
-[`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
-does the same with a third coordinate, so any curve given as a function
-of a parameter can be drawn by sampling the parameter. The trefoil knot
-below is traced by three sine and cosine terms in a parameter `t` from 0
-to 2π.
+Sample a curve in row order and sweep a circular cross-section along it
+to give it thickness. The trefoil knot below is traced by three sine and
+cosine terms in a parameter `t` from 0 to 2π. The closed tube joins its
+last cross-section to its first.
 
 ``` r
 
-t <- seq(0, 2 * pi, length.out = 300)
+t <- seq(0, 2 * pi, length.out = 121)[-121]
 knot <- data.frame(x = sin(t) + 2 * sin(2 * t),
                    y = cos(t) - 2 * cos(2 * t),
                    z = -sin(3 * t))
 ggplot(knot, aes(x, y, z = z)) +
-  geom_path_3d(linewidth = 1.2, colour = PAL["blue"]) +
-  coord_3d()
+  geom_tube_3d(radius = 0.16, sides = 10, closed = TRUE, fill = PAL["blue"]) +
+  coord_3d(aspect = "data")
 ```
 
-![A blue trefoil knot drawn as a closed curve in three dimensions,
-crossing itself three times.](gallery_files/figure-html/knot-1.svg)
+![A solid blue trefoil tube crossing over and under itself three
+times.](gallery_files/figure-html/knot-1.svg)
 
 At each of the three crossings, the strand nearer the camera is drawn
 over the other.
+[Layers](https://gillescolling.com/ggplot3d/articles/layers.html#tubes-ribbons-and-sweeps)
+shows ribbons and custom cross-sections along curves.
+
+## Solid violins
+
+The iris data record flower measurements in centimetres for three
+species. Revolve each species’ estimated petal-length density around a
+vertical axis. The width changes along that axis with the density,
+giving each species a solid violin.
+
+``` r
+
+ggplot(iris, aes(Species, y = 0, z = Petal.Length, fill = Species)) +
+  geom_violin_3d(shape = "revolve", n = 40, sides = 16) +
+  scale_y_continuous(limits = c(-1, 1), breaks = NULL, name = NULL) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  coord_3d(elevation = 20)
+```
+
+![Three revolved petal-length violins for the iris species, separated
+along x.](gallery_files/figure-html/solid-violins-1.svg)
+
+## Covariance ellipsoids
+
+Three measurements place each iris flower in space. Estimate a normal
+covariance ellipsoid for each species to show the direction and extent
+of its spread. Translucent faces reveal the points and principal axes.
+
+``` r
+
+ggplot(iris, aes(Sepal.Length, Sepal.Width, z = Petal.Length,
+                 colour = Species, fill = Species)) +
+  stat_ellipsoid_3d(type = "norm", kind = "data", alpha = 0.2,
+                     axes = TRUE, detail = 2) +
+  geom_point_3d(size = 1) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  coord_3d(azimuth = -45, elevation = 25)
+```
+
+![Three translucent covariance ellipsoids around iris measurements, with
+points and principal axes
+visible.](gallery_files/figure-html/covariance-1.svg)
+
+The data ellipsoids describe variation among flowers. Confidence
+ellipsoids for the species means use the standard-error kind, as shown
+in
+[Layers](https://gillescolling.com/ggplot3d/articles/layers.html#spheres-ellipsoids-and-glyphs).
+
+## Streamtubes
+
+A rotating vector field with a positive vertical component produces
+rising helices. Integrate from three seeds at different radii, then give
+each curve a circular cross-section. Fill represents the vector
+magnitude along each tube.
+
+``` r
+
+field <- expand.grid(x = seq(-1, 1, length.out = 5),
+                     y = seq(-1, 1, length.out = 5), z = c(-1, 0, 1))
+field <- transform(field, u = -y, v = x, w = 0.2)
+seeds <- rbind(c(0.3, 0, -0.8), c(0.55, 0, -0.8), c(0.8, 0, -0.8))
+ggplot(field, aes(x, y, z = z, u = u, v = v, w = w)) +
+  stat_streamline_3d(aes(fill = after_stat(norm)), seeds = seeds,
+    geom = "tube", direction = "forward", step = 0.1, max_steps = 80,
+    radius = 0.035, sides = 8, cap = "flat", colour = NA) +
+  scale_fill_gradient(low = PAL["blue"], high = PAL["orange"]) +
+  coord_3d(aspect = "data")
+```
+
+![Three rising helical streamtubes in a rotating vector field, coloured
+by vector magnitude.](gallery_files/figure-html/streamtubes-1.svg)
+
+## A capped cutaway
+
+Subtract a smaller sphere from a larger one to make a hollow shell. A
+clipping plane removes the half at positive x. Capping closes the cut
+with an annulus and preserves the inner cavity.
+
+``` r
+
+shell <- sdf_sphere(radius = 1) - sdf_sphere(radius = 0.65)
+ggplot() + geom_isofunction_3d(fun = shell, n = 24, fill = PAL["teal"]) +
+  xlim(-1.1, 1.1) + ylim(-1.1, 1.1) + zlim(-1.1, 1.1) +
+  coord_3d(aspect = "data", azimuth = -30,
+    clip_planes = list(clip_plane_3d(c(-1, 0, 0), c(x = 0), cap = TRUE)))
+```
+
+![A hollow sphere cut in half, with an annular cap around its visible
+inner cavity.](gallery_files/figure-html/cutaway-1.svg)
+
+[Implicit
+surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md)
+shows how to construct shapes from functions and reconstruct them from
+point samples.
 
 ## Functions of two variables
 
-[`geom_function()`](https://ggplot2.tidyverse.org/reference/geom_function.html)
-draws a function of x as a line.
+`geom_function()` draws a function of x as a line.
 [`geom_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
 samples a function of x and y on a grid and draws the result as a
 surface. The x and y limits set the sampling range, and `n` sets the
@@ -90,9 +190,8 @@ head(bezier, 3)
 #> 3 0.06181394 0.17336306 0.17814509
 ```
 
-In two dimensions the sampled points would go to
-[`geom_path()`](https://ggplot2.tidyverse.org/reference/geom_path.html).
-Here the curve is a
+In two dimensions the sampled points would go to `geom_path()`. Here the
+curve is a
 [`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
 layer, and the control polygon is a dashed path through the control
 points.
@@ -116,38 +215,22 @@ each end along the polygon’s first and last edge.
 
 ## Bivariate histograms
 
-[`geom_bin_2d()`](https://ggplot2.tidyverse.org/reference/geom_bin_2d.html)
-counts observations in rectangular cells of two continuous variables and
-shows each count as a fill colour. In three dimensions the count becomes
-the height of a column. The `faithful` data record the duration of 272
-eruptions of the Old Faithful geyser and the waiting time before each,
-both in minutes. Assign each eruption to a cell 0.5 minutes wide in
-duration and 5 minutes wide in waiting time, then count the eruptions in
-each cell.
+`geom_bin_2d()` counts observations in rectangular cells of two
+continuous variables and shows each count as a fill colour. In three
+dimensions the count becomes the height of a column. The `faithful` data
+record the duration of 272 eruptions of the Old Faithful geyser and the
+waiting time before each, both in minutes.
+[`geom_histogram_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_2d_3d.md)
+assigns each eruption to a cell 0.5 minutes wide in duration and 5
+minutes wide in waiting time, counts the eruptions in each cell and
+draws one column per occupied cell; neighbouring columns touch, as
+histogram bars do.
 
 ``` r
 
-duration <- 0.5 * floor(faithful$eruptions / 0.5) + 0.25
-waiting <- 5 * floor(faithful$waiting / 5) + 2.5
-bins <- aggregate(list(count = duration),
-                  list(duration = duration, waiting = waiting), length)
-head(bins, 3)
-#>   duration waiting count
-#> 1     1.75    42.5     1
-#> 2     1.75    47.5    14
-#> 3     2.25    47.5     6
-```
-
-Each row of `bins` holds a cell centre and its count; empty cells have
-no row.
-[`geom_col_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
-draws one column per row, and setting `width` and `depth` to the bin
-widths makes neighbouring columns touch, as histogram bars do.
-
-``` r
-
-ggplot(bins, aes(duration, waiting, z = count)) +
-  geom_col_3d(width = 0.5, depth = 5, fill = PAL["blue"]) +
+ggplot(faithful, aes(eruptions, waiting)) +
+  geom_histogram_3d(binwidth = c(0.5, 5), fill = PAL["blue"]) +
+  labs(x = "duration", z = "count") +
   coord_3d()
 ```
 
@@ -294,8 +377,8 @@ value in 2005.
 
 ## Scatter plots with a fitted surface
 
-[`geom_smooth()`](https://ggplot2.tidyverse.org/reference/geom_smooth.html)
-fits y as a function of x and draws the fitted line over the points.
+`geom_smooth()` fits y as a function of x and draws the fitted line over
+the points.
 [`geom_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
 fits z as a function of x and y and draws the fitted surface. Here the
 `mtcars` fuel consumption (`mpg`, miles per gallon) is modelled by
@@ -319,14 +402,13 @@ cars.](gallery_files/figure-html/smooth-1.svg)
 
 The pale surfaces above and below the fit are the pointwise 95%
 confidence bounds for the mean, the counterpart of the grey ribbon
-around
-[`geom_smooth()`](https://ggplot2.tidyverse.org/reference/geom_smooth.html).
-Points below the fitted surface are hidden by it.
+around `geom_smooth()`. Points below the fitted surface are hidden by
+it.
 
 ## Two-dimensional densities
 
-[`geom_density_2d()`](https://ggplot2.tidyverse.org/reference/geom_density_2d.html)
-draws contour lines of a bivariate kernel density estimate.
+`geom_density_2d()` draws contour lines of a bivariate kernel density
+estimate.
 [`stat_density_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_2d_3d.md)
 computes the same kind of estimate and draws the density as height. The
 sample below holds 2,000 diamonds under 2.5 carats, with price on a
@@ -353,8 +435,8 @@ than at neighbouring weights.
 
 ## Contour lines
 
-[`geom_contour()`](https://ggplot2.tidyverse.org/reference/geom_contour.html)
-draws the lines where a gridded height crosses a set of levels.
+`geom_contour()` draws the lines where a gridded height crosses a set of
+levels.
 [`geom_contour_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
 draws the same lines on the surface, each at the height of its level.
 `volcano` holds heights in metres of Maunga Whau on a 10 m grid, 87 rows
@@ -388,10 +470,32 @@ the crater.](gallery_files/figure-html/contour-1.svg)
 
 The lines close round the summit and the crater rim. Lines on the far
 slope are hidden where the near slope covers them. ggplot2’s own
-[`geom_contour()`](https://ggplot2.tidyverse.org/reference/geom_contour.html)
-also works inside
+`geom_contour()` also works inside
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
 drawing each line at its level without the surface.
+
+## Filled contour terraces
+
+ggplot2’s filled contour layer divides the volcano heights into bands.
+Adding the 3D coordinate system raises each band to its level midpoint,
+producing horizontal terraces with the original band colours.
+
+``` r
+
+ggplot(heights, aes(x, y, z = z)) +
+  geom_contour_filled(bins = 6, colour = "white", linewidth = 0.15) +
+  scale_fill_manual(values = unname(PAL[1:6])) +
+  coord_3d(azimuth = -40, elevation = 40, aspect = c(1.4, 1, 0.6))
+```
+
+![The volcano's filled contour bands lifted into coloured terraces, with
+the crater opening
+retained.](gallery_files/figure-html/filled-terraces-1.svg)
+
+[Combining 2D and 3D
+graphics](https://gillescolling.com/ggplot3d/articles/combining-2d-3d.md)
+shows terraced bands and contour maps placed on the floor below a
+surface.
 
 ## Where next
 

@@ -88,3 +88,60 @@ p + coord_3d(light = light_3d(direction = c(1, 1, 2), space = "camera"))
 
 ![Blue columns lit from the upper right of the
 view.](camera_files/figure-html/light-1.svg)
+
+## Stereo pairs
+
+Stereo output renders the scene from two eye directions. Each eye turns
+by half the separation about the image’s vertical axis while looking at
+the same target. The target lies in the page plane, with nearer geometry
+appearing in front of it. Both eyes share the same magnification.
+
+``` r
+
+p + coord_3d(axes = character(), panes = character(), box = "none",
+  stereo = stereo_3d("pair", separation = 5))
+```
+
+![Left-eye and right-eye views of the columns placed side by side for
+parallel stereo viewing.](camera_files/figure-html/stereo-pair-1.svg)
+
+Pair mode places the left-eye image on the left for parallel viewing or
+a stereoscope. Cross mode reverses their order for cross-eyed viewing.
+Each facet gets its own eye pair. The separation is an angle in degrees.
+
+``` r
+
+p + coord_3d(axes = character(), panes = character(), box = "none",
+  stereo = stereo_3d("cross", separation = 5))
+```
+
+![The column scene with the right-eye image on the left and the left-eye
+image on the right for cross-eyed
+viewing.](camera_files/figure-html/stereo-cross-1.svg)
+
+## Anaglyphs
+
+An anaglyph combines the two views into colour channels for coloured
+glasses. The default filters are red for the left eye and cyan for the
+right. Each eye image is reduced to luminance, so mapped colour scales
+communicate brightness in this mode. A plot with a colour or fill scale
+produces a warning.
+
+``` r
+
+p + coord_3d(stereo = stereo_3d("anaglyph", separation = 5),
+  backend = backend_3d("raster", dpi = 80, antialias = 1))
+```
+
+![Red-cyan anaglyph of the column scene for viewing through coloured
+glasses.](camera_files/figure-html/stereo-anaglyph-1.svg)
+
+Vector and hybrid output use device multiply compositing when available.
+Raster output composites the two eye images per channel; devices without
+multiply support also use that raster composite and require ragg.
+[Interactive
+viewing](https://gillescolling.com/ggplot3d/articles/viewer.md) uses the
+central camera in a browser. Intrinsic stereo needs separately
+configured observers and orientations for each eye in [Inside the
+Thurston
+geometries](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md).

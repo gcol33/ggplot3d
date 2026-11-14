@@ -2,6 +2,11 @@
 
 *three-dimensional plots with ggplot2*
 
+![Height bands of the Maunga Whau volcano every 10 metres, from blue at
+90 metres through beige to red at 200 metres, drawn as a flat ggplot2
+contour map on the left and, with coord_3d(), draped over the shaded
+volcano surface on the right.](reference/figures/ggplot3d-hero.svg)
+
 ggplot3d draws three-dimensional points, paths, surfaces and solids with
 [ggplot2](https://ggplot2.tidyverse.org/).
 

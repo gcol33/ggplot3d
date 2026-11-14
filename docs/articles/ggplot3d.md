@@ -5,14 +5,12 @@ ggplot3d adds three-dimensional layers and a z position scale to
 plots from data and aesthetic mappings. This tutorial assumes basic R
 and data frames. It ends with a surface, observations and a saved plot.
 
-1.  **Map** positions with
-    [`aes()`](https://ggplot2.tidyverse.org/reference/aes.html).
+1.  **Map** positions with `aes()`.
 
 2.  **Draw** a surface with
     [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md).
 
-3.  **Save** the plot with
-    [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
+3.  **Save** the plot with `ggsave()`.
 
 ## Installation
 
@@ -106,9 +104,10 @@ produced by a missing mapping.
 
 ``` r
 
-ggplot(surface, aes(east, north)) + geom_surface_3d() + coord_3d()
-#> Error in `make_layer_3d()`:
-#> ! Problem while computing stat.
+tryCatch(
+  print(ggplot(surface, aes(east, north)) + geom_surface_3d() + coord_3d()),
+  error = function(e) message(conditionMessage(e)))
+#> Problem while computing stat.
 #> ℹ Error occurred in the 1st layer.
 #> Caused by error:
 #> ! A surface requires a z aesthetic.

@@ -5,6 +5,27 @@
 - **[Gilles Colling](https://github.com/gcol33)**. Author, maintainer,
   copyright holder. [](https://orcid.org/0000-0003-3070-6066)
 
+- **The Manifold Authors**. Copyright holder.\
+  Bundled Manifold library
+
+- **Angus Johnson**. Copyright holder.\
+  Bundled Clipper2 library
+
+- **Jared Hoberock**. Copyright holder.\
+  Manifold utilities
+
+- **Nathan Bell**. Copyright holder.\
+  Manifold utilities
+
+- **Wenzel Jakob**. Copyright holder.\
+  Disjoint-set implementation
+
+- **wi-re**. Copyright holder.\
+  Singular value decomposition
+
+- **Sun Microsystems, Inc.**. Copyright holder.\
+  Mathematical functions
+
 ## Citation
 
 Source:

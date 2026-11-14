@@ -31,11 +31,8 @@ ends <- track[c(1, nrow(track)), ]
 ends$label <- c("start", "end")
 ```
 
-[`geom_path()`](https://ggplot2.tidyverse.org/reference/geom_path.html),
-[`geom_point()`](https://ggplot2.tidyverse.org/reference/geom_point.html)
-and
-[`geom_text()`](https://ggplot2.tidyverse.org/reference/geom_text.html)
-are the ggplot2 layers, used unchanged. Inside
+`geom_path()`, `geom_point()` and `geom_text()` are the ggplot2 layers,
+used unchanged. Inside
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
 they read the z mapping and are placed and depth sorted like
 [`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md),
@@ -56,15 +53,13 @@ h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
 start and end at its two
 ends.](combining-2d-3d_files/figure-html/plain-layers-1.svg)
 
-The accepted ggplot2 geoms are points, paths, lines, segments, text,
-polygons and
-[`geom_blank()`](https://ggplot2.tidyverse.org/reference/geom_blank.html);
-[`geom_contour()`](https://ggplot2.tidyverse.org/reference/geom_contour.html)
-and
-[`geom_density_2d()`](https://ggplot2.tidyverse.org/reference/geom_density_2d.html)
-draw each line at the height of its level. A layer without a z mapping
-is drawn at z = 0, and the z scale extends to include 0. Here the path
-is drawn a second time with `inherit.aes = FALSE`, so it lies flat at
+Registered ggplot2 layers include points, paths, lines, segments, text,
+labels, polygons, rectangles, tiles and intervals. Contour and density
+contours draw each line at the height of its level. Filled contours draw
+horizontal bands at their level midpoints, as shown in [Terraced filled
+contours](#terraced-filled-contours). A layer without a z mapping is
+drawn at z = 0, and the z scale extends to include 0. Here the path is
+drawn a second time with `inherit.aes = FALSE`, so it lies flat at
 height 0 below the helix.
 
 ``` r
@@ -114,6 +109,129 @@ points, so each projection lies on the box grid at the coordinates it
 shares with its point. The scales are trained on the finite positions
 only, so the box keeps the range of the data.
 
+## A whole 2D plot on a wall
+
+A projection shows the points; a 2D plot on the wall can show a summary
+of them as well.
+[`annotation_plot_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_plot_3d.md)
+takes a finished 2D ggplot and draws its panel, every layer with its
+background and grid lines, on a plane of the box. The plot below shows z
+against x with a linear fit, and it is placed on the back wall at the
+largest y. It keeps its own coordinates, so its x and z line up with the
+axes of the box.
+
+``` r
+
+side <- ggplot(cloud, aes(x, z)) +
+  geom_point(colour = PAL["orange"], size = 1) +
+  geom_smooth(method = "lm", formula = y ~ x, colour = PAL["blue"])
+k + annotation_plot_3d(side, plane = "xz", at = Inf) +
+  geom_point_3d(size = 2.5) +
+  coord_3d()
+```
+
+![Forty dark points in a box; on the back wall a grey 2D panel with the
+same points in orange and a blue fitted line with its grey confidence
+band.](combining-2d-3d_files/figure-html/plot-on-wall-1.svg)
+
+The vector route places the panel’s marks in the wall plane, where they
+are foreshortened with the box and covered by geometry in front. Text
+faces the viewer and draws over the scene. The panel background and grid
+travel with the panel; its outer axes, title and legend stay outside the
+embedded panel.
+
+The two letters of the plane name select the directions of the 2D plot’s
+x and y axes. The remaining coordinate is fixed by the placement
+argument. A four-value extent can position the plot independently of its
+original ranges.
+
+``` r
+
+bars <- ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = PAL["blue"])
+k + annotation_plot_3d(bars, plane = "xy", at = -Inf,
+                       extent = c(-2, 2, -2, 2), alpha = 0.7) +
+  geom_point_3d(size = 2) + coord_3d()
+```
+
+![A blue 2D bar chart placed inside a rectangular extent on the floor
+beneath the point
+cloud.](combining-2d-3d_files/figure-html/plot-on-floor-1.svg)
+
+For a dense panel, choose the raster route and set its image resolution.
+The following example uses a small resolution to keep the article fast.
+Both routes accept one 2D panel; place several panels with separate
+calls.
+
+``` r
+
+k + annotation_plot_3d(side, plane = "xz", at = Inf,
+                       route = "raster", resolution = 64) +
+  geom_point_3d(size = 2.5) + coord_3d()
+```
+
+![The fitted 2D scatter plot rendered as a small raster on the back wall
+behind the point
+cloud.](combining-2d-3d_files/figure-html/raster-wall-1.svg)
+
+See
+[annotation_plot_3d()](https://gillescolling.com/ggplot3d/reference/annotation_plot_3d.md)
+for all plane orientations and placement arguments.
+
+## Small multiples in depth
+
+[`facet_slices_3d()`](https://gillescolling.com/ggplot3d/reference/facet_slices_3d.md)
+splits the data like `facet_wrap()` and stacks the subsets on parallel
+planes of one panel. The cloud is split by the sign of x; each half gets
+its own density, computed within its slice.
+
+``` r
+
+cloud$side <- ifelse(cloud$x < 0, "negative", "positive")
+ggplot(cloud, aes(z)) +
+  geom_density(fill = PAL["blue"], alpha = 0.6) +
+  facet_slices_3d(vars(side), labels = FALSE) +
+  coord_3d(up = "y", azimuth = 30, elevation = 20)
+```
+
+![Two translucent planes one behind the other, labelled negative and
+positive, each with a filled density curve; the curve on the front plane
+lies further left.](combining-2d-3d_files/figure-html/slices-1.svg)
+
+The slices lie on z, so the 2D layers keep x and y; `coord_3d(up = "y")`
+stands the planes upright, one behind the other. A numeric slicing
+variable places slices at its values on a continuous scale. A factor
+uses its level order, and layers without the slicing variable repeat in
+every slice. Plane visibility, labels and opacity are set in
+[facet_slices_3d()](https://gillescolling.com/ggplot3d/reference/facet_slices_3d.md).
+
+## Reference lines and annotations
+
+`geom_hline()` and `geom_vline()` draw lines on the floor, here at x = 0
+and y = 0.
+[`annotate_3d()`](https://gillescolling.com/ggplot3d/reference/annotate_3d.md)
+adds z positions to the arguments of `annotate()`. Here it labels the
+highest point of the cloud.
+[Layers](https://gillescolling.com/ggplot3d/articles/layers.html#reference-lines-and-dimensions)
+shows arbitrary reference lines, brackets and dimension lines.
+
+``` r
+
+top <- cloud[which.max(cloud$z), ]
+k + geom_hline(yintercept = 0, colour = PAL["grey"]) +
+  geom_vline(xintercept = 0, colour = PAL["grey"]) +
+  geom_point_3d(size = 2.5) +
+  annotate_3d("label", x = top$x, y = top$y, z = top$z, label = "highest",
+              hjust = -0.15) +
+  coord_3d()
+```
+
+![Forty dark points in a box, two grey lines crossing at x = 0 and y = 0
+at height zero, and a white label reading highest next to the top
+point.](combining-2d-3d_files/figure-html/annotations-1.svg)
+
+The label is a box drawn at the projected position of its point; points
+and faces in front of that position cover it.
+
 ## Contours and densities on the floor
 
 The surface below has a peak and a hollow. `surface` contains one row
@@ -126,6 +244,27 @@ surface <- expand.grid(x = seq(-2, 2, length.out = 25),
 surface$z <- with(surface, exp(-((x - 0.5)^2 + y^2)) -
   0.6 * exp(-((x + 0.8)^2 + (y + 0.6)^2) / 0.5))
 ```
+
+### Terraced filled contours
+
+ggplot2’s own filled contour layer works with the z mapping. Each band
+occupies a horizontal plane at the midpoint of its lower and upper
+levels, and the ordered band factor uses a discrete fill scale. Holes
+inside a band remain open.
+
+``` r
+
+ggplot(surface, aes(x, y, z = z)) +
+  geom_contour_filled(bins = 5, colour = "white", linewidth = 0.15) +
+  scale_fill_manual(values = unname(PAL[c("purple", "blue", "teal", "green", "orange")])) +
+  coord_3d(elevation = 40)
+```
+
+![Filled contours of a peak and a hollow, lifted into horizontal
+terraces at their band
+midpoints.](combining-2d-3d_files/figure-html/terraced-contours-1.svg)
+
+### A contour map beneath a surface
 
 [`geom_contour_filled_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
 with `plane = "floor"` computes height bands from the same grid and
@@ -157,8 +296,8 @@ the Old Faithful geyser.
 draws the estimated density, and the eruptions are drawn on the floor
 with `z = -Inf`. The surface is half transparent and the camera is
 raised, so the points under the two peaks show through. The z title is
-set with [`labs()`](https://ggplot2.tidyverse.org/reference/labs.html)
-because the density layer computes z and has no z mapping to name it.
+set with `labs()` because the density layer computes z and has no z
+mapping to name it.
 
 ``` r
 
@@ -172,6 +311,30 @@ ggplot(faithful, aes(eruptions, waiting)) +
 ![A half-transparent grey density surface with two peaks over the
 faithful data, with the 272 eruptions drawn as black points on the floor
 below the peaks.](combining-2d-3d_files/figure-html/density-floor-1.svg)
+
+With `plane = "floor"`,
+[`stat_density_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_2d_3d.md)
+lays the same density grid flat on the floor and fills it by density, a
+heat map under the surface.
+
+``` r
+
+ggplot(faithful, aes(eruptions, waiting)) +
+  stat_density_2d_3d(n = 24, alpha = 0.5) +
+  stat_density_2d_3d(n = 48, plane = "floor") +
+  labs(z = "density") +
+  coord_3d(elevation = 50)
+#> Ignoring unknown labels:
+#> • z : "density"
+#> Ignoring unknown labels:
+#> • z : "density"
+#> Ignoring unknown labels:
+#> • z : "density"
+```
+
+![The half-transparent grey density surface over a floor coloured from
+dark blue where the density is low to light blue under the two
+peaks.](combining-2d-3d_files/figure-html/density-heat-1.svg)
 
 ## A 3D panel beside 2D panels
 
@@ -226,12 +389,29 @@ profile.
 
 ## Two camera views of one plot
 
-Facets in one plot share one
+The camera arguments of
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
-and therefore one camera. To show the same data from two directions,
-give each plot its own
-[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
-and arrange them with patchwork.
+take one value per panel. To show the same data from two directions,
+repeat the data once per view, facet by the view, and give each panel
+its own angles.
+
+``` r
+
+views <- rbind(transform(surface, view = "default view"),
+               transform(surface, view = "from the opposite side"))
+ggplot(views, aes(x, y, z = z)) + geom_surface_3d(fill = "grey85") +
+  facet_wrap(~view, ncol = 1) +
+  coord_3d(azimuth = c(-60, 120), elevation = c(30, 55))
+```
+
+![Two stacked panels: the grey surface from the default view, and the
+same surface seen from a higher camera on the opposite
+side.](combining-2d-3d_files/figure-html/two-views-1.svg)
+
+Both panels keep one magnification, so the surface has the same size in
+each. Separate plots with their own
+[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
+arranged with patchwork, do the same for plots with different data.
 
 ``` r
 
@@ -242,7 +422,7 @@ base <- s + geom_surface_3d(fill = "grey85")
 
 ![The grey surface from the default view above the same surface seen
 from a higher camera on the opposite
-side.](combining-2d-3d_files/figure-html/two-views-1.svg)
+side.](combining-2d-3d_files/figure-html/two-plots-1.svg)
 
 [Camera and
 framing](https://gillescolling.com/ggplot3d/articles/camera.md)
@@ -267,9 +447,7 @@ base + coord_3d() +
 giving the positions of the peak and the hollow, and a caption below the
 panel.](combining-2d-3d_files/figure-html/titles-1.svg)
 
-In a patchwork layout the same
-[`labs()`](https://ggplot2.tidyverse.org/reference/labs.html) call names
-one panel, and
+In a patchwork layout the same `labs()` call names one panel, and
 [`plot_annotation()`](https://patchwork.data-imaginist.com/reference/plot_annotation.html)
 adds a title over the whole arrangement.
 
@@ -277,6 +455,10 @@ adds a title over the whole arrangement.
 
 across / side + plot_annotation(title = "Profile at y = 0")
 ```
+
+![The surface with its red profile line above the 2D profile, under the
+overall title Profile at y =
+0.](combining-2d-3d_files/figure-html/layout-title-1.svg)
 
 ## Where next
 

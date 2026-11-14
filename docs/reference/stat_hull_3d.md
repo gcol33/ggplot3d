@@ -17,6 +17,7 @@ stat_hull_3d(
   geom = GeomStatsSurface3D,
   position = "identity",
   ...,
+  space = "data",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -35,10 +36,26 @@ geom_hull_3d(...)
 
   Geom prototype for keyed triangle corners.
 
+- space:
+
+  `"data"` takes the hull of the positions. `"ilr"` takes the hull of a
+  composition mapped with `a`, `b`, `c` (and `d`) in isometric log-ratio
+  coordinates and keeps its facets on the original points.
+
+## Details
+
+The hull faces keep the rows of their corner points, so a fill given per
+point, such as `fill = I(hex)`, reaches every vertex. With
+`shading = "smooth"` each face interpolates its corner colours in linear
+light, and with `shade = FALSE` the vertices show their colours exactly.
+A discrete fill splits the points into groups, so `group = 1` keeps one
+hull.
+
 ## References
 
 Barber, Dobkin and Huhdanpaa (1996). The Quickhull Algorithm for Convex
-Hulls. ACM TOMS 22, 469-483. <https://doi.org/10.1145/235815.235821>
+Hulls. ACM TOMS 22, 469-483.
+[doi:10.1145/235815.235821](https://doi.org/10.1145/235815.235821)
 
 ## Examples
 
@@ -48,4 +65,9 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_hull_3d(fill = "steelblue") + coord_3d()
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   stat_hull_3d(fill = "steelblue") + coord_3d()
+# Colours per vertex, interpolated over the faces.
+d$hex <- grDevices::rgb(d$x, d$y, d$z)
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  stat_hull_3d(ggplot2::aes(fill = I(hex), group = 1), shading = "smooth", shade = FALSE) +
+  coord_3d()
 ```

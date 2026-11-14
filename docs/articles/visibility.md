@@ -95,6 +95,41 @@ ggplot(a, aes(x, y, z = z)) + geom_surface_3d(fill = PAL["blue"]) +
 ![A blue surface with red observations and vertical black segments
 extending through it.](visibility_files/figure-html/strokes-1.svg)
 
+## Feature lines and haloes
+
+A surface or mesh layer can derive its own lines with
+`outline = outline_3d()`: silhouettes, where the surface turns away from
+the camera, creases, where neighbouring faces meet at a sharp angle, and
+boundaries of open surfaces. Silhouettes depend on the camera, so they
+are recomputed for each panel. Bénard and Hertzmann
+[2019](https://doi.org/10.1561/0600000075) describe these lines and how
+to extract them from a mesh.
+
+The lines are strokes of the scene, so nearer surfaces hide them like
+any other stroke, and `hidden = "dashed"` draws their hidden parts
+dashed. Where a hidden line passes behind a visible one, the two strokes
+touch on the page and the depth order is hard to read. `halo` leaves a
+gap of the given width on each side of every line where a farther line
+passes behind it, the haloed lines of Appel, Rohlf and Stein (1979).
+Lines that end at a common vertex, such as the edges at a corner of a
+cube, still meet.
+
+``` r
+
+cube <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
+quads <- rbind(c(1, 3, 4, 2), c(5, 6, 8, 7), c(1, 2, 6, 5),
+               c(3, 7, 8, 4), c(1, 5, 7, 3), c(2, 4, 8, 6))
+ggplot() +
+  geom_mesh_3d(vertices = cube, faces = quads, fill = "grey95",
+               outline = outline_3d(hidden = "dashed", linewidth = 0.8,
+                                    halo = grid::unit(1.2, "mm"))) +
+  coord_3d(azimuth = -50, elevation = 25)
+```
+
+![A wire-frame cube whose hidden edges are dashed and stop short of the
+visible edges they pass
+behind.](visibility_files/figure-html/halo-1.svg)
+
 ## Transparency and overlays
 
 An opacity below one lets farther geometry contribute to the image. The
@@ -119,6 +154,14 @@ annotations whose role requires them to remain visible.
 - Fuchs, H., Kedem, Z. M. and Naylor, B. F. (1980). On Visible Surface
   Generation by A Priori Tree Structures. SIGGRAPH, 124-133.
   [doi:10.1145/800250.807481](https://doi.org/10.1145/800250.807481).
+
+- Bénard, P. and Hertzmann, A. (2019). Line Drawings from 3D Models: A
+  Tutorial. Foundations and Trends in Computer Graphics and Vision 11,
+  1-159. [doi:10.1561/0600000075](https://doi.org/10.1561/0600000075).
+
+- Appel, A., Rohlf, F. J. and Stein, A. J. (1979). The Haloed Line
+  Effect for Hidden Line Elimination. SIGGRAPH ’79.
+  [history.siggraph.org](https://history.siggraph.org/?p=104577).
 
 - Nehab, D. (2020). Converting Stroked Primitives to Filled Primitives.
   ACM Transactions on Graphics 39(4).

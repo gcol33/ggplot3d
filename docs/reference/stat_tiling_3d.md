@@ -1,0 +1,121 @@
+# Regular tilings and honeycombs from Coxeter reflections
+
+Factors the simplex Gram matrix with off-diagonal entries -cos(pi/m).
+Mirror reflections generate a seed cell and its orbit. Cell centres are
+deduplicated and retained within radius of the seed centre. Reports the
+number of cells before emission. Spherical, Euclidean and hyperbolic
+symbols are supported, with finite, ideal or hyperideal vertices and
+cells (Nelson and Segerman 2016). Ideal vertices are light-cone points,
+drawn on the boundary of the Klein and Poincare balls. Hyperideal
+vertices are cut off by their polar planes: each face loses its corners
+and every vertex leaves a truncation face orthogonal to its edges, so
+the truncated cells are compact. When the cell centre is ideal or
+hyperideal the cells are infinite; faces (edges for tilings with
+apeirogonal cells) are then generated one by one and retained within
+radius of the seed face, depth counts reflections from the seed face,
+and what = "cells" draws each face once for each of its two cells. An
+apeirogonal tiling cell is filled by the ideal triangles from its edges
+to its ideal centre. The message then reports faces or edges instead of
+cells. Faces with ideal vertices are exact in the Klein model; in the
+Poincare model their cusps are sampled to the screen tolerance, which
+can take deep subdivision.
+
+## Usage
+
+``` r
+stat_tiling_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  schlafli = c(7, 3),
+  radius = 2,
+  what = c("edges", "faces", "cells"),
+  max_cells = 10000L,
+  model = NULL,
+  munch_tolerance = 0.001,
+  munch_max_depth = 9L,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
+
+stat_honeycomb_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  schlafli = c(5, 3, 4),
+  radius = 2,
+  what = c("edges", "faces", "cells"),
+  max_cells = 10000L,
+  model = NULL,
+  munch_tolerance = 0.001,
+  munch_max_depth = 9L,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
+```
+
+## Arguments
+
+- mapping, data, position, ..., na.rm, show.legend, inherit.aes:
+
+  Standard layer arguments.
+
+- schlafli:
+
+  Two entries {p,q} for tilings, three {p,q,r} for honeycombs.
+
+- radius:
+
+  Centre distance cutoff in intrinsic units (radians on spheres).
+
+- what:
+
+  Geometry to emit: edges, faces or cells.
+
+- max_cells:
+
+  Explicit orbit resource limit; exceeding it raises an error.
+
+- model:
+
+  NULL chooses Klein, embedded spherical or Cartesian output. Other
+  choices are Poincare for hyperbolic geometry and stereographic for
+  S^3.
+
+- munch_tolerance, munch_max_depth:
+
+  Shared geodesic sampling controls.
+
+## Value
+
+A ggplot2 layer with cell and depth computed variables; depth counts
+simplex reflections.
+
+## Details
+
+Hyperbolic output uses the Klein model by default; Poincare output is
+adaptively tessellated. Spherical tiles lie on S^2. Spherical honeycombs
+are projected from S^3 into R^3 by their first three coordinates or by
+stereographic projection. Their curved edges and faces use the shared
+space sampler. what="faces" deduplicates shared faces, what="cells"
+retains each cell's boundary, and what="edges" deduplicates shared
+edges.
+
+## References
+
+Nelson and Segerman (2016). Visualizing hyperbolic honeycombs.
+<https://arxiv.org/abs/1511.02851>. Kopczynski and Celinska-Kopczynska
+(2020). <https://arxiv.org/abs/2002.09533>.
+
+## Examples
+
+``` r
+ggplot2::ggplot()+stat_tiling_3d(schlafli=c(7,3),radius=2)+
+  coord_3d(axes=character(),panes=character(),box="none")
+ggplot2::ggplot()+stat_honeycomb_3d(schlafli=c(5,3,4),radius=1,what="faces")+
+  coord_3d(axes=character(),panes=character(),box="none")
+```

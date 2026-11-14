@@ -14,7 +14,13 @@ register_geom_3d(
   position_check = NULL,
   replace = FALSE,
   prepare_data = NULL,
-  prepare_aesthetics = NULL
+  prepare_aesthetics = NULL,
+  parameters = list(),
+  default_z = 0,
+  positions = "nudge",
+  extents = list(),
+  tween = c("group", "row", "path", "polygon"),
+  space = NULL
 )
 ```
 
@@ -42,7 +48,8 @@ register_geom_3d(
 
 - position_check:
 
-  Optional position validation function.
+  Optional extra position validation, a function of the position and the
+  panel's scales that signals an error.
 
 - replace:
 
@@ -50,7 +57,64 @@ register_geom_3d(
 
 - prepare_data, prepare_aesthetics:
 
-  Optional input and aesthetic preparation functions.
+  Optional preparation functions applied to every layer drawing the geom
+  inside
+  [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md):
+  `prepare_data(data)` receives the layer data,
+  `prepare_aesthetics(out, data, plot, params)` the evaluated aesthetics
+  with the layer data, plot and layer parameters.
+
+- parameters:
+
+  Named list of further drawing parameters the geom accepts, with their
+  defaults. They reach the emitter in `params`.
+
+- default_z:
+
+  Height of a layer without a z mapping. The default 0 trains the z
+  scale; `-Inf` places the layer on the floor without training it.
+
+- positions:
+
+  Position adjustments the geometry accepts besides identity: any of
+  `"nudge"`
+  ([`position_nudge_3d()`](https://gillescolling.com/ggplot3d/reference/position_nudge_3d.md)),
+  `"jitter"`
+  ([`position_jitter_3d()`](https://gillescolling.com/ggplot3d/reference/position_jitter_3d.md)),
+  `"dodge"`
+  ([`position_dodge_3d()`](https://gillescolling.com/ggplot3d/reference/position_dodge_3d.md)),
+  `"stack"`
+  ([`position_stack_3d()`](https://gillescolling.com/ggplot3d/reference/position_stack_3d.md),
+  [`position_fill_3d()`](https://gillescolling.com/ggplot3d/reference/position_stack_3d.md))
+  and `"planar"` (ggplot2's own nudge, jitter and dodge, which move x
+  and y only).
+
+- extents:
+
+  Named list, by axis `"x"`, `"y"`, `"z"`, of the columns holding the
+  geometry's interval along that axis, as character vectors
+  `c(lower = , upper = , centre = )`; `lower` or `centre` may be `NA`.
+  Stacking and dodging read and rewrite these columns. An axis not
+  listed takes its own coordinate as both the interval end and the
+  anchor.
+
+- tween:
+
+  How
+  [`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md)
+  pairs the layer's rows between two states. `"row"`: each row is one
+  mark (points, text, columns), paired by group and order. `"path"` and
+  `"polygon"`: the rows of a group form an open or closed line,
+  resampled by arc length when the two states differ in length.
+  `"group"` (default): the rows of a group form one shape (a surface, a
+  mesh) that morphs row by row when its row count is unchanged and
+  cross-fades otherwise.
+
+- space:
+
+  Optional function of data, params and panel_params returning a space
+  specification. Layer-owned canonical geometry then shares coordinate
+  munching and remunches against the final camera and viewport.
 
 ## Value
 

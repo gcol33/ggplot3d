@@ -24,6 +24,10 @@ silhouettes and depth steps from the depth buffer alone."><meta property="og:ima
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -77,6 +81,7 @@ silhouettes and depth steps from the depth buffer alone."><meta property="og:ima
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -138,7 +143,10 @@ silhouettes and depth steps from the depth buffer alone.</p>
 <span>  far <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  amount <span class="op">=</span> <span class="fl">0.6</span>,</span>
 <span>  linewidth <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  edl <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  edl <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ao <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ao_radius <span class="op">=</span> <span class="fl">0.25</span>,</span>
+<span>  ao_samples <span class="op">=</span> <span class="fl">64L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -170,6 +178,19 @@ by which strokes thin at full weight.</p></dd>
 <dd><p><code>FALSE</code>, <code>TRUE</code> (1), or a nonnegative eye-dome lighting
 strength.</p></dd>
 
+
+<dt id="arg-ao">ao<a class="anchor" aria-label="anchor" href="#arg-ao"></a></dt>
+<dd><p><code>FALSE</code>, <code>TRUE</code> (1), or ambient occlusion strength from 0 to 1.
+Acts on shaded mesh faces with enabled lighting.</p></dd>
+
+
+<dt id="arg-ao-radius">ao_radius<a class="anchor" aria-label="anchor" href="#arg-ao-radius"></a></dt>
+<dd><p>Positive ray distance in aspect-scaled panel units.</p></dd>
+
+
+<dt id="arg-ao-samples">ao_samples<a class="anchor" aria-label="anchor" href="#arg-ao-samples"></a></dt>
+<dd><p>Positive whole number of deterministic hemisphere rays.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -181,12 +202,21 @@ strength.</p></dd>
 $$w = \min(1, \max(0, (s - near) / (far - near))),$$
 where \(s\) is the camera depth of the primitive's centre as a fraction
 of the depth extent of the panel box: 0 at the box corner nearest the
-camera, 1 at the farthest. Fill, stroke, text and label border colours move
+camera, 1 at the farthest. Geometry fill and stroke colours move
 toward the fog colour by <code>amount * w</code>, and with <code>linewidth</code> a stroke's width
 is multiplied by <code>1 - linewidth * w</code>. Panel furniture keeps its colours.
 The vector, raster and hybrid backends evaluate the weight once per
 primitive, so tessellated surfaces fade smoothly; <code><a href="view_3d.html">view_3d()</a></code> evaluates the
 same formula per pixel.</p>
+<p>Ambient occlusion samples the hemisphere above each mesh vertex against
+a mesh bounding-volume hierarchy, following Pharr and Green (GPU Gems,
+chapter 17). Its accessibility estimates mean hemisphere transmission
+with deterministic rays within <code>ao_radius</code>, including face and texture opacity.
+Shaded face colours are multiplied in the shared kernel by
+<code>1 - ao * (1 - accessibility)</code>. The vector, raster and hybrid backends
+interpolate these values over faces. Both sides of a surface have their
+own accessibility. Text and label boxes keep their colours and draw last.
+The interactive viewer uses <code>edl</code> for occlusion shading.</p>
 <p>Eye-dome lighting acts on the raster backend, the rasterised layers of the
 hybrid backend, and <code><a href="view_3d.html">view_3d()</a></code>. A pixel darkens by
 <code>exp(-40 * edl * r)</code>, where <code>r</code> averages over its eight neighbours how far
@@ -195,7 +225,9 @@ near and far planes, as for <code>geom_point_3d(render = "splat")</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Boucheny, C. (2009). Visualisation scientifique de grands
+    <p>Pharr and Green (2004). Ambient Occlusion. GPU Gems, chapter 17.
+<a href="https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-17-ambient-occlusion" class="external-link">https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-17-ambient-occlusion</a></p>
+<p>Boucheny, C. (2009). Visualisation scientifique de grands
 volumes de donnees: pour une approche perceptive. PhD thesis, Universite
 Joseph Fourier, Grenoble.</p>
 <p>Kitware. Eye-Dome Lighting: a non-photorealistic shading technique.
@@ -213,7 +245,12 @@ Joseph Fourier, Grenoble.</p>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">v</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"grey80"</span>, colour <span class="op">=</span> <span class="cn">NA</span>, shade <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>backend <span class="op">=</span> <span class="fu"><a href="backend_3d.html">backend_3d</a></span><span class="op">(</span><span class="st">"raster"</span>, dpi <span class="op">=</span> <span class="fl">72</span><span class="op">)</span>, light <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>    depth_cue <span class="op">=</span> <span class="fu">depth_cue_3d</span><span class="op">(</span>fog <span class="op">=</span> <span class="cn">NA</span>, edl <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>    depth_cue <span class="op">=</span> <span class="fu">depth_cue_3d</span><span class="op">(</span>fog <span class="op">=</span> <span class="cn">NA</span>, edl <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">7</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">7</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">a</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">a</span>, <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">a</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"grey70"</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>depth_cue <span class="op">=</span> <span class="fu">depth_cue_3d</span><span class="op">(</span>fog <span class="op">=</span> <span class="cn">NA</span>, ao <span class="op">=</span> <span class="cn">TRUE</span>, ao_radius <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

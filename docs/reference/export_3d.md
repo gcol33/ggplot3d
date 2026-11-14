@@ -1,0 +1,132 @@
+# Export a panel as a 3D model file
+
+Write the scene of one panel to a file that 3D software opens: glTF
+binary (`.glb`) or glTF with a separate buffer (`.gltf` and `.bin`) for
+Blender and the web, PLY, OBJ with an MTL material file, or binary STL.
+Faces are triangulated, paths become tubes or line primitives, and
+points become small solids or point primitives, all in model
+coordinates: the panel box scaled by the aspect of
+[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
+with its longest side `size` long.
+
+## Usage
+
+``` r
+export_3d(
+  plot,
+  file,
+  panel = 1L,
+  furniture = FALSE,
+  lines = c("tube", "line"),
+  points = c("mesh", "point"),
+  size = 1,
+  width = 640L,
+  height = 640L,
+  dpi = 96,
+  print = NULL
+)
+```
+
+## Arguments
+
+- plot:
+
+  A ggplot with
+  [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
+
+- file:
+
+  Output path. Its extension selects the format: `.glb`, `.gltf`,
+  `.ply`, `.obj`, `.stl` or `.3mf`.
+
+- panel:
+
+  Panel index in layout order, default 1.
+
+- furniture:
+
+  Whether to include the panes, grid lines and box edges, default FALSE.
+
+- lines:
+
+  `"tube"` (default) writes each path as a closed tube with the drawn
+  line width as diameter; `"line"` writes line primitives.
+
+- points:
+
+  `"mesh"` (default) writes each point as a solid of its drawn size: a
+  cube for square shapes, a tetrahedron for triangles, an octahedron for
+  diamonds and a sphere for the other shapes; `"point"` writes point
+  primitives.
+
+- size:
+
+  Length of the longest side of the box in file units, default 1.
+
+- width, height:
+
+  Device size in pixels used to lay out the plot, default 640 each.
+  Tubes and solids keep the size relative to the box that lines and
+  points have in a plot of this size.
+
+- dpi:
+
+  Device resolution, default 96 dots per inch.
+
+- print:
+
+  Optional
+  [`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md)
+  specification for closed millimetre solids in STL or 3MF output.
+
+## Value
+
+`file`, invisibly.
+
+## Details
+
+glTF output follows the glTF 2.0 specification and is the route into
+Blender, whose importer reads its meshes, materials, cameras and
+animation. The vertical axis of the plot becomes +y. Each layer is one
+named node (`layer1_point`, `layer2_surface`, ...), and the furniture is
+a node `furniture` with the children `panes`, `grid` and `box`, so
+layers can be selected, hidden and restyled after import. Mapped colours
+are vertex colours (`COLOR_0`, linear light), so a colour scale needs no
+material per colour. Faces drawn with lighting
+([`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
+and `shade`) use one lit material whose base colour multiplies the
+vertex colours; all other geometry uses the `KHR_materials_unlit`
+extension. Translucent geometry uses alpha blending and every material
+is double sided. A node `camera` holds the view of the panel, so the
+file opens on the plot's view; an oblique projection is written as an
+orthographic camera along the sight direction.
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+writes animated glTF files.
+
+PLY output is binary with vertex normals and 8-bit sRGB vertex colours;
+line primitives are `edge` elements. OBJ output writes one object per
+node, sRGB vertex colours after each vertex position, and one MTL
+material per distinct colour; its vertical axis is +y, as OBJ importers
+expect. PLY and STL keep the vertical axis of the plot as +z. STL holds
+triangles only, so it requires `lines = "tube"` and `points = "mesh"`.
+
+Ordinary model exports omit text and write dashed lines solid. Printing
+exports include extruded text according to
+[`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md).
+
+## See also
+
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+for animated glTF files.
+
+## Examples
+
+``` r
+d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))
+d$z <- d$x * exp(-d$x^2 - d$y^2)
+p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d(ggplot2::aes(fill = z)) + coord_3d()
+glb <- export_3d(p, tempfile(fileext = ".glb"))
+file.size(glb)
+export_3d(p, tempfile(fileext = ".stl"), size = 50)
+```

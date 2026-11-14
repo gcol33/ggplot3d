@@ -55,6 +55,36 @@ p + geom_text_3d(aes(label = label), size = 5) + coord_3d()
 ![The labels a, b and c at three
 positions.](layers_files/figure-html/text-1.svg)
 
+Text outlines can lie in a plane through each anchor. `normal` gives its
+direction in normalized panel coordinates; `up` gives the reading-up
+hint. The frame and aspect scaling transform those directions into the
+displayed model. `angle` rotates within the plane.
+
+``` r
+
+p + geom_text_3d(aes(label = label), orientation = "plane",
+  normal = c(1, 1, 1), up = c(0, 0, 1), size = 8) + coord_3d()
+```
+
+![Font outlines lying on tilted planes through three
+anchors.](layers_files/figure-html/tilted-text-1.svg)
+
+`facing = "camera_plane"` gives the outlines a shared view-facing
+direction. `facing = "camera_point"` turns each label toward the
+perspective eye from its own anchor. Each panel resolves its orientation
+using its drawing camera; the HTML viewer updates it during orbit and
+playback. The outlines participate in the scene’s depth testing and
+picking.
+
+``` r
+
+p + geom_text_3d(aes(label = label), orientation = "plane",
+  facing = "camera_point", size = 8) + coord_3d(projection = "perspective")
+```
+
+![Font outlines facing the perspective camera at three
+anchors.](layers_files/figure-html/camera-text-1.svg)
+
 ``` r
 
 p + geom_dropline_3d(face = "zmin", linewidth = 0.8) +
@@ -149,6 +179,54 @@ s + geom_contour_filled_3d(bins = 4, plane = "floor") +
 
 ![Filled height bands projected onto the floor of the data
 box.](layers_files/figure-html/filled-contours-1.svg)
+
+## Images and textures
+
+An image draped over a surface carries detail that would otherwise need
+a mesh as fine as the image. `texture` takes a
+[`texture_3d()`](https://gillescolling.com/ggplot3d/reference/texture_3d.md)
+image, or anything it reads (a colour matrix, a numeric array from
+[`png::readPNG()`](https://rdrr.io/pkg/png/man/readPNG.html), a PNG
+file). Each face shows the image at its texture coordinates, which
+default to the x and y positions spread over the image; `extent` places
+the image in data units instead, and faces outside it keep their fill.
+
+``` r
+
+volcano_grid <- expand.grid(x = seq_len(nrow(volcano)), y = seq_len(ncol(volcano)))
+volcano_grid$z <- as.vector(volcano)
+coarse <- volcano_grid[volcano_grid$x %% 3 == 1 & volcano_grid$y %% 3 == 1, ]
+checker <- matrix("#F2EFE6", 8, 8)
+checker[(row(checker) + col(checker)) %% 2 == 1] <- "#2B5F75"
+ggplot(coarse, aes(x, y, z = z)) +
+  geom_surface_3d(texture = texture_3d(checker, interpolate = FALSE)) + coord_3d()
+```
+
+![The volcano height map draped with a checkerboard image whose squares
+bend over the slopes.](layers_files/figure-html/drape-1.svg)
+
+An image can also lie on a plane of the panel box.
+[`geom_raster_3d()`](https://gillescolling.com/ggplot3d/reference/geom_raster_3d.md)
+turns values on a regular grid into one image, one per level of the
+remaining axis, and
+[`annotation_raster_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_raster_3d.md)
+lays a given image on a plane. Both are single faces of the scene, so
+they are foreshortened and hidden like any other face; here the
+full-resolution height map lies on the floor under the coarse surface.
+
+``` r
+
+ggplot(coarse, aes(x, y, z = z)) +
+  geom_raster_3d(aes(fill = z), data = volcano_grid, at = -Inf) +
+  annotation_raster_3d(matrix(grDevices::hcl.colors(8, "Zissou 1"), 1), plane = "xz", at = Inf) +
+  geom_surface_3d(fill = "grey85", colour = NA) +
+  scale_fill_viridis_c() +
+  coord_3d()
+```
+
+![The coarse volcano surface above a full-resolution coloured height map
+on the floor of the box and a colour ramp image on its back
+wall.](layers_files/figure-html/raster-planes-1.svg)
 
 ## Columns, counts and extrusions
 

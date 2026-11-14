@@ -1,0 +1,76 @@
+# Hopf fibres, latitude tori and their spherical base
+
+Over colatitude theta and longitude phi, samples the complex pair
+(cos(theta/2) exp(i(phi+t)), sin(theta/2) exp(it)). The Hopf map (2 z1
+conjugate(z2), \|z1\|^2-\|z2\|^2) is constant along each fibre. Latitude
+zero gives the Clifford torus. Tubes use the shared rotation minimising
+sweep after geodesic sampling and finite-box clipping. Use what="base"
+in a second plot with coord_3d() and the same colour mapping to display
+matching points on the base two-sphere.
+
+## Usage
+
+``` r
+stat_hopf_fibre_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  what = c("fibres", "torus", "base"),
+  n = 64L,
+  radius = 0.025,
+  sides = 8L,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
+```
+
+## Arguments
+
+- mapping, data, position, ..., na.rm, show.legend, inherit.aes:
+
+  Standard layer arguments.
+
+- what:
+
+  Fibres, a full torus for each latitude, or points on the base sphere.
+
+- n:
+
+  Number of angular intervals per fibre or torus direction.
+
+- radius:
+
+  Tube radius in display-model units; zero draws paths. In the gnomonic
+  model tubes are geodesic tubes of angular radius `radius`, which stay
+  exact under observer motion.
+
+- sides:
+
+  Number of tube sides.
+
+## Value
+
+A registered 3D layer; lon and lat are in degrees.
+
+## References
+
+Johnson (2011). Hopf fibration production notes.
+<https://nilesjohnson.net/hopf-production.html>.
+
+## Examples
+
+``` r
+d <- data.frame(lon=seq(0,300,by=60),lat=0,id=factor(1:6))
+ggplot2::ggplot(d,ggplot2::aes(lon=lon,lat=lat,fill=id))+
+  stat_hopf_fibre_3d(n=24)+coord_spherical_geometry_3d()
+ggplot2::ggplot(d,ggplot2::aes(lon=lon,lat=lat,colour=id))+
+  stat_hopf_fibre_3d(what="base",size=3)+
+  geom_sphere_3d(data=data.frame(x=0,y=0,z=0),
+    mapping=ggplot2::aes(x,y,z=z),inherit.aes=FALSE,
+    radius=.98,fill="grey90",colour=NA)+coord_3d()
+ggplot2::ggplot(data.frame(lon=0,lat=0),ggplot2::aes(lon=lon,lat=lat))+
+  stat_hopf_fibre_3d(what="torus",n=12,fill="steelblue")+
+  coord_spherical_geometry_3d()
+```
