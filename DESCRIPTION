@@ -46,6 +46,7 @@ Suggests:
     lidR,
     mgcv,
     patchwork,
+    png,
     ragg,
     rayrender,
     rgl,
@@ -55,7 +56,8 @@ Suggests:
     stars,
     svglite,
     terra,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    xml2
 SystemRequirements: C++17
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0

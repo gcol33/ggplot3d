@@ -348,14 +348,3 @@ view_column_3d <- function(x) {
   list(type = "f32", b64 = base64_3d(writeBin(as.double(x), raw(), size = 4L, endian = "little")))
 }
 
-base64_3d <- function(bytes) {
-  n <- length(bytes)
-  if (!n) return("")
-  pad <- (3L - n %% 3L) %% 3L
-  b <- matrix(as.integer(c(bytes, raw(pad))), 3L)
-  v <- b[1L, ] * 65536L + b[2L, ] * 256L + b[3L, ]
-  index <- rbind(v %/% 262144L, (v %/% 4096L) %% 64L, (v %/% 64L) %% 64L, v %% 64L)
-  out <- charToRaw("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")[index + 1L]
-  if (pad) out[length(out) - seq_len(pad) + 1L] <- charToRaw("=")
-  rawToChar(out)
-}

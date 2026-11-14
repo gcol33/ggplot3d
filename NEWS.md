@@ -1,5 +1,9 @@
 # ggplot3d 0.0.0.9000
 
+* `save_svg_3d()` writes native depth-ordered SVG with layer and row identities, tooltips and linked hover highlighting. `export_code_3d()` writes editable TikZ paths or model-space Asymptote scenes with camera and optional PRC output.
+
+* ggplot2's `geom_contour_filled()` draws terraced bands at their level midpoints inside `coord_3d()`, preserving polygon holes and the band fill scale.
+
 * `geom_quiver_3d()` draws vectors with solid cone heads and line or tube shafts; `geom_cone_3d()` draws magnitude-scaled cones. `stat_streamline_3d()` integrates trilinear vector fields with RK4 or adaptive RK45, accepts point/rake/plane seeds and Jobard-Lefer slice placement, and sweeps streamtubes through the shared tube machinery.
 
 * `backend_3d("raymarch")` renders in-space views of all eight Thurston geometries with geodesic sphere tracing, paired quotient faces, parallel transport, and geodesic-sphere area lighting. `geom_thurston_3d()` supplies intrinsic primitives, and `geodesic_3d()` exposes the shared flow and transport calculations.
