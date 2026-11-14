@@ -123,7 +123,16 @@ Orthographic projection multiplies scale-transformed coordinates by a p by
 the orthogonal fourth coordinate. Finite projections preserve straight
 edges and planar faces. Stereographic projection first normalises points
 to S^3 and tessellates spherical geodesic edges and triangular faces through
-the shared space adapter. Eye/pole crossings need homogeneous clipping.
+the shared space adapter. Both projective maps are linear from R^4 to
+homogeneous P^3 coordinates: the perspective eye hyperplane and the
+stereographic pole go to infinity. Perspective edges and faces are clipped
+to the half-space in front of the eye in R^4, where the cut vertices become
+explicit ideal points (w = 0), and the scene engine clips them to the panel
+box before division; points behind the eye are dropped. Stereographic
+arcs are clipped on their great circles against the box planes pulled back
+to R^4, and faces are sampled outside a cap around the pole whose image lies
+outside the box. Position scales train on the finite images, so set limits
+when geometry approaches the eye or the pole.
 Stereographic polygon faces are triangulated in their ambient plane, then
 tessellated on S^3. Collapsed projective faces are omitted. Map dimensions by
 name; dimensions lists the aesthetic names in matrix row order.

@@ -50,7 +50,23 @@ static inline Polygon clip_polygon(Polygon polygon, const std::vector<Plane>& pl
     }
     polygon = std::move(out);
   }
-  return polygon;
+  // A polygon edge through a box edge or corner meets two planes at one point;
+  // rounding then leaves two coincident corners, which are merged.
+  auto same = [](const Vertex& a, const Vertex& b) {
+    if (a.w > 0 && b.w > 0) {
+      double scale = 1, gap = 0;
+      for (int k = 0; k < 3; ++k) {
+        scale = std::max(scale, std::max(std::abs(a.xyz[k]/a.w), std::abs(b.xyz[k]/b.w)));
+        gap = std::max(gap, std::abs(a.xyz[k]/a.w - b.xyz[k]/b.w));
+      }
+      return gap <= 64*std::numeric_limits<double>::epsilon()*scale;
+    }
+    return false;
+  };
+  Polygon kept;
+  for (const Vertex& v : polygon) if (kept.empty() || !same(kept.back(), v)) kept.push_back(v);
+  while (kept.size() > 1 && same(kept.back(), kept.front())) kept.pop_back();
+  return kept;
 }
 
 static inline std::pair<double,double> clip_segment_range(const Vertex& a,const Vertex& b,

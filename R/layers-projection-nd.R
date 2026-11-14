@@ -40,15 +40,76 @@ projection_basis_3d <- function(basis,p) {
   basis
 }
 
+projection_normal_3d <- function(basis) qr.Q(qr(basis),complete=TRUE)[,4L]
+
+# Homogeneous images (x, y, z, w): orthographic (Y, 1), four-dimensional
+# perspective (eye Y, eye - depth) and stereographic (Y, 1 - depth). Both
+# projective maps are linear from R^4 to P^3, so the eye hyperplane and the
+# pole go to infinity (w = 0) and points behind the eye have w < 0.
 project_nd_3d <- function(X,basis,projection,eye) {
   Y <- X%*%basis
-  if(projection=="orthographic") return(Y)
-  normal <- qr.Q(qr(basis),complete=TRUE)[,4L]
-  depth <- drop(X%*%normal)
-  denominator <- if(projection=="perspective") eye-depth else 1-depth
-  if(any(denominator<=0)) stop("Projection reaches or crosses its eye/pole; homogeneous clipping and camera pre require #16.",call.=FALSE)
-  Y/denominator*if(projection=="perspective") eye else 1
+  if(projection=="orthographic") return(cbind(Y,1))
+  depth <- drop(X%*%projection_normal_3d(basis))
+  scale <- if(projection=="perspective") eye else 1
+  w <- scale-depth
+  w[w<0&w>-64*.Machine$double.eps*scale] <- 0
+  cbind(Y*scale,w)
 }
+
+# Finite images for training position scales; rows at or behind infinity
+# take the centre of the finite rows.
+project_nd_xyz_3d <- function(X,basis,projection,eye) {
+  H <- project_nd_3d(X,basis,projection,eye)
+  finite <- H[,4L]>0
+  out <- H[,1:3,drop=FALSE]/H[,4L]
+  if(any(!finite)) out[!finite,] <- matrix(if(any(finite)) colMeans(out[finite,,drop=FALSE]) else 0,sum(!finite),3L,byrow=TRUE)
+  out
+}
+
+# Visible straight-segment parameters for planes n.X + c >= 0 (rows n, c).
+linear_clip_segment_3d <- function(X,Y,planes) {
+  k <- ncol(planes); lo <- 0; hi <- 1
+  for(i in seq_len(nrow(planes))) {
+    a <- sum(planes[i,-k]*X)+planes[i,k]; b <- sum(planes[i,-k]*Y)+planes[i,k]
+    if(a<0&&b<0) return(matrix(numeric(),0L,2L))
+    if(a<0) lo <- max(lo,a/(a-b)) else if(b<0) hi <- min(hi,a/(a-b))
+  }
+  if(hi<=lo) matrix(numeric(),0L,2L) else matrix(c(lo,hi),1L)
+}
+
+# Sutherland-Hodgman clipping of a straight-edged polygon, with corner weights.
+linear_clip_polygon_3d <- function(X,weights,planes) {
+  k <- ncol(planes)
+  for(i in seq_len(nrow(planes))) {
+    if(nrow(X)<3L) break
+    value <- drop(X%*%planes[i,-k])+planes[i,k]
+    following <- c(seq_len(nrow(X))[-1L],1L)
+    points <- list(); values <- list()
+    for(j in seq_len(nrow(X))) {
+      a <- value[j]; b <- value[following[j]]
+      if(a>=0) {points[[length(points)+1L]] <- X[j,]; values[[length(values)+1L]] <- weights[j,]}
+      if((a<0&&b>0)||(a>0&&b<0)) {
+        t <- a/(a-b)
+        points[[length(points)+1L]] <- (1-t)*X[j,]+t*X[following[j],]
+        values[[length(values)+1L]] <- (1-t)*weights[j,]+t*weights[following[j],]
+      }
+    }
+    X <- if(length(points)) do.call(rbind,points) else matrix(numeric(),0L,ncol(X))
+    weights <- if(length(values)) do.call(rbind,values) else matrix(numeric(),0L,ncol(weights))
+  }
+  list(points=X,weights=weights)
+}
+
+# Box planes lo w <= Y <= hi w pulled back to R^4 for the stereographic map,
+# and the pole cap whose image lies outside twice the box circumradius.
+projection_sphere_planes_3d <- function(basis,ranges) {
+  n <- projection_normal_3d(basis)
+  lo <- vapply(ranges,`[`,numeric(1),1L); hi <- vapply(ranges,`[`,numeric(1),2L)
+  box <- do.call(rbind,lapply(1:3,function(j) rbind(c(basis[,j]+lo[j]*n,-lo[j]),c(-basis[,j]-hi[j]*n,hi[j]))))
+  rbind(box,c(-n,cos(projection_pole_radius_3d(ranges))))
+}
+
+projection_pole_radius_3d <- function(ranges) 2*atan(1/(2*sqrt(sum(vapply(ranges,function(r) max(abs(r)),numeric(1))^2))))
 
 SpaceProjectionND <- ggplot2::ggproto("SpaceProjectionND",Space3D,
   charts="ambient",models="projection",default_model="projection",basis=NULL,projection="orthographic",eye=4,
@@ -57,6 +118,25 @@ SpaceProjectionND <- ggplot2::ggproto("SpaceProjectionND",Space3D,
   distance=function(X,Y) sqrt(rowSums((X-Y)^2)),
   geodesic=function(self,X,Y,s) if(self$projection=="stereographic") sphere_slerp_3d(X,Y,s) else segment_points_3d(X,Y,s),
   chart_is_projective=function(self,model) self$projection!="stereographic",
+  eye_plane=function(self) c(-projection_normal_3d(self$basis),self$eye),
+  clip_segment=function(self,X,Y,model,ranges) switch(self$projection,orthographic=matrix(c(0,1),1L),
+    perspective=linear_clip_segment_3d(X,Y,matrix(self$eye_plane(),1L)),
+    stereographic=spherical_clip_segment_3d(X,Y,projection_sphere_planes_3d(self$basis,ranges))),
+  clip_polygon=function(self,X,model,ranges) if(self$projection=="perspective") linear_clip_polygon_3d(X,diag(nrow(X)),matrix(self$eye_plane(),1L)) else NULL,
+  visible=function(self,X,model,ranges) {
+    if(self$projection!="stereographic") return(rep(TRUE,nrow(X)))
+    drop(X%*%projection_normal_3d(self$basis))<=cos(projection_pole_radius_3d(ranges))
+  },
+  cull=function(self,corners,model,ranges) {
+    if(self$projection!="stereographic") return(rep(FALSE,nrow(corners[[1L]])))
+    spherical_cull_3d(corners,projection_sphere_planes_3d(self$basis,ranges))
+  },
+  contains=function(self,X,model,ranges) {
+    if(self$projection=="orthographic") return(rep(TRUE,nrow(X)))
+    planes <- if(self$projection=="perspective") matrix(self$eye_plane(),1L) else projection_sphere_planes_3d(self$basis,ranges)
+    value <- sweep(X%*%t(planes[,-ncol(planes),drop=FALSE]),2L,planes[,ncol(planes)],"+")
+    if(self$projection=="perspective") drop(value)>0 else apply(value,1L,function(v) all(v>=-1e-12))
+  },
   model_ranges=function(model,panel_params) panel_params$ranges
 )
 
@@ -78,9 +158,10 @@ StatProject3D <- ggplot2::ggproto("StatProject3D",ggplot2::Stat,
       X <- X/r
     }
     out <- data; out[paste0(".nd",seq_len(p))] <- as.data.frame(X)
-    out[c("x","y","z")] <- as.data.frame(project_nd_3d(X,basis,projection,eye))
+    out[c("x","y","z")] <- as.data.frame(project_nd_xyz_3d(X,basis,projection,eye))
     if(source_geom=="GeomMesh3D") out <- mesh_face_materials_3d(out)
-    if(source_geom%in%c("GeomMesh3D","GeomPolygon")) out <- projection_surface_rows_3d(out,topology,source_geom,projection)
+    unbounded <- project_nd_3d(X,basis,projection,eye)[,4L]<=0
+    if(source_geom%in%c("GeomMesh3D","GeomPolygon")) out <- projection_surface_rows_3d(out,topology,source_geom,projection,unbounded)
     out
   }
 )
@@ -113,7 +194,16 @@ register_geom_3d(GeomProject3D,emit_projection_nd_3d,positions=character(),
 #' the orthogonal fourth coordinate. Finite projections preserve straight
 #' edges and planar faces. Stereographic projection first normalises points
 #' to S^3 and tessellates spherical geodesic edges and triangular faces through
-#' the shared space adapter. Eye/pole crossings need homogeneous clipping.
+#' the shared space adapter. Both projective maps are linear from R^4 to
+#' homogeneous P^3 coordinates: the perspective eye hyperplane and the
+#' stereographic pole go to infinity. Perspective edges and faces are clipped
+#' to the half-space in front of the eye in R^4, where the cut vertices become
+#' explicit ideal points (w = 0), and the scene engine clips them to the panel
+#' box before division; points behind the eye are dropped. Stereographic
+#' arcs are clipped on their great circles against the box planes pulled back
+#' to R^4, and faces are sampled outside a cap around the pole whose image lies
+#' outside the box. Position scales train on the finite images, so set limits
+#' when geometry approaches the eye or the pole.
 #' Stereographic polygon faces are triangulated in their ambient plane, then
 #' tessellated on S^3. Collapsed projective faces are omitted. Map dimensions by
 #' name; dimensions lists the aesthetic names in matrix row order.
@@ -155,7 +245,10 @@ stat_project_3d <- function(mapping=NULL,data=NULL,geom="point",position="identi
 }
 
 
-projection_surface_rows_3d <- function(data, X, source_geom, projection) {
+# Stereographic faces, and every face of a perspective layer in which some
+# face has a corner at or behind the eye (no finite image to triangulate), are
+# triangulated in their ambient planes.
+projection_surface_rows_3d <- function(data, X, source_geom, projection, unbounded) {
   if(source_geom=="GeomPolygon") {
     data$.mesh <- 1L; data$.face <- data$group
     data$.corner <- seq_len(nrow(data)); data$.vertex <- seq_len(nrow(data))
@@ -163,12 +256,14 @@ projection_surface_rows_3d <- function(data, X, source_geom, projection) {
   keys <- interaction(data$.mesh,data$.face,data$group,drop=TRUE)
   groups <- split(seq_len(nrow(data)),keys)
   if(projection!="stereographic") {
-    keep <- unlist(lapply(groups,function(rows) {
+    unbounded_face <- vapply(groups,function(rows) any(unbounded[rows]),logical(1))
+    flat <- vapply(groups,function(rows) {
       xyz <- as.matrix(data[rows,c("x","y","z")])
       singular <- svd(sweep(xyz,2L,colMeans(xyz),"-"),nu=0,nv=0)$d
-      if(length(singular)>=2L && singular[2L]>1024*.Machine$double.eps*singular[1L]) rows else integer()
-    }),use.names=FALSE)
-    return(data[keep,,drop=FALSE])
+      length(singular)>=2L && singular[2L]>1024*.Machine$double.eps*singular[1L]
+    },logical(1))
+    groups <- groups[flat|unbounded_face]
+    if(!any(unbounded_face)) return(data[unlist(groups,use.names=FALSE),,drop=FALSE])
   }
   pieces <- list(); next_face <- 0L
   for(rows in groups) {

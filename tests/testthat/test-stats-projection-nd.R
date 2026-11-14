@@ -27,7 +27,8 @@ test_that("linear and finite perspective projections agree with matrix formulas"
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z,a=a,b=b,c=c))+stat_project_3d(dimensions=names(d),basis=basis)+coord_3d()
   got <- ggplot2::layer_data(p)
   expect_equal(unname(as.matrix(got[c("x","y","z")])),unname(X%*%basis),tolerance=1e-12)
-  expect_error(project_nd_3d(matrix(c(0,0,0,1),1),diag(4)[,1:3],"stereographic",4),"#16")
+  pole <- projection_normal_3d(diag(4)[,1:3])
+  expect_equal(unname(project_nd_3d(matrix(pole,1),diag(4)[,1:3],"stereographic",4)),matrix(0,1,4))
   near_eye <- matrix(c(1,0,0,1-1e-14),1)
   expect_true(all(is.finite(project_nd_3d(near_eye,diag(4)[,1:3],"perspective",1))))
 })
@@ -159,7 +160,7 @@ test_that("finite perspective tours share projection frames and fixed limits", {
   for(basis in state$bases) {
     frame <- motion_tour_plot_3d(state$plot,basis)
     got <- ggplot2::layer_data(frame)
-    expected <- project_nd_3d(as.matrix(d),basis,"perspective",3)
+    expected <- project_nd_xyz_3d(as.matrix(d),basis,"perspective",3)
     expect_equal(unname(as.matrix(got[c("x","y","z")])),unname(expected),tolerance=1e-12)
     expect_true(all(abs(expected)<=state$plot@coordinates$limits$x[2]))
     expect_silent(validate_scene_packet(stats_scene(frame)$packet))

@@ -636,7 +636,7 @@ motion_tour_prepare_3d <- function(plot, tour, frames) {
   dimensions <- lapply(plot@layers[index], function(layer) layer$stat_params$dimensions)
   p <- length(dimensions[[1L]])
   if (any(lengths(dimensions) != p) || any(vapply(plot@layers[index], function(layer) layer$stat_params$projection == "stereographic", logical(1)))) {
-    stop("Tour layers require the same input dimension and orthographic or finite perspective projection; stereographic pole crossings require #16.", call. = FALSE)
+    stop("Tour layers require the same input dimension and orthographic or perspective projection; a stereographic tour moves its pole through the data.", call. = FALSE)
   }
   built <- ggplot2::ggplot_build(plot)
   for (axis in c("x", "y", "z")) {
@@ -650,7 +650,7 @@ motion_tour_prepare_3d <- function(plot, tour, frames) {
     X <- as.matrix(built$data[[i]][paste0(".nd", seq_len(p))])
     params <- plot@layers[[i]]$stat_params
     if (params$projection == "orthographic") return(max(sqrt(rowSums(X^2))))
-    max(vapply(bases, function(basis) max(sqrt(rowSums(project_nd_3d(X, basis, params$projection, params$eye)^2))), numeric(1)))
+    max(vapply(bases, function(basis) max(sqrt(rowSums(project_nd_xyz_3d(X, basis, params$projection, params$eye)^2))), numeric(1)))
   }, numeric(1)))
   for (i in setdiff(seq_along(built$data), index)) {
     d <- built$data[[i]]

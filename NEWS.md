@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* `stat_project_3d()` handles edges and faces that meet or cross the
+  four-dimensional perspective eye or the stereographic pole: both maps are
+  linear from R^4 to homogeneous coordinates, perspective geometry is clipped
+  to the half-space in front of the eye with explicit points at infinity,
+  and the scene engine clips it to the panel box before division (#20).
+
 * Spheres, cylinders and cones are analytic primitives of the scene contract
   (Sigg, Weyrich, Botsch and Gross 2006): a unit primitive per row placed by an
   affine map, with flat or open end disks. The engine orders them through a
