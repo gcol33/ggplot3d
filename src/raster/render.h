@@ -1307,17 +1307,35 @@ static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List da
     double z=depth(height-1-y,x);
     return Rcpp::NumericVector::is_na(z) ? R_PosInf:z;
   };
+  // Depth step of the buffer along one row or column through a cell: the
+  // median of the finite differences across the cell and its two neighbours.
+  // A crease inside the cell keeps the slopes on either side, a depth jump at
+  // a silhouette is outvoted by the slopes next to it.
+  auto step=[&](int x,int y,int dx,int dy) {
+    double d[3]; int n=0;
+    for(int k=-1;k<=1;++k) {
+      double a=raster_depth(x+k*dx,y+k*dy),b=raster_depth(x+(k+1)*dx,y+(k+1)*dy);
+      if(std::isfinite(a) && std::isfinite(b)) d[n++]=std::abs(b-a);
+    }
+    std::sort(d,d+n);
+    return n==0 ? 0.0:n==2 ? d[0]:d[n/2];
+  };
   // Raster depth that hides a canvas point: the farthest of the four buffer
   // samples around it (each pixel's centre sample, (aa / 2 + 0.5) / aa of a
-  // pixel in). Paint lying on a rasterised surface is never hidden by the
-  // interpolation error between samples, and an occlusion edge moves by at
-  // most one pixel toward the visible side.
+  // pixel in), offset by the local depth step of the buffer, as a
+  // slope-scaled polygon offset (OpenGL glPolygonOffset with factor 1). Paint
+  // lying on a rasterised surface is then never hidden by the interpolation
+  // error between samples, a fold between them included, and an occlusion
+  // edge moves by at most one pixel toward the visible side.
   auto depth_at_point=[&](double px,double py) {
     const double offset=(aa/2+.5)/aa;
     double u=(px-canvas.origin_x)/canvas.dx-offset,v=(py-canvas.origin_y)/canvas.dy-offset;
     int x0=static_cast<int>(std::floor(u)),y0=static_cast<int>(std::floor(v));
-    return std::max(std::max(raster_depth(x0,y0),raster_depth(x0+1,y0)),
-                    std::max(raster_depth(x0,y0+1),raster_depth(x0+1,y0+1)));
+    double far=std::max(std::max(raster_depth(x0,y0),raster_depth(x0+1,y0)),
+                        std::max(raster_depth(x0,y0+1),raster_depth(x0+1,y0+1)));
+    if(!std::isfinite(far)) return far;
+    double slope=std::max(std::max(step(x0,y0,1,0),step(x0,y0+1,1,0)),std::max(step(x0,y0,0,1),step(x0+1,y0,0,1)));
+    return far+slope;
   };
   // The point whose depth decides a sample: a stroke ribbon lies at the depth
   // of its centreline, so a stroke sample is seen when the nearest centreline

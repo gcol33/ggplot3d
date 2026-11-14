@@ -100,6 +100,11 @@
   image at twice the displayed resolution while axes, grid lines, panes and
   text stay themeable vector graphics.
 
+* Vector strokes on a hybrid panel's image are tested against its depth with
+  a slope-scaled offset (OpenGL `glPolygonOffset`): contours lying on a
+  rasterised surface are no longer cut where the surface folds between
+  pixels.
+
 * Smooth vector paint fills a fan triangle whose corners share one colour
   flat instead of passing a zero-length gradient to the device; clipped
   sphere caps no longer fail to draw.

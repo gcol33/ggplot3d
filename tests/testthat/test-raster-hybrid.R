@@ -125,3 +125,27 @@ test_that("hybrid panels with rasterise = \"surfaces\" draw unmarked surface lay
   expect_true(any(surfaces$raster_result$id != 0L))
   expect_identical(panel(backend_3d("hybrid", dpi = 50, rasterise = "all"))$capabilities$image_layers, 1:2)
 })
+
+test_that("vector contours on a rasterised surface are seen, and paths under it hidden", {
+  d <- expand.grid(x = seq(-1, 1, length.out = 20), y = seq(-1, 1, length.out = 20))
+  d$z <- sin(pi * d$x) * cos(pi * d$y)
+  under <- data.frame(x = seq(-0.9, 0.9, length.out = 40), y = 0.5, z = -0.3)
+  status <- function(elevation, layer) {
+    p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+      geom_surface_3d(fill = "grey80", colour = NA) + layer +
+      coord_3d(elevation = elevation, backend = backend_3d("hybrid", dpi = 72, rasterise = "surfaces"))
+    grDevices::pdf(NULL)
+    on.exit(grDevices::dev.off())
+    find <- function(g) {
+      if (identical(g$name, "scene-hybrid-3d")) return(list(g))
+      unlist(lapply(c(as.list(g$children), g$grobs), find), recursive = FALSE)
+    }
+    s <- find(grid::grid.force(ggplot2::ggplotGrob(p)))[[1L]]$occlusion$status$polylines
+    utils::tail(s, length(unique(ggplot2::layer_data(p, 2L)$group)))
+  }
+  contours <- geom_contour_3d(colour = "red")
+  expect_true(all(status(89, contours) == 0L))
+  expect_identical(status(89, geom_path_3d(data = under, colour = "red")), 1L)
+  expect_true(2L %in% status(20, contours))
+})
+
