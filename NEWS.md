@@ -12,7 +12,7 @@
 
 * `geom_text_3d(orientation = "plane")` accepts arbitrary `normal` and `up` directions and `facing = "camera_plane"` or `"camera_point"`. Font outlines resolve against each panel's drawing camera across static backends and follow camera movement in the HTML viewer, including depth-tested picking.
 
-* Package checks store the OBJ mesh fixture as text, declare the test dependencies and catch the introductory vignette's expected missing-z error while drawing the plot.
+* Package checks store the OBJ mesh fixture as text, declare the test dependencies, respect the thread limit in raster test diagnostics and catch the introductory vignette's expected missing-z error while drawing the plot.
 
 * Viewers and model exporters share physical panel measurement independently of the static renderer, so point-cloud widgets bypass the vector marker limit and static visibility compilation.
 * `view3dOutput()` and `renderView3d()` embed reactive viewers in Shiny applications and modules, with camera and selection inputs.

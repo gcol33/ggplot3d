@@ -17,11 +17,13 @@ test_that("tiled raster output does not depend on the thread count", {
     on.exit(options(old))
     ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, 2L, buffers = TRUE)
   }
+  limit <- tolower(Sys.getenv("_R_CHECK_LIMIT_CORES_", ""))
+  expected_threads <- if (nzchar(limit) && limit != "false") 2L else 4L
   one <- render(1L); many <- render(4L)
   expect_gt(one$width, 64L)
   expect_gt(one$height, 64L)
   expect_identical(one$threads, 1L)
-  expect_identical(many$threads, 4L)
+  expect_identical(many$threads, expected_threads)
   for (field in c("image", "id", "passes", "text", "buffers")) expect_identical(one[[field]], many[[field]])
 })
 
