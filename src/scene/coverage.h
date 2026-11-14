@@ -1,6 +1,7 @@
 #pragma once
 #include "partition.h"
 #include "bounds.h"
+#include "halo.h"
 
 namespace ggplot3d { namespace engine {
 
@@ -164,13 +165,29 @@ static inline void lift_coverage(Piece& piece,const CoverageFace& face,const Pro
   piece.hidden=true;
 }
 
+// The side (+1 or -1) of its edge planes that holds a face whose projection
+// is convex, or 0 when it is not convex and cells are tested one by one.
+static inline int convex_inside(const CoverageFace& face,const std::vector<SplitPlane>& boundaries,
+                                const Projection& p) {
+  if(face.polygon.size()<3 || boundaries.size()!=face.polygon.size()) return 0;
+  int inside=0;
+  for(const SplitPlane& plane:boundaries) for(const Vertex& v:face.polygon) {
+    int s=side(plane_distance(plane,v,p),p.resolved.tolerance);
+    if(s==0) continue;
+    if(inside==0) inside=s;
+    else if(s!=inside) return 0;
+  }
+  return inside;
+}
+
 class CoverageIndex {
   std::vector<CoverageFace> faces;
   BoundsIndex<CoverageFace> index;
   const Projection& projection;
+  HaloJoins joins;
 
 public:
-  CoverageIndex(const std::vector<Piece>& pieces,const ScenePacket& packet,const Projection& p):projection(p) {
+  CoverageIndex(const std::vector<Piece>& pieces,const ScenePacket& packet,const Projection& p):projection(p),joins(packet) {
     for (const Piece& piece:pieces) {
       if (piece.source->partition[piece.row]!=1) continue;
       const bool halo=piece.kind==Kind::polyline && piece.polygon.size()>=3 &&
@@ -234,13 +251,13 @@ public:
       const PrimitiveTable* source=piece.source;const Index row=piece.row;
       std::vector<Piece> cells; cells.push_back(std::move(piece));
       for(const CoverageFace* face:candidates) {
-        if(face->halo && face->source==source && face->row==row) continue;
+        if(face->halo && face->source==source && joins.joined(face->row,row)) continue;
         const Polygon& path=cells.empty() ? piece.polygon : (cells[0].anchor.empty() ? cells[0].polygon:cells[0].anchor);
         bool coplanar=!path.empty();
         for(const auto& v:path) coplanar=coplanar && std::abs(plane_distance(face->plane,v,projection))<=projection.resolved.tolerance;
         if(!coplanar && !face->halo &&
            (!face->opaque || packet.polylines.hidden[piece.row]==static_cast<Index>(Hidden::hide))) continue;
-        std::vector<SplitPlane> boundaries{face->plane};
+        std::vector<SplitPlane> boundaries;
         for(std::size_t i=0;i<face->polygon.size();++i) {
           Vec3 a=projection.model(face->polygon[i].xyz);
           Vec3 b=projection.model(face->polygon[(i+1)%face->polygon.size()].xyz);
@@ -251,31 +268,56 @@ public:
           for(double& x:normal) x/=length;
           boundaries.push_back({normal,a});
         }
-        for(const SplitPlane& plane:boundaries) {
+        // A convex face is a clip region: parts of a cell outside one of its
+        // edge planes, or in front of it, are left whole instead of being cut
+        // by its remaining planes (Sutherland and Hodgman 1974).
+        const int inside=convex_inside(*face,boundaries,projection);
+        auto centre_of=[](const Piece& cell) {
+          Vertex centre{};
+          for(const Vertex& v:cell.polygon) for(int k=0;k<3;++k) centre.xyz[k]+=v.xyz[k]/cell.polygon.size();
+          return centre;
+        };
+        auto behind=[&](const Vertex& centre) {
+          double t=face_ray_parameter(*face,centre,projection);
+          Vec3 ray=projection.camera.perspective ? subtract(projection.model(centre.xyz),projection.resolved.eye) : projection.resolved.ray;
+          return t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray));
+        };
+        std::vector<Piece> settled;
+        auto cut=[&](const SplitPlane& plane,auto keep) {
           std::vector<Piece> next;
+          auto place=[&](Piece&& cell) {
+            if(keep(cell)) next.push_back(std::move(cell)); else settled.push_back(std::move(cell));
+          };
           for(Piece& cell:cells) {
             if(classify(cell,plane,projection)==3) {
               budget_split(cell,budget);
               auto halves=split_piece(std::move(cell),plane,projection);
-              next.push_back(std::move(halves.first));next.push_back(std::move(halves.second));
-            } else next.push_back(std::move(cell));
+              place(std::move(halves.first));place(std::move(halves.second));
+            } else place(std::move(cell));
           }
           cells=std::move(next);
-        }
+        };
+        cut(face->plane,[&](const Piece& cell) { return coplanar || behind(centre_of(cell)); });
+        for(const SplitPlane& plane:boundaries)
+          cut(plane,[&](const Piece& cell) {
+            if(inside==0) return true;
+            for(const Vertex& v:cell.polygon)
+              if(inside*side(plane_distance(plane,v,projection),projection.resolved.tolerance)<0) return false;
+            return true;
+          });
         for(Piece& cell:cells) {
-          Vertex centre{};
-          for(const Vertex& v:cell.polygon) for(int k=0;k<3;++k) centre.xyz[k]+=v.xyz[k]/cell.polygon.size();
+          Vertex centre=centre_of(cell);
           if(!screen_contains(face->polygon,centre,projection)) continue;
-          double t=face_ray_parameter(*face,centre,projection);
-          Vec3 ray=projection.camera.perspective ? subtract(projection.model(centre.xyz),projection.resolved.eye) : projection.resolved.ray;
           if(face->halo) {
-            if(!coplanar && t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray))) cell.behind_halo=true;
-          } else if(coplanar || t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray))) {
+            if(!coplanar && behind(centre)) cell.behind_halo=true;
+          } else if(coplanar || behind(centre)) {
             bool hidden=cell.hidden;
             lift_coverage(cell,*face,projection);
             if(coplanar) cell.hidden=hidden;
           }
         }
+        for(Piece& cell:settled) cells.push_back(std::move(cell));
+        std::stable_sort(cells.begin(),cells.end(),[](const Piece& a,const Piece& b) {return a.path_start<b.path_start;});
       }
       for(Piece& cell:cells) {
         if(cell.behind_halo) continue;

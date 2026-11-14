@@ -25,15 +25,30 @@ utils::globalVariables("outline_lines_cpp")
 #' smooth contour for layers with vertex normals (`nx`, `ny`, `nz`, as grid,
 #' parametric and isosurface layers have) and the mesh silhouette otherwise.
 #' In the interactive viewer, silhouettes stay those of the initial camera.
+#'
+#' `halo` draws haloed lines (Appel, Rohlf and Stein 1979): each feature line
+#' masks a band of the given width on both sides of its stroke, and any line
+#' behind it is cut back inside that band, so a line passing behind another
+#' stops short of it instead of touching it. The stroke itself stays
+#' `linewidth` wide. The band only cuts lines lying farther from the camera,
+#' never faces, and lines that end at a common vertex, such as the edges at
+#' a corner of a cube, still meet there.
 #' @param silhouette `TRUE`, `FALSE`, `"smooth"` or `"mesh"`.
 #' @param crease Crease angle in degrees, or `NULL` for no creases.
 #' @param boundary Whether to draw boundary edges.
 #' @param colour,linewidth,linetype,alpha Stroke of the lines.
 #' @param hidden Hidden stroke policy of the lines: `"hide"`, `"dashed"` or
 #'   `"show"`.
+#' @param halo Width of the gap left on each side of a line where farther
+#'   lines pass behind it: a physical [grid::unit()] or a number in
+#'   millimetres. `NULL` (the default) for no gap.
 #' @return An outline specification for the `outline` argument of
 #'   [geom_surface_3d()], [geom_mesh_3d()] and the surface stats.
-#' @references Bénard and Hertzmann (2019). Line drawings from 3D models: a
+#' @references Appel, Rohlf and Stein (1979). The haloed line effect for
+#'   hidden line elimination. SIGGRAPH '79.
+#'   \url{https://history.siggraph.org/?p=104577}
+#'
+#'   Bénard and Hertzmann (2019). Line drawings from 3D models: a
 #'   tutorial. Foundations and Trends in Computer Graphics and Vision 11,
 #'   1-159. \doi{10.1561/0600000075}
 #'
@@ -53,9 +68,13 @@ utils::globalVariables("outline_lines_cpp")
 #'   geom_mesh_3d(vertices = cube, faces = quads, fill = "grey90",
 #'     outline = outline_3d(hidden = "dashed")) +
 #'   coord_3d()
+#' ggplot2::ggplot() +
+#'   geom_parametric_3d(fun = torus, n = c(48, 24), closed = TRUE, fill = "white",
+#'     outline = outline_3d(crease = NULL, hidden = "show", halo = grid::unit(1, "mm"))) +
+#'   coord_3d(elevation = 30)
 #' @export
 outline_3d <- function(silhouette = TRUE, crease = 30, boundary = TRUE, colour = "black", linewidth = 0.5,
-                       linetype = 1, alpha = 1, hidden = c("hide", "dashed", "show")) {
+                       linetype = 1, alpha = 1, hidden = c("hide", "dashed", "show"), halo = NULL) {
   if (isTRUE(silhouette)) silhouette <- "auto"
   else if (isFALSE(silhouette)) silhouette <- "none"
   if (!is.character(silhouette) || length(silhouette) != 1L || !silhouette %in% c("auto", "none", "smooth", "mesh"))
@@ -67,7 +86,18 @@ outline_3d <- function(silhouette = TRUE, crease = 30, boundary = TRUE, colour =
   if (length(colour) != 1L) stop("colour must be a single colour.", call. = FALSE)
   grDevices::col2rgb(colour)
   structure(list(silhouette = silhouette, crease = crease, boundary = boundary, colour = colour,
-    linewidth = linewidth, linetype = linetype, alpha = alpha, hidden = match.arg(hidden)), class = "ggplot3d_outline")
+    linewidth = linewidth, linetype = linetype, alpha = alpha, hidden = match.arg(hidden),
+    halo = outline_halo_mm_3d(halo)), class = "ggplot3d_outline")
+}
+
+outline_halo_mm_3d <- function(halo) {
+  if (is.null(halo)) return(0)
+  if (grid::is.unit(halo)) {
+    if (length(halo) != 1L || !grid::unitType(halo) %in% c("mm", "cm", "inches", "points", "bigpts", "picas"))
+      stop("halo must be a single physical grid unit, a number of millimetres or NULL.", call. = FALSE)
+    halo <- grid::convertUnit(halo, "mm", valueOnly = TRUE)
+  }
+  mesh_number_3d(halo, "halo", function(x) is.finite(x) && x >= 0, "a nonnegative width")
 }
 
 # Adds the feature lines of params$outline to a packet of triangles: faces
@@ -105,8 +135,10 @@ outline_merge_3d <- function(packet, data, faces, params, panel_params) {
     colour = spec$colour, linewidth = spec$linewidth, linetype = spec$linetype, alpha = spec$alpha,
     .source = data$.source[rows[lines$vertex]], .layer = data$.layer[rows[lines$vertex]])
   counts <- tabulate(lines$line)
-  style <- utils::modifyList(params, list(hidden = spec$hidden, lineend = "round", linejoin = "round", shade = FALSE, arrow = NULL))
+  style <- utils::modifyList(params, list(hidden = spec$hidden, lineend = "round", linejoin = "round", shade = FALSE,
+    shading = "flat", arrow = NULL, .vertex_key = NULL))
   outline <- packet_from_primitives_3d(strokes, seq_len(n), rep("polylines", length(counts)), style,
     panel_params$panel_id, counts)
+  outline$polylines$mask_width_mm <- outline$polylines$width_mm + 2 * (spec$halo %or3d% 0)
   merge_scene_packets(list(packet, outline), panel_params$panel_id)
 }

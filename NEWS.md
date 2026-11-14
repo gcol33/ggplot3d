@@ -30,6 +30,22 @@
   homogeneous with the pole at infinity, and faces are sampled only where
   they can reach the box, so the `pole_radius` cut is gone (#19).
 
+* `outline_3d()` derives feature lines from the triangles of
+  `geom_surface_3d()`, `geom_mesh_3d()` and the surface stats, passed as their
+  `outline` argument: view-dependent silhouettes (mesh edges between front-
+  and back-facing triangles, or the interpolated contour of Hertzmann and
+  Zorin 2000 for layers with vertex normals), creases above a dihedral angle
+  and boundary edges (Bénard and Hertzmann 2019). `halo` draws them as haloed
+  lines (Appel, Rohlf and Stein 1979): a farther line passing behind one is
+  cut back to leave a gap of the given width on each side, in the vector and
+  raster backends alike, while lines that end at a common vertex still meet.
+  Raster halos now cut only strokes, as the vector backend does, and never
+  the strokes of their own polyline. Mesh outlines no longer reuse the mesh's
+  vertex keys, which dropped and misplaced crease edges. Hidden-line coverage
+  clips line pieces against convex occluders instead of cutting them along
+  every edge plane, which keeps `hidden = "show"` and halos within the
+  vector engine's budget on finer meshes (#61).
+
 * Lighting has materials and several lights. `lights_3d()` combines
   `light_directional()`, `light_point(position, falloff)` (inverse-square at
   `falloff = 2`, independent of the other geometry), `light_head()` (MATLAB's

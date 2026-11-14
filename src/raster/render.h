@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry.h"
+#include "../scene/halo.h"
 #include "../shade/read.h"
 #include "../raymarch/volume.h"
 #include <numeric>
@@ -377,14 +378,38 @@ struct Fragment { Index item; double z; int sample; bool border; bool own=false;
 // The nearest opaque coverage of a sample: its partition and, within the depth
 // partition, its depth. A fragment in a lower partition, or more than the
 // tolerance behind it in the depth partition, follows it in compositing order.
+// Halo bands are kept apart from opaque depth and hide only depth-partition
+// strokes, as the scene compiler's line coverage does: up to four bands of
+// distinct polylines, the nearest kept, so a stroke is cut by the nearest
+// band of a polyline it does not join (HaloJoins).
 struct Occluder {
-  int partition=-1; double z=R_PosInf;
+  static constexpr int bands=4;
+  int partition=-1,halos=0; double z=R_PosInf;
+  std::array<double,bands> halo_depth; std::array<Index,bands> halo_row;
   bool hides(int p,double depth,double tolerance) const {
     return p<partition || (p==1 && partition==1 && depth>z+tolerance);
   }
+  bool hides_line(int p,double depth,double tolerance,Index row,const HaloJoins& joins) const {
+    if(hides(p,depth,tolerance)) return true;
+    if(p!=1 || partition>1) return false;
+    for(int k=0;k<halos;++k)
+      if(depth>halo_depth[k]+tolerance && !joins.joined(halo_row[k],row)) return true;
+    return false;
+  }
   void add(int p,double depth) {
-    if(p>partition) {partition=p;z=depth;}
+    if(p>partition) {partition=p;z=depth;if(p>1) halos=0;}
     else if(p==partition && depth<z) z=depth;
+  }
+  void add_halo(Index row,double depth) {
+    if(partition>1) return;
+    for(int k=0;k<halos;++k) if(halo_row[k]==row) {halo_depth[k]=std::min(halo_depth[k],depth);return;}
+    int slot=halos<bands ? halos++:-1;
+    if(slot<0) {
+      slot=0;
+      for(int k=1;k<bands;++k) if(halo_depth[k]>halo_depth[slot]) slot=k;
+      if(halo_depth[slot]<=depth) return;
+    }
+    halo_depth[slot]=depth;halo_row[slot]=row;
   }
 };
 
@@ -670,7 +695,7 @@ static inline Colour quadric_colour(const Shapes& shapes,const Item& item,const 
 static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const std::vector<Span>& spans,
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
                                bool retained,const Traced& traced,bool keep_buffers,
-                               TileScratch& s,Buffers& out,int& passes) {
+                               const HaloJoins& joins,TileScratch& s,Buffers& out,int& passes) {
   const Scene& scene=shapes.scene;
   const auto& line=scene.packet.polylines;
   const double tolerance=scene.projection.resolved.tolerance;
@@ -691,18 +716,20 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
     const Item& item=scene.items[i]; const Paint& p=shapes.paint[i]; const Span& span=spans[i];
     const bool smooth_item=shapes.smooth && shapes.smooth->active && item.kind==1 && shapes.smooth->item[i];
     const bool lit_quadric=item.kind==5 && shapes.quadric_lighting && shapes.quadric_lighting->active;
+    const Index line_row=item.kind==2 ? item.row:-1;
     int x0=std::max(span.samples[0],sx0),y0=std::max(span.samples[1],sy0);
     int x1=std::min(span.samples[2],sx1-1),y1=std::min(span.samples[3],sy1-1);
     for(int y=y0;y<=y1;++y) for(int x=x0;x<=x1;++x) {
       int local=(y-sy0)*tw+(x-sx0);
       Occluder& occluder=s.occluders[local];
-      if(!span.lift && occluder.hides(span.partition,span.nearest,tolerance)) continue;
+      if(!span.lift && (line_row>=0 ? occluder.hides_line(span.partition,span.nearest,tolerance,line_row,joins):
+                        occluder.hides(span.partition,span.nearest,tolerance))) continue;
       bool border=false;double xx=canvas.origin_x+(x+.5)*canvas.dx,yy=canvas.origin_y+(y+.5)*canvas.dy;
       Hit hit;
       if(span.halo) {
         // A haloed stroke hides what lies behind it in its mask band.
         double h=halo_depth(scene,item,xx,yy);
-        if(std::isfinite(h)) occluder.add(span.partition,h);
+        if(std::isfinite(h)) occluder.add_halo(item.row,h);
       }
       double z=sample(shapes,item,p,xx,yy,&border,false,span.lift,&hit);
       if(span.retained_occluder) s.opaque[local]=std::min(s.opaque[local],z);
@@ -713,7 +740,8 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       }
       if(!std::isfinite(z)) continue;
       const Colour& c=border ? p.outline:p.colour;
-      if(c.a==0 || occluder.hides(span.partition,z,tolerance)) continue;
+      if(c.a==0 || (line_row>=0 ? occluder.hides_line(span.partition,z,tolerance,line_row,joins):
+                                  occluder.hides(span.partition,z,tolerance))) continue;
       Fragment fragment{i,z,local,border};
       if(!border && smooth_item) {fragment.own=true;fragment.colour=smooth_colour(shapes,item,p,hit);}
       if(lit_quadric) {fragment.own=true;fragment.colour=quadric_colour(shapes,item,p,xx,yy);}
@@ -734,7 +762,11 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
     Fragment* f=s.ordered.data()+s.start[k];
     std::size_t count=s.start[k+1]-s.start[k],kept=0;
     for(std::size_t j=0;j<count;++j)
-      if(!s.occluders[k].hides(spans[f[j].item].partition,f[j].z,tolerance)) f[kept++]=f[j];
+    {
+      const Item& item=scene.items[f[j].item]; const int partition=spans[f[j].item].partition;
+      if(!(item.kind==2 ? s.occluders[k].hides_line(partition,f[j].z,tolerance,item.row,joins):
+                          s.occluders[k].hides(partition,f[j].z,tolerance))) f[kept++]=f[j];
+    }
     order_fragments(scene,f,kept,s.merge);
     const int sx=sx0+static_cast<int>(k%tw),sy=sy0+static_cast<int>(k/tw);
     const bool centre=keep_buffers && sx%canvas.aa==canvas.aa/2 && sy%canvas.aa==canvas.aa/2;
@@ -1062,11 +1094,12 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   threads=thread_count(threads,tiles);
   std::vector<TileScratch> scratch(threads);
   std::vector<int> worker_passes(threads,0);
+  const HaloJoins joins(scene.packet);
   double setup_seconds=seconds(start); auto tiles_start=Clock::now();
   parallel_tiles(tiles,threads,[&](int worker,int tile) {
     int tx=tile%canvas.tiles_x,ty=tile/canvas.tiles_x;
     render_tile(shapes,canvas,spans,tile_items.data()+tile_start[tile],tile_start[tile+1]-tile_start[tile],
-      tx,ty,retained,traced,keep_buffers,scratch[worker],buffers,worker_passes[worker]);
+      tx,ty,retained,traced,keep_buffers,joins,scratch[worker],buffers,worker_passes[worker]);
   });
   scratch.clear();
   buffers.passes=*std::max_element(worker_passes.begin(),worker_passes.end());

@@ -77,3 +77,54 @@ test_that("surface layers draw outlines with their own hidden policy", {
   expect_s3_class(ggplot2::ggplotGrob(ggplot2::ggplot() + geom_parametric_3d(fun = torus, n = c(24, 12), closed = TRUE,
     outline = outline_3d()) + coord_3d()), "gtable")
 })
+
+test_that("mesh outlines keep the mesh's corners", {
+  packet <- stats_scene(outline_cube_test(outline_3d(silhouette = FALSE, boundary = FALSE)))$packet
+  corners <- packet$corners$vertex[unlist(Map(function(o, n) o + seq_len(n) - 1L, packet$polylines$offset, packet$polylines$count))]
+  xyz <- round(scene_vertices_xyz_3d(packet$vertices)[corners, , drop = FALSE], 9)
+  expect_equal(nrow(unique(xyz)), 8L)
+  ends <- matrix(seq_len(nrow(xyz)), ncol = 2L, byrow = TRUE)
+  lengths <- sqrt(rowSums((xyz[ends[, 1L], ] - xyz[ends[, 2L], ])^2))
+  expect_equal(lengths, rep(lengths[1L], 12L))
+})
+
+test_that("interpolated contours of a torus follow its analytic contour generator", {
+  big <- 1; small <- 0.4
+  torus_mesh <- function(nu, nv) {
+    grid <- expand.grid(u = (seq_len(nu) - 0.5) * 2 * pi / nu, v = (seq_len(nv) - 0.25) * 2 * pi / nv)
+    p <- cbind((big + small * cos(grid$v)) * cos(grid$u), (big + small * cos(grid$v)) * sin(grid$u), small * sin(grid$v))
+    n <- cbind(cos(grid$v) * cos(grid$u), cos(grid$v) * sin(grid$u), sin(grid$v))
+    id <- function(i, j) ((j - 1L) %% nv) * nu + ((i - 1L) %% nu) + 1L
+    cells <- expand.grid(i = seq_len(nu), j = seq_len(nv))
+    a <- id(cells$i, cells$j); b <- id(cells$i + 1L, cells$j); c <- id(cells$i + 1L, cells$j + 1L); d <- id(cells$i, cells$j + 1L)
+    list(p = p, n = n, tri = rbind(cbind(a, b, c), cbind(a, c, d)))
+  }
+  direction <- c(0.2, -0.6, -0.5); direction <- direction / sqrt(sum(direction^2))
+  residual <- function(nu, nv) {
+    m <- torus_mesh(nu, nv)
+    lines <- outline_lines_cpp(m$p, m$p, m$n, m$tri, direction, FALSE, 2L, NA_real_, FALSE)
+    q <- cbind(lines$x, lines$y, lines$z)
+    rho <- sqrt(q[, 1L]^2 + q[, 2L]^2); u <- atan2(q[, 2L], q[, 1L]); v <- atan2(q[, 3L], rho - big)
+    normal <- cbind(cos(v) * cos(u), cos(v) * sin(u), sin(v))
+    list(dot = max(abs(normal %*% direction)), surface = max(abs(sqrt((rho - big)^2 + q[, 3L]^2) - small)),
+         loops = length(unique(lines$line)))
+  }
+  coarse <- residual(48L, 24L); fine <- residual(96L, 48L)
+  expect_lt(fine$dot, 0.01)
+  expect_lt(fine$dot, coarse$dot / 3)
+  expect_lt(fine$surface, coarse$surface / 3)
+  expect_equal(fine$loops, coarse$loops)
+})
+
+test_that("outline_3d(halo) widens the mask of the feature lines", {
+  expect_equal(outline_3d()$halo, 0)
+  expect_equal(outline_3d(halo = 0.75)$halo, 0.75)
+  expect_equal(outline_3d(halo = grid::unit(2, "pt"))$halo, 2 * 25.4 / 72.27)
+  expect_error(outline_3d(halo = -1), "halo")
+  expect_error(outline_3d(halo = grid::unit(1, "npc")), "halo")
+  plain <- stats_scene(outline_cube_test(outline_3d(linewidth = 0.5)))$packet
+  expect_equal(plain$polylines$mask_width_mm, plain$polylines$width_mm)
+  haloed <- stats_scene(outline_cube_test(outline_3d(linewidth = 0.5, halo = grid::unit(1, "mm"))))$packet
+  expect_equal(haloed$polylines$mask_width_mm, haloed$polylines$width_mm + 2)
+  expect_equal(length(haloed$faces$count), length(plain$faces$count))
+})

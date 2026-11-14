@@ -12,7 +12,8 @@ outline_3d(
   linewidth = 0.5,
   linetype = 1,
   alpha = 1,
-  hidden = c("hide", "dashed", "show")
+  hidden = c("hide", "dashed", "show"),
+  halo = NULL
 )
 }
 \arguments{
@@ -26,6 +27,10 @@ outline_3d(
 
 \item{hidden}{Hidden stroke policy of the lines: \code{"hide"}, \code{"dashed"} or
 \code{"show"}.}
+
+\item{halo}{Width of the gap left on each side of a line where farther
+lines pass behind it: a physical \code{\link[grid:unit]{grid::unit()}} or a number in
+millimetres. \code{NULL} (the default) for no gap.}
 }
 \value{
 An outline specification for the \code{outline} argument of
@@ -56,6 +61,14 @@ triangles can hide short pieces of it. \code{silhouette = TRUE} takes the
 smooth contour for layers with vertex normals (\code{nx}, \code{ny}, \code{nz}, as grid,
 parametric and isosurface layers have) and the mesh silhouette otherwise.
 In the interactive viewer, silhouettes stay those of the initial camera.
+
+\code{halo} draws haloed lines (Appel, Rohlf and Stein 1979): each feature line
+masks a band of the given width on both sides of its stroke, and any line
+behind it is cut back inside that band, so a line passing behind another
+stops short of it instead of touching it. The stroke itself stays
+\code{linewidth} wide. The band only cuts lines lying farther from the camera,
+never faces, and lines that end at a common vertex, such as the edges at
+a corner of a cube, still meet there.
 }
 \examples{
 torus <- function(u, v) list(x = (1 + 0.4 * cos(v)) * cos(u),
@@ -71,8 +84,16 @@ ggplot2::ggplot() +
   geom_mesh_3d(vertices = cube, faces = quads, fill = "grey90",
     outline = outline_3d(hidden = "dashed")) +
   coord_3d()
+ggplot2::ggplot() +
+  geom_parametric_3d(fun = torus, n = c(48, 24), closed = TRUE, fill = "white",
+    outline = outline_3d(crease = NULL, hidden = "show", halo = grid::unit(1, "mm"))) +
+  coord_3d(elevation = 30)
 }
 \references{
+Appel, Rohlf and Stein (1979). The haloed line effect for
+hidden line elimination. SIGGRAPH '79.
+\url{https://history.siggraph.org/?p=104577}
+
 Bénard and Hertzmann (2019). Line drawings from 3D models: a
 tutorial. Foundations and Trends in Computer Graphics and Vision 11,
 1-159. \doi{10.1561/0600000075}
