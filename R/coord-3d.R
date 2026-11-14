@@ -32,7 +32,12 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #'   painted, and consecutive visible pieces of one stroke are drawn as one
 #'   path, so an SVG device (`ggplot2::ggsave(device = "svg")`) writes a
 #'   drawing for a pen plotter. Feature lines ([outline_3d()]) and model-space
-#'   hatching ([hatch_3d()]) make line-only figures of surfaces. A hybrid panel
+#'   hatching ([hatch_3d()]) make line-only figures of surfaces. Stroke
+#'   centrelines are clipped to visible intervals, joined within each source
+#'   polyline, and ordered within each layer and colour by the nearest endpoint,
+#'   reversing paths to shorten pen travel (as in vpype's `linesort`). Consecutive
+#'   points within 0.01 mm or one tenth of a device pixel are combined. Text
+#'   and labels are drawn last. A hybrid panel
 #'   rasterises the layers created with `raster = TRUE` (an argument of every
 #'   `geom_*_3d()` layer and of [layer_3d()]) into one image at `dpi` and draws
 #'   the other layers, axes, panes and text as vector graphics. Vector

@@ -7,6 +7,14 @@
 * Textured faces carry explicit opaque-coverage metadata for solid culling
   and occlusion; their opacity retains the layer's actual alpha (#64).
 
+* Plotter output clips every stroke to visible centreline intervals, joins
+  continued paths, removes subpixel duplicate points and sorts paths by the
+  nearest endpoint within each layer and colour, allowing reversal. Grid
+  stroke outlines also remove duplicate vertices and simplify within 0.01 mm
+  or one tenth of a device pixel. Opaque dash outlines share compound paths.
+  Rasterised retained outlines use centreline visibility against surfaces,
+  preserving visible silhouette strokes and their full width in hybrid panels.
+
 * Textures: `texture_3d()` wraps an image (nativeRaster, colour matrix,
   numeric array or PNG file) that `texture =` drapes over the faces of
   `geom_surface_3d()`, `geom_mesh_3d()`, `stat_parametric_3d()` and the other

@@ -1,6 +1,7 @@
 #pragma once
 #include "geometry.h"
 #include "../scene/halo.h"
+#include "../scene/bounds.h"
 #include "texture.h"
 #include "../shade/read.h"
 #include "../raymarch/volume.h"
@@ -738,7 +739,21 @@ static inline Colour quadric_colour(const Shapes& shapes,const Item& item,const 
   return out;
 }
 
+// A stroke sample takes its visibility from the nearest centreline point.
+// Join sectors take the depth of their vertex.
+static inline std::array<double,2> stroke_sample_point(const Scene& scene,const Item& item,double x,double y) {
+  const Screen* v=scene.vertices.data()+item.offset;
+  if(item.kind==2 && item.geometry==0) {
+    double dx=v[1].x-v[0].x,dy=v[1].y-v[0].y,length2=dx*dx+dy*dy;
+    double t=length2>0 ? std::max(0.0,std::min(1.0,((x-v[0].x)*dx+(y-v[0].y)*dy)/length2)):0;
+    return {v[0].x+t*dx,v[0].y+t*dy};
+  }
+  if(item.kind==2 && (item.geometry==1 || item.geometry==2)) return {v[0].x,v[0].y};
+  return {x,y};
+}
+
 static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const std::vector<Span>& spans,
+                               const BoundsIndex<Paint>& paint_index,
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
                                bool retained,const Traced& traced,bool keep_buffers,
                                const HaloJoins& joins,TileScratch& s,Buffers& out,int& passes) {
@@ -780,9 +795,15 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       double z=sample(shapes,item,p,xx,yy,&border,false,span.lift,&hit);
       if(span.retained_occluder) s.opaque[local]=std::min(s.opaque[local],z);
       if(span.lift && std::isfinite(z)) {
-        bool hidden=z>s.opaque[local]+tolerance;
+        const auto point=stroke_sample_point(scene,item,xx,yy);
+        double opaque=R_PosInf;
+        paint_index.query({point[0],point[1],point[0],point[1]},0,[&](std::size_t j) {
+          if(spans[j].retained_occluder)
+            opaque=std::min(opaque,sample(shapes,scene.items[j],shapes.paint[j],point[0],point[1]));
+        });
+        bool hidden=z>opaque+tolerance;
         z=sample(shapes,item,p,xx,yy,&border,hidden && line.hidden[item.row]==1);
-        if(hidden && std::isfinite(z)) z=s.opaque[local];
+        if(std::isfinite(z)) z=std::min(z,s.opaque[local]);
       }
       if(!std::isfinite(z)) continue;
       const Colour& c=border ? p.outline:p.colour;
@@ -1158,10 +1179,12 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   std::vector<TileScratch> scratch(threads);
   std::vector<int> worker_passes(threads,0);
   const HaloJoins joins(scene.packet);
+  BoundsIndex<Paint> paint_index;
+  if(retained) paint_index.reset(paint);
   double setup_seconds=seconds(start); auto tiles_start=Clock::now();
   parallel_tiles(tiles,threads,[&](int worker,int tile) {
     int tx=tile%canvas.tiles_x,ty=tile/canvas.tiles_x;
-    render_tile(shapes,canvas,spans,tile_items.data()+tile_start[tile],tile_start[tile+1]-tile_start[tile],
+    render_tile(shapes,canvas,spans,paint_index,tile_items.data()+tile_start[tile],tile_start[tile+1]-tile_start[tile],
       tx,ty,retained,traced,keep_buffers,joins,scratch[worker],buffers,worker_passes[worker]);
   });
   scratch.clear();
@@ -1343,16 +1366,6 @@ static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List da
   // The point whose depth decides a sample: a stroke ribbon lies at the depth
   // of its centreline, so a stroke sample is seen when the nearest centreline
   // point is; other paint is tested where it is drawn.
-  auto decisive=[&](const Item& item,double x,double y) {
-    const Screen* v=scene.vertices.data()+item.offset;
-    if(item.kind==2 && item.geometry==0) {
-      double dx=v[1].x-v[0].x,dy=v[1].y-v[0].y,length2=dx*dx+dy*dy;
-      double t=length2>0 ? std::max(0.0,std::min(1.0,((x-v[0].x)*dx+(y-v[0].y)*dy)/length2)):0;
-      return std::array<double,2>{v[0].x+t*dx,v[0].y+t*dy};
-    }
-    if(item.kind==2 && (item.geometry==1 || item.geometry==2)) return std::array<double,2>{v[0].x,v[0].y};
-    return std::array<double,2>{x,y};
-  };
   struct State {std::vector<std::int64_t> hidden; bool shown=false;};
   std::array<std::vector<State>,5> states;
   for(int kind=1;kind<=5;++kind) states[kind-1].resize(scene.table(kind).count.size());
@@ -1376,7 +1389,7 @@ static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List da
       double xx=canvas.origin_x+(x+.5)*canvas.dx,yy=canvas.origin_y+(y+.5)*canvas.dy;
       double z=sample(shapes,item,p,xx,yy,nullptr,false,true);
       if(!std::isfinite(z)) continue;
-      auto point=decisive(item,xx,yy);
+      auto point=stroke_sample_point(scene,item,xx,yy);
       double occluder=depth_at_point(point[0],point[1]);
       if(z>occluder+tolerance) state.hidden.push_back(static_cast<std::int64_t>(y)*width+x);
       else state.shown=true;

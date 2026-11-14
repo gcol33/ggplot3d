@@ -74,7 +74,8 @@ makeContent.scene_panel_grob <- function(x) {
   } else {
     packet <- device_text_metrics_3d(merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id))
     vector_marker_limit_3d(packet)
-    scene <- scene_compile(packet, furniture$camera, furniture$viewport,
+    compile <- if (identical(backend$type, "plotter")) compile_plotter_scene_3d else scene_compile
+    scene <- compile(packet, furniture$camera, furniture$viewport,
                            stable_partition = isTRUE(x$panel_params$coord_params$stable_partition))
     rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light,
       strokes_only = identical(backend$type, "plotter"))
@@ -370,12 +371,18 @@ clipped_path_grob_3d <- function(x, y, id, clip, viewport, gp, width = 0, cap = 
   outline <- if (!is.null(cache)) cache[[key]] else NULL
   paths <- grid_clip_paths_cpp(x * viewport$width_mm, y * viewport$height_mm, as.integer(id),
     as.numeric(clip$x) * viewport$width_mm, as.numeric(clip$y) * viewport$height_mm, as.integer(clip$id),
-    width, as.integer(cap), as.integer(join), mitre, 25.4 / (viewport$dpi * 4096), outline, radii)
+    width, as.integer(cap), as.integer(join), mitre, 25.4 / (viewport$dpi * 4096), outline, radii,
+    if (width > 0) min(0.01, 2.54 / viewport$dpi) else 0)
   if (!is.null(cache)) cache[[key]] <- paths$outline
   if (!paths$supported) return(NULL)
   if (!length(paths$x)) return(grid::nullGrob())
+  keep <- compact_path_points_3d(paths$x, paths$y, paths$id,
+    if (width > 0) min(0.01, 2.54 / viewport$dpi) else min(0.001, 0.254 / viewport$dpi), closed = TRUE)
+  paths <- lapply(paths[c("x", "y", "id", "path_id")], `[`, keep)
+  if (!length(paths$x)) return(grid::nullGrob())
   grid::pathGrob(paths$x / viewport$width_mm, paths$y / viewport$height_mm, id = paths$id,
-    pathId = paths$path_id, rule = "winding", gp = grid::gpar(fill = gp$col[1L], col = NA, alpha = gp$alpha[1L]))
+    pathId = if (width > 0 && isTRUE(gp$alpha[1L] == 1)) rep(1L, length(paths$id)) else paths$path_id,
+    rule = "winding", gp = grid::gpar(fill = gp$col[1L], col = NA, alpha = gp$alpha[1L]))
 }
 
 # Filled point footprints use the same physical outlines as scene visibility.
@@ -439,7 +446,7 @@ dash_segments_3d <- function(x, y, start, pattern, viewport) {
   list(x = xx, y = yy, count = counts)
 }
 
-arrow_heads_3d <- function(scene, rows, styles, viewport) {
+arrow_heads_3d <- function(scene, rows, styles, viewport, strokes_only = FALSE) {
   f <- scene$fragments
   arrow <- style_value_3d(styles[1L, , drop = FALSE], "arrow", list(NULL))[[1L]]
   if (is.null(arrow)) return(grid::nullGrob())
@@ -469,6 +476,10 @@ arrow_heads_3d <- function(scene, rows, styles, viewport) {
   gp$lty <- 1
   id <- rep(seq_along(materials), each = 3L)
   if (arrow$type == 2L) {
+    if (strokes_only) {
+      indices <- unlist(lapply(split(seq_along(xx), id), function(i) c(i, i[1L])))
+      return(grid::polylineGrob(xx[indices], yy[indices], default.units = "mm", id = id[indices], gp = gp))
+    }
     gp$fill <- style_value_3d(styles[materials, , drop = FALSE], "arrow_fill", "black")
     grid::polygonGrob(xx, yy, default.units = "mm", id = id, gp = gp)
   } else grid::polylineGrob(xx, yy, default.units = "mm", id = id, gp = gp)
@@ -575,7 +586,7 @@ stroke_run_grob_3d <- function(scene, rows, s, x, y, counts, starts, viewport) {
 # between the two paints, is at most `tolerance_mm`; otherwise all its runs
 # keep the clipped outline.
 masked_stroke_runs_3d <- function(scene, runs, styles, viewport, geometry,
-                                  tolerance_mm = min(0.1, 12.7 / viewport$dpi)) {
+                                  tolerance_mm = min(0.1, 12.7 / viewport$dpi), centreline = FALSE) {
   f <- scene$fragments; tab <- scene$source$polylines
   n <- length(runs)
   out <- list(polylines = vector("list", n), intervals = vector("list", n), segments = logical(n))
@@ -612,6 +623,12 @@ masked_stroke_runs_3d <- function(scene, runs, styles, viewport, geometry,
     union <- list(x = unlist(lapply(clips[members], `[[`, "x")), y = unlist(lapply(clips[members], `[[`, "y")),
       id = match(unlist(ids), unique(unlist(ids))))
     visible <- intervals_of(out$polylines[[members[1L]]], union, source, FALSE)
+    if (centreline) {
+      out$intervals[[members[1L]]] <- visible
+      for (run in members[-1L]) out$intervals[[run]] <- list(x = numeric(), y = numeric(), id = integer())
+      out$segments[members] <- TRUE
+      next
+    }
     worst[[length(worst) + 1L]] <- data.frame(source = source, deviation = max(c(0, visible$lateral, visible$uncovered)))
     if (!length(visible$id)) next
     last <- cumsum(rle(visible$id)$lengths); start <- c(1L, utils::head(last, -1L) + 1L)
@@ -620,6 +637,7 @@ masked_stroke_runs_3d <- function(scene, runs, styles, viewport, geometry,
       kind = c(visible$start_kind, visible$end_kind),
       deviation = c(visible$start_deviation, visible$end_deviation))
   }
+  if (centreline) return(out)
   # A piece whose footprint boundary runs within the half width of its own
   # centreline holds part of the stroke's width only: the rest is painted by
   # another piece, at another place in the draw order.
@@ -655,9 +673,31 @@ stroke_intervals_grob_3d <- function(intervals, gp, viewport) {
     default.units = "npc", id = intervals$id, gp = gp)
 }
 
+# Consecutive opaque paths of one paint form a single winding-rule operation.
+compact_painted_grobs_3d <- function(grobs) {
+  out <- list()
+  eligible <- function(g) inherits(g, "pathgrob") && is.null(g$vp) &&
+    identical(g$rule, "winding") && isTRUE(g$gp$alpha == 1) && all(is.na(g$gp$col))
+  for (g in grobs) {
+    previous <- if (length(out)) out[[length(out)]] else NULL
+    if (eligible(g) && eligible(previous) && identical(g$gp, previous$gp)) {
+      g$x <- grid::unit.c(previous$x, g$x); g$y <- grid::unit.c(previous$y, g$y)
+      g$id <- c(previous$id, g$id + max(previous$id))
+      g$pathId <- rep(1L, length(g$id))
+      out[[length(out)]] <- g
+    } else out[[length(out) + 1L]] <- g
+  }
+  out
+}
+
 # `regions`: optional list(id, grobs). Fragment i is clipped to grobs[[id[i]]]
 # when id[i] > 0.
 render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, strokes_only = FALSE) {
+  if (strokes_only && !isTRUE(scene$plotter_visible) && length(scene$source$faces$primitive_id)) {
+    packet <- scene$source
+    packet$styles <- scene$styles; packet$materials <- scene$materials
+    scene <- compile_plotter_scene_3d(packet, scene$camera_input, viewport)
+  }
   f <- scene$fragments; order <- scene$draw_order
   styles <- scene$styles[match(f$style_id, scene$styles$style_id), , drop = FALSE]
   if (is.null(styles$colour)) styles$colour <- rep(NA_character_, nrow(styles))
@@ -679,6 +719,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       f$arrow_start[lines], f$arrow_end[lines], arrow_key[match(f$style_id[lines], scene$styles$style_id)], sep = ":")
     lty <- style_value_3d(styles, "linetype", 1)
     key[lines] <- paste(key[lines], lty[lines] %in% c("solid", "1") & !f$hidden[lines], sep = ":")
+    if (strokes_only) key[lines] <- paste(key[lines], source, sep = ":source:")
   }
   text <- which(f$kind == 4L)
   key[text] <- paste(key[text], scene$source$text$angle[f$source_index[text]], sep = ":")
@@ -717,6 +758,15 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   key[textured] <- paste(key[textured], "texture", textures$index[textured], sep = ":")
   region_id <- if (is.null(regions)) integer(length(key)) else regions$id
   key <- paste(key, region_id, sep = ":region:")
+  # Adjacent footprint pieces of the same stroke carry disjoint paint, so
+  # visible and hidden pieces can each share a compound footprint.
+  block <- paste(f$kind, f$source_index, f$style_id, f$opacity, f$path_start_mm,
+    f$path_end_mm, f$count, region_id, f$mask_count > 0L)
+  blocks <- cumsum(c(TRUE, block[order][-1L] != head(block[order], -1L)))
+  order <- unlist(lapply(split(order, blocks), function(rows) {
+    if (f$kind[rows[1L]] == 2L && f$mask_count[rows[1L]] > 0L)
+      rows[order(f$hidden[rows])] else rows
+  }), use.names = FALSE)
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   path_cache <- new.env(parent = emptyenv())
@@ -728,7 +778,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
     list(rows = rows, counts = counts, starts = cumsum(c(1L, head(counts, -1L))),
          x = scene$vertices$x_npc[indices], y = scene$vertices$y_npc[indices])
   }
-  strokes <- masked_stroke_runs_3d(scene, runs, styles, viewport, geometry)
+  strokes <- masked_stroke_runs_3d(scene, runs, styles, viewport, geometry, centreline = strokes_only)
   grobs <- lapply(seq_along(runs), function(run) {
     masks <- runs[[run]]
     run_geometry <- geometry(masks)
@@ -738,8 +788,9 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
     gp <- material_gp_3d(s, f$opacity[rows], kind)
     clip <- NULL
     if (f$mask_count[rows[1L]] > 0L) clip <- mask_path_3d(scene, masks)
-    if (strokes_only && kind %in% c(1L, 5L)) {
+    if (strokes_only && kind %in% c(1L, 3L, 5L)) {
       g <- grid::nullGrob()
+      clip <- NULL
     } else if (kind == 5L) {
       drawn <- quadric_run_grob_3d(scene, rows, quadric_info, styles, light, c(rows, underlay[[run]]))
       g <- drawn$grob; clip <- drawn$clip
@@ -812,7 +863,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
           }
         }
       }
-      heads <- arrow_heads_3d(scene, masks, styles[masks, , drop = FALSE], viewport)
+      heads <- arrow_heads_3d(scene, masks, styles[masks, , drop = FALSE], viewport, strokes_only)
       if (!inherits(heads, "null")) {
         if (!is.null(clip)) { g <- clip_grob_3d(g, clip, caps = caps); clip <- NULL }
         g <- grid::grobTree(g, heads)
@@ -832,5 +883,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
     g$name <- paste0("scene-run-", run)
     g
   })
+  if (strokes_only) return(plotter_strokes_grob_3d(grobs, runs, scene, viewport))
+  grobs <- compact_painted_grobs_3d(grobs)
   grid::gTree(children = do.call(grid::gList, grobs), fragment_runs = runs, capabilities = caps, name = "scene-vector-3d")
 }

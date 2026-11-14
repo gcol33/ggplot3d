@@ -172,7 +172,7 @@ test_that("the plotter backend draws strokes only, with hatching hidden by the s
   hidden <- scene$fragments$kind == 2L & scene$fragments$hidden
   expect_true(any(scene$fragments$kind == 2L))
   vector <- motion_panels_3d(npr_render(npr_surface(hatch = hatch_3d(spacing = 0.04))))[[1L]]$scene
-  expect_identical(sum(vector$fragments$kind == 2L), sum(scene$fragments$kind == 2L))
+  expect_identical(vector$source$polylines, scene$source$polylines)
 })
 
 test_that("screen-space hatching fills faces with a pattern per tone band", {

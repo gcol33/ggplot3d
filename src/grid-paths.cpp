@@ -136,8 +136,10 @@ Clipper2Lib::PathsD stroke_paths(const Clipper2Lib::PathsD& input, double radius
 Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id,
                               Rcpp::NumericVector mask_x, Rcpp::NumericVector mask_y, Rcpp::IntegerVector mask_id,
                               double width, int cap, int join, double mitre, double tolerance,
-                              SEXP outline = R_NilValue, Rcpp::Nullable<Rcpp::NumericVector> radii = R_NilValue) {
+                              SEXP outline = R_NilValue, Rcpp::Nullable<Rcpp::NumericVector> radii = R_NilValue,
+                              double simplify = 0) {
   using namespace Clipper2Lib;
+  if (!R_finite(simplify) || simplify < 0) Rcpp::stop("Invalid path simplification tolerance.");
   Rcpp::XPtr<GridPaint> paint(outline == R_NilValue ? Rcpp::XPtr<GridPaint>(new GridPaint(), true) : Rcpp::XPtr<GridPaint>(outline));
   PathsD mask = Union(grid_paths(mask_x, mask_y, mask_id), FillRule::EvenOdd, 8);
   if (outline == R_NilValue) {
@@ -166,7 +168,9 @@ Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcp
     PathsD clipped = Intersect(group, mask, FillRule::NonZero, 8);
     if (clipped.empty()) continue;
     ++paint_id;
-    for (const auto& ring : clipped) {
+    for (const auto& clipped_ring : clipped) {
+      const auto ring = simplify > 0 ? SimplifyPath(clipped_ring, simplify) : clipped_ring;
+      if (ring.size() < 3) continue;
       ++ring_id;
       for (const auto& p : ring) {
         xx.push_back(p.x); yy.push_back(p.y); rings.push_back(ring_id); path_id.push_back(paint_id);
@@ -489,8 +493,11 @@ Rcpp::List grid_stroke_intervals_cpp(Rcpp::NumericVector x, Rcpp::NumericVector 
         // A centreline along a boundary between two footprint pieces of one
         // stroke belongs to the piece on its left, so exactly one draws it.
         PointD middle = at((lo + hi) / 2);
+        bool boundary = !pieces && std::any_of(edges.begin(), edges.end(), [&](const MaskEdge& edge) {
+          return point_segment_distance(middle, edge.a, edge.b) <= 1e-7;
+        });
         middle.x -= 1e-6 * uy / length; middle.y += 1e-6 * ux / length;
-        bool inside = even_odd_inside(edges, middle.x, middle.y);
+        bool inside = boundary || even_odd_inside(edges, middle.x, middle.y);
         if (inside && points.empty()) {
           bool path_start = j == 0 && lo == 0;
           opened_kind = path_start ? 0 : 1;

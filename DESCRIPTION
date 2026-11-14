@@ -87,6 +87,7 @@ Collate:
     'backend-hybrid.R'
     'backend-light.R'
     'backend-pathtrace.R'
+    'backend-plotter.R'
     'backend-raster.R'
     'backend-raymarch.R'
     'backend-shading.R'
