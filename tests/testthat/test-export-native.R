@@ -57,7 +57,7 @@ test_that("native SVG hover links actual browser primitives", {
   if (!nzchar(chromote::find_chrome() %or3d% "")) skip("Chrome is unavailable")
   file <- tempfile(fileext = ".svg");on.exit(unlink(file))
   save_svg_3d(native_plot(), file, width = 400, height = 400)
-  browser <- chromote::ChromoteSession$new(width = 500, height = 500)
+  browser <- viewer_browser_session(width = 500, height = 500)
   on.exit(browser$close(), add = TRUE)
   browser$Page$navigate(paste0("file:///", normalizePath(file, winslash = "/")))
   ready <- browser$Runtime$evaluate("document.readyState", returnByValue = TRUE)$result$value
