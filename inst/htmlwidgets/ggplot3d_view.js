@@ -139,28 +139,33 @@
   const STREAMS = {[FACE]: ['aState'], [STROKE]: ['aState', 'aDashStart'], [MARKER]: ['aState'], [TEXT]: ['aState'], [DISC]: []};
 
   const SHADERS = {
+    // Faces interpolate the model-space normal and the linear-light colour
+    // of their vertices and are lit per fragment (Phong 1975), so a smooth
+    // layer's corner normals and colours vary across each face.
     [FACE]: [`
       in vec3 aPos; in vec3 aNormal; in vec4 aColour; in uint aId; in vec4 aFlags; in float aState;
-      uniform float uLight, uAmbient, uDiffuse, uMultiply; uniform vec3 uLightDir, uRay;
       ${VARYINGS}
+      out vec3 vNormal; out vec3 vLinear; flat out float vShade;
       ${COLOUR_SPACE}
       void main() {
         float d; vec4 p = project(aPos, d);
         gl_Position = clipPosition(p.xy, p.z, p.w);
-        vec4 c = aColour;
-        vec3 n = aNormal/uScale;
-        if (aFlags.x > 0.5 && uLight > 0.5 && dot(n, n) > 0.0) {
-          n = normalize(n);
+        vNormal = aNormal/uScale; vLinear = toLinear(aColour.rgb); vShade = aFlags.x;
+        vColour = vec4(aColour.rgb, aColour.a*aState); vModel = aPos; vId = aId; vClip = aFlags.y;
+      }`, `
+      uniform float uLight, uAmbient, uDiffuse, uMultiply; uniform vec3 uLightDir, uRay;
+      in vec3 vNormal; in vec3 vLinear; flat in float vShade;
+      void main() {
+        clipData();
+        vec3 l = clamp(vLinear, 0.0, 1.0);
+        if (vShade > 0.5 && uLight > 0.5 && dot(vNormal, vNormal) > 0.0) {
+          vec3 n = normalize(vNormal);
           if (dot(n, uRay) > 0.0) n = -n;
           float b = uAmbient+uDiffuse*max(0.0, dot(n, uLightDir));
-          vec3 l = toLinear(c.rgb);
-          l = uMultiply > 0.5 ? l*b : 1.0-(1.0-l)*b;
-          c.rgb = clamp(toSrgb(clamp(l, 0.0, 1.0)), 0.0, 1.0);
+          l = clamp(uMultiply > 0.5 ? l*b : 1.0-(1.0-l)*b, 0.0, 1.0);
         }
-        c.a *= aState;
-        vColour = c; vModel = aPos; vId = aId; vClip = aFlags.y;
-      }`, `
-      void main() { clipData(); emit(vColour); }`],
+        emit(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a));
+      }`],
     [STROKE]: [`
       in vec3 aA; in vec3 aB; in vec4 aCorner; in float aWidth; in vec4 aColour; in uint aId; in vec4 aFlags;
       in float aState; in float aDashStart;
@@ -504,20 +509,31 @@
     });
     const sheet = packet.face_sheet = column(packet.face_sheet);
     const vx = packet.vertices.x, vy = packet.vertices.y, vz = packet.vertices.z, corner = packet.corners.vertex;
+    // Optional corner normals and encoded colours of smooth layers.
+    const cornerColumns = names => names.every(n => packet.corners[n]) ? names.map(n => packet.corners[n]) : null;
+    const cornerNormal = cornerColumns(['normal_x', 'normal_y', 'normal_z']), cornerColour = cornerColumns(['red', 'green', 'blue']);
+    const cornerValue = (columns, c) => {
+      if (!columns) return null;
+      const v = columns.map(x => x[c]);
+      return v.every(Number.isFinite) ? v : null;
+    };
     const result = [];
     ['faces', 'polylines', 'markers', 'text'].forEach((name, kind) => {
       const t = packet[name];
       for (let i = 0; i < t.offset.length; i++) {
         const material = packet.materials[t.style_id[i]-1];
         if (material.anchor) continue;
-        const points = [], glyph = [];
+        const points = [], glyph = [], normals = [], colours = [];
         for (let j = 0; j < t.count[i]; j++) {
-          const v = corner[t.offset[i]+j-1]-1;
+          const c = t.offset[i]+j-1, v = corner[c]-1;
           points.push([vx[v], vy[v], vz[v]]); glyph.push(glyphs.get(v+1));
+          if (kind === FACE) { normals.push(cornerValue(cornerNormal, c)); colours.push(cornerValue(cornerColour, c)); }
         }
         const p = {kind, points, material, opacity: t.opacity[i], partition: t.partition[i], furniture, row: i, table: t, packet,
           primitiveId: t.primitive_id[i], layer: t.layer_id[i], source: t.source_row[i], sheet: kind === FACE ? sheet[i] || 0 : 0};
         if (glyph.some(Boolean)) p.glyph = glyph;
+        if (normals.some(Boolean)) p.normals = normals;
+        if (colours.some(Boolean)) p.colours = colours;
         if (kind === FACE) p.normal = material.normal || cross(sub(points[1], points[0]), sub(points[2], points[0]));
         result.push(p);
       }
@@ -564,7 +580,8 @@
       if (p.colour[3] <= 0 && p.kind !== TEXT) { p.skip = true; }
       else if (p.kind === FACE && p.points.length >= 3) {
         const shade = p.material.shade ? 1 : 0;
-        p.points.forEach(v => V.add({aPos: v, aNormal: p.normal, aColour: p.colour, aId: id, aFlags: [shade, clip, 0, 0]}));
+        p.points.forEach((v, j) => V.add({aPos: v, aNormal: (p.normals && p.normals[j]) || p.normal,
+          aColour: p.colours && p.colours[j] ? p.colours[j].concat(p.colour[3]) : p.colour, aId: id, aFlags: [shade, clip, 0, 0]}));
         for (let j = 1; j < p.points.length-1; j++) E.push(p.vertexStart, p.vertexStart+j, p.vertexStart+j+1);
       } else if (p.kind === STROKE && !['blank', '0'].includes(String(p.material.linetype))) {
         const t = p.table, width = t.width_mm[p.row] || p.material.width_mm;

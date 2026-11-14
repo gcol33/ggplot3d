@@ -61,6 +61,11 @@ probs <- function(...) {
 #' Default levels are interior pretty(range(value), n = 10) values. The number
 #' of levels depends on the pretty spacing. level and z_mean are computed
 #' face attributes; .face, .corner and .vertex preserve triangle topology.
+#' A numeric `fill` aesthetic, a second field on the same grid, is
+#' interpolated trilinearly to the vertices, exactly on the grid edges where
+#' the vertices lie; with `shading = "smooth"` (see [geom_surface_3d()]) it
+#' stays per vertex and is interpolated across faces, otherwise each face
+#' takes the mean of its corners.
 #' @inheritParams stat_function_3d
 #' @param levels Numeric scalar-field thresholds; NULL uses pretty levels.
 #' @param caps Whether to cap the sublevel region on the box faces (and on
@@ -112,6 +117,8 @@ probs <- function(...) {
 #'   geom_isosurface_3d(levels = 0.6) + coord_3d()
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
 #'   stat_isosurface_3d(levels = 0.6) + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value, fill = z)) +
+#'   stat_isosurface_3d(levels = 0.6, shading = "smooth") + coord_3d()
 stat_isosurface_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                 position = "identity", ..., levels = NULL, caps = FALSE,
                                 method = "cubes", simplify = NULL, clip = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {

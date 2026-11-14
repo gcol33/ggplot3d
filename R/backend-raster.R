@@ -11,10 +11,19 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
       filled <- style_value_3d(styles, "shape", 19) %in% 21:25
       colour[filled] <- style_value_3d(styles, "fill", NA_character_)[filled]
     }
+    smooth <- NULL
     if (kind == "faces") {
       shade <- which(style_value_3d(styles, "shade", FALSE))
       normals <- prepared$normals
       fragments <- list(normal_x = normals[, 1L], normal_y = normals[, 2L], normal_z = normals[, 3L])
+      if (length(colour) && any(corner_attribute_columns_3d %in% names(packet$corners))) {
+        lit <- !is.null(light) & style_value_3d(styles, "shade", FALSE) %in% TRUE
+        smooth <- list(base = linear_rgb_3d(colour),
+          lit = lit, normal = face_shading_normals_3d(fragments, seq_along(colour), prepared$camera, styles),
+          light = if (!is.null(light)) resolved_light_3d(light, prepared$camera),
+          toward = view_toward_3d(prepared$camera))
+        smooth$normal[!is.finite(smooth$normal)] <- 0
+      }
       colour[shade] <- shade_fill_3d(colour[shade], fragments, shade, prepared$camera, light, styles[shade, , drop = FALSE])
     }
     if (!length(colour)) return(matrix(numeric(), 4L, 0L))
@@ -25,6 +34,7 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
     outline[4L, ] <- as.double(!is.na(border))
     attr(rgba, "outline") <- outline
     if (kind == "faces") attr(rgba, "sheet") <- as.integer(surface_sheets_3d(styles, tab$layer_id, tab$opacity))
+    if (!is.null(smooth)) attr(rgba, "smooth") <- smooth
     metrics <- paint_metrics_3d(styles)
     attr(rgba, "width_mm") <- if (kind == "markers") metrics$border_mm * 2 else metrics$width_mm
     attr(rgba, "separate") <- if (kind == "markers") style_value_3d(styles, "shape", 19) %in% 21:25 else rep(FALSE, nrow(styles))
@@ -93,7 +103,7 @@ raster_traced_input_3d <- function(specs, camera, viewport, canvas, resolved, li
       matrix(srgb_decode_3d(colour_channels_3d(spec$fill) / 255), length(take), 3L, byrow = TRUE)
     } else hit$colour[take, , drop = FALSE]
     if (!identical(spec$mode, 1L) && !is.null(light))
-      base <- brighten_linear_3d(base, light_brightness_3d(unit, resolved, light), light$mode)
+      base <- shade_linear_3d(base, unit, resolved, light)
     depth[take] <- z[take]; layer[take] <- j
     colour[take, ] <- pmin(pmax(base, 0), 1); normal[take, ] <- unit
   }

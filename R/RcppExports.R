@@ -173,6 +173,14 @@ geometry_section_mesh_cpp <- function(positions, signed_distance, cells) {
     .Call(`_ggplot3d_geometry_section_mesh_cpp`, positions, signed_distance, cells)
 }
 
+shade_cpp <- function(normal, toward, base, light) {
+    .Call(`_ggplot3d_shade_cpp`, normal, toward, base, light)
+}
+
+shade_transfer_cpp <- function(linear, brightness, multiply) {
+    .Call(`_ggplot3d_shade_transfer_cpp`, linear, brightness, multiply)
+}
+
 streamlines_cpp <- function(axes, values, seeds, step, max_steps, method, direction, tolerance, separation, dtest, slice_axis, max_lines) {
     .Call(`_ggplot3d_streamlines_cpp`, axes, values, seeds, step, max_steps, method, direction, tolerance, separation, dtest, slice_axis, max_lines)
 }

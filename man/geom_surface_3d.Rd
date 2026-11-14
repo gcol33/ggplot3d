@@ -18,6 +18,7 @@ geom_surface_3d(
   hidden = "hide",
   outline = NULL,
   alpha_mode = "face",
+  shading = "flat",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -65,6 +66,21 @@ composite the sheets in depth order, with any fill colours; so does the
 that draw surfaces (\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()}}, \code{\link[=stat_parametric_3d]{stat_parametric_3d()}},
 \code{\link[=geom_mesh_3d]{geom_mesh_3d()}} and others) accept it too.}
 
+\item{shading}{\code{"flat"} lights and fills each face uniformly; \code{"smooth"}
+interpolates vertex normals and vertex fills across faces. The raster
+backend and the \code{\link[=view_3d]{view_3d()}} viewer interpolate per sample, perspective
+correctly. The vector backend draws a face whose colour varies as one
+linear gradient when its colour varies along one direction and the device
+supports gradients, and otherwise as flat sub-triangles whose colours
+differ from the interpolated colour by at most the option
+\code{ggplot3d.shading_tolerance} (default 2 / 255 in encoded sRGB), splitting
+each triangle at most eight times (256 pieces along an edge), which can
+leave larger steps where a channel approaches black and the sRGB curve is
+steepest. Gradients
+follow the sRGB curve through their stops within the same tolerance. The
+layers that draw surfaces (\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()}}, \code{\link[=geom_mesh_3d]{geom_mesh_3d()}} and
+others) accept it too.}
+
 \item{geom}{Geom prototype used to draw the computed triangles.}
 }
 \value{
@@ -72,7 +88,12 @@ A ggplot2 layer.
 }
 \description{
 Grid surfaces estimate vertex normals from height differences along each
-axis. Lighting uses the normalised mean of each face's vertex normals.
+axis. With \code{shading = "flat"} lighting uses the normalised mean of each
+face's vertex normals and a numeric fill is averaged over each face. With
+\code{shading = "smooth"} the vertex normals are interpolated across each face
+(Phong 1975) and a fill that varies between vertices is interpolated in
+linear light (Gouraud 1971), as MATLAB's \verb{lighting gouraud} with
+\code{FaceColor = "interp"} and rgl's \code{smooth} material.
 }
 \examples{
 d <- expand.grid(x = seq(-1, 1, length.out = 6),
@@ -81,4 +102,5 @@ d$z <- with(d, x^2 + y^2)
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 p + geom_surface_3d(fill = "steelblue") + coord_3d()
 p + stat_surface_3d() + coord_3d()
+p + geom_surface_3d(ggplot2::aes(fill = z), shading = "smooth") + coord_3d()
 }

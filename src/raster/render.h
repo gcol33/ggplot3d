@@ -1,5 +1,6 @@
 #pragma once
 #include "geometry.h"
+#include "../shade/read.h"
 #include "../raymarch/volume.h"
 #include <numeric>
 #include <atomic>
@@ -24,6 +25,18 @@ struct Paint {
   Index once=-1;
 };
 
+// Smooth faces (Phong 1975 normals, Gouraud 1971 colours): per face row the
+// unlit linear base colour, whether it is lit and its face normal; the light,
+// the direction toward the viewer, and per item whether its vertices carry
+// attributes that vary over it.
+struct Smooth {
+  std::vector<Vec3> base,normal;
+  std::vector<bool> lit,item;
+  shade::Light light;
+  Vec3 toward{0,0,1};
+  bool linear=true,active=false;
+};
+
 // Per-draw constants shared read-only by all tiles: the scene, the paints,
 // marker footprint rotations and the fan-triangle areas of every polygon item.
 struct Shapes {
@@ -31,7 +44,12 @@ struct Shapes {
   const std::vector<Paint>& paint;
   std::vector<std::array<double,2>> rotation;
   std::vector<double> area;
+  const Smooth* smooth=nullptr;
 };
+
+// Where a sample hits a polygon item: fan triangle (0, i, i+1) and the screen
+// barycentric coordinates of its corners.
+struct Hit { Index i=0; double a=0,b=0,c=0; };
 
 static inline double edge(const Screen& a,const Screen& b,double x,double y) {
   // A shared edge uses one evaluation order, including under fused arithmetic.
@@ -90,7 +108,7 @@ static inline bool footprint(const Shapes& shapes,Index row,double x,double y,do
 
 // Depth of an item's paint at a canvas point, or +Inf where it paints nothing.
 static inline double sample(const Shapes& shapes,const Item& item,const Paint& paint,double x,double y,
-                            bool* border=nullptr,bool hidden=false,bool ignore_dash=false) {
+                            bool* border=nullptr,bool hidden=false,bool ignore_dash=false,Hit* hit=nullptr) {
   const Scene& scene=shapes.scene;
   const Screen* v=scene.vertices.data()+item.offset;
   if(x<paint.bounds[0] || y<paint.bounds[1] || x>paint.bounds[2] || y>paint.bounds[3]) return R_PosInf;
@@ -122,9 +140,11 @@ static inline double sample(const Shapes& shapes,const Item& item,const Paint& p
       double c=edge(v[0],v[i],x,y)/area;
       double orientation=area>0 ? 1:-1;
       if(edge_inside(a,v[i],v[i+1],orientation) && edge_inside(b,v[i+1],v[0],orientation) &&
-         edge_inside(c,v[0],v[i],orientation))
+         edge_inside(c,v[0],v[i],orientation)) {
+        if(hit) *hit={i,a,b,c};
         return scene.projection.camera.perspective ? 1/(a/v[0].depth+b/v[i].depth+c/v[i+1].depth) :
           a*v[0].depth+b*v[i].depth+c*v[i+1].depth;
+      }
     }
   } else if(item.kind==2) {
     double dx=v[1].x-v[0].x,dy=v[1].y-v[0].y,length2=dx*dx+dy*dy;
@@ -327,7 +347,8 @@ struct Span {
 };
 
 // A painted sample: the item, its depth, and whether the outline paints it.
-struct Fragment { Index item; double z; int sample; bool border; };
+// A smooth face carries its own colour at the sample (`own`).
+struct Fragment { Index item; double z; int sample; bool border; bool own=false; Colour colour{}; };
 
 // The nearest opaque coverage of a sample: its partition and, within the depth
 // partition, its depth. A fragment in a lower partition, or more than the
@@ -521,7 +542,7 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
       }
     }
     const Paint& p=shapes.paint[f[j].item];
-    const Colour& c=f[j].border ? p.outline:p.colour;
+    const Colour& c=f[j].own ? f[j].colour:f[j].border ? p.outline:p.colour;
     if(once>=0) painted.push_back(once);
     double weight=(1-out.colour.a)*c.a;
     out.colour.r+=weight*c.r; out.colour.g+=weight*c.g; out.colour.b+=weight*c.b; out.colour.a+=weight;
@@ -563,6 +584,41 @@ static inline std::uint32_t channel_byte(double value) {
   return static_cast<std::uint32_t>(std::round(std::max(0.0,std::min(1.0,value))*255));
 }
 
+// Colour of a smooth face at a sample: corner colours and normals
+// interpolated perspective-correctly (weights a / depth under perspective),
+// the normal renormalised and lit by the shading kernel in linear light, then
+// put in the compositing space with the paint's alpha.
+static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const Paint& paint,const Hit& hit) {
+  const Scene& scene=shapes.scene; const Smooth& sm=*shapes.smooth;
+  const Index k[3]={item.offset,item.offset+hit.i,item.offset+hit.i+1};
+  double w[3]={hit.a,hit.b,hit.c};
+  if(scene.projection.camera.perspective) {
+    double total=0;
+    for(int j=0;j<3;++j) {w[j]/=scene.vertices[k[j]].depth;total+=w[j];}
+    for(double& x:w) x/=total;
+  }
+  auto blend=[&](bool normal) {
+    Vec3 out{0,0,0};
+    for(int j=0;j<3;++j) {
+      const Vec3& v=normal ? scene.shading[k[j]].normal:scene.shading[k[j]].colour;
+      if(!std::isfinite(v[0]+v[1]+v[2])) return Vec3{NAN,NAN,NAN};
+      for(int d=0;d<3;++d) out[d]+=w[j]*v[d];
+    }
+    return out;
+  };
+  Vec3 colour=blend(false);
+  if(!std::isfinite(colour[0]+colour[1]+colour[2])) colour=sm.base[item.row];
+  if(sm.lit[item.row]) {
+    Vec3 normal=blend(true);
+    if(!std::isfinite(normal[0]+normal[1]+normal[2]) || !(dot(normal,normal)>0)) normal=sm.normal[item.row];
+    colour=shade::shade(shade::unit(normal),sm.toward,colour,sm.light);
+  }
+  Colour out{std::max(0.0,std::min(1.0,colour[0])),std::max(0.0,std::min(1.0,colour[1])),
+             std::max(0.0,std::min(1.0,colour[2])),paint.colour.a};
+  if(!sm.linear) {out.r=srgb_encode(out.r);out.g=srgb_encode(out.g);out.b=srgb_encode(out.b);}
+  return out;
+}
+
 static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const std::vector<Span>& spans,
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
                                bool retained,const Traced& traced,bool keep_buffers,
@@ -585,6 +641,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
   });
   for(Index i:s.order) {
     const Item& item=scene.items[i]; const Paint& p=shapes.paint[i]; const Span& span=spans[i];
+    const bool smooth_item=shapes.smooth && shapes.smooth->active && item.kind==1 && shapes.smooth->item[i];
     int x0=std::max(span.samples[0],sx0),y0=std::max(span.samples[1],sy0);
     int x1=std::min(span.samples[2],sx1-1),y1=std::min(span.samples[3],sy1-1);
     for(int y=y0;y<=y1;++y) for(int x=x0;x<=x1;++x) {
@@ -592,7 +649,8 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       Occluder& occluder=s.occluders[local];
       if(!span.lift && occluder.hides(span.partition,span.nearest,tolerance)) continue;
       bool border=false;double xx=canvas.origin_x+(x+.5)*canvas.dx,yy=canvas.origin_y+(y+.5)*canvas.dy;
-      double z=sample(shapes,item,p,xx,yy,&border,false,span.lift);
+      Hit hit;
+      double z=sample(shapes,item,p,xx,yy,&border,false,span.lift,&hit);
       if(span.retained_occluder) s.opaque[local]=std::min(s.opaque[local],z);
       if(span.lift && std::isfinite(z)) {
         bool hidden=z>s.opaque[local]+tolerance;
@@ -602,7 +660,9 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       if(!std::isfinite(z)) continue;
       const Colour& c=border ? p.outline:p.colour;
       if(c.a==0 || occluder.hides(span.partition,z,tolerance)) continue;
-      s.fragments.push_back({i,z,local,border});
+      Fragment fragment{i,z,local,border};
+      if(!border && smooth_item) {fragment.own=true;fragment.colour=smooth_colour(shapes,item,p,hit);}
+      s.fragments.push_back(fragment);
       if(span.occluder && c.a==1) occluder.add(span.partition,z);
     }
   }
@@ -814,6 +874,43 @@ static inline Traced traced_of(Rcpp::List input,const Canvas& canvas) {
   return t;
 }
 
+// The smooth-face input of a draw, from the "smooth" attribute of the face
+// colours: list(base = n x 3 unlit linear colours, lit, normal = n x 3 unit
+// model-space face normals, light (or NULL), toward).
+static inline Smooth smooth_of(const Scene& scene,Rcpp::NumericMatrix face_colours,bool linear) {
+  Smooth sm; sm.linear=linear;
+  if(!scene.corner.any() || !face_colours.hasAttribute("smooth")) return sm;
+  Rcpp::List x=face_colours.attr("smooth");
+  Rcpp::NumericMatrix base=x["base"],normal=x["normal"];
+  Rcpp::LogicalVector lit=x["lit"];
+  const std::size_t n=scene.packet.faces.count.size();
+  require(static_cast<std::size_t>(base.nrow())==n && base.ncol()==3 && static_cast<std::size_t>(normal.nrow())==n &&
+          normal.ncol()==3 && static_cast<std::size_t>(lit.size())==n,"invalid raster smooth-face input");
+  sm.base.resize(n);sm.normal.resize(n);sm.lit.resize(n);
+  for(std::size_t i=0;i<n;++i) {
+    sm.base[i]={base(i,0),base(i,1),base(i,2)};
+    sm.normal[i]={normal(i,0),normal(i,1),normal(i,2)};
+    sm.lit[i]=lit[i]==TRUE;
+  }
+  if(!Rf_isNull(x["light"])) sm.light=shade::read_light(x["light"]);
+  Rcpp::NumericVector toward=x["toward"];
+  sm.toward=shade::unit({toward[0],toward[1],toward[2]});
+  sm.item.assign(scene.items.size(),false);
+  for(std::size_t i=0;i<scene.items.size();++i) {
+    const Item& item=scene.items[i];
+    if(item.kind!=1 || static_cast<std::size_t>(item.offset+item.count)>scene.shading.size()) continue;
+    bool varies=false;
+    for(Index j=0;j<item.count && !varies;++j) {
+      const Shading& v=scene.shading[item.offset+j];
+      varies=std::isfinite(v.colour[0]+v.colour[1]+v.colour[2]) ||
+        (sm.lit[item.row] && std::isfinite(v.normal[0]+v.normal[1]+v.normal[2]));
+    }
+    sm.item[i]=varies;
+    sm.active=sm.active || varies;
+  }
+  return sm;
+}
+
 static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
                               int width,int height,int aa,bool id_pass,int threads,bool keep_buffers,bool linear,
                               Rcpp::List traced_input) {
@@ -830,6 +927,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   width=canvas.width;height=canvas.height;
   const Traced traced=traced_of(traced_input,canvas);
   Shapes shapes=shapes_of(scene,paint);
+  const Smooth smooth=smooth_of(scene,Rcpp::as<Rcpp::NumericMatrix>(colours[0]),linear);
+  shapes.smooth=&smooth;
   const auto& line=scene.packet.polylines;
   bool retained=std::any_of(line.hidden.begin(),line.hidden.end(),[](Index x){return x!=0;});
   const Index items=static_cast<Index>(scene.items.size());

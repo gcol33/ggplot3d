@@ -6,11 +6,38 @@ StatIsosurface3D <- ggplot2::ggproto("StatIsosurface3D", StatGeometry3D,
     if (is.null(data$value) || !is.numeric(data$value)) stop("An isosurface requires a numeric value aesthetic.", call. = FALSE)
     params
   },
-  compute_group = function(data, scales, levels = NULL, caps = FALSE, method = "cubes", simplify = NULL, clip = NULL) {
+  compute_group = function(data, scales, levels = NULL, caps = FALSE, method = "cubes", simplify = NULL, clip = NULL,
+                           shading = "flat") {
     if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Isosurfaces require continuous position scales.", call. = FALSE)
-    stats_field_3d(data, levels, caps, method, simplify = simplify, clip = clip)
+    out <- stats_field_3d(data, levels, caps, method, simplify = simplify, clip = clip)
+    if (is.numeric(data$fill) && length(out$x)) {
+      grid <- data
+      grid$value <- data$fill
+      field <- stats_scalar_grid_3d(grid)
+      out$fill <- trilinear_3d(field$axes, field$value, cbind(out$x, out$y, out$z))
+      if (shading == "flat") out$fill <- rep(colMeans(matrix(out$fill, nrow = 3L)), each = 3L)
+    }
+    out
   }
 )
+
+# Trilinear interpolant of grid values (x fastest) at the rows of p; exact
+# along grid edges, where marching methods place their vertices.
+trilinear_3d <- function(axes, value, p) {
+  n <- lengths(axes)
+  cell <- lapply(1:3, function(k) {
+    i <- pmin(pmax(findInterval(p[, k], axes[[k]], all.inside = TRUE), 1L), n[k] - 1L)
+    list(i = i, t = (p[, k] - axes[[k]][i]) / (axes[[k]][i + 1L] - axes[[k]][i]))
+  })
+  out <- 0
+  for (dx in 0:1) for (dy in 0:1) for (dz in 0:1) {
+    weight <- (if (dx) cell[[1L]]$t else 1 - cell[[1L]]$t) * (if (dy) cell[[2L]]$t else 1 - cell[[2L]]$t) *
+      (if (dz) cell[[3L]]$t else 1 - cell[[3L]]$t)
+    index <- cell[[1L]]$i + dx + n[1L] * (cell[[2L]]$i + dy - 1L + n[2L] * (cell[[3L]]$i + dz - 1L))
+    out <- out + weight * value[index]
+  }
+  out
+}
 
 # Gaussian product-kernel density of x, y, z (or of their log-ratio
 # coordinates) on a grid: the grid as a data frame with value, and the axes.

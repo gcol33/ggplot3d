@@ -4,6 +4,7 @@ grid_capabilities_3d <- function() {
        masks = length(caps$masks) > 0L && !all(is.na(caps$masks)),
        group_atop = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "atop" %in% caps$compositing,
        group_over = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "over" %in% caps$compositing,
+       gradients = getRversion() >= "4.1.0" && "LinearGradient" %in% caps$patterns,
        dash_phase = "physical segmented strokes", raster = FALSE)
 }
 
@@ -316,6 +317,23 @@ translucent_seam_3d <- function(paths, opacity, caps) {
   grid::grobTree(group, vp = grid::viewport(mask = mask))
 }
 
+# Smooth faces with borders, face by face: the painted shapes, then the
+# face outline unfilled.
+bordered_smooth_faces_3d <- function(x, y, id, painted, styles, opacity, viewport, caps) {
+  children <- lapply(seq_len(max(id)), function(k) {
+    shapes <- which(painted$face == k)
+    keep <- painted$id %in% shapes
+    part <- list(x_mm = painted$x_mm[keep], y_mm = painted$y_mm[keep], id = match(painted$id[keep], shapes),
+      face = painted$face[shapes], flat = painted$flat[shapes], gradient = painted$gradient[shapes],
+      paint = painted$paint[shapes])
+    outline <- material_gp_3d(styles[k, , drop = FALSE], opacity[k], 1L)
+    outline$fill <- NA
+    grid::grobTree(smooth_face_grob_3d(part, styles, opacity, viewport, FALSE, caps),
+      grid::polygonGrob(x[id == k], y[id == k], gp = outline))
+  })
+  grid::gTree(children = do.call(grid::gList, children))
+}
+
 mask_path_3d <- function(scene, rows) {
   f <- scene$fragments
   rows <- rows[!duplicated(paste(f$mask_offset[rows], f$mask_count[rows], sep = ":"))]
@@ -444,7 +462,11 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
   sheet_style <- style_value_3d(styles, "alpha_mode", "face") == "surface"
-  seam <- face & (f$layer_id > 0L | sheet_style) & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
+  attributes <- scene_vertex_attributes_3d(scene, corner_attribute_columns_3d)
+  smooth <- smooth_fragments_3d(scene, attributes, styles, light)
+  # Translucent seam groups paint from flat compound paths only.
+  seam <- face & (f$layer_id > 0L | sheet_style) & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill) &
+    !(smooth & f$opacity < 1)
   surface <- seam & surface_sheets_3d(styles, f$layer_id, f$opacity) > 0L
   key[face] <- paste(key[face], seam[face], ifelse(seam[face],
     paste(f$layer_id[face], ifelse(surface[face], "surface", f$seam_group[face]), f$opacity[face]), 0L), sep = ":")
@@ -468,7 +490,12 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
       if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light, s[shade, , drop = FALSE])
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
-      g <- if (all(surface[rows])) translucent_sheets_3d(x, y, id, fill, f$seam_group[rows],
+      if (any(smooth[rows])) {
+        vertex <- fragment_vertex_linear_3d(scene, rows, s, attributes, light)
+        painted <- smooth_face_paint_3d(x * viewport$width_mm, y * viewport$height_mm, id, vertex$linear, caps$gradients)
+        g <- if (any(!is.na(s$colour))) bordered_smooth_faces_3d(x, y, id, painted, s, f$opacity[rows], viewport, caps) else
+          smooth_face_grob_3d(painted, s, f$opacity[rows], viewport, all(seam[rows]), caps)
+      } else g <- if (all(surface[rows])) translucent_sheets_3d(x, y, id, fill, f$seam_group[rows],
           style_value_3d(s, "sheet", 1L), f$opacity[rows[1L]], caps) else
         if (all(seam[rows])) seam_group_grob_3d(x, y, id, fill, gp, f$opacity[rows[1L]], caps) else
           grid::polygonGrob(x, y, id = id, gp = gp)

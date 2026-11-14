@@ -97,7 +97,8 @@ scene_table <- function(x, schema, defaults, name, optional = character()) {
 #'   panel box, the near and far planes or the viewport before it is drawn.
 #' @param corners List with vertex indices and source_row input indices, and
 #'   optional per-corner attributes normal_x, normal_y, normal_z, red, green,
-#'   blue, alpha (colour channels in \[0, 1\]) and u, v (texture coordinates),
+#'   blue, alpha (encoded sRGB colour channels in \[0, 1\], interpolated in
+#'   linear light) and u, v (texture coordinates),
 #'   in that order; NA marks a corner without the attribute. Compiled vertex
 #'   weights carry them through clipping.
 #' @param faces,polylines,markers,text Primitive tables. Each requires offset
@@ -344,6 +345,36 @@ normalise_homogeneous_3d <- function(x, y, z, w = 1, ranges) {
   out
 }
 
+# Optional corner attributes (`columns`) at the output vertices of a compiled
+# scene: each output vertex combines the corners of its source primitive with
+# the coefficients weight * w, w the homogeneous weight after camera pre,
+# which sum to one. A vertex takes NA when a corner it depends on lacks the
+# attribute. NULL when the packet supplies none of the columns.
+scene_vertex_attributes_3d <- function(scene, columns) {
+  corners <- scene$source$corners
+  present <- intersect(columns, names(corners))
+  n <- length(scene$vertices$x)
+  if (!length(present) || !n) return(NULL)
+  weights <- scene$weights
+  xyzw <- scene_vertex_matrix_3d(scene$source$vertices)[corners$vertex[weights$corner], , drop = FALSE]
+  pre <- scene$pre %or3d% c(diag(4))
+  w <- drop(xyzw %*% matrix(as.double(pre), 4L, 4L)[4L, ])
+  coefficient <- weights$weight * w
+  out <- vapply(present, function(name) {
+    value <- corners[[name]][weights$corner]
+    used <- coefficient != 0
+    total <- numeric(n); missing <- logical(n)
+    sums <- rowsum(coefficient[used] * value[used], weights$vertex[used])
+    total[as.integer(rownames(sums))] <- sums[, 1L]
+    missing[weights$vertex[used & is.na(value)]] <- TRUE
+    seen <- logical(n); seen[weights$vertex] <- TRUE
+    total[missing | !seen] <- NA_real_
+    total
+  }, numeric(n))
+  if (n == 1L) out <- matrix(out, 1L, dimnames = list(NULL, present))
+  out
+}
+
 # Rows (x, y, z, w) of packet vertices.
 scene_vertex_matrix_3d <- function(vertices) {
   cbind(x = vertices$x, y = vertices$y, z = vertices$z, w = vertices$w)
@@ -503,6 +534,7 @@ scene_compile <- function(packet, camera = new_camera_3d(), viewport) {
   bytes <- as.numeric(utils::object.size(result)) + as.numeric(utils::object.size(packet))
   result$styles <- packet$styles
   result$source <- packet[names(packet) != "styles"]
+  result$pre <- camera$pre
   class(result) <- "ggplot3d_compiled_scene"
   scene_cache_store(packet, camera, viewport, result, bytes, limit)
   result

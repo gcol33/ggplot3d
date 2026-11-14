@@ -398,6 +398,31 @@ triangle_level_3d <- function(frame, p0, p1, p2, level, max_level) {
 
 # Packet munching ---------------------------------------------------------------
 
+# Normals (rows) under a linear map with columns jacobian[[1]], [[2]], [[3]]
+# (each a matrix of rows, one map per normal): the inverse transpose, whose
+# columns are the cross products of pairs of map columns over the
+# determinant, renormalised.
+cotransform_normals_3d <- function(normal, jacobian) {
+  a <- jacobian[[1L]]; b <- jacobian[[2L]]; c <- jacobian[[3L]]
+  bc <- cross_rows_3d(b, c); ca <- cross_rows_3d(c, a); ab <- cross_rows_3d(a, b)
+  out <- normal[, 1L] * bc + normal[, 2L] * ca + normal[, 3L] * ab
+  out <- out * sign(rowSums(a * bc))
+  out / sqrt(rowSums(out^2))
+}
+
+# Corner columns with their finite normals mapped by `cotransform(normal,
+# rows)`, which receives the finite rows and their row numbers.
+map_corner_normals_3d <- function(corners, cotransform) {
+  names <- c("normal_x", "normal_y", "normal_z")
+  if (!all(names %in% names(corners))) return(corners)
+  normal <- cbind(corners$normal_x, corners$normal_y, corners$normal_z)
+  ok <- which(rowSums(is.finite(normal)) == 3L)
+  if (!length(ok)) return(corners)
+  mapped <- cotransform(normal[ok, , drop = FALSE], ok)
+  for (k in 1:3) corners[[names[k]]][ok] <- mapped[, k]
+  corners
+}
+
 # Maps a scale-space packet through a frame. Linear frames map vertices; other
 # frames clip to the panel box in scale space, then subdivide faces and
 # strokes so curved images stay within tolerance. A linear (affine) frame maps
@@ -408,6 +433,14 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
   if (frame$linear) {
     out <- if (is.null(coordinates)) frame_map_homogeneous_3d(frame, scene_vertex_matrix_3d(packet$vertices)) else frame$map(coordinates)
     packet$vertices <- scene_vertices_3d(out)
+    packet$corners <- map_corner_normals_3d(packet$corners, function(normal, rows) {
+      origin <- frame$map(matrix(0, 1L, 3L))
+      jacobian <- lapply(1:3, function(k) {
+        column <- frame$map(diag(3)[k, , drop = FALSE]) - origin
+        matrix(column, nrow(normal), 3L, byrow = TRUE)
+      })
+      cotransform_normals_3d(normal, jacobian)
+    })
     validate_scene_packet(packet)
     return(packet)
   }
@@ -429,16 +462,19 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
   }
   # Faces: fan-triangulate, subdivide.
   faces <- packet$faces
-  tri <- list(p0 = list(), p1 = list(), p2 = list(), parent = integer(), boundary = list())
+  tri <- list(p0 = list(), p1 = list(), p2 = list(), parent = integer(), boundary = list(), corners = list())
   for (f in seq_along(faces$offset)) {
     xyz <- corner_xyz(seq.int(faces$offset[f], length.out = faces$count[f]))
     for (i in 2:(nrow(xyz) - 1L)) {
       tri$p0[[length(tri$p0) + 1L]] <- xyz[1L, ]; tri$p1[[length(tri$p1) + 1L]] <- xyz[i, ]; tri$p2[[length(tri$p2) + 1L]] <- xyz[i + 1L, ]
+      tri$corners[[length(tri$corners) + 1L]] <- faces$offset[f] + c(0L, i - 1L, i)
       tri$parent <- c(tri$parent, f)
       tri$boundary[[length(tri$boundary) + 1L]] <- if (isTRUE(frame$strict)) rep(TRUE, 3L) else c(i == 2L, TRUE, i == nrow(xyz) - 1L)
     }
   }
   face_rows <- list(corners = integer(), parent = integer())
+  attributes <- setdiff(names(packet$corners), c("vertex", "source_row"))
+  out_attributes <- list()
   if (length(tri$parent)) {
     munched <- munch_triangles_3d(frame, do.call(rbind, tri$p0), do.call(rbind, tri$p1), do.call(rbind, tri$p2),
       do.call(rbind, tri$boundary), max_level = frame$max_level %or3d% 6L)
@@ -450,6 +486,24 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
     area <- sqrt(rowSums(cross_rows_3d(b - a, c - a)^2))
     keep <- is.finite(area) & area > 1e-12
     ids <- emit(munched$model, faces$source_row[tri$parent[munched$point_parent]], munched$scale)
+    if (length(attributes)) {
+      # Corner attributes are barycentric in the scale-space triangle; normals
+      # then follow the frame's local linear map.
+      from <- do.call(rbind, tri$corners)[munched$point_parent, , drop = FALSE]
+      values <- lapply(packet$corners[attributes], function(a)
+        rowSums(munched$weights * matrix(a[from], ncol = 3L)))
+      point <- munched$scale
+      corner_set <- map_corner_normals_3d(values, function(normal, rows) {
+        h <- 1e-6
+        at <- point[rows, , drop = FALSE]
+        jacobian <- lapply(1:3, function(k) {
+          step <- matrix(0, nrow(at), 3L); step[, k] <- h
+          (frame$map(at + step) - frame$map(at - step)) / (2 * h)
+        })
+        cotransform_normals_3d(normal, jacobian)
+      })
+      out_attributes[[length(out_attributes) + 1L]] <- list(ids = ids, values = corner_set)
+    }
     face_rows$corners <- ids[as.vector(t(munched$triangles[keep, , drop = FALSE]))]
     face_rows$parent <- parents[keep]
   }
@@ -504,6 +558,11 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
   }
   packet$vertices <- scene_vertices_3d(model[used, , drop = FALSE])
   packet$corners <- list(vertex = as.integer(vertex_of[corner_ids]), source_row = as.integer(source_rows[corner_ids]))
+  for (name in attributes) {
+    value <- rep(NA_real_, n_points)
+    for (part in out_attributes) value[part$ids] <- part$values[[name]]
+    packet$corners[[name]] <- value[corner_ids]
+  }
   if (all(c("normal_x", "normal_y", "normal_z") %in% names(packet$styles))) {
     packet$styles$normal_x <- NA_real_; packet$styles$normal_y <- NA_real_; packet$styles$normal_z <- NA_real_
   }

@@ -27,7 +27,8 @@ panel box, the near and far planes or the viewport before it is drawn.}
 
 \item{corners}{List with vertex indices and source_row input indices, and
 optional per-corner attributes normal_x, normal_y, normal_z, red, green,
-blue, alpha (colour channels in [0, 1]) and u, v (texture coordinates),
+blue, alpha (encoded sRGB colour channels in [0, 1], interpolated in
+linear light) and u, v (texture coordinates),
 in that order; NA marks a corner without the attribute. Compiled vertex
 weights carry them through clipping.}
 

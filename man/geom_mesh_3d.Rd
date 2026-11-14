@@ -23,6 +23,7 @@ geom_mesh_3d(
   crease = NULL,
   outline = NULL,
   alpha_mode = "face",
+  shading = "flat",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -69,6 +70,21 @@ composite the sheets in depth order, with any fill colours; so does the
 \code{\link[=view_3d]{view_3d()}} viewer. The layers
 that draw surfaces (\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()}}, \code{\link[=stat_parametric_3d]{stat_parametric_3d()}},
 \code{\link[=geom_mesh_3d]{geom_mesh_3d()}} and others) accept it too.}
+
+\item{shading}{\code{"flat"} lights and fills each face uniformly; \code{"smooth"}
+interpolates vertex normals and vertex fills across faces. The raster
+backend and the \code{\link[=view_3d]{view_3d()}} viewer interpolate per sample, perspective
+correctly. The vector backend draws a face whose colour varies as one
+linear gradient when its colour varies along one direction and the device
+supports gradients, and otherwise as flat sub-triangles whose colours
+differ from the interpolated colour by at most the option
+\code{ggplot3d.shading_tolerance} (default 2 / 255 in encoded sRGB), splitting
+each triangle at most eight times (256 pieces along an edge), which can
+leave larger steps where a channel approaches black and the sRGB curve is
+steepest. Gradients
+follow the sRGB curve through their stops within the same tolerance. The
+layers that draw surfaces (\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()}}, \code{\link[=geom_mesh_3d]{geom_mesh_3d()}} and
+others) accept it too.}
 }
 \value{
 A ggplot2 layer.

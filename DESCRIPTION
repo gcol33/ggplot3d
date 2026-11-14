@@ -89,6 +89,7 @@ Collate:
     'backend-pathtrace.R'
     'backend-raster.R'
     'backend-raymarch.R'
+    'backend-shading.R'
     'backend-thurston.R'
     'base64.R'
     'build-adapter.R'

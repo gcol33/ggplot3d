@@ -1,7 +1,12 @@
 #' Triangulated surfaces in three dimensions
 #'
 #' Grid surfaces estimate vertex normals from height differences along each
-#' axis. Lighting uses the normalised mean of each face's vertex normals.
+#' axis. With `shading = "flat"` lighting uses the normalised mean of each
+#' face's vertex normals and a numeric fill is averaged over each face. With
+#' `shading = "smooth"` the vertex normals are interpolated across each face
+#' (Phong 1975) and a fill that varies between vertices is interpolated in
+#' linear light (Gouraud 1971), as MATLAB's `lighting gouraud` with
+#' `FaceColor = "interp"` and rgl's `smooth` material.
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard ggplot2 layer arguments.
 #' @param method Grid connectivity or Delaunay triangulation.
 #' @param max_edge Maximum triangle edge length in transformed x/y units.
@@ -9,6 +14,20 @@
 #' @param wireframe Whether to draw triangle edges.
 #' @param hidden Hidden stroke policy.
 #' @param outline Feature lines from [outline_3d()], or NULL for none.
+#' @param shading `"flat"` lights and fills each face uniformly; `"smooth"`
+#'   interpolates vertex normals and vertex fills across faces. The raster
+#'   backend and the [view_3d()] viewer interpolate per sample, perspective
+#'   correctly. The vector backend draws a face whose colour varies as one
+#'   linear gradient when its colour varies along one direction and the device
+#'   supports gradients, and otherwise as flat sub-triangles whose colours
+#'   differ from the interpolated colour by at most the option
+#'   `ggplot3d.shading_tolerance` (default 2 / 255 in encoded sRGB), splitting
+#'   each triangle at most eight times (256 pieces along an edge), which can
+#'   leave larger steps where a channel approaches black and the sRGB curve is
+#'   steepest. Gradients
+#'   follow the sRGB curve through their stops within the same tolerance. The
+#'   layers that draw surfaces ([stat_isosurface_3d()], [geom_mesh_3d()] and
+#'   others) accept it too.
 #' @param alpha_mode How a translucent surface composites.
 #'   `"face"` blends every face over what lies behind it, so a surface seen
 #'   through itself darkens where it folds over. `"surface"` paints each sheet
@@ -30,14 +49,16 @@
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 #' p + geom_surface_3d(fill = "steelblue") + coord_3d()
 #' p + stat_surface_3d() + coord_3d()
+#' p + geom_surface_3d(ggplot2::aes(fill = z), shading = "smooth") + coord_3d()
 #' @export
 geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
                              position = "identity", ..., method = "grid", max_edge = Inf,
                              shade = TRUE, wireframe = FALSE, hidden = "hide", outline = NULL,
-                             alpha_mode = "face", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                             alpha_mode = "face", shading = "flat", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSurface3D, mapping, data, stat, position,
     c(list(method = method, max_edge = max_edge, shade = shade, wireframe = wireframe,
-           hidden = hidden, outline = outline, alpha_mode = alpha_mode_3d(alpha_mode), na.rm = na.rm), list(...)),
+           hidden = hidden, outline = outline, alpha_mode = alpha_mode_3d(alpha_mode),
+           shading = shading_mode_3d(shading), na.rm = na.rm), list(...)),
     show.legend, inherit.aes)
 }
 
@@ -99,7 +120,7 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
     if (length(params$max_edge) != 1L || is.na(params$max_edge) || params$max_edge <= 0) stop("max_edge must be positive.", call. = FALSE)
     params
   },
-  compute_group = function(data, scales, method = "grid", max_edge = Inf) {
+  compute_group = function(data, scales, method = "grid", max_edge = Inf, shading = "flat") {
     if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Surfaces require continuous x/y/z scales.", call. = FALSE)
     triangles <- surface_triangles_3d(data, method, max_edge)
     if (!length(triangles)) return(data.frame())
@@ -111,7 +132,9 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
     out$.corner <- rep.int(1:3, nrow(triangles))
     out$z_mean <- rep(rowMeans(matrix(data$z[triangles], ncol = 3L)), each = 3L)
     if ("fill" %in% names(data)) {
-      if (is.numeric(data$fill)) out$fill <- rep(rowMeans(matrix(data$fill[triangles], ncol = 3L)), each = 3L)
+      if (is.numeric(data$fill)) {
+        if (shading == "flat") out$fill <- rep(rowMeans(matrix(data$fill[triangles], ncol = 3L)), each = 3L)
+      }
       else if (!constant_corners_3d(data$fill, triangles)) stop("Non-numeric surface fill must be constant on each triangle.", call. = FALSE)
     }
     out
@@ -139,7 +162,8 @@ emit_surface_3d <- function(data, params, panel_params) {
   corner <- matrix(data$.corner[faces], ncol = 3L)
   if (any(corner[, 1L] == corner[, 2L] | corner[, 2L] == corner[, 3L] | corner[, 1L] == corner[, 3L])) stop("Surface faces require three keyed corners.", call. = FALSE)
   for (name in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
-    if (!constant_corners_3d(data[[name]], faces)) stop("Surface materials must be constant per face; use fill = after_stat(z_mean).", call. = FALSE)
+    if (name == "fill" && identical(params$shading, "smooth")) next
+    if (!constant_corners_3d(data[[name]], faces)) stop("Surface materials must be constant per face; use fill = after_stat(z_mean) or shading = \"smooth\".", call. = FALSE)
   }
   edges <- matrix(integer(), ncol = 2L)
   if (isTRUE(params$wireframe) || any(!is.na(data$colour))) {

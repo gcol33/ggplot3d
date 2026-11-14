@@ -94,6 +94,11 @@ Surface triangle winding points towards increasing field value.
 Default levels are interior pretty(range(value), n = 10) values. The number
 of levels depends on the pretty spacing. level and z_mean are computed
 face attributes; .face, .corner and .vertex preserve triangle topology.
+A numeric \code{fill} aesthetic, a second field on the same grid, is
+interpolated trilinearly to the vertices, exactly on the grid edges where
+the vertices lie; with \code{shading = "smooth"} (see \code{\link[=geom_surface_3d]{geom_surface_3d()}}) it
+stays per vertex and is interpolated across faces, otherwise each face
+takes the mean of its corners.
 }
 \examples{
 d <- expand.grid(x = seq(-1, 1, length.out = 10),
@@ -103,6 +108,8 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
   geom_isosurface_3d(levels = 0.6) + coord_3d()
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
   stat_isosurface_3d(levels = 0.6) + coord_3d()
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value, fill = z)) +
+  stat_isosurface_3d(levels = 0.6, shading = "smooth") + coord_3d()
 }
 \references{
 Lewiner, Lopes, Vieira and Tavares (2003). Efficient

@@ -181,7 +181,44 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
 }
 
 # Drawing parameters of the geoms that draw triangulated surfaces.
-surface_parameters_3d <- list(outline = NULL, alpha_mode = "face")
+surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat")
+
+shading_mode_3d <- function(shading) {
+  if (!is.character(shading) || length(shading) != 1L || !(shading %in% c("flat", "smooth")))
+    stop("shading must be \"flat\" or \"smooth\".", call. = FALSE)
+  shading
+}
+
+# Per-corner attributes of a smooth-shaded layer: the unit vertex normals of
+# face corners and, where the fill varies within a face, the encoded sRGB fill
+# channels of every face corner. Other corners carry NA.
+smooth_corners_3d <- function(data, primitives, kinds, counts) {
+  owner <- rep.int(seq_along(counts), counts)
+  face <- kinds[owner] == "faces"
+  out <- list()
+  if (all(c("nx", "ny", "nz") %in% names(data))) {
+    normal <- matrix(NA_real_, length(primitives), 3L)
+    n <- cbind(data$nx, data$ny, data$nz)[primitives[face], , drop = FALSE]
+    size <- sqrt(rowSums(n^2))
+    good <- is.finite(size) & size > 0
+    n[good, ] <- n[good, , drop = FALSE] / size[good]
+    n[!good, ] <- NA_real_
+    normal[face, ] <- n
+    out[c("normal_x", "normal_y", "normal_z")] <- lapply(1:3, function(k) normal[, k])
+  }
+  fill <- data$fill
+  if (!is.null(fill) && any(face)) {
+    key <- match(fill[primitives], unique(fill[primitives]))
+    varies <- tapply(key[face], owner[face], function(k) any(k != k[1L]))
+    if (any(varies)) {
+      rgb <- matrix(NA_real_, length(primitives), 3L)
+      painted <- face & !is.na(fill[primitives])
+      rgb[painted, ] <- t(colour_channels_3d(fill[primitives[painted]])) / 255
+      out[c("red", "green", "blue")] <- lapply(1:3, function(k) rgb[, k])
+    }
+  }
+  out
+}
 
 # Drawing parameters every 3D geom accepts, with their defaults.
 scene_draw_formals_3d <- function() {
@@ -430,6 +467,7 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
   if (!is.null(data$.w)) vertices$w <- as.double(data$.w[used])
   corners <- list(vertex = match(primitives, used),
                   source_row = as.integer(data$.source[primitives]))
+  if (identical(params$shading, "smooth")) corners <- c(corners, smooth_corners_3d(data, primitives, kinds, counts))
   if (!is.null(params$.vertex_key)) {
     key <- params$.vertex_key[used]
     representatives <- !duplicated(key)

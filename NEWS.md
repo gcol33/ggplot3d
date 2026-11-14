@@ -1,5 +1,16 @@
 # ggplot3d 0.0.0.9000
 
+* `shading = "smooth"` on `geom_surface_3d()`, `geom_mesh_3d()`,
+  `stat_isosurface_3d()` and the other surface layers interpolates vertex
+  normals (Phong shading) and vertex fills (Gouraud colours in linear light)
+  across faces, as MATLAB's `lighting gouraud` with `FaceColor = "interp"`.
+  The raster backend shades per sample, the viewer per fragment, and the
+  vector backend draws one `linearGradient()` per triangle where the colour
+  varies along one direction, else flat pieces within
+  `options(ggplot3d.shading_tolerance)`. `stat_isosurface_3d(aes(fill = w))`
+  interpolates a second field to the surface. Lighting runs in one C++ kernel
+  (`src/shade/shade.h`) for every backend (#55).
+
 * In the Klein model of `coord_hyperbolic_3d()`, `observer`, `centre` and
   `isometry` are Lorentz transformations carried by the camera
   pre-transform (Weeks 2002), so the geometry is emitted once and

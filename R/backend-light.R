@@ -1,3 +1,5 @@
+utils::globalVariables(c("shade_cpp", "shade_transfer_cpp"))
+
 colour_channels_3d <- function(colour, alpha = FALSE) {
   palette <- unique(colour)
   grDevices::col2rgb(palette, alpha = alpha)[, match(colour, palette), drop = FALSE]
@@ -15,19 +17,11 @@ grey_level_3d <- function(rgb) {
   pmin(1, pmax(0, srgb_encode_3d(luminance)))
 }
 
-shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL) {
-  if (is.null(light) || !length(rows)) return(fill)
-  normal <- cbind(fragments$normal_x[rows], fragments$normal_y[rows], fragments$normal_z[rows])
-  if (all(c("normal_x", "normal_y", "normal_z") %in% names(styles))) {
-    supplied <- as.matrix(styles[c("normal_x", "normal_y", "normal_z")])
-    intrinsic <- styles$intrinsic_normal %in% TRUE
-    supplied <- sweep(supplied, 2L, camera$model_scale, "/")
-    if(length(intrinsic)) supplied[intrinsic,] <- as.matrix(styles[intrinsic,c("normal_x","normal_y","normal_z")])
-    lengths <- sqrt(rowSums(supplied^2))
-    valid <- is.finite(lengths) & lengths > 0
-    normal[valid, ] <- supplied[valid, , drop = FALSE] / lengths[valid]
-  }
-  apply_brightness_3d(fill, light_brightness_3d(normal, camera, light), light$mode)
+# Linear-light rows (n x 3) of colours, and encoded colours of such rows.
+linear_rgb_3d <- function(colour) srgb_decode_3d(t(colour_channels_3d(colour)) / 255)
+encode_rgb_3d <- function(linear) {
+  rgb <- srgb_encode_3d(pmin(pmax(linear, 0), 1))
+  grDevices::rgb(rgb[, 1L], rgb[, 2L], rgb[, 3L])
 }
 
 # Unit model-space direction toward the light, for a camera with right, up
@@ -39,26 +33,45 @@ light_vector_3d <- function(camera, light) {
   direction / sqrt(sum(direction^2))
 }
 
-# Lambert brightness of unit model-space normals (one per row), each turned
-# toward the viewer.
-light_brightness_3d <- function(normal, camera, light) {
-  direction <- light_vector_3d(camera, light)
-  toward <- -(camera$ray %or3d% camera$forward)
-  normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, ] <- -normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, , drop = FALSE]
-  light$ambient + light$diffuse * pmax(0, drop(normal %*% direction))
+# The light as the shading kernel reads it (src/shade/read.h).
+resolved_light_3d <- function(light, camera) {
+  list(direction = light_vector_3d(camera, light), ambient = light$ambient,
+       diffuse = light$diffuse, mode = light$mode)
+}
+
+# Unit direction from the scene toward a parallel viewer.
+view_toward_3d <- function(camera) -(camera$ray %or3d% camera$forward)
+
+# Unit model-space normals from normals in normalised panel coordinates: the
+# aspect scaling maps a normal by its inverse transpose.
+model_normals_3d <- function(normal, camera) {
+  normal <- sweep(normal, 2L, camera$model_scale, "/")
+  normal / sqrt(rowSums(normal^2))
+}
+
+# Linear-light colours (rows) lit by the shading kernel at unit model-space
+# normals, seen from `toward` (one row, or one per colour).
+shade_linear_3d <- function(linear, normal, camera, light, toward = view_toward_3d(camera)) {
+  if (!nrow(linear)) return(linear)
+  shade_cpp(normal, matrix(toward, ncol = 3L), linear, resolved_light_3d(light, camera))
+}
+
+shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL) {
+  if (is.null(light) || !length(rows)) return(fill)
+  normal <- face_shading_normals_3d(fragments, rows, camera, styles)
+  result <- encode_rgb_3d(shade_linear_3d(linear_rgb_3d(fill), normal, camera, light))
+  result[is.na(fill)] <- NA_character_
+  result
 }
 
 # Linear-light colours (one per row) scaled by brightness: multiplied, or
 # their distance from white scaled.
 brighten_linear_3d <- function(linear, brightness, mode) {
-  if (mode == "multiply") linear * brightness else 1 - (1 - linear) * brightness
+  shade_transfer_cpp(linear, rep_len(as.double(brightness), nrow(linear)), mode == "multiply")
 }
 
 apply_brightness_3d <- function(fill, brightness, mode) {
-  rgb <- t(colour_channels_3d(fill)) / 255
-  linear <- brighten_linear_3d(srgb_decode_3d(rgb), brightness, mode)
-  rgb <- srgb_encode_3d(linear)
-  result <- grDevices::rgb(pmin(1, pmax(0, rgb[, 1L])), pmin(1, pmax(0, rgb[, 2L])), pmin(1, pmax(0, rgb[, 3L])))
+  result <- encode_rgb_3d(brighten_linear_3d(linear_rgb_3d(fill), brightness, mode))
   result[is.na(fill)] <- NA_character_
   result
 }

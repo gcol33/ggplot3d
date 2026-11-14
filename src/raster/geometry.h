@@ -1,6 +1,7 @@
 #pragma once
 #include "../scene/wire.h"
 #include "../scene/clipping.h"
+#include "../shade/shade.h"
 #include <chrono>
 
 namespace ggplot3d { namespace raster {
@@ -16,12 +17,27 @@ struct Item {
   int geometry = 0;
   bool cap_start = true, cap_end = true;
 };
+// Interpolated corner attributes at a face vertex: the unit model-space
+// normal and the linear-light colour, each NaN where not supplied.
+struct Shading {
+  Vec3 normal{NAN, NAN, NAN}, colour{NAN, NAN, NAN};
+};
+// Optional corner columns of the packet, NaN for NA: normal_x/y/z and
+// red/green/blue.
+struct CornerAttributes {
+  std::array<std::vector<double>, 6> columns;
+  bool normals = false, colours = false;
+  bool any() const {return normals || colours;}
+};
 struct Scene {
   ScenePacket packet;
   Projection projection;
   std::vector<Screen> vertices;
   std::vector<Item> items;
   std::vector<Vec3> normals;
+  CornerAttributes corner;
+  // Per vertex of the prepared face items; empty without corner attributes.
+  std::vector<Shading> shading;
   Scene(ScenePacket p, const Camera& c, const Viewport& v)
     : packet(std::move(p)), projection(c,v) {}
   const PrimitiveTable& table(int kind) const {
@@ -34,7 +50,31 @@ struct Scene {
   }
   void append(int kind, Index row, const Polygon& polygon, double start=0) {
     items.push_back({kind,row,static_cast<Index>(vertices.size()),static_cast<Index>(polygon.size()),start});
+    const std::size_t first=vertices.size();
     for(const auto& v:polygon) vertices.push_back(project(v));
+    if(corner.any()) {
+      shading.resize(vertices.size());
+      if(kind==1) for(std::size_t j=0;j<polygon.size();++j) shading[first+j]=interpolate_shading(polygon[j]);
+    }
+  }
+  // Each attribute is sum weight * w * value over the source corners (the
+  // weights of a dehomogenised vertex), NaN when a contributing corner lacks it.
+  std::vector<double> corner_w;
+  Shading interpolate_shading(const Vertex& v) const {
+    Shading out;
+    std::array<double,6> value{0,0,0,0,0,0};
+    for(int k=0;k<6;++k) {
+      const auto& column=corner.columns[k];
+      if(column.empty()) {value[k]=NAN;continue;}
+      for(const auto& weight:v.weights) value[k]+=weight.second*corner_w[weight.first]*column[weight.first];
+    }
+    if(corner.normals && std::isfinite(value[0]+value[1]+value[2])) {
+      Vec3 n{value[0]/projection.resolved.model_scale[0],value[1]/projection.resolved.model_scale[1],value[2]/projection.resolved.model_scale[2]};
+      double length=std::sqrt(dot(n,n));
+      if(length>0) out.normal={n[0]/length,n[1]/length,n[2]/length};
+    }
+    if(corner.colours && std::isfinite(value[3]+value[4]+value[5])) out.colour={value[3],value[4],value[5]};
+    return out;
   }
   void join(Index row,const Screen& a,const Screen& b,const Screen& c,double distance) {
     const auto& line=packet.polylines;
@@ -62,6 +102,7 @@ struct Scene {
       item.count=static_cast<Index>(vertices.size())-item.offset;
     }
     items.push_back(item);
+    if(corner.any()) shading.resize(vertices.size());
   }
 };
 
@@ -78,10 +119,11 @@ static inline void prepare_geometry(Scene& scene) {
       if(row%4096==0) Rcpp::checkUserInterrupt();
       if(table.opacity[row]==0) continue;
       Polygon polygon; polygon.reserve(table.count[row]);
+      const bool weighted=kind==1 && scene.corner.any();
       for(Index j=0;j<table.count[row];++j) {
         Index corner=table.offset[row]+j;
         polygon.push_back(corner_vertex(points,corner,scene.packet.corners.vertex[corner]));
-        polygon.back().weights.clear();
+        if(!weighted) polygon.back().weights.clear();
       }
       if(kind==1) {
         // A face through infinity takes its normal from its clipped ring.
@@ -138,12 +180,37 @@ static inline void prepare_geometry(Scene& scene) {
   }
 }
 
+// Corner colours are encoded sRGB channels, decoded here to linear light.
+static inline void read_corner_attributes(Scene& scene, const Rcpp::List& packet) {
+  Rcpp::List corners=packet["corners"];
+  const char* names[]={"normal_x","normal_y","normal_z","red","green","blue"};
+  auto& c=scene.corner;
+  for(int k=0;k<6;++k) if(corners.containsElementNamed(names[k])) {
+    Rcpp::NumericVector x=corners[names[k]];
+    c.columns[k].resize(x.size());
+    for(R_xlen_t i=0;i<x.size();++i) {
+      double v=Rcpp::NumericVector::is_na(x[i]) ? NAN:x[i];
+      if(k>=3 && std::isfinite(v)) v=v<=0.04045 ? v/12.92:std::pow((v+0.055)/1.055,2.4);
+      c.columns[k][i]=v;
+    }
+  }
+  c.normals=!c.columns[0].empty() && !c.columns[1].empty() && !c.columns[2].empty();
+  c.colours=!c.columns[3].empty() && !c.columns[4].empty() && !c.columns[5].empty();
+  if(!c.normals) for(int k=0;k<3;++k) c.columns[k].clear();
+  if(!c.colours) for(int k=3;k<6;++k) c.columns[k].clear();
+  if(!c.any()) return;
+  const auto points=homogeneous_points(scene.packet.vertices,scene.projection);
+  scene.corner_w.resize(scene.packet.corners.vertex.size());
+  for(std::size_t i=0;i<scene.corner_w.size();++i) scene.corner_w[i]=points[scene.packet.corners.vertex[i]][3];
+}
+
 static inline Rcpp::List prepare(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport) {
   auto start=Clock::now();
   Viewport v{Rcpp::as<double>(viewport["width_mm"]),Rcpp::as<double>(viewport["height_mm"]),Rcpp::as<double>(viewport["dpi"])};
   require(std::isfinite(v.width_mm) && std::isfinite(v.height_mm) && std::isfinite(v.dpi) &&
           v.width_mm>0 && v.height_mm>0 && v.dpi>0,"invalid raster viewport");
   Rcpp::XPtr<Scene> scene(new Scene(read_packet(packet),read_camera(camera),v),true);
+  read_corner_attributes(*scene,packet);
   prepare_geometry(*scene);
   Rcpp::NumericMatrix normals(scene->normals.size(),3);
   for(std::size_t i=0;i<scene->normals.size();++i) for(int k=0;k<3;++k) normals(i,k)=scene->normals[i][k];

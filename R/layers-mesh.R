@@ -156,20 +156,20 @@ prepare_mesh_aesthetics_3d <- function(out, data, plot, params) {
 StatMesh3D <- ggplot2::ggproto("StatMesh3D", ggplot2::Stat,
   required_aes = c("x", "y", "z", ".mesh", ".face", ".corner", ".vertex"),
   compute_panel = function(data, scales, subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L,
-                           curvature = FALSE, crease = NULL) {
-    mesh_face_materials_3d(mesh_pipeline_3d(data, subdivide, remesh, decimate, smooth, curvature, crease))
+                           curvature = FALSE, crease = NULL, shading = "flat") {
+    mesh_face_materials_3d(mesh_pipeline_3d(data, subdivide, remesh, decimate, smooth, curvature, crease), shading)
   }
 )
 
-# Numeric fill averaged over the corners of each face; other materials must
-# already be constant per face.
-mesh_face_materials_3d <- function(data) {
+# Numeric fill averaged over the corners of each face (kept per vertex for
+# smooth shading); other materials must already be constant per face.
+mesh_face_materials_3d <- function(data, shading = "flat") {
   rows <- order(data$.mesh, data$.face, data$.corner)
   ids <- mesh_face_ids_3d(data, rows)
   for (field in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
     value <- data[[field]]
     if (field == "fill" && is.numeric(value)) {
-      data[[field]] <- mesh_face_mean_3d(value, ids)
+      if (shading == "flat") data[[field]] <- mesh_face_mean_3d(value, ids)
     } else {
       keys <- match(value, unique(value))
       adjacent <- head(rows, -1L); next_row <- tail(rows, -1L)
@@ -254,7 +254,7 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, position = "identity", ...,
                          vertices = NULL, faces = NULL, shade = TRUE, wireframe = FALSE, hidden = "hide",
                          subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L, curvature = FALSE, crease = NULL,
-                         outline = NULL, alpha_mode = "face", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                         outline = NULL, alpha_mode = "face", shading = "flat", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.null(vertices) || !is.null(faces)) {
     if (!is.null(data) && !is.null(vertices)) stop("Supply data or vertices/faces.", call. = FALSE)
     data <- mesh_3d(vertices %or3d% data, faces)
@@ -263,7 +263,7 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
   make_layer_3d(GeomMesh3D, mapping, data, stat, position,
     c(list(shade = shade, wireframe = wireframe, hidden = hidden, subdivide = subdivide, remesh = remesh,
       decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, outline = outline,
-      alpha_mode = alpha_mode_3d(alpha_mode), na.rm = na.rm), list(...)),
+      alpha_mode = alpha_mode_3d(alpha_mode), shading = shading_mode_3d(shading), na.rm = na.rm), list(...)),
     show.legend, inherit.aes)
 }
 
