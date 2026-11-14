@@ -64,6 +64,7 @@ register_geom_3d(GeomIntersection3D,emit_paths_3d,
 #' vertices; junctions start separate paths. Computed face1 and face2 identify
 #' the contributing faces in the order of the keyed input table.
 #' @inheritParams geom_mesh_3d
+#' @inheritParams ggplot2::stat_identity
 #' @param tolerance Positive positional tolerance relative to the mesh extent.
 #' @return A ggplot2 layer drawing paths.
 #' @references van Wijk and Cohen (2006). Visualization of Seifert Surfaces.

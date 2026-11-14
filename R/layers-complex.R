@@ -177,7 +177,9 @@ StatRiemannSurface3D <- ggplot2::ggproto("StatRiemannSurface3D",StatGeometry3D,
 #'   <https://diglib.eg.org/handle/10.1111/v28i3pp0735-0742>.
 #' @examples
 #' ggplot2::ggplot()+stat_riemann_surface_3d(fun_inverse=function(w) w^3,sheets=3,n=20)+coord_3d()
-#' ggplot2::ggplot()+stat_riemann_surface_3d(fun_inverse=exp,sheets=2,domain="cartesian",u=c(-1,1),n=20)+coord_3d()
+#' ggplot2::ggplot() +
+#'   stat_riemann_surface_3d(fun_inverse=exp,sheets=2,domain="cartesian",
+#'     u=c(-1,1),n=20) + coord_3d()
 #' @export
 stat_riemann_surface_3d <- function(mapping=NULL,data=NULL,geom=GeomStatsSurface3D,position="identity",...,
                                     fun_inverse,sheets=2L,domain=c("polar","cartesian"),u=c(0,1),v=NULL,n=40L,

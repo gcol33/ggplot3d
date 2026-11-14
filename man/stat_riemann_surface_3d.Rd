@@ -50,7 +50,9 @@ must be single-valued and finite throughout the sampled parameter domain.
 }
 \examples{
 ggplot2::ggplot()+stat_riemann_surface_3d(fun_inverse=function(w) w^3,sheets=3,n=20)+coord_3d()
-ggplot2::ggplot()+stat_riemann_surface_3d(fun_inverse=exp,sheets=2,domain="cartesian",u=c(-1,1),n=20)+coord_3d()
+ggplot2::ggplot() +
+  stat_riemann_surface_3d(fun_inverse=exp,sheets=2,domain="cartesian",
+    u=c(-1,1),n=20) + coord_3d()
 }
 \references{
 Poelke and Polthier (2009). Lifted domain coloring.

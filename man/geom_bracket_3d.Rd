@@ -69,7 +69,8 @@ ggplot2::ggplot(cols, ggplot2::aes(x, y, z = z)) +
   coord_3d()
 
 box <- data.frame(x = 0, y = 0, z = 0, xend = 4, yend = 0, zend = 0, label = "4 m")
-ggplot2::ggplot(box, ggplot2::aes(x, y, z = z, xend = xend, yend = yend, zend = zend, label = label)) +
+ggplot2::ggplot(box, ggplot2::aes(x, y, z = z, xend = xend, yend = yend,
+                                zend = zend, label = label)) +
   geom_bracket_3d(type = "dimension", offset = c(0, -0.08, 0)) +
   coord_3d(clip_data = FALSE)
 }
