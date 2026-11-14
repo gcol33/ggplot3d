@@ -154,6 +154,7 @@ band_split_primitives_3d <- function(data, primitives, kinds, counts, params) {
   interpolate_fill <- !"fill" %in% names(bands) && identical(params$shading, "smooth") && !is.null(data$fill)
   if (interpolate_fill) {
     fill <- linear_rgb_3d(data$fill)
+    fill_alpha <- colour_channels_3d(data$fill, alpha = TRUE)[4L, primitives[offsets]]
     fills <- vector("list", length(counts)); fill_valid <- logical(length(counts))
   }
   for (i in seq_along(counts)) {
@@ -204,7 +205,7 @@ band_split_primitives_3d <- function(data, primitives, kinds, counts, params) {
   if (interpolate_fill) {
     rgb <- do.call(rbind, fills)
     valid <- fill_valid[parent]
-    data$fill[valid] <- encode_rgb_3d(rgb[valid, , drop = FALSE])
+    data$fill[valid] <- sprintf("%s%02X", encode_rgb_3d(rgb[valid, , drop = FALSE]), fill_alpha[parent[valid]])
   }
   owner <- rep.int(seq_along(counts), counts)
   for (name in names(bands)) {

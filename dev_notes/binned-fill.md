@@ -51,3 +51,5 @@ edge from 1 to 100 lies at 9/99 of that edge.
 The saved original continuous-scale smooth hill packet is identical to the new
 packet. Persistent tests also require byte-identical packets and compiled scenes
 for ordinary and low-contrast continuous gradients with band detection bypassed.
+
+Banded edge colours preserve the parent face fill's alpha while interpolating its RGB channels.

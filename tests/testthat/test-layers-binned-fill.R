@@ -234,3 +234,13 @@ test_that("date-valued band variables retain their transformation class when rem
   expect_true(any(abs(x - 0.4) < 1e-12))
   expect_false(any(vapply(split(x, f$owner), function(v) min(v) < 0.4 - 1e-12 && max(v) > 0.4 + 1e-12, logical(1))))
 })
+
+test_that("banded edge colours preserve the face fill's alpha", {
+  vertices <- data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = 0)
+  mesh <- mesh_3d(vertices, matrix(1:3, 1L), vertex_data = data.frame(.vertex = 1:3,
+    value = c(0, 1, 0), hex = c("#FF000080", "#0000FF80", "#00FF0080")))
+  out <- stats_scene(ggplot2::ggplot(mesh, ggplot2::aes(x, y, z = z, fill = I(hex), colour = value)) +
+    geom_mesh_3d(shading = "smooth") + ggplot2::scale_colour_steps(breaks = 0.5, limits = c(0, 1)) + coord_3d())
+  expect_gt(length(out$packet$faces$count), 1L)
+  expect_equal(out$packet$faces$opacity, rep(128 / 255, length(out$packet$faces$count)))
+})
