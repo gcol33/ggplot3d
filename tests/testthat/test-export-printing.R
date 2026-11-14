@@ -1,13 +1,3 @@
-printing_settings <- function(...) {
-  spec <- print_3d(...)
-  python <- tryCatch(print_python_3d(spec$python), error = function(e) NULL)
-  if (is.null(python)) skip("The configured native Python interpreter is unavailable")
-  status <- suppressWarnings(system2(python, c("-c", shQuote("import manifold3d, numpy")), stdout = FALSE, stderr = FALSE))
-  if (status != 0L) skip("Python manifold3d and numpy are unavailable")
-  spec$python <- python
-  spec
-}
-
 printing_volume <- function(mesh) {
   a <- mesh$position[mesh$triangles[, 1L], , drop = FALSE]
   b <- mesh$position[mesh$triangles[, 2L], , drop = FALSE]
@@ -75,23 +65,23 @@ test_that("mesh keys preserve touching closed objects before union", {
 })
 
 test_that("Manifold unions overlaps and preserves nested cavities", {
-  spec <- printing_settings(text = "none", furniture = character())
+  spec <- print_3d(text = "none", furniture = character())
   a <- print_box_mesh_3d(c(2, 2, 2));b <- print_box_mesh_3d(c(2, 2, 2), c(1, 0, 0))
   parts <- c(print_parts_3d(a, "left", spec), print_parts_3d(b, "right", spec))
-  joined <- print_union_3d(parts, list(), spec$python)
+  joined <- print_union_3d(parts, list())
   expect_equal(printing_volume(joined), 12, tolerance = 1e-10)
   outer <- print_box_mesh_3d(c(2, 2, 2));inner <- print_box_mesh_3d(c(1, 1, 1), c(.5, .5, .5))
   inner$index <- inner$index[3:1, , drop = FALSE]
   cavity <- export_join_soups_3d(list(outer, inner))
   parts <- print_parts_3d(cavity, "hollow", spec)
   expect_setequal(vapply(parts, `[[`, integer(1), "role"), c(0L, 1L))
-  hollow <- print_union_3d(parts, list(), spec$python)
+  hollow <- print_union_3d(parts, list())
   expect_equal(printing_volume(hollow), 7, tolerance = 1e-10)
   expect_true(all(vapply(print_mesh_cpp(hollow$position, hollow$triangles, TRUE)$parts, `[[`, logical(1), "closed")))
 })
 
 test_that("print preparation clamps markers and writes closed STL and coloured 3MF", {
-  spec <- printing_settings(size_mm = c(20, 40, 60), min_mm = 1, text = "none", furniture = character())
+  spec <- print_3d(size_mm = c(20, 40, 60), min_mm = 1, text = "none", furniture = character())
   p <- ggplot2::ggplot(data.frame(x = 0, y = 0, z = 0), ggplot2::aes(x, y, z = z)) +
     geom_point_3d(size = .001, shape = 18, colour = "#336699") + coord_3d(aspect = c(1, 2, 3))
   scene <- export_scene_3d(p, 1, export_options_3d(FALSE, "tube", "mesh", 1), 400, 400, 96)
@@ -116,9 +106,9 @@ test_that("print preparation clamps markers and writes closed STL and coloured 3
 test_that("raised and engraved font outlines produce closed physical plaques", {
   skip_if_not_installed("systemfonts")
   for (mode in c("raised", "engraved")) {
-    spec <- printing_settings(text = mode, furniture = character())
+    spec <- print_3d(text = mode, furniture = character())
     text <- print_text_3d("BO", 18, "sans", "plain", c(0, 0, 2), c(1, 0, 0), c(0, 1, 0), c(0, 0, 0, 1), spec, 1, "label")
-    mesh <- print_union_3d(list(), list(text), spec$python)
+    mesh <- print_union_3d(list(), list(text))
     check <- print_mesh_cpp(mesh$position, mesh$triangles, TRUE)
     expect_true(all(vapply(check$parts, `[[`, logical(1), "closed")))
     expect_gt(printing_volume(mesh), 0)
@@ -127,10 +117,54 @@ test_that("raised and engraved font outlines produce closed physical plaques", {
 })
 
 test_that("invalid layers fail before a model file is written", {
-  spec <- printing_settings(text = "none", furniture = character())
+  spec <- print_3d(text = "none", furniture = character())
   v <- rbind(c(0, 0, 0), c(1, 0, 0), c(0, 1, 0), c(0, 0, 1), c(0, -1, 0))
   p <- ggplot2::ggplot() + geom_mesh_3d(vertices = v, faces = rbind(c(1, 2, 3), c(2, 1, 4), c(1, 2, 5))) + coord_3d()
   file <- tempfile(fileext = ".stl")
   expect_error(export_3d(p, file, print = spec), "layer1_mesh: non-manifold edge")
   expect_false(file.exists(file))
+})
+
+test_that("double precision and named cavity ownership survive native union", {
+  spec <- print_3d(text = "none", furniture = character())
+  width <- 1 + 2^-30
+  box <- print_box_mesh_3d(c(width, 1, 1), colour = c(.2, .4, .6, .8))
+  solid <- print_union_3d(print_parts_3d(box, "precise", spec), list())
+  expect_equal(diff(range(solid$position[, 1L])), width, tolerance = 1e-13)
+  expect_equal(printing_volume(solid), width, tolerance = 1e-13)
+  expect_equal(solid$colour, matrix(c(.2, .4, .6, .8), nrow(solid$colour), 4L, byrow = TRUE))
+
+  outer <- print_box_mesh_3d(c(2, 2, 2))
+  hole <- print_box_mesh_3d(c(1, 1, 1), c(1.5, .5, .5))
+  hole$index <- hole$index[3:1, , drop = FALSE]
+  parts <- print_parts_3d(export_join_soups_3d(list(outer, hole)), "hollow", spec)
+  neighbour <- print_parts_3d(print_box_mesh_3d(c(2, 2, 2), c(1, 0, 0)), "neighbour", spec)
+  expect_error(print_union_3d(c(parts, neighbour), list()),
+    "hollow: negative-winding cavity extends outside its solid")
+})
+
+test_that("cavity union matches the reference mesh dimensions and volume", {
+  spec <- print_3d(text = "none", furniture = character())
+  outer <- print_box_mesh_3d(c(2, 2, 2), colour = c(1, 0, 0, 1))
+  inner <- print_box_mesh_3d(c(1, 1, 1), c(.5, .5, .5))
+  inner$index <- inner$index[3:1, , drop = FALSE]
+  parts <- print_parts_3d(export_join_soups_3d(list(outer, inner)), "hollow", spec)
+  solid <- print_union_3d(parts, list())
+  expect_equal(nrow(solid$position), 16L)
+  expect_equal(nrow(solid$triangles), 24L)
+  expect_equal(printing_volume(solid), 7, tolerance = 1e-10)
+})
+
+test_that("per-face property seams retain RGBA and errors identify named parts", {
+  spec <- print_3d(text = "none", furniture = character())
+  part <- print_parts_3d(print_box_mesh_3d(c(2, 2, 2)), "coloured", spec)[[1L]]
+  n <- nrow(part$triangles)
+  part$colour <- cbind(seq_len(n) / n, 0, 1, .5)
+  solid <- print_union_3d(list(part), list())
+  expect_setequal(solid$colour[, 1L], part$colour[, 1L])
+  expect_equal(solid$colour[, 4L], rep(.5, nrow(solid$colour)))
+  part$role <- 2L
+  expect_error(print_union_3d(list(part), list()), "coloured: solid is empty")
+  part$triangles[1L, 1L] <- NA_integer_
+  expect_error(print_union_3d(list(part), list()), "coloured: triangle index outside")
 })

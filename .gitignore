@@ -10,3 +10,5 @@ dev_notes/agents/logs/*.log
 tests/testthat/Rplots.pdf
 Rplots.pdf
 *.log
+
+src/vendor/**/*.o

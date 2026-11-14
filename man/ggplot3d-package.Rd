@@ -42,5 +42,16 @@ Authors:
   \item Gilles Colling \email{gilles.colling051@gmail.com} (\href{https://orcid.org/0000-0003-3070-6066}{ORCID}) [copyright holder]
 }
 
+Other contributors:
+\itemize{
+  \item The Manifold Authors (Bundled Manifold library) [copyright holder]
+  \item Angus Johnson (Bundled Clipper2 library) [copyright holder]
+  \item Jared Hoberock (Manifold utilities) [copyright holder]
+  \item Nathan Bell (Manifold utilities) [copyright holder]
+  \item Wenzel Jakob (Disjoint-set implementation) [copyright holder]
+  \item wi-re (Singular value decomposition) [copyright holder]
+  \item Sun Microsystems, Inc. (Mathematical functions) [copyright holder]
+}
+
 }
 \keyword{internal}

@@ -22,3 +22,4 @@
 ^build_site\.R$
 ^pkgdown$
 ^CITATION\.cff$
+^src/vendor/.*\.(o|so|dll)$

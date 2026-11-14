@@ -13,8 +13,7 @@ print_3d(
   furniture = c("base", "axes"),
   surface = c("shell", "base"),
   layers = NULL,
-  sides = 12L,
-  python = Sys.getenv("GGPLOT3D_PYTHON", unname(Sys.which("python")))
+  sides = 12L
 )
 }
 \arguments{
@@ -36,8 +35,6 @@ print_3d(
 \code{c(layer1_surface = "base", layer2_mesh = "shell")}.}
 
 \item{sides}{Number of tube cross-section sides, at least six.}
-
-\item{python}{Python executable, or a PATH shim resolving to it.}
 }
 \value{
 A printing specification for \code{export_3d(..., print = )}.
@@ -60,10 +57,8 @@ can extend beyond the panel box.
 
 Meshes are checked for edge incidence, winding and self-intersections.
 Manifold performs Boolean union, preserves cavity boundaries and carries
-colour properties. Requires Python with the manifold3d and numpy modules;
-install them with \verb{python -m pip install manifold3d numpy}. The bridge uses
-Manifold's double-precision Mesh64 API (tested with manifold3d 3.5.5).
-Set GGPLOT3D_PYTHON to that Python executable, or supply \code{python} explicitly.
+colour properties through the bundled native Manifold library, using
+double-precision meshes and a single-threaded Boolean engine.
 Disconnected solid components are stored in one model object.
 }
 \examples{

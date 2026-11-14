@@ -259,6 +259,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// print_union_cpp
+List print_union_cpp(List meshes, List texts);
+RcppExport SEXP _ggplot3d_print_union_cpp(SEXP meshesSEXP, SEXP textsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type meshes(meshesSEXP);
+    Rcpp::traits::input_parameter< List >::type texts(textsSEXP);
+    rcpp_result_gen = Rcpp::wrap(print_union_cpp(meshes, texts));
+    return rcpp_result_gen;
+END_RCPP
+}
 // print_mesh_cpp
 List print_mesh_cpp(NumericMatrix position, IntegerMatrix triangles, bool cross_components, Nullable<IntegerVector> identity);
 RcppExport SEXP _ggplot3d_print_mesh_cpp(SEXP positionSEXP, SEXP trianglesSEXP, SEXP cross_componentsSEXP, SEXP identitySEXP) {
@@ -605,6 +617,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_parametric_bisect_cpp", (DL_FUNC) &_ggplot3d_parametric_bisect_cpp, 6},
     {"_ggplot3d_parametric_face_normals_cpp", (DL_FUNC) &_ggplot3d_parametric_face_normals_cpp, 2},
     {"_ggplot3d_png_crc32_cpp", (DL_FUNC) &_ggplot3d_png_crc32_cpp, 1},
+    {"_ggplot3d_print_union_cpp", (DL_FUNC) &_ggplot3d_print_union_cpp, 2},
     {"_ggplot3d_print_mesh_cpp", (DL_FUNC) &_ggplot3d_print_mesh_cpp, 4},
     {"_ggplot3d_print_zip_cpp", (DL_FUNC) &_ggplot3d_print_zip_cpp, 2},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},

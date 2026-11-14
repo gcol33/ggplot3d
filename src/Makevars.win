@@ -1,3 +1,16 @@
 CXX_STD = CXX17
+PKG_CPPFLAGS = -Ivendor/manifold3d/include -Ivendor/clipper2/include -DMANIFOLD_PAR=-1 -DMANIFOLD_CROSS_SECTION -DMANIFOLD_NO_IOSTREAM -DMANIFOLD_NO_FILESYSTEM -DCLIPPER2_NO_IOSTREAM
 PKG_CXXFLAGS = $(SHLIB_PTHREAD_FLAGS)
 PKG_LIBS = $(SHLIB_PTHREAD_FLAGS)
+OBJECTS = engine.o geometry.o mesh.o \
+    outline.o parametric.o png.o \
+    printing.o raster.o raymarch.o \
+    RcppExports.o reconstruct.o repel.o \
+    streamline.o sweep.o vendor/clipper2/src/clipper.engine.o \
+    vendor/clipper2/src/clipper.offset.o vendor/manifold3d/src/boolean_result.o vendor/manifold3d/src/boolean3.o \
+    vendor/manifold3d/src/constructors.o vendor/manifold3d/src/cross_section/cross_section.o vendor/manifold3d/src/csg_tree.o \
+    vendor/manifold3d/src/edge_op.o vendor/manifold3d/src/execution_impl.o vendor/manifold3d/src/face_op.o \
+    vendor/manifold3d/src/impl.o vendor/manifold3d/src/manifold.o vendor/manifold3d/src/minkowski.o \
+    vendor/manifold3d/src/polygon.o vendor/manifold3d/src/properties.o vendor/manifold3d/src/quickhull.o \
+    vendor/manifold3d/src/sdf.o vendor/manifold3d/src/smoothing.o vendor/manifold3d/src/sort.o \
+    vendor/manifold3d/src/subdivision.o vendor/manifold3d/src/tree2d.o voxel.o

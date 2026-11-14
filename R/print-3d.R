@@ -16,10 +16,8 @@
 #'
 #' Meshes are checked for edge incidence, winding and self-intersections.
 #' Manifold performs Boolean union, preserves cavity boundaries and carries
-#' colour properties. Requires Python with the manifold3d and numpy modules;
-#' install them with `python -m pip install manifold3d numpy`. The bridge uses
-#' Manifold's double-precision Mesh64 API (tested with manifold3d 3.5.5).
-#' Set GGPLOT3D_PYTHON to that Python executable, or supply `python` explicitly.
+#' colour properties through the bundled native Manifold library, using
+#' double-precision meshes and a single-threaded Boolean engine.
 #' Disconnected solid components are stored in one model object.
 #' @param size_mm Three positive maximum dimensions of the panel box.
 #' @param min_mm Minimum tube or marker width and text extrusion depth.
@@ -31,7 +29,6 @@
 #' @param layers Named vector of surface methods, keyed by layer name such as
 #'   `c(layer1_surface = "base", layer2_mesh = "shell")`.
 #' @param sides Number of tube cross-section sides, at least six.
-#' @param python Python executable, or a PATH shim resolving to it.
 #' @return A printing specification for `export_3d(..., print = )`.
 #' @examples
 #' settings <- print_3d(size_mm = c(100, 100, 60), text = "none")
@@ -39,8 +36,7 @@
 #' @export
 print_3d <- function(size_mm = c(100, 100, 60), min_mm = .8, shell_mm = 1.2, base_mm = 2,
                       text = c("raised", "engraved", "none"), furniture = c("base", "axes"),
-                      surface = c("shell", "base"), layers = NULL, sides = 12L,
-                      python = Sys.getenv("GGPLOT3D_PYTHON", unname(Sys.which("python")))) {
+                      surface = c("shell", "base"), layers = NULL, sides = 12L) {
   scene_assert(is.numeric(size_mm) && length(size_mm) == 3L && all(is.finite(size_mm) & size_mm > 0), "size_mm must contain three positive dimensions")
   for (name in c("min_mm", "shell_mm", "base_mm")) {
     value <- get(name)
@@ -50,10 +46,9 @@ print_3d <- function(size_mm = c(100, 100, 60), min_mm = .8, shell_mm = 1.2, bas
   if (!is.null(layers)) scene_assert(is.character(layers) && !is.null(names(layers)) &&
     !anyNA(layers) && !anyDuplicated(names(layers)) && all(nzchar(names(layers))) && all(layers %in% c("shell", "base")), "layers must name a shell or base method for each selected layer")
   scene_assert(is.numeric(sides) && length(sides) == 1L && is.finite(sides) && sides >= 6 && sides == trunc(sides), "sides must be an integer of at least six")
-  scene_assert(is.character(python) && length(python) == 1L && !is.na(python), "python must identify an executable")
   structure(list(size_mm = as.double(size_mm), min_mm = min_mm, shell_mm = max(min_mm, shell_mm),
     base_mm = if (base_mm > 0) max(min_mm, base_mm) else 0, text = match.arg(text), furniture = unique(furniture),
-    surface = match.arg(surface), layers = layers, sides = as.integer(sides), python = python), class = "ggplot3d_print")
+    surface = match.arg(surface), layers = layers, sides = as.integer(sides)), class = "ggplot3d_print")
 }
 
 print_layer_error_3d <- function(name, expression) {
@@ -224,7 +219,7 @@ print_scene_3d <- function(scene, settings) {
   }
   texts <- Filter(Negate(is.null), texts)
   scene_assert(length(meshes) + length(texts) > 0, "The selected panel has no printable geometry")
-  solid <- print_union_3d(meshes, texts, settings$python)
+  solid <- print_union_3d(meshes, texts)
   topology <- print_layer_error_3d(paste(unique(vapply(meshes, `[[`, character(1), "name")), collapse = ", "),
     print_mesh_cpp(solid$position, solid$triangles, TRUE))
   checked <- topology$parts
@@ -238,4 +233,4 @@ print_scene_3d <- function(scene, settings) {
     colour = colours, lit = rep(FALSE, nrow(colours))))), up = 3L, printing = settings, printing_mesh = topology)
 }
 
-utils::globalVariables(c("print_mesh_cpp", "print_zip_cpp"))
+utils::globalVariables(c("print_mesh_cpp", "print_zip_cpp", "print_union_cpp"))

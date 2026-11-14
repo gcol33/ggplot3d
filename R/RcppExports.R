@@ -73,6 +73,10 @@ png_crc32_cpp <- function(bytes) {
     .Call(`_ggplot3d_png_crc32_cpp`, bytes)
 }
 
+print_union_cpp <- function(meshes, texts) {
+    .Call(`_ggplot3d_print_union_cpp`, meshes, texts)
+}
+
 print_mesh_cpp <- function(position, triangles, cross_components = FALSE, identity = NULL) {
     .Call(`_ggplot3d_print_mesh_cpp`, position, triangles, cross_components, identity)
 }

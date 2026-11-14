@@ -273,10 +273,8 @@ export_3d(p, "cars.stl", print = settings)
 export_3d(p, "cars.3mf", print = settings)
 ```
 
-Printing uses Python with `manifold3d` and `numpy` for Boolean union. Install
-these modules with `python -m pip install manifold3d numpy`, then set
-`GGPLOT3D_PYTHON` or pass the executable as `print_3d(python = )`. Manifold
-provides mesh union and property propagation; native checks validate edge
+Printing uses the bundled Manifold C++ library for Boolean union with
+double-precision meshes and colour propagation. Native checks validate edge
 incidence, closure, winding and self-intersection and identify failing layers.
 Disconnected closed components share one exported model object.
 

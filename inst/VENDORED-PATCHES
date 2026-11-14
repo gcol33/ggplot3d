@@ -1,0 +1,37 @@
+Manifold and Clipper2 source bundle
+
+Manifold 3.5.5, revision 32271a1a999ce721ffaf5ab10e9746ceeb696547:
+  The public headers and core src/*.cpp and src/*.h files are bundled,
+  together with cross_section/cross_section.cpp (the Clipper2 backend).
+  No bindings, tests, samples, CMake files, or alternative cross-section
+  backend are included. version.h is instantiated from cmake/version.h.in.
+  MANIFOLD_PAR=-1 selects upstream's serial implementation, with no TBB.
+  MANIFOLD_CROSS_SECTION enables polygon operations for extruded text.
+  MANIFOLD_NO_IOSTREAM and MANIFOLD_NO_FILESYSTEM exclude the optional
+  stream/file diagnostic API. Debugging, timing and Tracy are disabled.
+
+Clipper2, revision 46f639177fe418f9689e8ddb74f08a870c71f5b4:
+  The include/clipper2 headers and the engine and offset source files are
+  bundled. Rectangle clipping and triangulation source files are unused.
+  Applied Manifold's cmake/patches/0001-clipper2-no-iostream.patch,
+  which guards optional stream operators with CLIPPER2_NO_IOSTREAM.
+  This is the same carry patch that Manifold's pinned CMake build applies.
+  CLIPPER2_NO_IOSTREAM excludes these operators in the R package build.
+
+Both Makevars files compile the source bundle directly with R's C++17
+compiler and default compiler warnings and optimization flags.
+
+Local warning fixes in Manifold (no diagnostic flags are suppressed):
+  quickhull.cpp: remove unused extraPointIndex and numVert variables.
+  Require a nonempty point list before shrinking it by one, making the
+  size_t subtraction's precondition explicit to GCC at -O2.
+  boolean_result.cpp: mark debug-only n12 and n21 counts [[maybe_unused]].
+  impl.cpp: remove unused k variable in PrepHalfedges.
+  subdivision.cpp: remove unused offset variable in Partition::Reindex.
+  smoothing.cpp: use size_t to index the normals vector.
+
+R source-package directory names:
+  The bundle directory and public include directory are named manifold3d.
+  Include directives use manifold3d/ instead of manifold/. R CMD build
+  removes directories whose names end in "old", including "manifold".
+  Directory names and include paths are the only changes to public headers.

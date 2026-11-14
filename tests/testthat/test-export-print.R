@@ -1,11 +1,3 @@
-printing_python <- function() {
-  python <- Sys.getenv("GGPLOT3D_PYTHON", unname(Sys.which("python")))
-  skip_if(!nzchar(python), "Python is unavailable")
-  status <- suppressWarnings(system2(python, c("-c", shQuote("import manifold3d, numpy")), stdout = FALSE, stderr = FALSE))
-  skip_if(status != 0, "Python manifold3d and numpy are unavailable")
-  python
-}
-
 printing_scene <- function(nodes, box = c(1, 1, 1)) {
   list(nodes = nodes, box = box, up = 3L, mm = 100,
     camera = list(right = c(1, 0, 0), up = c(0, 1, 0)),
@@ -48,11 +40,10 @@ test_that("native printing checks find boundary, winding, incidence and intersec
 })
 
 test_that("shells use millimetre thickness and base closures fill their footprint", {
-  python <- printing_python()
   plane <- rbind(c(0, 0, .5), c(1, 0, .5), c(1, 1, .5), c(0, 1, .5))
   mesh <- export_soup_3d(plane, matrix(c(1L, 2L, 3L, 1L, 3L, 4L), 3L), matrix(1, 4, 4), FALSE)
   scene <- printing_scene(list(printing_node(mesh)))
-  settings <- print_3d(size_mm = c(20, 40, 30), shell_mm = 1.5, furniture = character(), text = "none", python = python)
+  settings <- print_3d(size_mm = c(20, 40, 30), shell_mm = 1.5, furniture = character(), text = "none")
   solid <- print_scene_3d(scene, settings)
   checked <- ggplot3d:::print_mesh_cpp(solid$printing_mesh$position, solid$printing_mesh$triangles, TRUE)
   expect_equal(checked$parts[[1]]$volume, 20 * 20 * 1.5)
@@ -65,8 +56,7 @@ test_that("shells use millimetre thickness and base closures fill their footprin
 })
 
 test_that("Boolean union removes interior overlap and preserves cavity boundaries", {
-  python <- printing_python()
-  settings <- print_3d(size_mm = rep(3, 3), furniture = character(), text = "none", python = python)
+  settings <- print_3d(size_mm = rep(3, 3), furniture = character(), text = "none")
   a <- print_box_mesh_3d(c(2, 2, 2), colour = c(1, 0, 0, 1))
   b <- print_box_mesh_3d(c(2, 2, 2), c(1, 0, 0), colour = c(0, 0, 1, 1))
   solid <- print_scene_3d(printing_scene(list(printing_node(a, "red"), printing_node(b, "blue")), rep(3, 3)), settings)
@@ -78,17 +68,16 @@ test_that("Boolean union removes interior overlap and preserves cavity boundarie
   cavity$index <- cavity$index[3:1, , drop = FALSE]
   hollow <- export_join_soups_3d(list(a, cavity))
   parts <- print_parts_3d(hollow, "hollow", settings)
-  united <- print_union_3d(parts, list(), python)
+  united <- print_union_3d(parts, list())
   checked <- ggplot3d:::print_mesh_cpp(united$position, united$triangles, TRUE)
   expect_equal(sum(vapply(checked$parts, `[[`, numeric(1), "volume")), 7)
   expect_equal(sort(vapply(checked$parts, `[[`, numeric(1), "volume")), c(-1, 8))
 })
 
 test_that("printing points and paths respect minimum dimensions", {
-  python <- printing_python()
   node <- list(name = "marks", markers = list(position = matrix(c(.5, .5, .5), 1L),
     colour = matrix(c(1, 0, 0, 1), 1L), radius = .001, shape = 15))
-  settings <- print_3d(size_mm = rep(10, 3), min_mm = 2, furniture = character(), text = "none", python = python)
+  settings <- print_3d(size_mm = rep(10, 3), min_mm = 2, furniture = character(), text = "none")
   solid <- print_scene_3d(printing_scene(list(node)), settings)
   expect_equal(apply(solid$printing_mesh$position, 2L, function(x) diff(range(x))), rep(2, 3))
   node$markers <- NULL
@@ -102,9 +91,8 @@ test_that("printing points and paths respect minimum dimensions", {
 })
 
 test_that("STL and 3MF printing exports carry closed solids and triangle colours", {
-  python <- printing_python()
   p <- export_surface_plot(n = 3, colour = NA, fill = "#336699", coord = coord_3d(light = NULL))
-  settings <- print_3d(size_mm = c(30, 30, 15), surface = "base", furniture = "base", text = "none", python = python)
+  settings <- print_3d(size_mm = c(30, 30, 15), surface = "base", furniture = "base", text = "none")
   stl <- tempfile(fileext = ".stl"); mf <- tempfile(fileext = ".3mf")
   export_3d(p, stl, print = settings, width = 240, height = 240)
   raw <- readBin(stl, "raw", file.size(stl))
@@ -125,13 +113,12 @@ test_that("STL and 3MF printing exports carry closed solids and triangle colours
 })
 
 test_that("raised and engraved text are extruded with counters and axis furniture", {
-  python <- printing_python()
   skip_if_not_installed("systemfonts")
   for (mode in c("raised", "engraved")) {
-    settings <- print_3d(size_mm = rep(20, 3), text = mode, furniture = character(), python = python)
+    settings <- print_3d(size_mm = rep(20, 3), text = mode, furniture = character())
     text <- print_text_3d("O", 12, "", "plain", c(0, 0, 0), c(1, 0, 0), c(0, 1, 0),
       c(1, 0, 0, 1), settings, 1, "label")
-    solid <- print_union_3d(list(), list(text), python)
+    solid <- print_union_3d(list(), list(text))
     checked <- ggplot3d:::print_mesh_cpp(solid$position, solid$triangles, TRUE)
     expect_true(all(vapply(checked$parts, `[[`, logical(1), "closed")))
     expect_gt(sum(vapply(checked$parts, `[[`, numeric(1), "volume")), 0)
@@ -139,6 +126,6 @@ test_that("raised and engraved text are extruded with counters and axis furnitur
   p <- ggplot2::ggplot(data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1)), ggplot2::aes(x, y, z = z)) +
     geom_point_3d(size = 2) + coord_3d()
   file <- tempfile(fileext = ".3mf")
-  expect_silent(export_3d(p, file, print = print_3d(size_mm = rep(20, 3), python = python), width = 240, height = 240))
+  expect_silent(export_3d(p, file, print = print_3d(size_mm = rep(20, 3)), width = 240, height = 240))
   expect_gt(file.size(file), 100)
 })

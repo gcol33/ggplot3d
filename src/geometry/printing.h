@@ -164,7 +164,8 @@ struct Mesh {
       Tri t;
       for(int k=0;k<3;++k) {
         V v=raw[input[i][k]];auto entry=unique.emplace(std::make_pair(region[i],v),p.size());
-        if(entry.second) p.push_back(v);t[k]=entry.first->second;
+        if(entry.second) p.push_back(v);
+        t[k]=entry.first->second;
       }
       tri.push_back(t);
     }
