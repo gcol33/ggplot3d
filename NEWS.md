@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* `stat_tiling_3d()` and `stat_honeycomb_3d()` accept Schlafli symbols with
+  ideal or hyperideal vertices and cells (Nelson and Segerman 2016): ideal
+  vertices lie on the boundary of the ball models, hyperideal vertices are
+  cut off by their polar planes, and honeycombs with infinite cells are
+  generated face by face within `radius` (#21).
+
 * `stat_project_3d()` handles edges and faces that meet or cross the
   four-dimensional perspective eye or the stereographic pole: both maps are
   linear from R^4 to homogeneous coordinates, perspective geometry is clipped

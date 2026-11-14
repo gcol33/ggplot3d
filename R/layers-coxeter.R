@@ -3,6 +3,10 @@ NULL
 
 coxeter_key_3d <- function(x) paste(round(x,8L),collapse=":")
 
+# Simplex points are finite (timelike), ideal (null) or hyperideal (spacelike)
+# by the sign of their Lorentz norm.
+coxeter_point_kind_3d <- function(norm,scale) ifelse(abs(norm)<=1e-9*scale,"ideal",ifelse(norm<0,"finite","hyperideal"))
+
 coxeter_simplex_3d <- function(schlafli) {
   d <- length(schlafli); rank <- d+1L
   if(!d%in%c(2L,3L)||!is.numeric(schlafli)||any(is.na(schlafli)|schlafli<3|schlafli!=trunc(schlafli))) stop("schlafli must give two or three integers >=3 (or Inf).",call.=FALSE)
@@ -11,6 +15,7 @@ coxeter_simplex_3d <- function(schlafli) {
   eig <- eigen(G,symmetric=TRUE); values <- eig$values
   kind <- if(min(values)>1e-10) "spherical" else if(min(values)>=-1e-10) "euclidean" else "hyperbolic"
   if(sum(values< -1e-10)>1L) stop("The Coxeter Gram matrix has more than one negative direction.",call.=FALSE)
+  points <- rep("finite",rank)
   if(kind=="euclidean") {
     positive <- which(values>1e-10)
     if(length(positive)!=d) stop("Degenerate Coxeter simplex.",call.=FALSE)
@@ -28,12 +33,13 @@ coxeter_simplex_3d <- function(schlafli) {
     B <- diag(sqrt(abs(values)),rank)%*%t(eig$vectors)
     mirrors <- lapply(seq_len(rank),function(i) diag(rank)-2*B[,i,drop=FALSE]%*%t(B[,i,drop=FALSE])%*%J)
     V <- t(solve(t(B)%*%J))
-    norm <- rowSums((V%*%J)*V)
-    if(kind=="hyperbolic"&&(any(eigen(G[seq_len(d),seq_len(d)],symmetric=TRUE,only.values=TRUE)$values<=1e-10)||norm[1L]>=-1e-10||norm[rank]>=-1e-10)) stop("Ideal/hyperideal vertices or cells require schema 2 or explicit truncation (#16).",call.=FALSE)
-    V <- V/sqrt(abs(norm))
-    if(kind=="hyperbolic") V <- V*ifelse(V[,rank]<0,-1,1)
+    if(kind=="hyperbolic") points <- coxeter_point_kind_3d(rowSums((V%*%J)*V),rowSums(V^2))
+    V <- t(apply(V,1L,coxeter_normalise_3d,list(kind=kind,J=J)))
   }
-  center <- V[rank,]
+  # The display is centred on the cell centre, or on the seed face (edge for
+  # tilings) when the cell is not compact.
+  centre_index <- if(points[rank]=="finite") rank else d
+  center <- V[centre_index,]
   if(kind=="hyperbolic") {
     spatial <- center[seq_len(d)]; r <- sqrt(sum(spatial^2)); direction <- if(r>0) spatial/r else spatial
     T <- diag(rank)
@@ -45,16 +51,25 @@ coxeter_simplex_3d <- function(schlafli) {
     pole <- c(rep(0,d),1); v <- center-pole
     T <- if(sum(v^2)<1e-20) diag(rank) else diag(rank)-2*tcrossprod(v)/sum(v^2)
   } else {T <- diag(rank); T[seq_len(d),rank] <- -center[seq_len(d)]}
-  inv <- solve(T)
-  list(d=d,kind=kind,G=G,J=J,vertices=V%*%t(T),mirrors=lapply(mirrors,function(M) T%*%M%*%inv),symbol=schlafli)
+  inv <- solve(T,diag(rank))
+  simplex <- list(d=d,kind=kind,G=G,J=J,mirrors=lapply(mirrors,function(M) T%*%M%*%inv),symbol=schlafli,points=points,centre_index=centre_index)
+  simplex$vertices <- t(apply(V%*%t(T),1L,coxeter_normalise_3d,simplex))
+  simplex
 }
 
+# Canonical representatives: Euclidean points with last coordinate one, unit
+# vectors on spheres, future hyperboloid points, future null vectors with
+# last coordinate one (ideal), and unit spacelike vectors with a fixed sign
+# (hyperideal; the sign carries no geometry).
 coxeter_normalise_3d <- function(x,simplex) {
-  if(simplex$kind=="euclidean") return(x/x[length(x)])
+  n <- length(x)
+  if(simplex$kind=="euclidean") return(x/x[n])
   norm <- sum((x%*%simplex$J)*x)
+  if(simplex$kind=="spherical") return(x/sqrt(norm))
+  if(abs(norm)<=1e-9*sum(x^2)) return(x/x[n])
   out <- x/sqrt(abs(norm))
-  if(simplex$kind=="hyperbolic"&&tail(out,1L)<0) out <- -out
-  out
+  lead <- if(norm<0||abs(out[n])>1e-12) out[n] else out[which(abs(out)>1e-12)[1L]]
+  if(lead<0) -out else out
 }
 
 coxeter_orbit_3d <- function(seed,mirrors,simplex,max_count) {
@@ -73,6 +88,28 @@ coxeter_orbit_3d <- function(seed,mirrors,simplex,max_count) {
   do.call(rbind,points)
 }
 
+# Breadth-first images of a seed point, with the group elements reaching them
+# and their reflection depth; keep() bounds the search.
+coxeter_transforms_3d <- function(seed,mirrors,simplex,keep,max_count,overflow) {
+  transforms <- list(diag(length(seed))); points <- list(seed); depth <- 0L
+  seen <- new.env(hash=TRUE,parent=emptyenv()); seen[[coxeter_key_3d(seed)]] <- TRUE
+  i <- 1L
+  while(i<=length(transforms)) {
+    for(M in mirrors) {
+      T <- M%*%transforms[[i]]; candidate <- coxeter_normalise_3d(drop(T%*%seed),simplex)
+      if(!keep(candidate)) next
+      key <- coxeter_key_3d(candidate)
+      if(!exists(key,seen,inherits=FALSE)) {
+        if(length(transforms)>=max_count) stop(overflow,call.=FALSE)
+        transforms[[length(transforms)+1L]] <- T; points[[length(points)+1L]] <- candidate
+        depth <- c(depth,depth[i]+1L); seen[[key]] <- TRUE
+      }
+    }
+    i <- i+1L
+  }
+  list(transforms=transforms,points=do.call(rbind,points),depth=depth)
+}
+
 coxeter_ring_order_3d <- function(points) {
   centered <- sweep(points,2L,colMeans(points),"-")
   basis <- svd(centered,nu=0,nv=2L)$v
@@ -80,53 +117,141 @@ coxeter_ring_order_3d <- function(points) {
   order(atan2(xy[,2L],xy[,1L]))
 }
 
+coxeter_distance_3d <- function(x,simplex) {
+  rank <- length(x); d <- rank-1L
+  if(simplex$kind=="hyperbolic") acosh(max(1,x[rank])) else
+    if(simplex$kind=="spherical") acos(max(-1,min(1,x[rank]))) else sqrt(sum(x[seq_len(d)]^2))
+}
+
+# Truncation of a hyperideal vertex a by its polar plane <X, a> = 0 meets the
+# edge towards b at b - <a, b> a, a finite point when |<a, b>| > 1, that is
+# when the edge's line enters hyperbolic space beyond both polar planes.
+coxeter_truncation_point_3d <- function(a,b,simplex) {
+  product <- sum((a%*%simplex$J)*b)
+  if(abs(product)<=1+1e-9) stop("Polar planes of adjacent hyperideal vertices meet; the truncation is not defined.",call.=FALSE)
+  coxeter_normalise_3d(b-product*a,simplex)
+}
+
+# A polygon whose hyperideal corners are cut by their polar planes.
+coxeter_truncate_polygon_3d <- function(X,simplex) {
+  n <- nrow(X); out <- list()
+  for(k in seq_len(n)) {
+    previous <- X[if(k==1L) n else k-1L,]; following <- X[if(k==n) 1L else k+1L,]
+    out <- c(out,list(coxeter_truncation_point_3d(X[k,],previous,simplex),coxeter_truncation_point_3d(X[k,],following,simplex)))
+  }
+  do.call(rbind,out)
+}
+
+# The face that truncation leaves in the polar plane of vertex a, from the
+# far ends of the edges at a.
+coxeter_truncation_face_3d <- function(a,neighbours,simplex) {
+  P <- t(apply(neighbours,1L,function(b) coxeter_truncation_point_3d(a,b,simplex)))
+  P[coxeter_ring_order_3d(P),,drop=FALSE]
+}
+
+# The seed polygon: the orbit of the vertex under the first two mirrors, in
+# ring order. For a tiling it is the seed cell, for a honeycomb a cell face.
+coxeter_seed_face_3d <- function(simplex) {
+  p <- simplex$symbol[1L]
+  if(!is.finite(p)) return(NULL)
+  ring <- coxeter_orbit_3d(simplex$vertices[1L,],simplex$mirrors[1:2],simplex,p)
+  ring[coxeter_ring_order_3d(ring),,drop=FALSE]
+}
+
+# Edges at the seed vertex inside one cell end at the images of the second
+# edge endpoint under the vertex's stabiliser in the cell.
+coxeter_seed_neighbours_3d <- function(simplex) {
+  far <- coxeter_normalise_3d(drop(simplex$mirrors[[1L]]%*%simplex$vertices[1L,]),simplex)
+  if(simplex$d==2L) return(rbind(far,coxeter_normalise_3d(drop(simplex$mirrors[[2L]]%*%far),simplex)))
+  coxeter_orbit_3d(far,simplex$mirrors[2:3],simplex,max(3,simplex$symbol[2L]))
+}
+
+# Index a list of canonical polygons into one vertex table.
+coxeter_index_3d <- function(polygons) {
+  keys <- character(); points <- list()
+  faces <- lapply(polygons,function(X) vapply(seq_len(nrow(X)),function(i) {
+    key <- coxeter_key_3d(X[i,]); index <- match(key,keys)
+    if(is.na(index)) {keys <<- c(keys,key); points[[length(points)+1L]] <<- X[i,]; index <- length(keys)}
+    index
+  },integer(1)))
+  list(vertices=do.call(rbind,points),faces=faces)
+}
+
 coxeter_cells_3d <- function(schlafli,radius,max_cells) {
   simplex <- coxeter_simplex_3d(schlafli); d <- simplex$d; rank <- d+1L
-  group <- simplex$mirrors[seq_len(d)]
-  expected_vertices <- if(d==2L) schlafli[1L] else round(4*schlafli[1L]/(2*schlafli[1L]+2*schlafli[2L]-prod(schlafli[1:2])))
-  vertices <- coxeter_orbit_3d(simplex$vertices[1L,],group,simplex,expected_vertices)
-  if(d==2L) faces <- list(coxeter_ring_order_3d(vertices)) else {
-    centers <- coxeter_orbit_3d(simplex$vertices[d,],group,simplex,round(4*schlafli[2L]/(2*schlafli[1L]+2*schlafli[2L]-prod(schlafli[1:2]))))
-    if(simplex$kind=="euclidean") {
-      normal <- simplex$vertices[d,seq_len(d)]
-      relative <- sweep(vertices[,seq_len(d),drop=FALSE],2L,simplex$vertices[rank,seq_len(d)],"-")
-      target <- sum((simplex$vertices[1L,seq_len(d)]-simplex$vertices[rank,seq_len(d)])*normal)
-      faces <- lapply(seq_len(nrow(centers)),function(i) {
-        n <- centers[i,seq_len(d)]; value <- drop(relative%*%n)
-        ids <- which(abs(value-target)<1e-7); ids[coxeter_ring_order_3d(vertices[ids,,drop=FALSE])]
-      })
-    } else {
-      target <- sum((simplex$vertices[1L,]%*%simplex$J)*simplex$vertices[d,])
-      values <- vertices%*%simplex$J%*%t(centers)
-      faces <- lapply(seq_len(nrow(centers)),function(i) {
-        ids <- which(abs(values[,i]-target)<1e-7)
-        ids[coxeter_ring_order_3d(vertices[ids,,drop=FALSE])]
-      })
+  hyperideal <- simplex$points[1L]=="hyperideal"
+  inside <- function(x) coxeter_distance_3d(x,simplex)<=radius+1e-8
+  if(simplex$points[rank]!="finite") return(coxeter_faces_3d(simplex,radius,max_cells))
+  seed <- coxeter_seed_face_3d(simplex)
+  polygons <- if(d==2L) list(seed) else {
+    images <- coxeter_transforms_3d(simplex$vertices[d,],simplex$mirrors[seq_len(d)],simplex,function(x) TRUE,64L,"Degenerate Coxeter cell.")
+    lapply(images$transforms,function(T) t(apply(seed%*%t(T),1L,coxeter_normalise_3d,simplex)))
+  }
+  if(hyperideal) {
+    corners <- coxeter_index_3d(polygons)
+    neighbours <- coxeter_seed_neighbours_3d(simplex)
+    stabiliser <- coxeter_transforms_3d(simplex$vertices[1L,],simplex$mirrors[seq_len(d)],simplex,function(x) TRUE,256L,"Degenerate Coxeter cell.")
+    cuts <- lapply(stabiliser$transforms,function(T) coxeter_truncation_face_3d(drop(T%*%simplex$vertices[1L,]),
+      t(apply(neighbours%*%t(T),1L,coxeter_normalise_3d,simplex)),simplex))
+    polygons <- c(lapply(polygons,coxeter_truncate_polygon_3d,simplex),cuts)
+  }
+  indexed <- coxeter_index_3d(polygons)
+  if(any(lengths(indexed$faces)<3L)) stop("The Coxeter cell has a degenerate facet.",call.=FALSE)
+  center <- simplex$vertices[rank,]
+  cells <- coxeter_transforms_3d(center,simplex$mirrors,simplex,inside,max_cells,
+    "The radius requires more than max_cells; increase the explicit resource budget.")
+  message(length(cells$transforms)," cells in ",simplex$kind," ",d,"-space")
+  list(simplex=simplex,vertices=indexed$vertices,faces=indexed$faces,transforms=cells$transforms,centers=cells$points,depth=cells$depth,mode="cells")
+}
+
+# Honeycombs whose cells are not compact (ideal or hyperideal cell centres)
+# have infinitely many faces per cell. Faces, edges for tilings, and the
+# truncation faces of hyperideal vertices are generated as orbits of their
+# seed pieces, retained within radius of the seed by their finite centres.
+coxeter_faces_3d <- function(simplex,radius,max_cells) {
+  d <- simplex$d; rank <- d+1L
+  inside <- function(x) coxeter_distance_3d(x,simplex)<=radius+1e-8
+  overflow <- "The radius requires more than max_cells; increase the explicit resource budget."
+  hyperideal <- simplex$points[1L]=="hyperideal"
+  cell <- simplex$vertices[rank,]
+  swap <- simplex$mirrors[[rank]]
+  seed <- if(d==2L) {
+    if(hyperideal) stop("Hyperideal vertices of a tiling are not supported.",call.=FALSE)
+    rbind(simplex$vertices[1L,],coxeter_normalise_3d(drop(simplex$mirrors[[1L]]%*%simplex$vertices[1L,]),simplex))
+  } else coxeter_seed_face_3d(simplex)
+  if(is.null(seed)) stop("Apeirogonal faces have no finite boundary.",call.=FALSE)
+  pieces <- list(list(X=if(hyperideal) coxeter_truncate_polygon_3d(seed,simplex) else seed,cells=list(cell,drop(swap%*%cell)),edge=d==2L))
+  if(hyperideal) pieces[[2L]] <- list(X=coxeter_truncation_face_3d(simplex$vertices[1L,],coxeter_seed_neighbours_3d(simplex),simplex),cells=list(cell),edge=FALSE)
+  out <- list()
+  for(piece in pieces) {
+    centre <- coxeter_normalise_3d(colMeans(piece$X),simplex)
+    orbit <- coxeter_transforms_3d(centre,simplex$mirrors,simplex,inside,max_cells,overflow)
+    for(i in seq_along(orbit$transforms)) {
+      T <- orbit$transforms[[i]]
+      out[[length(out)+1L]] <- list(X=t(apply(piece$X%*%t(T),1L,coxeter_normalise_3d,simplex)),
+        cells=vapply(piece$cells,function(x) coxeter_key_3d(coxeter_normalise_3d(drop(T%*%x),simplex)),character(1)),
+        depth=orbit$depth[i],edge=piece$edge)
     }
   }
-  if(any(lengths(faces)<3L)) stop("The Coxeter cell has a degenerate facet.",call.=FALSE)
-  center <- simplex$vertices[rank,]; transforms <- list(diag(rank)); centers <- list(center)
-  depth <- 0L; seen <- new.env(hash=TRUE,parent=emptyenv()); seen[[coxeter_key_3d(center)]] <- TRUE
-  distance <- function(x) {
-    if(simplex$kind=="hyperbolic") acosh(max(1,x[rank])) else
-      if(simplex$kind=="spherical") acos(max(-1,min(1,x[rank]))) else sqrt(sum(x[seq_len(d)]^2))
+  message(length(out)," ",if(d==2L) "edges" else "faces"," in ",simplex$kind," ",d,"-space")
+  list(simplex=simplex,pieces=out,mode="faces")
+}
+
+# Polygons of a tiling with their cell identities and depths.
+coxeter_pieces_3d <- function(tiling,what) {
+  if(tiling$mode=="faces") {
+    if(what!="edges"&&any(vapply(tiling$pieces,`[[`,logical(1),"edge"))) stop("Apeirogonal cells have no finite faces; use what = \"edges\".",call.=FALSE)
+    keys <- unique(unlist(lapply(tiling$pieces,`[[`,"cells")))
+    return(unlist(lapply(tiling$pieces,function(piece) {
+      cells <- match(piece$cells,keys)
+      if(what!="cells") cells <- cells[1L]
+      lapply(cells,function(cell) list(X=piece$X,cell=cell,depth=piece$depth,edge=piece$edge))
+    }),recursive=FALSE))
   }
-  i <- 1L
-  while(i<=length(transforms)) {
-    for(M in simplex$mirrors) {
-      T <- M%*%transforms[[i]]; candidate <- coxeter_normalise_3d(drop(T%*%center),simplex)
-      if(distance(candidate)>radius+1e-8) next
-      key <- coxeter_key_3d(candidate)
-      if(!exists(key,seen,inherits=FALSE)) {
-        if(length(transforms)>=max_cells) stop("The radius requires more than max_cells; increase the explicit resource budget.",call.=FALSE)
-        transforms[[length(transforms)+1L]] <- T; centers[[length(centers)+1L]] <- candidate
-        depth <- c(depth,depth[i]+1L); seen[[key]] <- TRUE
-      }
-    }
-    i <- i+1L
-  }
-  message(length(transforms)," cells in ",simplex$kind," ",d,"-space")
-  list(simplex=simplex,vertices=vertices,faces=faces,transforms=transforms,centers=do.call(rbind,centers),depth=depth)
+  unlist(lapply(seq_along(tiling$transforms),function(cell) {
+    points <- tiling$vertices%*%t(tiling$transforms[[cell]])
+    lapply(tiling$faces,function(face) list(X=points[face,,drop=FALSE],cell=cell,depth=tiling$depth[cell],edge=FALSE))
+  }),recursive=FALSE)
 }
 
 SpaceCoxeter3D <- ggplot2::ggproto("SpaceCoxeter3D",Space3D,
@@ -151,7 +276,7 @@ SpaceCoxeter3D <- ggplot2::ggproto("SpaceCoxeter3D",Space3D,
   geodesic=function(self,X,Y,s) {
     if(self$kind=="spherical") return(sphere_slerp_3d(X,Y,s))
     if(self$kind=="euclidean") return(segment_points_3d(X,Y,s))
-    hyperbolic_slerp_3d(X,Y,s)
+    hyperbolic_geodesic_3d(X,Y,s)
   },
   chart_is_projective=function(self,model) self$kind=="euclidean"||(self$kind=="hyperbolic"&&model=="klein"),
   model_ranges=function(self,model,panel_params) {
@@ -163,28 +288,26 @@ SpaceCoxeter3D <- ggplot2::ggproto("SpaceCoxeter3D",Space3D,
 coxeter_data_3d <- function(tiling,what,model) {
   simplex <- tiling$simplex; space <- ggplot2::ggproto(NULL,SpaceCoxeter3D,dimension=simplex$d,kind=simplex$kind)
   blocks <- list(); seen <- new.env(hash=TRUE,parent=emptyenv()); face_id <- 0L
-  for(cell in seq_along(tiling$transforms)) {
-    points <- tiling$vertices%*%t(tiling$transforms[[cell]])
-    for(face in tiling$faces) {
-      if(what=="edges") rings <- lapply(seq_along(face),function(k) face[c(k,k%%length(face)+1L)]) else rings <- list(face)
-      for(ids in rings) {
-        X <- points[ids,,drop=FALSE]
-        key <- paste(sort(apply(X,1L,coxeter_key_3d)),collapse=";")
-        if(what!="cells"&&exists(key,seen,inherits=FALSE)) next
-        seen[[key]] <- TRUE
-        if(what=="edges") triangles <- list(X) else {
-          # A face's canonical centre and its boundary define spherical or hyperbolic fan triangles.
-          center <- coxeter_normalise_3d(colMeans(X),simplex)
-          triangles <- lapply(seq_len(nrow(X)),function(k) rbind(center,X[k,],X[k%%nrow(X)+1L,]))
-        }
-        for(corners in triangles) {
-          face_id <- face_id+1L
-          xyz <- space_model_xyz_3d(corners,space,model)
-          d <- as.data.frame(xyz); names(d) <- c("x","y","z")
-          d[paste0(".canonical",seq_len(ncol(corners)))] <- as.data.frame(corners)
-          d$.face <- face_id; d$cell <- cell; d$depth <- tiling$depth[cell]
-          blocks[[length(blocks)+1L]] <- d
-        }
+  for(piece in coxeter_pieces_3d(tiling,what)) {
+    X <- piece$X
+    rings <- if(what=="edges") lapply(seq_len(nrow(X)),function(k) c(k,k%%nrow(X)+1L)) else list(seq_len(nrow(X)))
+    for(ids in rings) {
+      Y <- X[ids,,drop=FALSE]
+      key <- paste(sort(apply(Y,1L,coxeter_key_3d)),collapse=";")
+      if(what!="cells"&&exists(key,seen,inherits=FALSE)) next
+      seen[[key]] <- TRUE
+      if(what=="edges") triangles <- list(Y) else {
+        # A face's canonical centre and its boundary define spherical or hyperbolic fan triangles.
+        center <- coxeter_normalise_3d(colMeans(Y),simplex)
+        triangles <- lapply(seq_len(nrow(Y)),function(k) rbind(center,Y[k,],Y[k%%nrow(Y)+1L,]))
+      }
+      for(corners in triangles) {
+        face_id <- face_id+1L
+        xyz <- space_model_xyz_3d(corners,space,model)
+        d <- as.data.frame(xyz); names(d) <- c("x","y","z")
+        d[paste0(".canonical",seq_len(ncol(corners)))] <- as.data.frame(corners)
+        d$.face <- face_id; d$cell <- piece$cell; d$depth <- piece$depth
+        blocks[[length(blocks)+1L]] <- d
       }
     }
   }
@@ -239,9 +362,17 @@ register_geom_3d(GeomCoxeter3D,emit_coxeter_3d,positions=character(),parameters=
 #' Factors the simplex Gram matrix with off-diagonal entries -cos(pi/m).
 #' Mirror reflections generate a seed cell and its orbit. Cell centres are
 #' deduplicated and retained within radius of the seed centre. Reports the
-#' number of cells before emission. Spherical, Euclidean and compact
-#' hyperbolic symbols are supported. Ideal or hyperideal vertices and cells
-#' require homogeneous clipping or an explicit truncation and raise an error.
+#' number of cells before emission. Spherical, Euclidean and hyperbolic
+#' symbols are supported, with finite, ideal or hyperideal vertices and cells
+#' (Nelson and Segerman 2016). Ideal vertices are light-cone points, drawn on
+#' the boundary of the Klein and Poincare balls. Hyperideal vertices are cut
+#' off by their polar planes: each face loses its corners and every vertex
+#' leaves a truncation face orthogonal to its edges, so the truncated cells are
+#' compact. When the cell centre is ideal or hyperideal the cells are infinite;
+#' faces (edges for tilings with apeirogonal cells) are then generated one by
+#' one and retained within radius of the seed face, depth counts reflections
+#' from the seed face, and what = "cells" draws each face once for each of its
+#' two cells. The message then reports faces or edges instead of cells.
 #'
 #' Hyperbolic output uses the Klein model by default; Poincare output is
 #' adaptively tessellated. Spherical tiles lie on S^2. Spherical honeycombs

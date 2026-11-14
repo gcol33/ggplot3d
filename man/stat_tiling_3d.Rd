@@ -62,9 +62,17 @@ A ggplot2 layer with cell and depth computed variables; depth counts simplex ref
 Factors the simplex Gram matrix with off-diagonal entries -cos(pi/m).
 Mirror reflections generate a seed cell and its orbit. Cell centres are
 deduplicated and retained within radius of the seed centre. Reports the
-number of cells before emission. Spherical, Euclidean and compact
-hyperbolic symbols are supported. Ideal or hyperideal vertices and cells
-require homogeneous clipping or an explicit truncation and raise an error.
+number of cells before emission. Spherical, Euclidean and hyperbolic
+symbols are supported, with finite, ideal or hyperideal vertices and cells
+(Nelson and Segerman 2016). Ideal vertices are light-cone points, drawn on
+the boundary of the Klein and Poincare balls. Hyperideal vertices are cut
+off by their polar planes: each face loses its corners and every vertex
+leaves a truncation face orthogonal to its edges, so the truncated cells are
+compact. When the cell centre is ideal or hyperideal the cells are infinite;
+faces (edges for tilings with apeirogonal cells) are then generated one by
+one and retained within radius of the seed face, depth counts reflections
+from the seed face, and what = "cells" draws each face once for each of its
+two cells. The message then reports faces or edges instead of cells.
 }
 \details{
 Hyperbolic output uses the Klein model by default; Poincare output is

@@ -23,8 +23,6 @@ test_that("regular seed cells have the expected combinatorics", {
     expect_equal(nrow(out$vertices)-nrow(edges)+length(out$faces),2)
     expect_equal(length(out$transforms),1L)
   }
-  expect_error(coxeter_simplex_3d(c(3,3,6)),"Ideal/hyperideal")
-  expect_error(coxeter_simplex_3d(c(5,3,7)),"Ideal/hyperideal")
 })
 
 test_that("hyperbolic polygon circumradii satisfy the right-triangle identity", {
