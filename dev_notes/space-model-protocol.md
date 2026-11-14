@@ -115,3 +115,19 @@ isometries), #18 (globe charts), #19 (four-dimensional spherical points),
 and network edges), #23 (surface triangles), #24 (sphere charts and maps),
 and #25 (rapidity-space isometries). Their dedicated layers and spaces are
 separate implementations.
+
+## Finite clipping and style hooks
+
+Spaces may implement `clip_segment(X, Y, model)`, returning a two-column
+matrix of visible geodesic-parameter intervals. A NULL method preserves the
+ordinary sampler. `space_path_samples_3d()` splits intervals before model
+projection, shares the adaptive sampler and retains original edge parameters
+for paint interpolation. Spherical arcs solve affine-plane intersections
+analytically. Adjacent visible intervals join; invisible intervals break paths.
+`contains(X, model)` controls point and text anchors and defaults to TRUE.
+
+`style_packet(packet, context)` defaults to identity. It can attach intrinsic
+normal fields or model-specific colour calculations after model placement.
+Klein faces use spacelike Lorentz plane normals parallel transported to the
+origin. These hooks preserve the scene schema and all packet coordinates
+continue through `space_packet_coordinates_3d()`.
