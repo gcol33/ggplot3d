@@ -21,7 +21,9 @@ enum class Join : Index { round = 0, mitre = 1, bevel = 2 };
 struct Points {
   std::vector<double> x, y, z;
 };
-// Homogeneous box fractions (x, y, z, w) with w >= 0; w == 0 is an ideal point.
+// Homogeneous box fractions (x, y, z, w) of oriented projective space (Stolfi
+// 1991): w may take either sign, a row and its negation are distinct points,
+// w == 0 is an ideal point, and only w >= 0 after camera pre is drawn.
 struct Vertices : Points {
   std::vector<double> w;
 };

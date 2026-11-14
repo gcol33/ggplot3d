@@ -82,11 +82,10 @@ hyperbolic_origin_boost_3d <- function(X,inverse=FALSE) {
 # with the Euclidean tangent space at the hyperboloid origin.
 hyperbolic_style_packet_3d <- function(packet,context) {
   if(context$model!="klein") return(packet)
-  projective_face_normals_3d(packet,context,function(n,offset,k) {
-    norm <- sqrt(sum(n^2)-offset^2)
+  projective_face_normals_3d(packet,context,function(C,X) {
+    norm <- sqrt(sum(C[1:3]^2)-C[4L]^2)
     if(!is.finite(norm)||norm<=0) return(rep(NA_real_,3L))
-    N <- c(n,offset)/norm
-    X <- c(k,1)/sqrt(1-sum(k^2))
+    N <- c(C[1:3],-C[4L])/norm
     drop(hyperbolic_origin_boost_3d(X,TRUE)%*%N)[1:3]
   })
 }
@@ -134,6 +133,7 @@ SpaceHyperbolicFinite <- ggplot2::ggproto("SpaceHyperbolicFinite",Space3D,
   },
   chart_is_projective=function(model) model=="klein",
   projective_action=function(g,model) if(model=="klein") check_lorentz_matrix_3d(g,3L) else NULL,
+  projective_canonical=function(H,model) H*sign(H[,4L])/sqrt(H[,4L]^2-rowSums(H[,1:3,drop=FALSE]^2)),
   style_packet=function(self,packet,context) space_depth_cue_3d(hyperbolic_style_packet_3d(packet,context),context,self$fog,
     function(X) rowSums(X[,1:3,drop=FALSE]^2)/(-self$curvature)),
   model_ranges=function(self,model,panel_params) {

@@ -120,9 +120,8 @@ ScenePacket read_packet(const Rcpp::List& x) {
   p.vertices.z = doubles(v, "z", nv);
   p.vertices.w = doubles(v, "w", nv);
   for (int i = 0; i < nv; ++i) {
-    require(p.vertices.w[i] >= 0, "vertex w must be nonnegative");
-    require(p.vertices.w[i] > 0 || p.vertices.x[i] != 0 || p.vertices.y[i] != 0 ||
-            p.vertices.z[i] != 0, "ideal vertices must have a nonzero direction");
+    require(p.vertices.w[i] != 0 || p.vertices.x[i] != 0 || p.vertices.y[i] != 0 ||
+            p.vertices.z[i] != 0, "vertices must not be the zero vector");
   }
   // Optional corner attributes travel with the vertex weights; the engine only
   // checks them.

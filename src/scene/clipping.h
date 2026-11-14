@@ -112,17 +112,20 @@ static inline Vec3 face_normal(const Polygon& polygon, const Projection& project
   }
   require(!flat, "degenerate face");
   for (double& value : normal) value /= length;
+  // Rounding in the planarity and convexity tests grows with the ring's
+  // extent, which is large for a corner near infinity (w close to 0).
+  const double relative = projection.resolved.tolerance*std::max(1.0, extent);
   for (std::size_t i = 0; i < polygon.size(); ++i) {
     Vec3 a = projection.model(polygon[i].xyz);
     Vec3 b = projection.model(polygon[(i+1)%polygon.size()].xyz);
-    require(std::abs(dot(subtract(a, origin), normal)) <= projection.resolved.tolerance,
+    require(std::abs(dot(subtract(a, origin), normal)) <= relative,
             "faces must be planar");
     Vec3 edge = subtract(b, a);
     require(std::sqrt(dot(edge, edge)) > projection.resolved.tolerance,
             "face rings must have distinct consecutive corners and implicit closure");
     for (const Vertex& vertex : polygon) {
       require(dot(cross(edge, subtract(projection.model(vertex.xyz), a)), normal) >=
-              -projection.resolved.tolerance*std::sqrt(dot(edge,edge)), "faces must be convex simple rings");
+              -relative*std::sqrt(dot(edge,edge)), "faces must be convex simple rings");
     }
   }
   return normal;

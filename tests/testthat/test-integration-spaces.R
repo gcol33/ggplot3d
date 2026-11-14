@@ -99,7 +99,8 @@ test_that("canonical dimension, charts, projectivity and homogeneous output are 
   context <- result$params$space_context
   expect_equal(space_packet_coordinates_3d(matrix(c(0, 0, 0, 1), 1), context), list(x = 1/22, y = 1/22, z = 1/22, w = 1))
   context$space <- ggplot2::ggproto(NULL, lifted, from_canonical = function(X, model) X)
-  expect_error(space_packet_coordinates_3d(matrix(c(1, 0, 0, -1), 1), context), "w >= 0")
+  expect_identical(space_packet_coordinates_3d(matrix(c(1, 0, 0, -1), 1), context)$w, -1)
+  expect_error(space_packet_coordinates_3d(matrix(0, 1, 4), context), "nonzero")
   expect_equal(homogeneous_xyz_3d(do.call(cbind, space_packet_coordinates_3d(matrix(c(1, 0, 0, 2), 1), context))),
                homogeneous_xyz_3d(do.call(cbind, space_packet_coordinates_3d(matrix(c(0.5, 0, 0, 1), 1), context))))
   ideal <- space_packet_coordinates_3d(matrix(c(1, 0, 0, 0), 1), context)

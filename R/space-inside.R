@@ -48,41 +48,29 @@ check_inside_options_3d <- function(inside,fog,args) {
   args
 }
 
-# Gnomonic box planes pass through the spherical origin, so their cuts
-# preserve great-circle edges and totally geodesic face interiors.
-spherical_clip_polygon_3d <- function(X,weights,extent) {
-  if(any(pi-sphere_angle_3d(X,rbind(X[-1L,,drop=FALSE],X[1L,,drop=FALSE]))<1e-10)) stop("Antipodal face endpoints require intermediate points.",call.=FALSE)
-  planes <- spherical_clip_planes_3d("gnomonic",extent,.01)[1:6,1:4,drop=FALSE]
-  for(i in seq_len(nrow(planes))) {
-    if(nrow(X)<3L) break
-    vertices <- list(); values <- list()
-    for(j in seq_len(nrow(X))) {
-      k <- if(j==nrow(X)) 1L else j+1L
-      a <- sum(X[j,]*planes[i,]); b <- sum(X[k,]*planes[i,])
-      if(a>=0) {vertices[[length(vertices)+1L]] <- X[j,]; values[[length(values)+1L]] <- weights[j,]}
-      if((a<0&&b>0)||(a>0&&b<0)) {
-        t <- a/(a-b)
-        point <- (1-t)*X[j,]+t*X[k,]
-        vertices[[length(vertices)+1L]] <- point/sqrt(sum(point^2))
-        theta <- sphere_angle_3d(X[j,,drop=FALSE],X[k,,drop=FALSE])
-        s <- if(theta<1e-12) t else sphere_angle_3d(X[j,,drop=FALSE],matrix(vertices[[length(vertices)]],1L))/theta
-        values[[length(values)+1L]] <- (1-s)*weights[j,]+s*weights[k,]
-      }
-    }
-    X <- if(length(vertices)) do.call(rbind,vertices) else matrix(numeric(),0L,4L)
-    weights <- if(length(values)) do.call(rbind,values) else matrix(numeric(),0L,ncol(weights))
-  }
-  list(points=X,weights=weights)
+# Coefficients C of the oriented hyperplane of R^4 through the origin and the
+# rows A, B, D, with C . H = det(H, A, B, D). For rows (k, 1) this is
+# (n, -n . k1) with n = (k2 - k1) x (k3 - k1); it is multilinear, so positive
+# rescaling of a row keeps it, and the sign of a row is part of the point
+# (Stolfi 1991).
+hyperplane_rows_4d <- function(A,B,D) {
+  minor <- function(i,j,k) A[,i]*(B[,j]*D[,k]-B[,k]*D[,j])-A[,j]*(B[,i]*D[,k]-B[,k]*D[,i])+A[,k]*(B[,i]*D[,j]-B[,j]*D[,i])
+  cbind(minor(2,3,4),-minor(1,3,4),minor(1,2,4),-minor(1,2,3))
 }
 
+# Each face's hyperplane C in homogeneous model coordinates (summed over a
+# fan) and its centre, the chart centroid of corners rescaled to |w| = 1, as a
+# canonical point; transport(C, X) returns the tangent normal at the observer.
 projective_face_normals_3d <- function(packet,context,transport) {
   if(!length(packet$faces$offset)) return(packet)
-  P <- packet_model_points_3d(packet,context)
+  H <- packet_model_homogeneous_3d(packet,context)
   normal <- t(vapply(seq_along(packet$faces$offset),function(i) {
     vertices <- packet$corners$vertex[seq.int(packet$faces$offset[i],length.out=packet$faces$count[i])]
-    K <- P[vertices,,drop=FALSE]
-    n <- colSums(cross_rows_3d(K,rbind(K[-1L,,drop=FALSE],K[1L,,drop=FALSE])))
-    transport(n,sum(n*colMeans(K)),colMeans(K))
+    K <- H[vertices,,drop=FALSE]; m <- nrow(K)
+    C <- colSums(hyperplane_rows_4d(K[rep(1L,m-2L),,drop=FALSE],K[2:(m-1L),,drop=FALSE],K[3:m,,drop=FALSE]))
+    size <- ifelse(K[,4L]!=0,abs(K[,4L]),sqrt(rowSums(K^2)))
+    out <- transport(C,drop(space_model_canonical_3d(matrix(colMeans(K/size),1L),context)))
+    if(all(is.finite(out))) out else rep(NA_real_,3L)
   },numeric(3)))
   styles <- packet$styles[match(packet$faces$style_id,packet$styles$style_id),,drop=FALSE]
   styles[c("normal_x","normal_y","normal_z")] <- as.data.frame(normal)
@@ -98,11 +86,10 @@ projective_face_normals_3d <- function(packet,context,transport) {
 
 spherical_style_packet_3d <- function(packet,context) {
   if(context$model!="gnomonic") return(packet)
-  projective_face_normals_3d(packet,context,function(n,offset,k) {
-    norm <- sqrt(sum(n^2)+offset^2)
+  projective_face_normals_3d(packet,context,function(C,X) {
+    norm <- sqrt(sum(C^2))
     if(!is.finite(norm)||norm<=0) return(rep(NA_real_,3L))
-    N <- c(n,-offset)/norm
-    X <- c(k,1)/sqrt(1+sum(k^2))
+    N <- C/norm
     N[1:3]-N[4L]*X[1:3]/(1+X[4L])
   })
 }
@@ -110,13 +97,10 @@ spherical_style_packet_3d <- function(packet,context) {
 # Each primitive receives the inverse geodesic-sphere area at its centre.
 space_depth_cue_3d <- function(packet,context,fog,area) {
   if(is.null(fog)||!length(packet$vertices$x)) return(packet)
-  centres <- primitive_centres_3d(packet,space_action_pre_3d(context) %or3d% diag(4))
-  sizes <- vapply(centres,nrow,integer(1))
+  means <- primitive_means_3d(packet,space_action_pre_3d(context) %or3d% diag(4))
+  sizes <- vapply(means,nrow,integer(1))
   if(!sum(sizes)) return(packet)
-  P <- do.call(rbind,centres)
-  P <- sweep(sweep(P,2L,vapply(context$ranges,diff,numeric(1)),"*"),2L,vapply(context$ranges,`[`,numeric(1),1L),"+")
-  data <- as.data.frame(P); names(data) <- c("x","y","z")
-  X <- context$space$to_canonical(data,context$model)
+  X <- space_model_canonical_3d(space_box_model_3d(do.call(rbind,means),context),context)
   brightness <- pmin(1,fog/pmax(area(X),.Machine$double.xmin))
   styles <- primitive_styles_3d(packet)
   for(name in intersect(c("colour","fill","border_colour"),names(styles))) styles[[name]] <- apply_brightness_3d(styles[[name]],brightness,"multiply")

@@ -94,9 +94,12 @@ scene_table <- function(x, schema, defaults, name, optional = character()) {
 #' Indices start at one. Empty lists represent unused geometry kinds.
 #' @param vertices List with x, y, z and optional w: homogeneous positions in
 #'   normalised panel coordinates, see [normalise_homogeneous_3d()]. `w`
-#'   defaults to 1, must be nonnegative, and `w = 0` places an ideal point (a
-#'   direction) at infinity. Geometry through an ideal point is clipped by the
-#'   panel box, the near and far planes or the viewport before it is drawn.
+#'   defaults to 1 and may take either sign: rows are points of oriented
+#'   projective space (Stolfi 1991), so (x, y, z, w) and (-x, -y, -z, -w) are
+#'   distinct points, and `w = 0` places an ideal point (a direction) at
+#'   infinity. Only the half `w >= 0` after the camera `pre` map is drawn.
+#'   Geometry through an ideal point is clipped by the panel box, the near and
+#'   far planes or the viewport before it is drawn.
 #' @param corners List with vertex indices and source_row input indices, and
 #'   optional per-corner attributes normal_x, normal_y, normal_z, red, green,
 #'   blue, alpha (encoded sRGB colour channels in \[0, 1\], interpolated in
@@ -240,8 +243,8 @@ validate_scene_packet <- function(packet) {
     }
   }
   v <- packet$vertices
-  scene_assert(all(v$w >= 0) && all(v$w > 0 | v$x != 0 | v$y != 0 | v$z != 0),
-               "vertex w must be nonnegative, and ideal vertices (w = 0) need a nonzero direction")
+  scene_assert(all(v$w != 0 | v$x != 0 | v$y != 0 | v$z != 0),
+               "vertices must not be the zero vector: ideal vertices (w = 0) need a nonzero direction")
   colours <- intersect(c("red", "green", "blue", "alpha"), names(packet$corners))
   scene_assert(all(vapply(packet$corners[colours], function(x) all(is.na(x) | (x >= 0 & x <= 1)), logical(1))),
                "corner colours must lie in [0, 1]")
@@ -359,12 +362,15 @@ scene_engine_packet_3d <- function(packet) packet[!names(packet) %in% c("styles"
 #'
 #' Homogeneous coordinates (x, y, z, w) with w > 0 stand for the point
 #' (x / w, y / w, z / w); with w = 0 they stand for the direction (x, y, z), a
-#' point at infinity. This maps homogeneous positions in scale units to the
+#' point at infinity. Rows with w < 0 are points of the far half of oriented
+#' projective space (Stolfi 1991): (x, y, z, w) and (-x, -y, -z, -w) are
+#' distinct, and only the half with w >= 0 after the camera `pre` map is drawn.
+#' This maps homogeneous positions in scale units to the
 #' homogeneous panel-box fractions that [new_scene_packet()] takes: each
 #' coordinate becomes (x - lo * w) / (hi - lo) and w is kept, so that positive
 #' multiples of a row give the same point and directions stay at infinity.
 #' @param x,y,z Homogeneous coordinates in scale units.
-#' @param w Nonnegative homogeneous weight; 1 for ordinary points.
+#' @param w Homogeneous weight of either sign; 1 for ordinary points.
 #' @param ranges List with x, y and z, each the lower and upper limit of the
 #'   panel range, as in `panel_params$ranges`.
 #' @return A list with x, y, z and w, the `vertices` of [new_scene_packet()].
@@ -379,7 +385,6 @@ normalise_homogeneous_3d <- function(x, y, z, w = 1, ranges) {
                             length(v) %in% c(1L, n), logical(1))),
                "x, y, z and w must be finite numbers of one common length")
   w <- rep_len(as.double(w), n)
-  scene_assert(all(w >= 0), "w must be nonnegative")
   scene_assert(is.list(ranges) && all(c("x", "y", "z") %in% names(ranges)),
                "ranges must be a list with x, y and z limits")
   out <- lapply(c(x = "x", y = "y", z = "z"), function(axis) {

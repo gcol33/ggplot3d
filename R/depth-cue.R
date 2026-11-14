@@ -178,18 +178,18 @@ box_depth_fraction_3d <- function(camera, viewport, frame) {
   function(xyz) (frame_eye_coordinates_3d(xyz, camera, basis)[, 3L] - low) / span
 }
 
-# Centre of every primitive, one matrix per kind (faces, polylines, markers,
-# text, quadrics), in packet coordinates after the homogeneous matrix `pre`:
-# the mean of its homogeneous corners (the placed local centre of a
-# quadric), NA where that mean lies at or beyond infinity.
-primitive_centres_3d <- function(packet, pre = diag(4)) {
+# Homogeneous centre of every primitive, one matrix (x, y, z, w) per kind
+# (faces, polylines, markers, text, quadrics), in packet coordinates after the
+# homogeneous matrix `pre`: the mean of its homogeneous corners (the placed
+# local centre of a quadric).
+primitive_means_3d <- function(packet, pre = diag(4)) {
   positions <- scene_vertex_matrix_3d(packet$vertices)
   identity <- identical(as.double(pre), as.double(diag(4)))
   if (!identity) positions <- positions %*% t(matrix(as.double(pre), 4L, 4L))
   lapply(primitive_kinds_3d, function(kind) {
     tab <- packet[[kind]]
     n <- length(tab$primitive_id)
-    if (!n) return(matrix(numeric(), 0L, 3L))
+    if (!n) return(matrix(numeric(), 0L, 4L))
     if (kind == "quadrics") {
       axial <- ifelse(tab$kind == 1L, 0, 0.5)
       mean <- cbind(tab$transform_13 + axial * tab$transform_9, tab$transform_14 + axial * tab$transform_10,
@@ -200,6 +200,14 @@ primitive_centres_3d <- function(packet, pre = diag(4)) {
       corner <- tab$offset[group] + sequence(tab$count) - 1L
       mean <- rowsum(positions[packet$corners$vertex[corner], , drop = FALSE], group, reorder = TRUE)
     }
+    mean
+  })
+}
+
+# Euclidean centre of every primitive (see primitive_means_3d()), NA where
+# the homogeneous mean lies at or beyond infinity.
+primitive_centres_3d <- function(packet, pre = diag(4)) {
+  lapply(primitive_means_3d(packet, pre), function(mean) {
     centre <- mean[, 1:3, drop = FALSE] / mean[, 4L]
     centre[!(mean[, 4L] > 0), ] <- NA_real_
     centre

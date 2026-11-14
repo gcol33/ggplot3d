@@ -59,7 +59,8 @@ test_that("ideal corners from a space reach the panel box through homogeneous cl
   camera <- scene$params$camera
   camera$clip_data <- FALSE; camera$clip <- FALSE
   expect_error(scene_compile(packet, camera, new_scene_viewport(100, 100, 144)), "unbounded geometry")
-  expect_error(space_model_homogeneous_3d(matrix(c(1, 0, -1), 1), projective_test_space(), "homogeneous"), "w >= 0")
+  expect_equal(unname(space_model_homogeneous_3d(matrix(c(1, 0, -1), 1), projective_test_space(), "homogeneous")), matrix(c(1, 0, 0, -1), 1))
+  expect_error(space_model_homogeneous_3d(matrix(0, 1, 3), projective_test_space(), "homogeneous"), "nonzero")
   for (backend in c("vector", "raster")) {
     file <- tempfile(fileext = ".png")
     ragg::agg_png(file, 300, 300, res = 72)

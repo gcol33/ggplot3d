@@ -13,7 +13,7 @@ in `Coord3D$distance()`. The space's own distance is in intrinsic units.
   numeric row matrix. All input columns are available, including additional
   ambient coordinates supplied by a specialized stat or emitter.
 - `from_canonical(X, model)`: canonical points to three model coordinates,
-  or four homogeneous coordinates (x, y, z, w) with w >= 0.
+  or four homogeneous coordinates (x, y, z, w) of oriented projective space.
 - `model_ranges(model, panel_params)`: named x/y/z intervals in model units.
   This can fix a ball's bounds independently of the trained input chart.
 - `distance(X, Y)`: one finite nonnegative intrinsic distance per paired row.
@@ -69,18 +69,34 @@ chart singularities and ambiguous geodesics must be handled by the space.
 
 ## Homogeneous output
 
-`from_canonical()` may return four homogeneous columns (x, y, z, w), w >= 0.
+`from_canonical()` may return four homogeneous columns (x, y, z, w). They are
+points of oriented projective space (Stolfi 1991): w may take either sign, a
+row and its negation are distinct points, and only w >= 0 after the camera
+pre-transform is drawn.
 `space_packet_coordinates_3d()` normalises them with
 `normalise_homogeneous_3d()` and the packet keeps w: the primitive builder
 reads it from the internal `.w` column, affine frames map homogeneous rows
 without division (`frame_map_homogeneous_3d()`), and `munch_packet_3d()`
 keeps homogeneous rows. Projective models return (X, X0) for Klein, (X,
-X0 + 1) for Poincare and (X1:3, 1 - X4) for stereographic S^3, so box
-clipping is the engine's homogeneous clip. Subdivision measures screen error
+X0 + 1) for Poincare, (X1:3, 1 - X4) for stereographic S^3 and (X1:3, X4)
+for gnomonic S^3, so box clipping is the engine's homogeneous clip. Subdivision measures screen error
 after the camera pre-transform and before division
 (`screen_positions_homogeneous_3d()`); rows at or behind infinity count as
 infinite error. Steps that need Euclidean model points use
-`space_model_xyz_3d()` or `packet_model_points_3d()`.
+`space_model_xyz_3d()`; `packet_model_homogeneous_3d()` returns a packet's
+homogeneous model rows after the observer action, and
+`space_model_canonical_3d()` maps homogeneous model rows back to canonical
+points through `projective_canonical(H, model)` for projective models.
+
+`projective_action(g, model)` returns the 4 x 4 matrix of an isometry acting
+linearly on a projective model's homogeneous coordinates, or NULL. When it
+exists the observer, centre or isometry is carried by the camera pre-transform
+(Weeks 2002): Lorentz transformations of the Klein model and SO(4) rotations of
+gnomonic S^3. Such a space emits all of its geometry and skips its own
+clip_segment, clip_polygon and contains hooks (`space_clips_3d()`), since the
+action moves points into and out of the panel box after packing; the engine
+clips in homogeneous coordinates after pre. Gnomonic S^3 therefore emits both
+hemispheres, the far one with w < 0, and a rotation brings it into view.
 
 Ideal points of H^3 are canonical future null vectors; Klein and Poincare
 inputs accept boundary points. Geodesics with an ideal endpoint follow the
@@ -153,7 +169,7 @@ continue through `space_packet_coordinates_3d()`.
 
 Projective models may implement `clip_polygon(X, model, ranges)`, returning canonical
 points and weights on the original corners. A NULL result preserves ordinary
-face sampling. The gnomonic implementation clips against homogeneous cone
-planes, retaining great-circle edges and planar model faces. This finite
-positive-hemisphere path uses unit packet weights. Intrinsic face-normal
-transport shares one projective plane/centroid extractor for H^3 and S^3.
+face sampling. Intrinsic face-normal transport shares one projective
+plane/centroid extractor for H^3 and S^3: the oriented hyperplane of R^4
+through a face's homogeneous corners and its chart centroid, valid for corners
+of either sign of w.

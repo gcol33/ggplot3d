@@ -9,7 +9,7 @@ normalise_homogeneous_3d(x, y, z, w = 1, ranges)
 \arguments{
 \item{x, y, z}{Homogeneous coordinates in scale units.}
 
-\item{w}{Nonnegative homogeneous weight; 1 for ordinary points.}
+\item{w}{Homogeneous weight of either sign; 1 for ordinary points.}
 
 \item{ranges}{List with x, y and z, each the lower and upper limit of the
 panel range, as in \code{panel_params$ranges}.}
@@ -20,7 +20,10 @@ A list with x, y, z and w, the \code{vertices} of \code{\link[=new_scene_packet]
 \description{
 Homogeneous coordinates (x, y, z, w) with w > 0 stand for the point
 (x / w, y / w, z / w); with w = 0 they stand for the direction (x, y, z), a
-point at infinity. This maps homogeneous positions in scale units to the
+point at infinity. Rows with w < 0 are points of the far half of oriented
+projective space (Stolfi 1991): (x, y, z, w) and (-x, -y, -z, -w) are
+distinct, and only the half with w >= 0 after the camera \code{pre} map is drawn.
+This maps homogeneous positions in scale units to the
 homogeneous panel-box fractions that \code{\link[=new_scene_packet]{new_scene_packet()}} takes: each
 coordinate becomes (x - lo * w) / (hi - lo) and w is kept, so that positive
 multiples of a row give the same point and directions stay at infinity.

@@ -249,14 +249,14 @@ model_points_3d <- function(xyz) {
 culled_3d <- function(frame, corners) if (is.function(frame$cull)) frame$cull(corners) else rep(FALSE, nrow(corners[[1L]]))
 
 # A frame applied to homogeneous rows (x, y, z, w). An affine frame maps a
-# finite point p/w to map(p/w) w, keeping w, and a direction d (w = 0) to
-# map(d) - map(0); other frames need finite points.
+# finite point p/w to map(p/w) w, keeping w and so its sign, and a direction
+# d (w = 0) to map(d) - map(0); other frames need finite points.
 frame_map_homogeneous_3d <- function(frame, xyzw) {
   if (ncol(xyzw) == 3L) return(frame$map(xyzw))
   if (isTRUE(frame$identity)) return(xyzw)
   if (!isTRUE(frame$linear)) return(cbind(frame$map(homogeneous_xyz_3d(xyzw)), 1))
   out <- xyzw
-  finite <- xyzw[, 4L] > 0
+  finite <- xyzw[, 4L] != 0
   if (any(finite)) out[finite, 1:3] <- frame$map(xyzw[finite, 1:3, drop = FALSE] / xyzw[finite, 4L]) * xyzw[finite, 4L]
   if (any(!finite)) out[!finite, 1:3] <- frame$map(xyzw[!finite, 1:3, drop = FALSE]) -
     frame$map(matrix(0, sum(!finite), 3L))

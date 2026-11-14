@@ -14,6 +14,7 @@ Space3D <- ggplot2::ggproto("Space3D", NULL,
   act = function(g, X) stop("Space must implement act() for an isometry.", call. = FALSE),
   chart_is_projective = function(model) FALSE,
   projective_action = function(g, model) NULL,
+  projective_canonical = NULL,
   style_packet = function(packet, context) packet,
   clip_segment = NULL,
   clip_polygon = NULL,
@@ -69,14 +70,15 @@ space_canonical_3d <- function(data, context) {
 }
 
 # Homogeneous model coordinates (x, y, z, w) of canonical points. A model may
-# return three Euclidean columns or four homogeneous ones with w >= 0; w = 0
-# is a point at infinity of the model.
+# return three Euclidean columns or four homogeneous ones of oriented
+# projective space: w = 0 is a point at infinity of the model, and a row and
+# its negation are distinct points.
 space_model_homogeneous_3d <- function(X, space, model) {
   xyz <- space_matrix_3d(space$from_canonical(X, model), nrow(X), "from_canonical()")
   if (!ncol(xyz) %in% c(3L, 4L)) stop("A space model must return x, y, z and optional homogeneous w.", call. = FALSE)
   if (ncol(xyz) == 3L) xyz <- cbind(xyz, 1)
-  if (any(xyz[, 4L] < 0) || any(rowSums(abs(xyz)) == 0)) {
-    stop("A space model must return nonzero homogeneous points with w >= 0.", call. = FALSE)
+  if (any(rowSums(abs(xyz)) == 0)) {
+    stop("A space model must return nonzero homogeneous points.", call. = FALSE)
   }
   xyz
 }
@@ -93,15 +95,41 @@ space_packet_coordinates_3d <- function(X, context) {
   normalise_homogeneous_3d(xyzw[, 1L], xyzw[, 2L], xyzw[, 3L], xyzw[, 4L], context$ranges)
 }
 
-# Euclidean model coordinates of a space packet's vertices, seen by the
+# Homogeneous model coordinates of homogeneous panel-box rows: the inverse of
+# normalise_homogeneous_3d(), linear and so valid for rows of either sign.
+space_box_model_3d <- function(xyzw, context) {
+  lo <- vapply(context$ranges, `[`, numeric(1), 1L)
+  d <- vapply(context$ranges, diff, numeric(1))
+  cbind(sweep(xyzw[, 1:3, drop = FALSE], 2L, d, "*") + outer(xyzw[, 4L], lo), xyzw[, 4L])
+}
+
+# Homogeneous model coordinates of a space packet's vertices, seen by the
 # observer: an isometry carried by the camera pre-transform is applied.
-packet_model_points_3d <- function(packet, context) {
+packet_model_homogeneous_3d <- function(packet, context) {
   xyzw <- scene_vertex_matrix_3d(packet$vertices)
   pre <- space_action_pre_3d(context)
   if (!is.null(pre)) xyzw <- xyzw %*% t(pre)
-  xyz <- homogeneous_xyz_3d(xyzw)
-  sweep(sweep(xyz, 2L, vapply(context$ranges, diff, numeric(1)), "*"), 2L, vapply(context$ranges, `[`, numeric(1), 1L), "+")
+  space_box_model_3d(xyzw, context)
 }
+
+# Canonical points of homogeneous model rows. A projective model inverts its
+# linear chart, so rows of either sign map to the points they stand for; other
+# models need finite rows and give NA at or beyond infinity.
+space_model_canonical_3d <- function(H, context) {
+  if (isTRUE(context$space$chart_is_projective(context$model)) && is.function(context$space$projective_canonical)) {
+    return(context$space$projective_canonical(H, context$model))
+  }
+  P <- H[, 1:3, drop = FALSE] / H[, 4L]
+  P[!(H[, 4L] > 0), ] <- NA_real_
+  data <- as.data.frame(P); names(data) <- c("x", "y", "z")
+  context$space$to_canonical(data, context$model)
+}
+
+# A space whose isometry is carried by the camera pre-transform emits all of
+# its geometry: the action moves points into and out of the panel box after
+# packing, and the engine clips in homogeneous coordinates after pre (Blinn
+# and Newell 1978). Other spaces clip canonical geometry before packing.
+space_clips_3d <- function(context) !isTRUE(context$linear_action)
 
 # An isometry acting linearly on homogeneous model coordinates (a Lorentz
 # transformation in the Klein model) is carried by the camera pre-transform,
@@ -248,7 +276,7 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
     corners <- seq.int(offsets[i], length.out = counts[i])
     rows <- primitives[corners]; points <- X[lookup[corners], , drop = FALSE]
     kind <- kinds[i]
-    clipped <- if(kind=="faces"&&!is.null(context$space$clip_polygon)) context$space$clip_polygon(points,context$model,context$ranges) else NULL
+    clipped <- if(kind=="faces"&&!is.null(context$space$clip_polygon)&&space_clips_3d(context)) context$space$clip_polygon(points,context$model,context$ranges) else NULL
     if(!is.null(clipped)) {
       if(nrow(clipped$points)<3L) next
       if(!sampler$projective) stop("Canonical polygon clipping requires a projective display model.",call.=FALSE)
@@ -281,7 +309,7 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
       index <- as.vector(t(mesh$triangles))
       add(d[index, , drop = FALSE], mesh$model[index, , drop = FALSE], kind, rep.int(3L, nrow(mesh$triangles)))
     } else {
-      keep <- if(kind %in% c("markers","text")) context$space$contains(points,context$model,context$ranges) else rep(TRUE,nrow(points))
+      keep <- if(kind %in% c("markers","text")&&space_clips_3d(context)) context$space$contains(points,context$model,context$ranges) else rep(TRUE,nrow(points))
       if(any(keep)) add(data[rows[keep], , drop = FALSE], sampler$map(points[keep,,drop=FALSE]), kind, sum(keep))
     }
   }
@@ -302,7 +330,7 @@ emit_model_scene_3d <- function(data,params,panel_params,ranges,layer_id=scene_f
 # Subdivision happens only on visible canonical intervals, before projection.
 space_path_samples_3d <- function(points,context) {
   sampler <- space_subdivision_3d(context)
-  if(is.null(context$space$clip_segment)) return(list(polyline_model_3d(sampler,points,context$max_depth)))
+  if(is.null(context$space$clip_segment)||!space_clips_3d(context)) return(list(polyline_model_3d(sampler,points,context$max_depth)))
   parts <- list(); current <- list(); last <- NULL
   flush <- function() {
     if(length(current)) parts[[length(parts)+1L]] <<- list(

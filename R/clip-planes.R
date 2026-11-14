@@ -231,7 +231,7 @@ append_corners_3d <- function(packet, vertex, source_row, from, to = from, t = 0
   if (length(extra)) {
     pa <- (1 - t) * packet$vertices$w[corners$vertex[from]]
     pb <- t * packet$vertices$w[corners$vertex[to]]
-    beta <- ifelse(pa + pb > 0, pb / (pa + pb), t)
+    beta <- ifelse(pa + pb != 0, pb / (pa + pb), t)
     for (name in extra) {
       value <- corner_linear_3d(corners, name)
       corners[[name]] <- c(corners[[name]], corner_encoded_3d(name, (1 - beta) * value[from] + beta * value[to]))

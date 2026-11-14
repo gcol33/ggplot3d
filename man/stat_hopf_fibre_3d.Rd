@@ -25,7 +25,9 @@ stat_hopf_fibre_3d(
 
 \item{n}{Number of angular intervals per fibre or torus direction.}
 
-\item{radius}{Tube radius in display-model units; zero draws paths.}
+\item{radius}{Tube radius in display-model units; zero draws paths. In the
+gnomonic model tubes are geodesic tubes of angular radius \code{radius}, which
+stay exact under observer motion.}
 
 \item{sides}{Number of tube sides.}
 }

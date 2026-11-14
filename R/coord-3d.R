@@ -213,8 +213,10 @@ plot_backend_3d <- function(plot, backend) {
 #' parameter per row, from zero to one. Input positions are scale-transformed
 #' chart coordinates. Model output has three columns in model axis units;
 #' `model_ranges(model, panel_params)` supplies named x, y, z bounds.
-#' Four-column homogeneous output (x, y, z, w) with w >= 0 is also accepted
-#' and travels unchanged into the scene packet; w = 0 is a point at infinity.
+#' Four-column homogeneous output (x, y, z, w) is also accepted and travels
+#' unchanged into the scene packet; w = 0 is a point at infinity, and w < 0 a
+#' point of the far half of oriented projective space (Stolfi 1991), drawn
+#' only where the camera `pre` map brings it to w >= 0.
 #' Projective models such as the Klein ball return (X, X0), so clipping to the
 #' panel box happens in homogeneous coordinates before division (Blinn and
 #' Newell 1978) and isometries stay linear. An edge whose image passes through

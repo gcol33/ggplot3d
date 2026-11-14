@@ -73,3 +73,106 @@ test_that("the Poincare model keeps isometries in emission", {
   expect_identical(as.double(scene$params$camera$pre), as.double(diag(4)))
   expect_false(is.null(scene$params$space_context$isometry))
 })
+
+spherical_squares <- function(w) {
+  a <- 0.25
+  P <- rbind(c(1, -a, -a), c(1, a, -a), c(1, a, a), c(1, -a, a))
+  do.call(rbind, lapply(seq_along(w), function(i) {
+    Q <- P / sqrt(rowSums(P^2)) * sqrt(1 - w[i]^2)
+    data.frame(x = Q[, 1], y = Q[, 2], z = Q[, 3], w = w[i], id = i)
+  }))
+}
+
+spherical_observer_scene <- function(...) {
+  d <- spherical_squares(c(0.6, -0.6))
+  integration_packets(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, w = w, group = id)) +
+    geom_polygon_3d(fill = "steelblue") +
+    coord_spherical_geometry_3d(inside = TRUE, input = "ambient", azimuth = 180, elevation = 0, ...))
+}
+
+visible_squares <- function(scene) {
+  compiled <- scene_compile(scene$packet, scene$params$camera, new_scene_viewport(100, 100, 144))
+  faces <- compiled$fragments$kind == 1L
+  sort(unique((compiled$fragments$source_row[faces] - 1L) %/% 4L + 1L))
+}
+
+test_that("S^3 observers turn the far hemisphere into view through the camera pre-transform", {
+  base <- spherical_observer_scene()
+  expect_true(any(base$packet$vertices$w < 0))
+  expect_silent(validate_scene_packet(base$packet))
+  expect_identical(visible_squares(base), 1L)
+  turn <- rotate_4d("xw", 2 * asin(0.6))
+  moved <- spherical_observer_scene(isometry = turn)
+  expect_null(moved$params$space_context$isometry)
+  expect_equal(moved$params$space_context$action, turn)
+  expect_identical(scene_vertex_matrix_3d(moved$packet$vertices), scene_vertex_matrix_3d(base$packet$vertices))
+  expect_identical(visible_squares(moved), 2L)
+  pre <- matrix(moved$params$camera$pre, 4L, 4L)
+  applied <- base$packet
+  applied$vertices <- scene_vertices_3d(scene_vertex_matrix_3d(applied$vertices) %*% t(pre))
+  viewport <- new_scene_viewport(100, 100, 144)
+  direct <- scene_compile(moved$packet, moved$params$camera, viewport)
+  camera <- moved$params$camera; camera$pre <- as.double(diag(4))
+  reference <- scene_compile(applied, camera, viewport)
+  expect_identical(direct$draw_order, reference$draw_order)
+  expect_equal(direct$vertices$x_npc, reference$vertices$x_npc, tolerance = 1e-10)
+  expect_equal(direct$vertices$y_npc, reference$vertices$y_npc, tolerance = 1e-10)
+  angle <- 110 * pi / 180
+  observer <- spherical_observer_scene(observer = c(sin(angle), 0, 0, cos(angle)))
+  expect_identical(visible_squares(observer), 2L)
+})
+
+test_that("the identity observer leaves the S^3 scene unchanged", {
+  base <- spherical_observer_scene()
+  identity <- spherical_observer_scene(observer = c(0, 0, 0, 1))
+  expect_identical(identity$packet$vertices, base$packet$vertices)
+  viewport <- new_scene_viewport(100, 100, 144)
+  expect_identical(scene_compile(identity$packet, identity$params$camera, viewport)[c("vertices", "fragments", "draw_order")],
+                   scene_compile(base$packet, base$params$camera, viewport)[c("vertices", "fragments", "draw_order")])
+})
+
+test_that("a full turn of a Clifford translation returns the S^3 scene", {
+  d <- spherical_squares(c(0.6, -0.6))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, w = w, group = id)) + geom_polygon_3d(fill = "tomato") +
+    coord_spherical_geometry_3d(inside = TRUE, input = "ambient", azimuth = 180, elevation = 0, fog = 0.3)
+  built <- integration_packets(p)
+  packets <- collect_scene_layers(built$grobs, built$params, ggplot2::theme_grey())$packets
+  expect_false(is.null(attr(packets[[1]], "space_unstyled")))
+  panel <- list(packets = packets, panel_params = built$params)
+  clifford <- function(angle) rotate_4d(left = c(sin(angle), 0, 0, cos(angle)), right = c(0, 0, 0, 1))
+  expect_equal(clifford(pi / 2) %*% c(0, 0, 0, 1), matrix(c(1, 0, 0, 0)), tolerance = 1e-12)
+  viewport <- new_scene_viewport(100, 100, 144)
+  frame <- function(angle) {
+    moved <- motion_isometry_panel_3d(panel, clifford(angle))
+    expect_identical(scene_vertex_matrix_3d(moved$packets[[1]]$vertices), scene_vertex_matrix_3d(packets[[1]]$vertices))
+    list(scene = scene_compile(moved$packets[[1]], moved$panel_params$camera, viewport), fill = moved$packets[[1]]$styles$fill)
+  }
+  start <- frame(0); half <- frame(pi / 2); full <- frame(2 * pi)
+  expect_identical(start$scene$draw_order, full$scene$draw_order)
+  expect_equal(full$scene$vertices$x_npc, start$scene$vertices$x_npc, tolerance = 1e-10)
+  expect_equal(full$scene$vertices$y_npc, start$scene$vertices$y_npc, tolerance = 1e-10)
+  expect_identical(full$fill, start$fill)
+  expect_false(identical(half$scene$vertices$x_npc, start$scene$vertices$x_npc))
+  outside <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, w = w, group = id)) + geom_polygon_3d(fill = "tomato") +
+    coord_spherical_geometry_3d(model = "gnomonic", input = "ambient", fog = 0.3)
+  a <- animate_3d(outside, isometry = list(clifford(0), clifford(pi / 4)), frames = 2, width = 120, height = 120, progress = FALSE, workers = 1)
+  on.exit(unlink(a$frames), add = TRUE)
+  expect_equal(a$frame_count, 2L)
+})
+
+test_that("gnomonic Hopf tubes are geodesic tubes about their fibres", {
+  d <- data.frame(lon = c(0, 120), lat = 30)
+  scene <- integration_packets(ggplot2::ggplot(d, ggplot2::aes(lon = lon, lat = lat)) +
+    stat_hopf_fibre_3d(n = 12, radius = 0.1, sides = 6) +
+    coord_spherical_geometry_3d(inside = TRUE, isometry = rotate_4d("xw", 2)))
+  H <- space_box_model_3d(scene_vertex_matrix_3d(scene$packet$vertices), scene$params$space_context)
+  X <- H / sqrt(rowSums(H^2))
+  distance <- sapply(d$lon, function(lon) {
+    plane <- t(hopf_points_3d(lon, 30, c(0, pi / 2)))
+    acos(pmin(1, sqrt(rowSums((X %*% plane)^2))))
+  })
+  expect_equal(apply(distance, 1L, min), rep(0.1, nrow(X)), tolerance = 1e-10)
+  expect_true(any(scene$packet$vertices$w < 0))
+  compiled <- scene_compile(scene$packet, scene$params$camera, new_scene_viewport(100, 100, 144))
+  expect_gt(length(compiled$fragments$fragment_id), 0L)
+})

@@ -26,11 +26,26 @@ test_that("packets default to w = 1 and validate homogeneous vertices", {
   expect_identical(packet$schema_version, 2L)
   expect_identical(names(packet$vertices), c("x", "y", "z", "w"))
   expect_identical(packet$vertices$w, 1)
-  expect_error(new_scene_packet(vertices = list(x = 0.5, y = 0.5, z = 0.5, w = -1)), "nonnegative")
+  expect_silent(new_scene_packet(vertices = list(x = 0.5, y = 0.5, z = 0.5, w = -1)))
   expect_error(new_scene_packet(vertices = list(x = 0, y = 0, z = 0, w = 0)), "nonzero direction")
-  broken <- packet; broken$vertices$w <- -1
+  expect_error(new_scene_packet(vertices = list(x = 0.5, y = 0.5, z = 0.5, w = NaN)), "finite")
+  broken <- packet; broken$vertices[c("x", "y", "z", "w")] <- list(0, 0, 0, 0)
   expect_error(scene_compile_cpp(broken[names(broken) != "styles"], new_camera_3d(),
-                                 homogeneous_viewport()), "nonnegative")
+                                 homogeneous_viewport()), "zero vector")
+})
+
+test_that("rows of either sign are distinct points of oriented projective space", {
+  packet <- homogeneous_scene()
+  camera <- new_camera_3d()
+  reference <- scene_compile(packet, camera, homogeneous_viewport())
+  antipodal <- packet
+  antipodal$vertices <- lapply(packet$vertices, `-`)
+  expect_silent(validate_scene_packet(antipodal))
+  hidden <- scene_compile(antipodal, camera, homogeneous_viewport())
+  expect_length(hidden$fragments$fragment_id, 0L)
+  camera$pre <- -as.double(diag(4))
+  restored <- scene_compile(antipodal, camera, homogeneous_viewport())
+  expect_identical(compiled_geometry(restored), compiled_geometry(reference))
 })
 
 test_that("normalise_homogeneous_3d keeps directions at infinity", {
@@ -43,7 +58,8 @@ test_that("normalise_homogeneous_3d keeps directions at infinity", {
   expect_identical(out$w, c(1, 2, 0))
   finite <- normalise_homogeneous_3d(c(2, 7), c(0, 1), c(1, 2), ranges = ranges)
   expect_identical(finite$x, (c(2, 7) - 0) / 10)
-  expect_error(normalise_homogeneous_3d(1, 1, 1, w = -1, ranges = ranges), "nonnegative")
+  far <- normalise_homogeneous_3d(-5, 0, -1, w = -1, ranges = ranges)
+  expect_equal(unlist(far), c(x = -0.5, y = -0.5, z = -0.5, w = -1))
 })
 
 test_that("a face with an ideal vertex is clipped to the box before division", {

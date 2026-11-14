@@ -185,6 +185,17 @@
   `animate_3d(isometry = )` frames only recompile; fog and intrinsic
   normals follow the moved observer (#15).
 
+* Scene packet vertices may have w of either sign: rows are points of
+  oriented projective space (Stolfi 1991), a row and its negation are
+  distinct points, and the engine's homogeneous clip keeps w >= 0 after the
+  camera pre-transform. Scenes with w = 1 compile exactly as before. In the
+  gnomonic model of `coord_spherical_geometry_3d()`, `observer` and
+  `isometry` are SO(4) rotations carried by the camera pre-transform: both
+  hemispheres of S^3 are emitted once, a rotation brings the far hemisphere
+  into view, and `animate_3d(isometry = )` frames, such as Clifford
+  translations from `rotate_4d(left =, right =)`, only recompile.
+  `stat_hopf_fibre_3d()` tubes in the gnomonic model are geodesic tubes (#15).
+
 * Coordinate spaces emit homogeneous model coordinates: a space model may
   return (x, y, z, w) and w reaches the scene packet, so the Klein,
   Poincare and stereographic models are clipped to the panel box before
@@ -235,9 +246,8 @@
 
 * Hyperbolic and spherical coordinates accept `inside = TRUE`, finite observer
   points or isometries, and optional inverse-geodesic-area depth cues. The
-  vector backend views Klein or gnomonic geometry from the model origin;
-  spherical faces clip to a finite observer-hemisphere box. Compile-only
-  per-frame observer boosts await homogeneous camera pre-transforms (#15).
+  vector backend views Klein or gnomonic geometry from the model origin and
+  clips to the finite observer-hemisphere box (#15).
 
 * `coord_spherical_geometry_3d()` supplies S^3 stereographic and gnomonic
   charts with great-circle munching and SO(4) actions. `stat_hopf_fibre_3d()`

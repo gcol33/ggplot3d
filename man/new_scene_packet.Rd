@@ -22,9 +22,12 @@ new_scene_packet(
 \arguments{
 \item{vertices}{List with x, y, z and optional w: homogeneous positions in
 normalised panel coordinates, see \code{\link[=normalise_homogeneous_3d]{normalise_homogeneous_3d()}}. \code{w}
-defaults to 1, must be nonnegative, and \code{w = 0} places an ideal point (a
-direction) at infinity. Geometry through an ideal point is clipped by the
-panel box, the near and far planes or the viewport before it is drawn.}
+defaults to 1 and may take either sign: rows are points of oriented
+projective space (Stolfi 1991), so (x, y, z, w) and (-x, -y, -z, -w) are
+distinct points, and \code{w = 0} places an ideal point (a direction) at
+infinity. Only the half \code{w >= 0} after the camera \code{pre} map is drawn.
+Geometry through an ideal point is clipped by the panel box, the near and
+far planes or the viewport before it is drawn.}
 
 \item{corners}{List with vertex indices and source_row input indices, and
 optional per-corner attributes normal_x, normal_y, normal_z, red, green,

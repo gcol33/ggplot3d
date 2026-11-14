@@ -21,7 +21,8 @@ coord_spherical_geometry_3d(
 \item{model, input}{Display model and input chart.}
 
 \item{extent}{Positive half-width of the finite display box. Gnomonic
-geometry clips to the finite positive-hemisphere box.}
+geometry is clipped to the finite box of the hemisphere in front of the
+observer.}
 
 \item{inside}{Use a first-person perspective eye at the gnomonic origin.}
 
@@ -42,7 +43,11 @@ Maps the unit three-sphere in four dimensions to three display coordinates.
 Paths and faces follow shorter great circles through the shared sampler.
 Ambient inputs map x, y, z and w. Stereographic input is the inverse chart
 (2p, |p|^2-1)/(1+|p|^2). The display map is \code{X[1:3]/(1-X[4])}.
-Gnomonic display \code{X[1:3]/X[4]} covers the positive fourth-coordinate hemisphere.
+Gnomonic coordinates are the homogeneous point X itself, (X1:3, X4), read
+in oriented projective space (Stolfi 1991): X and -X are distinct points, so
+the chart covers the whole sphere, and the display \code{X[1:3]/X[4]} shows the
+hemisphere X4 > 0. Great circles are straight lines and totally geodesic
+faces are planar, so SO(4) acts linearly.
 Stereographic coordinates are homogeneous, (X1:3, 1 - X4), so the pole is
 the point at infinity and box clipping happens before division. Paths are
 clipped analytically on their great circles against the box planes, which
@@ -52,13 +57,19 @@ clips their triangles to the box in homogeneous coordinates, so fibres and
 faces through the pole are drawn up to the panel box.
 }
 \details{
-Inside views restrict geometry to the observer hemisphere and finite
-panel box. Great-circle face edges clip before division. Near defaults to
-sqrt(machine epsilon), and far to the farthest panel-box corner, in
-normalised camera units. Azimuth, elevation and roll set facing. Observer
-actions run before packing: SO(4) acts linearly on the gnomonic
-coordinates (X1:3, X4), but turning the far hemisphere into view would
-need packet vertices with w < 0, which the scene contract excludes.
+In the gnomonic model an observer or isometry is an SO(4) matrix
+acting on the homogeneous coordinates (X1:3, X4), carried by the camera
+pre-transform as in Weeks (2002). The geometry of the whole sphere is
+emitted once, with packet vertices of either sign of w; the scene engine
+applies the action and clips in homogeneous coordinates to w >= 0 and the
+panel box (Blinn and Newell 1978), so the hemisphere within a quarter
+turn of the observer is drawn and a rotation brings the far hemisphere
+into view. animate_3d(isometry = ) frames, such as Clifford translations
+from \code{\link[=rotate_4d]{rotate_4d()}} with left or right quaternions, only recompile. Inside
+views restrict geometry to the observer hemisphere and finite panel box.
+Near defaults to sqrt(machine epsilon), and far to the farthest panel-box
+corner, in normalised camera units. Azimuth, elevation and roll set
+facing. The stereographic model applies the action before packing.
 }
 \examples{
 d <- data.frame(x=c(-1,1),y=.4,z=0)
@@ -74,5 +85,7 @@ Johnson (2011). A visualization of the Hopf fibration.
 \url{https://jenn3d.org/}.
 Weeks (2002). Real-time rendering in curved spaces.
 \doi{10.1109/MCG.2002.1046633}. Coulon et al. (2022), Section 7.
-\url{https://arxiv.org/abs/2010.15801}.
+\url{https://arxiv.org/abs/2010.15801}. Stolfi (1991). Oriented projective
+geometry. Academic Press. Hart, Francis and Kauffman (1994). Visualizing
+quaternion rotation. \doi{10.1145/195784.197480}.
 }
