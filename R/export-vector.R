@@ -176,6 +176,15 @@ svg_scene_3d <- function(panel, layers, prefix, interactive) {
   vector <- panel$children[[which(vapply(panel$children, function(g) identical(g$name, "scene-vector-3d"), logical(1)))]]
   runs <- unlist(lapply(vector$fragment_runs, function(rows) unname(split(rows,
     cumsum(c(TRUE, diff(f$layer_id[rows]) != 0L))))), recursive = FALSE)
+  runs <- unlist(lapply(runs, function(rows) {
+    styles <- scene$styles[f$style_id[rows], , drop = FALSE]
+    sheet_mode <- all(f$kind[rows] == 1L & f$opacity[rows] < 1 &
+      style_value_3d(styles, "alpha_mode", "face") == "surface")
+    if (!sheet_mode) return(list(rows))
+    sheets <- style_value_3d(styles, "sheet", 1L)
+    order <- unique(sheets)[order(vapply(unique(sheets), function(s) max(which(sheets == s)), integer(1)))]
+    lapply(order, function(s) rows[sheets == s])
+  }), recursive = FALSE)
   fills <- style_value_3d(scene$styles[f$style_id, , drop = FALSE], "fill", NA_character_)
   shaded <- which(style_value_3d(scene$styles[f$style_id, , drop = FALSE], "shade", FALSE) %in% TRUE & f$kind == 1L)
   if (length(shaded)) fills[shaded] <- shade_fill_3d(fills[shaded], f, shaded, scene$camera,

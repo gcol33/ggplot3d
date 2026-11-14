@@ -52,6 +52,18 @@ test_that("native SVG writes glyph masks and compound surface seam paths", {
   }
 })
 
+test_that("native SVG composites disconnected translucent sheets separately", {
+  skip_if_not_installed("xml2");skip_if_not_installed("svglite")
+  vertices <- expand.grid(x = 0:1, y = 0:1, z = c(.25, .75))
+  faces <- rbind(c(1, 2, 4), c(1, 4, 3), c(5, 6, 8), c(5, 8, 7))
+  p <- ggplot2::ggplot() + geom_mesh_3d(data = mesh_3d(vertices, faces),
+    fill = "steelblue", alpha = .5, shade = FALSE, alpha_mode = "surface") + coord_3d()
+  doc <- xml2::read_xml(native_svg_3d(p, 400, 400, FALSE))
+  groups <- xml2::xml_find_all(doc, ".//*[@class='gg3d-layer' and @data-layer='1' and @opacity]")
+  expect_length(groups, 2L)
+  expect_equal(as.numeric(xml2::xml_attr(groups, "opacity")), c(.5, .5))
+})
+
 test_that("native SVG hover links actual browser primitives", {
   skip_on_cran();skip_if_not_installed("chromote");skip_if_not_installed("xml2");skip_if_not_installed("svglite")
   if (!nzchar(chromote::find_chrome() %or3d% "")) skip("Chrome is unavailable")
