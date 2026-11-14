@@ -22,8 +22,8 @@ pathtrace_scene_3d <- function(packet, specs, camera, viewport, backend, light) 
   scale <- resolved$model_scale
   mm <- export_camera_3d(resolved, camera, viewport, 1)$mm_per_unit
   nodes <- export_nodes_3d(scene_finite_packet_3d(packet, camera$pre), scale, NULL, mm,
-    function(tab) rep("scene", length(tab$offset)))
-  mesh <- export_merged_3d(list(nodes = nodes, up = 3L), export_options_3d(FALSE, "tube", "mesh", 1))
+    function(tab) paste(attr(tab, "kind"), tab$style_id, sep = ":"))
+  mesh <- pathtrace_mesh_3d(nodes, packet, resolved, light)
   mesh$colour[, 1:3] <- srgb_decode_3d(mesh$colour[, 1:3, drop = FALSE])
   fields <- lapply(specs, function(spec) {
     if (!identical(spec$kind, "sdf")) stop("Path tracing currently accepts mesh and SDF surfaces; use the raster backend for scalar volumes.", call. = FALSE)
@@ -62,6 +62,26 @@ pathtrace_scene_3d <- function(packet, specs, camera, viewport, backend, light) 
   result$samples <- state$samples
   result$sum <- state$sum
   result
+}
+
+# Illustrative surfaces terminate transport with the shared kernel's colour.
+pathtrace_mesh_3d <- function(nodes, packet, camera, light) {
+  options <- export_options_3d(FALSE, "tube", "mesh", 1)
+  meshes <- lapply(nodes, function(node) export_merged_3d(list(nodes = list(node), up = 3L), options))
+  mesh <- export_merged_3d(list(nodes = nodes, up = 3L), options)
+  mesh$illustrative <- unlist(Map(function(node, part) {
+    key <- strsplit(node$name, ":", fixed = TRUE)[[1L]]
+    id <- 0L
+    if (key[1L] == "faces" && !is.null(light)) {
+      s <- packet$styles[match(as.integer(key[2L]), packet$styles$style_id), , drop = FALSE]
+      m <- material_index_3d(s)
+      if (isTRUE(s$shade) && m > 0L && packet$materials$style[m] != "standard") id <- m
+    }
+    rep(id, ncol(part$triangles))
+  }, nodes, meshes), use.names = FALSE)
+  mesh$materials <- kernel_materials_3d(packet$materials)
+  mesh$lights <- if (is.null(light)) resolved_light_3d(lights_3d(ambient = 1), camera) else resolved_light_3d(light, camera)
+  mesh
 }
 
 render_pathtrace_panel_3d <- function(x, furniture, backend) {

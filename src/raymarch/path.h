@@ -1,5 +1,6 @@
 #pragma once
 #include "kernel.h"
+#include "../shade/read.h"
 #include <cstdint>
 
 namespace ggplot3d { namespace raymarch {
@@ -37,9 +38,9 @@ inline Ray lens_ray(const engine::Projection& p,double x,double y,double apertur
   }
   return r;
 }
-struct SurfaceHit {bool found=false;double t=0,alpha=1;Vec3 normal{0,0,0},colour{0,0,0};};
+struct SurfaceHit {bool found=false;int illustrative=0;double t=0,alpha=1;Vec3 normal{0,0,0},colour{0,0,0};};
 struct Triangle {
-  std::array<Vec3,3> p,n,c;std::array<double,3> alpha;
+  std::array<Vec3,3> p,n,c;std::array<double,3> alpha;int illustrative=0;
   SurfaceHit intersect(const Ray& ray) const {
     SurfaceHit out;Vec3 e1=engine::subtract(p[1],p[0]),e2=engine::subtract(p[2],p[0]);
     Vec3 h=engine::cross(ray.direction,e2);double det=engine::dot(e1,h);
@@ -47,7 +48,7 @@ struct Triangle {
     Vec3 s=engine::subtract(ray.origin,p[0]);double u=engine::dot(s,h)/det;if(u<0 || u>1)return out;
     Vec3 q=engine::cross(s,e1);double v=engine::dot(ray.direction,q)/det;if(v<0 || u+v>1)return out;
     double t=engine::dot(e2,q)/det;if(t<ray.near || t>ray.far)return out;
-    out.found=true;out.t=t;double weights[3]={1-u-v,u,v};out.alpha=0;
+    out.found=true;out.t=t;out.illustrative=illustrative;double weights[3]={1-u-v,u,v};out.alpha=0;
     for(int i=0;i<3;++i) {out.alpha+=weights[i]*alpha[i];for(int k=0;k<3;++k){out.colour[k]+=weights[i]*c[i][k];out.normal[k]+=weights[i]*n[i][k];}}
     out.normal=unit(out.normal);return out;
   }
@@ -82,10 +83,19 @@ struct BvhNode {Bounds bounds;int begin=0,end=0,left=-1,right=-1;};
 struct TraceScene {
   std::vector<Triangle> triangles;std::vector<Implicit> implicit;std::vector<Object> objects;std::vector<BvhNode> nodes;
   Vec3 model_scale;bool clip;
+  std::vector<shade::Material> materials;
+  shade::Lights lights;
   TraceScene(const Rcpp::List& mesh,const Rcpp::List& fields,const Vec3& scale,bool clip_data):model_scale(scale),clip(clip_data) {
     Rcpp::NumericMatrix p=mesh["position"],n=mesh["normal"],c=mesh["colour"];Rcpp::IntegerMatrix index=mesh["triangles"];
+    Rcpp::IntegerVector illustrative(index.ncol());
+    if(mesh.containsElementNamed("illustrative")) illustrative=Rcpp::as<Rcpp::IntegerVector>(mesh["illustrative"]);
+    if(mesh.containsElementNamed("materials")) materials=shade::read_materials(Rcpp::as<Rcpp::List>(mesh["materials"]));
+    if(mesh.containsElementNamed("lights")) lights=shade::read_lights(Rcpp::as<Rcpp::List>(mesh["lights"]));
+    require(illustrative.size()==index.ncol(),"Invalid illustrative material indices");
     require(p.ncol()==3 && n.ncol()==3 && c.ncol()==4 && p.nrow()==n.nrow() && p.nrow()==c.nrow() && index.nrow()==3,"Invalid path-trace mesh");
     for(int i=0;i<index.ncol();++i){Triangle t;Object o;o.kind=0;o.index=i;
+      t.illustrative=illustrative[i];
+      require(t.illustrative>=0 && (t.illustrative==0 || t.illustrative<int(materials.size())),"Invalid illustrative material");
       for(int j=0;j<3;++j){int row=index(j,i)-1;require(row>=0 && row<p.nrow(),"Invalid triangle index");
         for(int k=0;k<3;++k){t.p[j][k]=p(row,k);t.n[j][k]=n(row,k);t.c[j][k]=c(row,k);}t.alpha[j]=c(row,3);o.bounds.add(t.p[j]);}
       triangles.push_back(t);objects.push_back(o);
@@ -138,6 +148,12 @@ inline std::array<double,4> path_sample(const TraceScene& scene,Ray ray,const Pa
     if(!hit.found){if(covered)for(int k=0;k<3;++k)radiance[k]+=throughput[k]*light.sky;break;}
     covered=true;Vec3 n=hit.normal;if(engine::dot(n,ray.direction)>0)for(double& v:n)v=-v;
     Vec3 p=point(ray.origin,ray.direction,hit.t),origin=point(p,n,epsilon);
+    if(hit.illustrative>0) {
+      shade::vec3 colour=shade::shade(shade::to_vec3(hit.normal),shade::to_vec3(p),-shade::to_vec3(ray.direction),
+        shade::to_vec3(hit.colour),scene.materials[hit.illustrative],scene.lights);
+      for(int k=0;k<3;++k)radiance[k]+=throughput[k]*colour[k];
+      break;
+    }
     Vec3 l=cone_sample(light.direction,light.cosine,rng);double cosine=std::max(0.0,engine::dot(n,l));
     if(cosine>0 && light.sun>0){double visible=scene.visibility({origin,l,0,INFINITY},scratch,epsilon);
       for(int k=0;k<3;++k)radiance[k]+=throughput[k]*hit.colour[k]*light.sun*cosine*visible;}

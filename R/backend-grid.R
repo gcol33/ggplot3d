@@ -546,6 +546,11 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   masked_lines <- intersect(glyphs, lines)
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
+  if (!is.null(styles$hatch_angle)) {
+    hatch <- intersect(names(styles), c("hatch_angle", "hatch_spacing", "hatch_cross", "hatch_tone",
+      "hatch_colour", "hatch_linewidth", "hatch_alpha"))
+    key[face] <- paste(key[face], do.call(paste, c(styles[face, hatch, drop = FALSE], sep = ":")), sep = ":")
+  }
   sheet_style <- style_value_3d(styles, "alpha_mode", "face") == "surface"
   attributes <- scene_linear_attributes_3d(scene)
   smooth <- smooth_fragments_3d(scene, attributes, styles, light)

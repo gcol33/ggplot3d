@@ -108,7 +108,7 @@ hatch_merge_3d <- function(packet, data, faces, params, panel_params) {
     normal <- cross_rows_3d(b - a, c - a)
     length <- sqrt(rowSums(normal^2)); normal <- normal / ifelse(length > 0, length, 1)
     levels <- hatch_levels_3d(hatch_darkness_3d(normal, (a + b + c) / 3, camera, light, params$material), spec$cross)
-  } else levels <- cbind(rep(3L, nrow(triangles)), if (spec$cross) rep(0L, nrow(triangles)))
+  } else levels <- cbind(rep(3L, nrow(triangles)), if (spec$cross) rep(if (spec$tone) 0L else 3L, nrow(triangles)))
   lines <- hatch_lines_cpp(model, triangles - 1L, directions, spec$spacing, matrix(as.integer(levels), nrow(triangles)))
   n <- length(lines$x)
   if (!n) return(packet)
@@ -140,8 +140,8 @@ hatch_bands_3d <- function(darkness, cross) {
 }
 
 # A device-space pattern of parallel lines `spacing` mm apart at `angle`
-# degrees, crossed by the perpendicular lines when `cross`.
-hatch_pattern_3d <- function(angle, spacing, cross, colour, linewidth, alpha) {
+# degrees.
+hatch_pattern_3d <- function(angle, spacing, colour, linewidth, alpha) {
   a <- (angle %% 180) * pi / 180
   tile <- function(a) {
     s <- abs(sin(a)); c <- abs(cos(a))
@@ -149,18 +149,11 @@ hatch_pattern_3d <- function(angle, spacing, cross, colour, linewidth, alpha) {
     if (c < 1e-6) return(list(w = spacing, h = spacing, x = c(0.5, 0.5), y = c(0, 1)))
     list(w = spacing / s, h = spacing / c, x = c(0, 1), y = if (sin(a) * cos(a) > 0) c(0, 1) else c(1, 0))
   }
-  families <- c(list(tile(a)), if (cross) list(tile(a + pi / 2)))
-  w <- if (cross) max(families[[1L]]$w, families[[2L]]$w) else families[[1L]]$w
-  h <- if (cross) max(families[[1L]]$h, families[[2L]]$h) else families[[1L]]$h
+  t <- tile(a)
+  w <- t$w; h <- t$h
   gp <- grid::gpar(col = colour, lwd = linewidth * 72.27 / 25.4, alpha = alpha, lineend = "square")
-  grobs <- lapply(families, function(t) {
-    reps_x <- round(w / t$w); reps_y <- round(h / t$h)
-    shift <- expand.grid(i = seq_len(reps_x) - 1L, j = seq_len(reps_y) - 1L)
-    grid::polylineGrob(as.vector(rbind(t$x[1L] + shift$i, t$x[2L] + shift$i)) * t$w,
-      as.vector(rbind(t$y[1L] + shift$j, t$y[2L] + shift$j)) * t$h, id = rep(seq_len(nrow(shift)), each = 2L),
-      default.units = "mm", gp = gp)
-  })
-  grid::pattern(do.call(grid::gTree, list(children = do.call(grid::gList, grobs))), x = 0, y = 0,
+  grob <- grid::polylineGrob(t$x * w, t$y * h, default.units = "mm", gp = gp)
+  grid::pattern(grob, x = 0, y = 0,
     width = grid::unit(w, "mm"), height = grid::unit(h, "mm"), just = c("left", "bottom"), extend = "repeat")
 }
 
@@ -177,15 +170,18 @@ hatch_face_grob_3d <- function(scene, rows, styles, light, x, y, id) {
     darkness <- 1 - grey_level_3d(grDevices::col2rgb(face_fill_3d(scene, rows, white, light)) / 255)
   }
   band <- hatch_bands_3d(darkness, isTRUE(s$hatch_cross))
+  if (!isTRUE(s$hatch_tone)) band[] <- if (isTRUE(s$hatch_cross)) 4L else 2L
   band[is.na(angle)] <- 0L
-  grobs <- lapply(sort(unique(band[band > 0L])), function(b) {
+  grobs <- unlist(lapply(sort(unique(band[band > 0L])), function(b) {
     take <- band[id] == b
-    pattern <- hatch_pattern_3d(s$hatch_angle, s$hatch_spacing * if (b %in% c(1L, 3L)) 2 else 1, b >= 3L,
-      s$hatch_colour, s$hatch_linewidth, s$hatch_alpha)
-    g <- grid::polygonGrob(x[take], y[take], id = match(id[take], unique(id[take])), gp = grid::gpar(fill = pattern, col = NA))
-    g$hatch_band <- b
-    g
-  })
+    lapply(s$hatch_angle + if (b >= 3L) c(0, 90) else 0, function(angle) {
+      pattern <- hatch_pattern_3d(angle, s$hatch_spacing * if (b %in% c(1L, 3L)) 2 else 1,
+        s$hatch_colour, s$hatch_linewidth, s$hatch_alpha)
+      g <- grid::polygonGrob(x[take], y[take], id = match(id[take], unique(id[take])), gp = grid::gpar(fill = pattern, col = NA))
+      g$hatch_band <- b
+      g
+    })
+  }), recursive = FALSE)
   if (!length(grobs)) return(NULL)
   grid::gTree(children = do.call(grid::gList, grobs), name = "hatch-3d", bands = band)
 }

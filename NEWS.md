@@ -1,5 +1,10 @@
 # ggplot3d 0.0.0.9000
 
+* Illustrative path-trace surfaces return the shared shading kernel's colour
+  at each hit, including back colours and indirect hits. Uniform hatching
+  draws both requested families, and screen cross-hatching repeats each
+  family independently at arbitrary angles (#62).
+
 * Axis label thinning leaves room for text that renders wider than its
   measured size (a web font in an SVG): each label rectangle counts 20% larger
   in the overlap test, and labels are visited in ggplot2's `check.overlap`

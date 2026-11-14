@@ -86,12 +86,13 @@ defaults are the paper's \verb{k_blue = (0, 0, 0.4)} and
 \code{(n + 1) / 2} in sRGB (three.js \code{MeshNormalMaterial}), in the panel's
 axes (\code{normal_space = "model"}), the camera's right, up and toward axes
 (\code{"camera"}), or a frame whose third axis points at the first
-directional light (\code{"light"}). It takes no light and no specular term,
+contributing light (\code{"light"}). It takes no light and no specular term,
 and the layer's fill legend is dropped.
 }
 
 Styles need a light: with \code{coord_3d(light = NULL)} faces keep their fill.
-The path tracer ignores styles and uses the fill as the diffuse albedo.
+In the path tracer, illustrative surfaces return the shared kernel's
+colour at the hit point and terminate the path, including indirect hits.
 }
 \examples{
 material_3d("shiny")

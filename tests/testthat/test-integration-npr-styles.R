@@ -140,6 +140,8 @@ test_that("model-space hatching lies on its planes, nests by tone and is chained
   h2 <- (-crossed$vertices$x[index] * sin(a) + crossed$vertices$y[index] * cos(a)) / 0.05
   on_plane <- pmin(abs(h1 - round(h1)), abs(h2 - round(h2)))
   expect_lt(max(on_plane), 1e-9)
+  expect_true(any(abs(h1 - round(h1)) > 1e-6))
+  expect_true(any(abs(h2 - round(h2)) > 1e-6))
   expect_lt(length(lines$offset), sum(lines$count) / 3)
 })
 
@@ -189,6 +191,16 @@ test_that("screen-space hatching fills faces with a pattern per tone band", {
   expect_true(all(fills == "GridTilingPattern"))
 })
 
+test_that("uniform screen cross-hatching uses independently repeating families", {
+  spec <- hatch_3d(space = "screen", angle = 30, tone = FALSE)
+  g <- npr_render(npr_surface(hatch = spec))
+  panel <- motion_panels_3d(g)[[1L]]
+  h <- grid::getGrob(panel, "hatch-3d", grep = TRUE)
+  expect_true(all(h$bands == 4L))
+  expect_length(h$children, 2L)
+  expect_true(all(vapply(h$children, function(x) inherits(x$gp$fill, "GridTilingPattern"), logical(1))))
+})
+
 test_that("styles render in raster and vector output and colour samples agree", {
   for (material in list(material_3d(style = "toon"), material_3d(style = "gooch"), material_3d(style = "normals"))) {
     for (type in c("vector", "raster")) expect_no_error(npr_render(npr_surface(material, backend = backend_3d(type), fill = "steelblue")))
@@ -216,5 +228,43 @@ test_that("the viewer applies the styles like the kernel", {
       linear_rgb_3d("#4080C0"), 1L, kernel_materials_3d(material_table_3d(styles[[name]])),
       resolved_light_3d(params$coord_params$light, camera), kernel_view_3d(camera))
     expect_equal(unlist(pixel) / 255, srgb_encode_3d(pmin(expected[1L, ], 1)), tolerance = 2 / 255, info = name)
+  }
+})
+
+test_that("illustrative path-trace hits return kernel colours", {
+  light <- lights_3d(light_head(), ambient = 0.2)
+  for (style in c("toon", "gooch", "normals")) for (elevation in c(90, -90)) {
+    material <- material_3d(style = style, back = "#F08040")
+    d <- expand.grid(x = 0:1, y = 0:1); d$z <- 0
+    p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+      geom_surface_3d(fill = "#4080C0", colour = NA, material = material) +
+      coord_3d(azimuth = -90, elevation = elevation, light = light, panes = character(), axes = character(), box = "none")
+    input <- integration_packets(p)
+    camera <- input$params$camera
+    viewport <- new_scene_viewport(25.4, 25.4, 9)
+    backend <- backend_3d("pathtrace", samples = 4, bounces = 2, seed = 1)
+    result <- pathtrace_scene_3d(input$packet, list(), camera, viewport, backend, light)
+    resolved <- scene_compile(new_scene_packet(), camera, viewport)$camera
+    expected <- shade_linear_3d(linear_rgb_3d("#4080C0"), matrix(c(0, 0, 1), 1L), resolved, light,
+      matrix(c(0.5, 0.5, 0.5), 1L), 1L, material_table_3d(material))
+    rows <- which(result$sum[, 4L] == 4)
+    expect_gt(length(rows), 0L)
+    expect_equal(result$sum[rows, 1:3, drop = FALSE] / 4,
+      matrix(rep(expected, each = length(rows)), length(rows), 3L), tolerance = 1e-10, info = style)
+  }
+})
+
+test_that("styles preserve alpha and disabled lighting", {
+  for (style in material_styles_3d[-1L]) {
+    p <- npr_surface(material_3d(style = style), light = NULL, fill = "#4080C0")
+    input <- integration_packets(p)
+    scene <- scene_compile(input$packet, input$params$camera, new_scene_viewport(40, 40))
+    rows <- which(scene$fragments$kind == 1L)
+    styles <- scene$styles[match(scene$fragments$style_id, scene$styles$style_id), , drop = FALSE]
+    expect_true(all(face_fill_3d(scene, rows, styles, NULL) == "#4080C0"))
+    input$packet$faces$opacity[] <- 0.4
+    prepared <- raster_prepare_cpp(scene_engine_packet_3d(input$packet), input$params$camera, new_scene_viewport(40, 40))
+    expect_identical(input$packet$faces$opacity, rep(0.4, length(input$packet$faces$opacity)))
+    expect_true(all(raster_colours_3d(input$packet, prepared, NULL)[[1L]][4L, ] == 1))
   }
 })

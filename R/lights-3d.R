@@ -222,11 +222,12 @@ as_lights_3d <- function(light) {
 #'   `(n + 1) / 2` in sRGB (three.js `MeshNormalMaterial`), in the panel's
 #'   axes (`normal_space = "model"`), the camera's right, up and toward axes
 #'   (`"camera"`), or a frame whose third axis points at the first
-#'   directional light (`"light"`). It takes no light and no specular term,
+#'   contributing light (`"light"`). It takes no light and no specular term,
 #'   and the layer's fill legend is dropped.
 #'
 #' Styles need a light: with `coord_3d(light = NULL)` faces keep their fill.
-#' The path tracer ignores styles and uses the fill as the diffuse albedo.
+#' In the path tracer, illustrative surfaces return the shared kernel's
+#' colour at the hit point and terminate the path, including indirect hits.
 #' @param type Preset: `"matte"`, `"shiny"` or `"metal"`.
 #' @param ambient,diffuse,specular Nonnegative strengths; NULL keeps the preset.
 #' @param shininess Positive specular exponent; NULL keeps the preset.
