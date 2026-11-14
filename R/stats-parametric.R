@@ -55,7 +55,7 @@ parametric_frame_3d <- function(evaluate, uv, h) {
   list(normal = n, gaussian = (L * N - M^2) / det, mean = (E * N - 2 * F * M + G * L) / (2 * det))
 }
 
-parametric_surface_3d <- function(fun, u, v, n, closed, twist, args, adaptive, tolerance, angle, max_depth) {
+parametric_surface_3d <- function(fun, u, v, n, closed, twist, args, adaptive, tolerance, angle, max_depth, vertex_parameters = FALSE) {
   if (!is.function(fun)) stop("fun must be a function of u and v.", call. = FALSE)
   range_ok <- function(r) is.numeric(r) && length(r) == 2L && all(is.finite(r)) && r[2L] > r[1L]
   if (!range_ok(u) || !range_ok(v)) stop("u and v must be increasing finite ranges.", call. = FALSE)
@@ -109,6 +109,10 @@ parametric_surface_3d <- function(fun, u, v, n, closed, twist, args, adaptive, t
     u = face_mean(as.vector(t(cu))), v = face_mean(as.vector(t(cv))),
     gaussian_curvature = face_mean(frame$gaussian[rows]), mean_curvature = face_mean(frame$mean[rows]),
     .face = rep(seq_len(nrow(tri)), each = 3L), .corner = rep.int(1:3, nrow(tri)), .vertex = rows)
+  if (vertex_parameters) {
+    out$.u_vertex <- uv[rows, 1L]
+    out$.v_vertex <- uv[rows, 2L]
+  }
   out$z_mean <- face_mean(out$z)
   out
 }

@@ -77,6 +77,11 @@ navbar:
       href: https://github.com/gcol33/ggplot3d
       aria-label: GitHub
 reference:
+- title: Complex analysis
+  contents:
+  - mobius
+  - stat_riemann_sphere_3d
+  - stat_riemann_surface_3d
 - title: Immersed surfaces and knots
   contents:
   - stat_self_intersection_3d

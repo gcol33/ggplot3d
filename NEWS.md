@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* Complex-analysis layers draw Riemann-sphere phase portraits and inverse-parametrised Riemann surfaces. `mobius()` maps extended complex values, the finite Riemann sphere and hyperbolic half-space.
+
 * `stat_self_intersection_3d()` extracts transverse triangle crossings as stitched paths. `stat_immersed_3d()` supplies Klein bottles, Boy's surface, a cross-cap and a Moebius band; `stat_knot_3d()` generates torus knots and closed tubes.
 
 * `coord_globe_3d()` maps longitude, latitude and height to a sphere, munches great-circle paths and faces, reprojects sf inputs, and draws a graticule and opaque lit globe.
