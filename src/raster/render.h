@@ -172,6 +172,19 @@ static inline double sample(const Shapes& shapes,const Item& item,const Paint& p
   return R_PosInf;
 }
 
+// Depth at which a haloed stroke segment masks a canvas point: within half its
+// mask width of the segment (round ends, so the bands of consecutive segments
+// join), +Inf elsewhere (Appel, Rohlf and Stein 1979).
+static inline double halo_depth(const Scene& scene,const Item& item,double x,double y) {
+  const Screen* v=scene.vertices.data()+item.offset;
+  const double radius=scene.packet.polylines.mask_width_mm[item.row]*.5;
+  double dx=v[1].x-v[0].x,dy=v[1].y-v[0].y,length2=dx*dx+dy*dy;
+  double t=length2>0 ? std::max(0.0,std::min(1.0,((x-v[0].x)*dx+(y-v[0].y)*dy)/length2)):0;
+  double ex=x-v[0].x-t*dx,ey=y-v[0].y-t*dy;
+  if(ex*ex+ey*ey>radius*radius) return R_PosInf;
+  return depth_at(v[0].depth,v[1].depth,t,scene.projection.camera.perspective);
+}
+
 static inline Shapes shapes_of(const Scene& scene,const std::vector<Paint>& paint) {
   Shapes shapes{scene,paint,{},{}};
   const auto& f=scene.packet.footprints;
@@ -266,6 +279,9 @@ static inline std::vector<Paint> paints(const Scene& scene,Rcpp::List colours,Rc
       p.outline=Colour();p.separate=false;
     }
     if(item.kind==2) {
+      // Haloed strokes sample their mask band too.
+      double grow=std::max(0.0,(scene.packet.polylines.mask_width_mm[item.row]-scene.packet.polylines.width_mm[item.row])*.5);
+      if(item.geometry==0) {p.bounds[0]-=grow;p.bounds[1]-=grow;p.bounds[2]+=grow;p.bounds[3]+=grow;}
       p.dash=dash[item.row];
       for(double value:p.dash) p.period+=value;
       p.hidden_dash=hidden_dash[item.row];
@@ -345,7 +361,7 @@ struct Span {
   std::array<int,4> samples;
   double nearest;
   int partition;
-  bool lift,occluder,retained_occluder;
+  bool lift,occluder,retained_occluder,halo=false;
 };
 
 // A painted sample: the item, its depth, and whether the outline paints it.
@@ -657,6 +673,11 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       if(!span.lift && occluder.hides(span.partition,span.nearest,tolerance)) continue;
       bool border=false;double xx=canvas.origin_x+(x+.5)*canvas.dx,yy=canvas.origin_y+(y+.5)*canvas.dy;
       Hit hit;
+      if(span.halo) {
+        // A haloed stroke hides what lies behind it in its mask band.
+        double h=halo_depth(scene,item,xx,yy);
+        if(std::isfinite(h)) occluder.add(span.partition,h);
+      }
       double z=sample(shapes,item,p,xx,yy,&border,false,span.lift,&hit);
       if(span.retained_occluder) s.opaque[local]=std::min(s.opaque[local],z);
       if(span.lift && std::isfinite(z)) {
@@ -959,6 +980,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
     span.lift=retained && item.kind==2 && line.hidden[item.row]!=0 && span.partition==1;
     span.occluder=item.kind==1 || item.kind==3;
     span.retained_occluder=retained && item.kind==1 && p.colour.a==1 && span.partition==1;
+    span.halo=item.kind==2 && item.geometry==0 && span.partition==1 &&
+      line.mask_width_mm[item.row]>line.width_mm[item.row];
     span.nearest=R_PosInf;
     for(Index j=0;j<item.count;++j) span.nearest=std::min(span.nearest,scene.vertices[item.offset+j].depth);
     if(scene.projection.camera.perspective && !(span.nearest>0)) span.nearest=R_NegInf;
