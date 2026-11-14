@@ -5,8 +5,8 @@
 \title{Finite hyperbolic ball and sheet coordinates}
 \usage{
 coord_hyperbolic_3d(
-  input = c("poincare", "klein", "halfspace", "hyperboloid_sheet"),
   model = "klein",
+  input = model,
   extent = 3,
   references = character(),
   curvature = -1,
@@ -57,8 +57,8 @@ and the Poincare disk at X0=0. Half-space has positive z. All input points
 are finite and strictly interior to their charts.
 }
 \details{
-Klein is the default display. Poincare is the default input for
-compatibility with hyperbolic layout statistics. Half-space is truncated
+Klein is the default display and input. Hyperbolic layout statistics
+register their own Poincare input chart. Half-space is truncated
 to the finite display box set by extent. Geodesic faces and arcs use the
 common screen-error sampler. Position scales must be identity transforms.
 Klein lighting transports Minkowski plane normals to the origin.

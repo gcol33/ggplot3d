@@ -72,6 +72,20 @@ test_that("focus boosts move the selected node continuously to the origin", {
   expect_true(all(vapply(frames,function(B) max(abs(t(B)%*%diag(c(1,1,1,-1))%*%B-diag(c(1,1,1,-1))))<1e-12,logical(1))))
 })
 
+test_that("tree layers register their Poincare input independently of display", {
+  edges <- data.frame(from=c("a","a","b"),to=c("b","c","d"))
+  tree <- hyperbolic_tree_layout_3d(edges$from,edges$to,3L,1)
+  for(model in c("klein","poincare","halfspace")) {
+    coord <- coord_hyperbolic_3d(model=model)
+    p <- ggplot2::ggplot(edges)+stat_tree_hyperbolic_3d(what="nodes",edge_length=1)+coord
+    packet <- stats_scene(p)$packet
+    ranges <- coord$space$model_ranges(model,NULL)
+    xyz <- do.call(cbind,packet$vertices[c("x","y","z")])
+    xyz <- sweep(sweep(xyz,2L,vapply(ranges,diff,numeric(1)),"*"),2L,vapply(ranges,`[`,numeric(1),1L),"+")
+    expect_equal(unname(xyz),unname(coord$space$from_canonical(tree$canonical,model)),tolerance=1e-12)
+  }
+})
+
 test_that("hyperbolic focus schedules animate the embedding", {
   edges <- data.frame(from=c("a","a","b","b"),to=c("b","c","d","e"))
   p <- ggplot2::ggplot(edges)+stat_tree_hyperbolic_3d(dimension=2,edge_length=1)+

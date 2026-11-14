@@ -1,6 +1,7 @@
 test_that("hyperbolic curvature and centring preserve intrinsic geometry", {
-  coord <- coord_hyperbolic_3d(curvature=-4,centre=c(.3,.1,0))
+  coord <- coord_hyperbolic_3d(input="poincare",curvature=-4,centre=c(.3,.1,0))
   expect_identical(coord$model,"klein")
+  expect_identical(coord_hyperbolic_3d()$input,"klein")
   s <- coord$space
   X <- s$to_canonical(data.frame(x=c(0,.3),y=c(0,.1),z=0),"poincare")
   Y <- s$act(coord$isometry,X)

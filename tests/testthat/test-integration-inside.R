@@ -13,7 +13,7 @@ test_that("inside cameras put the eye at the model origin for every view", {
 })
 
 test_that("observer transformations send finite observers to their origins", {
-  h <- coord_hyperbolic_3d(inside=TRUE,observer=c(.2,.1,0))
+  h <- coord_hyperbolic_3d(inside=TRUE,input="poincare",observer=c(.2,.1,0))
   X <- h$space$to_canonical(data.frame(x=.2,y=.1,z=0),"poincare")
   expect_equal(unname(h$space$act(h$isometry,X)),matrix(c(0,0,0,1),1),tolerance=1e-12)
   observer <- c(.2,.3,.1,sqrt(.86))
@@ -26,7 +26,7 @@ test_that("observer transformations send finite observers to their origins", {
 })
 
 test_that("first-person projective angles agree with intrinsic tangent directions", {
-  coord <- coord_hyperbolic_3d(inside=TRUE,azimuth=180,elevation=0)
+  coord <- coord_hyperbolic_3d(inside=TRUE,input="poincare",azimuth=180,elevation=0)
   d <- data.frame(x=c(.2,.4),y=c(.1,.2),z=c(.05,.1))
   X <- coord$space$to_canonical(d,"poincare")
   context <- list(space=coord$space,model="klein",ranges=list(x=c(-1,1),y=c(-1,1),z=c(-1,1)))
@@ -41,7 +41,7 @@ test_that("depth cue uses geodesic-sphere inverse area in linear light", {
   for(kind in c("hyperbolic","spherical")) {
     radius <- c(.5,1.4)
     d <- data.frame(x=if(kind=="hyperbolic") tanh(radius/2) else tan(radius),y=0,z=0)
-    coord <- if(kind=="hyperbolic") coord_hyperbolic_3d(inside=TRUE,fog=.1) else coord_spherical_geometry_3d(inside=TRUE,fog=.1,extent=10)
+    coord <- if(kind=="hyperbolic") coord_hyperbolic_3d(inside=TRUE,input="poincare",fog=.1) else coord_spherical_geometry_3d(inside=TRUE,fog=.1,extent=10)
     packet <- stats_scene(ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_point_3d(colour="white")+coord)$packet
     colour <- packet$styles$colour[match(packet$markers$style_id,packet$styles$style_id)]
     actual <- as.numeric(grDevices::col2rgb(colour)[1,])

@@ -16,6 +16,8 @@
   observer centring, intrinsic radial distance guides and transported Minkowski
   normals for lighting. Poincare and upper half-space geodesics share adaptive
   munching; half-space output clips to a finite panel box (#14).
+  Input defaults to the display model. Tree layers register their Poincare
+  input independently of the selected display chart.
 
 * Project 4D and n-D data with `stat_project_3d()`, all six SO(4) plane
   rotations and quaternion double rotations, finite perspective and adaptive
