@@ -83,8 +83,8 @@ fragment_vertex_linear_3d <- function(scene, rows, styles, attributes, light) {
 
 # Vector paint of faces with per-vertex linear colours. Each face is
 # fan-triangulated. A triangle whose colour varies along one screen direction
-# (the colour differences of its corners are parallel, as for a lit face of
-# one colour) becomes one linear gradient on devices that draw them, with
+# (the colour differences of its corners are parallel and not all zero, as
+# for a lit face of one colour) becomes one linear gradient on devices that draw them, with
 # stops along the sRGB curve until the device's encoded interpolation is
 # within the tolerance. Other triangles are split into four until the encoded
 # corner colours of each piece differ by at most the tolerance, and each piece
@@ -121,7 +121,8 @@ smooth_face_paint_3d <- function(x_mm, y_mm, id, linear, gradients, tolerance = 
     area <- (P[[2L]][, 1L] - P[[1L]][, 1L]) * (P[[3L]][, 2L] - P[[1L]][, 2L]) -
       (P[[3L]][, 1L] - P[[1L]][, 1L]) * (P[[2L]][, 2L] - P[[1L]][, 2L])
     scale <- pmax(rowSums((P[[2L]] - P[[1L]])^2), rowSums((P[[3L]] - P[[1L]])^2))
-    gradient <- which(gradients & parallel & abs(area) > 1e-8 * scale)
+    varies <- rowSums(d1^2) + rowSums(d2^2) > 0
+    gradient <- which(gradients & varies & parallel & abs(area) > 1e-8 * scale)
     if (length(gradient)) {
       made <- lapply(gradient, function(j) triangle_gradient_3d(lapply(P, function(p) p[j, ]), lapply(L, function(l) l[j, ]), tolerance))
       add(as.vector(rbind(P[[1L]][gradient, 1L], P[[2L]][gradient, 1L], P[[3L]][gradient, 1L])),

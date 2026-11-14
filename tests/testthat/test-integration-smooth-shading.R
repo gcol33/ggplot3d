@@ -138,6 +138,16 @@ test_that("vector smooth paint stays within the colour tolerance", {
   expect_gt(length(stops$stops), 2L)
 })
 
+test_that("a fan triangle of one colour inside a varied face is painted flat", {
+  x <- c(0, 40, 40, 0); y <- c(0, 0, 30, 30)
+  linear <- decode(rbind(c(0.4, 0.5, 0.6), c(0.4, 0.5, 0.6), c(0.4, 0.5, 0.6), c(0.8, 0.5, 0.2)))
+  painted <- smooth_face_paint_3d(x, y, rep(1L, 4L), linear, gradients = TRUE, tolerance = 2 / 255)
+  expect_true(all(painted$face == 1L))
+  expect_identical(sum(painted$gradient), 1L)
+  expect_true(all(is.finite(painted$x_mm)))
+  expect_true(painted$flat[!painted$gradient][1L] == encode_rgb_3d(linear[1L, , drop = FALSE]))
+})
+
 test_that("isosurface fill is interpolated to the vertices", {
   d <- expand.grid(x = seq(-1, 1, length.out = 7), y = seq(-1, 1, length.out = 7), z = seq(-1, 1, length.out = 7))
   d$value <- with(d, x^2 + y^2 + z^2)
