@@ -37,7 +37,13 @@ coord_3d(
   axis_lines = "box",
   origin = c(x = 0, y = 0, z = 0),
   clip_planes = list(),
-  stereo = NULL
+  stereo = NULL,
+  space = "euclidean",
+  model = NULL,
+  input = NULL,
+  isometry = NULL,
+  munch_tolerance = 0.001,
+  munch_max_depth = 9L
 )
 }
 \arguments{
@@ -118,6 +124,22 @@ of the panel. A layer's own \code{clip_planes} argument replaces this list for
 that layer.}
 
 \item{stereo}{Stereo output from \code{\link[=stereo_3d]{stereo_3d()}}, or NULL for one view.}
+
+\item{space}{Geometry of paths and faces: \code{"euclidean"} or an internal
+\code{Space3D} extension. Spaces define canonical points, chart conversions,
+distance, geodesics and isometries. See Details.}
+
+\item{model}{Display model supplied by the space; NULL uses its default.}
+
+\item{input}{Input chart supplied by the space; NULL uses \code{model}.}
+
+\item{isometry}{Optional space-specific action on canonical points.}
+
+\item{munch_tolerance}{Positive chord-error tolerance in projected panel
+fractions, used for geodesic subdivision. The default is 0.001.}
+
+\item{munch_max_depth}{Maximum binary subdivision depth, from 0 to 12.
+A space reports an error when this budget cannot meet the tolerance.}
 }
 \value{
 A Coord3D ggproto object.
@@ -125,6 +147,29 @@ A Coord3D ggproto object.
 \description{
 Set \code{z_scales = "free"} here to train a separate z range per facet.
 ggplot2 facets control x and y scales and have no z scale.
+}
+\details{
+Space extensions inherit from \code{ggplot3d:::Space3D}. They declare \code{charts},
+\code{models} and \code{default_model}, and implement \code{to_canonical(data, chart)},
+\code{from_canonical(X, model)}, \code{distance(X, Y)}, \code{geodesic(X, Y, s)} and
+\code{act(g, X)}. Canonical points are finite numeric row matrices of any
+dimension. Geodesic endpoints are paired rows and \code{s} is a scalar or one
+parameter per row, from zero to one. Input positions are scale-transformed
+chart coordinates. Model output has three columns in model axis units;
+\code{model_ranges(model, panel_params)} supplies named x, y, z bounds.
+Four-column output with w = 1 is also accepted. Other homogeneous weights
+and ideal points require scene schema 2.
+
+\code{chart_is_projective(model)} declares straight geodesic images and planar
+faces, allowing subdivision to be omitted. Other models share the frame
+subdivision machinery, sampling geodesics before projection. Faces use
+nested geodesic interpolation on a triangular lattice; shared edges use
+identical canonical samples. Continuous paint attributes interpolate by
+geodesic parameter, with piecewise constant paint on emitted primitives.
+Discrete attributes and source identities follow the starting corner.
+Polygon topology is triangulated in a planar input chart; curved models
+receive those triangles and closed boundary strokes. Panel furniture is
+supplied by the frame. Visibility is exact for the resulting tessellation.
 }
 \section{Theme elements}{
 
@@ -174,4 +219,8 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
   coord_3d(clip_planes = list(clip_plane_3d(c(0, 0, -1), c(z = 2.5))))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
   coord_3d(stereo = stereo_3d("cross"))
+rotation <- diag(4)
+rotation[1:2, 1:2] <- matrix(c(0, 1, -1, 0), 2)
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_path_3d() +
+  coord_3d(isometry = rotation, xlim = c(-4, 4), ylim = c(-4, 4))
 }

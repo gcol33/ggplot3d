@@ -64,6 +64,8 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
       if (identical(coord$model_aspect, "data")) out$camera$aspect <- as.double(vapply(out$ranges, diff, numeric(1)))
       out$coord_params <- coord$config
       out$frame <- bind_frame_3d(coord$frame %or3d% FrameBox, out)
+      out$space_context <- coord$bind_space(out)
+      out$space_munch <- coord$munch
       out$axis_titles <- lapply(c("x", "y", "z"), function(axis) {
         name <- scales[[axis]]$name
         if (!inherits(name, "waiver")) return(name)

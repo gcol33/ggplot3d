@@ -190,7 +190,11 @@ frame_surface_samples_3d <- function(panes, n) {
 segment_points_3d <- function(lo, hi, s) (1 - s) * lo + s * hi
 
 canonical_segments_3d <- function(p, q) {
-  swap <- p[, 1L] > q[, 1L] | (p[, 1L] == q[, 1L] & (p[, 2L] > q[, 2L] | (p[, 2L] == q[, 2L] & p[, 3L] > q[, 3L])))
+  swap <- rep(FALSE, nrow(p)); equal <- rep(TRUE, nrow(p))
+  for (j in seq_len(ncol(p))) {
+    swap <- swap | (equal & p[, j] > q[, j])
+    equal <- equal & p[, j] == q[, j]
+  }
   lo <- p; hi <- q
   lo[swap, ] <- q[swap, ]; hi[swap, ] <- p[swap, ]
   list(lo = lo, hi = hi, swap = swap)
@@ -201,29 +205,48 @@ canonical_segments_3d <- function(p, q) {
 segment_levels_3d <- function(frame, lo, hi, tolerance = frame$tolerance, max_level = 9L) {
   n <- nrow(lo)
   level <- integer(n)
+  if (isTRUE(frame$projective)) return(level)
   active <- seq_len(n)
   for (current in 0:max_level) {
     if (!length(active)) break
     m <- 2^current
     edge <- rep(active, each = m)
     j <- rep(seq_len(m) - 1, length(active))
-    a <- frame$map(segment_points_3d(lo[edge, , drop = FALSE], hi[edge, , drop = FALSE], j / m))
-    b <- frame$map(segment_points_3d(lo[edge, , drop = FALSE], hi[edge, , drop = FALSE], (j + 1) / m))
-    mid <- frame$map(segment_points_3d(lo[edge, , drop = FALSE], hi[edge, , drop = FALSE], (j + 0.5) / m))
-    deviation <- chord_distance_3d(mid, a, b)
+    sample <- function(s) subdivision_metric_3d(frame, frame$map(subdivision_points_3d(frame,
+      lo[edge, , drop = FALSE], hi[edge, , drop = FALSE], s)))
+    a <- sample(j / m); b <- sample((j + 1) / m)
+    probes <- if (isTRUE(frame$strict)) c(0.25, 0.5, 0.75) else 0.5
+    deviation <- Reduce(pmax, lapply(probes, function(s) chord_distance_3d(sample((j + s) / m), a, b, segment = isTRUE(frame$strict))))
     worst <- vapply(split(deviation, factor(edge, levels = active)), max, numeric(1))
     level[active] <- current
     active <- active[worst > tolerance]
   }
+  if (length(active) && isTRUE(frame$strict)) stop("Geodesic subdivision exceeded max_depth before reaching munch_tolerance.", call. = FALSE)
   level
+}
+
+subdivision_points_3d <- function(frame, lo, hi, s) {
+  if (is.function(frame$interpolate)) frame$interpolate(lo, hi, s) else segment_points_3d(lo, hi, s)
+}
+
+subdivision_metric_3d <- function(frame, xyz) {
+  if (is.function(frame$metric)) frame$metric(xyz) else xyz
+}
+
+triangle_points_3d <- function(frame, p0, p1, p2, a, b) {
+  if (!is.function(frame$interpolate)) return((1 - a - b) * p0 + a * p1 + b * p2)
+  total <- a + b
+  edge <- subdivision_points_3d(frame, p1, p2, ifelse(total > 0, b / total, 0))
+  subdivision_points_3d(frame, p0, edge, total)
 }
 
 # Distance of mapped midpoints from the line through the mapped endpoints: a
 # straight image with uneven parametrisation needs no subdivision.
-chord_distance_3d <- function(m, a, b) {
+chord_distance_3d <- function(m, a, b, segment = FALSE) {
   d <- b - a; length <- sqrt(rowSums(d^2))
   v <- m - a
   along <- rowSums(v * d) / ifelse(length > 0, length^2, 1)
+  if (segment) along <- pmax(0, pmin(1, along))
   out <- sqrt(rowSums((v - along * d)^2))
   out[!(length > 0)] <- sqrt(rowSums(v^2))[!(length > 0)]
   out[!is.finite(out)] <- Inf
@@ -238,33 +261,35 @@ segment_model_3d <- function(frame, lo, hi, level, s) {
   position <- s * n
   j0 <- pmin(floor(position), n - 1)
   f <- position - j0
-  a <- frame$map(segment_points_3d(lo, hi, j0 / n))
+  a <- frame$map(subdivision_points_3d(frame, lo, hi, j0 / n))
   exact <- f == 0
   out <- a
   if (any(!exact)) {
     k <- which(!exact)
-    b <- frame$map(segment_points_3d(lo[k, , drop = FALSE], hi[k, , drop = FALSE], (j0[k] + 1) / n[k]))
+    b <- frame$map(subdivision_points_3d(frame, lo[k, , drop = FALSE], hi[k, , drop = FALSE], (j0[k] + 1) / n[k]))
     out[k, ] <- (1 - f[k]) * a[k, , drop = FALSE] + f[k] * b
   }
   out
 }
 
-polyline_model_3d <- function(frame, xyz) {
+polyline_model_3d <- function(frame, xyz, max_level = 9L) {
   if (nrow(xyz) < 2L) return(list(model = frame$map(xyz), scale = xyz))
   p <- xyz[-nrow(xyz), , drop = FALSE]; q <- xyz[-1L, , drop = FALSE]
   seg <- canonical_segments_3d(p, q)
-  level <- segment_levels_3d(frame, seg$lo, seg$hi)
+  level <- segment_levels_3d(frame, seg$lo, seg$hi, max_level = max_level)
   pieces <- lapply(seq_len(nrow(p)), function(i) {
     m <- 2^level[i]
     s <- (seq_len(m + 1L) - 1) / m
     if (seg$swap[i]) s <- 1 - s
     lo <- seg$lo[rep(i, length(s)), , drop = FALSE]; hi <- seg$hi[rep(i, length(s)), , drop = FALSE]
     model <- segment_model_3d(frame, lo, hi, rep(level[i], length(s)), s)
-    scale <- segment_points_3d(lo, hi, s)
+    scale <- subdivision_points_3d(frame, lo, hi, s)
     keep <- if (i > 1L) -1L else seq_along(s)
-    list(model = model[keep, , drop = FALSE], scale = scale[keep, , drop = FALSE])
+    list(model = model[keep, , drop = FALSE], scale = scale[keep, , drop = FALSE],
+      segment = rep.int(i, nrow(model[keep, , drop = FALSE])), s = (if (seg$swap[i]) 1 - s else s)[keep])
   })
-  list(model = do.call(rbind, lapply(pieces, `[[`, "model")), scale = do.call(rbind, lapply(pieces, `[[`, "scale")))
+  list(model = do.call(rbind, lapply(pieces, `[[`, "model")), scale = do.call(rbind, lapply(pieces, `[[`, "scale")),
+    segment = unlist(lapply(pieces, `[[`, "segment")), s = unlist(lapply(pieces, `[[`, "s")))
 }
 
 # Triangles in scale space become a lattice of 4^k triangles per input, with
@@ -283,18 +308,23 @@ munch_triangles_3d <- function(frame, p0, p1, p2, boundary = matrix(TRUE, nrow(p
   n <- nrow(p0)
   if (!n) return(list(model = matrix(numeric(), 0L, 3L), triangles = matrix(integer(), 0L, 3L), parent = integer(), point_parent = integer(), scale = matrix(numeric(), 0L, 3L)))
   edges <- list(canonical_segments_3d(p0, p1), canonical_segments_3d(p1, p2), canonical_segments_3d(p2, p0))
-  levels <- vapply(edges, function(e) segment_levels_3d(frame, e$lo, e$hi), integer(n))
+  levels <- vapply(edges, function(e) segment_levels_3d(frame, e$lo, e$hi,
+    max_level = if (isTRUE(frame$strict)) max_level else 9L), integer(n))
   if (n == 1L) levels <- matrix(levels, 1L)
   levels[!boundary] <- 0L
   m0 <- frame$map(p0); m1 <- frame$map(p1); m2 <- frame$map(p2)
   normal <- cross_rows_3d(m1 - m0, m2 - m0)
   area <- sqrt(rowSums(normal^2))
-  offset <- frame$map((p0 + p1 + p2) / 3) - m0
+  offset <- frame$map(if (is.function(frame$interpolate)) triangle_points_3d(frame, p0, p1, p2, 1/3, 1/3) else (p0 + p1 + p2) / 3) - m0
   deviation <- ifelse(area > 0, abs(rowSums(offset * normal)) / area, sqrt(rowSums(offset^2)))
   interior <- ifelse(is.finite(deviation) & deviation > frame$tolerance, ceiling(log2(sqrt(deviation / frame$tolerance))), 0)
   levels <- pmin(levels, max_level)
   level <- pmin(max_level, pmax(apply(levels, 1L, max), as.integer(interior)))
-  model <- list(); scale <- list(); triangles <- list(); parent <- list(); point_parent <- list(); offset <- 0L
+  if (isTRUE(frame$strict)) {
+    level <- vapply(seq_len(n), function(i) triangle_level_3d(frame,
+      p0[i, , drop = FALSE], p1[i, , drop = FALSE], p2[i, , drop = FALSE], level[i], max_level), integer(1))
+  }
+  model <- list(); scale <- list(); triangles <- list(); parent <- list(); point_parent <- list(); weights <- list(); offset <- 0L
   for (lv in sort(unique(level))) {
     rows <- which(level == lv)
     k <- 2L^lv
@@ -303,7 +333,7 @@ munch_triangles_3d <- function(frame, p0, p1, p2, boundary = matrix(TRUE, nrow(p
     owner <- rep(rows, each = m)
     i <- rep(lattice$ij[, 1L], length(rows)); j <- rep(lattice$ij[, 2L], length(rows))
     a <- i / k; b <- j / k
-    xyz <- (1 - a - b) * p0[owner, , drop = FALSE] + a * p1[owner, , drop = FALSE] + b * p2[owner, , drop = FALSE]
+    xyz <- triangle_points_3d(frame, p0[owner, , drop = FALSE], p1[owner, , drop = FALSE], p2[owner, , drop = FALSE], a, b)
     out <- frame$map(xyz)
     on_edge <- list(j == 0L, i + j == k, i == 0L)
     params <- list(a, b, 1 - b)
@@ -321,11 +351,30 @@ munch_triangles_3d <- function(frame, p0, p1, p2, boundary = matrix(TRUE, nrow(p
       rep(block, each = nrow(lattice$triangles))
     parent[[length(parent) + 1L]] <- rep(rows, each = nrow(lattice$triangles))
     point_parent[[length(point_parent) + 1L]] <- owner
+    weights[[length(weights) + 1L]] <- cbind(1 - a - b, a, b)
     offset <- offset + m * length(rows)
   }
   list(model = do.call(rbind, model), triangles = do.call(rbind, triangles),
     parent = unlist(parent, use.names = FALSE), point_parent = unlist(point_parent, use.names = FALSE),
-    scale = do.call(rbind, scale))
+    scale = do.call(rbind, scale), weights = do.call(rbind, weights))
+}
+
+# Samples each subtriangle at its barycentre in the drawing metric.
+triangle_level_3d <- function(frame, p0, p1, p2, level, max_level) {
+  for (current in level:max_level) {
+    lattice <- triangle_lattice_3d(2^current)
+    ab <- lattice$ij / 2^current
+    sample <- function(weights) frame$map(triangle_points_3d(frame,
+      p0[rep(1L, nrow(weights)), , drop = FALSE], p1[rep(1L, nrow(weights)), , drop = FALSE],
+      p2[rep(1L, nrow(weights)), , drop = FALSE], weights[, 1L], weights[, 2L]))
+    vertices <- sample(ab)
+    t <- lattice$triangles
+    centroid <- (ab[t[, 1L], , drop = FALSE] + ab[t[, 2L], , drop = FALSE] + ab[t[, 3L], , drop = FALSE]) / 3
+    chord <- (vertices[t[, 1L], , drop = FALSE] + vertices[t[, 2L], , drop = FALSE] + vertices[t[, 3L], , drop = FALSE]) / 3
+    error <- sqrt(rowSums((subdivision_metric_3d(frame, sample(centroid)) - subdivision_metric_3d(frame, chord))^2))
+    if (all(is.finite(error)) && max(error) <= frame$tolerance) return(as.integer(current))
+  }
+  stop("Geodesic face subdivision exceeded max_depth before reaching munch_tolerance.", call. = FALSE)
 }
 
 # Packet munching ---------------------------------------------------------------
@@ -333,10 +382,10 @@ munch_triangles_3d <- function(frame, p0, p1, p2, boundary = matrix(TRUE, nrow(p
 # Maps a scale-space packet through a frame. Linear frames map vertices; other
 # frames clip to the panel box in scale space, then subdivide faces and
 # strokes so curved images stay within tolerance.
-munch_packet_3d <- function(frame, packet, clip = TRUE) {
+munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
   validate_scene_packet(packet)
   if (frame$linear) {
-    xyz <- frame$map(do.call(cbind, packet$vertices))
+    xyz <- frame$map(coordinates %or3d% do.call(cbind, packet$vertices))
     packet$vertices <- list(x = as.double(xyz[, 1L]), y = as.double(xyz[, 2L]), z = as.double(xyz[, 3L]))
     validate_scene_packet(packet)
     return(packet)
@@ -346,7 +395,7 @@ munch_packet_3d <- function(frame, packet, clip = TRUE) {
     packet <- clip_packet_planes_3d(packet, unit_box_planes_3d())
     clipped <- attr(packet, "parent")
   }
-  scale_xyz <- do.call(cbind, packet$vertices)
+  scale_xyz <- coordinates %or3d% do.call(cbind, packet$vertices)
   corner_xyz <- function(rows) scale_xyz[packet$corners$vertex[rows], , drop = FALSE]
   out_xyz <- list(); out_rows <- list(); out_scale <- list(); n_points <- 0L
   emit <- function(model, source_row, scale) {
@@ -365,13 +414,13 @@ munch_packet_3d <- function(frame, packet, clip = TRUE) {
     for (i in 2:(nrow(xyz) - 1L)) {
       tri$p0[[length(tri$p0) + 1L]] <- xyz[1L, ]; tri$p1[[length(tri$p1) + 1L]] <- xyz[i, ]; tri$p2[[length(tri$p2) + 1L]] <- xyz[i + 1L, ]
       tri$parent <- c(tri$parent, f)
-      tri$boundary[[length(tri$boundary) + 1L]] <- c(i == 2L, TRUE, i == nrow(xyz) - 1L)
+      tri$boundary[[length(tri$boundary) + 1L]] <- if (isTRUE(frame$strict)) rep(TRUE, 3L) else c(i == 2L, TRUE, i == nrow(xyz) - 1L)
     }
   }
   face_rows <- list(corners = integer(), parent = integer())
   if (length(tri$parent)) {
     munched <- munch_triangles_3d(frame, do.call(rbind, tri$p0), do.call(rbind, tri$p1), do.call(rbind, tri$p2),
-      do.call(rbind, tri$boundary))
+      do.call(rbind, tri$boundary), max_level = frame$max_level %or3d% 6L)
     parents <- tri$parent[munched$parent]
     a <- munched$model[munched$triangles[, 1L], , drop = FALSE]
     b <- munched$model[munched$triangles[, 2L], , drop = FALSE]
@@ -387,7 +436,7 @@ munch_packet_3d <- function(frame, packet, clip = TRUE) {
   line_rows <- list(corners = integer(), count = integer(), parent = integer())
   for (l in seq_along(line$offset)) {
     xyz <- corner_xyz(seq.int(line$offset[l], length.out = line$count[l]))
-    path <- polyline_model_3d(frame, xyz)
+    path <- polyline_model_3d(frame, xyz, max_level = frame$max_level %or3d% 9L)
     ids <- emit(path$model, rep.int(line$source_row[l], nrow(path$model)), path$scale)
     line_rows$corners <- c(line_rows$corners, ids)
     line_rows$count <- c(line_rows$count, length(ids))

@@ -158,6 +158,38 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #'   transformation name such as `"log10"` or a scales transformation. Lines
 #'   and faces are subdivided so their images bend with the transformation.
 #' @param default Whether this is the default coordinate system.
+#' @param space Geometry of paths and faces: `"euclidean"` or an internal
+#'   `Space3D` extension. Spaces define canonical points, chart conversions,
+#'   distance, geodesics and isometries. See Details.
+#' @param model Display model supplied by the space; NULL uses its default.
+#' @param input Input chart supplied by the space; NULL uses `model`.
+#' @param isometry Optional space-specific action on canonical points.
+#' @param munch_tolerance Positive chord-error tolerance in projected panel
+#'   fractions, used for geodesic subdivision. The default is 0.001.
+#' @param munch_max_depth Maximum binary subdivision depth, from 0 to 12.
+#'   A space reports an error when this budget cannot meet the tolerance.
+#' @details
+#' Space extensions inherit from `ggplot3d:::Space3D`. They declare `charts`,
+#' `models` and `default_model`, and implement `to_canonical(data, chart)`,
+#' `from_canonical(X, model)`, `distance(X, Y)`, `geodesic(X, Y, s)` and
+#' `act(g, X)`. Canonical points are finite numeric row matrices of any
+#' dimension. Geodesic endpoints are paired rows and `s` is a scalar or one
+#' parameter per row, from zero to one. Input positions are scale-transformed
+#' chart coordinates. Model output has three columns in model axis units;
+#' `model_ranges(model, panel_params)` supplies named x, y, z bounds.
+#' Four-column output with w = 1 is also accepted. Other homogeneous weights
+#' and ideal points require scene schema 2.
+#'
+#' `chart_is_projective(model)` declares straight geodesic images and planar
+#' faces, allowing subdivision to be omitted. Other models share the frame
+#' subdivision machinery, sampling geodesics before projection. Faces use
+#' nested geodesic interpolation on a triangular lattice; shared edges use
+#' identical canonical samples. Continuous paint attributes interpolate by
+#' geodesic parameter, with piecewise constant paint on emitted primitives.
+#' Discrete attributes and source identities follow the starting corner.
+#' Polygon topology is triangulated in a planar input chart; curved models
+#' receive those triangles and closed boundary strokes. Panel furniture is
+#' supplied by the frame. Visibility is exact for the resulting tessellation.
 #' @section Theme elements:
 #' Besides the ggplot2 elements, panels read these theme elements:
 #' \itemize{
@@ -204,6 +236,10 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #'   coord_3d(clip_planes = list(clip_plane_3d(c(0, 0, -1), c(z = 2.5))))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
 #'   coord_3d(stereo = stereo_3d("cross"))
+#' rotation <- diag(4)
+#' rotation[1:2, 1:2] <- matrix(c(0, 1, -1, 0), 2)
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_path_3d() +
+#'   coord_3d(isometry = rotation, xlim = c(-4, 4), ylim = c(-4, 4))
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      oblique = c(angle = 45, ratio = 0.5), up = "z",
@@ -213,7 +249,9 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      panes = c("back", "floor"), box = "back", z_scales = "fixed", crs = NULL,
                      light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
                      transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0),
-                     clip_planes = list(), stereo = NULL) {
+                     clip_planes = list(), stereo = NULL, space = "euclidean", model = NULL,
+                     input = NULL, isometry = NULL, munch_tolerance = 1e-3, munch_max_depth = 9L) {
+  space_spec <- space_spec_3d(space, model, input, isometry, munch_tolerance, munch_max_depth)
   clip <- match.arg(clip, c("on", "off"))
   clip_planes <- check_clip_planes_3d(clip_planes)
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
@@ -236,6 +274,8 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
   })
   cameras <- lapply(panel_args, camera_from_args_3d)
   ggplot2::ggproto(NULL, Coord3D, camera = cameras[[1L]], cameras = cameras, camera_args = panel_args[[1L]], model_aspect = aspect, frame = frame_box_3d(transform),
+    space = space_spec$space, model = space_spec$model, input = space_spec$input,
+    isometry = isometry, munch_tolerance = munch_tolerance, munch_max_depth = munch_max_depth,
     limits = list(x = xlim, y = ylim, z = zlim), expand_axes = expand_axes,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
@@ -341,6 +381,22 @@ camera_3d <- function(preset = c("default", "isometric", "dimetric", "trimetric"
 
 Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
   frame = NULL,
+  space = NULL,
+  model = NULL,
+  input = NULL,
+  isometry = NULL,
+  munch_tolerance = 1e-3,
+  munch_max_depth = 9L,
+  bind_space = function(self, panel_params) {
+    spec <- space_spec_3d(self$space %or3d% "euclidean", self$model, self$input,
+      self$isometry, self$munch_tolerance, self$munch_max_depth)
+    bind_space_3d(spec, panel_params)
+  },
+  munch = function(self, data, primitives, kinds, counts, panel_params) {
+    context <- panel_params$space_context
+    if (is.null(context)) return(list(data = data, primitives = primitives, kinds = kinds, counts = counts))
+    munch_3d(data, primitives, kinds, counts, context)
+  },
   cameras = NULL,
   # Camera of the panel in layout row `index` of `count` panels.
   panel_camera = function(self, index, count) {
@@ -379,7 +435,15 @@ Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
     structure(lapply(c("x", "y", "z"), function(a) panel_params[[a]]$get_transformation()$inverse(panel_params$ranges[[a]])), names = c("x", "y", "z"))
   },
   transform = function(data, panel_params) project_positions_3d(data, panel_params),
-  distance = function(x, y, panel_params, z = NULL) {
+  distance = function(self, x, y, panel_params, z = NULL) {
+    if (!is.null(panel_params$space_context)) {
+      context <- panel_params$space_context
+      X <- space_canonical_3d(data.frame(x = x, y = y, z = z %or3d% rep(0, length(x))), context)
+      if (nrow(X) < 2L) return(numeric())
+      d <- context$space$distance(X[-nrow(X), , drop = FALSE], X[-1L, , drop = FALSE])
+      if (!is.numeric(d) || length(d) != nrow(X) - 1L || any(!is.finite(d) | d < 0)) stop("Space distance() must return finite nonnegative distances for paired rows.", call. = FALSE)
+      return(d)
+    }
     squared <- diff(x / diff(panel_params$ranges$x))^2 + diff(y / diff(panel_params$ranges$y))^2
     if (!is.null(z)) squared <- squared + diff(z / diff(panel_params$ranges$z))^2
     sqrt(squared)
@@ -417,7 +481,7 @@ project_positions_3d <- function(data, panel_params) {
   normal <- normalise_positions_3d(data, panel_params)
   coordinates <- normal[c("x", "y", "z")]
   frame <- frame_of_3d(panel_params)
-  if (!isTRUE(frame$identity)) {
+  if (is.null(panel_params$space_context) && !isTRUE(frame$identity)) {
     mapped <- frame$map(as.matrix(coordinates))
     coordinates[] <- lapply(seq_len(3L), function(k) mapped[, k])
   }
@@ -428,6 +492,11 @@ project_positions_3d <- function(data, panel_params) {
     coordinates <- rbind(coordinates, end)
   }
   valid <- which(Reduce(`&`, lapply(coordinates, is.finite)))
+  if (length(valid) && !is.null(panel_params$space_context)) {
+    context <- panel_params$space_context
+    X <- space_canonical_3d(space_input_3d(coordinates[valid, , drop = FALSE], context), context)
+    coordinates[valid, ] <- as.data.frame(space_subdivision_3d(context)$map(X))
+  }
   projected <- matrix(NA_real_, nrow(coordinates), 6L,
                       dimnames = list(NULL, c("x_npc", "y_npc", "x_camera", "y_camera", "depth", "clip_w")))
   if (length(valid)) {
@@ -447,7 +516,7 @@ project_positions_3d <- function(data, panel_params) {
   start <- seq_len(nrow(data))
   out <- data
   out$x <- projected[start, "x_npc"]; out$y <- projected[start, "y_npc"]
-  for (axis in c("x", "y", "z")) out[[paste0(".", axis, "_model")]] <- normal[[axis]]
+  for (axis in c("x", "y", "z")) out[[paste0(".", axis, "_model")]] <- if (is.null(panel_params$space_context)) normal[[axis]] else coordinates[[axis]][start]
   for (name in c("x_camera", "y_camera", "depth", "clip_w")) out[[paste0(".", name)]] <- projected[start, name]
   out$.z_camera <- out$.depth
   out$.visible <- is.finite(out$x) & is.finite(out$y)

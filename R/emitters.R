@@ -240,6 +240,7 @@ scene_draw_panel_3d <- function(entry) {
 # An emitter returns a scene packet, or an annotation grob drawn over the scene.
 emit_scene_3d <- function(data, params, panel_params, layer_id) {
   check_3d_build(!is.null(panel_params$camera) && !is.null(panel_params$ranges$z))
+  recipe <- if (!is.null(panel_params$space_context)) list(data = data, params = params, panel_params = panel_params, layer_id = layer_id) else NULL
   entry <- .emitters_3d[[params$.emitter]]
   if (is.null(entry)) stop("Unknown 3D emitter: ", params$.emitter, call. = FALSE)
   if (is.null(data$.source)) data$.source <- seq_len(nrow(data))
@@ -255,9 +256,14 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   raster <- params$raster %or3d% FALSE
   if (!is.logical(raster) || length(raster) != 1L || is.na(raster)) stop("raster must be TRUE or FALSE.", call. = FALSE)
   data <- normalise_positions_3d(data, panel_params)
+  params$.space_context <- panel_params$space_context
+  params$.space_munch <- panel_params$space_munch
   params$clip_planes <- layer_clip_planes_3d(params$clip_planes, panel_params)
   packet <- if (is.null(params$.project)) entry$emit(data, params, panel_params) else emit_projected_3d(entry, data, params, panel_params)
   if (inherits(packet, "grob")) return(packet)
+  if (!is.null(panel_params$space_context) && !isTRUE(attr(packet, "space_mapped")) && !isTRUE(attr(packet, "model_space"))) {
+    packet <- space_packet_3d(packet, panel_params$space_context)
+  }
   validate_scene_packet(packet)
   if (raster && nrow(packet$styles)) packet$styles$raster <- TRUE
   frame <- frame_of_3d(panel_params)
@@ -268,6 +274,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
     packet <- clip_packet_planes_3d(packet, params$clip_planes)
     attr(packet, "parent") <- NULL
   }
+  if (!is.null(recipe)) attr(packet, "space_recipe") <- recipe
   if (model_space) return(packet)
   frame_packet_3d(frame, packet, panel_params$camera$clip_data)
 }
@@ -366,6 +373,15 @@ vertex_identity_3d <- function(data, columns) {
 
 packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id, counts) {
   if (!length(primitives)) return(new_scene_packet(panel_id = panel_id))
+  space_mapped <- !is.null(params$.space_context)
+  if (space_mapped) {
+    context <- list(space_context = params$.space_context)
+    munched <- params$.space_munch(data, primitives, kinds, counts, context)
+    data <- munched$data; primitives <- munched$primitives
+    kinds <- munched$kinds; counts <- munched$counts
+    params$.munch_start <- munched$start; params$.munch_end <- munched$end
+    params$.vertex_key <- NULL
+  }
   offsets <- cumsum(c(1L, counts[-length(counts)]))
   rows <- primitives[offsets]
   normals <- NULL
@@ -421,6 +437,10 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
       arrow <- params$arrow
       tables[[kind]]$arrow_start <- rep(!is.null(arrow) && arrow$ends %in% c(1L, 3L), length(i))
       tables[[kind]]$arrow_end <- rep(!is.null(arrow) && arrow$ends %in% c(2L, 3L), length(i))
+      if (space_mapped) {
+        tables[[kind]]$arrow_start <- tables[[kind]]$arrow_start & params$.munch_start[i]
+        tables[[kind]]$arrow_end <- tables[[kind]]$arrow_end & params$.munch_end[i]
+      }
     }
     if (kind == "text") {
       for (key in c("hjust", "vjust", "angle")) tables[[kind]][[key]] <- material$styles[[key]][style]
@@ -438,8 +458,13 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     tables$footprints <- footprints$footprints
     tables$footprint_vertices <- footprints$vertices
   }
-  do.call(new_scene_packet, c(list(vertices = vertices, corners = corners), tables,
+  packet <- do.call(new_scene_packet, c(list(vertices = vertices, corners = corners), tables,
                              list(styles = material$styles, panel_id = panel_id)))
+  if (space_mapped) {
+    attr(packet, "space_mapped") <- TRUE
+    attr(packet, "model_space") <- TRUE
+  }
+  packet
 }
 
 valid_rows_3d <- function(data, params, columns = c("x", "y", "z")) {
