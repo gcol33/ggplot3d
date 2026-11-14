@@ -346,6 +346,9 @@
     add(values) {
       if (this.count === this.capacity) this.allocate(this.capacity*2);
       const v = this.count++;
+      return this.set(v, values);
+    }
+    set(v, values) {
       for (const name in values) {
         const a = this.byName[name], x = values[name], base = v*this.stride+a.offset;
         if (a.type === 'f32') for (let k = 0; k < a.size; k++) this.f32[base/4+k] = x[k];
@@ -368,7 +371,7 @@
     });
   }
 
-  function packetPrimitives(packet, furniture) {
+  function packetPrimitives(packet, furniture, glyphs = new Map()) {
     ['vertices','corners','faces','polylines','markers','text','footprints','footprint_vertices'].forEach(name => {
       Object.keys(packet[name]).forEach(key => { packet[name][key] = column(packet[name][key]); });
     });
@@ -379,10 +382,14 @@
       for (let i = 0; i < t.offset.length; i++) {
         const material = packet.materials[t.style_id[i]-1];
         if (material.anchor) continue;
-        const points = [];
-        for (let j = 0; j < t.count[i]; j++) { const v = corner[t.offset[i]+j-1]-1; points.push([vx[v], vy[v], vz[v]]); }
+        const points = [], glyph = [];
+        for (let j = 0; j < t.count[i]; j++) {
+          const v = corner[t.offset[i]+j-1]-1;
+          points.push([vx[v], vy[v], vz[v]]); glyph.push(glyphs.get(v+1));
+        }
         const p = {kind, points, material, opacity: t.opacity[i], partition: t.partition[i], furniture, row: i, table: t, packet,
           primitiveId: t.primitive_id[i], layer: t.layer_id[i], source: t.source_row[i]};
+        if (glyph.some(Boolean)) p.glyph = glyph;
         if (kind === FACE) p.normal = material.normal || cross(sub(points[1], points[0]), sub(points[2], points[0]));
         result.push(p);
       }
@@ -401,7 +408,16 @@
   // GPU geometry of one panel. Primitive i (0-based) carries pick id i+1;
   // furniture carries 0 and is never picked.
   function buildScene(gl, panel) {
-    const prims = packetPrimitives(panel.scene, false).concat(packetPrimitives(panel.furniture, true));
+    const glyphs = new Map();
+    arr(panel.glyphs).forEach(g => {
+      const rows = column(g.rows), angle = column(g.angle);
+      const vectors = {};
+      ['centre', 'local', 'u', 'v', 'up'].forEach(key => { vectors[key] = g[key] == null ? null : column(g[key]); });
+      const at = (key, i) => vectors[key] == null ? null : Array.from(vectors[key].slice(3*i, 3*i+3));
+      rows.forEach((row, i) => glyphs.set(row, {facing: g.facing, angle: angle[i]*rad,
+        centre: at('centre', i), local: at('local', i), u: at('u', i), v: at('v', i), up: at('up', i)}));
+    });
+    const prims = packetPrimitives(panel.scene, false, glyphs).concat(packetPrimitives(panel.furniture, true));
     prims.forEach(p => {
       if (p.kind === MARKER && p.packet.footprints.kind[p.packet.markers.footprint_id[p.row]-1] === 1) p.kind = DISC;
     });
@@ -447,7 +463,7 @@
       p.vertexCount = V.count-p.vertexStart; p.elementCount = E.length-p.elementStart;
       if (!p.elementCount) p.skip = true;
     });
-    const scene = {prims, dashed, kinds: {}};
+    const scene = {prims, dashed, kinds: {}, glyphs, glyphFaces: prims.filter(p => p.glyph && p.kind === FACE && !p.skip)};
     KINDS.forEach(k => {
       const V = vertices[k], vao = gl.createVertexArray(), buffer = gl.createBuffer();
       gl.bindVertexArray(vao);
@@ -477,6 +493,52 @@
       gl.deleteTexture(dashTexture);
     };
     return scene;
+  }
+
+  // Outline vertices are positioned in model space before the colour and id
+  // passes. The same updated positions also supply face normals and labels.
+  function updateGlyphs(gl, V) {
+    if (!V.scene.glyphFaces.length) return;
+    const b = V.basis, c = V.camera, step = 1e-3;
+    const depth = b.perspective ? b.distance+step*dot(b.right, b.forward) : 1;
+    const factor = step*b.base*V.data.viewport.height_mm/(2*depth);
+    const k = step/Math.hypot(dot(b.right, b.right)*factor, dot(b.right, b.up)*factor);
+    function planeUp(n, hint) {
+      let v = sub(hint, n.map(x => x*dot(hint, n)));
+      if (dot(v, v) < 1e-20) {
+        const index = n.reduce((best, x, i) => Math.abs(x) < Math.abs(n[best]) ? i : best, 0);
+        const axis = [0, 0, 0]; axis[index] = 1;
+        v = sub(axis, n.map(x => x*dot(axis, n)));
+      }
+      return norm(v);
+    }
+    V.scene.glyphs.forEach(g => {
+      const delta = g.centre.map((x, i) => (x-c.target[i])*b.scale[i]);
+      const toward = b.perspective ? delta.map((x, i) => -x-b.forward[i]*b.distance) : b.ray.map(x => -x);
+      let u, v, n;
+      if (g.facing === 'fixed') {
+        u = g.u; v = g.v; n = cross(u, v);
+        if (dot(n, toward) < 0) u = u.map(x => -x);
+      } else {
+        n = norm(g.facing === 'camera_point' ? toward : (b.perspective ? b.forward : b.ray).map(x => -x));
+        v = planeUp(n, g.up || b.up); u = norm(cross(v, n));
+      }
+      const x = g.local[0]*Math.cos(g.angle)-g.local[1]*Math.sin(g.angle);
+      const y = g.local[0]*Math.sin(g.angle)+g.local[1]*Math.cos(g.angle);
+      g.point = g.centre.map((a, i) => a+(x*u[i]+y*v[i])*k/b.scale[i]);
+    });
+    const geometry = V.scene.kinds[FACE], vertices = geometry.vertices, ranges = [];
+    V.scene.glyphFaces.forEach(p => {
+      p.points = p.glyph.map((g, i) => g ? g.point : p.points[i]);
+      p.normal = cross(sub(p.points[1], p.points[0]), sub(p.points[2], p.points[0]));
+      p.points.forEach((point, i) => vertices.set(p.vertexStart+i, {aPos: point, aNormal: p.normal}));
+      const end = p.vertexStart+p.vertexCount, last = ranges[ranges.length-1];
+      if (last && last[1] === p.vertexStart) last[1] = end;
+      else ranges.push([p.vertexStart, end]);
+    });
+    gl.bindBuffer(gl.ARRAY_BUFFER, geometry.buffer);
+    ranges.forEach(([start, end]) => gl.bufferSubData(gl.ARRAY_BUFFER, start*vertices.stride,
+      vertices.u8.subarray(start*vertices.stride, end*vertices.stride)));
   }
 
   // Marker footprints in mm around the anchor: ellipses as one quad whose
@@ -923,6 +985,7 @@
         views.forEach(V => {
           const vp = V.data.viewport, r = V.data.rect_mm, ppm = F.ppm;
           V.basis = cameraBasis(V.camera, vp, V.framing);
+          updateGlyphs(gl, V);
           const px = F.x+r[0]*ppm, py = F.y+r[1]*ppm;
           V.layout = {ppm, px, py, pw: r[2]*ppm, ph: r[3]*ppm,
             ox: px+(r[2]-vp.outer_width_mm)*ppm/2+V.data.framing.origin[0]*ppm,
@@ -1156,7 +1219,7 @@
       resize(width, height);
       return {
         renderValue: function (x) {
-          if (x.schema_version !== 3) throw Error('Unsupported ggplot3d viewer schema');
+          if (x.schema_version !== 4) throw Error('Unsupported ggplot3d viewer schema');
           stop(); pathIndex = 0;
           views.forEach(V => V.scene.release());
           if (transparency) { transparency.release(); transparency = null; }

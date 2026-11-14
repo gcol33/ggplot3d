@@ -12,7 +12,7 @@ test_that("viewer serializes one mapped model scene with furniture and camera", 
   expect_s3_class(w, "htmlwidget")
   expect_s3_class(w, "ggplot3d_view")
   expect_identical(w$elementId, "motion-test")
-  expect_identical(w$x$schema_version, 3L)
+  expect_identical(w$x$schema_version, 4L)
   expect_null(w$x$chrome)
   expect_length(w$x$panels, 1L)
   panel <- w$x$panels[[1L]]

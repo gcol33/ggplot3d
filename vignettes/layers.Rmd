@@ -54,6 +54,27 @@ p + geom_segment_3d(aes(xend = x, yend = y, zend = 0),
 p + geom_text_3d(aes(label = label), size = 5) + coord_3d()
 ```
 
+Text outlines can lie in a plane through each anchor. `normal` gives its
+direction in normalized panel coordinates; `up` gives the reading-up hint.
+The frame and aspect scaling transform those directions into the displayed
+model. `angle` rotates within the plane.
+
+```{r tilted-text, fig.alt="Font outlines lying on tilted planes through three anchors."}
+p + geom_text_3d(aes(label = label), orientation = "plane",
+  normal = c(1, 1, 1), up = c(0, 0, 1), size = 8) + coord_3d()
+```
+
+`facing = "camera_plane"` gives the outlines a shared view-facing direction.
+`facing = "camera_point"` turns each label toward the perspective eye from
+its own anchor. Each panel resolves its orientation using its drawing camera;
+the HTML viewer updates it during orbit and playback. The outlines participate
+in the scene's depth testing and picking.
+
+```{r camera-text, fig.alt="Font outlines facing the perspective camera at three anchors."}
+p + geom_text_3d(aes(label = label), orientation = "plane",
+  facing = "camera_point", size = 8) + coord_3d(projection = "perspective")
+```
+
 ```{r droplines, fig.alt="Three points with lines connecting them to the floor of the box."}
 p + geom_dropline_3d(face = "zmin", linewidth = 0.8) +
   geom_point_3d(size = 3) + coord_3d()

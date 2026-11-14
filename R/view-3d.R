@@ -52,7 +52,7 @@
 #'   the views [animate_3d()] renders; dragging or Reset stops it.
 #' @param fps Camera views per second of the sampled path, default 30.
 #' @return An htmlwidget of class ggplot3d_view. Its x contains schema_version
-#'   (3), frame (the plot size in mm), chrome (the SVG of everything outside
+#'   (4), frame (the plot size in mm), chrome (the SVG of everything outside
 #'   the panels, or NULL), panels, link (whether the panels share camera
 #'   moves), link_group (the group name, or NULL), selection settings and
 #'   capabilities.
@@ -145,7 +145,7 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
   })
   grDevices::dev.off(device)
   frame <- if (is.null(panel)) device_mm else panels[[1L]]$rect_mm[3:4]
-  x <- list(schema_version = 3L,
+  x <- list(schema_version = 4L,
     frame = list(width_mm = frame[1L], height_mm = frame[2L]),
     chrome = if (is.null(panel)) view_chrome_3d(table, width, height) else NULL,
     panels = panels, link = !isFALSE(link),
@@ -235,7 +235,8 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
   all_params$coord_params$panes <- vapply(frame$panes(), `[[`, character(1), "name")
   all_params$coord_params$box <- "all"
   all_furniture <- panel_furniture_3d(all_params, selected$theme, outer, as.list(selected$frame_group))
-  packet <- merge_scene_packets(resolve_glyph_packets_3d(selected$packets, furniture$camera, furniture$viewport), params$panel_id)
+  packets <- resolve_glyph_packets_3d(selected$packets, furniture$camera, furniture$viewport)
+  packet <- merge_scene_packets(packets, params$panel_id)
   furniture_view <- view_packet_3d(all_furniture$packet)
   furniture_view$materials <- view_furniture_tags_3d(frame, all_furniture, furniture_view$materials)
   axes <- lapply(names(params$axis_guides), function(name) {
@@ -262,7 +263,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
   # Automatic camera values use JSON null; finite resolved values travel separately.
   raw_camera[c("distance", "near", "far")] <- lapply(raw_camera[c("distance", "near", "far")],
     function(value) if (is.na(value) || !is.finite(value)) NULL else value)
-  list(id = params$panel_id, scene = view_packet_3d(packet),
+  list(id = params$panel_id, scene = view_packet_3d(packet), glyphs = view_glyphs_3d(packets),
     furniture = furniture_view, axes = unname(axes),
     bounds = unname(lapply(seq_len(nrow(frame$bounds())), function(i) unname(frame$bounds()[i, ]))),
     camera = raw_camera,
@@ -277,6 +278,24 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
     light = params$coord_params$light,
     background = if (visible_element_3d(bg)) view_rgba_3d(bg$fill) else c(0, 0, 0, 0),
     path = if (is.null(path)) NULL else view_path_3d(path, fps, params, furniture$viewport, frame$bounds()))
+}
+
+# Deferred outline vertices keep their millimetre coordinates and orientation
+# outside the compiled scene schema. Vertex indices refer to the merged scene.
+view_glyphs_3d <- function(packets) {
+  shift <- 0L; out <- list()
+  for (packet in packets) {
+    glyph <- attr(packet, "glyph_mm")
+    if (!is.null(glyph$orientation)) {
+      spec <- glyph$orientation
+      columns <- c(list(centre = glyph$centre, local = glyph$local), spec[c("u", "v", "up")])
+      columns <- lapply(columns, function(x) if (is.null(x)) NULL else view_column_3d(as.double(t(x))))
+      out[[length(out) + 1L]] <- c(list(rows = view_column_3d(as.integer(glyph$rows + shift)),
+        facing = spec$facing, angle = view_column_3d(spec$angle)), columns)
+    }
+    shift <- shift + length(packet$vertices$x)
+  }
+  out
 }
 
 # Everything the static plot draws outside its scene panels, as one SVG of

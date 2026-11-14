@@ -62,7 +62,7 @@ the views \code{\link[=animate_3d]{animate_3d()}} renders; dragging or Reset sto
 }
 \value{
 An htmlwidget of class ggplot3d_view. Its x contains schema_version
-(3), frame (the plot size in mm), chrome (the SVG of everything outside
+(4), frame (the plot size in mm), chrome (the SVG of everything outside
 the panels, or NULL), panels, link (whether the panels share camera
 moves), link_group (the group name, or NULL), selection settings and
 capabilities.
