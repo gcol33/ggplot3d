@@ -4,11 +4,18 @@
 #' The function receives x and y in original data units and returns z in data
 #' units. The z scale transforms the returned heights once.
 #' Newly mapped after_stat variables follow ggplot2 scale transformation.
+#' Each data row produces one surface. Non-aesthetic columns are passed to
+#' `fun` as named scalar arguments, recycled over the grid, and retained in
+#' the output. With no data or a blank data frame, one surface is evaluated.
+#' Rows form separate groups unless `group` is explicitly mapped or set.
+#' Parameters can also be mapped to colour or fill, used in facets, or selected
+#' as the `time` column of [animate_3d()].
 #' @param mapping,data,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param geom Geom prototype for keyed triangle corners.
 #' @param fun Vectorised function of x and y.
 #' @param n Grid resolution, a scalar or two integers.
-#' @param args Additional named arguments passed to fun.
+#' @param args List of fixed extra arguments passed to `fun`, as in
+#'   [ggplot2::geom_function()]. Names must differ from data parameters.
 #' @return A ggplot2 layer.
 #' @export
 #' @examples
@@ -18,11 +25,15 @@
 #' ggplot2::ggplot() +
 #'   geom_function_3d(fun = function(x, y) x^2 + y^2, n = 8) +
 #'   ggplot2::xlim(-1, 1) + ggplot2::ylim(-1, 1) + coord_3d()
+#' ggplot2::ggplot(data.frame(t = c(0, 1))) +
+#'   geom_function_3d(fun = function(x, y, t, k) sin(x + t) * cos(k * y),
+#'     args = list(k = 2), n = 8) +
+#'   ggplot2::facet_wrap(~t) + coord_3d()
 stat_function_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                               position = "identity", ..., fun, n = 40L, args = list(),
                               na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatFunction3D, position,
-    stats_params_3d(list(fun = fun, n = n, args = args, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+  stats_function_layer_3d(make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatFunction3D, position,
+    stats_params_3d(list(fun = fun, n = n, args = args, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes))
 }
 
 #' @rdname stat_function_3d

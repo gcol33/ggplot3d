@@ -43,7 +43,8 @@ function (\code{\link[=sdf_sphere]{sdf_sphere()}}).}
 
 \item{n}{Grid resolution, scalar or three integers.}
 
-\item{args}{Additional named arguments passed to fun.}
+\item{args}{List of fixed extra arguments passed to \code{fun}. Names must
+differ from data parameters; see \code{\link[=stat_function_3d]{stat_function_3d()}}.}
 
 \item{levels}{Numeric scalar-field thresholds; NULL uses pretty levels.}
 
@@ -133,6 +134,10 @@ fun may be a signed distance function built with \code{\link[=sdf_sphere]{sdf_sp
 \code{\link[=sdf_blend]{sdf_blend()}}. levels then defaults to 0, and vertex normals (with the
 crossing normals of \code{"dual"}) come from the exact gradient of its
 expression tree in place of central differences.
+
+For mesh extraction, each data row supplies one set of constant named
+parameters and produces its own isosurface. Columns and grouping follow
+\code{\link[=stat_function_3d]{stat_function_3d()}}, including facets and \code{\link[=animate_3d]{animate_3d()}}'s time column.
 }
 \examples{
 ggplot2::ggplot() +

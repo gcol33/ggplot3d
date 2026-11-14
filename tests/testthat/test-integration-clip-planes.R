@@ -13,10 +13,11 @@ face_area_3d <- function(packet, faces) {
 }
 
 torus_plot <- function(...) {
-  box <- data.frame(x = c(-1.6, 1.6), y = c(-1.6, 1.6), z = c(-0.6, 0.6))
-  ggplot2::ggplot(box, ggplot2::aes(x, y, z = z)) +
+  ggplot2::ggplot() +
     geom_isofunction_3d(fun = function(x, y, z) (sqrt(x^2 + y^2) - 1)^2 + z^2, levels = 0.25, n = 28L,
       fill = "grey70") +
+    ggplot2::xlim(-1.6, 1.6) + ggplot2::ylim(-1.6, 1.6) +
+    scale_z_continuous(limits = c(-0.6, 0.6)) +
     coord_3d(expand = FALSE, ...)
 }
 

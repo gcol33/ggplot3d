@@ -212,10 +212,15 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #' [sdf_blend()]. levels then defaults to 0, and vertex normals (with the
 #' crossing normals of `"dual"`) come from the exact gradient of its
 #' expression tree in place of central differences.
+#'
+#' For mesh extraction, each data row supplies one set of constant named
+#' parameters and produces its own isosurface. Columns and grouping follow
+#' [stat_function_3d()], including facets and [animate_3d()]'s time column.
 #' @inheritParams stat_isosurface_3d
 #' @param fun Vectorised scalar function of x, y and z, or a signed distance
 #'   function ([sdf_sphere()]).
-#' @param args Additional named arguments passed to fun.
+#' @param args List of fixed extra arguments passed to `fun`. Names must
+#'   differ from data parameters; see [stat_function_3d()].
 #' @param n Grid resolution, scalar or three integers.
 #' @param method Extraction method: `"cubes"` (the default on a grid),
 #'   `"tetra"`, `"dual"` (the default with `adaptive = TRUE`) or `"nets"`.
@@ -275,9 +280,9 @@ stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSur
   if (!is.logical(adaptive) || length(adaptive) != 1L || is.na(adaptive)) stop("adaptive must be TRUE or FALSE.", call. = FALSE)
   method <- isosurface_method_3d(method %or3d% if (adaptive) "dual" else "cubes")
   if (is.null(levels) && inherits(fun, "ggplot3d_sdf")) levels <- 0
-  make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsofunction3D, position,
+  stats_function_layer_3d(make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsofunction3D, position,
     stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = method, refine = refine,
-      adaptive = adaptive, depth = depth, tol = tol, simplify = simplify, clip = clip, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+      adaptive = adaptive, depth = depth, tol = tol, simplify = simplify, clip = clip, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes))
 }
 
 #' @rdname stat_isofunction_3d

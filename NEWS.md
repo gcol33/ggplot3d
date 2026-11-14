@@ -5,6 +5,10 @@
   neighbour. Figures whose image is denser than the display, such as HTML
   figures at `fig.retina = 2`, no longer show stepped face edges.
 
+* Function surfaces and isosurfaces evaluate one parameter set per data row,
+  retain the parameter columns, and support facets, mapped aesthetics and
+  `animate_3d(time = ...)`. Fixed extra arguments use `args`, as in ggplot2.
+
 * Binned fill and colour scales cut surface and mesh faces along interpolated
   scalar iso-lines. Each piece carries one band colour, with smooth normals
   shared across the cuts in vector, raster and interactive output.

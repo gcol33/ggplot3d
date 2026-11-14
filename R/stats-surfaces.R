@@ -1,14 +1,16 @@
-StatFunction3D <- ggplot2::ggproto("StatFunction3D", StatGeometry3D,
+StatFunction3D <- ggplot2::ggproto("StatFunction3D", StatFunctionRows3D,
   required_aes = character(),
   optional_aes = c("x", "y", "z"),
   compute_group = function(data, scales, fun, n = 40L, args = list()) {
     grid <- expand.grid(stats_grid_3d(scales, n))
     x <- stats_scale_3d(scales, "x")$get_transformation()$inverse(grid$x)
     y <- stats_scale_3d(scales, "y")$get_transformation()$inverse(grid$y)
-    z <- do.call(fun, c(list(x, y), args))
-    if (!is.numeric(z) || !(length(z) %in% c(1L, nrow(grid)))) stop("fun must return one numeric value per grid point.", call. = FALSE)
-    grid$z <- stats_scale_3d(scales, "z")$get_transformation()$transform(rep_len(z, nrow(grid)))
-    stats_triangles_3d(grid)
+    stats_function_rows_3d(data, args, function(parameters) {
+      z <- do.call(fun, c(list(x, y), parameters))
+      if (!is.numeric(z) || !(length(z) %in% c(1L, nrow(grid)))) stop("fun must return one numeric value per grid point.", call. = FALSE)
+      grid$z <- stats_scale_3d(scales, "z")$get_transformation()$transform(rep_len(z, nrow(grid)))
+      stats_triangles_3d(grid)
+    })
   }
 )
 

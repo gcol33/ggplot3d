@@ -34,7 +34,8 @@ distance functions.}
 
 \item{n}{Grid resolution, scalar or three integers.}
 
-\item{args}{Additional named arguments passed to fun.}
+\item{args}{List of fixed extra arguments passed to \code{fun}. Names must
+differ from data parameters; see \code{\link[=stat_function_3d]{stat_function_3d()}}.}
 
 \item{levels}{The levels of fun1 and fun2.}
 

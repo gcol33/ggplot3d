@@ -19,6 +19,52 @@ stats_seed_data_3d <- function(data) {
   if (is.null(data)) function(d) if (is.data.frame(d) && nrow(d) > 0L) d else data.frame(.grid = 1) else data
 }
 
+# Keep function parameters alongside the evaluated aesthetics through the build.
+stats_function_layer_3d <- function(layer) {
+  parent <- layer
+  ggplot2::ggproto(NULL, layer,
+    layer_data = function(self, plot_data) {
+      data <- ggplot2::ggproto_parent(parent, self)$layer_data(plot_data)
+      if (!nrow(data)) data <- data.frame(.grid = 1)
+      data
+    },
+    compute_aesthetics = function(self, data, plot) {
+      out <- ggplot2::ggproto_parent(parent, self)$compute_aesthetics(data, plot)
+      excluded <- unique(c(self$geom$aesthetics(), self$stat$aesthetics(),
+        "PANEL", "group", ".grid", ".source", ".layer"))
+      columns <- setdiff(names(data), excluded)
+      out$.function_args <- lapply(seq_len(nrow(out)), function(i) as.list(data[i, columns, drop = FALSE]))
+      if (is.null(self$computed_mapping$group) && is.null(self$aes_params$group) && nrow(out) > 1L)
+        out$group <- seq_len(nrow(out))
+      out
+    }
+  )
+}
+
+# Each row supplies constant parameters to one vectorised grid evaluation.
+stats_function_rows_3d <- function(data, args, evaluate) {
+  if (!is.list(args)) stop("args must be a list.", call. = FALSE)
+  pieces <- lapply(seq_len(nrow(data)), function(i) {
+    row <- data[i, , drop = FALSE]
+    parameters <- row$.function_args[[1L]] %or3d% list()
+    duplicate <- intersect(names(parameters), names(args))
+    if (length(duplicate)) stop("Function arguments occur in both data and args: ",
+      paste(duplicate, collapse = ", "), ".", call. = FALSE)
+    out <- evaluate(c(parameters, args))
+    for (name in setdiff(names(row), c(names(out), ".function_args"))) out[[name]] <- rep(row[[name]], length.out = nrow(out))
+    for (name in setdiff(names(parameters), names(out))) out[[name]] <- rep(parameters[[name]], length.out = nrow(out))
+    out
+  })
+  if (length(pieces) == 1L) return(pieces[[1L]])
+  vertices <- 0L
+  for (i in seq_along(pieces)) {
+    if (!nrow(pieces[[i]])) next
+    pieces[[i]]$.vertex <- pieces[[i]]$.vertex + vertices
+    vertices <- max(pieces[[i]]$.vertex)
+  }
+  stats_bind_faces_3d(pieces)
+}
+
 stats_params_3d <- function(defaults, extra) {
   defaults[names(extra)] <- extra
   defaults
@@ -45,6 +91,15 @@ stats_scale_3d <- function(scales, axis) {
 
 StatGeometry3D <- ggplot2::ggproto("StatGeometry3D", ggplot2::Stat,
   dropped_aes = c(".source", "value", "weight")
+)
+
+StatFunctionRows3D <- ggplot2::ggproto("StatFunctionRows3D", StatGeometry3D,
+  dropped_aes = c(StatGeometry3D$dropped_aes, ".function_args"),
+  compute_panel = function(self, data, scales, ...) {
+    out <- ggplot2::ggproto_parent(StatGeometry3D, self)$compute_panel(data, scales, ...)
+    out$.function_args <- NULL
+    out
+  }
 )
 
 stats_triangles_3d <- function(data) {
