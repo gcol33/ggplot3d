@@ -1,7 +1,5 @@
 # ggplot3d 0.0.0.9000
 
-# ggplot3d 0.0.0.9000
-
 * `stat_hull_3d()` draws colour gamuts with interpolated vertex colours:
   `aes(fill = I(hex), group = 1)` with `shading = "smooth"` gives every hull
   vertex the colour of its point and each face their interpolation, exact at
