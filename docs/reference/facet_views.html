@@ -22,6 +22,10 @@ measures the same on the page in every orthographic view."><meta property="og:im
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -75,6 +79,7 @@ measures the same on the page in every orthographic view."><meta property="og:im
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -135,7 +140,9 @@ measures the same on the page in every orthographic view.</p>
 <span>  nrow <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ncol <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labeller <span class="op">=</span> <span class="st">"label_value"</span>,</span>
-<span>  strip.position <span class="op">=</span> <span class="st">"top"</span></span>
+<span>  strip.position <span class="op">=</span> <span class="st">"top"</span>,</span>
+<span>  lights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  combine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cross"</span>, <span class="st">"pair"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -149,7 +156,8 @@ measures the same on the page in every orthographic view.</p>
 names or lists of camera arguments such as <code>camera_3d("front")</code> or
 <code>list(azimuth = 30, elevation = 20)</code>. Camera arguments a view leaves out
 come from <code><a href="coord_3d.html">coord_3d()</a></code>. Names label the panels; unnamed preset entries
-are labelled by the preset name.</p></dd>
+are labelled by the preset name.
+<code>NULL</code> uses the coordinate's camera.</p></dd>
 
 
 <dt id="arg-layout">layout<a class="anchor" aria-label="anchor" href="#arg-layout"></a></dt>
@@ -166,6 +174,19 @@ projection method.</p></dd>
 <dd><p>Panel strip labeller and position, as in
 <code><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">ggplot2::facet_wrap()</a></code>. Use <code>theme(strip.text = element_blank())</code> for a
 drawing without view names.</p></dd>
+
+
+<dt id="arg-lights">lights<a class="anchor" aria-label="anchor" href="#arg-lights"></a></dt>
+<dd><p>NULL inherits coordinate lighting. A named list of lights
+from <code><a href="lights_3d.html">lights_3d()</a></code>, <code><a href="light_3d.html">light_3d()</a></code> or the individual light constructors
+supplies lighting conditions; a NULL list entry selects an unlit panel.</p></dd>
+
+
+<dt id="arg-combine">combine<a class="anchor" aria-label="anchor" href="#arg-combine"></a></dt>
+<dd><p><code>"cross"</code> visits the lights in order for each camera;
+<code>"pair"</code> pairs the specifications, broadcasting a singleton. Shared
+guides use the first panel's camera and lighting as their reference.
+Engineering layouts accept one lighting condition.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -185,7 +206,7 @@ first the upper right. Views in one row share their vertical page
 positions and views in one column their horizontal ones, so an edge seen in
 two adjacent views lines up across them.</p>
 <p>The layers and their statistics are computed once; the panels differ only
-in their camera. The plot's layer data therefore all belong to the first
+in their camera and lighting. The plot's layer data therefore all belong to the first
 panel.</p>
     </div>
     <div class="section level2">
@@ -204,7 +225,10 @@ several views together in the browser.</p></div>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">facet_views</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">facet_views</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"front"</span>, <span class="st">"top"</span>, <span class="st">"right"</span>, iso <span class="op">=</span> <span class="st">"isometric"</span><span class="op">)</span>, layout <span class="op">=</span> <span class="st">"third_angle"</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">facet_views</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"front"</span>, <span class="st">"top"</span>, <span class="st">"right"</span>, iso <span class="op">=</span> <span class="st">"isometric"</span><span class="op">)</span>, layout <span class="op">=</span> <span class="st">"first_angle"</span><span class="op">)</span></span>
-<span><span class="va">p</span> <span class="op">+</span> <span class="fu">facet_views</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">30</span><span class="op">)</span>, b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="fl">60</span>, zoom <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu">facet_views</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">30</span><span class="op">)</span>, b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="fl">60</span>, zoom <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu">facet_views</span><span class="op">(</span>views <span class="op">=</span> <span class="cn">NULL</span>, lights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  left <span class="op">=</span> <span class="fu"><a href="lights_3d.html">lights_3d</a></span><span class="op">(</span><span class="fu"><a href="light_directional.html">light_directional</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  right <span class="op">=</span> <span class="fu"><a href="lights_3d.html">lights_3d</a></span><span class="op">(</span><span class="fu"><a href="light_directional.html">light_directional</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -160,7 +160,12 @@ and analytic primitives still hide the strokes behind them but are not
 painted, and consecutive visible pieces of one stroke are drawn as one
 path, so an SVG device (<code>ggplot2::ggsave(device = "svg")</code>) writes a
 drawing for a pen plotter. Feature lines (<code><a href="outline_3d.html">outline_3d()</a></code>) and model-space
-hatching (<code><a href="hatch_3d.html">hatch_3d()</a></code>) make line-only figures of surfaces. A hybrid panel
+hatching (<code><a href="hatch_3d.html">hatch_3d()</a></code>) make line-only figures of surfaces. Stroke
+centrelines are clipped to visible intervals, joined within each source
+polyline, and ordered within each layer and colour by the nearest endpoint,
+reversing paths to shorten pen travel (as in vpype's <code>linesort</code>). Consecutive
+points within 0.01 mm or one tenth of a device pixel are combined. Text
+and labels are drawn last. A hybrid panel
 rasterises the layers created with <code>raster = TRUE</code> (an argument of every
 <code>geom_*_3d()</code> layer and of <code><a href="layer_3d.html">layer_3d()</a></code>) into one image at <code>dpi</code> and draws
 the other layers, axes, panes and text as vector graphics. Vector
