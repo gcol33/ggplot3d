@@ -24,6 +24,7 @@ animate_3d(
   workers = 1L,
   tween = NULL,
   trail = NULL,
+  isometry = NULL,
   ...
 )
 }
@@ -102,6 +103,10 @@ units; the default radius is 0.5\% of the panel range diagonal. Mapped
 age, multiplying the mark's alpha. \code{taper = TRUE} also scales the cross
 section by this fraction. Requires \code{time}; tweened frames count towards
 the window. Static layers stay fixed. Missing observations break a trail.}
+
+\item{isometry}{A list of one canonical-space isometry matrix per frame,
+a matrix shared by all frames, or a function of frame times returning the
+list. Re-emits geometry through the space adapter; limits remain fixed.}
 
 \item{...}{Arguments to \code{\link[=export_3d]{export_3d()}} for glTF output: \code{furniture}, \code{lines},
 \code{points} and \code{size}.}

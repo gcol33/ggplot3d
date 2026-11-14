@@ -139,6 +139,7 @@ Collate:
     'layers-raymarch.R'
     'layers-reconstruct.R'
     'layers-reference.R'
+    'layers-relativity.R'
     'layers-rug.R'
     'layers-scale-bar.R'
     'layers-solid.R'

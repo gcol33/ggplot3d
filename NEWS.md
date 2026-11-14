@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* Relativity layers draw light cones, constant-interval hyperboloids, Schwarzschild spatial embeddings and equatorial timelike/null orbits. `coord_spacetime_3d()` and `lorentz_boost_3d()` support finite Lorentz transformations, including per-frame `animate_3d(isometry = )` schedules.
+
 * Complex-analysis layers draw Riemann-sphere phase portraits and inverse-parametrised Riemann surfaces. `mobius()` maps extended complex values, the finite Riemann sphere and hyperbolic half-space.
 
 * `stat_self_intersection_3d()` extracts transverse triangle crossings as stitched paths. `stat_immersed_3d()` supplies Klein bottles, Boy's surface, a cross-cap and a Moebius band; `stat_knot_3d()` generates torus knots and closed tubes.

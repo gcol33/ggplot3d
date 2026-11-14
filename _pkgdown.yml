@@ -77,6 +77,13 @@ navbar:
       href: https://github.com/gcol33/ggplot3d
       aria-label: GitHub
 reference:
+- title: Relativity
+  contents:
+  - stat_light_cone_3d
+  - stat_embedding_3d
+  - stat_geodesic_ode_3d
+  - lorentz_boost_3d
+  - coord_spacetime_3d
 - title: Complex analysis
   contents:
   - mobius

@@ -64,6 +64,9 @@
 #'   age, multiplying the mark's alpha. `taper = TRUE` also scales the cross
 #'   section by this fraction. Requires `time`; tweened frames count towards
 #'   the window. Static layers stay fixed. Missing observations break a trail.
+#' @param isometry A list of one canonical-space isometry matrix per frame,
+#'   a matrix shared by all frames, or a function of frame times returning the
+#'   list. Re-emits geometry through the space adapter; limits remain fixed.
 #' @return A ggplot3d_animation list with `file`, `frame_count`, `fps`, `camera`
 #'   (one row per frame with the time, the camera angles, zoom, projection,
 #'   field of view, distance (NA when automatic) and target, and the frame's
@@ -126,7 +129,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        renderer = c("raster", "vector"), roll = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
-                       path = NULL, workers = 1L, tween = NULL, trail = NULL, ...) {
+                       path = NULL, workers = 1L, tween = NULL, trail = NULL, isometry = NULL, ...) {
   renderer <- match.arg(renderer)
   motion_dimensions_3d(width, height, dpi)
   coord <- motion_plot_coord_3d(plot)
@@ -173,7 +176,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   options <- if (output$kind == "scene") motion_export_options_3d(...)
   if (is.null(path)) {
     times <- (seq_len(frames) - 1) / fps
-    steps <- motion_track_steps_3d(coord, list(azimuth = if (is.null(azimuth) && is.null(time))
+    steps <- motion_track_steps_3d(coord, list(azimuth = if (is.null(azimuth) && is.null(time) && is.null(isometry))
       coord$camera$azimuth + 360 * (seq_len(frames) - 1) / frames else azimuth,
       elevation = elevation, zoom = zoom, roll = roll), frames, times)
     cameras <- lapply(steps, motion_camera_3d, base = coord$camera)
@@ -205,6 +208,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     steps <- sampled$steps
     cameras <- lapply(steps, motion_camera_3d, base = coord$camera)
   }
+  isometries <- motion_isometries_3d(isometry, times, frames)
   grDevices::dev.off(device)
   paths <- switch(output$kind, sequence = motion_sequence_paths_3d(file, frames), pages = file,
     scene = file.path(directory, sprintf("scene-%06d.pdf", seq_len(frames))),
@@ -212,6 +216,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   # Repelled labels start each frame where the previous frame of the same
   # worker left them.
   job <- list(built = built, plot = plot, time = time, values = values, limits = limits,
+    isometries = isometries,
     keyframes = keyframes, schedule = schedule, tween = tween,
     trail = trail, trail_layers = if (!is.null(trail)) motion_trail_layers_3d(plot, time, trail),
     trail_history = new.env(parent = emptyenv()),
@@ -233,6 +238,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   structure(list(file = file, frame_count = as.integer(frames), fps = fps, camera = camera,
     timings = vapply(rendered, `[[`, numeric(1), "timing"), build_seconds = build_seconds,
     frame = job$frame, panel_extents = lapply(rendered, `[[`, "extents"),
+    isometries = isometries,
     transition = if (is.null(schedule)) NULL else data.frame(from = states[schedule$from], to = states[schedule$to], fraction = schedule$fraction),
     frames = if (is.null(file) || output$kind == "sequence") paths else character()),
     class = "ggplot3d_animation")
@@ -338,6 +344,7 @@ motion_frame_grob_3d <- function(job, i) {
   trails <- if (!is.null(job$trail)) motion_trail_history_3d(job, i)
   motion_map_panels_3d(built, function(panel) {
     if (!is.null(trails)) panel$packets <- c(panel$packets, motion_trail_packets_3d(trails, panel$panel_params, job$trail))
+    if (!is.null(job$isometries)) panel <- motion_isometry_panel_3d(panel, job$isometries[[i]])
     motion_panel_grob_3d(panel, job$cameras[[i]], job$base, job$backend, job$frame, registry, job$label_state)
   })
 }
@@ -550,4 +557,29 @@ motion_map_panels_3d <- function(grob, f) {
     grob$children <- do.call(grid::gList, lapply(as.list(grob$children), motion_map_panels_3d, f))
   } else if (length(grob$grobs)) grob$grobs <- lapply(grob$grobs, motion_map_panels_3d, f)
   grob
+}
+
+
+motion_isometries_3d <- function(isometry, times, frames) {
+  if (is.null(isometry)) return(NULL)
+  if (is.function(isometry)) isometry <- isometry(times)
+  if (is.matrix(isometry)) isometry <- rep(list(isometry), frames)
+  if (!is.list(isometry) || length(isometry) != frames ||
+      !all(vapply(isometry, function(x) is.matrix(x) && is.numeric(x) && all(is.finite(x)), logical(1)))) {
+    stop("isometry must supply one finite canonical matrix per frame.", call. = FALSE)
+  }
+  isometry
+}
+
+motion_isometry_panel_3d <- function(panel, isometry) {
+  context <- panel$panel_params$space_context
+  if (is.null(context)) stop("Isometry animation requires a non-default coordinate space.", call. = FALSE)
+  panel$panel_params$space_context$isometry <- isometry
+  panel$packets <- lapply(panel$packets, function(packet) {
+    recipe <- attr(packet, "space_recipe")
+    if (is.null(recipe) || !identical(recipe$panel_params$space_context$space, context$space)) return(packet)
+    recipe$panel_params$space_context$isometry <- isometry
+    do.call(emit_scene_3d, recipe)
+  })
+  panel
 }
