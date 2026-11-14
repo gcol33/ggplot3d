@@ -502,7 +502,16 @@ p + geom_point_3d(size = 3) +
   coord_3d()
 ```
 
-Annotate a span with a bracket or dimension line. The two endpoints use data coordinates; the offset uses fractions of the box dimensions. These examples label a supplied distance, with extension lines and arrowheads on the dimension version.
+Fixed segments can be added with [annotate_3d()](../reference/annotate_3d.html). Supply all three coordinates at each end. This arrow joins the first and last positions in the point table.
+
+```{r annotation-segment, fig.alt="Three points with a blue arrow joining the first position at zero, zero, one to the last at two, one, two."}
+p + geom_point_3d(size = 3) +
+  annotate_3d("segment", x = 0, y = 0, z = 1,
+    xend = 2, yend = 1, zend = 2, colour = PAL["blue"], linewidth = 0.8,
+    arrow = grid::arrow(length = grid::unit(3, "mm"))) + coord_3d()
+```
+
+Annotate a span with [geom_bracket_3d()](../reference/geom_bracket_3d.html) to set its bracket or dimension-line parameters. The two endpoints use data coordinates; the offset uses fractions of the box dimensions. These examples label a supplied distance, with extension lines and arrowheads on the dimension version.
 
 ```{r bracket, fig.alt="Two points connected by a bracket labelled span."}
 span <- ggplot(data.frame(x = c(0, 2), y = 0, z = 1), aes(x, y, z = z)) +
