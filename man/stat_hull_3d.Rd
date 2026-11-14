@@ -36,12 +36,24 @@ inputs return a triangulated planar convex polygon; collinear inputs return
 no faces. Orientation uses a fixed interior point and scale-relative
 floating-point tolerance. x/y/z positions are already transformed.
 }
+\details{
+The hull faces keep the rows of their corner points, so a fill given per
+point, such as \code{fill = I(hex)}, reaches every vertex. With
+\code{shading = "smooth"} each face interpolates its corner colours in linear
+light, and with \code{shade = FALSE} the vertices show their colours exactly. A
+discrete fill splits the points into groups, so \code{group = 1} keeps one hull.
+}
 \examples{
 d <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_hull_3d(fill = "steelblue") + coord_3d()
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   stat_hull_3d(fill = "steelblue") + coord_3d()
+# Colours per vertex, interpolated over the faces.
+d$hex <- grDevices::rgb(d$x, d$y, d$z)
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  stat_hull_3d(ggplot2::aes(fill = I(hex), group = 1), shading = "smooth", shade = FALSE) +
+  coord_3d()
 }
 \references{
 Barber, Dobkin and Huhdanpaa (1996). The Quickhull Algorithm for

@@ -223,7 +223,7 @@ append_vertices_3d <- function(packet, points) {
 
 # Appends corners. Optional corner attributes come from corner `from`, or lie
 # between corners `from` and `to` at the homogeneous parameter t, interpolated
-# affinely in the Euclidean point.
+# affinely in the Euclidean point (colours in linear light).
 append_corners_3d <- function(packet, vertex, source_row, from, to = from, t = 0) {
   corners <- packet$corners
   start <- length(corners$vertex)
@@ -232,8 +232,10 @@ append_corners_3d <- function(packet, vertex, source_row, from, to = from, t = 0
     pa <- (1 - t) * packet$vertices$w[corners$vertex[from]]
     pb <- t * packet$vertices$w[corners$vertex[to]]
     beta <- ifelse(pa + pb > 0, pb / (pa + pb), t)
-    for (name in extra) corners[[name]] <- c(corners[[name]],
-      (1 - beta) * corners[[name]][from] + beta * corners[[name]][to])
+    for (name in extra) {
+      value <- corner_linear_3d(corners, name)
+      corners[[name]] <- c(corners[[name]], corner_encoded_3d(name, (1 - beta) * value[from] + beta * value[to]))
+    }
   }
   corners$vertex <- c(corners$vertex, as.integer(vertex))
   corners$source_row <- c(corners$source_row, as.integer(source_row))

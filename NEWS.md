@@ -2,6 +2,17 @@
 
 # ggplot3d 0.0.0.9000
 
+* `stat_hull_3d()` draws colour gamuts with interpolated vertex colours:
+  `aes(fill = I(hex), group = 1)` with `shading = "smooth"` gives every hull
+  vertex the colour of its point and each face their interpolation, exact at
+  the vertices when unlit (`shade = FALSE`). Points added on a face by clip
+  planes, coordinate frames or the depth-order split take the linear-light
+  interpolation of its corner colours, the interpolation the raster backend
+  and the viewer draw across the face, so a split face paints like the whole
+  one in every backend. A hull whose groups all have fewer than three points
+  warns that a discrete fill split them. The colour-gamuts article draws the
+  sRGB gamut in Lab this way.
+
 * Shading can keep data colours readable against their legend.
   `lights_3d(mode = "lightness" | "tone" | "overlay" | "soft", range, neutral)`
   moves a colour by a signed level per light, 0 at the `neutral` angle

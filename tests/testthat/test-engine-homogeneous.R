@@ -144,14 +144,15 @@ test_that("optional corner attributes are validated and carried through merges",
 test_that("clip planes interpolate corner attributes and keep w", {
   packet <- new_scene_packet(
     vertices = list(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1), z = c(0.5, 0.5, 0.5, 0.5)),
-    corners = list(vertex = 1:4, red = c(0, 1, 1, 0)), faces = list(offset = 1L, count = 4L),
+    corners = list(vertex = 1:4, red = c(0, 1, 1, 0), normal_x = c(0, 1, 1, 0)), faces = list(offset = 1L, count = 4L),
     styles = data.frame(style_id = 1L))
   cut <- clip_packet_planes_3d(packet, list(list(normal = c(-1, 0, 0), offset = 0.25, cap = FALSE)))
   f <- cut$faces
   rows <- seq.int(f$offset, length.out = f$count)
   x <- cut$vertices$x[cut$corners$vertex[rows]]
   expect_equal(sort(unique(x)), c(0, 0.25))
-  expect_equal(cut$corners$red[rows], x)
+  expect_equal(cut$corners$normal_x[rows], x)
+  expect_equal(cut$corners$red[rows], srgb_encode_3d(x))
   expect_true(all(cut$vertices$w == 1))
 })
 

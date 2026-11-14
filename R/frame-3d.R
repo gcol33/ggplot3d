@@ -512,11 +512,12 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
     keep <- is.finite(area) & area > 1e-12
     ids <- emit(munched$model, faces$source_row[tri$parent[munched$point_parent]], munched$scale)
     if (length(attributes)) {
-      # Corner attributes are barycentric in the scale-space triangle; normals
-      # then follow the frame's local linear map.
+      # Corner attributes are barycentric in the scale-space triangle
+      # (colours in linear light); normals then follow the frame's local
+      # linear map.
       from <- do.call(rbind, tri$corners)[munched$point_parent, , drop = FALSE]
-      values <- lapply(packet$corners[attributes], function(a)
-        rowSums(munched$weights * matrix(a[from], ncol = 3L)))
+      values <- stats::setNames(lapply(attributes, function(name) corner_encoded_3d(name,
+        rowSums(munched$weights * matrix(corner_linear_3d(packet$corners, name)[from], ncol = 3L)))), attributes)
       point <- munched$scale
       corner_set <- map_corner_normals_3d(values, function(normal, rows) {
         h <- 1e-6

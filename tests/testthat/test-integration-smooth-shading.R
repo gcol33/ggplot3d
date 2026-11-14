@@ -62,7 +62,7 @@ test_that("munching keeps corner attributes and maps normals", {
   packet <- smooth_triangle_packet(normals = matrix(c(0, 0, 1), 3L, 3L, byrow = TRUE))
   out <- munch_packet_3d(frame, packet)
   expect_true(all(c("normal_z", "red") %in% names(out$corners)))
-  expect_equal(out$corners$red + out$corners$green + out$corners$blue, rep(1, length(out$corners$vertex)))
+  expect_equal(decode(out$corners$red) + decode(out$corners$green) + decode(out$corners$blue), rep(1, length(out$corners$vertex)))
   expect_equal(abs(out$corners$normal_z), rep(1, length(out$corners$vertex)), tolerance = 1e-6)
   linear <- list(linear = TRUE, map = function(p) cbind(2 * p[, 1L], p[, 2L], p[, 3L]))
   tilted <- smooth_triangle_packet(normals = matrix(c(1, 0, 1) / sqrt(2), 3L, 3L, byrow = TRUE))

@@ -251,6 +251,13 @@ StatDensitySlice3D <- ggplot2::ggproto("StatDensitySlice3D", StatGeometry3D,
 
 StatHull3D <- ggplot2::ggproto("StatHull3D", StatGeometry3D,
   required_aes = c("x", "y", "z"),
+  setup_params = function(data, params) {
+    sizes <- lengths(split(seq_len(nrow(data)), list(data$PANEL, data$group), drop = TRUE))
+    if (length(sizes) && max(sizes) < 3L)
+      warning("Every group has fewer than three points, so no hull is drawn. A discrete fill or colour ",
+              "mapping splits the points into groups; aes(group = 1) keeps one hull.", call. = FALSE)
+    params
+  },
   compute_group = function(data, scales, space = "data") {
     if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Hulls require continuous position scales.", call. = FALSE)
     if (match.arg(space, c("data", "ilr")) == "ilr") {

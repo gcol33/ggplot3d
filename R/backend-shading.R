@@ -3,6 +3,29 @@
 
 corner_attribute_columns_3d <- c("normal_x", "normal_y", "normal_z", "red", "green", "blue")
 
+# Corner colours are encoded sRGB channels and the faces they paint are
+# interpolated in linear light (Gouraud over the decoded colours), so a point
+# added on a face by clipping, munching or splitting takes the linear-light
+# interpolation of the corner colours: the split face paints as the whole one.
+# Other corner attributes interpolate as stored.
+corner_colour_columns_3d <- c("red", "green", "blue")
+
+corner_linear_3d <- function(corners, name) {
+  if (name %in% corner_colour_columns_3d) srgb_decode_3d(corners[[name]]) else corners[[name]]
+}
+
+corner_encoded_3d <- function(name, value) {
+  if (name %in% corner_colour_columns_3d) srgb_encode_3d(pmin(pmax(value, 0), 1)) else value
+}
+
+# Corner attributes at the compiled vertices of a scene, colours in linear light.
+scene_linear_attributes_3d <- function(scene, columns = corner_attribute_columns_3d) {
+  corners <- scene$source$corners
+  for (name in intersect(columns, names(corners))) corners[[name]] <- corner_linear_3d(corners, name)
+  scene$source$corners <- corners
+  scene_vertex_attributes_3d(scene, columns)
+}
+
 # Encoded-sRGB tolerance of vector smooth shading.
 shading_tolerance_3d <- function() {
   tolerance <- getOption("ggplot3d.shading_tolerance", 2 / 255)
@@ -50,7 +73,8 @@ smooth_fragments_3d <- function(scene, attributes, styles, light) {
 }
 
 # Linear-light colours at the vertices of face fragments `rows` (one row per
-# vertex, fragments in order): the corner colour where interpolated, else the
+# vertex, fragments in order) from the linear vertex attributes of
+# scene_linear_attributes_3d(): the corner colour where interpolated, else the
 # style fill, lit at the interpolated corner normal where one exists, else at
 # the face normal. Gouraud (1971) shading over the clipped fragment.
 fragment_vertex_linear_3d <- function(scene, rows, styles, attributes, light) {
@@ -63,7 +87,7 @@ fragment_vertex_linear_3d <- function(scene, rows, styles, attributes, light) {
   if (all(c("red", "green", "blue") %in% columns)) {
     rgb <- attributes[index, c("red", "green", "blue"), drop = FALSE]
     ok <- rowSums(is.finite(rgb)) == 3L
-    linear[ok, ] <- srgb_decode_3d(rgb[ok, , drop = FALSE])
+    linear[ok, ] <- rgb[ok, , drop = FALSE]
   }
   lit <- !is.null(light) & (style_value_3d(styles, "shade", FALSE) %in% TRUE)[owner]
   if (any(lit)) {

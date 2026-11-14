@@ -546,7 +546,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
   sheet_style <- style_value_3d(styles, "alpha_mode", "face") == "surface"
-  attributes <- scene_vertex_attributes_3d(scene, corner_attribute_columns_3d)
+  attributes <- scene_linear_attributes_3d(scene)
   smooth <- smooth_fragments_3d(scene, attributes, styles, light)
   # Translucent seam groups paint from flat compound paths only.
   seam <- face & (f$layer_id > 0L | sheet_style) & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill) &
