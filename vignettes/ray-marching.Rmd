@@ -229,5 +229,6 @@ scalar volumes require the raster, vector or hybrid backends described above.
 ## Where next
 
 * [Output backends](backends.html): choose resolution and save an image.
+
 * [Inside the Thurston geometries](thurston-geometries.html): follow curved
   viewing rays from an observer inside a geometry.

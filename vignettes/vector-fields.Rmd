@@ -22,7 +22,9 @@ the field and gives those curves thickness. Installation is covered in
 [Get started](ggplot3d.html).
 
 1. **Map** the position and vector components with `geom_quiver_3d()`.
+
 2. **Trace** curves through a regular grid with `stat_streamline_3d()`.
+
 3. **Thicken** the curves by choosing the tube geometry.
 
 ## Example
@@ -185,7 +187,9 @@ points to trace that field away from its stationary centre.
 ## Where next
 
 * [Layers](layers.html): solid glyphs and sweeps along supplied curves.
+
 * [Camera animation and interaction](motion.html): move the camera or tween
   data between states.
 * [geom_quiver_3d()](../reference/geom_quiver_3d.html): head, shaft, scale and pivot arguments.
+
 * [stat_streamline_3d()](../reference/stat_streamline_3d.html): integration settings and seed specifications.
