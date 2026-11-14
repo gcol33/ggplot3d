@@ -17,7 +17,7 @@ struct Paint {
   bool separate=false;
   std::array<double,4> bounds;
   // A splat is a sphere impostor: radius in mm, and depth units per mm at its
-  // centre (0 for other paint). edl is its eye-dome lighting strength.
+  // centre (0 for other paint). edl is the eye-dome lighting strength.
   double radius=0,splat=0,edl=0;
   // Paint-once key: a sample takes at most one fragment per key, the first
   // in compositing order; -1 paints every fragment.
@@ -214,10 +214,8 @@ static inline std::vector<Paint> paints(const Scene& scene,Rcpp::List colours,Rc
       t.width=Rcpp::as<Rcpp::NumericVector>(t.colour.attr("width_mm"));
       t.separate=Rcpp::as<Rcpp::LogicalVector>(t.colour.attr("separate"));
     }
-    if(t.colour.hasAttribute("splat")) {
-      t.splat=Rcpp::as<Rcpp::LogicalVector>(t.colour.attr("splat"));
-      t.edl=Rcpp::as<Rcpp::NumericVector>(t.colour.attr("edl"));
-    }
+    if(t.colour.hasAttribute("splat")) t.splat=Rcpp::as<Rcpp::LogicalVector>(t.colour.attr("splat"));
+    if(t.colour.hasAttribute("edl")) t.edl=Rcpp::as<Rcpp::NumericVector>(t.colour.attr("edl"));
   }
   std::vector<std::vector<double>> dash(dashes.size()),hidden_dash(dashes.size());
   Rcpp::List hidden=dashes.hasAttribute("hidden") ? Rcpp::List(dashes.attr("hidden")):Rcpp::List();
@@ -230,6 +228,7 @@ static inline std::vector<Paint> paints(const Scene& scene,Rcpp::List colours,Rc
   for(const auto& item:scene.items) {
     const auto& table=scene.table(item.kind); const Table& t=tables[item.kind-1]; const auto& c=t.colour;
     Paint p; p.bounds=bounds(scene,item);
+    if(t.edl.size()) p.edl=t.edl[item.row];
     p.colour={c(0,item.row),c(1,item.row),c(2,item.row),(id_pass ? 1:c(3,item.row))*table.opacity[item.row]};
     if(t.styled) {
       p.outline={t.outline(0,item.row),t.outline(1,item.row),t.outline(2,item.row),t.outline(3,item.row)*table.opacity[item.row]};
@@ -242,7 +241,6 @@ static inline std::vector<Paint> paints(const Scene& scene,Rcpp::List colours,Rc
       double w=projection.camera.perspective ? scene.vertices[item.offset].depth:1;
       p.radius=(p.bounds[2]-p.bounds[0])*.5;
       p.splat=w/(.5*projection.sy*projection.viewport.height_mm);
-      p.edl=t.edl[item.row];
       p.outline=Colour();p.separate=false;
     }
     if(item.kind==2) {
@@ -646,7 +644,8 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
   }
 }
 
-// Eye-dome lighting (Boucheny 2009, as in ParaView): a splat pixel darkens by
+// Eye-dome lighting (Boucheny 2009, as in ParaView): a pixel whose nearest
+// paint has a positive strength darkens by
 // exp(-edl_scale * strength * response), where response averages, over the
 // eight neighbours one pixel away, how far each neighbour lies in front in
 // log2 of the depth normalised to the near-far range. Empty neighbours lie at
@@ -667,7 +666,7 @@ static inline void eye_dome_lighting(const Shapes& shapes,const Canvas& canvas,B
   for(int y=0;y<height;++y) for(int x=0;x<width;++x) {
     std::size_t pixel=static_cast<std::size_t>(y)*width+x;
     Index i=b.item[pixel];
-    if(i<0 || shapes.paint[i].splat<=0 || shapes.paint[i].edl<=0) continue;
+    if(i<0 || shapes.paint[i].edl<=0) continue;
     double centre=level(pixel),response=0;
     for(int dy=-1;dy<=1;++dy) for(int dx=-1;dx<=1;++dx) {
       if(dx==0 && dy==0) continue;
@@ -882,7 +881,7 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   scratch.clear();
   buffers.passes=*std::max_element(worker_passes.begin(),worker_passes.end());
   double tile_seconds=seconds(tiles_start);
-  if(std::any_of(paint.begin(),paint.end(),[](const Paint& p){return p.splat>0 && p.edl>0;}))
+  if(std::any_of(paint.begin(),paint.end(),[](const Paint& p){return p.edl>0;}))
     eye_dome_lighting(shapes,canvas,buffers);
   Rcpp::IntegerMatrix raster(height,width),ids(height,width);
   std::uint32_t* packed=reinterpret_cast<std::uint32_t*>(INTEGER(raster));

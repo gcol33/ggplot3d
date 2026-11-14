@@ -1,6 +1,8 @@
 utils::globalVariables(c("raster_prepare_cpp", "raster_draw_cpp", "raster_canvas_cpp"))
 
-raster_colours_3d <- function(packet, prepared, light) {
+# `edl`: eye-dome lighting strength of every primitive that is not a splat;
+# splats keep the strength of their layer.
+raster_colours_3d <- function(packet, prepared, light, edl = 0) {
   lapply(c("faces", "polylines", "markers", "text"), function(kind) {
     tab <- packet[[kind]]
     styles <- packet$styles[match(tab$style_id, packet$styles$style_id), , drop = FALSE]
@@ -26,11 +28,14 @@ raster_colours_3d <- function(packet, prepared, light) {
     metrics <- paint_metrics_3d(styles)
     attr(rgba, "width_mm") <- if (kind == "markers") metrics$border_mm * 2 else metrics$width_mm
     attr(rgba, "separate") <- if (kind == "markers") style_value_3d(styles, "shape", 19) %in% 21:25 else rep(FALSE, nrow(styles))
+    strength <- rep(edl, nrow(styles))
     if (kind == "markers") {
-      attr(rgba, "splat") <- style_value_3d(styles, "render", "marker") %in% "splat"
-      edl <- as.double(style_value_3d(styles, "edl", 0))
-      attr(rgba, "edl") <- ifelse(is.na(edl), 0, edl)
+      splat <- style_value_3d(styles, "render", "marker") %in% "splat"
+      attr(rgba, "splat") <- splat
+      layer <- as.double(style_value_3d(styles, "edl", 0))
+      strength[splat] <- ifelse(is.na(layer[splat]), 0, layer[splat])
     }
+    if (any(strength > 0)) attr(rgba, "edl") <- strength
     if (kind == "polylines") {
       arrows <- style_value_3d(styles, "arrow", list(NULL))
       attr(rgba, "arrows") <- t(vapply(arrows, function(a) {
@@ -101,11 +106,11 @@ raster_traced_input_3d <- function(specs, camera, viewport, canvas, resolved, li
 }
 
 raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NULL,
-                           id_pass = FALSE, buffers = FALSE, blend = "linear", traced = list()) {
+                           id_pass = FALSE, buffers = FALSE, blend = "linear", traced = list(), edl = 0) {
   blend <- match.arg(blend, c("linear", "srgb"))
   validate_camera_3d(camera)
   prepared <- raster_prepare_cpp(packet[names(packet) != "styles"], camera, viewport)
-  colours <- raster_colours_3d(packet, prepared, light)
+  colours <- raster_colours_3d(packet, prepared, light, edl)
   line <- packet$polylines
   styles <- packet$styles[match(line$style_id, packet$styles$style_id), , drop = FALSE]
   lty <- style_value_3d(styles, "linetype", 1)
@@ -177,6 +182,6 @@ render_raster_panel_3d <- function(x, furniture, backend) {
   packet <- merge_scene_packets(x$packets, x$panel_params$panel_id)
   result <- raster_scene_3d(packet, furniture$camera, furniture$viewport,
     backend$antialias, x$panel_params$coord_params$light, buffers = length(traced) > 0L,
-    blend = backend$blend, traced = traced)
+    blend = backend$blend, traced = traced, edl = depth_cue_edl_3d(x$panel_params))
   raster_panel_grob_3d(result, packet, furniture, if (length(traced)) "scene-raymarch-3d" else "scene-raster-3d")
 }

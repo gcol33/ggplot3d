@@ -119,6 +119,8 @@ reference:
   - facet_views
   - stereo_3d
   - light_3d
+  - shadow_3d
+  - depth_cue_3d
   - clip_plane_3d
 - title: Curvilinear and compositional frames
   contents:

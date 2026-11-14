@@ -151,6 +151,9 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' @param z_scales Fixed or free z scales across panels.
 #' @param crs Target spatial coordinate reference system.
 #' @param light Lighting configuration or NULL.
+#' @param shadow Planar cast shadows from [shadow_3d()], or NULL for none.
+#' @param depth_cue Fog, depth-thinned strokes and eye-dome lighting from
+#'   [depth_cue_3d()], or NULL for none.
 #' @param backend Backend configuration.
 #' @param stereo Stereo output from [stereo_3d()], or NULL for one view.
 #' @param transform Optional coordinate transformations applied after
@@ -240,6 +243,8 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' rotation[1:2, 1:2] <- matrix(c(0, 1, -1, 0), 2)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_path_3d() +
 #'   coord_3d(isometry = rotation, xlim = c(-4, 4), ylim = c(-4, 4))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 4) +
+#'   coord_3d(shadow = shadow_3d(), depth_cue = depth_cue_3d())
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      oblique = c(angle = 45, ratio = 0.5), up = "z",
@@ -250,7 +255,8 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
                      transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0),
                      clip_planes = list(), stereo = NULL, space = "euclidean", model = NULL,
-                     input = NULL, isometry = NULL, munch_tolerance = 1e-3, munch_max_depth = 9L) {
+                     input = NULL, isometry = NULL, munch_tolerance = 1e-3, munch_max_depth = 9L,
+                     shadow = NULL, depth_cue = NULL) {
   space_spec <- space_spec_3d(space, model, input, isometry, munch_tolerance, munch_max_depth)
   clip <- match.arg(clip, c("on", "off"))
   clip_planes <- check_clip_planes_3d(clip_planes)
@@ -260,6 +266,8 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
   if (!all(axes %in% c("x", "y", "z"))) stop("Unknown 3D axis.", call. = FALSE)
   if (!all(panes %in% c("back", "floor", "front", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))) stop("Unknown cube pane.", call. = FALSE)
   if (!is.null(stereo) && !inherits(stereo, "ggplot3d_stereo")) stop("stereo must be NULL or a stereo_3d() configuration.", call. = FALSE)
+  if (!is.null(shadow) && !inherits(shadow, "ggplot3d_shadow")) stop("shadow must be NULL or a shadow_3d() configuration.", call. = FALSE)
+  if (!is.null(depth_cue) && !inherits(depth_cue, "ggplot3d_depth_cue")) stop("depth_cue must be NULL or a depth_cue_3d() configuration.", call. = FALSE)
   views <- list(azimuth = azimuth, elevation = elevation, roll = roll, distance = distance, fov = fov, zoom = zoom)
   sizes <- lengths(views)
   count <- max(1L, sizes)
@@ -280,7 +288,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
                   axis_lines = match.arg(axis_lines, c("box", "origin", "none")), origin = check_origin_3d(origin),
-                  light = light, backend = backend, crs = crs, clip_planes = clip_planes, stereo = stereo,
+                  light = light, shadow = shadow, depth_cue = depth_cue, backend = backend, crs = crs, clip_planes = clip_planes, stereo = stereo,
                   frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
 }
 

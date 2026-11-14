@@ -56,7 +56,7 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   vector_marker_limit_3d(vector_packet)
   scene <- scene_compile(vector_packet, camera, viewport)
   result <- raster_scene_3d(raster_packet, camera, viewport, backend$antialias, light,
-    buffers = TRUE, blend = backend$blend, traced = specs)
+    buffers = TRUE, blend = backend$blend, traced = specs, edl = depth_cue_edl_3d(x$panel_params))
   occlusion <- raster_occlusion_3d(vector_packet, camera, viewport, result)
   f <- scene$fragments
   kinds <- c("faces", "polylines", "markers", "text")

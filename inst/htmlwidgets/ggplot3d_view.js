@@ -52,8 +52,27 @@
       far: c.far == null ? distance+radius+tolerance : c.far};
   }
 
+  // Fog weight of depth_cue_3d(), depth_cue_weight_3d() in R: the camera
+  // depth d as a fraction of the box's depth extent (uFogDepth.xy: nearest
+  // depth and extent), ramped from near to far (uFogDepth.zw). uFog holds the
+  // linear-light fog colour and its share at full weight; uFogWidth the share
+  // by which strokes thin.
+  const FOG = `
+    uniform vec4 uFog, uFogDepth; uniform float uFogWidth;
+    float fogWeight(float d) {
+      float s = (d-uFogDepth.x)/uFogDepth.y;
+      return clamp((s-uFogDepth.z)/(uFogDepth.w-uFogDepth.z), 0.0, 1.0);
+    }`;
+  const fogWeight = (cue, depth, d) => {
+    const s = (d-depth[0])/depth[1];
+    return Math.min(1, Math.max(0, (s-cue.near)/(cue.far-cue.near)));
+  };
+  const toLinear = c => c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+  const toSrgb = l => l <= 0.0031308 ? 12.92*l : 1.055*Math.pow(l, 1/2.4)-0.055;
+
   // Shaders. Every kind projects with the static backends' camera model and
-  // writes either its colour or, with PICK defined, its primitive id.
+  // writes its colour or, with PICK defined, its primitive id, or, with DEPTH
+  // defined, its camera depth.
   const PROJECT = `
     uniform vec3 uTarget, uScale, uRight, uUp, uForward;
     uniform float uDistance, uNear, uFar, uBase, uPerspective, uPpm;
@@ -69,23 +88,31 @@
         (uFar+uNear)/(uFar-uNear)-2.0*uFar*uNear/((uFar-uNear)*d), uPerspective);
       return vec4(uOrigin+(xy+0.5)*uInner, z, w);
     }
-    vec4 clipPosition(vec2 px, float z, float w) { return vec4((2.0*px/uSize-1.0)*w, z*w, w); }`;
+    vec4 clipPosition(vec2 px, float z, float w) { return vec4((2.0*px/uSize-1.0)*w, z*w, w); }
+    ${FOG}`;
   const COLOUR_SPACE = `
     vec3 toLinear(vec3 c) { return mix(c/12.92, pow((c+0.055)/1.055, vec3(2.4)), step(vec3(0.04045), c)); }
     vec3 toSrgb(vec3 l) { return mix(12.92*l, 1.055*pow(l, vec3(1.0/2.4))-0.055, step(vec3(0.0031308), l)); }`;
   const FRAGMENT = `
     uniform float uClipData; uniform int uOitPass;
+    uniform vec3 uTarget, uScale, uForward; uniform float uDistance;
     in vec3 vModel; in vec4 vColour; flat in uint vId; flat in float vClip;
     out vec4 outColour;
     ${COLOUR_SPACE}
+    ${FOG}
+    float eyeDepth() { return uDistance+dot((vModel-uTarget)*uScale, uForward); }
     void clipData() {
       if (uClipData > 0.5 && vClip > 0.5 && (any(lessThan(vModel, vec3(0.0))) || any(greaterThan(vModel, vec3(1.0))))) discard;
     }
     void emit(vec4 c) {
-    #ifdef PICK
+    #if defined(PICK)
       outColour = vec4(float(vId & 255u), float((vId >> 8) & 255u), float((vId >> 16) & 255u), float((vId >> 24) & 255u))/255.0;
+    #elif defined(DEPTH)
+      if (c.a <= 0.0) discard;
+      outColour = vec4(eyeDepth(), 0.0, 0.0, 1.0);
     #else
       if (c.a <= 0.0) discard;
+      if (uFog.a > 0.0 && vClip > 0.5) c.rgb = toSrgb(clamp(mix(toLinear(c.rgb), uFog.rgb, uFog.a*fogWeight(eyeDepth())), 0.0, 1.0));
       if (uOitPass == 1) {
         float weight = clamp(pow(c.a+0.01, 3.0)*1000.0*pow(1.0-gl_FragCoord.z*0.9, 3.0), 0.01, 30.0);
         outColour = vec4(toLinear(c.rgb)*c.a, c.a)*weight;
@@ -145,7 +172,8 @@
         if ((uPerspective > 0.5 && (da <= 0.0 || db <= 0.0)) || len < 1e-6) { gl_Position = OFFSCREEN; return; }
         dir /= len;
         vec2 n = vec2(-dir.y, dir.x);
-        float hw = max(0.5, aWidth*uPpm*0.5);
+        float thin = aFlags.y > 0.5 ? 1.0-uFogWidth*fogWeight(0.5*(da+db)) : 1.0;
+        float hw = max(0.5, aWidth*thin*uPpm*0.5);
         bool atEnd = aCorner.y > 0.5;
         float cap = atEnd ? aCorner.w : aCorner.z;
         vec4 q = atEnd ? pb : pa;
@@ -234,8 +262,10 @@
   };
   SHADERS[DISC] = SHADERS[MARKER];
 
-  function compile(gl, kind, pick) {
-    const header = '#version 300 es\nprecision highp float;\nprecision highp int;\n' + (pick ? '#define PICK\n' : '') + (INSTANCED.has(kind) ? '#define INSTANCED\n' : '');
+  // mode: false for colour, true for pick ids, 'depth' for camera depth.
+  function compile(gl, kind, mode) {
+    const header = '#version 300 es\nprecision highp float;\nprecision highp int;\n' + (mode === true ? '#define PICK\n' : '') +
+      (mode === 'depth' ? '#define DEPTH\n' : '') + (INSTANCED.has(kind) ? '#define INSTANCED\n' : '');
     return shaderProgram(gl, header+PROJECT+SHADERS[kind][0], header+FRAGMENT+SHADERS[kind][1],
       LAYOUTS[kind].concat(STREAMS[kind].map(n => [n])).map(a => a[0]));
   }
@@ -255,6 +285,67 @@
     const cache = {};
     p.uniform = name => name in cache ? cache[name] : (cache[name] = gl.getUniformLocation(p, name));
     return p;
+  }
+
+  // Eye-dome lighting of depth_cue_3d(edl) (Boucheny 2009), the formula of
+  // the raster backend: the camera depth of the opaque data is drawn into a
+  // float target; a full-panel pass then multiplies each pixel by
+  // exp(-40 * strength * r), where r averages over the eight neighbours how
+  // far each lies in front in log2 of the depth normalised to the near-far
+  // range. Empty pixels lie at the far plane and are not darkened.
+  class EyeDome {
+    constructor(gl) {
+      this.gl = gl;
+      this.depth = gl.createRenderbuffer(); this.texture = gl.createTexture(); this.framebuffer = gl.createFramebuffer();
+      this.vao = gl.createVertexArray();
+      this.program = shaderProgram(gl, `#version 300 es
+        void main() { vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Position = vec4(p*2.0-1.0, 0.0, 1.0); }`,
+        `#version 300 es
+        precision highp float;
+        uniform highp sampler2D uDepth; uniform float uStrength, uNear, uFar;
+        out vec4 colour;
+        float level(ivec2 p) {
+          float z = texelFetch(uDepth, clamp(p, ivec2(0), textureSize(uDepth, 0)-1), 0).r;
+          return z > 0.0 ? log2(clamp((z-uNear)/(uFar-uNear), 1e-6, 1.0)) : 0.0;
+        }
+        void main() {
+          ivec2 p = ivec2(gl_FragCoord.xy);
+          if (texelFetch(uDepth, p, 0).r <= 0.0) { colour = vec4(1.0); return; }
+          float centre = level(p), response = 0.0;
+          for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++)
+            if (dx != 0 || dy != 0) response += max(0.0, centre-level(p+ivec2(dx, dy)));
+          colour = vec4(vec3(exp(-40.0*uStrength*response/8.0)), 1.0);
+        }`);
+    }
+    resize(width, height) {
+      if (width === this.width && height === this.height) return;
+      const gl = this.gl; this.width = width; this.height = height;
+      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, width, height, 0, gl.RED, gl.FLOAT, null);
+      [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(f => gl.texParameteri(gl.TEXTURE_2D, f, gl.NEAREST));
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.depth); gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, width, height);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depth);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error('The eye-dome lighting framebuffer is unavailable.');
+    }
+    bind() { this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer); }
+    // Multiplies the default framebuffer's colour by the shading, alpha kept.
+    shade(strength, near, far) {
+      const gl = this.gl, p = this.program;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
+      gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE);
+      gl.useProgram(p); gl.bindVertexArray(this.vao);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.texture); gl.uniform1i(p.uniform('uDepth'), 0);
+      gl.uniform1f(p.uniform('uStrength'), strength); gl.uniform1f(p.uniform('uNear'), near); gl.uniform1f(p.uniform('uFar'), far);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    release() {
+      const gl = this.gl;
+      gl.deleteFramebuffer(this.framebuffer); gl.deleteTexture(this.texture); gl.deleteRenderbuffer(this.depth);
+      gl.deleteVertexArray(this.vao); gl.deleteProgram(this.program);
+    }
   }
 
   // Weighted blended transparency (McGuire and Bavoil 2013) accumulates
@@ -644,7 +735,7 @@
       const programs = {}, pickPrograms = {};
       KINDS.forEach(k => { programs[k] = compile(gl, k, false); pickPrograms[k] = compile(gl, k, true); });
       const pickTarget = {framebuffer: gl.createFramebuffer(), colour: gl.createRenderbuffer(), depth: gl.createRenderbuffer(), panel: -1};
-      let transparency = null;
+      let transparency = null, eyeDome = null, depthPrograms = null;
       let data, views = [], frame, active = 0, frameRequest, pickRequest, hovered = null;
       let selected = new Set(), filter = null, selectionHandle = null, filterHandle = null;
       let playback = null, pathIndex = 0, group = null;
@@ -850,8 +941,34 @@
           set3('uLightDir', norm(direction)); set3('uRay', b.ray);
           set1('uAmbient', light.ambient); set1('uDiffuse', light.diffuse); set1('uMultiply', light.mode === 'multiply' ? 1 : 0);
         }
+        const cue = V.data.depth_cue, depth = V.fogDepth || [0, 1];
+        const fog = cue && cue.amount > 0 && cue.fog[3] > 0;
+        gl.uniform4f(prog.uniform('uFog'), ...(fog ? cue.fog.slice(0, 3).map(toLinear) : [0, 0, 0]), fog ? cue.amount : 0);
+        gl.uniform4f(prog.uniform('uFogDepth'), depth[0], depth[1], cue ? cue.near : 0, cue ? cue.far : 1);
+        set1('uFogWidth', cue ? cue.linewidth : 0);
         gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, V.scene.dashTexture);
         gl.uniform1i(prog.uniform('uDash'), 0);
+      }
+      // Nearest camera depth of the panel box and its depth extent.
+      function boxDepth(V) {
+        const b = V.basis, depths = arr(V.data.bounds).map(p => b.distance+dot(p.map((v, i) => (v-V.camera.target[i])*b.scale[i]), b.forward));
+        const low = Math.min(...depths);
+        return [low, Math.max(...depths)-low];
+      }
+      function shadeEyeDome(V) {
+        const cue = V.data.depth_cue, L = V.layout;
+        if (!cue || !(cue.edl > 0) || !gl.getExtension('EXT_color_buffer_float')) return;
+        if (!eyeDome) eyeDome = new EyeDome(gl);
+        if (!depthPrograms) { depthPrograms = {}; KINDS.forEach(k => { depthPrograms[k] = compile(gl, k, 'depth'); }); }
+        eyeDome.resize(canvas.width, canvas.height); eyeDome.bind();
+        gl.enable(gl.SCISSOR_TEST); gl.scissor(...rect([L.px, L.py, L.pw, L.ph]));
+        gl.clearColor(0, 0, 0, 0); gl.clearDepth(1); gl.depthMask(true);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        if (V.camera.clip) gl.scissor(...rect([L.ox, L.oy, L.iw, L.ih]));
+        gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
+        DRAW_KINDS.forEach(k => drawRange(V, k, 'fixed', V.scene.kinds[k].fixedRanges[1], depthPrograms));
+        eyeDome.shade(cue.edl, V.basis.near, V.basis.far);
+        gl.depthMask(true); gl.disable(gl.SCISSOR_TEST); gl.bindVertexArray(null);
       }
       function drawRange(V, kind, buffer, range, set, oitPass = 0) {
         if (!range || range[1] <= 0) return;
@@ -1045,8 +1162,12 @@
       }
       function sceneLabels(V) {
         V.labels.forEach(p => {
-          const m = p.material, t = p.table, i = p.row, c = p.colour.slice();
+          const m = p.material, t = p.table, i = p.row, c = p.colour.slice(), cue = V.data.depth_cue;
           if (p.dimmed) c[3] *= data.selection.dim;
+          if (cue && cue.amount > 0 && cue.fog[3] > 0) {
+            const w = cue.amount*fogWeight(cue, V.fogDepth, project(V, p.points[0])[2]);
+            for (let k = 0; k < 3; k++) c[k] = Math.min(1, Math.max(0, toSrgb((1-w)*toLinear(c[k])+w*toLinear(cue.fog[k]))));
+          }
           text(m.label, project(V, p.points[0]), {visible: true, colour: c, size: m.fontsize, family: m.family, face: m.fontface}, t.angle[i], t.hjust[i], t.vjust[i], V.layout.ppm);
         });
       }
@@ -1076,6 +1197,7 @@
         views.forEach(V => {
           const vp = V.data.viewport, r = V.data.rect_mm, ppm = F.ppm;
           V.basis = cameraBasis(V.camera, vp, V.framing);
+          V.fogDepth = boxDepth(V);
           updateGlyphs(gl, V);
           const px = F.x+r[0]*ppm, py = F.y+r[1]*ppm;
           V.layout = {ppm, px, py, pw: r[2]*ppm, ph: r[3]*ppm,
@@ -1085,6 +1207,7 @@
           V.opaqueFaces = V.scene.prims.filter(p => p.kind === FACE && !p.furniture && !p.skip && !p.hidden && p.partition === 1 && !p.translucent);
           prepare(V);
           drawPanel(V, false);
+          shadeEyeDome(V);
           V.pickDirty = true;
           sceneLabels(V); axes(V);
         });
@@ -1314,6 +1437,7 @@
           stop(); pathIndex = 0;
           views.forEach(V => V.scene.release());
           if (transparency) { transparency.release(); transparency = null; }
+          if (eyeDome) { eyeDome.release(); eyeDome = null; }
           data = x; frame = x.frame; active = 0; selected = new Set(); filter = null; hovered = null;
           chrome.innerHTML = x.chrome || '';
           const svg = chrome.querySelector('svg');

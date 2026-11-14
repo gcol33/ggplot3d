@@ -37,6 +37,8 @@ makeContent.scene_panel_grob <- function(x) {
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, x$eye_group %or3d% as.list(x$frame_group))
   x$packets <- resolve_draw_packets_3d(x$packets, furniture$camera, furniture$viewport)
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
+  furniture <- shadow_furniture_3d(furniture, x$packets, x$panel_params)
+  x$packets <- depth_cue_packets_3d(x$packets, x$panel_params, furniture$camera, furniture$viewport, x$theme)
   if (identical(backend$type, "pathtrace")) {
     result <- render_pathtrace_panel_3d(x, furniture, backend)
     scene <- result$scene
@@ -254,9 +256,10 @@ seam_group_grob_3d <- function(x, y, id, fill, gp, opacity, caps) {
 # nearest piece.
 # Sheet key of each face for alpha_mode = "surface": faces of one layer and
 # one sheet share a positive key; faces composited one by one take 0. Only
-# translucent faces with a fill and no border form sheets.
+# translucent faces with a fill and no border form sheets. Shadow films are
+# furniture (layer 0) sheets.
 surface_sheets_3d <- function(styles, layer_id, opacity) {
-  surface <- layer_id > 0L & opacity < 1 & is.na(style_value_3d(styles, "colour", NA_character_)) &
+  surface <- opacity < 1 & is.na(style_value_3d(styles, "colour", NA_character_)) &
     !is.na(style_value_3d(styles, "fill", NA_character_)) &
     style_value_3d(styles, "alpha_mode", "face") == "surface"
   key <- paste(layer_id, style_value_3d(styles, "sheet", 1L))
@@ -440,7 +443,8 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   masked_lines <- intersect(glyphs, lines)
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
-  seam <- face & f$layer_id > 0L & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
+  sheet_style <- style_value_3d(styles, "alpha_mode", "face") == "surface"
+  seam <- face & (f$layer_id > 0L | sheet_style) & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
   surface <- seam & surface_sheets_3d(styles, f$layer_id, f$opacity) > 0L
   key[face] <- paste(key[face], seam[face], ifelse(seam[face],
     paste(f$layer_id[face], ifelse(surface[face], "surface", f$seam_group[face]), f$opacity[face]), 0L), sep = ":")

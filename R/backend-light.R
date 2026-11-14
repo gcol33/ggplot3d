@@ -30,13 +30,19 @@ shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL) {
   apply_brightness_3d(fill, light_brightness_3d(normal, camera, light), light$mode)
 }
 
-# Lambert brightness of unit model-space normals (one per row), each turned
-# toward the viewer.
-light_brightness_3d <- function(normal, camera, light) {
+# Unit model-space direction toward the light, for a camera with right, up
+# and forward axes and the model scale of the panel box.
+light_vector_3d <- function(camera, light) {
   direction <- light$direction
   if (light$space == "camera") direction <- camera$right * direction[1L] + camera$up * direction[2L] - camera$forward * direction[3L]
   if (light$space == "data") direction <- direction * camera$model_scale
-  direction <- direction / sqrt(sum(direction^2))
+  direction / sqrt(sum(direction^2))
+}
+
+# Lambert brightness of unit model-space normals (one per row), each turned
+# toward the viewer.
+light_brightness_3d <- function(normal, camera, light) {
+  direction <- light_vector_3d(camera, light)
   toward <- -(camera$ray %or3d% camera$forward)
   normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, ] <- -normal[rowSums(sweep(normal, 2L, toward, "*")) < 0, , drop = FALSE]
   light$ambient + light$diffuse * pmax(0, drop(normal %*% direction))

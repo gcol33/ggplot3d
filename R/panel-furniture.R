@@ -110,7 +110,7 @@ frame_basis_3d <- function(camera, viewport) {
   }
   base <- if (perspective) 1 / tan(camera$fov * pi / 360) else min(1, ratio) / radius
   list(scale = scale, extent = extent, radius = radius, ratio = ratio, basis = basis,
-    forward = forward, ray = ray, standard = all(shear == 0) && identical(as.integer(camera$up %or3d% 3L), 3L),
+    right = rolled_right, up = rolled_up, forward = forward, ray = ray, standard = all(shear == 0) && identical(as.integer(camera$up %or3d% 3L), 3L),
     perspective = perspective, distance = distance, base = base)
 }
 

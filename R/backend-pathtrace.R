@@ -39,10 +39,7 @@ pathtrace_scene_3d <- function(packet, specs, camera, viewport, backend, light) 
   if (length(fields)) settings$epsilon <- max(settings$epsilon, vapply(fields, function(s)
     4 * s$tolerance * max(scale / vapply(s$ranges, diff, numeric(1))), numeric(1)))
   light <- light %or3d% light_3d(ambient = 1, diffuse = 0)
-  direction <- light$direction
-  if (light$space == "camera") direction <- resolved$right * direction[1L] + resolved$up * direction[2L] - resolved$forward * direction[3L]
-  else direction <- direction * scale
-  illumination <- c(direction / sqrt(sum(direction^2)), light$ambient, light$diffuse)
+  illumination <- c(light_vector_3d(resolved, light), light$ambient, light$diffuse)
   key <- serialize(list(mesh, fields, camera, viewport, settings, illumination, result$extent), NULL, version = 2L)
   panel <- as.character(packet$panel_id)
   if (is.null(backend$state[[panel]])) backend$state[[panel]] <- new.env(parent = emptyenv())

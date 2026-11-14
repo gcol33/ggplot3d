@@ -43,7 +43,9 @@ coord_3d(
   input = NULL,
   isometry = NULL,
   munch_tolerance = 0.001,
-  munch_max_depth = 9L
+  munch_max_depth = 9L,
+  shadow = NULL,
+  depth_cue = NULL
 )
 }
 \arguments{
@@ -140,6 +142,11 @@ fractions, used for geodesic subdivision. The default is 0.001.}
 
 \item{munch_max_depth}{Maximum binary subdivision depth, from 0 to 12.
 A space reports an error when this budget cannot meet the tolerance.}
+
+\item{shadow}{Planar cast shadows from \code{\link[=shadow_3d]{shadow_3d()}}, or NULL for none.}
+
+\item{depth_cue}{Fog, depth-thinned strokes and eye-dome lighting from
+\code{\link[=depth_cue_3d]{depth_cue_3d()}}, or NULL for none.}
 }
 \value{
 A Coord3D ggproto object.
@@ -223,4 +230,6 @@ rotation <- diag(4)
 rotation[1:2, 1:2] <- matrix(c(0, 1, -1, 0), 2)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_path_3d() +
   coord_3d(isometry = rotation, xlim = c(-4, 4), ylim = c(-4, 4))
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 4) +
+  coord_3d(shadow = shadow_3d(), depth_cue = depth_cue_3d())
 }

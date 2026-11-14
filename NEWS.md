@@ -1,5 +1,15 @@
 # ggplot3d 0.0.0.9000
 
+* `coord_3d(shadow = shadow_3d())` casts planar shadows (Blinn 1988) of
+  faces, strokes and points along the light onto the floor or other panes,
+  one translucent film per layer between the pane and its grid lines, exact
+  in vector output and drawn the same way by the raster and hybrid backends.
+  `coord_3d(depth_cue = depth_cue_3d())` fades the plot layers toward a fog
+  colour with camera depth in linear light, optionally thins strokes with
+  depth (as ggcube's `scale_depth`), and adds eye-dome lighting (Boucheny
+  2009, as in ParaView and PyVista) from the depth buffer of the raster and
+  hybrid backends and of `view_3d()`, which evaluates the same fog formula.
+
 * `geom_tube_3d(radius.unit = "mm")`, `geom_ribbon_3d(width.unit = "mm")` and
   `stat_sweep_3d(radius.unit = "mm")` size the cross section in millimetres on
   the page. The sweep runs when the plot is drawn, in the box the camera

@@ -95,6 +95,7 @@ Collate:
     'camera-path.R'
     'clip-planes.R'
     'coord-3d.R'
+    'depth-cue.R'
     'emitters.R'
     'export-3d.R'
     'export-3mf.R'

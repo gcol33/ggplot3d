@@ -282,6 +282,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
       outer_height_mm = outer$height_mm)),
     reference = list(corners_mm = unname(furniture_overlay_3d(furniture, NULL, selected$theme)$corners_mm)),
     light = params$coord_params$light,
+    depth_cue = view_depth_cue_3d(params$coord_params$depth_cue, selected$theme),
     background = if (visible_element_3d(bg)) view_rgba_3d(bg$fill) else c(0, 0, 0, 0),
     path = if (is.null(path)) NULL else view_path_3d(path, fps, params, furniture$viewport, frame$bounds()))
 }

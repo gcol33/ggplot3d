@@ -50,17 +50,6 @@ test_that("widget scenes label isosurface sheets as the static backends do", {
   expect_true(all(decode_column(scene$face_sheet) == 0L))
 })
 
-# Pixels of each widget as rows of RGBA, read back from its WebGL canvas.
-viewer_canvas_pixels <- function(b, ids) {
-  lapply(stats::setNames(ids, ids), function(id) {
-    p <- b$eval(sprintf(paste0("(() => { const el=document.getElementById('%s'); el.ggplot3d.redraw();",
-      "const c=el.querySelector('canvas'),g=c.getContext('webgl2'),p=new Uint8Array(c.width*c.height*4);",
-      "g.readPixels(0,0,c.width,c.height,g.RGBA,g.UNSIGNED_BYTE,p);if(g.getError()) throw Error('WebGL error');",
-      "return {w:c.width,h:c.height,p:Array.from(p)};})()"), id))
-    list(w = p$w, h = p$h, rgba = matrix(unlist(p$p), ncol = 4L, byrow = TRUE))
-  })
-}
-
 test_that("a translucent sheet does not darken where it folds over itself in the viewer", {
   skip_if_not_installed("htmlwidgets")
   b <- viewer_browser(list(

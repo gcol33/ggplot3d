@@ -111,33 +111,15 @@ spherical_style_packet_3d <- function(packet,context) {
 # Each primitive receives the inverse geodesic-sphere area at its centre.
 space_depth_cue_3d <- function(packet,context,fog,area) {
   if(is.null(fog)||!length(packet$vertices$x)) return(packet)
-  positions <- do.call(cbind,packet$vertices[c("x","y","z")])
-  kinds <- c("faces","polylines","markers","text")
-  centres <- list(); styles <- list(); sizes <- integer(length(kinds))
-  for(i in seq_along(kinds)) {
-    table <- packet[[kinds[i]]]; sizes[i] <- length(table$offset)
-    if(!sizes[i]) next
-    centres[[i]] <- t(vapply(seq_len(sizes[i]),function(j) {
-      vertex <- packet$corners$vertex[seq.int(table$offset[j],length.out=table$count[j])]
-      colMeans(positions[vertex,,drop=FALSE])
-    },numeric(3)))
-    styles[[i]] <- packet$styles[match(table$style_id,packet$styles$style_id),,drop=FALSE]
-  }
+  centres <- primitive_centres_3d(packet)
+  sizes <- vapply(centres,nrow,integer(1))
   if(!sum(sizes)) return(packet)
   P <- do.call(rbind,centres)
   P <- sweep(sweep(P,2L,vapply(context$ranges,diff,numeric(1)),"*"),2L,vapply(context$ranges,`[`,numeric(1),1L),"+")
   data <- as.data.frame(P); names(data) <- c("x","y","z")
   X <- context$space$to_canonical(data,context$model)
   brightness <- pmin(1,fog/pmax(area(X),.Machine$double.xmin))
-  styles <- do.call(rbind,styles)
+  styles <- primitive_styles_3d(packet)
   for(name in intersect(c("colour","fill","border_colour"),names(styles))) styles[[name]] <- apply_brightness_3d(styles[[name]],brightness,"multiply")
-  styles$style_id <- nrow(packet$styles)+seq_len(nrow(styles))
-  packet$styles <- rbind(packet$styles,styles)
-  packet$style_count <- as.integer(nrow(packet$styles))
-  index <- 0L
-  for(i in seq_along(kinds)) if(sizes[i]) {
-    packet[[kinds[i]]]$style_id <- styles$style_id[index+seq_len(sizes[i])]
-    index <- index+sizes[i]
-  }
-  packet
+  restyle_primitives_3d(packet,styles,sizes)
 }
