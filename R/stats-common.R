@@ -4,7 +4,7 @@ NULL
 utils::globalVariables(c("geometry_isosurface_cpp", "geometry_isosurface_methods_cpp", "geometry_hull_cpp", "geometry_kde_cpp", "density"))
 
 GeomStatsSurface3D <- ggplot2::ggproto("GeomStatsSurface3D", GeomSurface3D,
-  optional_aes = c(".opacity", "nx", "ny", "nz", "level", "density", "surface", "se"),
+  optional_aes = c(".opacity", "nx", "ny", "nz", "level", "density", "surface", "se", ".texture_u", ".texture_v"),
   default_aes = solid_defaults_3d()
 )
 

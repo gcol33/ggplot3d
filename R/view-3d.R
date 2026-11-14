@@ -448,6 +448,8 @@ view_packet_3d <- function(packet, pre = diag(4)) {
       dash = dash)
   })
   materials <- view_materials_3d(materials, styles, packet$materials)
+  textures <- panel_textures_3d(styles)
+  for (i in seq_along(materials)) materials[[i]]$texture <- textures$index[i] - 1L
   face_styles <- styles[match(packet$faces$style_id, styles$style_id), , drop = FALSE]
   sheet <- as.integer(surface_sheets_3d(face_styles, packet$faces$layer_id, packet$faces$opacity))
   packet$styles <- NULL
@@ -455,6 +457,8 @@ view_packet_3d <- function(packet, pre = diag(4)) {
   for (table in names(scene_schemas())) packet[[table]] <- lapply(packet[[table]], view_column_3d)
   packet <- unclass(packet)
   packet$face_sheet <- view_column_3d(sheet)
+  packet$textures <- lapply(textures$textures, function(t)
+    list(png = base64_3d(texture_png_3d(t$image)), interpolate = t$interpolate))
   packet
 }
 

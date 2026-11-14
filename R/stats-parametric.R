@@ -108,7 +108,8 @@ parametric_surface_3d <- function(fun, u, v, n, closed, twist, args, adaptive, t
     nx = normal[rows, 1L], ny = normal[rows, 2L], nz = normal[rows, 3L],
     u = face_mean(as.vector(t(cu))), v = face_mean(as.vector(t(cv))),
     gaussian_curvature = face_mean(frame$gaussian[rows]), mean_curvature = face_mean(frame$mean[rows]),
-    .face = rep(seq_len(nrow(tri)), each = 3L), .corner = rep.int(1:3, nrow(tri)), .vertex = rows)
+    .face = rep(seq_len(nrow(tri)), each = 3L), .corner = rep.int(1:3, nrow(tri)), .vertex = rows,
+    .texture_u = as.vector(t(cu)), .texture_v = as.vector(t(cv)))
   if (vertex_parameters) {
     out$.u_vertex <- uv[rows, 1L]
     out$.v_vertex <- uv[rows, 2L]

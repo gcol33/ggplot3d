@@ -1,6 +1,7 @@
 #pragma once
 #include "geometry.h"
 #include "../scene/halo.h"
+#include "texture.h"
 #include "../shade/read.h"
 #include "../raymarch/volume.h"
 #include <numeric>
@@ -29,11 +30,14 @@ struct Paint {
 // Smooth faces (Phong 1975 normals, Gouraud 1971 colours): per face row the
 // unlit linear base colour, whether it is lit and its face normal; the light,
 // the direction toward the viewer, and per item whether its vertices carry
-// attributes that vary over it.
+// attributes that vary over it. Textured faces: per face row the texture
+// (0 for none) and the alpha of the fill under it (0 for no fill).
 struct Smooth {
   std::vector<Vec3> base,normal;
   std::vector<bool> lit,item;
-  std::vector<int> material;
+  std::vector<int> material,texture;
+  std::vector<double> fill_alpha;
+  std::vector<Texture> textures;
   std::vector<shade::Material> materials;
   shade::Lights lights;
   shade::View view;
@@ -633,19 +637,43 @@ static inline std::uint32_t channel_byte(double value) {
   return static_cast<std::uint32_t>(std::round(std::max(0.0,std::min(1.0,value))*255));
 }
 
-// Colour of a smooth face at a sample: corner colours and normals
+// Screen barycentric weights of fan triangle (0, i, i+1) of a polygon item
+// at (x, y), extended affinely outside it, made perspective-correct (weights
+// a / depth, normalised) under perspective.
+static inline std::array<double,3> fan_weights(const Shapes& shapes,const Item& item,Index i,double x,double y) {
+  const Scene& scene=shapes.scene;
+  const Screen* v=scene.vertices.data()+item.offset;
+  const double area=shapes.area[item.offset+i];
+  std::array<double,3> w{edge(v[i],v[i+1],x,y)/area,edge(v[i+1],v[0],x,y)/area,edge(v[0],v[i],x,y)/area};
+  if(scene.projection.camera.perspective) {
+    const double depth[3]={v[0].depth,v[i].depth,v[i+1].depth};
+    double total=0;
+    for(int j=0;j<3;++j) {w[j]/=depth[j];total+=w[j];}
+    for(double& z:w) z/=total;
+  }
+  return w;
+}
+
+// Texture coordinates of fan triangle i at (x, y).
+static inline std::array<double,2> fan_uv(const Shapes& shapes,const Item& item,Index i,double x,double y) {
+  const auto w=fan_weights(shapes,item,i,x,y);
+  const Index k[3]={item.offset,item.offset+i,item.offset+i+1};
+  std::array<double,2> uv{0,0};
+  for(int j=0;j<3;++j) for(int d=0;d<2;++d) uv[d]+=w[j]*shapes.scene.shading[k[j]].uv[d];
+  return uv;
+}
+
+// Colour of a smooth face at the sample (x, y): corner colours and normals
 // interpolated perspective-correctly (weights a / depth under perspective),
 // the normal renormalised and lit by the shading kernel in linear light, then
-// put in the compositing space with the paint's alpha.
-static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const Paint& paint,const Hit& hit) {
+// put in the compositing space with the paint's alpha. A textured face takes
+// the texel at its perspective-correct texture coordinates, filtered over the
+// texels that one sample (dx by dy) covers, composited over its fill.
+static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const Paint& paint,const Hit& hit,
+                                   double x,double y,double dx,double dy) {
   const Scene& scene=shapes.scene; const Smooth& sm=*shapes.smooth;
   const Index k[3]={item.offset,item.offset+hit.i,item.offset+hit.i+1};
-  double w[3]={hit.a,hit.b,hit.c};
-  if(scene.projection.camera.perspective) {
-    double total=0;
-    for(int j=0;j<3;++j) {w[j]/=scene.vertices[k[j]].depth;total+=w[j];}
-    for(double& x:w) x/=total;
-  }
+  const auto w=fan_weights(shapes,item,hit.i,x,y);
   auto blend=[&](bool normal) {
     Vec3 out{0,0,0};
     for(int j=0;j<3;++j) {
@@ -657,6 +685,21 @@ static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const P
   };
   Vec3 colour=blend(false);
   if(!std::isfinite(colour[0]+colour[1]+colour[2])) colour=sm.base[item.row];
+  double alpha=1;
+  const int texture=sm.texture.empty() ? 0:sm.texture[item.row];
+  if(texture>0 && std::isfinite(scene.shading[k[0]].uv[0]+scene.shading[k[1]].uv[0]+scene.shading[k[2]].uv[0])) {
+    const Texture& t=sm.textures[texture-1];
+    std::array<double,2> uv{0,0};
+    for(int j=0;j<3;++j) for(int d=0;d<2;++d) uv[d]+=w[j]*scene.shading[k[j]].uv[d];
+    const auto ux=fan_uv(shapes,item,hit.i,x+dx,y),uy=fan_uv(shapes,item,hit.i,x,y+dy);
+    const double width=t.levels[0].width,height=t.levels[0].height;
+    const double footprint=std::max(std::hypot((ux[0]-uv[0])*width,(ux[1]-uv[1])*height),
+                                    std::hypot((uy[0]-uv[0])*width,(uy[1]-uv[1])*height));
+    const Texel texel=t.sample(uv[0],uv[1],footprint);
+    const double under=sm.fill_alpha[item.row]*(1-texel[3]);
+    alpha=texel[3]+under;
+    if(alpha>0) for(int d=0;d<3;++d) colour[d]=(texel[d]+under*colour[d])/alpha;
+  }
   if(sm.lit[item.row]) {
     Vec3 normal=blend(true);
     if(!std::isfinite(normal[0]+normal[1]+normal[2]) || !(dot(normal,normal)>0)) normal=sm.normal[item.row];
@@ -668,7 +711,7 @@ static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const P
     colour={lit.x,lit.y,lit.z};
   }
   Colour out{std::max(0.0,std::min(1.0,colour[0])),std::max(0.0,std::min(1.0,colour[1])),
-             std::max(0.0,std::min(1.0,colour[2])),paint.colour.a};
+             std::max(0.0,std::min(1.0,colour[2])),paint.colour.a*std::max(0.0,std::min(1.0,alpha))};
   if(!sm.linear) {out.r=srgb_encode(out.r);out.g=srgb_encode(out.g);out.b=srgb_encode(out.b);}
   return out;
 }
@@ -743,7 +786,10 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       if(c.a==0 || (line_row>=0 ? occluder.hides_line(span.partition,z,tolerance,line_row,joins):
                                   occluder.hides(span.partition,z,tolerance))) continue;
       Fragment fragment{i,z,local,border};
-      if(!border && smooth_item) {fragment.own=true;fragment.colour=smooth_colour(shapes,item,p,hit);}
+      if(!border && smooth_item) {
+        fragment.own=true;fragment.colour=smooth_colour(shapes,item,p,hit,xx,yy,canvas.dx,canvas.dy);
+        if(fragment.colour.a==0) continue;
+      }
       if(lit_quadric) {fragment.own=true;fragment.colour=quadric_colour(shapes,item,p,xx,yy);}
       s.fragments.push_back(fragment);
       if(span.occluder && c.a==1) occluder.add(span.partition,z);
@@ -987,6 +1033,19 @@ static inline Smooth smooth_of(const Scene& scene,Rcpp::NumericMatrix face_colou
   }
   if(!Rf_isNull(x["lights"])) sm.lights=shade::read_lights(x["lights"]);
   sm.view=shade::read_view(x["view"]);
+  if(x.containsElementNamed("textures")) {
+    Rcpp::List textures=x["textures"];
+    Rcpp::IntegerVector texture=x["texture"];
+    Rcpp::NumericVector fill_alpha=x["fill_alpha"];
+    Rcpp::LogicalVector interpolate=x["interpolate"];
+    require(static_cast<std::size_t>(texture.size())==n && static_cast<std::size_t>(fill_alpha.size())==n &&
+            interpolate.size()==textures.size(),"invalid raster texture input");
+    for(R_xlen_t i=0;i<textures.size();++i) sm.textures.push_back(read_texture(textures[i],interpolate[i]==TRUE));
+    sm.texture.assign(texture.begin(),texture.end());
+    sm.fill_alpha.assign(fill_alpha.begin(),fill_alpha.end());
+    for(std::size_t i=0;i<n;++i) require(sm.texture[i]>=0 && sm.texture[i]<=static_cast<int>(sm.textures.size()),
+                                         "invalid raster texture index");
+  }
   sm.item.assign(scene.items.size(),false);
   for(std::size_t i=0;i<scene.items.size();++i) {
     const Item& item=scene.items[i];
@@ -995,7 +1054,8 @@ static inline Smooth smooth_of(const Scene& scene,Rcpp::NumericMatrix face_colou
     for(Index j=0;j<item.count && !varies;++j) {
       const Shading& v=scene.shading[item.offset+j];
       varies=std::isfinite(v.colour[0]+v.colour[1]+v.colour[2]) ||
-        (sm.lit[item.row] && std::isfinite(v.normal[0]+v.normal[1]+v.normal[2]));
+        (sm.lit[item.row] && std::isfinite(v.normal[0]+v.normal[1]+v.normal[2])) ||
+        (!sm.texture.empty() && sm.texture[item.row]>0 && std::isfinite(v.uv[0]+v.uv[1]));
     }
     sm.item[i]=varies;
     sm.active=sm.active || varies;

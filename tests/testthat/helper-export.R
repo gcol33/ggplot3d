@@ -17,7 +17,7 @@ read_glb <- function(path) {
 glb_accessor <- function(glb, index) {
   accessor <- glb$json$accessors[[index + 1L]]
   view <- glb$json$bufferViews[[accessor$bufferView + 1L]]
-  width <- c(SCALAR = 1L, VEC3 = 3L, VEC4 = 4L)[[accessor$type]]
+  width <- c(SCALAR = 1L, VEC2 = 2L, VEC3 = 3L, VEC4 = 4L)[[accessor$type]]
   bytes <- glb$bin[view$byteOffset + seq_len(view$byteLength)]
   values <- if (accessor$componentType == 5125L) readBin(bytes, "integer", n = accessor$count * width, size = 4L, endian = "little")
     else readBin(bytes, "double", n = accessor$count * width, size = 4L, endian = "little")

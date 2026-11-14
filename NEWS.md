@@ -1,5 +1,23 @@
 # ggplot3d 0.0.0.9000
 
+* Textures: `texture_3d()` wraps an image (nativeRaster, colour matrix,
+  numeric array or PNG file) that `texture =` drapes over the faces of
+  `geom_surface_3d()`, `geom_mesh_3d()`, `stat_parametric_3d()` and the other
+  surface layers, with texture coordinates from the `u` and `v` aesthetics,
+  else x and y over the texture's `extent`; parametric surfaces use their
+  parameters and rgl meshes their `texcoords` and `texture` file. The image
+  is painted over the face fill. `annotation_raster_3d()` lays an image on
+  any plane of the panel box, `geom_raster_3d()` draws a regular grid as one
+  image per level (one per volume slice), and `ggplot2::annotation_raster()`
+  in `coord_3d()` becomes an image on the floor. The raster backend samples
+  perspective-correctly in linear light, bilinearly under magnification and
+  from a mipmap (Williams 1983) under minification; the vector backend draws
+  the image once per triangle through an affine group transformation clipped
+  to the triangle (R >= 4.2 groups), exact under orthographic projection and
+  split to half a device pixel under perspective; the viewer samples an sRGB
+  WebGL texture array; glTF export writes `TEXCOORD_0` and embedded PNG
+  textures (#64).
+
 * Illustrative path-trace surfaces return the shared shading kernel's colour
   at each hit, including back colours and indirect hits. Uniform hatching
   draws both requested families, and screen cross-hatching repeats each

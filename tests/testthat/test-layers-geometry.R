@@ -113,8 +113,11 @@ test_that("rgl homogeneous triangles and quads fortify with material provenance"
   expect_length(s$packet$faces$primitive_id, 2L)
   m$vb[4L, 1L] <- 0
   expect_error(fortify.mesh3d(m), "nonzero w")
+  m$vb[4L, 1L] <- 2
   m$material$texture <- "texture.png"
-  expect_error(fortify.mesh3d(m), "textures")
+  m$texcoords <- rbind(c(0, 1, 1, 0), c(0, 0, 1, 1))
+  f <- fortify.mesh3d(m)
+  expect_equal(f$.texture_u, c(0, 1, 1, 0)); expect_equal(f$.texture_v, c(0, 0, 1, 1))
 })
 
 test_that("extrusions preserve hole area, cap choice and boundary wall strokes", {

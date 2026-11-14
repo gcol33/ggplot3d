@@ -71,7 +71,6 @@ fortify.ggplot3d_mesh <- function(model, data = NULL, ...) as.data.frame(model)
 #' @export
 fortify.mesh3d <- function(model, data = NULL, ...) {
   require_geometry_package_3d("rgl")
-  if (length(model$material$texture) && any(is.na(model$material$texture) | nzchar(model$material$texture))) stop("Mesh textures are unsupported materials.", call. = FALSE)
   if (length(model$ip) || length(model$is)) stop("Mesh point and segment components are unsupported; supply triangle/quad faces.", call. = FALSE)
   vb <- model$vb
   if (!is.matrix(vb) || nrow(vb) != 4L || any(!is.finite(vb)) || any(vb[4L, ] == 0)) stop("Mesh homogeneous coordinates require finite nonzero w.", call. = FALSE)
@@ -86,6 +85,15 @@ fortify.mesh3d <- function(model, data = NULL, ...) {
   }
   if (!length(tables)) stop("Mesh has no triangle or quad faces.", call. = FALSE)
   result <- mesh_3d(vertices, do.call(rbind, tables))
+  texcoords <- model$texcoords
+  if (length(texcoords)) {
+    if (is.null(dim(texcoords))) texcoords <- matrix(texcoords, 2L)
+    if (nrow(texcoords) != 2L && ncol(texcoords) == 2L) texcoords <- t(texcoords)
+    if (nrow(texcoords) != 2L || ncol(texcoords) != nrow(vertices) || any(!is.finite(texcoords)))
+      stop("Mesh texcoords need finite u and v for every vertex.", call. = FALSE)
+    result$.texture_u <- texcoords[1L, result$.vertex]
+    result$.texture_v <- texcoords[2L, result$.vertex]
+  }
   for (field in setdiff(names(model$material), "texture")) {
     value <- model$material[[field]]
     if (!length(value) || !is.atomic(value)) next
@@ -150,6 +158,7 @@ prepare_mesh_data_3d <- function(data) {
 prepare_mesh_aesthetics_3d <- function(out, data, plot, params) {
   out <- prepare_spatial_aesthetics_3d(out, data, plot, params)
   for (axis in c("x", "y", "z")) if (is.null(out[[axis]])) out[[axis]] <- data[[axis]]
+  for (key in intersect(c(".texture_u", ".texture_v"), names(data))) out[[key]] <- data[[key]]
   out
 }
 
@@ -210,7 +219,7 @@ mesh_pipeline_3d <- function(data, subdivide, remesh, decimate, smooth, curvatur
 
 GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
   required_aes = c("x", "y", "z", ".mesh", ".face", ".vertex", ".corner"),
-  optional_aes = c("subgroup", ".origin", ".feature", ".part"),
+  optional_aes = c("subgroup", ".origin", ".feature", ".part", "u", "v", ".texture_u", ".texture_v"),
   default_aes = solid_defaults_3d(), draw_key = ggplot2::draw_key_polygon
 )
 
@@ -254,18 +263,24 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, position = "identity", ...,
                          vertices = NULL, faces = NULL, shade = TRUE, wireframe = FALSE, hidden = "hide",
                          subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L, curvature = FALSE, crease = NULL,
-                         outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL, na.rm = FALSE,
-                         show.legend = NA, inherit.aes = TRUE) {
+                         outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL,
+                         texture = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.null(vertices) || !is.null(faces)) {
     if (!is.null(data) && !is.null(vertices)) stop("Supply data or vertices/faces.", call. = FALSE)
     data <- mesh_3d(vertices %or3d% data, faces)
   }
-  if (inherits(data, "mesh3d")) data <- ggplot2::fortify(data)
+  texture <- texture_argument_3d(texture)
+  if (inherits(data, "mesh3d")) {
+    image <- data$material$texture
+    if (is.null(texture) && is.character(image) && length(image) == 1L && !is.na(image) && nzchar(image))
+      texture <- texture_3d(image, extent = c(0, 1, 0, 1))
+    data <- ggplot2::fortify(data)
+  }
   make_layer_3d(GeomMesh3D, mapping, data, stat, position,
     c(list(shade = shade, wireframe = wireframe, hidden = hidden, subdivide = subdivide, remesh = remesh,
       decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, outline = outline,
       alpha_mode = alpha_mode_3d(alpha_mode), shading = shading_mode_3d(shading), material = material_argument_3d(material),
-      hatch = hatch_argument_3d(hatch), na.rm = na.rm), list(...)),
+      hatch = hatch_argument_3d(hatch), texture = texture, na.rm = na.rm), list(...)),
     material_legend_3d(material, show.legend), inherit.aes)
 }
 
@@ -281,7 +296,7 @@ emit_mesh_3d <- function(data, params, panel_params) {
     vertices <- matrix(data$.vertex[faces], ncol = 3L)
     if (any(corners[, 1L] == corners[, 2L] | corners[, 2L] == corners[, 3L] | corners[, 1L] == corners[, 3L]) ||
         any(vertices[, 1L] == vertices[, 2L] | vertices[, 2L] == vertices[, 3L] | vertices[, 1L] == vertices[, 3L])) stop("Mesh face corners and vertices must be unique.", call. = FALSE)
-    keep <- rowSums(matrix(valid[faces], ncol = 3L)) == 3L & !is.na(data$fill[faces[, 1L]])
+    keep <- rowSums(matrix(valid[faces], ncol = 3L)) == 3L & (!is.null(params$texture) | !is.na(data$fill[faces[, 1L]]))
     faces <- faces[keep, , drop = FALSE]
     packet <- packet_from_primitives_3d(data, as.vector(t(faces)), rep("faces", nrow(faces)), params, panel_params$panel_id, rep.int(3L, nrow(faces)))
     return(surface_strokes_3d(packet, data, faces, params, panel_params))

@@ -557,12 +557,17 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   sheet_style <- style_value_3d(styles, "alpha_mode", "face") == "surface"
   attributes <- scene_linear_attributes_3d(scene)
   smooth <- smooth_fragments_3d(scene, attributes, styles, light)
+  textures <- panel_textures_3d(styles)
+  uv <- scene_vertex_attributes_3d(scene, c("u", "v"))
+  textured <- face & textures$index > 0L & !is.null(uv) & ncol(uv %or3d% matrix(0, 0, 0)) == 2L
+  smooth <- smooth & !textured
   # Translucent seam groups paint from flat compound paths only.
   seam <- face & (f$layer_id > 0L | sheet_style) & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill) &
-    !(smooth & f$opacity < 1)
+    !(smooth & f$opacity < 1) & !textured
   surface <- seam & surface_sheets_3d(styles, f$layer_id, f$opacity) > 0L
   key[face] <- paste(key[face], seam[face], ifelse(seam[face],
     paste(f$layer_id[face], ifelse(surface[face], "surface", f$seam_group[face]), f$opacity[face]), 0L), sep = ":")
+  key[textured] <- paste(key[textured], "texture", textures$index[textured], sep = ":")
   region_id <- if (is.null(regions)) integer(length(key)) else regions$id
   key <- paste(key, region_id, sep = ":region:")
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
@@ -584,6 +589,19 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
     } else if (kind == 5L) {
       drawn <- quadric_run_grob_3d(scene, rows, quadric_info, styles, light, c(rows, underlay[[run]]))
       g <- drawn$grob; clip <- drawn$clip
+    } else if (kind == 1L && textured[rows[1L]]) {
+      g <- textured_faces_grob_3d(scene, rows, s, f$opacity[rows], uv, textures$textures[[textures$index[rows[1L]]]],
+        viewport, caps, paste0("scene-run-", run), attributes, light)
+      if (any(!is.na(s$colour))) {
+        outline <- material_gp_3d(s, f$opacity[rows], 1L); outline$fill <- NA
+        id <- rep(seq_along(counts), counts)
+        g <- grid::grobTree(g, grid::polygonGrob(x, y, id = id, gp = outline))
+      }
+      if (!is.null(clip)) {
+        clip$gp <- grid::gpar(fill = "white", col = NA, alpha = 1)
+        g <- grid::grobTree(g, vp = grid::viewport(mask = grid::as.mask(clip, type = caps$mask_type %or3d% "alpha")))
+        clip <- NULL
+      }
     } else if (kind == 1L) {
       fill <- face_fill_3d(scene, rows, styles, light)
       gp$fill <- fill

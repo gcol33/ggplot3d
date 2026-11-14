@@ -34,11 +34,14 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
       colour[filled] <- style_value_3d(styles, "fill", NA_character_)[filled]
     }
     smooth <- NULL
+    textured <- FALSE
     if (kind == "faces") {
       shade <- which(style_value_3d(styles, "shade", FALSE))
       normals <- prepared$normals
       fragments <- list(normal_x = normals[, 1L], normal_y = normals[, 2L], normal_z = normals[, 3L])
-      if (length(colour) && any(corner_attribute_columns_3d %in% names(packet$corners))) {
+      textures <- panel_textures_3d(styles)
+      textured <- textures$index > 0L & all(c("u", "v") %in% names(packet$corners))
+      if (length(colour) && (any(corner_attribute_columns_3d %in% names(packet$corners)) || any(textured))) {
         lit <- !is.null(light) & style_value_3d(styles, "shade", FALSE) %in% TRUE
         smooth <- list(base = linear_rgb_3d(colour),
           lit = lit, normal = face_shading_normals_3d(fragments, seq_along(colour), prepared$camera, styles),
@@ -46,13 +49,20 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
           lights = if (!is.null(light)) resolved_light_3d(light, prepared$camera),
           view = kernel_view_3d(prepared$camera))
         smooth$normal[!is.finite(smooth$normal)] <- 0
+        smooth$base[!is.finite(smooth$base)] <- 0
+        if (any(textured)) {
+          smooth$textures <- lapply(textures$textures, `[[`, "image")
+          smooth$interpolate <- vapply(textures$textures, `[[`, logical(1), "interpolate")
+          smooth$texture <- ifelse(textured, textures$index, 0L)
+          smooth$fill_alpha <- as.double(!is.na(colour))
+        }
       }
       colour[shade] <- shade_fill_3d(colour[shade], fragments, shade, prepared$camera, light, styles[shade, , drop = FALSE],
         prepared$centres[shade, , drop = FALSE], packet$materials)
     }
     if (!length(colour)) return(matrix(numeric(), 4L, 0L))
     rgba <- colour_channels_3d(colour, alpha = TRUE) / 255
-    rgba[4L, ] <- as.double(!is.na(colour))
+    rgba[4L, ] <- as.double(!is.na(colour) | (kind == "faces" & textured))
     border <- style_value_3d(styles, "colour", NA_character_)
     outline <- colour_channels_3d(border, alpha = TRUE) / 255
     outline[4L, ] <- as.double(!is.na(border))

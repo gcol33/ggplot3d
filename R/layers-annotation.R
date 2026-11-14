@@ -145,8 +145,3 @@ register_geom_3d(ggplot2::GeomCustomAnn,
   annotation_emitter_3d(function(params) params$grob),
   parameters = list(grob = NULL, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
   default_z = -Inf)
-register_geom_3d(ggplot2::GeomRasterAnn,
-  annotation_emitter_3d(function(params) grid::rasterGrob(params$raster, width = grid::unit(1, "npc"),
-    height = grid::unit(1, "npc"), interpolate = isTRUE(params$interpolate))),
-  parameters = list(raster = NULL, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, interpolate = FALSE),
-  default_z = -Inf)

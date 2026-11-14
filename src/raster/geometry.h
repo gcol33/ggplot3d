@@ -21,16 +21,18 @@ struct Item {
 // Quadric items (kind 5) cover the screen bounds of one quadric, near side
 // (geometry 0) or far side (geometry 1); their samples cast rays.
 // Interpolated corner attributes at a face vertex: the unit model-space
-// normal and the linear-light colour, each NaN where not supplied.
+// normal, the linear-light colour and the texture coordinates, each NaN
+// where not supplied.
 struct Shading {
   Vec3 normal{NAN, NAN, NAN}, colour{NAN, NAN, NAN}, position{NAN, NAN, NAN};
+  std::array<double, 2> uv{NAN, NAN};
 };
-// Optional corner columns of the packet, NaN for NA: normal_x/y/z and
-// red/green/blue.
+// Optional corner columns of the packet, NaN for NA: normal_x/y/z,
+// red/green/blue and u/v.
 struct CornerAttributes {
-  std::array<std::vector<double>, 6> columns;
-  bool normals = false, colours = false;
-  bool any() const {return normals || colours;}
+  std::array<std::vector<double>, 8> columns;
+  bool normals = false, colours = false, uvs = false;
+  bool any() const {return normals || colours || uvs;}
 };
 struct Scene {
   ScenePacket packet;
@@ -84,8 +86,8 @@ struct Scene {
   Shading interpolate_shading(const Vertex& v) const {
     Shading out;
     for(int k=0;k<3;++k) out.position[k]=v.xyz[k]*projection.resolved.model_scale[k];
-    std::array<double,6> value{0,0,0,0,0,0};
-    for(int k=0;k<6;++k) {
+    std::array<double,8> value{0,0,0,0,0,0,0,0};
+    for(int k=0;k<8;++k) {
       const auto& column=corner.columns[k];
       if(column.empty()) {value[k]=NAN;continue;}
       for(const auto& weight:v.weights) value[k]+=weight.second*corner_w[weight.first]*column[weight.first];
@@ -96,6 +98,7 @@ struct Scene {
       if(length>0) out.normal={n[0]/length,n[1]/length,n[2]/length};
     }
     if(corner.colours && std::isfinite(value[3]+value[4]+value[5])) out.colour={value[3],value[4],value[5]};
+    if(corner.uvs && std::isfinite(value[6]+value[7])) out.uv={value[6],value[7]};
     return out;
   }
   void join(Index row,const Screen& a,const Screen& b,const Screen& c,double distance) {
@@ -235,21 +238,23 @@ static inline void prepare_geometry(Scene& scene) {
 // Corner colours are encoded sRGB channels, decoded here to linear light.
 static inline void read_corner_attributes(Scene& scene, const Rcpp::List& packet) {
   Rcpp::List corners=packet["corners"];
-  const char* names[]={"normal_x","normal_y","normal_z","red","green","blue"};
+  const char* names[]={"normal_x","normal_y","normal_z","red","green","blue","u","v"};
   auto& c=scene.corner;
-  for(int k=0;k<6;++k) if(corners.containsElementNamed(names[k])) {
+  for(int k=0;k<8;++k) if(corners.containsElementNamed(names[k])) {
     Rcpp::NumericVector x=corners[names[k]];
     c.columns[k].resize(x.size());
     for(R_xlen_t i=0;i<x.size();++i) {
       double v=Rcpp::NumericVector::is_na(x[i]) ? NAN:x[i];
-      if(k>=3 && std::isfinite(v)) v=v<=0.04045 ? v/12.92:std::pow((v+0.055)/1.055,2.4);
+      if(k>=3 && k<6 && std::isfinite(v)) v=v<=0.04045 ? v/12.92:std::pow((v+0.055)/1.055,2.4);
       c.columns[k][i]=v;
     }
   }
   c.normals=!c.columns[0].empty() && !c.columns[1].empty() && !c.columns[2].empty();
   c.colours=!c.columns[3].empty() && !c.columns[4].empty() && !c.columns[5].empty();
   if(!c.normals) for(int k=0;k<3;++k) c.columns[k].clear();
+  c.uvs=!c.columns[6].empty() && !c.columns[7].empty();
   if(!c.colours) for(int k=3;k<6;++k) c.columns[k].clear();
+  if(!c.uvs) for(int k=6;k<8;++k) c.columns[k].clear();
   if(!c.any()) return;
   const auto points=homogeneous_points(scene.packet.vertices,scene.projection);
   scene.corner_w.resize(scene.packet.corners.vertex.size());

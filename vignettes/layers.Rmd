@@ -131,6 +131,31 @@ s + geom_contour_filled_3d(bins = 4, plane = "floor") +
   coord_3d()
 ```
 
+## Images and textures
+
+An image draped over a surface carries detail that would otherwise need a mesh as fine as the image. `texture` takes a `texture_3d()` image, or anything it reads (a colour matrix, a numeric array from `png::readPNG()`, a PNG file). Each face shows the image at its texture coordinates, which default to the x and y positions spread over the image; `extent` places the image in data units instead, and faces outside it keep their fill.
+
+```{r drape, raster3d = TRUE, fig.alt="The volcano height map draped with a checkerboard image whose squares bend over the slopes."}
+volcano_grid <- expand.grid(x = seq_len(nrow(volcano)), y = seq_len(ncol(volcano)))
+volcano_grid$z <- as.vector(volcano)
+coarse <- volcano_grid[volcano_grid$x %% 3 == 1 & volcano_grid$y %% 3 == 1, ]
+checker <- matrix("#F2EFE6", 8, 8)
+checker[(row(checker) + col(checker)) %% 2 == 1] <- "#2B5F75"
+ggplot(coarse, aes(x, y, z = z)) +
+  geom_surface_3d(texture = texture_3d(checker, interpolate = FALSE)) + coord_3d()
+```
+
+An image can also lie on a plane of the panel box. `geom_raster_3d()` turns values on a regular grid into one image, one per level of the remaining axis, and `annotation_raster_3d()` lays a given image on a plane. Both are single faces of the scene, so they are foreshortened and hidden like any other face; here the full-resolution height map lies on the floor under the coarse surface.
+
+```{r raster-planes, raster3d = TRUE, fig.alt="The coarse volcano surface above a full-resolution coloured height map on the floor of the box and a colour ramp image on its back wall."}
+ggplot(coarse, aes(x, y, z = z)) +
+  geom_raster_3d(aes(fill = z), data = volcano_grid, at = -Inf) +
+  annotation_raster_3d(matrix(grDevices::hcl.colors(8, "Zissou 1"), 1), plane = "xz", at = Inf) +
+  geom_surface_3d(fill = "grey85", colour = NA) +
+  scale_fill_viridis_c() +
+  coord_3d()
+```
+
 ## Columns, counts and extrusions
 
 Columns occupy cells on an x/y lattice and extend from a baseline to z. A bar layer counts observations at each x/y combination. The count stat gives direct access to that calculation.

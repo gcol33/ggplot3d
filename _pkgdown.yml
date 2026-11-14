@@ -216,6 +216,11 @@ reference:
   contents:
   - annotation_plot_3d
   - facet_slices_3d
+- title: Images and textures
+  contents:
+  - texture_3d
+  - annotation_raster_3d
+  - geom_raster_3d
 - title: Statistical layers
   contents:
   - geom_function_3d

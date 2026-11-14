@@ -232,15 +232,23 @@ export_nodes_3d <- function(packet, scale, light, mm, key, parent = NULL) {
     keys <- table_key("faces")
     fill <- export_rgba_3d(style_value_3d(s, "fill", NA_character_), f$opacity)
     lit <- !is.null(light) & style_value_3d(s, "shade", FALSE) %in% TRUE
+    textures <- panel_textures_3d(s)
+    textured <- textures$index > 0L & all(c("u", "v") %in% names(packet$corners))
+    fill[textured, ] <- cbind(1, 1, 1, f$opacity[textured])
     n <- f$count - 2L
     face <- rep(seq_along(n), n); j <- sequence(n)
     keep <- !is.na(fill[face, 1L]) & fill[face, 4L] > 0
     face <- face[keep]; j <- j[keep]
     if (length(face)) {
-      corners <- rbind(f$offset[face], f$offset[face] + j, f$offset[face] + j + 1L)
-      parts$triangles <- list(position = model[vertex[as.vector(corners)], , drop = FALSE],
-        identity = vertex[as.vector(corners)],
+      corners <- as.vector(rbind(f$offset[face], f$offset[face] + j, f$offset[face] + j + 1L))
+      parts$triangles <- list(position = model[vertex[corners], , drop = FALSE],
+        identity = vertex[corners],
         colour = fill[face, , drop = FALSE], lit = lit[face], key = keys[face])
+      if (any(textured)) {
+        parts$triangles$uv <- cbind(packet$corners$u[corners], packet$corners$v[corners])
+        parts$triangles$texture <- ifelse(textured[face], textures$index[face], 0L)
+        parts$textures <- textures$textures
+      }
     }
     stroke <- export_rgba_3d(style_value_3d(s, "colour", NA_character_), f$opacity)
     width <- paint_metrics_3d(s)$width_mm
@@ -317,9 +325,15 @@ export_nodes_3d <- function(packet, scale, light, mm, key, parent = NULL) {
     tri <- parts$triangles
     if (!is.null(tri) && any(tri$key == name)) {
       i <- which(tri$key == name)
-      node$triangles <- list(position = tri$position[as.vector(rbind(3L * i - 2L, 3L * i - 1L, 3L * i)), , drop = FALSE],
-        identity = tri$identity[as.vector(rbind(3L * i - 2L, 3L * i - 1L, 3L * i))],
+      corner <- as.vector(rbind(3L * i - 2L, 3L * i - 1L, 3L * i))
+      node$triangles <- list(position = tri$position[corner, , drop = FALSE],
+        identity = tri$identity[corner],
         colour = tri$colour[i, , drop = FALSE], lit = tri$lit[i])
+      if (!is.null(tri$texture)) {
+        node$triangles$uv <- tri$uv[corner, , drop = FALSE]
+        node$triangles$texture <- tri$texture[i]
+        node$textures <- parts$textures
+      }
     }
     p <- parts$paths
     if (!is.null(p) && any(p$key == name)) {
@@ -350,14 +364,15 @@ export_axes_3d <- function(xyz, up, frame = c("z", "y")) {
 }
 
 # Meshes one node into primitives: list(mode, position, normal, colour, index,
-# lit). Triangle primitives are split by lighting and translucency, so each
-# maps to one material.
+# lit) and, for textured triangles, uv (texture coordinates per vertex) and
+# texture. Triangle primitives are split by lighting, translucency and
+# texture, so each maps to one material.
 export_mesh_3d <- function(node, options) {
   soups <- list()
   if (!is.null(node$triangles)) {
     t <- node$triangles
     soups$faces <- export_soup_3d(t$position, matrix(seq_len(nrow(t$position)), 3L),
-      t$colour[rep(seq_len(nrow(t$colour)), each = 3L), , drop = FALSE], t$lit)
+      t$colour[rep(seq_len(nrow(t$colour)), each = 3L), , drop = FALSE], t$lit, t$uv, t$texture)
   }
   if (!is.null(node$paths) && options$lines == "tube") {
     soups$tubes <- export_tubes_3d(node$paths)
@@ -371,11 +386,14 @@ export_mesh_3d <- function(node, options) {
     all <- export_join_soups_3d(soups)
     alpha <- matrix(all$colour[all$index, 4L], 3L)
     blend <- colSums(alpha < 1) > 0
-    for (lit in c(TRUE, FALSE)) for (translucent in c(FALSE, TRUE)) {
-      keep <- which(all$lit == lit & blend == translucent)
+    texture <- all$texture
+    blend[texture > 0L] <- blend[texture > 0L] | !vapply(node$textures, `[[`, logical(1), "opaque")[texture[texture > 0L]]
+    for (lit in c(TRUE, FALSE)) for (translucent in c(FALSE, TRUE)) for (k in sort(unique(texture))) {
+      keep <- which(all$lit == lit & blend == translucent & texture == k)
       if (!length(keep)) next
-      prims[[length(prims) + 1L]] <- c(list(mode = "triangles", lit = lit),
-        export_compact_3d(all, all$index[, keep, drop = FALSE]))
+      prim <- c(list(mode = "triangles", lit = lit), export_compact_3d(all, all$index[, keep, drop = FALSE]))
+      if (k > 0L) prim$texture <- node$textures[[k]] else prim$uv <- NULL
+      prims[[length(prims) + 1L]] <- prim
     }
   }
   if (!is.null(node$paths) && options$lines == "line") {
@@ -396,14 +414,17 @@ export_mesh_3d <- function(node, options) {
 
 export_compact_3d <- function(mesh, index) {
   used <- sort(unique(as.vector(index)))
-  list(position = mesh$position[used, , drop = FALSE], normal = mesh$normal[used, , drop = FALSE],
+  out <- list(position = mesh$position[used, , drop = FALSE], normal = mesh$normal[used, , drop = FALSE],
     colour = mesh$colour[used, , drop = FALSE], index = matrix(match(index, used), nrow(index)))
+  if (!is.null(mesh$uv)) out$uv <- mesh$uv[used, , drop = FALSE]
+  out
 }
 
 # Flat-shaded triangle soup: three unshared vertices per triangle carrying the
 # face normal. `index` is a 3 x n matrix of rows of `position`; degenerate
-# triangles are dropped.
-export_soup_3d <- function(position, index, colour, lit) {
+# triangles are dropped. Optional `uv` rows follow `position` and `texture`
+# numbers the triangles' textures (0 for none).
+export_soup_3d <- function(position, index, colour, lit, uv = NULL, texture = NULL) {
   a <- position[index[1L, ], , drop = FALSE]; b <- position[index[2L, ], , drop = FALSE]
   c <- position[index[3L, ], , drop = FALSE]
   normal <- cross_rows_3d(b - a, c - a)
@@ -413,8 +434,13 @@ export_soup_3d <- function(position, index, colour, lit) {
   normal <- normal[keep, , drop = FALSE] / length[keep]
   rows <- as.vector(index[, keep, drop = FALSE])
   n <- length(keep)
-  list(position = position[rows, , drop = FALSE], normal = normal[rep(seq_len(n), each = 3L), , drop = FALSE],
+  out <- list(position = position[rows, , drop = FALSE], normal = normal[rep(seq_len(n), each = 3L), , drop = FALSE],
     colour = colour[rows, , drop = FALSE], index = matrix(seq_len(3L * n), 3L), lit = rep_len(lit, length(index[1L, ]))[keep])
+  if (!is.null(texture)) {
+    out$uv <- uv[rows, , drop = FALSE]
+    out$texture <- texture[keep]
+  }
+  out
 }
 
 export_join_soups_3d <- function(soups) {
@@ -423,9 +449,12 @@ export_join_soups_3d <- function(soups) {
   shift <- cumsum(c(0L, vapply(soups, function(s) nrow(s$position), integer(1))))
   index <- do.call(cbind, Map(function(s, k) s$index + k, soups, head(shift, -1L)))
   storage.mode(index) <- "integer"
-  list(position = do.call(rbind, lapply(soups, `[[`, "position")),
+  out <- list(position = do.call(rbind, lapply(soups, `[[`, "position")),
     normal = do.call(rbind, lapply(soups, `[[`, "normal")), colour = do.call(rbind, lapply(soups, `[[`, "colour")),
-    index = index, lit = unlist(lapply(soups, function(s) s$lit %or3d% rep(FALSE, ncol(s$index))), use.names = FALSE))
+    index = index, lit = unlist(lapply(soups, function(s) s$lit %or3d% rep(FALSE, ncol(s$index))), use.names = FALSE),
+    texture = unlist(lapply(soups, function(s) s$texture %or3d% integer(ncol(s$index))), use.names = FALSE))
+  if (any(out$texture > 0L)) out$uv <- do.call(rbind, lapply(soups, function(s) s$uv %or3d% matrix(NA_real_, nrow(s$position), 2L)))
+  out
 }
 
 # Closed tubes share the rotation-minimising sweep and cap geometry.

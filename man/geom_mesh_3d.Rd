@@ -26,6 +26,7 @@ geom_mesh_3d(
   shading = "flat",
   material = NULL,
   hatch = NULL,
+  texture = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -97,6 +98,15 @@ illustrative style (toon, Gooch, normal colours). NULL reflects ambient
 and diffuse light fully, with no highlight.}
 
 \item{hatch}{Hatching from \code{\link[=hatch_3d]{hatch_3d()}}, or NULL for none.}
+
+\item{texture}{An image draped over the faces: a \code{\link[=texture_3d]{texture_3d()}} object or
+anything it accepts. Texture coordinates come from the \code{u} and \code{v}
+aesthetics when mapped, and otherwise from x and y, spread over the
+texture's extent (default the range of the layer). \code{\link[=stat_parametric_3d]{stat_parametric_3d()}}
+surfaces use their parameters and rgl meshes their \code{texcoords}, whose
+\code{texture} file is read when this is \code{NULL}. Each face shows the image
+over its fill; \code{fill = NA} shows the image alone. The layers that draw
+surfaces accept it too.}
 }
 \value{
 A ggplot2 layer.

@@ -63,7 +63,8 @@ write_gltf_3d <- function(frames, file, options, fps = NULL, binary = TRUE) {
   scene <- list(asset = list(version = "2.0",
       generator = paste("ggplot3d", as.character(utils::packageVersion("ggplot3d")))),
     scene = 0L, scenes = list(list(nodes = I(roots))), nodes = b$nodes, cameras = b$cameras,
-    meshes = b$meshes, materials = b$materials, accessors = b$accessors, bufferViews = b$views,
+    meshes = b$meshes, materials = b$materials, textures = b$textures, images = b$images, samplers = b$samplers_tex,
+    accessors = b$accessors, bufferViews = b$views,
     buffers = list(list(byteLength = b$length)))
   if (length(b$channels)) scene$animations <- list(list(name = "ggplot3d", samplers = b$samplers, channels = b$channels))
   if (length(b$extensions)) scene$extensionsUsed <- I(b$extensions)
@@ -85,6 +86,7 @@ gltf_builder_3d <- function() {
   b$chunks <- list(); b$length <- 0
   b$views <- list(); b$accessors <- list(); b$meshes <- list(); b$materials <- list()
   b$material_index <- list(); b$nodes <- list(); b$cameras <- list()
+  b$textures <- list(); b$images <- list(); b$samplers_tex <- list(); b$texture_objects <- list()
   b$samplers <- list(); b$channels <- list(); b$extensions <- character(); b$times <- NULL
   b
 }
@@ -101,7 +103,7 @@ gltf_accessor_3d <- function(b, values, type, target = NULL, bounds = FALSE) {
   b$chunks[[length(b$chunks) + 1L]] <- bytes
   b$length <- b$length + length(bytes)
   b$views[[length(b$views) + 1L]] <- view
-  width <- c(SCALAR = 1L, VEC3 = 3L, VEC4 = 4L)[[type]]
+  width <- c(SCALAR = 1L, VEC2 = 2L, VEC3 = 3L, VEC4 = 4L)[[type]]
   accessor <- list(bufferView = length(b$views) - 1L, componentType = if (integer) 5125L else 5126L,
     count = length(flat) %/% width, type = type)
   if (bounds) {
@@ -112,12 +114,33 @@ gltf_accessor_3d <- function(b, values, type, target = NULL, bounds = FALSE) {
   length(b$accessors) - 1L
 }
 
-gltf_material_3d <- function(b, lit, blend) {
-  key <- paste(lit, blend)
+# Index of a texture in the asset: its image as an embedded PNG buffer view,
+# with a sampler that filters linearly and mipmaps, or keeps sharp pixels.
+gltf_texture_3d <- function(b, texture) {
+  for (k in seq_along(b$texture_objects)) if (identical(b$texture_objects[[k]], texture)) return(k - 1L)
+  bytes <- texture_png_3d(texture$image)
+  b$chunks[[length(b$chunks) + 1L]] <- bytes
+  padding <- (4L - length(bytes) %% 4L) %% 4L
+  if (padding) b$chunks[[length(b$chunks) + 1L]] <- raw(padding)
+  b$views[[length(b$views) + 1L]] <- list(buffer = 0L, byteOffset = b$length, byteLength = length(bytes))
+  b$length <- b$length + length(bytes) + padding
+  b$images[[length(b$images) + 1L]] <- list(bufferView = length(b$views) - 1L, mimeType = "image/png")
+  b$samplers_tex[[length(b$samplers_tex) + 1L]] <- if (texture$interpolate) list(magFilter = 9729L, minFilter = 9987L,
+    wrapS = 33071L, wrapT = 33071L) else list(magFilter = 9728L, minFilter = 9984L, wrapS = 33071L, wrapT = 33071L)
+  b$textures[[length(b$textures) + 1L]] <- list(sampler = length(b$samplers_tex) - 1L, source = length(b$images) - 1L)
+  b$texture_objects[[length(b$texture_objects) + 1L]] <- texture
+  length(b$textures) - 1L
+}
+
+gltf_material_3d <- function(b, lit, blend, texture = NULL) {
+  image <- if (is.null(texture)) NULL else gltf_texture_3d(b, texture)
+  key <- paste(lit, blend, image %or3d% "")
   if (!is.null(b$material_index[[key]])) return(b$material_index[[key]])
-  material <- list(name = paste0(if (lit) "lit" else "unlit", if (blend) "_translucent" else ""),
+  material <- list(name = paste0(if (lit) "lit" else "unlit", if (blend) "_translucent" else "",
+      if (!is.null(image)) paste0("_texture", image) else ""),
     pbrMetallicRoughness = list(baseColorFactor = c(1, 1, 1, 1), metallicFactor = 0, roughnessFactor = 1),
     alphaMode = if (blend) "BLEND" else "OPAQUE", doubleSided = TRUE)
+  if (!is.null(image)) material$pbrMetallicRoughness$baseColorTexture <- list(index = image)
   if (!lit) {
     material$extensions <- list(KHR_materials_unlit = json_object_3d())
     b$extensions <- union(b$extensions, "KHR_materials_unlit")
@@ -134,8 +157,13 @@ gltf_mesh_3d <- function(b, prims, name, up) {
     attributes <- list(POSITION = gltf_accessor_3d(b, export_axes_3d(p$position, up, "y"), "VEC3", 34962L, bounds = TRUE))
     if (!is.null(p$normal)) attributes$NORMAL <- gltf_accessor_3d(b, export_axes_3d(p$normal, up, "y"), "VEC3", 34962L)
     attributes$COLOR_0 <- gltf_accessor_3d(b, cbind(srgb_to_linear_3d(p$colour[, 1:3, drop = FALSE]), p$colour[, 4L]), "VEC4", 34962L)
+    if (!is.null(p$texture)) {
+      uv <- p$uv
+      uv[!is.finite(uv)] <- -1
+      attributes$TEXCOORD_0 <- gltf_accessor_3d(b, cbind(uv[, 1L], 1 - uv[, 2L]), "VEC2", 34962L)
+    }
     list(attributes = attributes, indices = gltf_accessor_3d(b, as.integer(p$index) - 1L, "SCALAR", 34963L),
-      material = gltf_material_3d(b, p$lit, any(p$colour[, 4L] < 1)),
+      material = gltf_material_3d(b, p$lit, any(p$colour[, 4L] < 1) || (!is.null(p$texture) && !p$texture$opaque), p$texture),
       mode = c(points = 0L, lines = 1L, triangles = 4L)[[p$mode]])
   })
   b$meshes[[length(b$meshes) + 1L]] <- list(name = name, primitives = primitives)

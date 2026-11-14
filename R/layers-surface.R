@@ -36,6 +36,14 @@
 #'   triangle) and not into pieces narrower than a device pixel, so large
 #'   faces with distant colours show steps. The layers that draw surfaces
 #'   ([stat_isosurface_3d()], [geom_mesh_3d()] and others) accept it too.
+#' @param texture An image draped over the faces: a [texture_3d()] object or
+#'   anything it accepts. Texture coordinates come from the `u` and `v`
+#'   aesthetics when mapped, and otherwise from x and y, spread over the
+#'   texture's extent (default the range of the layer). [stat_parametric_3d()]
+#'   surfaces use their parameters and rgl meshes their `texcoords`, whose
+#'   `texture` file is read when this is `NULL`. Each face shows the image
+#'   over its fill; `fill = NA` shows the image alone. The layers that draw
+#'   surfaces accept it too.
 #' @param alpha_mode How a translucent surface composites.
 #'   `"face"` blends every face over what lies behind it, so a surface seen
 #'   through itself darkens where it folds over. `"surface"` paints each sheet
@@ -58,16 +66,19 @@
 #' p + geom_surface_3d(fill = "steelblue") + coord_3d()
 #' p + stat_surface_3d() + coord_3d()
 #' p + geom_surface_3d(ggplot2::aes(fill = z), shading = "smooth") + coord_3d()
+#' stripes <- matrix(rep(c("navy", "gold"), each = 4), 1)
+#' p + geom_surface_3d(texture = texture_3d(stripes, interpolate = FALSE)) + coord_3d()
 #' @export
 geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
                              position = "identity", ..., method = "grid", max_edge = Inf,
                              shade = TRUE, wireframe = FALSE, hidden = "hide", outline = NULL,
-                             alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                             alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL,
+                             texture = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSurface3D, mapping, data, stat, position,
     c(list(method = method, max_edge = max_edge, shade = shade, wireframe = wireframe,
            hidden = hidden, outline = outline, alpha_mode = alpha_mode_3d(alpha_mode),
            shading = shading_mode_3d(shading), material = material_argument_3d(material), hatch = hatch_argument_3d(hatch),
-           na.rm = na.rm), list(...)),
+           texture = texture_argument_3d(texture), na.rm = na.rm), list(...)),
     material_legend_3d(material, show.legend), inherit.aes)
 }
 
@@ -120,7 +131,7 @@ surface_triangles_3d <- function(data, method, max_edge, lattice = surface_latti
 
 StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
   required_aes = c("x", "y"),
-  optional_aes = c("z", "fill"),
+  optional_aes = c("z", "fill", "u", "v"),
   extra_params = c("na.rm", "method", "max_edge"),
   setup_params = function(data, params) {
     if (is.null(data$z)) stop("A surface requires a z aesthetic.", call. = FALSE)
@@ -152,7 +163,7 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
 
 GeomSurface3D <- ggplot2::ggproto("GeomSurface3D", ggplot2::GeomPolygon,
   required_aes = c("x", "y", "z", ".face", ".corner"),
-  optional_aes = c("nx", "ny", "nz"),
+  optional_aes = c("nx", "ny", "nz", "u", "v", ".texture_u", ".texture_v"),
   default_aes = ggplot2::aes(colour = NA, fill = "grey70", linewidth = 0.3, linetype = 1, alpha = NA)
 )
 

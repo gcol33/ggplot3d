@@ -21,6 +21,7 @@ geom_surface_3d(
   shading = "flat",
   material = NULL,
   hatch = NULL,
+  texture = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -93,6 +94,15 @@ and diffuse light fully, with no highlight.}
 
 \item{hatch}{Hatching from \code{\link[=hatch_3d]{hatch_3d()}}, or NULL for none.}
 
+\item{texture}{An image draped over the faces: a \code{\link[=texture_3d]{texture_3d()}} object or
+anything it accepts. Texture coordinates come from the \code{u} and \code{v}
+aesthetics when mapped, and otherwise from x and y, spread over the
+texture's extent (default the range of the layer). \code{\link[=stat_parametric_3d]{stat_parametric_3d()}}
+surfaces use their parameters and rgl meshes their \code{texcoords}, whose
+\code{texture} file is read when this is \code{NULL}. Each face shows the image
+over its fill; \code{fill = NA} shows the image alone. The layers that draw
+surfaces accept it too.}
+
 \item{geom}{Geom prototype used to draw the computed triangles.}
 }
 \value{
@@ -115,4 +125,6 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 p + geom_surface_3d(fill = "steelblue") + coord_3d()
 p + stat_surface_3d() + coord_3d()
 p + geom_surface_3d(ggplot2::aes(fill = z), shading = "smooth") + coord_3d()
+stripes <- matrix(rep(c("navy", "gold"), each = 4), 1)
+p + geom_surface_3d(texture = texture_3d(stripes, interpolate = FALSE)) + coord_3d()
 }

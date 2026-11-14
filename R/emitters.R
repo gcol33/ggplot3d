@@ -181,7 +181,7 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
 }
 
 # Drawing parameters of the geoms that draw triangulated surfaces.
-surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL)
+surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL, texture = NULL)
 
 shading_mode_3d <- function(shading) {
   if (!is.character(shading) || length(shading) != 1L || !(shading %in% c("flat", "smooth")))
@@ -299,8 +299,9 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   if (params$render == "splat" && entry$name != "GeomPoint") stop("render = \"splat\" requires a point layer.", call. = FALSE)
   edl <- params$edl %or3d% 1
   if (!is.numeric(edl) || length(edl) != 1L || !is.finite(edl) || edl < 0) stop("edl must be a nonnegative number.", call. = FALSE)
-  raster <- params$raster %or3d% FALSE
+  raster <- if ("raster" %in% names(entry$parameters)) FALSE else params$raster %or3d% FALSE
   if (!is.logical(raster) || length(raster) != 1L || is.na(raster)) stop("raster must be TRUE or FALSE.", call. = FALSE)
+  if (!is.null(params$texture)) data <- texture_coordinates_3d(data)
   data <- normalise_positions_3d(data, panel_params)
   params$.space_context <- panel_params$space_context
   params$.space_munch <- panel_params$space_munch
@@ -474,12 +475,18 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
   }
   material <- styles_3d(data, rows, kinds, params, normals, sheets)
   if (!is.null(params$material)) material$styles$material_id <- 1L
+  texture <- texture_argument_3d(params$texture)
+  if (!is.null(texture)) {
+    uv <- texture_corners_3d(data, primitives, kinds, counts, texture)
+    material <- texture_styles_3d(material, data, rows, kinds, counts, texture, uv)
+  }
   used <- which(tabulate(primitives, nrow(data)) > 0L)
   vertices <- lapply(data[used, c("x", "y", "z"), drop = FALSE], as.double)
   if (!is.null(data$.w)) vertices$w <- as.double(data$.w[used])
   corners <- list(vertex = match(primitives, used),
                   source_row = as.integer(data$.source[primitives]))
   if (identical(params$shading, "smooth")) corners <- c(corners, smooth_corners_3d(data, primitives, kinds, counts))
+  if (!is.null(texture)) corners <- c(corners, uv)
   if (!is.null(params$.vertex_key)) {
     key <- params$.vertex_key[used]
     representatives <- !duplicated(key)
@@ -560,7 +567,7 @@ packet_from_faces_edges_3d <- function(data, faces, edges, params, panel_params)
     faces <- list()
     if (all(is.na(data$colour))) data$colour <- "grey30"
   }
-  faces <- lapply(faces, function(f) f[!is.na(data$fill[f[, 1L]]), , drop = FALSE])
+  if (is.null(params$texture)) faces <- lapply(faces, function(f) f[!is.na(data$fill[f[, 1L]]), , drop = FALSE])
   edges <- edges[!is.na(data$colour[edges[, 1L]]), , drop = FALSE]
   counts <- unlist(lapply(faces, function(f) rep.int(ncol(f), nrow(f))), use.names = FALSE)
   packet_from_primitives_3d(data, c(unlist(lapply(faces, function(f) as.vector(t(f))), use.names = FALSE), as.vector(t(edges))),
@@ -631,6 +638,8 @@ merge_scene_packets <- function(packets, panel_id) {
   for (key in rownames(sizes)) shifts[key, ] <- c(0, head(cumsum(sizes[key, ]), -1L))
   material_count <- vapply(packets, function(p) nrow(p$materials), integer(1))
   material_shift <- c(0L, head(cumsum(material_count), -1L))
+  texture_count <- vapply(packets, function(p) max(c(0L, p$styles$texture_id), na.rm = TRUE), numeric(1))
+  texture_shift <- c(0L, head(cumsum(texture_count), -1L))
   for (j in seq_along(packets)) {
     packet <- packets[[j]]
     shift <- shifts[, j]
@@ -653,6 +662,7 @@ merge_scene_packets <- function(packets, panel_id) {
     packet$quadrics <- quadric
     packet$styles$style_id <- as.integer(packet$styles$style_id + shift[["style"]])
     if (!is.null(packet$styles$material_id)) packet$styles$material_id <- as.integer(packet$styles$material_id + material_shift[j])
+    if (!is.null(packet$styles$texture_id)) packet$styles$texture_id <- as.integer(packet$styles$texture_id + texture_shift[j])
     packets[[j]] <- packet
   }
   # An optional column supplied by some packets is NA (not supplied) in the others.
