@@ -1,5 +1,3 @@
-mesh_fixture <- function(name) test_path("fixtures", "meshes", name)
-
 sphere_mesh <- function(n = 30, method = "cubes") {
   axes <- rep(list(seq(-1.3, 1.3, length.out = n)), 3)
   g <- expand.grid(x = axes[[1]], y = axes[[2]], z = axes[[3]])
@@ -41,7 +39,7 @@ test_that("non-manifold and non-orientable input is refused, inconsistent windin
   quads <- cbind(1:23, 2:24, 26:48, 25:47)
   expect_s3_class(mesh_normals(mesh_3d(strip, quads)), "ggplot3d_mesh")
   expect_error(mesh_curvature(mesh_3d(strip, rbind(quads, c(24, 25, 1, 48)))), "not orientable")
-  cube <- read_mesh_3d(mesh_fixture("cube.obj"))
+  cube <- read_mesh_fixture("cube.obj")
   expect_warning(out <- mesh_subdivide(cube), "Reversed the winding of 2 triangles")
   expect_true(closed_oriented(out))
 })
@@ -58,7 +56,7 @@ test_that("a vertex where two surfaces touch is split into one vertex per fan", 
 })
 
 test_that("normals split at creases and are angle weighted", {
-  cube <- read_mesh_3d(mesh_fixture("cube-ascii.ply"))
+  cube <- read_mesh_fixture("cube-ascii.ply")
   sharp <- mesh_normals(cube, crease = 30)
   axis <- abs(cbind(sharp$nx, sharp$ny, sharp$nz))
   expect_true(all(abs(rowSums(axis) - 1) < 1e-12))
@@ -85,7 +83,7 @@ test_that("curvature matches the analytic torus and is NA on the boundary", {
 })
 
 test_that("Loop subdivision quadruples faces and keeps a closed surface closed", {
-  cube <- read_mesh_3d(mesh_fixture("cube-ascii.ply"))
+  cube <- read_mesh_fixture("cube-ascii.ply")
   loop <- mesh_subdivide(cube, 2)
   expect_equal(max(loop$.face), 12L * 16L)
   expect_true(closed_oriented(loop))
@@ -147,7 +145,7 @@ test_that("remeshing equalises edge lengths on the input surface", {
 })
 
 test_that("mesh parameters of geom_mesh_3d and simplify on isosurface stats", {
-  cube <- read_mesh_3d(mesh_fixture("cube-ascii.ply"))
+  cube <- read_mesh_fixture("cube-ascii.ply")
   s <- stats_scene(ggplot2::ggplot() + geom_mesh_3d(data = cube, subdivide = 2, smooth = 2) + coord_3d())
   expect_length(s$packet$faces$primitive_id, 192L)
   p <- ggplot2::ggplot() + geom_mesh_3d(ggplot2::aes(fill = ggplot2::after_stat(mean_curvature)),

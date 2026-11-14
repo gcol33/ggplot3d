@@ -90,8 +90,10 @@ unlink(path)
 
 A surface needs a z mapping. The following call shows the message produced by a missing mapping.
 
-```{r missing-z, error=TRUE}
-ggplot(surface, aes(east, north)) + geom_surface_3d() + coord_3d()
+```{r missing-z}
+tryCatch(
+  print(ggplot(surface, aes(east, north)) + geom_surface_3d() + coord_3d()),
+  error = function(e) message(conditionMessage(e)))
 ```
 
 Map the height column to z to connect the grid points.

@@ -1,0 +1,7 @@
+--- a/src/library/grDevices/src/devPS.c
++++ b/src/library/grDevices/src/devPS.c
+@@ -7946,2 +7946,2 @@
+-    if(tempnobj >= pd->max_nobjs) {
+-	int new = tempnobj + 500;
++    if(tempnobj + pd->numDefns >= pd->max_nobjs) {
++	int new = tempnobj + pd->numDefns + 500;
