@@ -91,7 +91,8 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
     self$panel_params <- self$facet$setup_panel_params(panels, coord)
     if (is.environment(self$context$key_context)) {
       self$context$key_context$camera <- self$panel_params[[1L]]$camera
-      self$context$key_context$light <- self$panel_params[[1L]]$coord_params$light
+      self$context$key_context$light <- panel_lights_3d(self$panel_params[[1L]]$coord_params$light,
+        self$panel_params[[1L]])
     }
     invisible()
   },

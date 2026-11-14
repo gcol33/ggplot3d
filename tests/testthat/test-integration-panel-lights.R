@@ -76,6 +76,19 @@ test_that("each panel matches its standalone vector and raster shading", {
   }
 })
 
+test_that("the guide reference binds data-space point lights to its panel ranges", {
+  point <- lights_3d(light_point(c(2, 2, 7), space = "data", falloff = 2))
+  p <- panel_light_surface() + coord_3d() + facet_views(NULL, lights = list(point = point))
+  layout <- ggplot2::ggplot_build(p)$layout
+  panel <- layout$panel_params[[1L]]
+  reference <- layout$context$key_context$light
+  expect_identical(reference, panel_lights_3d(point, panel))
+  expect_identical(reference$lights[[1L]]$space, "box")
+  low <- vapply(panel$ranges, `[`, numeric(1), 1L)
+  span <- vapply(panel$ranges, diff, numeric(1))
+  expect_equal(reference$lights[[1L]]$vector, unname((c(2, 2, 7) - low) / span))
+})
+
 test_that("viewer payloads keep panel lights and progressive caches include their condition", {
   skip_if_not_installed("htmlwidgets")
   p <- panel_light_surface() + coord_3d() + facet_views(NULL, lights = panel_light_conditions())
