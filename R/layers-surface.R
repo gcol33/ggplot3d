@@ -10,7 +10,8 @@
 #' `smooth` material. A discrete fill splits the rows into groups, so
 #' `group = 1` keeps one surface.
 #' Binned fill and colour scales split faces at the scalar iso-lines, using
-#' linear interpolation of the transformed aesthetic between vertices.
+#' linear interpolation of the mapped variable between vertices. Scale
+#' transformations place the breaks in the variable's original units.
 #' Each piece has one band colour, with normals interpolated across its edges.
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard ggplot2 layer arguments.
 #' @param method Grid connectivity or Delaunay triangulation.

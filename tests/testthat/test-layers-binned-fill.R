@@ -78,11 +78,19 @@ test_that("mesh triangles and polygons use transformed binned fill and colour va
     f <- band_face_values(p)
     x_range <- out$built$layout$panel_params[[1L]]$ranges$x
     x <- f$x * diff(x_range) + x_range[1L]
-    expect_true(any(abs(x - 0.5) < 1e-12))
-    expect_false(any(vapply(split(x, f$owner), function(v) min(v) < 0.5 - 1e-12 && max(v) > 0.5 + 1e-12, logical(1))))
+    cut <- (10 - 1) / (100 - 1)
+    expect_true(any(abs(x - cut) < 1e-12))
+    expect_false(any(vapply(split(x, f$owner), function(v) min(v) < cut - 1e-12 && max(v) > cut + 1e-12, logical(1))))
     if (aes == "fill") {
-      expected <- out$built$plot@scales$get_scales(aes)$map(vapply(split(x, f$owner), mean, numeric(1)) * 2)
+      expected <- out$built$plot@scales$get_scales(aes)$map(log10(1 + vapply(split(x, f$owner), mean, numeric(1)) * 99))
       expect_identical(grDevices::col2rgb(p$styles$fill[p$faces$style_id]), grDevices::col2rgb(expected))
+    } else {
+      at <- rep(p$polylines$offset, p$polylines$count) + sequence(p$polylines$count) - 1L
+      x <- p$vertices$x[p$corners$vertex[at]] * diff(x_range) + x_range[1L]
+      owner <- rep(seq_along(p$polylines$count), p$polylines$count)
+      expect_false(any(vapply(split(x, owner), function(v) min(v) < cut - 1e-12 && max(v) > cut + 1e-12, logical(1))))
+      expected <- out$built$plot@scales$get_scales(aes)$map(log10(1 + vapply(split(x, owner), mean, numeric(1)) * 99))
+      expect_identical(grDevices::col2rgb(p$styles$colour[p$polylines$style_id]), grDevices::col2rgb(expected))
     }
   }
 })
@@ -196,4 +204,33 @@ test_that("banded faces keep exact visibility against the independent referee", 
     expect_gt(score$scored, 0)
     expect_equal(score$wrong, 0L)
   }
+})
+
+test_that("implicit binned limits train on vertex samples for flat and smooth shading", {
+  d <- expand.grid(x = 0:1, y = 0:1); d$z <- d$x
+  flat <- stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = x)) +
+    geom_surface_3d() + ggplot2::scale_fill_steps(breaks = c(0.2, 0.8)) + coord_3d())
+  smooth <- stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = x)) +
+    geom_surface_3d(shading = "smooth") + ggplot2::scale_fill_steps(breaks = c(0.2, 0.8)) + coord_3d())
+  expect_identical(flat$built$plot@scales$get_scales("fill")$get_limits(), c(0, 1))
+  expect_identical(flat$packet$faces$count, smooth$packet$faces$count)
+  expect_identical(flat$packet$styles$fill[flat$packet$faces$style_id], smooth$packet$styles$fill[smooth$packet$faces$style_id])
+  palette <- scales::new_continuous_palette(function(x) ifelse(x <= 0.37, "navy", "gold"), type = "colour")
+  custom <- stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = x)) + geom_surface_3d() +
+    ggplot2::continuous_scale("fill", palette = palette) + coord_3d())
+  expect_identical(custom$built$plot@scales$get_scales("fill")$get_limits(), c(0, 1))
+  expect_gt(length(custom$packet$faces$count), 2L)
+})
+
+test_that("date-valued band variables retain their transformation class when remapped", {
+  d <- expand.grid(x = 0:1, y = 0:1); d$z <- d$x
+  d$value <- as.Date("2026-01-01") + 10 * d$x
+  out <- stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = value)) + geom_surface_3d() +
+    ggplot2::binned_scale("fill", palette = scales::pal_seq_gradient(), transform = "date",
+      limits = as.Date(c("2026-01-01", "2026-01-11")), breaks = as.Date("2026-01-05")) + coord_3d())
+  f <- band_face_values(out$packet)
+  r <- out$built$layout$panel_params[[1L]]$ranges$x
+  x <- f$x * diff(r) + r[1L]
+  expect_true(any(abs(x - 0.4) < 1e-12))
+  expect_false(any(vapply(split(x, f$owner), function(v) min(v) < 0.4 - 1e-12 && max(v) > 0.4 + 1e-12, logical(1))))
 })

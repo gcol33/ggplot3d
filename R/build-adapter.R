@@ -58,6 +58,7 @@ scales_3d <- function(parent, context) {
       df <- band_map_df_3d(df, self$scales, self$context)
       ggplot2::ggproto_parent(parent, self)$map_df(df)
     },
+    train_df = function(self, df) band_train_df_3d(df, self$scales),
     transform_df = function(self, df) {
       position <- unique(unlist(lapply(Filter(function(s) any(s$aesthetics %in% c("x", "y", "z")), self$scales), `[[`, "aesthetics")))
       columns <- intersect(position, names(df))

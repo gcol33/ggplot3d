@@ -119,7 +119,8 @@ colours such as \code{fill = I(hex)}, is interpolated in linear light (Gouraud
 \code{smooth} material. A discrete fill splits the rows into groups, so
 \code{group = 1} keeps one surface.
 Binned fill and colour scales split faces at the scalar iso-lines, using
-linear interpolation of the transformed aesthetic between vertices.
+linear interpolation of the mapped variable between vertices. Scale
+transformations place the breaks in the variable's original units.
 Each piece has one band colour, with normals interpolated across its edges.
 }
 \examples{

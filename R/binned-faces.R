@@ -8,7 +8,29 @@ face_fill_samples_3d <- function(data, face, shading, average = mesh_face_mean_3
   data
 }
 
-# Breaks are in transformed aesthetic units, as are the values entering map_df.
+band_palette_breaks_3d <- function(scale) {
+  if (scale$is_discrete() || inherits(scale, "ScaleContinuousIdentity")) return(NULL)
+  palette <- scale$palette
+  if (inherits(palette, "ggproto_method")) palette <- environment(palette)$f
+  if (inherits(palette, "pal_continuous") &&
+      identical(body(palette), body(scales::pal_gradient_n(c("black", "white"))))) return(NULL)
+  # Plateaus distinguish stepped palettes from ordinary gradient ramps.
+  x <- seq(0, 1, length.out = 1025L)
+  colour <- scale$palette(x)
+  runs <- rle(colour)
+  if (length(runs$lengths) < 2L || any(runs$lengths < 2L)) return(NULL)
+  at <- head(cumsum(runs$lengths), -1L)
+  lo <- x[at]; hi <- x[at + 1L]
+  for (i in seq_len(48L)) {
+    mid <- (lo + hi) / 2
+    left <- scale$palette(mid) == colour[at]
+    lo[left] <- mid[left]; hi[!left] <- mid[!left]
+  }
+  (lo + hi) / 2
+}
+
+# Scale mapping uses transformed units; face interpolation uses the scalar
+# field's original units, with breaks taken through the inverse transformation.
 band_scale_3d <- function(scale) {
   if (scale$is_discrete() || inherits(scale, "ScaleContinuousIdentity")) return(NULL)
   if (inherits(scale, "ScaleBinned")) {
@@ -16,29 +38,14 @@ band_scale_3d <- function(scale) {
     limits <- scale$get_limits()
     breaks <- sort(unique(c(limits, breaks[is.finite(breaks) & breaks > min(limits) & breaks < max(limits)])))
   } else {
-    palette <- scale$palette
-    if (inherits(palette, "ggproto_method")) palette <- environment(palette)$f
-    if (inherits(palette, "pal_continuous")) return(NULL)
-    # A constant plateau on both sides of every colour jump distinguishes a
-    # stepped palette from the encoded channel quantisation of a gradient.
-    x <- seq(0, 1, length.out = 1025L)
-    colour <- scale$palette(x)
-    runs <- rle(colour)
-    if (length(runs$lengths) < 2L || any(runs$lengths < 2L)) return(NULL)
-    at <- head(cumsum(runs$lengths), -1L)
-    lo <- x[at]; hi <- x[at + 1L]
-    for (i in seq_len(48L)) {
-      mid <- (lo + hi) / 2
-      left <- scale$palette(mid) == colour[at]
-      lo[left] <- mid[left]; hi[!left] <- mid[!left]
-    }
+    targets <- band_palette_breaks_3d(scale)
+    if (is.null(targets)) return(NULL)
     limits <- scale$get_limits()
     # Rescalers may reverse or nonlinearly place palette coordinates.
     raw <- seq(min(limits), max(limits), length.out = 1025L)
     mapped <- scale$rescale(raw, limits)
     if (any(!is.finite(mapped)) || any(diff(mapped) == 0) ||
         !(all(diff(mapped) > 0) || all(diff(mapped) < 0))) return(NULL)
-    targets <- (lo + hi) / 2
     low <- rep(min(limits), length(targets)); high <- rep(max(limits), length(targets))
     increasing <- mapped[1L] < tail(mapped, 1L)
     for (i in seq_len(48L)) {
@@ -49,7 +56,26 @@ band_scale_3d <- function(scale) {
     breaks <- (low + high) / 2
     breaks <- sort(unique(breaks))
   }
-  list(breaks = breaks, map = scale$map)
+  transformation <- scale$get_transformation()
+  raw <- transformation$inverse(breaks)
+  attributes <- attributes(raw); attributes$names <- NULL
+  list(breaks = sort(unique(as.double(raw))), inverse = transformation$inverse,
+       map = function(value) {
+         attributes(value) <- attributes
+         scale$map(transformation$transform(value))
+       })
+}
+
+band_train_df_3d <- function(df, scales) {
+  for (scale in scales) {
+    samples <- df
+    if ("fill" %in% scale$aesthetics && is.numeric(df$.vertex_fill) &&
+        identical(df$fill, df$.face_fill) &&
+        (inherits(scale, "ScaleBinned") || !is.null(band_palette_breaks_3d(scale))))
+      samples$fill <- df$.vertex_fill
+    scale$train_df(samples)
+  }
+  invisible()
 }
 
 band_map_df_3d <- function(df, scales, context) {
@@ -63,7 +89,7 @@ band_map_df_3d <- function(df, scales, context) {
       value <- df[[name]]
       if (name == "fill" && identical(value, df$.face_fill)) value <- df$.vertex_fill
       if (!is.numeric(value)) next
-      df[[paste0(".band_", name)]] <- value
+      df[[paste0(".band_", name)]] <- as.double(band$inverse(value))
       bands[[name]] <- band
     }
   }
@@ -100,6 +126,16 @@ band_split_primitives_3d <- function(data, primitives, kinds, counts, params) {
   bands <- bands[vapply(names(bands), function(n) paste0(".band_", n) %in% names(data), logical(1))]
   if (!length(bands) || !any(kinds == "faces"))
     return(list(data = data, primitives = primitives, kinds = kinds, counts = counts, params = params))
+  if ("colour" %in% names(bands) && any(kinds == "polylines" & counts > 2L)) {
+    offsets <- cumsum(c(1L, head(counts, -1L)))
+    pieces <- lapply(seq_along(counts), function(i) {
+      r <- primitives[offsets[i] + seq_len(counts[i]) - 1L]
+      if (kinds[i] == "polylines") lapply(seq_len(length(r) - 1L), function(j) r[c(j, j + 1L)]) else list(r)
+    })
+    pieces <- unlist(pieces, recursive = FALSE)
+    kinds <- rep(kinds, ifelse(kinds == "polylines", counts - 1L, 1L))
+    counts <- lengths(pieces); primitives <- unlist(pieces, use.names = FALSE)
+  }
   normal <- intersect(c("nx", "ny", "nz"), names(data))
   if (length(normal) == 3L) {
     n <- as.matrix(data[normal]); size <- sqrt(rowSums(n^2))
@@ -110,21 +146,24 @@ band_split_primitives_3d <- function(data, primitives, kinds, counts, params) {
     params$.band_normals <- TRUE
   }
   offsets <- cumsum(c(1L, head(counts, -1L)))
-  chunks <- vector("list", length(counts)); out_counts <- out_kinds <- vector("list", length(counts))
+  chunks <- indices <- parents <- out_counts <- out_kinds <- vector("list", length(counts))
   numeric <- intersect(c("x", "y", "z", ".w", normal, "u", "v", ".texture_u", ".texture_v",
                         paste0(".band_", names(bands))), names(data))
+  samples <- as.matrix(data[numeric])
+  flat <- matrix(NA_real_, length(counts), 3L)
+  interpolate_fill <- !"fill" %in% names(bands) && identical(params$shading, "smooth") && !is.null(data$fill)
+  if (interpolate_fill) {
+    fill <- linear_rgb_3d(data$fill)
+    fills <- vector("list", length(counts)); fill_valid <- logical(length(counts))
+  }
   for (i in seq_along(counts)) {
     rows <- primitives[offsets[i] + seq_len(counts[i]) - 1L]
-    d <- data[rows, , drop = FALSE]
-    if (kinds[i] != "faces") {
-      chunks[[i]] <- d; out_counts[[i]] <- counts[i]; out_kinds[[i]] <- kinds[i]
-      next
-    }
+    active <- if (kinds[i] == "faces") bands else if (kinds[i] == "polylines") bands[intersect("colour", names(bands))] else list()
     pieces <- list(diag(length(rows)))
-    for (name in names(bands)) {
-      value <- d[[paste0(".band_", name)]]
+    for (name in names(active)) {
+      value <- data[[paste0(".band_", name)]][rows]
       if (any(!is.finite(value))) next
-      cuts <- bands[[name]]$breaks
+      cuts <- active[[name]]$breaks
       cuts <- cuts[cuts > min(value) & cuts < max(value)]
       if (!length(cuts)) next
       if (length(rows) > 3L && length(pieces) == 1L)
@@ -141,27 +180,38 @@ band_split_primitives_3d <- function(data, primitives, kinds, counts, params) {
         pieces <- divided
       }
     }
-    pieces <- Filter(function(w) nrow(w) >= 3L, pieces)
-    chunks[[i]] <- do.call(rbind, lapply(pieces, function(w) {
-      out <- d[max.col(w, ties.method = "first"), , drop = FALSE]
-      out[numeric] <- w %*% as.matrix(d[numeric])
-      if (!"fill" %in% names(bands) && identical(params$shading, "smooth") && all(!is.na(d$fill)))
-        out$fill <- encode_rgb_3d(w %*% linear_rgb_3d(d$fill))
-      for (name in names(bands)) {
-        value <- mean(out[[paste0(".band_", name)]])
-        out[[name]] <- bands[[name]]$map(value)
-      }
-      if (length(normal) == 3L) {
-        flat <- colMeans(as.matrix(d[normal])); size <- sqrt(sum(flat^2))
-        out[c(".band_nx", ".band_ny", ".band_nz")] <- as.list(flat / size)
-      }
-      out
-    }))
+    weights <- do.call(rbind, pieces)
+    indices[[i]] <- rows[max.col(weights, ties.method = "first")]
+    parents[[i]] <- rep.int(i, nrow(weights))
+    chunks[[i]] <- weights %*% samples[rows, , drop = FALSE]
+    if (length(normal) == 3L && kinds[i] == "faces") {
+      average <- colMeans(n[rows, , drop = FALSE])
+      flat[i, ] <- average / sqrt(sum(average^2))
+    }
+    if (interpolate_fill) {
+      fills[[i]] <- weights %*% fill[rows, , drop = FALSE]
+      fill_valid[i] <- length(active) > 0L && all(!is.na(data$fill[rows]))
+    }
     out_counts[[i]] <- vapply(pieces, nrow, integer(1))
-    out_kinds[[i]] <- rep("faces", length(pieces))
+    out_kinds[[i]] <- rep(kinds[i], length(pieces))
   }
-  data <- do.call(rbind, chunks)
+  parent <- unlist(parents, use.names = FALSE)
+  data <- data[unlist(indices, use.names = FALSE), , drop = FALSE]
+  data[numeric] <- do.call(rbind, chunks)
+  counts <- unlist(out_counts, use.names = FALSE)
+  kinds <- unlist(out_kinds, use.names = FALSE)
+  if (length(normal) == 3L) data[c(".band_nx", ".band_ny", ".band_nz")] <- flat[parent, , drop = FALSE]
+  if (interpolate_fill) {
+    rgb <- do.call(rbind, fills)
+    valid <- fill_valid[parent]
+    data$fill[valid] <- encode_rgb_3d(rgb[valid, , drop = FALSE])
+  }
+  owner <- rep.int(seq_along(counts), counts)
+  for (name in names(bands)) {
+    active <- kinds == "faces" | (name == "colour" & kinds == "polylines")
+    value <- rowsum(data[[paste0(".band_", name)]], owner, reorder = FALSE)[, 1L] / counts
+    data[[name]][rep.int(active, counts)] <- rep.int(bands[[name]]$map(value[active]), counts[active])
+  }
   params$.vertex_key <- NULL
-  list(data = data, primitives = seq_len(nrow(data)), kinds = unlist(out_kinds, use.names = FALSE),
-       counts = unlist(out_counts, use.names = FALSE), params = params)
+  list(data = data, primitives = seq_len(nrow(data)), kinds = kinds, counts = counts, params = params)
 }
