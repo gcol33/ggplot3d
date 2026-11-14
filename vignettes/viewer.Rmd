@@ -1,0 +1,163 @@
+---
+title: "Interactive viewing"
+description: "Explore WebGL 2 scenes with tooltips, picking, selection, linked cameras and crosstalk filters."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Interactive viewing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
+  dev.args = list(pointsize = 14))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
+         grey = "#5C6166")
+library(ggplot2)
+library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
+```
+
+`view_3d()` opens a plot in an interactive browser widget with orbit controls,
+tooltips and selection. It uses WebGL 2, the browser graphics API, and the
+R packages [htmlwidgets](https://www.htmlwidgets.org/) and
+[svglite](https://svglite.r-lib.org/) to display the scene and its surrounding
+plot elements. This article builds a viewer and links its selections to a
+filter. Installation is covered in [Get started](ggplot3d.html).
+
+## Example
+
+The motor-car data contain weight in thousands of pounds, fuel economy in
+miles per US gallon, gross horsepower and cylinder count. Model names identify
+the observations. Map them to the hover text and selection key before
+creating the widget.
+
+```{r viewer-data}
+cars <- data.frame(mtcars, model = rownames(mtcars))
+p <- ggplot(cars, aes(wt, mpg, z = hp, tooltip = model, data_id = model)) +
+  geom_point_3d(size = 4, colour = PAL["blue"]) +
+  coord_3d() + labs(x = "weight", y = "mpg", z = "horsepower")
+```
+
+Drag to orbit and use the wheel or a pinch gesture to zoom. Arrow keys orbit,
+and the plus and minus keys zoom. Camera code copies the current angles into
+a coordinate call, and Reset restores the initial view.
+
+```{r viewer, fig.alt="Interactive motor-car scatterplot with orbit, zoom, hover and selection controls."}
+widget <- view_3d(p, width = 624, height = 432, elementId = "cars-view")
+widget
+```
+
+## Picking and selection
+
+Picking identifies the primitive under the pointer by its identifier in an
+offscreen image. Hover over a point to see its model name, then click it to
+select that key. Shift-click or control-click adds and removes keys; clicking
+empty space clears the selection. Unselected geometry dims while a selection
+exists.
+
+Rows sharing a key highlight together across layers. In the absence of a
+key mapping, each row in each layer receives its own key. The default tooltip
+lists mapped values. Use `tooltip = FALSE` to disable those default tooltips;
+an explicit tooltip mapping still supplies its text.
+
+```{r single-selection, fig.alt="Motor-car viewer allowing one selected model at a time."}
+view_3d(p, selection = "single", width = 624, height = 432)
+```
+
+Set the selection mode to `"none"` to disable it. In a Shiny application,
+the widget identifier above gives the selected keys in
+`input[["cars-view_selected"]]` and camera updates in
+`input[["cars-view_camera"]]`. Browser integrations can listen on the widget
+element for `ggplot3d:hover`, `ggplot3d:select` and `ggplot3d:camera` events.
+
+## Several panels
+
+Facets stay interactive and retain their strips, titles and legends. The
+example splits the cars by transmission, with zero denoting automatic and
+one manual. Orbiting either panel turns both by the same amount, retaining
+their relative camera angles.
+
+```{r multi-panel, fig.height=6, fig.alt="Two vertically stacked live panels for automatic and manual cars with linked cameras."}
+panels <- p + facet_wrap(~am, ncol = 1,
+  labeller = as_labeller(c("0" = "automatic", "1" = "manual")))
+view_3d(panels, width = 624, height = 576, link = TRUE)
+```
+
+Set `link = FALSE` to move the panel under the pointer alone. An index in `panel` selects one facet without the surrounding plot elements.
+In a short widget, extracting a panel from vertically stacked facets can
+produce compressed geometry and oversized axis labels. The linked viewers
+below each use a complete plot. A shared string links their camera changes
+on the same page.
+
+```{r separate-panels, fig.alt="A complete motor-car plot linked by camera group to the second view below."}
+view_3d(p, link = "cars-cameras", width = 624, height = 432)
+```
+
+The second viewer uses the same link name. Orbit, zoom and reset changes
+travel between the two, with angle changes added and zoom factors multiplied.
+
+```{r linked-panel, fig.alt="A second camera view of all motor cars sharing changes with the viewer above."}
+other <- p + coord_3d(azimuth = 30)
+view_3d(other, link = "cars-cameras", width = 624, height = 432)
+```
+
+## Linking data with crosstalk
+
+[crosstalk](https://rstudio.github.io/crosstalk/) links selections and filters
+between widgets using shared row keys. Construct the plot from the shared
+object's original data and pass that same shared object to the viewer.
+The cylinder filter below hides cars excluded by the chosen cylinder counts.
+
+```{r shared-data}
+shared <- crosstalk::SharedData$new(cars, key = ~model, group = "cars")
+linked <- ggplot(shared$origData(), aes(wt, mpg, z = hp, tooltip = model)) +
+  geom_point_3d(size = 4, colour = PAL["blue"]) + coord_3d()
+```
+
+The original rows let the viewer take its keys from the shared object.
+Other crosstalk widgets in the group receive its selections and can send
+selections back. Keep the plotted rows aligned with the shared data by
+constructing the plot from that original table.
+
+```{r crosstalk, fig.alt="Cylinder-count filter followed by the linked motor-car viewer."}
+htmltools::tagList(
+  crosstalk::filter_checkbox("cylinders", "Cylinders", shared, ~cyl),
+  view_3d(linked, data = shared, width = 624, height = 432))
+```
+
+## Saving the widget
+
+Save the widget as HTML to share an interactive view. This example writes
+the supporting files beside the HTML; distribute the HTML and its companion
+directory together. Use `selfcontained = TRUE` for a single HTML file when
+Pandoc is available.
+
+```{r save-widget}
+directory <- tempfile("cars-viewer-")
+dir.create(directory)
+html <- file.path(directory, "cars.html")
+htmlwidgets::saveWidget(widget, html, selfcontained = FALSE)
+file.info(html)$size > 0
+```
+
+## Rendering behaviour
+
+Opaque geometry uses a depth buffer. Transparent primitives are sorted by
+their centre depth, so crossing transparent surfaces can differ from the
+static vector output. Text is drawn as plain browser text, with a label's
+visibility decided at its anchor. Geometry, mapped colours and lighting are
+transferred once; camera interaction runs in the browser.
+
+Stereo plots use their central camera in the viewer. Static eye pairs and
+anaglyphs are covered in [Camera and framing](camera.html). Use
+[Documents](documents.html) to switch between an HTML viewer and a static
+figure from the same knitr or Quarto chunk.

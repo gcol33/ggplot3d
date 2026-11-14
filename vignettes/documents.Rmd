@@ -1,5 +1,6 @@
 ---
 title: "Documents"
+description: "Use knitr and Quarto to choose HTML viewers or static figures, supply alt text and compose panels."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Documents}
@@ -8,59 +9,149 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
+  dev.args = list(pointsize = 14))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
+         grey = "#5C6166")
 library(ggplot2)
 library(ggplot3d)
-knitr::opts_chunk$set(fig.width = 6, fig.height = 4, dpi = 144)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
 ```
 
-A knitr document can show a plot as a static figure or an interactive viewer.
-Quarto's R engine uses the same chunk options.
+A document can display a 3D plot as a static figure or an interactive viewer.
+This article uses knitr's output switching, supplies accessible descriptions
+and arranges plots on a page. Quarto's R engine uses the same chunk options.
+Installation is covered in [Get started](ggplot3d.html); HTML viewers also
+need [htmlwidgets](https://www.htmlwidgets.org/) and
+[svglite](https://svglite.r-lib.org/), described in [Interactive viewing](viewer.html).
 
-```{r plot, eval=FALSE}
-p <- ggplot(mtcars, aes(wt, mpg, z = hp)) + geom_point_3d() + coord_3d()
+## A static figure
+
+The motor-car data record weight in thousands of pounds, fuel economy in
+miles per US gallon and gross horsepower. Printing the plot uses its chosen
+scene backend and the document's graphics device. The default backend draws
+vector geometry; this article's SVG device keeps those paths scalable.
+
+```{r static, fig.alt="Motor cars positioned by weight, fuel economy and horsepower, with higher-power cars toward the upper part of the box."}
+p <- ggplot(mtcars, aes(wt, mpg, z = hp)) +
+  geom_point_3d(size = 3, colour = PAL["blue"]) + coord_3d() +
+  labs(x = "weight", y = "mpg", z = "horsepower")
 p
 ```
 
-Set `view3d = TRUE` to embed the interactive viewer in HTML. PDF and Word
-output draw the plot with the vector scene backend. The document's graphics
-device determines the image format: for example, `dev = "pdf"` produces a
-vector image for a PDF document. The viewer follows the chunk's `fig.width`
-and `fig.height`, with its facet panels, titles and legends.
+## HTML, PDF and Word
 
-````markdown
-```{r, view3d=TRUE, fig.width=6, fig.height=4}
+Set the chunk option `view3d = TRUE` to embed the interactive viewer in HTML.
+The following chunk runs that switch. The figure dimensions are in inches,
+and become widget dimensions at 96 pixels per inch. Facet panels, titles,
+strips and legends follow the plot's layout. Set `fig.asp = NULL` to keep
+the explicit dimensions when the document supplies a default figure aspect
+ratio, as pkgdown does. An automatic ratio can produce fractional pixel
+dimensions, which the viewer currently rejects.
+
+```{r interactive, view3d=TRUE, fig.width=6.5, fig.height=4.5, fig.asp=NULL, fig.alt="Interactive motor-car scatterplot with weight, fuel economy and horsepower axes."}
 p
 ```
-````
 
-In Quarto, the equivalent chunk begins with:
+For PDF and Word output, that same option draws a static vector scene.
+The document device determines the image format: a PDF device retains vector
+geometry for a PDF document, and a PNG device samples it into pixels for Word.
+With `view3d = FALSE`, the chunk uses the backend configured on the plot.
+
+Quarto accepts the equivalent option in its cell metadata. This is the same
+plot object created above.
 
 ````markdown
 ```{r}
 #| view3d: true
-#| fig-width: 6
-#| fig-height: 4
+#| fig-width: 6.5
+#| fig-height: 4.5
+#| fig-asp: null
+#| fig-alt: "Motor cars by weight, fuel economy and horsepower."
 p
 ```
 ````
 
-`alt_text_3d(p)` describes the layer types, mapped variables and camera
-angles. This description supplies `fig.alt` for static figures and an
-accessible name around an HTML viewer. Set `fig.alt` in the chunk or add
-`labs(alt = "...")` to describe the finding in the plot.
+## Accessible descriptions
+
+`alt_text_3d()` describes the layer types, mapped variables and initial camera
+angles. The generated description supplies the default alternative text for
+static figures and an accessible group name around HTML viewers. Inspect it
+before adding words about what the figure communicates.
 
 ```{r description}
-p <- ggplot(mtcars, aes(wt, mpg, z = hp)) + geom_point_3d() + coord_3d()
 alt_text_3d(p)
 ```
 
-Patchwork and cowplot preserve each panel's scene when arranging several
-plots. Each scene is compiled at the physical dimensions of its panel.
+An explicit chunk `fig.alt` takes precedence. A description supplied by
+`labs(alt = ...)` takes precedence over the generated layer description.
+The example below describes the relationship the reader can inspect in the
+motor-car plot.
 
-When saving a raster scene, match the scene sampling resolution to the
-output device. Both dpi values refer to the requested physical plot size.
-
-```{r save, eval=FALSE}
-raster <- p + coord_3d(backend = backend_3d("raster", dpi = 300))
-ggsave("cars.png", raster, width = 6, height = 4, dpi = 300)
+```{r explicit-description}
+described <- p + labs(alt = paste(
+  "Motor cars plotted by weight, fuel economy and horsepower.",
+  "Heavier cars generally have lower fuel economy."))
+alt_text_3d(described)
 ```
+
+When a chunk prints several plots, supply a vector of descriptions in their
+printed order. Each static figure gets its own alternative text.
+
+```{r several-plots, fig.alt=c("Motor cars seen from azimuth minus sixty degrees.", "The same motor cars seen from azimuth thirty degrees.")}
+p
+p + coord_3d(azimuth = 30)
+```
+
+## Composing plots
+
+[patchwork](https://patchwork.data-imaginist.com/) arranges ggplot objects.
+Each 3D scene compiles at the physical size of its panel, so camera projection
+and mark sizes follow the final layout. Stack the plot above a second view
+to give each one the document column's width.
+
+```{r patchwork, fig.height=8, fig.alt="Two motor-car plots stacked vertically with different camera angles."}
+other <- p + coord_3d(azimuth = 30)
+patchwork::wrap_plots(p, other, ncol = 1)
+```
+
+[cowplot](https://wilkelab.org/cowplot/) also preserves the independent scenes.
+Its composition below contains a 3D view and a 2D view of the same cars.
+These arrangements are static figures; use a faceted ggplot with the
+viewer for a live multi-panel document.
+
+```{r cowplot, fig.height=8, fig.alt="A 3D motor-car plot above a 2D scatterplot of weight and fuel economy."}
+flat <- ggplot(mtcars, aes(wt, mpg)) +
+  geom_point(colour = PAL["blue"], size = 3) + labs(x = "weight", y = "mpg")
+cowplot::plot_grid(p, flat, ncol = 1)
+```
+
+[Combining 2D and 3D graphics](combining-2d-3d.html) shows shared scales and
+plots placed on planes inside a scene.
+
+## Saving a raster figure
+
+Choose the scene sampling resolution on the backend, then set the saved
+image's pixel dimensions through the device resolution. Both settings use
+the intended physical size. The temporary file below is
+six inches wide and four inches high at 144 dots per inch.
+
+```{r save}
+raster <- p + coord_3d(backend = backend_3d("raster", dpi = 144))
+path <- tempfile(fileext = ".png")
+ggsave(path, raster, width = 6, height = 4, dpi = 144)
+file.info(path)$size > 0
+unlink(path)
+```
+
+[Output backends](backends.html) explains the rendering choices.
+[Exporting plots and scenes](export.html) writes model files and native SVG,
+TikZ or Asymptote output.
