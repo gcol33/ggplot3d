@@ -1,0 +1,43 @@
+---
+title: "Molecular ball-and-stick views"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Molecular ball-and-stick views}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 5, dev = "png")
+library(ggplot2)
+library(ggplot3d)
+```
+
+[bio3d](https://www.thegrantlab.org/bio3d/) reads Protein Data Bank coordinate files into `pdb` objects. `fortify()` turns their atom records into a table and attaches bond endpoints for `geom_edge_3d()`. Each atom retains its serial number, element and coordinate in angstroms.
+
+This water molecule has explicitly specified connectivity. Bond endpoints refer to atom serial numbers, and can be supplied independently of the order of the atom records.
+
+```{r water, eval=requireNamespace("bio3d", quietly=TRUE)}
+water <- bio3d::as.pdb(xyz = c(0, 0, 0, 0.96, 0, 0, -0.24, 0.93, 0),
+                     eleno = c(10, 40, 90), elety = c("O", "H1", "H2"),
+                     elesy = c("O", "H", "H"), resid = "HOH")
+bonds <- data.frame(from = c(10, 10), to = c(40, 90))
+atoms <- fortify(water, bonds = bonds)
+ggplot(atoms) +
+  geom_edge_3d(shape = "tube", radius = 0.025, colour = "grey55") +
+  geom_sphere_3d(aes(x, y, z = z, radius = 0.4 * covalent_radius,
+                     fill = I(colour)), detail = 2) + coord_3d(aspect = "data")
+```
+
+Atom sizes use a chosen fraction of the covalent radius; tube radius is measured as a fraction of the longest model-box side. `aspect = "data"` preserves coordinate distances. Element radii and display colours come from bio3d's periodic table.
+
+## A coordinate file
+
+```{r pdb, eval=requireNamespace("bio3d", quietly=TRUE)}
+pdb <- bio3d::read.pdb(system.file("examples/1hel.pdb", package = "bio3d"), verbose = FALSE)
+atoms <- fortify(pdb)
+head(atoms[c("eleno", "elety", "element", "covalent_radius")])
+head(get_edges_3d()(atoms))
+```
+
+When connectivity is omitted, fortification estimates candidate bonds using a distance at most `bond_scale` times the sum of the two covalent radii. The default multiplier is 1.2. This rule supplies connections for a geometric view; curated chemical connectivity can be passed as `bonds`. An empty bond table draws atoms alone. Element symbols must be recorded in the `elesy` field.

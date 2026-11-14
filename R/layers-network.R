@@ -402,6 +402,7 @@ StatLayers3D <- ggplot2::ggproto("StatLayers3D", ggplot2::Stat,
 #' xend, yend, zend and `interlayer`), `"nodes"` (one row per node and layer,
 #' with `node`, `layer` and `degree`) or `"planes"` (one rectangle per layer
 #' around the layout, extended by `margin` times its larger side).
+#' @inheritParams ggplot2::geom_point
 #' @inheritParams geom_edge_3d
 #' @param geom Geom to draw the output; by default [geom_edge_3d()] for
 #'   edges, points for nodes and polygons for planes.
@@ -538,6 +539,7 @@ StatDendrogram3D <- ggplot2::ggproto("StatDendrogram3D", ggplot2::Stat,
 #' index in `hclust$merge`) and, with `k`, `cluster`: the cluster of
 #' [stats::cutree()] with `k` groups that the branch belongs to, `NA` above
 #' the cut, for colouring branches by cluster as in dendextend.
+#' @inheritParams ggplot2::geom_point
 #' @inheritParams geom_edge_3d
 #' @param geom Geom drawing the segments.
 #' @param hclust A hierarchical clustering, an object with a

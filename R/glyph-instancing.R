@@ -197,7 +197,7 @@ glyph_limits_3d <- function(data, maps, unit, rows = rep(TRUE, nrow(data))) {
 # Glyphs stay rigid in curvilinear frames: data-space maps pass through the
 # frame's Jacobian at the centre. Millimetre glyphs are resolved at draw time,
 # when the device size is known; see resolve_glyph_packets_3d().
-emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_params, unit_index = NULL) {
+emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_params, unit_index = NULL, orientation = NULL) {
   units <- if (is.null(unit_index)) list(unit) else unit
   if (is.null(unit_index)) unit_index <- rep.int(1L, nrow(data))
   empty <- new_scene_packet(panel_id = panel_params$panel_id)
@@ -211,6 +211,7 @@ emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_param
   keep[is.na(keep)] <- FALSE
   if (!any(keep)) return(empty)
   data <- data[keep, , drop = FALSE]; maps <- maps[, , keep, drop = FALSE]; space <- space[keep]
+  if (!is.null(orientation)) orientation <- text_orientation_rows_3d(orientation, which(keep))
   unit_index <- unit_index[keep]
   n <- nrow(data)
   sizes <- vapply(units, function(u) nrow(u$vertices), integer(1))
@@ -220,12 +221,7 @@ emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_param
   scale <- panel_params$camera$aspect / max(panel_params$camera$aspect)
   data_rows <- which(space == "data")
   if (length(data_rows) && !isTRUE(frame$identity)) {
-    h <- 1e-6
-    jacobian <- array(0, c(3L, 3L, length(data_rows)))
-    for (j in 1:3) {
-      step <- matrix(0, length(data_rows), 3L); step[, j] <- h
-      jacobian[, j, ] <- t((frame$map(centre[data_rows, , drop = FALSE] + step) - frame$map(centre[data_rows, , drop = FALSE] - step)) / (2 * h))
-    }
+    jacobian <- frame_jacobian_3d(frame, centre[data_rows, , drop = FALSE])
     for (i in seq_along(data_rows)) maps[, , data_rows[i]] <- jacobian[, , i] %*% maps[, , data_rows[i]]
   }
   instance <- rep(seq_len(n), V)
@@ -258,6 +254,12 @@ emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_param
   attr(packet, "model_space") <- TRUE
   if (any(millimetre)) attr(packet, "glyph_mm") <- list(rows = which(millimetre),
     centre = centres[millimetre, , drop = FALSE], offset = mm_offset)
+  if (any(millimetre) && !is.null(orientation)) {
+    glyph <- attr(packet, "glyph_mm")
+    glyph$local <- u[millimetre, , drop = FALSE]
+    glyph$orientation <- text_orientation_rows_3d(orientation, instance[millimetre])
+    attr(packet, "glyph_mm") <- glyph
+  }
   packet
 }
 
@@ -294,7 +296,12 @@ resolve_glyph_packets_3d <- function(packets, camera, viewport) {
   scale <- camera$aspect / max(camera$aspect)
   for (i in which(deferred)) {
     glyph <- attr(packets[[i]], "glyph_mm")
-    xyz <- glyph$centre + sweep(glyph$offset * k, 2L, scale, "/")
+    offset <- glyph$offset
+    if (!is.null(glyph$orientation)) {
+      basis <- text_basis_3d(glyph$orientation, glyph$centre, camera, viewport)
+      offset <- glyph$local[, 1L] * basis$u + glyph$local[, 2L] * basis$v
+    }
+    xyz <- glyph$centre + sweep(offset * k, 2L, scale, "/")
     for (k3 in 1:3) packets[[i]]$vertices[[k3]][glyph$rows] <- as.double(xyz[, k3])
   }
   packets

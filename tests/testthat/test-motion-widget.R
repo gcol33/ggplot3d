@@ -12,7 +12,7 @@ test_that("viewer serializes one mapped model scene with furniture and camera", 
   expect_s3_class(w, "htmlwidget")
   expect_s3_class(w, "ggplot3d_view")
   expect_identical(w$elementId, "motion-test")
-  expect_identical(w$x$schema_version, 3L)
+  expect_identical(w$x$schema_version, 4L)
   expect_null(w$x$chrome)
   expect_length(w$x$panels, 1L)
   panel <- w$x$panels[[1L]]
@@ -43,7 +43,8 @@ test_that("viewer serializes one mapped model scene with furniture and camera", 
     identical(s$fill, ggplot3d:::view_rgba_3d("#2878A0")), logical(1))))
   expect_length(panel$axes, 3L)
   expect_identical(w$x$capabilities$opaque_visibility, "depth-buffer")
-  expect_identical(w$x$capabilities$transparency, "primitive-centroid")
+  expect_identical(w$x$capabilities$transparency, "weighted-blended")
+  expect_identical(w$x$capabilities$markers, "instanced-disc-quads")
   expect_identical(w$x$capabilities$picking, "id-buffer")
   expect_true(all(is.finite(unlist(panel$viewport))))
   path <- tempfile(fileext = ".html")
@@ -88,6 +89,41 @@ test_that("viewer selects a facet and validates its arguments", {
   expect_error(view_3d(p, tooltip = "yes"), "tooltip")
   expect_error(view_3d(p, selection = "some"), "should be one of")
   expect_error(view_3d(p, data = mtcars), "SharedData")
+})
+
+test_that("selected panels reflow their aspect and furniture at the widget size", {
+  skip_if_not_installed("htmlwidgets")
+  skip_if_not_installed("svglite")
+  p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
+    geom_point_3d(size = 4) + coord_3d() + ggplot2::theme_minimal(base_size = 17) +
+    ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
+  for (aspect in c(1, 0.5)) {
+    plot <- p + ggplot2::theme(aspect.ratio = aspect)
+    for (size in list(c(624, 384), c(384, 624))) {
+      complete <- view_3d(plot, width = size[1], height = size[2])$x$panels[[1L]]
+      stacked <- plot + ggplot2::facet_wrap(~am, ncol = 1)
+      selected <- view_3d(stacked, panel = 2, width = size[1], height = size[2])
+      panel <- selected$x$panels[[1L]]
+      expect_null(selected$x$chrome)
+      expect_identical(panel$id, 2L)
+      expect_equal(panel$viewport, complete$viewport)
+      expect_equal(panel$framing, complete$framing)
+      expect_equal(panel$axes, complete$axes)
+      expect_equal(panel$reference, complete$reference)
+      expect_equal(panel$rect_mm[1:2], c(0, 0))
+      expect_equal(panel$rect_mm[3:4], complete$rect_mm[3:4])
+      expect_equal(panel$rect_mm[4] / panel$rect_mm[3], aspect)
+      expect_equal(max(panel$rect_mm[3:4] / (size / 96 * 25.4)), 1)
+      expect_setequal(decode_column(panel$scene$markers$source_row), which(mtcars$am == 1))
+    }
+  }
+  views <- p + facet_views(c("front", "isometric"), ncol = 1)
+  selected <- view_3d(views, panel = 2, width = 624, height = 384)$x$panels[[1L]]
+  complete <- view_3d(p + do.call(coord_3d, camera_3d("isometric")),
+    width = 624, height = 384)$x$panels[[1L]]
+  expect_equal(selected$viewport, complete$viewport)
+  expect_equal(selected$framing, complete$framing)
+  expect_equal(selected$reference, complete$reference)
 })
 
 test_that("the whole plot keeps every panel at its place and embeds the rest as SVG", {

@@ -448,6 +448,18 @@ cross_rows_3d <- function(u, v) {
   cbind(u[, 2L] * v[, 3L] - u[, 3L] * v[, 2L], u[, 3L] * v[, 1L] - u[, 1L] * v[, 3L], u[, 1L] * v[, 2L] - u[, 2L] * v[, 1L])
 }
 
+# Local linear map from normalized panel coordinates into model coordinates.
+frame_jacobian_3d <- function(frame, points) {
+  jacobian <- array(diag(3), c(3L, 3L, nrow(points)))
+  if (isTRUE(frame$identity)) return(jacobian)
+  h <- 1e-6
+  for (j in 1:3) {
+    step <- matrix(0, nrow(points), 3L); step[, j] <- h
+    jacobian[, j, ] <- t((frame$map(points + step) - frame$map(points - step)) / (2 * h))
+  }
+  jacobian
+}
+
 # Facing ------------------------------------------------------------------------
 
 # Unit outward normals of a pane in aspect-scaled model space at scale points.

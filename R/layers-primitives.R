@@ -34,7 +34,26 @@ make_layer_3d <- function(geom, mapping, data, stat, position, params, show.lege
 #'   is the text size at the camera target. Seen from behind the plane, a
 #'   label reads in the turned direction instead of mirrored.
 #' @param orientation Text layers: `"screen"` draws labels upright on the
-#'   page, `"plane"` lays them flat in the plane given by `plane`.
+#'   page, `"plane"` draws font outline geometry in three dimensions.
+#' @param plane Text plane spanned by `"xy"`, `"xz"` or `"yz"`; defaults to
+#'   `"xy"` when neither `normal` nor `facing` is supplied.
+#' @param normal A finite nonzero numeric triple, the plane normal in
+#'   normalized panel coordinates. Supply one of `plane`, `normal` or `facing`.
+#' @param up A finite nonzero reading-up hint in normalized panel coordinates.
+#'   With `normal`, defaults to the z axis (y for a z normal). Camera-facing
+#'   text defaults to the camera's reading-up direction. A parallel hint uses
+#'   the least aligned coordinate axis to define the reading direction.
+#' @param facing `"camera_plane"` gives labels a shared view-facing normal;
+#'   `"camera_point"` faces each anchor toward the perspective eye. Parallel
+#'   projections use the reversed sight ray, including oblique shear.
+#' @details Normals and up hints refer to positions after scale normalization.
+#'   The frame's local Jacobian followed by aspect scaling transforms plane
+#'   tangents into displayed model space. Their cross product transforms
+#'   normals by the inverse transpose, preserving perpendicularity under
+#'   unequal aspect ratios and curved frames. Glyphs remain rigid in the local
+#'   tangent plane. `angle` rotates within that plane. Camera-facing geometry
+#'   is resolved for each panel at draw time in every static backend and
+#'   follows camera movement in the HTML viewer.
 #' @return A ggplot2 layer emitting unprojected scene geometry.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(1, 2, 4),
@@ -51,6 +70,10 @@ make_layer_3d <- function(geom, mapping, data, stat, position, params, show.lege
 #' if (requireNamespace("systemfonts", quietly = TRUE)) {
 #'   p + geom_text_3d(ggplot2::aes(label = label), orientation = "plane", plane = "xy", size = 8) +
 #'     coord_3d(projection = "perspective")
+#'   p + geom_text_3d(ggplot2::aes(label = label), orientation = "plane",
+#'     normal = c(1, 1, 1), up = c(0, 0, 1)) + coord_3d()
+#'   p + geom_text_3d(ggplot2::aes(label = label), orientation = "plane",
+#'     facing = "camera_point") + coord_3d(projection = "perspective")
 #' }
 #' p + geom_polygon_3d(fill = "steelblue", alpha = 0.5) + coord_3d()
 #' @export
@@ -76,9 +99,11 @@ geom_segment_3d <- function(mapping = NULL, data = NULL, stat = "identity", posi
 #' @rdname geom_point_3d
 #' @export
 geom_text_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
-                          orientation = "screen", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                          orientation = "screen", plane = NULL, normal = NULL, up = NULL, facing = NULL,
+                          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   geom <- switch(match.arg(orientation, c("screen", "plane")), screen = ggplot2::GeomText, plane = GeomTextPlane3D)
-  make_layer_3d(geom, mapping, data, stat, position, c(list(na.rm = na.rm), list(...)), show.legend, inherit.aes)
+  spec <- Filter(Negate(is.null), list(plane = plane, normal = normal, up = up, facing = facing))
+  make_layer_3d(geom, mapping, data, stat, position, c(list(na.rm = na.rm), spec, list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname geom_point_3d

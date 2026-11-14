@@ -1,5 +1,6 @@
 ---
 title: "Combining 2D and 3D graphics"
+description: "Place ggplot2 panels on walls, stack slices in depth, draw terraced contours and arrange 2D and 3D plots."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Combining 2D and 3D graphics}
@@ -8,7 +9,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.asp = NULL,
   fig.height = 4.5, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
   dev.args = list(pointsize = 14))
 PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
@@ -54,7 +55,7 @@ h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
   coord_3d()
 ```
 
-The accepted ggplot2 geoms are points, paths, lines, segments, text, labels, polygons, rectangles, tiles, `geom_hline()`, `geom_vline()`, `annotation_custom()`, `annotation_raster()` and `geom_blank()`; `geom_contour()` and `geom_density_2d()` draw each line at the height of its level. A layer without a z mapping is drawn at z = 0, and the z scale extends to include 0. Here the path is drawn a second time with `inherit.aes = FALSE`, so it lies flat at height 0 below the helix.
+Registered ggplot2 layers include points, paths, lines, segments, text, labels, polygons, rectangles, tiles and intervals. Contour and density contours draw each line at the height of its level. Filled contours draw horizontal bands at their level midpoints, as shown in [Terraced filled contours](#terraced-filled-contours). A layer without a z mapping is drawn at z = 0, and the z scale extends to include 0. Here the path is drawn a second time with `inherit.aes = FALSE`, so it lies flat at height 0 below the helix.
 
 ```{r z-zero, fig.alt="The blue helix above a grey circle drawn at height zero; the z axis now starts at zero."}
 h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
@@ -99,7 +100,28 @@ k + annotation_plot_3d(side, plane = "xz", at = Inf) +
   coord_3d()
 ```
 
-The wall plot is made of faces in the plane of the wall, so it is foreshortened with the box and points in front of it cover it. `route = "raster"` draws it as an image instead, which suits plots with many marks.
+The vector route places the panel's marks in the wall plane, where they are foreshortened with the box and covered by geometry in front. Text faces the viewer and draws over the scene. The panel background and grid travel with the panel; its outer axes, title and legend stay outside the embedded panel.
+
+The two letters of the plane name select the directions of the 2D plot's x and y axes. The remaining coordinate is fixed by the placement argument. A four-value extent can position the plot independently of its original ranges.
+
+```{r plot-on-floor, fig.alt="A blue 2D bar chart placed inside a rectangular extent on the floor beneath the point cloud."}
+bars <- ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = PAL["blue"])
+k + annotation_plot_3d(bars, plane = "xy", at = -Inf,
+                       extent = c(-2, 2, -2, 2), alpha = 0.7) +
+  geom_point_3d(size = 2) + coord_3d()
+```
+
+For a dense panel, choose the raster route and set its image resolution.
+The following example uses a small resolution to keep the article fast.
+Both routes accept one 2D panel; place several panels with separate calls.
+
+```{r raster-wall, fig.alt="The fitted 2D scatter plot rendered as a small raster on the back wall behind the point cloud."}
+k + annotation_plot_3d(side, plane = "xz", at = Inf,
+                       route = "raster", resolution = 64) +
+  geom_point_3d(size = 2.5) + coord_3d()
+```
+
+See [annotation_plot_3d()](../reference/annotation_plot_3d.html) for all plane orientations and placement arguments.
 
 ## Small multiples in depth
 
@@ -109,15 +131,15 @@ The wall plot is made of faces in the plane of the wall, so it is foreshortened 
 cloud$side <- ifelse(cloud$x < 0, "negative", "positive")
 ggplot(cloud, aes(z)) +
   geom_density(fill = PAL["blue"], alpha = 0.6) +
-  facet_slices_3d(vars(side)) +
+  facet_slices_3d(vars(side), labels = FALSE) +
   coord_3d(up = "y", azimuth = 30, elevation = 20)
 ```
 
-The slices lie on z, so the 2D layers keep x and y; `coord_3d(up = "y")` stands the planes upright, one behind the other.
+The slices lie on z, so the 2D layers keep x and y; `coord_3d(up = "y")` stands the planes upright, one behind the other. A numeric slicing variable places slices at its values on a continuous scale. A factor uses its level order, and layers without the slicing variable repeat in every slice. Plane visibility, labels and opacity are set in [facet_slices_3d()](../reference/facet_slices_3d.html).
 
 ## Reference lines and annotations
 
-`geom_hline()` and `geom_vline()` draw a line across the box at height 0, here the two zero lines of x and y. `annotate()` has no z position; `annotate_3d()` takes the same arguments as `annotate()` together with `z`, `zmin`, `zmax` and `zend`. Here it labels the highest point of the cloud.
+`geom_hline()` and `geom_vline()` draw lines on the floor, here at x = 0 and y = 0. `annotate_3d()` adds z positions to the arguments of `annotate()`. Here it labels the highest point of the cloud. [Layers](layers.html#reference-lines-and-dimensions) shows arbitrary reference lines, brackets and dimension lines.
 
 ```{r annotations, fig.alt="Forty dark points in a box, two grey lines crossing at x = 0 and y = 0 at height zero, and a white label reading highest next to the top point."}
 top <- cloud[which.max(cloud$z), ]
@@ -141,6 +163,22 @@ surface <- expand.grid(x = seq(-2, 2, length.out = 25),
 surface$z <- with(surface, exp(-((x - 0.5)^2 + y^2)) -
   0.6 * exp(-((x + 0.8)^2 + (y + 0.6)^2) / 0.5))
 ```
+
+### Terraced filled contours
+
+ggplot2's own filled contour layer works with the z mapping. Each band
+occupies a horizontal plane at the midpoint of its lower and upper levels,
+and the ordered band factor uses a discrete fill scale. Holes inside a
+band remain open.
+
+```{r terraced-contours, fig.alt="Filled contours of a peak and a hollow, lifted into horizontal terraces at their band midpoints."}
+ggplot(surface, aes(x, y, z = z)) +
+  geom_contour_filled(bins = 5, colour = "white", linewidth = 0.15) +
+  scale_fill_manual(values = unname(PAL[c("purple", "blue", "teal", "green", "orange")])) +
+  coord_3d(elevation = 40)
+```
+
+### A contour map beneath a surface
 
 `geom_contour_filled_3d()` with `plane = "floor"` computes height bands from the same grid and draws them flat on the floor, giving a contour map under the surface. A higher camera elevation shows more of the floor.
 
@@ -210,11 +248,11 @@ The x axis has the same range in both panels, so the hollow near x = -1 and the 
 
 The camera arguments of `coord_3d()` take one value per panel. To show the same data from two directions, repeat the data once per view, facet by the view, and give each panel its own angles.
 
-```{r two-views, fig.width=9, fig.height=4.5, fig.alt="Two panels: the grey surface from the default view, and the same surface seen from a higher camera on the opposite side."}
+```{r two-views, fig.height=8, fig.alt="Two stacked panels: the grey surface from the default view, and the same surface seen from a higher camera on the opposite side."}
 views <- rbind(transform(surface, view = "default view"),
                transform(surface, view = "from the opposite side"))
 ggplot(views, aes(x, y, z = z)) + geom_surface_3d(fill = "grey85") +
-  facet_wrap(~view) +
+  facet_wrap(~view, ncol = 1) +
   coord_3d(azimuth = c(-60, 120), elevation = c(30, 55))
 ```
 

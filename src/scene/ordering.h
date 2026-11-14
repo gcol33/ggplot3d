@@ -450,7 +450,27 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   ReadyQueue ready(later);
   std::vector<ReadyQueue> ready_by_material(material_index.size(),ReadyQueue(later));
   std::vector<bool> emitted(components.size(),false),is_ready(components.size(),false);
-  auto make_ready=[&](Index c) {is_ready[c]=true;ready.push(c);ready_by_material[material[c]].push(c);};
+  // Seam groups: consecutive pieces of one material of which no two overlap on
+  // screen. Every overlapping pair carries an occlusion edge, and a ready piece
+  // can only follow the emitted end of such an edge, so a ready piece overlaps
+  // the current group exactly when one of its predecessors belongs to it. Such
+  // pieces wait in `deferred` until the material has no other ready piece, so
+  // a group takes every piece it can before the next one opens. A material
+  // drawn without cycles or interleaved materials then splits into as many
+  // groups as its longest chain of overlapping pieces, the fewest possible.
+  // A backend may paint the union of a group under its faces without covering
+  // any face drawn later in the group.
+  std::vector<Index> piece_group(n,-1),latest_group(components.size(),-1),deferred;
+  Index current_group=-1,current_material=-1;
+  auto make_ready=[&](Index c) {
+    is_ready[c]=true;ready.push(c);
+    if(current_group>=0 && latest_group[c]==current_group) deferred.push_back(c);
+    else ready_by_material[material[c]].push(c);
+  };
+  auto release_deferred=[&]() {
+    for(Index c:deferred) if(!emitted[c]) ready_by_material[material[c]].push(c);
+    deferred.clear();
+  };
   // Before any other piece of the material, a ready fragment of the same
   // polyline: first the one that starts where the last one ended, so a backend
   // draws the two as one stroke with a line join, then any other, so masked
@@ -481,8 +501,11 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
     if(follow>=0) return follow;
     if(last>=0) {
       auto& same=ready_by_material[material[last]];
-      while(!same.empty() && emitted[same.top()]) same.pop();
-      if(!same.empty()) {Index c=same.top();same.pop();return c;}
+      for(int pass=0;pass<2;++pass) {
+        while(!same.empty() && emitted[same.top()]) same.pop();
+        if(!same.empty()) {Index c=same.top();same.pop();return c;}
+        release_deferred();
+      }
     }
     while(emitted[ready.top()]) ready.pop();
     Index c=ready.top();ready.pop();return c;
@@ -491,13 +514,6 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   for(std::size_t c=0;c<components.size();++c) if(indegree[c]==0) {make_ready(c);++pending;}
   std::vector<Piece> ordered;ordered.reserve(n);
   Index last=-1;
-  // Seam groups: consecutive pieces of one material of which no two overlap on
-  // screen. Every overlapping pair carries an occlusion edge, so a piece opens
-  // a new group when it is adjacent to a piece of the current one. A backend
-  // may paint the union of a group under its faces without covering any face
-  // drawn later in the group.
-  std::vector<Index> piece_group(n,-1);
-  Index current_group=-1,current_material=-1;
   while(pending) {
     Index c=next_ready(last);emitted[c]=true;--pending;last=c;auto& group=components[c];
     {
@@ -510,7 +526,7 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
       bool open=current_group<0 || material[c]!=current_material;
       for(std::size_t e=offsets[v];!open && e<offsets[v+1];++e) open=piece_group[targets[e]]==current_group;
       for(std::size_t e=in_offsets[v];!open && e<in_offsets[v+1];++e) open=piece_group[sources[e]]==current_group;
-      if(open) current_group=++groups;
+      if(open) {current_group=++groups;release_deferred();}
       current_material=material[c];piece_group[v]=current_group;
       pieces[v].seam_group=current_group;
       ordered.push_back(std::move(pieces[v]));
@@ -528,11 +544,13 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
         for(auto& piece:local) piece.seam_group=++groups;
       }
       for(auto& piece:local) ordered.push_back(std::move(piece));
-      current_group=-1;current_material=-1;
+      current_group=-1;current_material=-1;release_deferred();
     }
     for(Index v:group) for(std::size_t e=offsets[v];e<offsets[v+1];++e) {
       Index other=component[targets[e]];
-      if(other!=c && --indegree[other]==0) {make_ready(other);++pending;}
+      if(other==c) continue;
+      latest_group[other]=std::max(latest_group[other],current_group);
+      if(--indegree[other]==0) {make_ready(other);++pending;}
     }
   }
   return ordered;

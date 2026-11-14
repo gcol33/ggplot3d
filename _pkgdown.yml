@@ -147,7 +147,9 @@ reference:
   - geom_ribbon_3d
   - geom_sphere_3d
   - geom_ellipsoid_3d
+  - geom_tensor_3d
   - stat_ellipsoid_3d
+  - stat_biplot_3d
   - geom_glyph_3d
 - title: Network and tree layers
   contents:
@@ -244,7 +246,11 @@ reference:
   - animate_3d
   - tween_3d
   - view_3d
+  - view3dOutput
+  - renderView3d
   - alt_text_3d
+  - save_svg_3d
+  - export_code_3d
 - title: Camera paths
   contents:
   - camera_path_3d
@@ -254,6 +260,7 @@ reference:
 - title: Export to 3D software
   contents:
   - export_3d
+  - print_3d
   - rgl-bridge-3d
   - as_rayrender_3d
 - title: Mesh input and extension API
@@ -263,6 +270,7 @@ reference:
   - mesh_processing
   - mesh_geodesic
   - fortify
+  - fortify.pdb
   - layer_3d
   - register_geom_3d
   - new_scene_packet
@@ -279,16 +287,25 @@ articles:
   contents:
   - camera
   - backends
+  - ray-marching
+  - viewer
+  - export
   - motion
   - combining-2d-3d
   - documents
   - spatial
+  - vector-fields
 - title: Examples
   navbar: Examples
   contents:
   - gallery
   - pde
   - implicit-surfaces
+  - thurston-geometries
+  - tensors
+  - ordination
+  - molecules
+  - colour-gamuts
 - title: Background
   navbar: Background
   contents: visibility

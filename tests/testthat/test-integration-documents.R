@@ -43,6 +43,30 @@ test_that("knitting chooses HTML viewers and static PDF and Word plots", {
   }
 })
 
+test_that("HTML chunk dimensions round fractional pixels at the knitr boundary", {
+  skip_if_not_installed("knitr")
+  skip_if_not_installed("htmlwidgets")
+  skip_if_not_installed("svglite")
+  sizes <- NULL
+  view <- view_3d
+  local_mocked_bindings(view_3d = function(plot, width, height) {
+    sizes <<- c(width, height)
+    view(plot, width = width, height = height)
+  })
+  out <- knit_document_3d(document_plot(), "html", c(
+    "```{r, view3d=TRUE, echo=FALSE, error=FALSE, fig.width=6.5, fig.asp=0.6180469715698392}",
+    "p", "```"))
+  expect_equal(sizes, c(624, 386))
+  expect_match(out$text, "ggplot3d_view")
+  out <- knit_document_3d(document_plot(), "html", c(
+    "```{r, view3d=TRUE, echo=FALSE, error=FALSE, fig.width=6.501, fig.height=4.499}",
+    "p", "```"))
+  expect_equal(sizes, c(624, 432))
+  expect_match(out$text, "ggplot3d_view")
+  expect_error(view(document_plot(), width = 624, height = 385.6613102595796),
+    "positive integer pixels")
+})
+
 test_that("figure alt defaults and overrides are independent within a chunk", {
   skip_if_not_installed("knitr")
   out <- knit_document_3d(document_plot(), "html", c(

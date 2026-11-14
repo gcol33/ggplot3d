@@ -34,7 +34,12 @@ register_theme_3d <- function() {
   add("panel.box", "element_line", "line")
   for (side in c("back", "front")) add(paste0("panel.box.", side), "element_line", "panel.box")
   add("panel.margin.3d", "margin")
+  half_line <- 5.5
   ggplot2::register_theme_elements(
+    axis.text.z = ggplot2::element_text(margin = ggplot2::margin(0.8 * half_line / 2, 0.8 * half_line / 2,
+      0.8 * half_line / 2, 0.8 * half_line / 2), inherit.blank = TRUE),
+    axis.title.z = ggplot2::element_text(margin = ggplot2::margin(half_line / 2, half_line / 2,
+      half_line / 2, half_line / 2), inherit.blank = TRUE),
     axis.minor.ticks.length.z = grid::unit(1, "pt"),
     axis.line.origin = ggplot2::element_line(colour = "grey20", inherit.blank = TRUE),
     panel.pane.front = ggplot2::element_rect(fill = "#7F7F7F1A", colour = NA, inherit.blank = TRUE),

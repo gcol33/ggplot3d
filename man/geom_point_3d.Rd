@@ -48,6 +48,10 @@ geom_text_3d(
   position = "identity",
   ...,
   orientation = "screen",
+  plane = NULL,
+  normal = NULL,
+  up = NULL,
+  facing = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -68,7 +72,22 @@ geom_polygon_3d(
 \item{mapping, data, stat, position, ..., na.rm, show.legend, inherit.aes}{Standard ggplot2 layer arguments.}
 
 \item{orientation}{Text layers: \code{"screen"} draws labels upright on the
-page, \code{"plane"} lays them flat in the plane given by \code{plane}.}
+page, \code{"plane"} draws font outline geometry in three dimensions.}
+
+\item{plane}{Text plane spanned by \code{"xy"}, \code{"xz"} or \code{"yz"}; defaults to
+\code{"xy"} when neither \code{normal} nor \code{facing} is supplied.}
+
+\item{normal}{A finite nonzero numeric triple, the plane normal in
+normalized panel coordinates. Supply one of \code{plane}, \code{normal} or \code{facing}.}
+
+\item{up}{A finite nonzero reading-up hint in normalized panel coordinates.
+With \code{normal}, defaults to the z axis (y for a z normal). Camera-facing
+text defaults to the camera's reading-up direction. A parallel hint uses
+the least aligned coordinate axis to define the reading direction.}
+
+\item{facing}{\code{"camera_plane"} gives labels a shared view-facing normal;
+\code{"camera_point"} faces each anchor toward the perspective eye. Parallel
+projections use the reversed sight ray, including oblique shear.}
 }
 \value{
 A ggplot2 layer emitting unprojected scene geometry.
@@ -92,6 +111,15 @@ outlines of its font (read with the 'systemfonts' package) into faces that
 the camera foreshortens and that hide and are hidden by the data; \code{size}
 is the text size at the camera target. Seen from behind the plane, a
 label reads in the turned direction instead of mirrored.
+
+Normals and up hints refer to positions after scale normalization.
+The frame's local Jacobian followed by aspect scaling transforms plane
+tangents into displayed model space. Their cross product transforms
+normals by the inverse transpose, preserving perpendicularity under
+unequal aspect ratios and curved frames. Glyphs remain rigid in the local
+tangent plane. \code{angle} rotates within that plane. Camera-facing geometry
+is resolved for each panel at draw time in every static backend and
+follows camera movement in the HTML viewer.
 }
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(1, 2, 4),
@@ -108,6 +136,10 @@ p + geom_text_3d(ggplot2::aes(label = label)) + coord_3d()
 if (requireNamespace("systemfonts", quietly = TRUE)) {
   p + geom_text_3d(ggplot2::aes(label = label), orientation = "plane", plane = "xy", size = 8) +
     coord_3d(projection = "perspective")
+  p + geom_text_3d(ggplot2::aes(label = label), orientation = "plane",
+    normal = c(1, 1, 1), up = c(0, 0, 1)) + coord_3d()
+  p + geom_text_3d(ggplot2::aes(label = label), orientation = "plane",
+    facing = "camera_point") + coord_3d(projection = "perspective")
 }
 p + geom_polygon_3d(fill = "steelblue", alpha = 0.5) + coord_3d()
 }

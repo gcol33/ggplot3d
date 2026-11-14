@@ -52,7 +52,7 @@
 #'   the views [animate_3d()] renders; dragging or Reset stops it.
 #' @param fps Camera views per second of the sampled path, default 30.
 #' @return An htmlwidget of class ggplot3d_view. Its x contains schema_version
-#'   (3), frame (the plot size in mm), chrome (the SVG of everything outside
+#'   (4), frame (the plot size in mm), chrome (the SVG of everything outside
 #'   the panels, or NULL), panels, link (whether the panels share camera
 #'   moves), link_group (the group name, or NULL), selection settings and
 #'   capabilities.
@@ -63,9 +63,10 @@
 #'   primitives) and, with `path`, the sampled camera views. Geometry is
 #'   transferred once; camera interaction and playback stay in the browser.
 #' @details Requires htmlwidgets and a browser with WebGL 2. Opaque geometry
-#'   uses a depth buffer. Transparent primitives are sorted back to front by
-#'   centre depth; crossing transparent surfaces can differ from the exact
-#'   static vector backend. Strokes and markers widen to their physical size
+#'   uses a depth buffer. Transparent geometry uses
+#'   weighted blended order-independent transparency in linear light, an
+#'   approximation requiring WebGL 2's `EXT_color_buffer_float` extension.
+#'   Strokes and markers widen to their physical size
 #'   in the vertex shader, and face lighting uses the same linear-light colour
 #'   calculation as static output. Text uses plain browser text, with
 #'   whole-anchor visibility for scene labels. Furniture and its labels rotate
@@ -129,12 +130,12 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
   count <- length(motion_panels_3d(table))
   scene_assert(count > 0L, "plot has no 3D scene panels")
   scene_assert(is.null(panel) || panel <= count, "panel is outside the plot layout")
+  if (!is.null(panel)) table <- view_panel_layout_3d(table, panel)
   # Furniture layout supplies authoritative physical margins and text metrics.
-  forced <- motion_panels_3d(grid::grid.force(table))
+  forced <- layout_scene_panels_3d(table)
   device_mm <- unname(grDevices::dev.size("in") * 25.4)
   layers <- view_layers_3d(built, shared, tooltip)
-  chosen <- if (is.null(panel)) seq_along(forced) else panel
-  panels <- lapply(chosen, function(i) {
+  panels <- lapply(seq_along(forced), function(i) {
     selected <- forced[[i]]
     view <- view_panel_3d(selected, path, fps)
     size <- c(selected$outer_viewport$width_mm, selected$outer_viewport$height_mm)
@@ -144,7 +145,7 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
   })
   grDevices::dev.off(device)
   frame <- if (is.null(panel)) device_mm else panels[[1L]]$rect_mm[3:4]
-  x <- list(schema_version = 3L,
+  x <- list(schema_version = 4L,
     frame = list(width_mm = frame[1L], height_mm = frame[2L]),
     chrome = if (is.null(panel)) view_chrome_3d(table, width, height) else NULL,
     panels = panels, link = !isFALSE(link),
@@ -152,12 +153,75 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
     selection = list(mode = selection, dim = 0.2,
       group = if (is.null(shared)) NULL else shared$groupName()),
     capabilities = list(opaque_visibility = "depth-buffer",
-      transparency = "primitive-centroid", text = "plain-anchor", geometry_schema = 1L,
-      picking = "id-buffer", buffers = "interleaved-per-kind"))
+      transparency = "weighted-blended", text = "plain-anchor", geometry_schema = 1L,
+      picking = "id-buffer", buffers = "interleaved-per-kind", markers = "instanced-disc-quads"))
   htmlwidgets::createWidget("ggplot3d_view", x, width = width, height = height,
     package = "ggplot3d", elementId = elementId,
     dependencies = if (is.null(shared)) NULL else crosstalk::crosstalkLibs(),
     sizingPolicy = htmlwidgets::sizingPolicy(padding = 0, browser.fill = FALSE))
+}
+
+#' Shiny bindings for the interactive 3D viewer
+#'
+#' Place a viewer in a Shiny user interface and render a reactive expression
+#' returning [view_3d()]. In a module, pass `ns("scene")` to `view3dOutput()`
+#' and assign `output$scene` inside `shiny::moduleServer()`.
+#' Camera updates arrive in `input$scene_camera`; selected data keys arrive
+#' in `input$scene_selected`. Shiny supplies the widget identifier, so
+#' `view_3d()` can leave `elementId` at its default.
+#'
+#' @param outputId Output identifier, namespaced in a module's user interface.
+#' @param width,height CSS dimensions, default `"100%"` and `"400px"`.
+#' @param expr An expression returning a `ggplot3d_view` htmlwidget.
+#' @param env Environment in which to evaluate `expr`.
+#' @param quoted Whether `expr` is already quoted.
+#' @return `view3dOutput()` returns an HTML output container.
+#'   `renderView3d()` returns a Shiny render function.
+#' @examples
+#' if (requireNamespace("shiny", quietly = TRUE) &&
+#'     requireNamespace("htmlwidgets", quietly = TRUE)) {
+#'   ui <- shiny::fluidPage(view3dOutput("scene"))
+#'   server <- function(input, output, session) {
+#'     output$scene <- renderView3d({
+#'       p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
+#'         geom_point_3d() + coord_3d()
+#'       view_3d(p, panel = 1)
+#'     })
+#'   }
+#'   app <- shiny::shinyApp(ui, server)
+#' }
+#' @name view_3d-shiny
+#' @export
+view3dOutput <- function(outputId, width = "100%", height = "400px") {
+  motion_require_3d("shiny")
+  motion_require_3d("htmlwidgets")
+  htmlwidgets::shinyWidgetOutput(outputId, "ggplot3d_view", width, height,
+    package = "ggplot3d")
+}
+
+#' @rdname view_3d-shiny
+#' @export
+renderView3d <- function(expr, env = parent.frame(), quoted = FALSE) {
+  motion_require_3d("shiny")
+  motion_require_3d("htmlwidgets")
+  if (!quoted) expr <- substitute(expr)
+  htmlwidgets::shinyRenderWidget(expr, view3dOutput, env, quoted = TRUE)
+}
+
+# A standalone panel retains its layout aspect and measures furniture at the
+# widget size, with its own guides and camera supplying the framing group.
+view_panel_layout_3d <- function(table, panel) {
+  cells <- which(vapply(table$grobs, function(g) length(motion_panels_3d(g)) > 0L, logical(1)))
+  cell <- table$layout[cells[panel], ]
+  selected <- table[cell$t:cell$b, cell$l:cell$r]
+  selected$grobs <- lapply(selected$grobs, function(g) {
+    if (!length(motion_panels_3d(g))) return(grid::nullGrob())
+    motion_map_panels_3d(g, function(p) {
+      p$frame_group <- list(list(params = p$panel_params, theme = p$theme))
+      p
+    })
+  })
+  selected
 }
 
 # One panel of the viewer: its scene, furniture for every camera, axis
@@ -165,13 +229,14 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
 view_panel_3d <- function(selected, path = NULL, fps = 30) {
   params <- selected$panel_params
   outer <- selected$outer_viewport
-  furniture <- panel_furniture_3d(params, selected$theme, outer, as.list(selected$frame_group))
+  furniture <- selected$layout_furniture
   frame <- frame_of_3d(params)
   all_params <- params
   all_params$coord_params$panes <- vapply(frame$panes(), `[[`, character(1), "name")
   all_params$coord_params$box <- "all"
   all_furniture <- panel_furniture_3d(all_params, selected$theme, outer, as.list(selected$frame_group))
-  packet <- merge_scene_packets(resolve_glyph_packets_3d(selected$packets, furniture$camera, furniture$viewport), params$panel_id)
+  packets <- resolve_glyph_packets_3d(selected$packets, furniture$camera, furniture$viewport)
+  packet <- merge_scene_packets(packets, params$panel_id)
   furniture_view <- view_packet_3d(all_furniture$packet)
   furniture_view$materials <- view_furniture_tags_3d(frame, all_furniture, furniture_view$materials)
   axes <- lapply(names(params$axis_guides), function(name) {
@@ -198,7 +263,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
   # Automatic camera values use JSON null; finite resolved values travel separately.
   raw_camera[c("distance", "near", "far")] <- lapply(raw_camera[c("distance", "near", "far")],
     function(value) if (is.na(value) || !is.finite(value)) NULL else value)
-  list(id = params$panel_id, scene = view_packet_3d(packet),
+  list(id = params$panel_id, scene = view_packet_3d(packet), glyphs = view_glyphs_3d(packets),
     furniture = furniture_view, axes = unname(axes),
     bounds = unname(lapply(seq_len(nrow(frame$bounds())), function(i) unname(frame$bounds()[i, ]))),
     camera = raw_camera,
@@ -209,10 +274,28 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
       back = as.list(frame$back_candidates()), floor = as.list(frame$floor_panes())),
     viewport = c(furniture$viewport, list(outer_width_mm = outer$width_mm,
       outer_height_mm = outer$height_mm)),
-    reference = list(corners_mm = unname(selected$furniture$corners_mm)),
+    reference = list(corners_mm = unname(furniture_overlay_3d(furniture, NULL, selected$theme)$corners_mm)),
     light = params$coord_params$light,
     background = if (visible_element_3d(bg)) view_rgba_3d(bg$fill) else c(0, 0, 0, 0),
     path = if (is.null(path)) NULL else view_path_3d(path, fps, params, furniture$viewport, frame$bounds()))
+}
+
+# Deferred outline vertices keep their millimetre coordinates and orientation
+# outside the compiled scene schema. Vertex indices refer to the merged scene.
+view_glyphs_3d <- function(packets) {
+  shift <- 0L; out <- list()
+  for (packet in packets) {
+    glyph <- attr(packet, "glyph_mm")
+    if (!is.null(glyph$orientation)) {
+      spec <- glyph$orientation
+      columns <- c(list(centre = glyph$centre, local = glyph$local), spec[c("u", "v", "up")])
+      columns <- lapply(columns, function(x) if (is.null(x)) NULL else view_column_3d(as.double(t(x))))
+      out[[length(out) + 1L]] <- c(list(rows = view_column_3d(as.integer(glyph$rows + shift)),
+        facing = spec$facing, angle = view_column_3d(spec$angle)), columns)
+    }
+    shift <- shift + length(packet$vertices$x)
+  }
+  out
 }
 
 # Everything the static plot draws outside its scene panels, as one SVG of
@@ -348,14 +431,3 @@ view_column_3d <- function(x) {
   list(type = "f32", b64 = base64_3d(writeBin(as.double(x), raw(), size = 4L, endian = "little")))
 }
 
-base64_3d <- function(bytes) {
-  n <- length(bytes)
-  if (!n) return("")
-  pad <- (3L - n %% 3L) %% 3L
-  b <- matrix(as.integer(c(bytes, raw(pad))), 3L)
-  v <- b[1L, ] * 65536L + b[2L, ] * 256L + b[3L, ]
-  index <- rbind(v %/% 262144L, (v %/% 4096L) %% 64L, (v %/% 64L) %% 64L, v %% 64L)
-  out <- charToRaw("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")[index + 1L]
-  if (pad) out[length(out) - seq_len(pad) + 1L] <- charToRaw("=")
-  rawToChar(out)
-}

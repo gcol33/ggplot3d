@@ -19,3 +19,11 @@ for(fixture_name in names(ref_fixture_builders())) for(camera_name in names(ref_
       paste(head(score$locations,1),collapse=",")))
   })
 })
+
+test_that("nested closed sheets of one material paint in one seam group per depth layer", {
+  for (view in names(ref_cameras())) {
+    f <- ref_fixture("nested_isosurfaces", view)
+    compiled <- ggplot3d:::scene_compile(f$packet, f$camera, f$viewport)
+    expect_length(unique(compiled$fragments$seam_group), 4L)
+  }
+})

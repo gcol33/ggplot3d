@@ -1,0 +1,53 @@
+Bundled components in ggplot3d
+
+The ggplot3d package code is copyright Gilles Colling and distributed under
+MIT (see LICENSE).
+
+Manifold 3.5.5
+  Source: https://github.com/elalish/manifold
+  Revision: 32271a1a999ce721ffaf5ab10e9746ceeb696547
+  Copyright: The Manifold Authors, 2020-2026
+  License: Apache License, Version 2.0
+  Files: src/vendor/manifold3d/
+  License text: src/vendor/manifold3d/LICENSE
+  Contributors: src/vendor/manifold3d/AUTHORS
+  Includes adaptations of public-domain quickhull by Antti Kuukka and
+  linalg by Sterling Orsten, with attribution retained in the source.
+
+Clipper2
+  Source: https://github.com/AngusJohnson/Clipper2
+  Revision: 46f639177fe418f9689e8ddb74f08a870c71f5b4
+  Copyright: Angus Johnson, 2010-2026
+  License: Boost Software License, Version 1.0 (BSL-1.0)
+  Files: src/vendor/clipper2/
+  License text: src/vendor/clipper2/LICENSE
+
+Source selection and local modifications are documented in
+VENDORED-PATCHES. The upstream license files are retained beside each bundle
+in the source package, and copies are installed in licenses/.
+
+Additional components included within Manifold:
+
+Manifold utilities (src/vendor/manifold3d/src/utils.h)
+  Copyright: The Manifold Authors, Jared Hoberock and Nathan Bell of
+  NVIDIA Research, 2020
+  License: Apache License, Version 2.0
+
+Singular value decomposition, adapted from https://github.com/wi-re/tbtSVD
+  Files: src/vendor/manifold3d/src/svd.h
+  Copyright: wi-re, 2019; The Manifold Authors, 2023
+  License: MIT
+  Complete notice: src/vendor/manifold3d/LICENSE-SVD and licenses/Manifold-SVD
+
+Disjoint sets, adapted from https://github.com/wjakob/dset
+  Files: src/vendor/manifold3d/src/disjoint_sets.h
+  Copyright: Wenzel Jakob, 2015
+  License: zlib
+  Complete notice: src/vendor/manifold3d/LICENSE-DISJOINT-SETS and
+  licenses/Manifold-Disjoint-Sets
+
+Mathematical functions, adapted from FreeBSD msun via musl libc
+  Files: src/vendor/manifold3d/include/manifold3d/math.h
+  Copyright: Sun Microsystems, Inc., 1993; The Manifold Authors, 2026
+  License: Sun permissive notice; Manifold modifications under Apache-2.0
+  Complete notice: src/vendor/manifold3d/LICENSE-MATH and licenses/Manifold-Math

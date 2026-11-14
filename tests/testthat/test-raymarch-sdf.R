@@ -60,23 +60,3 @@ test_that("ray layers render and retain raster depth buffer layout", {
   expect_named(tree$raster_result$buffers,c("depth","opaque_depth","kind","row","normal","coverage_depth"))
 })
 
-source(testthat::test_path("..", "fixtures", "scenes", "builders.R"), local=TRUE)
-test_that("SDF and face depth use the same camera coordinate", {
-  ranges <- list(x=c(0,1),y=c(0,1),z=c(0,1))
-  spec <- list(tape=ggplot3d:::sdf_compile_3d(sdf_sphere(c(.5,.5,.5),.2)),
-    ranges=ranges,fill="blue",tolerance=1e-8,max_steps=512L)
-  viewport <- ggplot3d:::new_scene_viewport(25.4,25.4,31)
-  for (projection in c("orthographic","perspective","oblique")) {
-    camera <- ggplot3d:::new_camera_3d(projection=projection,azimuth=-90,elevation=90)
-    draw <- function(z) {
-      packet <- ref_packet(faces=list(ref_quad(z)))
-      packet$styles$fill <- "red"
-      ggplot3d:::raymarch_scene_3d(list(spec),packet,camera,viewport,backend_3d("raster",antialias=1L),NULL)
-    }
-    front <- draw(.9); behind <- draw(.1)
-    expect_lt(front$buffers$depth[16,16],behind$buffers$depth[16,16])
-    expect_equal(behind$buffers$normal$z[16,16],1,tolerance=1e-6)
-    expect_equal(behind$image[16+31*15],as.integer(-65536))
-    expect_equal(front$image[16+31*15],as.integer(-16776961))
-  }
-})

@@ -36,7 +36,7 @@ vertex attributes.
 }
 \examples{
 path <- tempfile(fileext = ".obj")
-writeLines(c("v 0 0 0", "v 1 0 0", "v 1 1 0", "v 0 1 1", "f 1 2 3 4"), path)
+writeLines(c("v 0 0 0", "v 1 0 0", "v 1 1 0", "v 0 1 0", "f 1 2 3 4"), path)
 m <- read_mesh_3d(path)
 ggplot2::ggplot() + geom_mesh_3d(data = m) + coord_3d()
 }

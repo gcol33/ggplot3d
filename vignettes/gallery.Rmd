@@ -1,6 +1,6 @@
 ---
 title: "Gallery"
-description: "Three-dimensional versions of common ggplot2 charts: curves, histograms, bars, pies, time series, fitted surfaces, densities and contours."
+description: "Worked plots of solid curves, distributions, covariance ellipsoids, streamtubes, cutaways and contour terraces alongside familiar charts."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Gallery}
@@ -26,23 +26,103 @@ theme_set(theme_minimal(base_size = 17) + theme(
   legend.position = "none"))
 ```
 
-This article draws three-dimensional versions of common ggplot2 charts: curves, function plots, histograms, grouped bars, pie charts, time series, fitted surfaces, densities and contour lines. Each section names the ggplot2 layer it corresponds to and shows which variables move to the z axis. [Layers](layers.html) gives a minimal example of every geom and stat; installation is covered in [Get started](ggplot3d.html).
+This article draws familiar charts and solid geometry from small datasets. Each example gives the data and the code that draws it. [Layers](layers.html) explains the data layers, and [Vector fields](vector-fields.html) develops the streamtube example. Installation is covered in [Get started](ggplot3d.html).
+
+## Domain recipes
+
+[Tensor glyphs](tensors.html) draw symmetric tensors as ellipsoids or superquadrics. [Ordination biplots](ordination.html) combine site scores, variable arrows and group regions. [Molecular views](molecules.html) draw atoms and bonds from bio3d records. [Colour gamuts](colour-gamuts.html) place sampled colours and their convex hull in Lab coordinates.
 
 ## Parametric curves
 
-In ggplot2, `geom_path()` joins rows in the order they appear in the data. `geom_path_3d()` does the same with a third coordinate, so any curve given as a function of a parameter can be drawn by sampling the parameter. The trefoil knot below is traced by three sine and cosine terms in a parameter `t` from 0 to 2&pi;.
+Sample a curve in row order and sweep a circular cross-section along it to
+give it thickness. The trefoil knot below is traced by three sine and cosine
+terms in a parameter `t` from 0 to 2&pi;. The closed tube joins its last
+cross-section to its first.
 
-```{r knot, fig.alt="A blue trefoil knot drawn as a closed curve in three dimensions, crossing itself three times."}
-t <- seq(0, 2 * pi, length.out = 300)
+```{r knot, fig.alt="A solid blue trefoil tube crossing over and under itself three times."}
+t <- seq(0, 2 * pi, length.out = 121)[-121]
 knot <- data.frame(x = sin(t) + 2 * sin(2 * t),
                    y = cos(t) - 2 * cos(2 * t),
                    z = -sin(3 * t))
 ggplot(knot, aes(x, y, z = z)) +
-  geom_path_3d(linewidth = 1.2, colour = PAL["blue"]) +
-  coord_3d()
+  geom_tube_3d(radius = 0.16, sides = 10, closed = TRUE, fill = PAL["blue"]) +
+  coord_3d(aspect = "data")
 ```
 
-At each of the three crossings, the strand nearer the camera is drawn over the other.
+At each of the three crossings, the strand nearer the camera is drawn over the other. [Layers](layers.html#tubes-ribbons-and-sweeps) shows ribbons and custom cross-sections along curves.
+
+## Solid violins
+
+The iris data record flower measurements in centimetres for three species.
+Revolve each species' estimated petal-length density around a vertical
+axis. The width changes along that axis with the density, giving each
+species a solid violin.
+
+```{r solid-violins, fig.alt="Three revolved petal-length violins for the iris species, separated along x."}
+ggplot(iris, aes(Species, y = 0, z = Petal.Length, fill = Species)) +
+  geom_violin_3d(shape = "revolve", n = 40, sides = 16) +
+  scale_y_continuous(limits = c(-1, 1), breaks = NULL, name = NULL) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  coord_3d(elevation = 20)
+```
+
+## Covariance ellipsoids
+
+Three measurements place each iris flower in space. Estimate a normal
+covariance ellipsoid for each species to show the direction and extent
+of its spread. Translucent faces reveal the points and principal axes.
+
+```{r covariance, fig.alt="Three translucent covariance ellipsoids around iris measurements, with points and principal axes visible."}
+ggplot(iris, aes(Sepal.Length, Sepal.Width, z = Petal.Length,
+                 colour = Species, fill = Species)) +
+  stat_ellipsoid_3d(type = "norm", kind = "data", alpha = 0.2,
+                     axes = TRUE, detail = 2) +
+  geom_point_3d(size = 1) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  coord_3d(azimuth = -45, elevation = 25)
+```
+
+The data ellipsoids describe variation among flowers. Confidence ellipsoids
+for the species means use the standard-error kind, as shown in
+[Layers](layers.html#spheres-ellipsoids-and-glyphs).
+
+## Streamtubes
+
+A rotating vector field with a positive vertical component produces rising
+helices. Integrate from three seeds at different radii, then give each
+curve a circular cross-section. Fill represents the vector magnitude along
+each tube.
+
+```{r streamtubes, fig.alt="Three rising helical streamtubes in a rotating vector field, coloured by vector magnitude."}
+field <- expand.grid(x = seq(-1, 1, length.out = 5),
+                     y = seq(-1, 1, length.out = 5), z = c(-1, 0, 1))
+field <- transform(field, u = -y, v = x, w = 0.2)
+seeds <- rbind(c(0.3, 0, -0.8), c(0.55, 0, -0.8), c(0.8, 0, -0.8))
+ggplot(field, aes(x, y, z = z, u = u, v = v, w = w)) +
+  stat_streamline_3d(aes(fill = after_stat(norm)), seeds = seeds,
+    geom = "tube", direction = "forward", step = 0.1, max_steps = 80,
+    radius = 0.035, sides = 8, cap = "flat", colour = NA) +
+  scale_fill_gradient(low = PAL["blue"], high = PAL["orange"]) +
+  coord_3d(aspect = "data")
+```
+
+## A capped cutaway
+
+Subtract a smaller sphere from a larger one to make a hollow shell. A
+clipping plane removes the half at positive x. Capping closes the cut
+with an annulus and preserves the inner cavity.
+
+```{r cutaway, fig.alt="A hollow sphere cut in half, with an annular cap around its visible inner cavity."}
+shell <- sdf_sphere(radius = 1) - sdf_sphere(radius = 0.65)
+ggplot() + geom_isofunction_3d(fun = shell, n = 24, fill = PAL["teal"]) +
+  xlim(-1.1, 1.1) + ylim(-1.1, 1.1) + zlim(-1.1, 1.1) +
+  coord_3d(aspect = "data", azimuth = -30,
+    clip_planes = list(clip_plane_3d(c(-1, 0, 0), c(x = 0), cap = TRUE)))
+```
+
+[Implicit surfaces](implicit-surfaces.html) shows how to construct shapes
+from functions and reconstruct them from point samples.
 
 ## Functions of two variables
 
@@ -231,6 +311,22 @@ ggplot(heights, aes(x, y, z = z)) +
 ```
 
 The lines close round the summit and the crater rim. Lines on the far slope are hidden where the near slope covers them. ggplot2's own `geom_contour()` also works inside `coord_3d()`, drawing each line at its level without the surface.
+
+## Filled contour terraces
+
+ggplot2's filled contour layer divides the volcano heights into bands.
+Adding the 3D coordinate system raises each band to its level midpoint,
+producing horizontal terraces with the original band colours.
+
+```{r filled-terraces, fig.alt="The volcano's filled contour bands lifted into coloured terraces, with the crater opening retained."}
+ggplot(heights, aes(x, y, z = z)) +
+  geom_contour_filled(bins = 6, colour = "white", linewidth = 0.15) +
+  scale_fill_manual(values = unname(PAL[1:6])) +
+  coord_3d(azimuth = -40, elevation = 40, aspect = c(1.4, 1, 0.6))
+```
+
+[Combining 2D and 3D graphics](combining-2d-3d.html) shows terraced bands
+and contour maps placed on the floor below a surface.
 
 ## Where next
 

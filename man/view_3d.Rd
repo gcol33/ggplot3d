@@ -62,7 +62,7 @@ the views \code{\link[=animate_3d]{animate_3d()}} renders; dragging or Reset sto
 }
 \value{
 An htmlwidget of class ggplot3d_view. Its x contains schema_version
-(3), frame (the plot size in mm), chrome (the SVG of everything outside
+(4), frame (the plot size in mm), chrome (the SVG of everything outside
 the panels, or NULL), panels, link (whether the panels share camera
 moves), link_group (the group name, or NULL), selection settings and
 capabilities.
@@ -99,9 +99,10 @@ pointer from an offscreen id image, by the same \code{primitive_id} the raster
 backend returns in its id buffer.
 
 Requires htmlwidgets and a browser with WebGL 2. Opaque geometry
-uses a depth buffer. Transparent primitives are sorted back to front by
-centre depth; crossing transparent surfaces can differ from the exact
-static vector backend. Strokes and markers widen to their physical size
+uses a depth buffer. Transparent geometry uses
+weighted blended order-independent transparency in linear light, an
+approximation requiring WebGL 2's \code{EXT_color_buffer_float} extension.
+Strokes and markers widen to their physical size
 in the vertex shader, and face lighting uses the same linear-light colour
 calculation as static output. Text uses plain browser text, with
 whole-anchor visibility for scene labels. Furniture and its labels rotate

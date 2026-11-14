@@ -1,0 +1,33 @@
+test_that("viewer layout bypasses static marker limits across facets", {
+  skip_if_not_installed("htmlwidgets")
+  skip_if_not_installed("svglite")
+  previous <- options(ggplot3d.vector_markers = 1)
+  on.exit(options(previous), add = TRUE)
+  d <- data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() + coord_3d()
+  for (panel in list(NULL, 1L)) {
+    widget <- view_3d(p, panel = panel, width = 300, height = 240)
+    expect_length(decode_column(widget$x$panels[[1L]]$scene$markers$offset), 2L)
+    expect_true(all(is.finite(unlist(widget$x$panels[[1L]]$viewport))))
+  }
+  faceted <- p + facet_views(c("front", "isometric"))
+  widget <- view_3d(faceted, width = 400, height = 240)
+  expect_length(widget$x$panels, 2L)
+  expect_true(all(vapply(widget$x$panels, function(panel)
+    length(decode_column(panel$scene$markers$offset)) == 2L, logical(1))))
+  grDevices::pdf(NULL)
+  device <- grDevices::dev.cur()
+  on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE)
+  expect_error(grid::grid.force(ggplot2::ggplotGrob(p)), "vector backend draws at most")
+})
+
+test_that("model export shares panel layout independently of static rendering", {
+  previous <- options(ggplot3d.vector_markers = 1)
+  on.exit(options(previous), add = TRUE)
+  d <- data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() + coord_3d()
+  path <- tempfile(fileext = ".ply")
+  on.exit(unlink(path), add = TRUE)
+  expect_silent(export_3d(p, path))
+  expect_true(file.exists(path))
+})

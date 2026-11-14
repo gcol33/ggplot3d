@@ -10,7 +10,7 @@ viewer_browser <- function(widgets, width = 800, height = 600) {
   dir.create(dir)
   html <- file.path(dir, "index.html")
   htmltools::save_html(do.call(htmltools::tagList, widgets), html, libdir = "lib")
-  session <- chromote::ChromoteSession$new(width = width, height = height)
+  session <- viewer_browser_session(width, height)
   session$Page$navigate(paste0("file:///", normalizePath(html, winslash = "/")))
   eval_js <- function(js) {
     result <- session$Runtime$evaluate(js, returnByValue = TRUE)
@@ -28,6 +28,14 @@ viewer_browser <- function(widgets, width = 800, height = 600) {
   }
   list(eval = eval_js, session = session,
     close = function() { session$close(); unlink(dir, recursive = TRUE) })
+}
+
+viewer_browser_session <- function(width = 800, height = 600) {
+  unavailable <- function(e) testthat::skip(paste("Headless Chrome cannot start:", conditionMessage(e)))
+  tryCatch(chromote::ChromoteSession$new(width = width, height = height),
+    error_stop_port_search = unavailable,
+    system_command_error = unavailable,
+    error_no_available_port = unavailable)
 }
 
 # Pointer coordinates of every pickable pixel of a widget, on a grid.

@@ -4,15 +4,27 @@ pkgdown_sha: ~
 articles:
   backends: backends.html
   camera: camera.html
+  colour-gamuts: colour-gamuts.html
   combining-2d-3d: combining-2d-3d.html
+  documents: documents.html
+  export: export.html
   gallery: gallery.html
   ggplot3d: ggplot3d.html
+  implicit-surfaces: implicit-surfaces.html
   layers: layers.html
+  molecules: molecules.html
   motion: motion.html
+  ordination: ordination.html
   pde: pde.html
+  ray-marching: ray-marching.html
+  spatial: spatial.html
+  tensors: tensors.html
+  thurston-geometries: thurston-geometries.html
+  vector-fields: vector-fields.html
+  viewer: viewer.html
   visibility: visibility.html
   z-scale: z-scale.html
-last_built: 2026-11-13T13:11Z
+last_built: 2026-11-14T00:30Z
 urls:
   reference: https://gillescolling.com/ggplot3d/reference
   article: https://gillescolling.com/ggplot3d/articles

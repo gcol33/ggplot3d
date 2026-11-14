@@ -93,9 +93,11 @@ place_overlay_3d.scene_annotation_grob <- function(grob, context) {
 #'
 #' Adds a layer of fixed values like [ggplot2::annotate()], with z positions
 #' as well. Every position vector has length one or a common length.
-#' @param geom Name of a geom, as in [ggplot2::annotate()].
+#' @param geom Name of a registered geom, such as `"point"` or `"bracket"`,
+#'   or a ggplot2 geom prototype.
 #' @param x,y,z,xmin,xmax,ymin,ymax,zmin,zmax,xend,yend,zend Positions.
-#' @param ...,na.rm Passed to [ggplot2::annotate()].
+#' @param ... Fixed aesthetics and drawing parameters passed to the 3D layer.
+#' @param na.rm Whether to silently remove missing values.
 #' @return A ggplot2 layer.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
@@ -107,17 +109,32 @@ place_overlay_3d.scene_annotation_grob <- function(grob, context) {
 annotate_3d <- function(geom, x = NULL, y = NULL, z = NULL, xmin = NULL, xmax = NULL,
                         ymin = NULL, ymax = NULL, zmin = NULL, zmax = NULL,
                         xend = NULL, yend = NULL, zend = NULL, ..., na.rm = FALSE) {
-  planar <- Filter(Negate(is.null), list(x = x, y = y, xmin = xmin, xmax = xmax,
-    ymin = ymin, ymax = ymax, xend = xend, yend = yend))
-  heights <- Filter(Negate(is.null), list(z = z, zmin = zmin, zmax = zmax, zend = zend))
-  n <- common_length_3d(lengths(c(planar, heights)), "position lengths")
-  planar <- lapply(planar, rep, length.out = n)
-  layer <- do.call(ggplot2::annotate, c(list(geom = geom), planar, list(...), list(na.rm = na.rm)))
-  if (!length(heights)) return(layer)
-  for (name in names(heights)) layer$data[[name]] <- rep(heights[[name]], length.out = nrow(layer$data))
-  mapping <- ggplot2::aes_all(names(heights))
-  for (name in names(mapping)) layer$mapping[[name]] <- mapping[[name]]
-  layer
+  geom <- annotation_geom_3d(geom)
+  positions <- Filter(Negate(is.null), list(x = x, y = y, z = z, xmin = xmin, xmax = xmax,
+    ymin = ymin, ymax = ymax, zmin = zmin, zmax = zmax, xend = xend, yend = yend, zend = zend))
+  common_length_3d(lengths(positions), "position lengths")
+  params <- c(list(na.rm = na.rm), list(...))
+  aesthetics <- scene_geom_3d(geom, find_emitter_3d(geom))$aesthetics()
+  n <- common_length_3d(c(lengths(positions), lengths(params[intersect(names(params), aesthetics)])),
+    "parameter lengths")
+  data <- data.frame(row.names = seq_len(n))
+  for (name in names(positions)) data[[name]] <- rep(positions[[name]], length.out = n)
+  make_layer_3d(geom, ggplot2::aes_all(names(data)), data, "identity", "identity", params,
+    show.legend = FALSE, inherit.aes = FALSE)
+}
+
+annotation_geom_3d <- function(geom) {
+  if (is.character(geom) && length(geom) == 1L && !is.na(geom)) {
+    classes <- ls(.emitters_3d)
+    names <- tolower(sub("3D$", "", sub("^Geom", "", classes)))
+    index <- match(tolower(gsub("_", "", geom, fixed = TRUE)), names)
+    if (is.na(index)) stop("No 3D emitter registered for geom '", geom, "'.", call. = FALSE)
+    geom <- .emitters_3d[[classes[[index]]]]$geom
+  }
+  if (!inherits(geom, "Geom") || is.null(find_emitter_3d(geom))) {
+    stop("geom must be a registered geom name or prototype.", call. = FALSE)
+  }
+  geom
 }
 
 register_geom_3d(ggplot2::GeomRect, emit_rects_3d, tween = "row")

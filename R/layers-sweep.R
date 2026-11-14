@@ -79,6 +79,7 @@ geom_ribbon_3d <- function(mapping = NULL, data = NULL, position = "identity", .
 #' @inheritParams geom_tube_3d
 #' @param geom Geom used to draw the surface.
 #' @param profile Two-column matrix or data frame of profile points.
+#' @param radius Scale factor for the profile, also available as an aesthetic.
 #' @param profile_closed Whether the profile is a closed polygon; NULL treats
 #'   profiles of three or more points as closed.
 #' @return A ggplot2 layer.

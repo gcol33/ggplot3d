@@ -1,5 +1,6 @@
 ---
 title: "Output backends"
+description: "Choose vector, raster, hybrid or traced rendering and save figures at the intended resolution."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Output backends}
@@ -33,7 +34,7 @@ A backend turns scene geometry into drawing commands or pixels. This article sho
 
 ## Example
 
-The data describe a curved surface on a regular grid. The same layers and camera can be rendered with either backend.
+The data describe a curved surface on a regular grid. The same layers and camera can be rendered with the vector, raster or hybrid backend.
 
 ```{r}
 d <- expand.grid(x = seq(-2, 2, length.out = 16),
@@ -81,6 +82,32 @@ unlink(path)
 
 Axes and labels are composed through grid around the raster scene. A PDF containing this plot includes the raster image at its chosen resolution.
 
+## Hybrid rendering
+
+A hybrid panel renders layers marked with `raster = TRUE` into an image and
+keeps the other layers as vector geometry. Use this to combine a sampled
+surface with editable contour paths. The shared depth test clips vector
+geometry wherever opaque raster coverage lies in front of it.
+
+```{r hybrid, fig.alt="A rasterized blue surface crossed by vector contour paths."}
+ggplot(d, aes(x, y, z = z)) +
+  geom_surface_3d(fill = PAL["blue"], raster = TRUE) +
+  geom_contour_3d(colour = "black", linewidth = 0.5, bins = 4) +
+  coord_3d(backend = backend_3d("hybrid", dpi = 100, antialias = 1))
+```
+
+## Traced fields and lighting
+
+Traced signed distance surfaces and scalar volumes become image layers in
+raster, vector and hybrid panels. [Ray marching and volumes](ray-marching.html)
+shows their depth compositing and the native seeded path tracer. The path
+tracer samples diffuse light transport across meshes and traced surfaces,
+with vector axes and text around the image.
+
+The intrinsic ray-marching backend places an observer inside a geometry.
+[Inside the Thurston geometries](thurston-geometries.html) explains its
+observer and orientation controls.
+
 ## Choosing output
 
 | Task | Backend | File |
@@ -88,6 +115,12 @@ Axes and labels are composed through grid around the raster scene. A PDF contain
 | Edit paths and faces | Vector | PDF or SVG |
 | Scale a modest scene for print | Vector | PDF or SVG |
 | Export a dense scene at a fixed size | Raster | PNG or PDF |
+| Keep contours editable over a dense surface | Hybrid | PDF or SVG |
+| Diffuse interreflection and soft shadows | Pathtrace | PNG or PDF |
 | Insert a figure into a slide | Either | PNG, PDF or SVG as supported |
 
 Visibility is resolved across each panel's layers. [Visibility](visibility.html) explains the geometric ordering used for vector output and the role of finite stroke width.
+
+[Exporting plots and scenes](export.html) covers editable semantic SVG, code
+for typesetting and model files for 3D software. [Interactive viewing](viewer.html)
+shows orbit controls, picking and linked selection in a browser.

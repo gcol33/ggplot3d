@@ -294,7 +294,7 @@ mesh_remesh <- function(m, edge = NULL, iterations = 10L) {
   m <- mesh_input_3d(m)
   if (is.null(edge)) {
     rows <- order(m$.mesh %or3d% 1L, m$.face, m$.corner)
-    nxt <- ave(rows, (m$.mesh %or3d% 1L)[rows], m$.face[rows], FUN = function(r) c(r[-1L], r[1L]))
+    nxt <- stats::ave(rows, (m$.mesh %or3d% 1L)[rows], m$.face[rows], FUN = function(r) c(r[-1L], r[1L]))
     edge <- mean(sqrt((m$x[rows] - m$x[nxt])^2 + (m$y[rows] - m$y[nxt])^2 + (m$z[rows] - m$z[nxt])^2))
   }
   edge <- mesh_number_3d(edge, "edge", function(x) is.finite(x) && x > 0, "a positive length")

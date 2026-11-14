@@ -158,7 +158,7 @@ geom_abline_3d <- function(mapping = NULL, data = NULL, ..., point = c(0, 0, 0),
       stop("point and direction need one row or a common number of rows.", call. = FALSE)
     }
     data <- recycle_columns_3d(list(dx = direction[, 1L], dy = direction[, 2L], dz = direction[, 3L]), lines)
-    mapping <- ggplot2::aes(dx = dx, dy = dy, dz = dz)
+    mapping <- ggplot2::aes_all(c("dx", "dy", "dz"))
     show.legend <- FALSE
   } else if (nrow(point) != 1L) {
     stop("Mapped directions share one point.", call. = FALSE)

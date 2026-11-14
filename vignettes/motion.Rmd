@@ -1,5 +1,6 @@
 ---
 title: "Camera animation and interaction"
+description: "Render camera moves, tween points and surfaces between data states, and explore linked interactive panels."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Camera animation and interaction}
@@ -14,9 +15,15 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
 PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
          orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
          grey = "#5C6166")
+show_frames <- function(animation, indices, label) {
+  images <- paste0(knitr::opts_chunk$get("fig.path"), label, "-", indices, ".png")
+  dir.create(dirname(images[1]), recursive = TRUE, showWarnings = FALSE)
+  file.copy(animation$frames[indices], images, overwrite = TRUE)
+  knitr::include_graphics(images)
+}
 ```
 
-Camera motion shows a fixed scene from several directions. This article saves a camera path and opens a panel with orbit controls. Installation is covered in [Get started](ggplot3d.html). Movie output uses [gifski](https://r-rust.r-universe.dev/gifski) for GIF files or [av](https://docs.ropensci.org/av/) for MP4 files; the viewer uses [htmlwidgets](https://www.htmlwidgets.org/).
+Camera motion shows a fixed scene from several directions. Data animation changes the observations or geometry between states. This article renders both kinds of animation and opens a panel with orbit controls. Installation is covered in [Get started](ggplot3d.html). Movie output uses [gifski](https://r-rust.r-universe.dev/gifski) for GIF files or [av](https://docs.ropensci.org/av/) for MP4 files; the viewer uses [htmlwidgets](https://www.htmlwidgets.org/).
 
 1. **Build** the scene with `coord_3d()`.
 
@@ -89,6 +96,89 @@ if (requireNamespace("av", quietly = TRUE)) {
   unlink(path)
 }
 ```
+
+### Tween observations between states
+
+The time argument selects a column naming the states. Layers without that
+column appear in every frame. The following example uses three cars from
+the built-in data, then constructs a hypothetical second state with lower
+weight and two more miles per gallon. Each car keeps its model name as its
+group, including when the second state's rows are reversed.
+
+```{r point-states}
+observed <- mtcars[c(1, 3, 8), c("wt", "hp", "mpg")]
+observed$id <- rownames(observed)
+observed$state <- 0
+changed <- transform(observed[3:1, ], wt = wt * 0.9, mpg = mpg + 2, state = 1)
+states <- rbind(observed, changed)
+moving <- ggplot(states, aes(wt, hp, z = mpg, group = id, colour = id)) +
+  geom_point_3d(size = 4) +
+  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  coord_3d()
+```
+
+The tween specification inserts three frames between the two supplied
+states, producing five frames in total. Statistics run on the supplied
+states before interpolation, and all states train one set of scales.
+
+```{r tween-points}
+movement <- animate_3d(moving, time = "state", tween = tween_3d(n = 3),
+  renderer = "vector", width = 480, height = 360, fps = 5, progress = FALSE)
+movement$frame_count
+movement$transition
+```
+
+The first, middle and final frames show the three cars moving to their
+new positions. The camera and axis ranges remain fixed.
+
+```{r point-frames, echo=FALSE, fig.alt=c("Three cars at their observed weights and fuel consumption.", "The same three cars halfway to their hypothetical second positions.", "The three cars at the hypothetical lower weights and higher fuel consumption.")}
+show_frames(movement, c(1, 3, 5), "point-state")
+```
+
+Group matching pairs occurrences within each persistent group. Map one
+identifier per moving mark when rows can change order. Source-row matching
+is also available, with row numbers interpreted within each state. Unmatched
+groups fade in or out by default; the enter and exit arguments can retain
+them or define starting and ending attributes.
+
+### Morph a surface
+
+A surface with the same grid and mesh connectivity in every state can
+interpolate its heights and fill. Here the two states contain the same
+sampled wave with opposite signs. The middle frame is flat because every
+pair of heights averages to zero.
+
+```{r surface-states}
+waves <- expand.grid(x = seq(-1, 1, length.out = 8),
+                     y = seq(-1, 1, length.out = 8), state = 0:1)
+waves$z <- with(waves, sin(pi * x) * cos(pi * y) * (1 - 2 * state))
+wave <- ggplot(waves, aes(x, y, z = z, fill = z)) + geom_surface_3d() +
+  scale_fill_gradient2(low = PAL["blue"], mid = "white", high = PAL["red"]) +
+  coord_3d()
+morph <- animate_3d(wave, time = "state", tween = tween_3d(n = 1),
+  renderer = "vector", width = 480, height = 360, progress = FALSE)
+```
+
+```{r surface-frames, echo=FALSE, fig.alt=c("A wave surface in its first state, coloured by height.", "The flat middle frame interpolated between opposite wave heights.", "The final wave with all heights reversed.")}
+show_frames(morph, seq_len(morph$frame_count), "surface-state")
+```
+
+Positions interpolate in transformed scale units, and colours interpolate
+in linear light. Paths with different vertex counts are resampled along
+their lengths. Polygon rings are aligned before interpolation. Meshes with
+changed connectivity cross-fade as complete shapes. See
+[tween_3d()](../reference/tween_3d.html) for matching and transition options.
+
+### Using gganimate
+
+The state and time transitions of [gganimate](https://gganimate.com/reference/transition_time.html) use a separate plot-building
+pipeline. Calling its animation renderer with those transitions and a 3D
+coordinate system produces guidance to use the native animation call.
+Build the ordinary 3D plot, supply its state column as the time argument,
+and add a tween specification, as in the examples above.
+
+The native renderer evaluates visibility for each frame. Reuse of one
+geometry partition across successive camera frames is currently unavailable.
 
 ### Explore the scene
 

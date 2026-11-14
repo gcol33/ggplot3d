@@ -168,13 +168,16 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
             is.numeric(default_z), length(default_z) == 1L, !is.na(default_z))
   name <- class(geom)[1L]
   if (exists(name, .emitters_3d, inherits = FALSE) && !replace) stop("Emitter already registered for ", name, ".", call. = FALSE)
-  .emitters_3d[[name]] <- list(name = name, emit = emit, aesthetics = aesthetics,
+  .emitters_3d[[name]] <- list(name = name, geom = geom, emit = emit, aesthetics = aesthetics,
                               setup_data = setup_data, stat_adapter = stat_adapter, position_check = position_check,
                               prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics,
                               parameters = parameters, default_z = default_z,
                               positions = positions, extents = extents, tween = tween)
   invisible(NULL)
 }
+
+# Drawing parameters of the geoms that draw triangulated surfaces.
+surface_parameters_3d <- list(outline = NULL, alpha_mode = "face")
 
 # Drawing parameters every 3D geom accepts, with their defaults.
 scene_draw_formals_3d <- function() {
@@ -271,7 +274,39 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
 
 `%or3d%` <- function(x, y) if (is.null(x)) y else x
 
-styles_3d <- function(data, rows, kinds, params, normals = NULL) {
+alpha_mode_3d <- function(mode) {
+  if (!is.character(mode) || length(mode) != 1L || !(mode %in% c("face", "surface")))
+    stop("alpha_mode must be \"face\" or \"surface\".", call. = FALSE)
+  mode
+}
+
+# Sheet of each face: the connected component of the faces that share a vertex
+# position. The label is the smallest face index of the component, reached by
+# taking the minimum over shared vertices and then following labels to their
+# own label until nothing changes.
+face_sheets_3d <- function(x, y, z, face) {
+  o <- order(x, y, z, method = "radix")
+  vertex <- integer(length(x))
+  vertex[o] <- cumsum(c(TRUE, diff(x[o]) != 0 | diff(y[o]) != 0 | diff(z[o]) != 0))
+  label <- seq_len(max(face))
+  repeat {
+    corner <- label[face]
+    o <- order(vertex, corner, method = "radix"); first <- o[!duplicated(vertex[o])]
+    smallest <- integer(max(vertex)); smallest[vertex[first]] <- corner[first]
+    via <- smallest[vertex]
+    o <- order(face, via, method = "radix"); first <- o[!duplicated(face[o])]
+    updated <- label; updated[face[first]] <- pmin(label[face[first]], via[first])
+    repeat {
+      jumped <- updated[updated]
+      if (identical(jumped, updated)) break
+      updated <- jumped
+    }
+    if (identical(updated, label)) return(label)
+    label <- updated
+  }
+}
+
+styles_3d <- function(data, rows, kinds, params, normals = NULL, sheets = NULL) {
   defaults <- list(colour = "black", fill = NA_character_, alpha = 1, linewidth = 0.5,
                    size = 1.5, shape = 19, linetype = 1, label = "", family = "", fontface = 1,
                    hjust = 0.5, vjust = 0.5, angle = 0, stroke = 0.5)
@@ -282,6 +317,8 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL) {
   styles$colour[kinds == "faces"] <- NA_character_
   styles$alpha[is.na(styles$alpha)] <- 1
   if (!is.null(normals)) styles[c("normal_x", "normal_y", "normal_z")] <- as.data.frame(normals)
+  if (!is.null(params$alpha_mode)) styles$alpha_mode <- rep(alpha_mode_3d(params$alpha_mode), length(rows))
+  if (!is.null(sheets)) styles$sheet <- sheets
   keys <- lapply(styles[setdiff(names(styles), "style_id")], function(x) match(x, unique(x)))
   order <- do.call(order, c(keys, list(method = "radix")))
   a <- head(order, -1L); b <- tail(order, -1L)
@@ -319,6 +356,14 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL) {
   list(styles = styles, opacity = opacity, index = index)
 }
 
+vertex_identity_3d <- function(data, columns) {
+  if (!nrow(data)) return(integer())
+  values <- data[columns]
+  order <- do.call(order, c(values, list(method = "radix")))
+  id <- integer(nrow(data));id[order] <- cumsum(!duplicated(values[order, , drop = FALSE]))
+  id
+}
+
 packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id, counts) {
   if (!length(primitives)) return(new_scene_packet(panel_id = panel_id))
   offsets <- cumsum(c(1L, counts[-length(counts)]))
@@ -339,11 +384,27 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
       normals[face[ok], ] <- mean[ok, , drop = FALSE] / length[ok]
     }
   }
-  material <- styles_3d(data, rows, kinds, params, normals)
+  sheets <- NULL
+  if (identical(params$alpha_mode, "surface")) {
+    owner <- rep.int(seq_along(counts), counts)
+    corner <- kinds[owner] == "faces"
+    sheets <- integer(length(rows))
+    if (any(corner)) {
+      p <- primitives[corner]
+      sheets[unique(owner[corner])] <- face_sheets_3d(data$x[p], data$y[p], data$z[p], match(owner[corner], unique(owner[corner])))
+    }
+  }
+  material <- styles_3d(data, rows, kinds, params, normals, sheets)
   used <- which(tabulate(primitives, nrow(data)) > 0L)
   vertices <- lapply(data[used, c("x", "y", "z"), drop = FALSE], as.double)
   corners <- list(vertex = match(primitives, used),
                   source_row = as.integer(data$.source[primitives]))
+  if (!is.null(params$.vertex_key)) {
+    key <- params$.vertex_key[used]
+    representatives <- !duplicated(key)
+    vertices <- lapply(data[used[representatives], c("x", "y", "z"), drop = FALSE], as.double)
+    corners$vertex <- match(params$.vertex_key[primitives], key[representatives])
+  }
   tables <- list()
   for (kind in unique(kinds)) {
     i <- which(kinds == kind)

@@ -229,6 +229,14 @@ as_matrix_list_3d <- function(x, name, n) {
   })
 }
 
+symmetric_eigen_3d <- function(s, name) {
+  if (max(abs(s - t(s))) > 1e-8 * max(1, abs(s))) stop(name, " matrices must be symmetric.", call. = FALSE)
+  e <- eigen((s + t(s)) / 2, symmetric = TRUE)
+  if (any(e$values < -1e-12 * max(abs(e$values)))) stop(name, " matrices must be positive semidefinite.", call. = FALSE)
+  e$values <- pmax(e$values, 0)
+  e
+}
+
 # Data-unit maps taking the unit sphere onto each ellipsoid: R diag(rx, ry, rz),
 # or for a shape matrix S the symmetric square root, so that the ellipsoid is
 # {p : (p - centre)' S^-1 (p - centre) <= 1}.
@@ -240,10 +248,8 @@ ellipsoid_maps_3d <- function(data) {
   for (i in seq_len(n)) {
     if (!is.null(sigma) && all(is.finite(sigma[[i]]))) {
       s <- sigma[[i]]
-      if (max(abs(s - t(s))) > 1e-8 * max(1, abs(s))) stop("sigma matrices must be symmetric.", call. = FALSE)
-      e <- eigen((s + t(s)) / 2, symmetric = TRUE)
-      if (any(e$values < -1e-12 * max(abs(e$values)))) stop("sigma matrices must be positive semidefinite.", call. = FALSE)
-      maps[, , i] <- e$vectors %*% diag(sqrt(pmax(e$values, 0)), 3L)
+      e <- symmetric_eigen_3d(s, "sigma")
+      maps[, , i] <- e$vectors %*% diag(sqrt(e$values), 3L)
       next
     }
     axes <- c(data$rx[i] %or3d% NA, data$ry[i] %or3d% NA, data$rz[i] %or3d% NA)

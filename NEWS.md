@@ -1,5 +1,24 @@
 # ggplot3d 0.0.0.9000
 
+* `geom_text_3d(orientation = "plane")` accepts arbitrary `normal` and `up` directions and `facing = "camera_plane"` or `"camera_point"`. Font outlines resolve against each panel's drawing camera across static backends and follow camera movement in the HTML viewer, including depth-tested picking.
+
+* Viewers and model exporters share physical panel measurement independently of the static renderer, so point-cloud widgets bypass the vector marker limit and static visibility compilation.
+* `view3dOutput()` and `renderView3d()` embed reactive viewers in Shiny applications and modules, with camera and selection inputs.
+
+* `export_3d(print = print_3d())` produces checked, closed millimetre solids as binary STL or coloured 3MF. Printing adds physical feature sizes, surface shells or base closures, extruded labels and axes, and Boolean union through the bundled native Manifold library.
+
+* `annotate_3d()` forwards registered drawing parameters through the shared 3D layer constructor, including bracket types, offsets and dimension arrows. Fixed spans in the Layers article use annotation calls.
+
+* The HTML viewer uses weighted blended order-independent transparency with linear-light accumulation. Circular markers use instanced disc quads with one GPU record per point, retaining footprint rotation, borders, picking and selection.
+
+* `view_3d(panel = )` sizes the selected facet and its axis furniture for the widget, preserving the panel aspect. knitr and Quarto round figure dimensions to whole pixels for HTML viewers.
+
+* Domain recipes cover symmetric tensor glyphs, ordination biplots, molecular ball-and-stick views and sampled Lab colour gamuts. `geom_tensor_3d()` adds Kindlmann superquadrics through shared glyph instancing, `stat_biplot_3d()` composes score points, quivers and group regions, and `fortify.pdb()` joins atoms and bonds by serial number.
+
+* `save_svg_3d()` writes native depth-ordered SVG with layer and row identities, tooltips and linked hover highlighting. `export_code_3d()` writes editable TikZ paths or model-space Asymptote scenes with camera and optional PRC output.
+
+* ggplot2's `geom_contour_filled()` draws terraced bands at their level midpoints inside `coord_3d()`, preserving polygon holes and the band fill scale.
+
 * `geom_quiver_3d()` draws vectors with solid cone heads and line or tube shafts; `geom_cone_3d()` draws magnitude-scaled cones. `stat_streamline_3d()` integrates trilinear vector fields with RK4 or adaptive RK45, accepts point/rake/plane seeds and Jobard-Lefer slice placement, and sweeps streamtubes through the shared tube machinery.
 
 * `backend_3d("raymarch")` renders in-space views of all eight Thurston geometries with geodesic sphere tracing, paired quotient faces, parallel transport, and geodesic-sphere area lighting. `geom_thurston_3d()` supplies intrinsic primitives, and `geodesic_3d()` exposes the shared flow and transport calculations.
@@ -49,6 +68,7 @@
 * `geom_blank()` and `expand_limits()` train scales inside `coord_3d()`.
 * The raster backend renders 64-pixel tiles on several threads (option `ggplot3d.threads`) with one fragment list per sample, keeps the exact compositing order and can return depth, id and normal buffers.
 * The raster backend composites translucent paint and averages antialiasing samples in linear light; `backend_3d(blend = "srgb")` matches vector devices.
+* Surface layers take `alpha_mode = "surface"`, which paints each connected sheet of a translucent surface as one film in vector output: nested isosurfaces show through each other while a sheet folding over itself does not darken.
 * `geom_point_3d(render = "splat")` draws large point clouds in the raster backend as depth-tested spheres with eye-dome lighting (`edl`); the vector backend stops above `getOption("ggplot3d.vector_markers", 50000)` markers per panel.
 * `backend_3d("hybrid")` rasterises the layers drawn with `raster = TRUE` and keeps the other layers, axes, panes and text as vector graphics, clipped where the image's opaque coverage lies in front of them.
 * Translucent surfaces in vector output cover the shared edges inside each group of non-overlapping faces once.

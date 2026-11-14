@@ -76,6 +76,50 @@ test_that("annotate_3d adds z positions and checks lengths", {
   expect_error(annotate_3d("point", x = 1:2, y = 1:3, z = 1), "Unequal position lengths")
 })
 
+test_that("annotate_3d forwards registered bracket parameters to the scene", {
+  span <- data.frame(x = 0, y = 0, z = 1, xend = 2, yend = 0, zend = 1)
+  mapping <- ggplot2::aes(x, y, z = z, xend = xend, yend = yend, zend = zend)
+  arrow <- grid::arrow(ends = "first", type = "open", length = grid::unit(4, "mm"))
+  for (type in c("bracket", "dimension")) {
+    params <- list(type = type, offset = c(0, 0.15, 0), tip_length = 0.04,
+      arrow = arrow, label = "2 m", colour = "blue")
+    direct <- do.call(geom_bracket_3d, c(list(mapping = mapping, data = span), params))
+    expected <- integration_packets(ggplot2::ggplot() + direct + coord_3d())$packet
+    for (geom in list("bracket", GeomBracket3D)) {
+      annotation <- do.call(annotate_3d, c(list(geom = geom), as.list(span), params))
+      expect_equal(nrow(annotation$data), 1L)
+      expect_false(annotation$inherit.aes)
+      expect_false(annotation$show.legend)
+      packet <- integration_packets(ggplot2::ggplot() + annotation + coord_3d())$packet
+      expect_equal(packet, expected)
+      if (type == "dimension") {
+        expect_equal(packet$polylines$count, c(2L, 2L, 2L))
+        expect_equal(packet$polylines$arrow_start, c(FALSE, FALSE, TRUE))
+        expect_equal(packet$polylines$arrow_end, c(FALSE, FALSE, FALSE))
+      }
+    }
+  }
+})
+
+test_that("annotate_3d forwards common and other geom parameters", {
+  segment <- annotate_3d("segment", x = 0, y = 0, z = 1,
+    xend = 2, yend = 1, zend = 2, lineend = "round", occlusion = "overlay")
+  expect_identical(segment$geom_params$lineend, "round")
+  expect_identical(segment$geom_params$occlusion, "overlay")
+  padding <- grid::unit(c(0.2, 0.3, 0.4, 0.5), "lines")
+  label <- annotate_3d("label", x = 1:2, y = 0, z = 1, label = c("a", "b"),
+    label.padding = padding, border.colour = "red")
+  expect_identical(label$geom_params$label.padding, padding)
+  expect_identical(label$geom_params$border.colour, "red")
+  expect_equal(nrow(label$data), 2L)
+  point <- annotate_3d("point", x = 1, y = 1, z = 1, colour = c("red", "blue"))
+  expect_equal(nrow(point$data), 2L)
+  expect_equal(point$data$z, c(1, 1))
+  expect_error(annotate_3d("point", x = 1:2, colour = letters[1:3]), "Unequal parameter lengths")
+  expect_error(annotate_3d("point", x = 1, misspelled = TRUE), "Unknown 3D layer arguments")
+  expect_error(annotate_3d("missing"), "No 3D emitter registered")
+})
+
 test_that("labs(axis = NULL) removes a 3D axis title", {
   d <- data.frame(x = 1:3, y = 1:3, z = 1:3)
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() + coord_3d()

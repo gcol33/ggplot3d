@@ -1,0 +1,32 @@
+---
+title: "Colour gamuts in Lab coordinates"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Colour gamuts in Lab coordinates}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 5, dev = "png")
+library(ggplot2)
+library(ggplot3d)
+```
+
+A colour gamut is the set of colours available in a colour space or device. Lab is a colour space defined by the International Commission on Illumination (CIE), with lightness L and two chromatic coordinates a and b. `convertColor()` maps sampled standard RGB (sRGB) colours into Lab; `stat_hull_3d()` draws their convex hull.
+
+```{r gamut}
+rgb <- expand.grid(r = seq(0, 1, length.out = 6),
+                   g = seq(0, 1, length.out = 6),
+                   b = seq(0, 1, length.out = 6))
+lab <- grDevices::convertColor(as.matrix(rgb), from = "sRGB", to = "Lab", scale.in = 1)
+gamut <- data.frame(a = lab[, 2], b = lab[, 3], L = lab[, 1],
+                    hex = grDevices::rgb(rgb$r, rgb$g, rgb$b))
+ggplot(gamut, aes(a, b, z = L)) +
+  stat_hull_3d(fill = "grey80", alpha = 0.15, shade = FALSE) +
+  geom_point_3d(aes(colour = I(hex)), size = 1.5) + coord_3d(aspect = "data")
+```
+
+The hull describes the convex extent of these samples in Lab. The sample points carry their individual sRGB colours. The result depends on sampling density, the Lab conversion and the convex-hull approximation.
+
+An interpolated colour hull requires per-vertex colours in the rendering contract. That renderer extension is tracked in [#55](https://github.com/gcol33/ggplot3d/issues/55). The recipe above uses the current constant-per-face hull and separately coloured samples.
