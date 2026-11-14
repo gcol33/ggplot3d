@@ -13,6 +13,19 @@
   error at draw time, so the mesh no longer disappears behind a stat
   warning.
 
+- Texture samples use their sampled alpha for raster occlusion. Lighting
+  runs clip each source face to its compiled fragments, preserving
+  translucent overlaps across intervening marks.
+  [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
+  uses the coverage guarantee to select its transparency pass. Texture
+  corner attributes retain contract order during ambient-occlusion setup
+  ([\#64](https://github.com/gcol33/ggplot3d/issues/64)).
+
+- Vector smooth surfaces share one clipped image per drawing-order run,
+  with perspective-correct per-sample lighting and sixteen samples per
+  pixel. Shared triangle edges carry continuous paint across lighting
+  gradients.
+
 - Inside-view animations retain sphere framing and rotate the camera
   about the observer’s fixed eye, including angle tracks and orbit paths
   ([\#15](https://github.com/gcol33/ggplot3d/issues/15)).
