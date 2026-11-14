@@ -23,6 +23,7 @@ animate_3d(
   path = NULL,
   workers = 1L,
   tween = NULL,
+  trail = NULL,
   ...
 )
 }
@@ -89,6 +90,19 @@ installed ggplot3d. PDF pages are drawn in one process.}
 for one frame per state. Requires \code{time}. The number of frames is then
 \verb{(number of states - 1) * (tween$n + 1) + 1}.}
 
+\item{trail}{NULL (default), a positive integer giving the number of preceding
+rendered frames in a motion trail, or a list with \code{length} and optional
+\code{radius}, \code{width}, \code{sides} (default 8), \code{taper} (default FALSE), \code{normal}
+and \code{layers} (layer indices). Trails follow the anchors of time-varying
+row-based marks, including points, text and solid glyphs. Map \code{group} to a
+persistent object identifier. Trails use \code{\link[=geom_tube_3d]{geom_tube_3d()}}'s sweep; setting
+\code{width} selects a ribbon. Cross-section sizes use transformed position
+units; the default radius is 0.5\% of the panel range diagonal. Mapped
+\code{radius}, \code{width} and \code{twist} are retained. Alpha fades linearly with frame
+age, multiplying the mark's alpha. \code{taper = TRUE} also scales the cross
+section by this fraction. Requires \code{time}; tweened frames count towards
+the window. Static layers stay fixed. Missing observations break a trail.}
+
 \item{...}{Arguments to \code{\link[=export_3d]{export_3d()}} for glTF output: \code{furniture}, \code{lines},
 \code{points} and \code{size}.}
 }
@@ -144,6 +158,15 @@ if (requireNamespace("gifski", quietly = TRUE)) {
   movie <- animate_3d(wave, time = "t", width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$camera$value
+}
+track <- data.frame(x = c(0, 1, 2), y = c(0, 1, 0), z = c(0, 0.5, 1), t = 1:3)
+moving <- ggplot2::ggplot(track, ggplot2::aes(x, y, z = z, group = 1)) +
+  geom_point_3d(colour = "steelblue", size = 3) + coord_3d()
+if (requireNamespace("ragg", quietly = TRUE)) {
+  wake <- animate_3d(moving, time = "t", tween = tween_3d(n = 1),
+    trail = list(length = 3, radius = 0.04, taper = TRUE),
+    width = 240, height = 240, progress = FALSE)
+  unlink(wake$frames)
 }
 }
 \seealso{

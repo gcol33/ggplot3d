@@ -141,6 +141,35 @@ is also available, with row numbers interpreted within each state. Unmatched
 groups fade in or out by default; the enter and exit arguments can retain
 them or define starting and ending attributes.
 
+### Motion trails
+
+The trail window counts preceding rendered frames, including the frames
+inserted by `tween_3d()`. Each moving mark leaves a tube whose alpha fades
+with age. A group identifier keeps each object's history together when rows
+change order. Layers with fixed data appear in every frame, and gaps in an
+object's observations break its trail.
+
+```{r motion-trails}
+wake <- animate_3d(moving, time = "state", tween = tween_3d(n = 3),
+  trail = list(length = 4, radius = 0.05, taper = TRUE),
+  renderer = "vector", width = 480, height = 360, progress = FALSE)
+```
+
+```{r trail-frames, echo=FALSE, fig.alt=c("Three cars halfway along their motion, with fading tapered trails.", "The cars at their final positions, with trails showing their recent paths.")}
+show_frames(wake, c(3, 5), "motion-trail")
+```
+
+`trail = 4` uses a default tube radius of 0.5% of the panel range diagonal.
+Setting `width` in the list selects a ribbon; `normal` sets its initial
+orientation. Radius and width use transformed position units. Mapped
+`radius`, `width` and `twist` aesthetics also reach the sweep. `taper = TRUE`
+multiplies the cross-section size by the age fraction used for fading.
+`layers` selects the indices of the moving layers that leave trails.
+Trails follow the frame-history approach of gganimate's
+[shadow_trail()](https://gganimate.com/reference/shadow_trail.html) and
+[shadow_wake()](https://gganimate.com/reference/shadow_wake.html), with
+connected surfaces built by the rotation-minimising tube and ribbon sweep.
+
 ### Morph a surface
 
 A surface with the same grid and mesh connectivity in every state can

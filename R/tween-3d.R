@@ -233,6 +233,17 @@ tween_group_pair_3d <- function(a, b, t, type, spec) {
   tween_join_rows_3d(a, b, ka, kb, t, spec)
 }
 
+tween_row_keys_3d <- function(data, spec, columns = intersect(c("PANEL",
+  if (spec$match == "group") ".tween_group", "subgroup", "level"), names(data))) {
+  if (!nrow(data)) return(character())
+  for (name in setdiff(columns, names(data))) data[[name]] <- rep(NA_character_, nrow(data))
+  keys <- tween_keys_3d(data, columns)
+  if (spec$match == ".source") return(paste0(keys, "R", data$.source %or3d% seq_len(nrow(data))))
+  occurrence <- integer(nrow(data))
+  for (rows in split(seq_len(nrow(data)), keys)) occurrence[rows] <- seq_along(rows)
+  paste0(keys, "R", occurrence)
+}
+
 tween_layer_3d <- function(a, b, t, entry, spec) {
   if (t == 0 || identical(a, b)) return(a)
   if (t == 1) return(b)
@@ -258,14 +269,7 @@ tween_layer_3d <- function(a, b, t, entry, spec) {
   ga <- split(seq_len(nrow(a)), ka); gb <- split(seq_len(nrow(b)), kb)
   ids <- union(unique(ka), unique(kb))
   if (type == "row") {
-    row_keys <- function(data, keys, grouped) {
-      if (!nrow(data)) return(character())
-      if (spec$match == ".source") return(paste0(keys, "R", data$.source %or3d% seq_len(nrow(data))))
-      occurrence <- integer(nrow(data))
-      for (rows in grouped) occurrence[rows] <- seq_along(rows)
-      paste0(keys, "R", occurrence)
-    }
-    pieces <- tween_join_rows_3d(a, b, row_keys(a, ka, ga), row_keys(b, kb, gb), t, spec)
+    pieces <- tween_join_rows_3d(a, b, tween_row_keys_3d(a, spec, groups), tween_row_keys_3d(b, spec, groups), t, spec)
     out <- do.call(rbind, Filter(function(d) nrow(d) > 0L, pieces))
     if (is.null(out)) return(a[FALSE, , drop = FALSE])
     out$group <- as.integer(match(tween_keys_3d(out, groups), ids))
@@ -290,11 +294,15 @@ tween_layer_3d <- function(a, b, t, entry, spec) {
   if (cursor) do.call(rbind, out[seq_len(cursor)]) else a[FALSE, , drop = FALSE]
 }
 
-motion_tween_build_3d <- function(keyframes, schedule, i, spec) {
+motion_tween_data_3d <- function(keyframes, schedule, i, spec) {
   a <- keyframes[[schedule$from[i]]]; b <- keyframes[[schedule$to[i]]]
   t <- schedule$fraction[i]
-  if (t == 0 || schedule$from[i] == schedule$to[i]) return(ggplot2::ggplot_gtable(a))
+  if (t == 0 || schedule$from[i] == schedule$to[i]) return(a)
   a$data <- lapply(seq_along(a$data), function(layer) tween_layer_3d(a$data[[layer]], b$data[[layer]], t,
     find_emitter_3d(a$plot@layers[[layer]]$geom), spec))
-  ggplot2::ggplot_gtable(a)
+  a
+}
+
+motion_tween_build_3d <- function(keyframes, schedule, i, spec) {
+  ggplot2::ggplot_gtable(motion_tween_data_3d(keyframes, schedule, i, spec))
 }

@@ -52,6 +52,18 @@
 #' @param tween A [tween_3d()] specification for in-between data frames, or NULL
 #'   for one frame per state. Requires `time`. The number of frames is then
 #'   `(number of states - 1) * (tween$n + 1) + 1`.
+#' @param trail NULL (default), a positive integer giving the number of preceding
+#'   rendered frames in a motion trail, or a list with `length` and optional
+#'   `radius`, `width`, `sides` (default 8), `taper` (default FALSE), `normal`
+#'   and `layers` (layer indices). Trails follow the anchors of time-varying
+#'   row-based marks, including points, text and solid glyphs. Map `group` to a
+#'   persistent object identifier. Trails use [geom_tube_3d()]'s sweep; setting
+#'   `width` selects a ribbon. Cross-section sizes use transformed position
+#'   units; the default radius is 0.5% of the panel range diagonal. Mapped
+#'   `radius`, `width` and `twist` are retained. Alpha fades linearly with frame
+#'   age, multiplying the mark's alpha. `taper = TRUE` also scales the cross
+#'   section by this fraction. Requires `time`; tweened frames count towards
+#'   the window. Static layers stay fixed. Missing observations break a trail.
 #' @return A ggplot3d_animation list with `file`, `frame_count`, `fps`, `camera`
 #'   (one row per frame with the time, the camera angles, zoom, projection,
 #'   field of view, distance (NA when automatic) and target, and the frame's
@@ -99,18 +111,30 @@
 #'                       file = tempfile(fileext = ".gif"))
 #'   movie$camera$value
 #' }
+#' track <- data.frame(x = c(0, 1, 2), y = c(0, 1, 0), z = c(0, 0.5, 1), t = 1:3)
+#' moving <- ggplot2::ggplot(track, ggplot2::aes(x, y, z = z, group = 1)) +
+#'   geom_point_3d(colour = "steelblue", size = 3) + coord_3d()
+#' if (requireNamespace("ragg", quietly = TRUE)) {
+#'   wake <- animate_3d(moving, time = "t", tween = tween_3d(n = 1),
+#'     trail = list(length = 3, radius = 0.04, taper = TRUE),
+#'     width = 240, height = 240, progress = FALSE)
+#'   unlink(wake$frames)
+#' }
 #' @export
 animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        frames = 60L, fps = 20, file = NULL,
                        renderer = c("raster", "vector"), roll = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
-                       path = NULL, workers = 1L, tween = NULL, ...) {
+                       path = NULL, workers = 1L, tween = NULL, trail = NULL, ...) {
   renderer <- match.arg(renderer)
   motion_dimensions_3d(width, height, dpi)
   coord <- motion_plot_coord_3d(plot)
+  trail <- motion_trail_spec_3d(trail, time)
   if (!is.null(tween)) {
     scene_assert(inherits(tween, "ggplot3d_tween") && !is.null(time), "tween must be a tween_3d() specification with time set")
+  }
+  if (!is.null(tween) || !is.null(trail)) {
     plot <- tween_plot_3d(plot)
     coord <- plot@coordinates
   }
@@ -164,7 +188,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     width, height, dpi)
   on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE, after = FALSE)
   limits <- if (is.null(time)) NULL else motion_frame_limits_3d(plot, time, states)
-  keyframes <- if (is.null(tween)) NULL else lapply(states, function(value) {
+  keyframes <- if (is.null(tween) && is.null(trail)) NULL else lapply(states, function(value) {
     ggplot2::ggplot_build(motion_frame_plot_3d(plot, time, value, limits))
   })
   built <- if (!is.null(keyframes)) ggplot2::ggplot_gtable(keyframes[[1L]]) else
@@ -189,6 +213,8 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   # worker left them.
   job <- list(built = built, plot = plot, time = time, values = values, limits = limits,
     keyframes = keyframes, schedule = schedule, tween = tween,
+    trail = trail, trail_layers = if (!is.null(trail)) motion_trail_layers_3d(plot, time, trail),
+    trail_history = new.env(parent = emptyenv()),
     cameras = cameras, base = coord$camera, backend = backend, frame = motion_frame_mode_3d(steps),
     device = output$device, per_file = output$kind != "pages", paths = paths, frames = frames,
     width = width, height = height, dpi = dpi, label_state = new.env(parent = emptyenv()),
@@ -305,10 +331,13 @@ motion_panel_grob_3d <- function(panel, camera, base, backend, frame, registry, 
 
 motion_frame_grob_3d <- function(job, i) {
   built <- if (!is.null(job$tween)) motion_tween_build_3d(job$keyframes, job$schedule, i, job$tween) else
+    if (!is.null(job$keyframes)) ggplot2::ggplot_gtable(job$keyframes[[i]]) else
     if (is.null(job$time) || i == 1L) job$built else
     ggplot2::ggplotGrob(motion_frame_plot_3d(job$plot, job$time, job$values[[i]], job$limits))
   registry <- new.env(parent = emptyenv())
+  trails <- if (!is.null(job$trail)) motion_trail_history_3d(job, i)
   motion_map_panels_3d(built, function(panel) {
+    if (!is.null(trails)) panel$packets <- c(panel$packets, motion_trail_packets_3d(trails, panel$panel_params, job$trail))
     motion_panel_grob_3d(panel, job$cameras[[i]], job$base, job$backend, job$frame, registry, job$label_state)
   })
 }

@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* `animate_3d(trail = )` draws fading tubes or ribbons behind moving marks, using rendered frame history and the shared rotation-minimising sweep. Trails follow tween identities, support radius or width aesthetics and optional tapering, and break at missing observations.
+
 * `geom_text_3d(orientation = "plane")` accepts arbitrary `normal` and `up` directions and `facing = "camera_plane"` or `"camera_point"`. Font outlines resolve against each panel's drawing camera across static backends and follow camera movement in the HTML viewer, including depth-tested picking.
 
 * Viewers and model exporters share physical panel measurement independently of the static renderer, so point-cloud widgets bypass the vector marker limit and static visibility compilation.
