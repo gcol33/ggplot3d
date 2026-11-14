@@ -141,12 +141,12 @@
 <polyline points='130.12,246.44 213.65,174.09 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='213.65,174.09 213.65,29.40 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <path d='M 272.03 276.44 L 347.97 210.67 L 347.97 79.13 L 272.03 144.90 ZM 140.49 106.93 L 272.03 144.90 L 347.97 79.13 L 216.43 41.16 ZM 140.49 238.47 L 272.03 276.44 L 272.03 144.90 L 140.49 106.93 Z' style='fill-rule: nonzero; fill: #23597F; stroke-width: 0.75; stroke: none;' />
-<path d='M 272.03 276.44 L 347.97 210.67 L 347.97 79.13 L 272.03 144.90 Z' style='fill-rule: nonzero; fill: #194361; stroke-width: 0.75; stroke: none;' />
-<path d='M 140.49 106.93 L 272.03 144.90 L 347.97 79.13 L 216.43 41.16 Z' style='fill-rule: nonzero; fill: #2A6792; stroke-width: 0.75; stroke: none;' />
-<path d='M 140.49 238.47 L 272.03 276.44 L 272.03 144.90 L 140.49 106.93 Z' style='fill-rule: nonzero; fill: #28628C; stroke-width: 0.75; stroke: none;' />
-<polygon points='272.03,276.44 347.97,210.67 347.97,79.13 272.03,144.90 ' style='stroke-width: 0.64; stroke: none; fill: #194361;' />
-<polygon points='140.49,106.93 272.03,144.90 347.97,79.13 216.43,41.16 ' style='stroke-width: 0.64; stroke: none; fill: #2A6792;' />
-<polygon points='140.49,238.47 272.03,276.44 272.03,144.90 140.49,106.93 ' style='stroke-width: 0.64; stroke: none; fill: #28628C;' />
+<path class='preserve-color' d='M 272.03 276.44 L 347.97 210.67 L 347.97 79.13 L 272.03 144.90 Z' style='fill-rule: nonzero; fill: #194361; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 140.49 106.93 L 272.03 144.90 L 347.97 79.13 L 216.43 41.16 Z' style='fill-rule: nonzero; fill: #2A6792; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 140.49 238.47 L 272.03 276.44 L 272.03 144.90 L 140.49 106.93 Z' style='fill-rule: nonzero; fill: #28628C; stroke-width: 0.75; stroke: none;' />
+<polygon class='preserve-color' points='272.03,276.44 347.97,210.67 347.97,79.13 272.03,144.90 ' style='stroke-width: 0.64; stroke: none; fill: #194361;' />
+<polygon class='preserve-color' points='140.49,106.93 272.03,144.90 347.97,79.13 216.43,41.16 ' style='stroke-width: 0.64; stroke: none; fill: #2A6792;' />
+<polygon class='preserve-color' points='140.49,238.47 272.03,276.44 272.03,144.90 140.49,106.93 ' style='stroke-width: 0.64; stroke: none; fill: #28628C;' />
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 <text x='133.10' y='265.65' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.0</text>

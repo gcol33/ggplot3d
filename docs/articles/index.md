@@ -24,11 +24,9 @@
   histograms, bars, pies, time series, fitted surfaces, densities and
   contours.
 
-- [Animated solutions of four linear
-  PDEs](https://gillescolling.com/ggplot3d/articles/pde.md):
+- [Linear and nonlinear PDEs](https://gillescolling.com/ggplot3d/articles/pde.md):
 
-  Exact solutions of the transport, heat, wave and Laplace equations
-  drawn as surfaces that change over time with animate_3d().
+  Exact solutions of four linear and four nonlinear partial differential equations drawn as surfaces that change over time with animate_3d().
 
 ### Background
 
