@@ -49,6 +49,12 @@
   (`geom_text_3d(orientation = "plane")`) is font outline geometry and still
   hides and is hidden by the data.
 
+* `stat_biplot_3d()` arrows are drawn with unshaded heads in `arrow_colour`
+  (a mid grey by default) and slightly larger heads, and each arrow-tip label
+  touches its tip on the side the arrow points to on the page, as vegan's
+  `ordiArrowTextXY()` places them. Rotations that align several glyphs or
+  cones with directions near the x axis no longer produce non-finite maps.
+
 * Strokes cut only by the panel viewport stay strokes in vector output instead
   of becoming filled outlines; the viewport clip of the panel already cuts
   them.

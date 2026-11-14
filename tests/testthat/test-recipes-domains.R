@@ -66,6 +66,24 @@ test_that("biplots preserve source scores and join groups by identifier", {
   expect_error(stat_biplot_3d(fit, label_size = -1), "label_size")
 })
 
+test_that("biplot arrows draw their heads and labels sit beyond the tips on the page", {
+  scores <- list(sites = cbind(c(-1, 1, 0, 0), c(0, 0, -1, 1), c(-1, 1, 1, -1)),
+    species = rbind(a = c(1, 0, 0), b = c(-1, 0, 0), c = c(0, 0, 1), d = c(0.9, 0.1, 0)))
+  p <- ggplot2::ggplot() + stat_biplot_3d(scores, arrow_colour = "red") +
+    coord_3d(azimuth = -90, elevation = 90, frame = "view")
+  packet <- stats_scene(p)$packet
+  q <- packet$quadrics
+  expect_length(q$style_id, 4L)
+  expect_true(all(is.finite(unlist(q[ggplot3d:::quadric_transform_columns]))))
+  heads <- packet$styles$fill[match(q$style_id, packet$styles$style_id)]
+  expect_true(all(grDevices::col2rgb(heads) == grDevices::col2rgb("red")[, rep(1L, 4L)]))
+  text <- packet$text
+  labels <- packet$styles$label[match(text$style_id, packet$styles$style_id)]
+  a <- match("a", labels); b <- match("b", labels)
+  expect_equal(c(text$hjust[a] + text$hjust[b], text$vjust[a] + text$vjust[b]), c(1, 1), tolerance = 1e-6)
+  expect_equal(max(abs(c(text$hjust[a], text$vjust[a]) - 0.5)), 0.5, tolerance = 1e-6)
+})
+
 test_that("vegan ordinations use the scores generic and its scaling", {
   skip_if_not_installed("vegan")
   fit <- vegan::rda(iris[1:4])

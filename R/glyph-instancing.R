@@ -152,7 +152,9 @@ align_z_3d <- function(direction) {
   if (!length(turn)) return(out)
   z <- direction[turn, , drop = FALSE] / length[turn]
   helper <- matrix(c(1, 0, 0), length(turn), 3L, byrow = TRUE)
-  helper[abs(z[, 1L]) > 0.9, ] <- matrix(c(0, 1, 0), 1L, 3L)
+  along_x <- abs(z[, 1L]) > 0.9
+  helper[along_x, 1L] <- 0
+  helper[along_x, 2L] <- 1
   x <- cross_rows_3d(helper, z); x <- x / sqrt(rowSums(x^2))
   y <- cross_rows_3d(z, x)
   out[, 1L, turn] <- t(x); out[, 2L, turn] <- t(y); out[, 3L, turn] <- t(z)

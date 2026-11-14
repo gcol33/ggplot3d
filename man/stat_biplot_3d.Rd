@@ -13,6 +13,7 @@ stat_biplot_3d(
   point_size = 1.5,
   label_loadings = TRUE,
   label_size = 4,
+  arrow_colour = "#5C6166",
   level = 0.95,
   scores_args = list()
 )
@@ -36,6 +37,8 @@ frame with id and group columns. Its row order is arbitrary.}
 
 \item{label_size}{Arrow-tip label size, in ggplot2 text size units (mm).}
 
+\item{arrow_colour}{Colour of the arrow shafts and their unshaded cone heads.}
+
 \item{level}{Ellipsoid coverage level.}
 
 \item{scores_args}{Additional arguments to vegan's scores method.}
@@ -49,6 +52,9 @@ quiver arrows from the origin. Optional group regions use the existing
 ellipsoid or convex-hull statistic. For prcomp, the coordinates are \code{x}
 and \code{rotation}. For vegan fits, extraction and scaling use \code{\link[vegan:scores]{vegan::scores()}}.
 A named list returned by that function can also be supplied directly.
+Each arrow-tip label touches its tip on the side the arrow points to on the
+page, as \code{\link[vegan:ordiArrowTextXY]{vegan::ordiArrowTextXY()}} places biplot labels, and like all text
+it is drawn over the scene.
 }
 \examples{
 fit <- stats::prcomp(iris[1:4], scale. = TRUE)

@@ -47,7 +47,9 @@ ggplot() + stat_biplot_3d(fit, groups = membership, region = "hull",
 ```{r vegan, eval=requireNamespace("vegan", quietly=TRUE)}
 model <- vegan::rda(iris[1:4], scale = TRUE)
 ggplot() + stat_biplot_3d(model, groups = groups,
-                        scores_args = list(scaling = 2), label_size = 5) + coord_3d()
+                        scores_args = list(scaling = 2), label_size = 5) + coord_3d(clip = "off")
 ```
+
+The species arrows of this fit reach the edge of the box. `clip = "off"` lets their labels extend past the drawing area of the panel instead of being cut at its edge.
 
 The group ellipsoids use `stat_ellipsoid_3d(type = "norm")`. Their level describes the spread of observations under that covariance model. Individual point, quiver, text, hull and ellipsoid layers can also be composed directly when a figure needs separate mappings. [vegan3d](https://rdrr.io/cran/vegan3d/man/vegan3d-package.html) documents the corresponding ordination and group-region conventions.

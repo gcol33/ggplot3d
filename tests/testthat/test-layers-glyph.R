@@ -47,9 +47,9 @@ test_that("user meshes become glyphs anchored at their origin", {
 })
 
 test_that("rotations carry the z axis onto each direction", {
-  d <- rbind(c(1, 0, 0), c(0, 0, -2), c(1, 2, 3), c(0, 0, 0))
+  d <- rbind(c(1, 0, 0), c(0, 0, -2), c(1, 2, 3), c(0, 0, 0), c(-3, 0, 0), c(2, 0.1, 0))
   r <- ggplot3d:::align_z_3d(d)
-  for (i in 1:3) {
+  for (i in c(1:3, 5:6)) {
     expect_equal(crossprod(r[, , i]), diag(3))
     expect_equal(det(r[, , i]), 1)
     expect_equal(r[, 3L, i], d[i, ] / sqrt(sum(d[i, ]^2)))

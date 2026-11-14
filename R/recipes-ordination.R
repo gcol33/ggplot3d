@@ -44,6 +44,9 @@ ordination_groups_3d <- function(sites, groups) {
 #' ellipsoid or convex-hull statistic. For prcomp, the coordinates are `x`
 #' and `rotation`. For vegan fits, extraction and scaling use [vegan::scores()].
 #' A named list returned by that function can also be supplied directly.
+#' Each arrow-tip label touches its tip on the side the arrow points to on the
+#' page, as [vegan::ordiArrowTextXY()] places biplot labels, and like all text
+#' it is drawn over the scene.
 #' @param model A prcomp fit, a vegan ordination fit, or a list with sites and
 #'   optional species score matrices.
 #' @param choices Three ordination axes.
@@ -54,6 +57,7 @@ ordination_groups_3d <- function(sites, groups) {
 #' @param point_size Site marker size in millimetres.
 #' @param label_loadings Whether to label arrow tips.
 #' @param label_size Arrow-tip label size, in ggplot2 text size units (mm).
+#' @param arrow_colour Colour of the arrow shafts and their unshaded cone heads.
 #' @param level Ellipsoid coverage level.
 #' @param scores_args Additional arguments to vegan's scores method.
 #' @return A list of layers to add to a ggplot with coord_3d().
@@ -64,7 +68,7 @@ ordination_groups_3d <- function(sites, groups) {
 #'   region = "ellipsoid", loading_scale = 2) + coord_3d()
 #' @export
 stat_biplot_3d <- function(model, choices = 1:3, groups = NULL, region = c("none", "ellipsoid", "hull"),
-                           loading_scale = 1, point_size = 1.5, label_loadings = TRUE, label_size = 4, level = 0.95, scores_args = list()) {
+                           loading_scale = 1, point_size = 1.5, label_loadings = TRUE, label_size = 4, arrow_colour = "#5C6166", level = 0.95, scores_args = list()) {
   region <- match.arg(region)
   for (name in c("loading_scale", "point_size", "label_size")) {
     value <- get(name)
@@ -84,11 +88,39 @@ stat_biplot_3d <- function(model, choices = 1:3, groups = NULL, region = c("none
     arrows[c("u", "v", "w")] <- arrows[c("x", "y", "z")] * loading_scale
     arrows[c("x", "y", "z")] <- 0
     layers <- c(layers, list(geom_quiver_3d(ggplot2::aes(x, y, z = z, u = u, v = v, w = w),
-      data = arrows, inherit.aes = FALSE, colour = "grey25", fill = "grey25", head_length = 0.12, head_width = 0.04)))
-    if (label_loadings) layers <- c(layers, list(geom_text_3d(ggplot2::aes(x = u, y = v, z = w, label = id),
-      data = arrows, inherit.aes = FALSE, size = label_size, vjust = -0.4)))
+      data = arrows, inherit.aes = FALSE, colour = arrow_colour, fill = arrow_colour, linewidth = 0.6,
+      head_length = 0.15, head_width = 0.05, shade = FALSE)))
+    if (label_loadings) layers <- c(layers, list(make_layer_3d(GeomArrowLabel3D,
+      ggplot2::aes(x = u, y = v, z = w, xend = x, yend = y, zend = z, label = id), arrows, "identity", "identity",
+      list(size = label_size, na.rm = FALSE), NA, FALSE)))
   }
   layers
 }
+
+# Arrow-tip labels justified away from their arrow on the page: the projected
+# direction from the arrow tail (xend, yend, zend) to its tip sets hjust and
+# vjust, so the text box touches the tip on the side the arrow points to, as
+# ordiArrowTextXY() places biplot labels in vegan. The packet is emitted again
+# for the drawing camera.
+GeomArrowLabel3D <- ggplot2::ggproto("GeomArrowLabel3D", ggplot2::GeomText,
+  required_aes = c("x", "y", "z", "xend", "yend", "zend", "label"))
+
+emit_arrow_labels_3d <- function(data, params, panel_params) {
+  frame <- frame_of_3d(panel_params)
+  camera <- panel_params$camera
+  basis <- frame_basis_3d(camera, panel_params$viewport %or3d% new_scene_viewport(100, 100))
+  page <- function(columns) frame_coordinates_3d(frame$map(as.matrix(data[columns])), camera, basis)[, 1:2, drop = FALSE]
+  direction <- page(c("x", "y", "z")) - page(c("xend", "yend", "zend"))
+  length <- sqrt(rowSums(direction^2))
+  unit <- direction / ifelse(length > 0, length, 1)
+  data$hjust <- (1 - unit[, 1L]) / 2
+  data$vjust <- (1 - unit[, 2L]) / 2
+  packet <- emit_text_3d(data, params, panel_params)
+  attr(packet, "draw_time") <- TRUE
+  packet
+}
+
+register_geom_3d(GeomArrowLabel3D, emit_arrow_labels_3d, positions = "nudge", tween = "row",
+  extents = list(x = extent_3d("x", "xend"), y = extent_3d("y", "yend"), z = extent_3d("z", "zend")))
 
 utils::globalVariables(c(".biplot_group", "u", "v", "w", "id"))
