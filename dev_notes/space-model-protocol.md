@@ -126,13 +126,24 @@ separate implementations.
 
 ## Finite clipping and style hooks
 
-Spaces may implement `clip_segment(X, Y, model)`, returning a two-column
+Spaces may implement `clip_segment(X, Y, model, ranges)`, returning a two-column
 matrix of visible geodesic-parameter intervals. A NULL method preserves the
 ordinary sampler. `space_path_samples_3d()` splits intervals before model
 projection, shares the adaptive sampler and retains original edge parameters
 for paint interpolation. Spherical arcs solve affine-plane intersections
 analytically. Adjacent visible intervals join; invisible intervals break paths.
-`contains(X, model)` controls point and text anchors and defaults to TRUE.
+`contains(X, model, ranges)` controls point and text anchors and defaults to
+TRUE. `ranges` are the model's panel ranges, so clipping planes can be pulled
+back from the panel box.
+
+`cull(corners, model, ranges)` receives geodesic simplices as a list of
+corner matrices and returns TRUE for those that certainly lie outside the
+panel box; their screen error is not measured, so subdivision stops at the
+box and near a projection pole. `visible(X, model, ranges)` marks canonical
+points the sampler maps; others (a cap around a pole) are left unmapped and
+any triangle touching them is dropped. Stereographic S^3 culls a simplex when
+its bounding cap lies outside one box plane of R^4 or inside the pole cap
+whose image lies outside twice the box circumradius.
 
 `style_packet(packet, context)` defaults to identity. It can attach intrinsic
 normal fields or model-specific colour calculations after model placement.
@@ -140,7 +151,7 @@ Klein faces use spacelike Lorentz plane normals parallel transported to the
 origin. These hooks preserve the scene schema and all packet coordinates
 continue through `space_packet_coordinates_3d()`.
 
-Projective models may implement `clip_polygon(X, model)`, returning canonical
+Projective models may implement `clip_polygon(X, model, ranges)`, returning canonical
 points and weights on the original corners. A NULL result preserves ordinary
 face sampling. The gnomonic implementation clips against homogeneous cone
 planes, retaining great-circle edges and planar model faces. This finite

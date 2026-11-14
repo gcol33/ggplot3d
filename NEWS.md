@@ -1,5 +1,10 @@
 # ggplot3d 0.0.0.9000
 
+* `coord_spherical_geometry_3d()` draws fibres and faces through the
+  stereographic pole up to the panel box: stereographic coordinates are
+  homogeneous with the pole at infinity, and faces are sampled only where
+  they can reach the box, so the `pole_radius` cut is gone (#19).
+
 * Lighting has materials and several lights. `lights_3d()` combines
   `light_directional()`, `light_point(position, falloff)` (inverse-square at
   `falloff = 2`, independent of the other geometry), `light_head()` (MATLAB's

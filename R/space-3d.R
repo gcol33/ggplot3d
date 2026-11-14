@@ -16,7 +16,9 @@ Space3D <- ggplot2::ggproto("Space3D", NULL,
   style_packet = function(packet, context) packet,
   clip_segment = NULL,
   clip_polygon = NULL,
-  contains = function(X, model) rep(TRUE, nrow(X)),
+  visible = NULL,
+  cull = NULL,
+  contains = function(X, model, ranges) rep(TRUE, nrow(X)),
   model_ranges = function(model, panel_params) panel_params$ranges
 )
 
@@ -149,15 +151,23 @@ space_input_3d <- function(data, context) {
 
 space_subdivision_3d <- function(context) {
   basis <- frame_basis_3d(context$camera, context$viewport)
+  visible <- if (is.function(context$space$visible)) function(X) context$space$visible(X, context$model, context$ranges)
+  cull <- if (is.function(context$space$cull)) function(corners) context$space$cull(corners, context$model, context$ranges)
   # Edge snapping and interior interpolation share the screen-error budget.
-  list(tolerance = context$tolerance / 2, strict = TRUE, max_level = context$max_depth,
+  list(tolerance = context$tolerance / 2, strict = TRUE, max_level = context$max_depth, cull = cull,
     projective = isTRUE(context$space$chart_is_projective(context$model)) && isTRUE(context$frame$linear),
     interpolate = function(X, Y, s) {
       out <- space_matrix_3d(context$space$geodesic(X, Y, s), nrow(X), "geodesic()")
       if (ncol(out) != ncol(X)) stop("Space geodesic() changed canonical dimension.", call. = FALSE)
       out
     },
-    map = function(X) frame_map_homogeneous_3d(context$frame, do.call(cbind, space_packet_coordinates_3d(X, context))),
+    map = function(X) {
+      out <- matrix(NA_real_, nrow(X), 4L)
+      keep <- if (is.null(visible)) rep(TRUE, nrow(X)) else visible(X)
+      if (any(keep)) out[keep, ] <- frame_map_homogeneous_3d(context$frame,
+        do.call(cbind, space_packet_coordinates_3d(X[keep, , drop = FALSE], context)))
+      out
+    },
     metric = function(xyzw) screen_positions_homogeneous_3d(xyzw, context$camera, basis))
 }
 
@@ -236,7 +246,7 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
     corners <- seq.int(offsets[i], length.out = counts[i])
     rows <- primitives[corners]; points <- X[lookup[corners], , drop = FALSE]
     kind <- kinds[i]
-    clipped <- if(kind=="faces"&&!is.null(context$space$clip_polygon)) context$space$clip_polygon(points,context$model) else NULL
+    clipped <- if(kind=="faces"&&!is.null(context$space$clip_polygon)) context$space$clip_polygon(points,context$model,context$ranges) else NULL
     if(!is.null(clipped)) {
       if(nrow(clipped$points)<3L) next
       if(!sampler$projective) stop("Canonical polygon clipping requires a projective display model.",call.=FALSE)
@@ -261,12 +271,15 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
       triangles <- cbind(1L, 2:(nrow(points) - 1L), 3:nrow(points))
       mesh <- munch_triangles_3d(sampler, points[triangles[, 1L], , drop = FALSE],
         points[triangles[, 2L], , drop = FALSE], points[triangles[, 3L], , drop = FALSE], max_level = context$max_depth)
+      drawn <- !rowSums(is.na(matrix(mesh$model[c(mesh$triangles), 4L], ncol = 3L)))
+      if (!any(drawn)) next
+      mesh$triangles <- mesh$triangles[drawn, , drop = FALSE]
       parent <- triangles[mesh$point_parent, , drop = FALSE]
       d <- space_attributes_3d(data, matrix(rows[parent], ncol = 3L), mesh$weights)
       index <- as.vector(t(mesh$triangles))
       add(d[index, , drop = FALSE], mesh$model[index, , drop = FALSE], kind, rep.int(3L, nrow(mesh$triangles)))
     } else {
-      keep <- if(kind %in% c("markers","text")) context$space$contains(points,context$model) else rep(TRUE,nrow(points))
+      keep <- if(kind %in% c("markers","text")) context$space$contains(points,context$model,context$ranges) else rep(TRUE,nrow(points))
       if(any(keep)) add(data[rows[keep], , drop = FALSE], sampler$map(points[keep,,drop=FALSE]), kind, sum(keep))
     }
   }
@@ -297,7 +310,7 @@ space_path_samples_3d <- function(points,context) {
   }
   for(i in seq_len(nrow(points)-1L)) {
     X <- points[i,,drop=FALSE]; Y <- points[i+1L,,drop=FALSE]
-    intervals <- context$space$clip_segment(drop(X),drop(Y),context$model)
+    intervals <- context$space$clip_segment(drop(X),drop(Y),context$model,context$ranges)
     if(!nrow(intervals)) {flush(); next}
     for(j in seq_len(nrow(intervals))) {
       s <- intervals[j,]

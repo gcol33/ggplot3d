@@ -150,14 +150,21 @@ frame_positions_3d <- function(xyz, camera, basis) {
 }
 
 # Screen positions of homogeneous box fractions under the camera pre-transform,
-# divided only after pre; rows at or behind infinity get Inf.
+# divided only after pre; rows at or behind infinity, behind a perspective
+# eye or left unmapped get Inf.
 screen_positions_homogeneous_3d <- function(xyzw, camera, basis) {
   if (ncol(xyzw) == 3L) xyzw <- cbind(xyzw, 1)
   pre <- camera$pre %or3d% as.double(diag(4))
   if (!identical(as.double(pre), as.double(diag(4)))) xyzw <- xyzw %*% t(matrix(pre, 4L, 4L))
   out <- matrix(Inf, nrow(xyzw), 2L)
-  finite <- xyzw[, 4L] > 0
-  if (any(finite)) out[finite, ] <- frame_positions_3d(xyzw[finite, 1:3, drop = FALSE] / xyzw[finite, 4L], camera, basis)[, 1:2, drop = FALSE]
+  finite <- which(rowSums(is.na(xyzw)) == 0 & xyzw[, 4L] > 0)
+  if (!length(finite)) return(out)
+  xyz <- xyzw[finite, 1:3, drop = FALSE] / xyzw[finite, 4L]
+  if (basis$perspective) {
+    front <- frame_eye_coordinates_3d(xyz, camera, basis)[, 3L] > 0
+    finite <- finite[front]; xyz <- xyz[front, , drop = FALSE]
+  }
+  if (length(finite)) out[finite, ] <- frame_positions_3d(xyz, camera, basis)[, 1:2, drop = FALSE]
   out
 }
 

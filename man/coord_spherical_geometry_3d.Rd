@@ -9,7 +9,6 @@ coord_spherical_geometry_3d(
   model = c("stereographic", "gnomonic"),
   input = model,
   extent = 3,
-  pole_radius = 0.01,
   inside = FALSE,
   observer = NULL,
   fog = NULL,
@@ -21,10 +20,8 @@ coord_spherical_geometry_3d(
 
 \item{model, input}{Display model and input chart.}
 
-\item{extent}{Positive half-width of the finite display box.}
-
-\item{pole_radius}{Angular radius excluded around the stereographic pole,
-in radians. Gnomonic geometry clips to the finite positive-hemisphere box.}
+\item{extent}{Positive half-width of the finite display box. Gnomonic
+geometry clips to the finite positive-hemisphere box.}
 
 \item{inside}{Use a first-person perspective eye at the gnomonic origin.}
 
@@ -46,7 +43,13 @@ Paths and faces follow shorter great circles through the shared sampler.
 Ambient inputs map x, y, z and w. Stereographic input is the inverse chart
 (2p, |p|^2-1)/(1+|p|^2). The display map is \code{X[1:3]/(1-X[4])}.
 Gnomonic display \code{X[1:3]/X[4]} covers the positive fourth-coordinate hemisphere.
-Paths are clipped analytically to the panel box and a ball around the pole.
+Stereographic coordinates are homogeneous, (X1:3, 1 - X4), so the pole is
+the point at infinity and box clipping happens before division. Paths are
+clipped analytically on their great circles against the box planes, which
+are planes of R^4. Faces are sampled only outside a cap around the pole
+whose image lies outside twice the box circumradius, and the scene engine
+clips their triangles to the box in homogeneous coordinates, so fibres and
+faces through the pole are drawn up to the panel box.
 }
 \details{
 Inside views restrict geometry to the observer hemisphere and finite

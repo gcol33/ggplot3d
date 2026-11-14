@@ -27,6 +27,32 @@ spherical_clip_segment_3d <- function(X,Y,planes) {
   intervals[keep,,drop=FALSE]/theta
 }
 
+# The stereographic image of the cap of angular radius r around the pole is
+# the outside of the ball of radius cot(r/2). Twice the panel-box circumradius
+# keeps every point of the cap, and of its sampled boundary, outside the box.
+spherical_pole_radius_3d <- function(extent) 2*atan(1/(2*sqrt(3)*extent))
+
+# A geodesic simplex on S^3 lies in the cap around the normalised sum of its
+# corners whose radius reaches the farthest corner. It is culled when that cap
+# lies outside one plane n.X + c >= 0: max over the cap of n.X is
+# |n| cos(max(0, angle(n, centre) - radius)).
+spherical_cull_3d <- function(corners,planes) {
+  centre <- Reduce(`+`,corners); size <- sqrt(rowSums(centre^2))
+  out <- rep(FALSE,nrow(centre)); ok <- size>0
+  if(!any(ok)) return(out)
+  centre <- centre[ok,,drop=FALSE]/size[ok]
+  radius <- Reduce(pmax,lapply(corners,function(X) sphere_angle_3d(centre,X[ok,,drop=FALSE])))
+  hidden <- rep(FALSE,nrow(centre))
+  for(i in seq_len(nrow(planes))) {
+    n <- planes[i,1:4]; length <- sqrt(sum(n^2))
+    if(length==0) next
+    angle <- acos(pmin(1,pmax(-1,drop(centre%*%n)/length)))
+    hidden <- hidden|(length*cos(pmax(0,angle-radius))+planes[i,5L]<0)
+  }
+  out[ok] <- hidden&radius<pi/2
+  out
+}
+
 spherical_clip_planes_3d <- function(model,extent,pole_radius) {
   den <- if(model=="stereographic") c(0,0,0,-1,1) else c(0,0,0,1,0)
   box <- do.call(rbind,lapply(1:3,function(j) {
@@ -38,7 +64,7 @@ spherical_clip_planes_3d <- function(model,extent,pole_radius) {
 
 SpaceSpherical3D <- ggplot2::ggproto("SpaceSpherical3D",Space3D,
   name="spherical",charts=c("stereographic","gnomonic","ambient","canonical"),
-  models=c("stereographic","gnomonic"),default_model="stereographic",extent=3,pole_radius=.01,fog=NULL,
+  models=c("stereographic","gnomonic"),default_model="stereographic",extent=3,pole_radius=spherical_pole_radius_3d(3),fog=NULL,
   to_canonical=function(data,chart) {
     if(chart=="canonical") return(as.matrix(data[paste0(".s",1:4)]))
     P <- as.matrix(data[c("x","y","z")])
@@ -57,11 +83,13 @@ SpaceSpherical3D <- ggplot2::ggproto("SpaceSpherical3D",Space3D,
   geodesic=function(X,Y,s) sphere_slerp_3d(X,Y,s),
   act=function(g,X) X%*%t(check_so4_3d(g)),
   chart_is_projective=function(model) model=="gnomonic",
-  clip_polygon=function(self,X,model) if(model=="gnomonic") spherical_clip_polygon_3d(X,diag(nrow(X)),self$extent) else NULL,
+  clip_polygon=function(self,X,model,ranges) if(model=="gnomonic") spherical_clip_polygon_3d(X,diag(nrow(X)),self$extent) else NULL,
+  visible=function(self,X,model,ranges) if(model=="stereographic") X[,4L]<=cos(self$pole_radius) else rep(TRUE,nrow(X)),
+  cull=function(self,corners,model,ranges) if(model=="stereographic") spherical_cull_3d(corners,spherical_clip_planes_3d(model,self$extent,self$pole_radius)) else rep(FALSE,nrow(corners[[1L]])),
   style_packet=function(self,packet,context) space_depth_cue_3d(spherical_style_packet_3d(packet,context),context,self$fog,function(X) pmax(0,1-X[,4L]^2)),
   model_ranges=function(self,model,panel_params) stats::setNames(rep(list(c(-self$extent,self$extent)),3L),c("x","y","z")),
-  clip_segment=function(self,X,Y,model) spherical_clip_segment_3d(X,Y,spherical_clip_planes_3d(model,self$extent,self$pole_radius)),
-  contains=function(self,X,model) {
+  clip_segment=function(self,X,Y,model,ranges) spherical_clip_segment_3d(X,Y,spherical_clip_planes_3d(model,self$extent,self$pole_radius)),
+  contains=function(self,X,model,ranges) {
     planes <- spherical_clip_planes_3d(model,self$extent,self$pole_radius)
     apply(sweep(X%*%t(planes[,1:4,drop=FALSE]),2L,planes[,5L],"+"),1L,function(x) all(x>=-1e-12))
   }
@@ -74,12 +102,17 @@ SpaceSpherical3D <- ggplot2::ggproto("SpaceSpherical3D",Space3D,
 #' Ambient inputs map x, y, z and w. Stereographic input is the inverse chart
 #' (2p, |p|^2-1)/(1+|p|^2). The display map is `X[1:3]/(1-X[4])`.
 #' Gnomonic display `X[1:3]/X[4]` covers the positive fourth-coordinate hemisphere.
-#' Paths are clipped analytically to the panel box and a ball around the pole.
+#' Stereographic coordinates are homogeneous, (X1:3, 1 - X4), so the pole is
+#' the point at infinity and box clipping happens before division. Paths are
+#' clipped analytically on their great circles against the box planes, which
+#' are planes of R^4. Faces are sampled only outside a cap around the pole
+#' whose image lies outside twice the box circumradius, and the scene engine
+#' clips their triangles to the box in homogeneous coordinates, so fibres and
+#' faces through the pole are drawn up to the panel box.
 #' @param dim Spherical dimension, currently three.
 #' @param model,input Display model and input chart.
-#' @param extent Positive half-width of the finite display box.
-#' @param pole_radius Angular radius excluded around the stereographic pole,
-#'   in radians. Gnomonic geometry clips to the finite positive-hemisphere box.
+#' @param extent Positive half-width of the finite display box. Gnomonic
+#'   geometry clips to the finite positive-hemisphere box.
 #' @param inside Use a first-person perspective eye at the gnomonic origin.
 #' @param observer Observer point in the input chart, an ambient unit four-vector,
 #'   or an SO(4) matrix taking the observer to the origin.
@@ -110,15 +143,14 @@ SpaceSpherical3D <- ggplot2::ggproto("SpaceSpherical3D",Space3D,
 #'   coord_spherical_geometry_3d(inside=TRUE,azimuth=180,elevation=0,fog=.1)
 #' @export
 coord_spherical_geometry_3d <- function(dim=3,model=c("stereographic","gnomonic"),input=model,
-                                       extent=3,pole_radius=.01,inside=FALSE,observer=NULL,fog=NULL,...) {
+                                       extent=3,inside=FALSE,observer=NULL,fog=NULL,...) {
   if(length(dim)!=1L||is.na(dim)||dim!=3) stop("dim must be 3.",call.=FALSE)
   args <- check_inside_options_3d(inside,fog,list(...))
   if(inside&&missing(model)) model <- "gnomonic"
   model <- match.arg(model); input <- match.arg(input,SpaceSpherical3D$charts)
   if(inside&&model!="gnomonic") stop("Inside spherical views require the gnomonic model.",call.=FALSE)
   extent <- mesh_number_3d(extent,"extent",function(x) is.finite(x)&&x>0,"positive")
-  pole_radius <- mesh_number_3d(pole_radius,"pole_radius",function(x) is.finite(x)&&x>0&&x<pi/2,"between zero and pi/2")
-  space <- ggplot2::ggproto(NULL,SpaceSpherical3D,extent=extent,pole_radius=pole_radius,fog=fog)
+  space <- ggplot2::ggproto(NULL,SpaceSpherical3D,extent=extent,pole_radius=spherical_pole_radius_3d(extent),fog=fog)
   if(!is.null(observer)) {
     if(!is.null(args$isometry)) stop("Supply observer or isometry, one action at a time.",call.=FALSE)
     args$isometry <- spherical_observer_3d(observer,space,input)

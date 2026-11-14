@@ -212,11 +212,12 @@ segment_levels_3d <- function(frame, lo, hi, tolerance = frame$tolerance, max_le
     m <- 2^current
     edge <- rep(active, each = m)
     j <- rep(seq_len(m) - 1, length(active))
-    sample <- function(s) subdivision_metric_3d(frame, frame$map(subdivision_points_3d(frame,
-      lo[edge, , drop = FALSE], hi[edge, , drop = FALSE], s)))
+    points <- function(s) subdivision_points_3d(frame, lo[edge, , drop = FALSE], hi[edge, , drop = FALSE], s)
+    sample <- function(s) subdivision_metric_3d(frame, frame$map(points(s)))
     a <- sample(j / m); b <- sample((j + 1) / m)
     probes <- if (isTRUE(frame$strict)) c(0.25, 0.5, 0.75) else 0.5
     deviation <- Reduce(pmax, lapply(probes, function(s) chord_distance_3d(sample((j + s) / m), a, b, segment = isTRUE(frame$strict))))
+    deviation[culled_3d(frame, list(points(j / m), points((j + 1) / m)))] <- 0
     worst <- vapply(split(deviation, factor(edge, levels = active)), max, numeric(1))
     level[active] <- current
     active <- active[worst > tolerance]
@@ -234,8 +235,18 @@ subdivision_metric_3d <- function(frame, xyz) {
 }
 
 # Euclidean rows of mapped model points, which are three Euclidean or four
-# homogeneous columns.
-model_points_3d <- function(xyz) if (ncol(xyz) == 4L) homogeneous_xyz_3d(xyz) else xyz
+# homogeneous columns. Rows a frame leaves unmapped (NA) stay NA.
+model_points_3d <- function(xyz) {
+  if (ncol(xyz) == 3L) return(xyz)
+  w <- xyz[, 4L]
+  if (any(!is.na(w) & w <= 0)) stop("unbounded geometry: this step needs finite vertices (w > 0)", call. = FALSE)
+  xyz[, 1:3, drop = FALSE] / w
+}
+
+# Geodesic simplices, given as a list of corner matrices, that a space can
+# show lie outside the panel box. Their screen error is not measured, so no
+# subdivision is spent beyond the box or near a projection pole.
+culled_3d <- function(frame, corners) if (is.function(frame$cull)) frame$cull(corners) else rep(FALSE, nrow(corners[[1L]]))
 
 # A frame applied to homogeneous rows (x, y, z, w). An affine frame maps a
 # finite point p/w to map(p/w) w, keeping w, and a direction d (w = 0) to
@@ -267,7 +278,8 @@ chord_distance_3d <- function(m, a, b, segment = FALSE) {
   along <- rowSums(v * d) / ifelse(length > 0, length^2, 1)
   if (segment) along <- pmax(0, pmin(1, along))
   out <- sqrt(rowSums((v - along * d)^2))
-  out[!(length > 0)] <- sqrt(rowSums(v^2))[!(length > 0)]
+  zero <- which(length == 0)
+  out[zero] <- sqrt(rowSums(v^2))[zero]
   out[!is.finite(out)] <- Inf
   out
 }
@@ -383,14 +395,19 @@ triangle_level_3d <- function(frame, p0, p1, p2, level, max_level) {
   for (current in level:max_level) {
     lattice <- triangle_lattice_3d(2^current)
     ab <- lattice$ij / 2^current
-    sample <- function(weights) frame$map(triangle_points_3d(frame,
+    points <- function(weights) triangle_points_3d(frame,
       p0[rep(1L, nrow(weights)), , drop = FALSE], p1[rep(1L, nrow(weights)), , drop = FALSE],
-      p2[rep(1L, nrow(weights)), , drop = FALSE], weights[, 1L], weights[, 2L]))
+      p2[rep(1L, nrow(weights)), , drop = FALSE], weights[, 1L], weights[, 2L])
+    sample <- function(weights) frame$map(points(weights))
     vertices <- model_points_3d(sample(ab))
     t <- lattice$triangles
     centroid <- (ab[t[, 1L], , drop = FALSE] + ab[t[, 2L], , drop = FALSE] + ab[t[, 3L], , drop = FALSE]) / 3
     chord <- (vertices[t[, 1L], , drop = FALSE] + vertices[t[, 2L], , drop = FALSE] + vertices[t[, 3L], , drop = FALSE]) / 3
     error <- sqrt(rowSums((subdivision_metric_3d(frame, sample(centroid)) - subdivision_metric_3d(frame, chord))^2))
+    if (is.function(frame$cull)) {
+      lattice_points <- points(ab)
+      error[culled_3d(frame, list(lattice_points[t[, 1L], , drop = FALSE], lattice_points[t[, 2L], , drop = FALSE], lattice_points[t[, 3L], , drop = FALSE]))] <- 0
+    }
     if (all(is.finite(error)) && max(error) <= frame$tolerance) return(as.integer(current))
   }
   stop("Geodesic face subdivision exceeded max_depth before reaching munch_tolerance.", call. = FALSE)
