@@ -118,6 +118,7 @@ register_geom_3d(GeomProject3D,emit_projection_nd_3d,positions=character(),
 #' tessellated on S^3. Collapsed projective faces are omitted. Map dimensions by
 #' name; dimensions lists the aesthetic names in matrix row order.
 #' @inheritParams geom_mesh_3d
+#' @inheritParams ggplot2::stat_identity
 #' @param geom Registered geom prototype, or "point", "path", "polygon" or "mesh".
 #' @param basis Projection frame, NULL for the first three coordinate axes.
 #' @param rotation Optional p by p orthogonal matrix, such as [rotate_4d()].
