@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* Hyperbolic and spherical coordinates accept `inside = TRUE`, finite observer
+  points or isometries, and optional inverse-geodesic-area depth cues. The
+  vector backend views Klein or gnomonic geometry from the model origin;
+  spherical faces clip to a finite observer-hemisphere box. Compile-only
+  per-frame observer boosts await homogeneous camera pre-transforms (#15).
+
 * `coord_spherical_geometry_3d()` supplies S^3 stereographic and gnomonic
   charts with great-circle munching and SO(4) actions. `stat_hopf_fibre_3d()`
   draws fibres as paths or tubes, latitude tori including the Clifford torus,

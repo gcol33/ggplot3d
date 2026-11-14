@@ -178,6 +178,7 @@ Collate:
     'sdf-compile.R'
     'sdf.R'
     'space-hyperbolic-finite.R'
+    'space-inside.R'
     'stats-adaptive.R'
     'stats-ellipsoid.R'
     'stats-interval.R'

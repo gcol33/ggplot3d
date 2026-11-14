@@ -12,6 +12,9 @@ coord_hyperbolic_3d(
   curvature = -1,
   centre = NULL,
   distance_breaks = NULL,
+  inside = FALSE,
+  observer = NULL,
+  fog = NULL,
   ...
 )
 }
@@ -30,6 +33,15 @@ Points are moved to the origin before display.}
 
 \item{distance_breaks}{Optional increasing nonnegative distances for a radial
 distance guide, in intrinsic units.}
+
+\item{inside}{Use a first-person perspective eye at the Klein origin.}
+
+\item{observer}{Observer point in the input chart, or an isometry taking the
+observer to the origin. Supply one of observer, centre or isometry.}
+
+\item{fog}{Optional positive inverse-area brightness scale. At each primitive
+centre brightness is min(1, fog/area), where area is
+sinh(sqrt(-curvature)*d)^2/(-curvature). Colours are scaled in linear light.}
 
 \item{...}{Arguments to \code{\link[=coord_3d]{coord_3d()}}, including isometry.}
 }
@@ -50,16 +62,27 @@ compatibility with hyperbolic layout statistics. Half-space is truncated
 to the finite display box set by extent. Geodesic faces and arcs use the
 common screen-error sampler. Position scales must be identity transforms.
 Klein lighting transports Minkowski plane normals to the origin.
+Inside views use the existing vector visibility pipeline with a perspective
+eye at the Klein origin. Near defaults to sqrt(machine epsilon), and far
+to the farthest panel-box corner, in normalised camera units. Observer
+actions are applied before packing; compile-only camera-pre actions await
+homogeneous scene support. Camera azimuth, elevation and roll set facing.
 }
 \examples{
 d <- data.frame(x=c(-.7,.7),y=c(.2,.2),z=0)
 ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+coord_hyperbolic_3d()
 ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+
   coord_hyperbolic_3d(model="poincare",curvature=-4,distance_breaks=c(0,.5,1))
+d <- data.frame(x=.5,y=c(-.2,.2,.2,-.2),z=c(-.2,-.2,.2,.2))
+ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_polygon_3d(fill="steelblue")+
+  coord_hyperbolic_3d(inside=TRUE,observer=c(.1,0,0),azimuth=180,elevation=0)
 }
 \references{
 Nickel and Kiela (2017). Poincare embeddings.
 \url{https://arxiv.org/abs/1705.08039}.
 Phillips and Gunn (1992). Visualizing hyperbolic space.
 \url{https://graphics.stanford.edu/papers/webviz/webviz/node2.html}.
+Weeks (2002). Real-time rendering in curved spaces.
+\doi{10.1109/MCG.2002.1046633}. Coulon et al. (2022), Section 7.
+\url{https://arxiv.org/abs/2010.15801}.
 }

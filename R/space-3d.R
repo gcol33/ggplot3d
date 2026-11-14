@@ -14,6 +14,7 @@ Space3D <- ggplot2::ggproto("Space3D", NULL,
   chart_is_projective = function(model) FALSE,
   style_packet = function(packet, context) packet,
   clip_segment = NULL,
+  clip_polygon = NULL,
   contains = function(X, model) rep(TRUE, nrow(X)),
   model_ranges = function(model, panel_params) panel_params$ranges
 )
@@ -183,6 +184,15 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
     corners <- seq.int(offsets[i], length.out = counts[i])
     rows <- primitives[corners]; points <- X[lookup[corners], , drop = FALSE]
     kind <- kinds[i]
+    clipped <- if(kind=="faces"&&!is.null(context$space$clip_polygon)) context$space$clip_polygon(points,context$model) else NULL
+    if(!is.null(clipped)) {
+      if(nrow(clipped$points)<3L) next
+      if(!sampler$projective) stop("Canonical polygon clipping requires a projective display model.",call.=FALSE)
+      source <- matrix(rep(rows,each=nrow(clipped$points)),nrow=nrow(clipped$points))
+      d <- space_attributes_3d(data,source,clipped$weights)
+      add(d,sampler$map(clipped$points),kind,nrow(d))
+      next
+    }
     if (kind == "polylines") {
       for (path in space_path_samples_3d(points, context)) {
       endpoints <- cbind(rows[path$segment], rows[path$segment + 1L])

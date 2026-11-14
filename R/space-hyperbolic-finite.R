@@ -32,34 +32,19 @@ hyperbolic_origin_boost_3d <- function(X,inverse=FALSE) {
 # Parallel transport along the radial geodesic identifies tangent spaces
 # with the Euclidean tangent space at the hyperboloid origin.
 hyperbolic_style_packet_3d <- function(packet,context) {
-  if(context$model!="klein"||!length(packet$faces$offset)) return(packet)
-  P <- do.call(cbind,packet$vertices[c("x","y","z")])
-  P <- sweep(sweep(P,2L,vapply(context$ranges,diff,numeric(1)),"*"),2L,vapply(context$ranges,`[`,numeric(1),1L),"+")
-  normal <- t(vapply(seq_along(packet$faces$offset),function(i) {
-    vertices <- packet$corners$vertex[seq.int(packet$faces$offset[i],length.out=packet$faces$count[i])]
-    K <- P[vertices,,drop=FALSE]
-    n <- cross_rows_3d(K[2L,,drop=FALSE]-K[1L,],K[3L,,drop=FALSE]-K[1L,])
-    c0 <- sum(n*K[1L,]); norm <- sqrt(sum(n^2)-c0^2)
+  if(context$model!="klein") return(packet)
+  projective_face_normals_3d(packet,context,function(n,offset,k) {
+    norm <- sqrt(sum(n^2)-offset^2)
     if(!is.finite(norm)||norm<=0) return(rep(NA_real_,3L))
-    N <- c(drop(n),c0)/norm
-    k <- colMeans(K); X <- c(k,1)/sqrt(1-sum(k^2))
+    N <- c(n,offset)/norm
+    X <- c(k,1)/sqrt(1-sum(k^2))
     drop(hyperbolic_origin_boost_3d(X,TRUE)%*%N)[1:3]
-  },numeric(3)))
-  styles <- packet$styles[match(packet$faces$style_id,packet$styles$style_id),,drop=FALSE]
-  styles[c("normal_x","normal_y","normal_z")] <- as.data.frame(normal)
-  styles$intrinsic_normal <- TRUE
-  if(is.null(packet$styles$intrinsic_normal)) packet$styles$intrinsic_normal <- FALSE
-  for(name in setdiff(names(styles),names(packet$styles))) packet$styles[[name]] <- NA_real_
-  styles$style_id <- nrow(packet$styles)+seq_len(nrow(styles))
-  packet$styles <- rbind(packet$styles,styles)
-  packet$faces$style_id <- styles$style_id
-  packet$style_count <- as.integer(nrow(packet$styles))
-  packet
+  })
 }
 
 SpaceHyperbolicFinite <- ggplot2::ggproto("SpaceHyperbolicFinite",Space3D,
   name="hyperbolic",charts=c("poincare","klein","halfspace","hyperboloid_sheet"),
-  models=c("poincare","klein","halfspace","hyperboloid_sheet"),default_model="klein",extent=3,curvature=-1,
+  models=c("poincare","klein","halfspace","hyperboloid_sheet"),default_model="klein",extent=3,curvature=-1,fog=NULL,
   to_canonical=function(data,chart) {
     P <- as.matrix(data[c("x","y","z")])
     if(chart=="hyperboloid_sheet") {
@@ -92,7 +77,8 @@ SpaceHyperbolicFinite <- ggplot2::ggproto("SpaceHyperbolicFinite",Space3D,
     X%*%t(g)
   },
   chart_is_projective=function(model) model=="klein",
-  style_packet=function(packet,context) hyperbolic_style_packet_3d(packet,context),
+  style_packet=function(self,packet,context) space_depth_cue_3d(hyperbolic_style_packet_3d(packet,context),context,self$fog,
+    function(X) rowSums(X[,1:3,drop=FALSE]^2)/(-self$curvature)),
   model_ranges=function(self,model,panel_params) {
     if(model%in%c("poincare","klein")) return(stats::setNames(rep(list(c(-1,1)),3L),c("x","y","z")))
     r <- sinh(self$extent)
@@ -146,32 +132,55 @@ FrameHyperbolicFinite <- ggplot2::ggproto("FrameHyperbolicFinite",FrameBox,
 #'   Points are moved to the origin before display.
 #' @param distance_breaks Optional increasing nonnegative distances for a radial
 #'   distance guide, in intrinsic units.
+#' @param inside Use a first-person perspective eye at the Klein origin.
+#' @param observer Observer point in the input chart, or an isometry taking the
+#'   observer to the origin. Supply one of observer, centre or isometry.
+#' @param fog Optional positive inverse-area brightness scale. At each primitive
+#'   centre brightness is min(1, fog/area), where area is
+#'   sinh(sqrt(-curvature)*d)^2/(-curvature). Colours are scaled in linear light.
 #' @param ... Arguments to [coord_3d()], including isometry.
 #' @return A Coord3D object.
 #' @references Nickel and Kiela (2017). Poincare embeddings.
 #' <https://arxiv.org/abs/1705.08039>.
 #' Phillips and Gunn (1992). Visualizing hyperbolic space.
 #' <https://graphics.stanford.edu/papers/webviz/webviz/node2.html>.
+#' Weeks (2002). Real-time rendering in curved spaces.
+#' \doi{10.1109/MCG.2002.1046633}. Coulon et al. (2022), Section 7.
+#' <https://arxiv.org/abs/2010.15801>.
 #' @details Klein is the default display. Poincare is the default input for
 #'   compatibility with hyperbolic layout statistics. Half-space is truncated
 #'   to the finite display box set by extent. Geodesic faces and arcs use the
 #'   common screen-error sampler. Position scales must be identity transforms.
 #'   Klein lighting transports Minkowski plane normals to the origin.
+#'   Inside views use the existing vector visibility pipeline with a perspective
+#'   eye at the Klein origin. Near defaults to sqrt(machine epsilon), and far
+#'   to the farthest panel-box corner, in normalised camera units. Observer
+#'   actions are applied before packing; compile-only camera-pre actions await
+#'   homogeneous scene support. Camera azimuth, elevation and roll set facing.
 #' @examples
 #' d <- data.frame(x=c(-.7,.7),y=c(.2,.2),z=0)
 #' ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+coord_hyperbolic_3d()
 #' ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+
 #'   coord_hyperbolic_3d(model="poincare",curvature=-4,distance_breaks=c(0,.5,1))
+#' d <- data.frame(x=.5,y=c(-.2,.2,.2,-.2),z=c(-.2,-.2,.2,.2))
+#' ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_polygon_3d(fill="steelblue")+
+#'   coord_hyperbolic_3d(inside=TRUE,observer=c(.1,0,0),azimuth=180,elevation=0)
 #' @export
 coord_hyperbolic_3d <- function(input=c("poincare","klein","halfspace","hyperboloid_sheet"),model="klein",
-                               extent=3,references=character(),curvature=-1,centre=NULL,distance_breaks=NULL,...) {
+                               extent=3,references=character(),curvature=-1,centre=NULL,distance_breaks=NULL,
+                               inside=FALSE,observer=NULL,fog=NULL,...) {
   input <- match.arg(input); model <- match.arg(model,SpaceHyperbolicFinite$models)
   extent <- mesh_number_3d(extent,"extent",function(x) is.finite(x)&&x>0,"positive")
   if(!is.character(references)||any(!references%in%c("klein","poincare"))) stop("Unknown hyperboloid reference disk.",call.=FALSE)
   curvature <- mesh_number_3d(curvature,"curvature",function(x) is.finite(x)&&x<0,"negative")
   if(!is.null(distance_breaks)&&(!is.numeric(distance_breaks)||any(!is.finite(distance_breaks))||any(distance_breaks<0)||is.unsorted(distance_breaks,strictly=TRUE))) stop("distance_breaks must be increasing finite nonnegative distances.",call.=FALSE)
-  space <- ggplot2::ggproto(NULL,SpaceHyperbolicFinite,extent=extent,curvature=curvature)
-  args <- list(...)
+  space <- ggplot2::ggproto(NULL,SpaceHyperbolicFinite,extent=extent,curvature=curvature,fog=fog)
+  args <- check_inside_options_3d(inside,fog,list(...))
+  if(inside&&model!="klein") stop("Inside hyperbolic views require the Klein model.",call.=FALSE)
+  if(!is.null(observer)) {
+    if(!is.null(centre)) stop("Supply observer or centre, one action at a time.",call.=FALSE)
+    centre <- observer
+  }
   if(!is.null(centre)) {
     if(!is.null(args$isometry)) stop("Supply centre or isometry, one action at a time.",call.=FALSE)
     if(is.matrix(centre)) {check_lorentz_matrix_3d(centre,3L); args$isometry <- centre} else {
@@ -186,7 +195,7 @@ coord_hyperbolic_3d <- function(input=c("poincare","klein","halfspace","hyperbol
   coord <- do.call(coord_3d,stats_params_3d(list(space=space,input=input,model=model,
     axes=character(),panes=character(),box="none",clip_data=TRUE),args))
   coord$frame <- ggplot2::ggproto(NULL,FrameHyperbolicFinite,space=space,model=model,references=references,distance_breaks=distance_breaks)
-  coord
+  if(inside) inside_coord_3d(coord) else coord
 }
 
 #' Focus paths for a hyperbolic embedding

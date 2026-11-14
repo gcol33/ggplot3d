@@ -77,7 +77,7 @@ navbar:
       href: https://github.com/gcol33/ggplot3d
       aria-label: GitHub
 reference:
-- title: Spherical geometry
+- title: Spherical geometry and observers
   contents:
   - coord_spherical_geometry_3d
   - stat_hopf_fibre_3d

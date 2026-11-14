@@ -10,6 +10,9 @@ coord_spherical_geometry_3d(
   input = model,
   extent = 3,
   pole_radius = 0.01,
+  inside = FALSE,
+  observer = NULL,
+  fog = NULL,
   ...
 )
 }
@@ -21,7 +24,15 @@ coord_spherical_geometry_3d(
 \item{extent}{Positive half-width of the finite display box.}
 
 \item{pole_radius}{Angular radius excluded around the stereographic pole,
-or excluded from the gnomonic equator, in radians.}
+in radians. Gnomonic geometry clips to the finite positive-hemisphere box.}
+
+\item{inside}{Use a first-person perspective eye at the gnomonic origin.}
+
+\item{observer}{Observer point in the input chart, an ambient unit four-vector,
+or an SO(4) matrix taking the observer to the origin.}
+
+\item{fog}{Optional positive inverse-area brightness scale. At each primitive
+centre brightness is min(1, fog/sin(d)^2), in linear light.}
 
 \item{...}{Arguments to \code{\link[=coord_3d]{coord_3d()}}, including SO(4) isometry matrices
 from \code{\link[=rotate_4d]{rotate_4d()}}. These also work in animate_3d(isometry=).}
@@ -37,13 +48,27 @@ Ambient inputs map x, y, z and w. Stereographic input is the inverse chart
 Gnomonic display \code{X[1:3]/X[4]} covers the positive fourth-coordinate hemisphere.
 Paths are clipped analytically to the panel box and a ball around the pole.
 }
+\details{
+Inside views restrict geometry to the observer hemisphere and finite
+panel box. Great-circle face edges clip before division. Near defaults to
+sqrt(machine epsilon), and far to the farthest panel-box corner, in
+normalised camera units. Azimuth, elevation and roll set facing. Observer
+actions run before packing; compile-only camera-pre actions await
+homogeneous scene support.
+}
 \examples{
 d <- data.frame(x=c(-1,1),y=.4,z=0)
 ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+
   coord_spherical_geometry_3d(isometry=rotate_4d("xw",.2))
+d <- data.frame(x=.5,y=c(-.2,.2,.2,-.2),z=c(-.2,-.2,.2,.2))
+ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_polygon_3d(fill="steelblue")+
+  coord_spherical_geometry_3d(inside=TRUE,azimuth=180,elevation=0,fog=.1)
 }
 \references{
 Johnson (2011). A visualization of the Hopf fibration.
 \url{https://nilesjohnson.net/hopf.html}. Obermeyer. Jenn3d.
 \url{https://jenn3d.org/}.
+Weeks (2002). Real-time rendering in curved spaces.
+\doi{10.1109/MCG.2002.1046633}. Coulon et al. (2022), Section 7.
+\url{https://arxiv.org/abs/2010.15801}.
 }

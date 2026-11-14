@@ -131,3 +131,10 @@ normal fields or model-specific colour calculations after model placement.
 Klein faces use spacelike Lorentz plane normals parallel transported to the
 origin. These hooks preserve the scene schema and all packet coordinates
 continue through `space_packet_coordinates_3d()`.
+
+Projective models may implement `clip_polygon(X, model)`, returning canonical
+points and weights on the original corners. A NULL result preserves ordinary
+face sampling. The gnomonic implementation clips against homogeneous cone
+planes, retaining great-circle edges and planar model faces. This finite
+positive-hemisphere path uses unit packet weights. Intrinsic face-normal
+transport shares one projective plane/centroid extractor for H^3 and S^3.
