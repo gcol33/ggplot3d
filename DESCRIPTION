@@ -124,6 +124,7 @@ Collate:
     'stats-common.R'
     'layers-complex.R'
     'layers-contour.R'
+    'layers-coxeter.R'
     'layers-distributions.R'
     'layers-glyph.R'
     'layers-mesh.R'

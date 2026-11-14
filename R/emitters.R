@@ -90,6 +90,9 @@ extent_3d <- function(lower = NA_character_, upper, centre = NA_character_) {
 }
 
 #' Register a geometry emitter
+#' @param space Optional function of data, params and panel_params returning a
+#'   space specification. Layer-owned canonical geometry then shares coordinate
+#'   munching and remunches against the final camera and viewport.
 #' @param geom A ggplot2 geom prototype.
 #' @param emit Function accepting data, params and panel_params.
 #' @param aesthetics Additional supported aesthetics.
@@ -158,9 +161,10 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
                              stat_adapter = NULL, position_check = NULL, replace = FALSE,
                              prepare_data = NULL, prepare_aesthetics = NULL, parameters = list(),
                              default_z = 0, positions = "nudge", extents = list(),
-                             tween = c("group", "row", "path", "polygon")) {
+                             tween = c("group", "row", "path", "polygon"), space = NULL) {
   tween <- match.arg(tween)
   stopifnot(inherits(geom, "Geom"), is.function(emit), is.list(parameters),
+            is.null(space) || is.function(space),
             is.character(positions), all(positions %in% position_kinds_3d),
             is.list(extents), all(names(extents) %in% c("x", "y", "z")),
             all(vapply(extents, function(e) is.character(e) && setequal(names(e), c("lower", "upper", "centre")), logical(1))),
@@ -172,7 +176,7 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
                               setup_data = setup_data, stat_adapter = stat_adapter, position_check = position_check,
                               prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics,
                               parameters = parameters, default_z = default_z,
-                              positions = positions, extents = extents, tween = tween)
+                              positions = positions, extents = extents, tween = tween, space = space)
   invisible(NULL)
 }
 
@@ -240,9 +244,12 @@ scene_draw_panel_3d <- function(entry) {
 # An emitter returns a scene packet, or an annotation grob drawn over the scene.
 emit_scene_3d <- function(data, params, panel_params, layer_id) {
   check_3d_build(!is.null(panel_params$camera) && !is.null(panel_params$ranges$z))
-  recipe <- if (!is.null(panel_params$space_context)) list(data = data, params = params, panel_params = panel_params, layer_id = layer_id) else NULL
   entry <- .emitters_3d[[params$.emitter]]
   if (is.null(entry)) stop("Unknown 3D emitter: ", params$.emitter, call. = FALSE)
+  if (is.function(entry$space)) {
+    panel_params$space_context <- bind_space_3d(entry$space(data, params, panel_params), panel_params)
+  }
+  recipe <- if (!is.null(panel_params$space_context)) list(data = data, params = params, panel_params = panel_params, layer_id = layer_id) else NULL
   if (is.null(data$.source)) data$.source <- seq_len(nrow(data))
   if (!is.null(data$.origin)) data$.source <- data$.origin
   data$.layer <- rep.int(as.integer(layer_id), nrow(data))

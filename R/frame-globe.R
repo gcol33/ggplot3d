@@ -79,14 +79,8 @@ FrameGlobe <- ggplot2::ggproto("FrameGlobe", Frame3D,
       names(d) <- c("x", "y", "z")
       d[c("nx", "ny", "nz")] <- as.data.frame(xyz[as.vector(t(tri)), ])
       d$.face <- rep(seq_len(nrow(tri)), each = 3L); d$.corner <- rep(1:3, nrow(tri)); d$.vertex <- as.vector(t(tri)); d$.mesh <- 1L; d$group <- 1L
-      params <- panel_params
-      params$ranges <- self$model_ranges
-      params$space_context$space <- SpaceEuclidean
-      params$space_context$input <- params$space_context$model <- "cartesian"
-      params$space_context$input_ranges <- self$model_ranges
-      params$space_context$isometry <- NULL
-      packets[[length(packets) + 1L]] <- emit_scene_3d(paint(d, NA_character_, "#E0E7EB"),
-        list(.emitter = "GeomMesh3D", shade = TRUE), params, scene_furniture_layer_3d)
+      packets[[length(packets) + 1L]] <- emit_model_scene_3d(paint(d, NA_character_, "#E0E7EB"),
+        list(.emitter = "GeomMesh3D", shade = TRUE), panel_params, self$model_ranges)
     }
     if (all(self$graticule > 0)) {
       lines <- c(lapply(seq(-180, 180 - 1e-8, by = self$graticule[1L]), function(lon) data.frame(x = lon, y = seq(-90, 90, by = 5))),

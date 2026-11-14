@@ -71,15 +71,6 @@ SpaceHyperbolicFinite <- ggplot2::ggproto("SpaceHyperbolicFinite",Space3D,
   }
 )
 
-emit_model_scene_3d <- function(data,params,panel_params,ranges,layer_id=scene_furniture_layer_3d) {
-  panel_params$ranges <- ranges
-  spec <- space_spec_3d(SpaceEuclidean,"cartesian","cartesian",NULL,1e-3,9L)
-  spec$identity <- FALSE
-  panel_params$space_context <- bind_space_3d(spec,panel_params)
-  panel_params$space_context$frame <- FrameBox
-  emit_scene_3d(data,params,panel_params,layer_id)
-}
-
 FrameHyperbolicFinite <- ggplot2::ggproto("FrameHyperbolicFinite",FrameBox,
   references=character(),space=NULL,model="poincare",
   scene_packets=function(self,panel_params,theme) {

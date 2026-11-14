@@ -18,7 +18,8 @@ register_geom_3d(
   default_z = 0,
   positions = "nudge",
   extents = list(),
-  tween = c("group", "row", "path", "polygon")
+  tween = c("group", "row", "path", "polygon"),
+  space = NULL
 )
 }
 \arguments{
@@ -67,6 +68,10 @@ closed line, resampled by arc length when the two states differ in
 length. \code{"group"} (default): the rows of a group form one shape (a
 surface, a mesh) that morphs row by row when its row count is unchanged
 and cross-fades otherwise.}
+
+\item{space}{Optional function of data, params and panel_params returning a
+space specification. Layer-owned canonical geometry then shares coordinate
+munching and remunches against the final camera and viewport.}
 }
 \value{
 NULL invisibly. Registers the emitter for subsequent layers.

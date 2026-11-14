@@ -77,6 +77,10 @@ navbar:
       href: https://github.com/gcol33/ggplot3d
       aria-label: GitHub
 reference:
+- title: Tilings and honeycombs
+  contents:
+  - stat_tiling_3d
+  - stat_honeycomb_3d
 - title: Hyperbolic data
   contents:
   - coord_hyperbolic_3d
