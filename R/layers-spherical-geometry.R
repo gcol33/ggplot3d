@@ -141,8 +141,7 @@ GeomHopfFibre3D <- ggplot2::ggproto("GeomHopfFibre3D",ggplot2::Geom,
   required_aes=c("x","y","z"),default_aes=local({a <- solid_defaults_3d(); a$colour <- "grey25"; a$size <- 1.5; a$shape <- 19; a}),draw_key=ggplot2::draw_key_polygon)
 
 emit_hopf_fibre_3d <- function(data,params,panel_params) {
-  if(params$what=="base") return(emit_model_scene_3d(data,list(.emitter="GeomPoint"),panel_params,
-    stats::setNames(rep(list(c(-1.2,1.2)),3L),c("x","y","z")),unique(data$.layer)))
+  if(params$what=="base") return(.emitters_3d[["GeomPoint"]]$emit(data,params,panel_params))
   keys <- interaction(data$group,data$.fibre,if(params$what=="torus") data$.face else 1L,drop=TRUE)
   chunks <- split(seq_len(nrow(data)),keys)
   primitives <- unlist(chunks,use.names=FALSE); counts <- lengths(chunks)

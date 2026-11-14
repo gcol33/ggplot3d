@@ -63,6 +63,12 @@ test_that("Hopf paths tubes tori and matching bases emit valid packets", {
     expect_silent(validate_scene_packet(packet))
     expect_gt(length(packet$vertices$x),0)
     if(what=="base") expect_equal(length(packet$markers$offset),2L) else expect_gt(length(packet$faces$offset),0)
+    if(what=="base") {
+      ranges <- ggplot2::ggplot_build(p)$layout$panel_params[[1]]$ranges
+      xyz <- do.call(cbind,packet$vertices[c("x","y","z")])
+      xyz <- sweep(sweep(xyz,2L,vapply(ranges,diff,numeric(1)),"*"),2L,vapply(ranges,`[`,numeric(1),1L),"+")
+      expect_equal(unname(xyz),unname(lonlat_xyz_3d(d$lon,d$lat)),tolerance=1e-12)
+    }
   }
   p <- ggplot2::ggplot(data.frame(lon=0,lat=-90),ggplot2::aes(lon=lon,lat=lat))+
     stat_hopf_fibre_3d(n=8,radius=0)+coord_spherical_geometry_3d()

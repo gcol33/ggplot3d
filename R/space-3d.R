@@ -256,4 +256,3 @@ space_path_samples_3d <- function(points,context) {
   }
   flush(); parts
 }
-
