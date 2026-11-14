@@ -89,6 +89,7 @@ reference:
   contents:
   - coord_cylindrical_3d
   - coord_spherical_3d
+  - coord_globe_3d
   - coord_ternary_3d
   - coord_simplex_3d
 - title: Z position scales

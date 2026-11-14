@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* `coord_globe_3d()` maps longitude, latitude and height to a sphere, munches great-circle paths and faces, reprojects sf inputs, and draws a graticule and opaque lit globe.
+
 * `coord_3d()` accepts a space, input chart, display model and isometry. Its shared geodesic munch hook adaptively subdivides paths and polygon faces in projected panel coordinates; the Euclidean default preserves existing packets. Homogeneous models and ideal points await scene schema 2.
 
 * `animate_3d(trail = )` draws fading tubes or ribbons behind moving marks, using rendered frame history and the shared rotation-minimising sweep. Trails follow tween identities, support radius or width aesthetics and optional tapering, and break at missing observations.

@@ -612,6 +612,8 @@ merge_scene_packets <- function(packets, panel_id) {
 
 collect_scene_layers <- function(panel, panel_params, theme) {
   result <- list(packets = list(), underlay = list(), overlay = list())
+  extra <- frame_of_3d(panel_params)$scene_packets
+  if (is.function(extra)) result$packets <- extra(panel_params, theme)
   for (grob in panel) {
     if (is.null(grob) || inherits(grob, "zeroGrob") || inherits(grob, "null")) next
     if (inherits(grob, "scene_layer_grob")) result$packets[[length(result$packets) + 1L]] <- grob$packet

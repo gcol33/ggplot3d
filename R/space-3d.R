@@ -86,7 +86,7 @@ bind_space_3d <- function(spec, panel_params) {
   }
   spec$ranges <- spec$ranges[c("x", "y", "z")]
   spec$input_ranges <- panel_params$ranges
-  spec$frame <- frame_of_3d(panel_params)
+  spec$frame <- frame_of_3d(panel_params)$space_frame %or3d% frame_of_3d(panel_params)
   spec$camera <- panel_params$camera
   spec$viewport <- emit_viewport_3d(panel_params)
   spec

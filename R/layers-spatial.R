@@ -62,13 +62,13 @@ spatial_rows_3d <- function(data) {
 }
 
 spatial_xy_3d <- function(xy, data, plot) {
-  target <- plot@coordinates$config$crs
+  target <- if (inherits(plot@coordinates$frame, "FrameGlobe")) 4326 else plot@coordinates$config$crs
   if (!is.null(target)) {
     require_geometry_package_3d("sf")
     source <- attr(data, "geometry_crs_3d")
     if (is.null(source) || is.na(source)) stop("A target CRS requires a declared source CRS.", call. = FALSE)
     projected <- sf::st_transform(sf::st_as_sf(xy, coords = names(xy), crs = source, na.fail = FALSE), target)
-    if (isTRUE(sf::st_is_longlat(projected))) stop("Planar geometry requires a projected target CRS.", call. = FALSE)
+    if (isTRUE(sf::st_is_longlat(projected)) && !inherits(plot@coordinates$frame, "FrameGlobe")) stop("Planar geometry requires a projected target CRS.", call. = FALSE)
     xy[] <- as.data.frame(sf::st_coordinates(projected))[1:2]
   } else if (isTRUE(attr(data, "geometry_geographic_3d"))) stop("Geographic geometry requires coord_3d(crs = <projected CRS>).", call. = FALSE)
   xy
@@ -90,6 +90,7 @@ prepare_sf_aesthetics_3d <- function(out, data, plot, params) {
   out <- prepare_spatial_aesthetics_3d(out, data, plot, params, z = FALSE)
   out$.kind <- data$.kind
   out$geometry <- spatial_prototypes_3d(data$.kind)
+  if (inherits(plot@coordinates$frame, "FrameGlobe") && is.null(out$z)) out$z <- rep(0, nrow(out))
   own <- data$.z3d
   has_z <- !is.na(own)
   extrude <- !is.null(out$height %or3d% params$height) || !is.null(out$zmax %or3d% params$zmax)
