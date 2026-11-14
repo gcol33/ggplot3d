@@ -7,7 +7,11 @@ shading = &quot;smooth&quot; the vertex normals are interpolated across each fac
 colours such as fill = I(hex), is interpolated in linear light (Gouraud
 1971), as MATLAB's lighting gouraud with FaceColor = &quot;interp&quot; and rgl's
 smooth material. A discrete fill splits the rows into groups, so
-group = 1 keeps one surface."><meta property="og:description" content="Grid surfaces estimate vertex normals from height differences along each
+group = 1 keeps one surface.
+Binned fill and colour scales split faces at the scalar iso-lines, using
+linear interpolation of the mapped variable between vertices. Scale
+transformations place the breaks in the variable's original units.
+Each piece has one band colour, with normals interpolated across its edges."><meta property="og:description" content="Grid surfaces estimate vertex normals from height differences along each
 axis. With shading = &quot;flat&quot; lighting uses the normalised mean of each
 face's vertex normals and a numeric fill is averaged over each face. With
 shading = &quot;smooth&quot; the vertex normals are interpolated across each face
@@ -15,7 +19,11 @@ shading = &quot;smooth&quot; the vertex normals are interpolated across each fac
 colours such as fill = I(hex), is interpolated in linear light (Gouraud
 1971), as MATLAB's lighting gouraud with FaceColor = &quot;interp&quot; and rgl's
 smooth material. A discrete fill splits the rows into groups, so
-group = 1 keeps one surface."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
+group = 1 keeps one surface.
+Binned fill and colour scales split faces at the scalar iso-lines, using
+linear interpolation of the mapped variable between vertices. Scale
+transformations place the breaks in the variable's original units.
+Each piece has one band colour, with normals interpolated across its edges."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
 (function () {
   var D = String.fromCharCode(36);
   window.MathJax = {
@@ -83,6 +91,7 @@ group = 1 keeps one surface."><meta property="og:image" content="https://gillesc
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
@@ -141,7 +150,11 @@ face's vertex normals and a numeric fill is averaged over each face. With
 colours such as <code>fill = I(hex)</code>, is interpolated in linear light (Gouraud
 1971), as MATLAB's <code>lighting gouraud</code> with <code>FaceColor = "interp"</code> and rgl's
 <code>smooth</code> material. A discrete fill splits the rows into groups, so
-<code>group = 1</code> keeps one surface.</p>
+<code>group = 1</code> keeps one surface.
+Binned fill and colour scales split faces at the scalar iso-lines, using
+linear interpolation of the mapped variable between vertices. Scale
+transformations place the breaks in the variable's original units.
+Each piece has one band colour, with normals interpolated across its edges.</p>
     </div>
 
     <div class="section level2">

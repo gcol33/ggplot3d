@@ -47,28 +47,21 @@ A `ggplot3d_texture` object.
 
 ## Details
 
-The raster backend and the
-[`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
-viewer sample the image per sample, perspective-correctly, in linear
-light: bilinearly where the image is magnified and from a mipmap
-(Williams 1983) where it is minified. The vector backend draws unlit
-images once per face triangle through an affine group transformation
-clipped to the triangle (R \>= 4.2 groups, Murrell 2021). Under an
-orthographic camera every triangle maps the image affinely, which is
-exact; under perspective, triangles are split until the affine map lies
-within half a device pixel of the projective one. Raster devices
-resample the image with their own filter, in encoded sRGB. svglite
-writes transformation matrices with two significant digits, which can
-misplace the image by about 1% of its size; ragg, pdf(), cairo_pdf() and
-svg() keep it in place. Lit faces use the shared texture sampler and
-linear-light shading kernel to build colour-correct multiply and screen
-layers in one clipped group per face run. The hybrid renderer handles
-devices with limited compositing support. Text and labels are drawn over
-the scene.
+Static backends share a perspective-correct, linear-light texture
+sampler. With `interpolate = FALSE`, every sample takes its nearest
+texel at the original image resolution. With interpolation enabled,
+magnified images use bilinear sampling and minified images use mipmaps
+(Williams 1983). The vector backend embeds one sampled image per face
+run. Opaque runs use sixteen samples per pixel at the device resolution
+or 300 dpi, whichever is higher. Lit faces use the shared linear-light
+shading kernel. Translucent runs sample at device pixel centres to
+retain disjoint coverage across runs. Text and labels are drawn over the
+scene.
 [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
 and glTF export
 ([`export_3d()`](https://gillescolling.com/ggplot3d/reference/export_3d.md))
-carry the image and the texture coordinates.
+carry the image and the texture coordinates; the viewer applies GPU
+texture filtering.
 
 ## References
 

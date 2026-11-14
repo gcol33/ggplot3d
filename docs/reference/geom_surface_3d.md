@@ -8,7 +8,11 @@ each face (Phong 1975) and a fill that varies between vertices, numeric
 or given as colours such as `fill = I(hex)`, is interpolated in linear
 light (Gouraud 1971), as MATLAB's `lighting gouraud` with
 `FaceColor = "interp"` and rgl's `smooth` material. A discrete fill
-splits the rows into groups, so `group = 1` keeps one surface.
+splits the rows into groups, so `group = 1` keeps one surface. Binned
+fill and colour scales split faces at the scalar iso-lines, using linear
+interpolation of the mapped variable between vertices. Scale
+transformations place the breaks in the variable's original units. Each
+piece has one band colour, with normals interpolated across its edges.
 
 ## Usage
 
