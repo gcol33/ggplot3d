@@ -252,6 +252,17 @@ seam_group_grob_3d <- function(x, y, id, fill, gp, opacity, caps) {
 # masks, pdf() among them, paint it face by face. Sheets are composited in the
 # order in which their last faces are drawn, the painter's position of their
 # nearest piece.
+# Sheet key of each face for alpha_mode = "surface": faces of one layer and
+# one sheet share a positive key; faces composited one by one take 0. Only
+# translucent faces with a fill and no border form sheets.
+surface_sheets_3d <- function(styles, layer_id, opacity) {
+  surface <- layer_id > 0L & opacity < 1 & is.na(style_value_3d(styles, "colour", NA_character_)) &
+    !is.na(style_value_3d(styles, "fill", NA_character_)) &
+    style_value_3d(styles, "alpha_mode", "face") == "surface"
+  key <- paste(layer_id, style_value_3d(styles, "sheet", 1L))
+  ifelse(surface, match(key, unique(key[surface])), 0L)
+}
+
 translucent_sheets_3d <- function(x, y, id, fill, seam_group, sheet, opacity, caps) {
   sheets <- unique(sheet)
   sheets <- sheets[order(vapply(sheets, function(s) max(which(sheet == s)), integer(1)))]
@@ -430,7 +441,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   key[masked_lines] <- paste(key[masked_lines], f$path_start_mm[masked_lines], f$path_end_mm[masked_lines], f$count[masked_lines], f$hidden[masked_lines], sep = ":")
   face <- f$kind == 1L
   seam <- face & f$layer_id > 0L & f$mask_count == 0L & is.na(styles$colour) & !is.na(styles$fill)
-  surface <- seam & f$opacity < 1 & style_value_3d(styles, "alpha_mode", "face") == "surface"
+  surface <- seam & surface_sheets_3d(styles, f$layer_id, f$opacity) > 0L
   key[face] <- paste(key[face], seam[face], ifelse(seam[face],
     paste(f$layer_id[face], ifelse(surface[face], "surface", f$seam_group[face]), f$opacity[face]), 0L), sep = ":")
   region_id <- if (is.null(regions)) integer(length(key)) else regions$id

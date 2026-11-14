@@ -9,17 +9,18 @@
 #' @param wireframe Whether to draw triangle edges.
 #' @param hidden Hidden stroke policy.
 #' @param outline Feature lines from [outline_3d()], or NULL for none.
-#' @param alpha_mode How a translucent surface composites in vector output.
+#' @param alpha_mode How a translucent surface composites.
 #'   `"face"` blends every face over what lies behind it, so a surface seen
 #'   through itself darkens where it folds over. `"surface"` paints each sheet
 #'   (a connected set of faces sharing vertices, such as one isosurface level)
 #'   as one translucent film: other sheets show through it, its own pieces
 #'   behind its nearer pieces do not. A sheet of several fill colours needs a
 #'   device with Porter-Duff groups and alpha masks (ragg, cairo_pdf, svg);
-#'   other devices, pdf() among them, paint it as `"face"`. The layers that
-#'   draw surfaces ([stat_isosurface_3d()], [stat_parametric_3d()],
-#'   [geom_mesh_3d()] and others) accept it too. Raster backends composite per
-#'   face.
+#'   other devices, pdf() among them, paint it as `"face"`. The raster and
+#'   hybrid backends keep, per sample, the nearest piece of each sheet and
+#'   composite the sheets in depth order, with any fill colours. The layers
+#'   that draw surfaces ([stat_isosurface_3d()], [stat_parametric_3d()],
+#'   [geom_mesh_3d()] and others) accept it too.
 #' @return A ggplot2 layer.
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 6),

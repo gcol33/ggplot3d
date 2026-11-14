@@ -22,6 +22,7 @@ raster_colours_3d <- function(packet, prepared, light) {
     outline <- colour_channels_3d(border, alpha = TRUE) / 255
     outline[4L, ] <- as.double(!is.na(border))
     attr(rgba, "outline") <- outline
+    if (kind == "faces") attr(rgba, "sheet") <- as.integer(surface_sheets_3d(styles, tab$layer_id, tab$opacity))
     metrics <- paint_metrics_3d(styles)
     attr(rgba, "width_mm") <- if (kind == "markers") metrics$border_mm * 2 else metrics$width_mm
     attr(rgba, "separate") <- if (kind == "markers") style_value_3d(styles, "shape", 19) %in% 21:25 else rep(FALSE, nrow(styles))

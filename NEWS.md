@@ -1,5 +1,10 @@
 # ggplot3d 0.0.0.9000
 
+* The raster and hybrid backends honour `alpha_mode = "surface"`: each sample
+  keeps the nearest fragment of every translucent sheet and composites the
+  sheets front to back in linear light, so a sheet folding over itself does
+  not darken and nested isosurfaces still show through each other (#58).
+
 * Hyperbolic and spherical coordinates accept `inside = TRUE`, finite observer
   points or isometries, and optional inverse-geodesic-area depth cues. The
   vector backend views Klein or gnomonic geometry from the model origin;

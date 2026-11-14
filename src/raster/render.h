@@ -19,6 +19,9 @@ struct Paint {
   // A splat is a sphere impostor: radius in mm, and depth units per mm at its
   // centre (0 for other paint). edl is its eye-dome lighting strength.
   double radius=0,splat=0,edl=0;
+  // Paint-once key: a sample takes at most one fragment per key, the first
+  // in compositing order; -1 paints every fragment.
+  Index once=-1;
 };
 
 // Per-draw constants shared read-only by all tiles: the scene, the paints,
@@ -279,6 +282,26 @@ static inline void add_arrowheads(Scene& scene,std::vector<Paint>& paint,Rcpp::N
   }
 }
 
+// Paint-once keys. Translucent strokes, arrowheads included, paint a sample
+// once per polyline row. Faces of one translucent sheet drawn with
+// alpha_mode = "surface" (the "sheet" attribute of the face colours, 0 for
+// none) share a key, so a sample takes the sheet's nearest piece only and
+// sheets composite over each other in depth order.
+static inline void paint_once(const Scene& scene,std::vector<Paint>& paint,Rcpp::NumericMatrix face_colours,
+                              bool translucent_strokes) {
+  const Index lines=static_cast<Index>(scene.packet.polylines.count.size());
+  Rcpp::IntegerVector sheet;
+  if(face_colours.hasAttribute("sheet")) {
+    sheet=Rcpp::as<Rcpp::IntegerVector>(face_colours.attr("sheet"));
+    require(sheet.size()==face_colours.ncol(),"invalid raster sheet keys");
+  }
+  for(std::size_t i=0;i<scene.items.size();++i) {
+    const Item& item=scene.items[i];
+    if(item.kind==2 && translucent_strokes) paint[i].once=item.row;
+    if(item.kind==1 && sheet.size() && sheet[item.row]>0) paint[i].once=lines+sheet[item.row]-1;
+  }
+}
+
 // Sample grid of the canvas: sample centres sit at origin + (index + 0.5) * step.
 // With `linear`, paints are composited and averaged in linear light and the
 // averaged pixel is sRGB-encoded.
@@ -456,14 +479,14 @@ static inline void coverage_of(const Traced* t,std::size_t i,const std::vector<S
 }
 
 // Walks one sample's fragments in compositing order. A primitive paints a
-// sample once in succession and a translucent stroke once in total; the walk
+// sample once in succession and each paint-once key once in total; the walk
 // stops when the accumulated coverage is opaque. With traced content, the
 // absorption volumes are integrated between consecutive depth-partition
 // fragments, front to back, and the traced surface is composited at its
 // depth; overlay fragments precede and underlay fragments follow both. A
 // fragment within the depth tolerance of the traced surface precedes it.
 static inline SampleResult composite_sample(const Shapes& shapes,const Fragment* f,std::size_t k,
-                                            bool translucent_strokes,std::vector<Index>& painted,
+                                            std::vector<Index>& painted,
                                             const Traced* traced,std::size_t ray,bool linear,
                                             std::vector<Step>* steps) {
   const Scene& scene=shapes.scene;
@@ -477,7 +500,8 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
   Index previous=-1; double previous_z=R_NegInf;
   for(std::size_t j=0;j<k;++j) {
     const Item& item=scene.items[f[j].item];
-    if(translucent_strokes && item.kind==2 && std::find(painted.begin(),painted.end(),item.row)!=painted.end()) continue;
+    const Index once=shapes.paint[f[j].item].once;
+    if(once>=0 && std::find(painted.begin(),painted.end(),once)!=painted.end()) continue;
     if(previous>=0) {
       const Item& prev=scene.items[previous];
       if(prev.kind==item.kind && prev.row==item.row) continue;
@@ -500,7 +524,7 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
     }
     const Paint& p=shapes.paint[f[j].item];
     const Colour& c=f[j].border ? p.outline:p.colour;
-    if(translucent_strokes && item.kind==2) painted.push_back(item.row);
+    if(once>=0) painted.push_back(once);
     double weight=(1-out.colour.a)*c.a;
     out.colour.r+=weight*c.r; out.colour.g+=weight*c.g; out.colour.b+=weight*c.b; out.colour.a+=weight;
     if(++out.peels==1) {out.first=f[j].item;out.depth=f[j].z;}
@@ -543,7 +567,7 @@ static inline std::uint32_t channel_byte(double value) {
 
 static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const std::vector<Span>& spans,
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
-                               bool retained,bool translucent_strokes,const Traced& traced,bool keep_buffers,
+                               bool retained,const Traced& traced,bool keep_buffers,
                                TileScratch& s,Buffers& out,int& passes) {
   const Scene& scene=shapes.scene;
   const auto& line=scene.packet.polylines;
@@ -601,7 +625,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
     order_fragments(scene,f,kept,s.merge);
     const int sx=sx0+static_cast<int>(k%tw),sy=sy0+static_cast<int>(k/tw);
     const bool centre=keep_buffers && sx%canvas.aa==canvas.aa/2 && sy%canvas.aa==canvas.aa/2;
-    s.results[k]=composite_sample(shapes,f,kept,translucent_strokes,s.painted,
+    s.results[k]=composite_sample(shapes,f,kept,s.painted,
       &traced,traced.active ? traced.ray(sx,sy):0,canvas.linear,centre ? &s.steps:nullptr);
     passes=std::max(passes,s.results[k].peels);
   }
@@ -800,6 +824,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   require(width>0 && height>0 && aa>0,"raster dimensions and antialias must be positive");
   auto paint=paints(scene,colours,dashes,id_pass);
   add_arrowheads(scene,paint,colours[1],restore.items);
+  const auto& opacity=scene.packet.polylines.opacity;
+  paint_once(scene,paint,colours[0],std::any_of(opacity.begin(),opacity.end(),[](double x){return x>0 && x<1;}));
   if(linear) for(auto& p:paint) {p.colour=linear_colour(p.colour);p.outline=linear_colour(p.outline);}
   Canvas canvas=canvas_of(scene,paint,width,height,aa,linear);
   width=canvas.width;height=canvas.height;
@@ -807,7 +833,6 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   Shapes shapes=shapes_of(scene,paint);
   const auto& line=scene.packet.polylines;
   bool retained=std::any_of(line.hidden.begin(),line.hidden.end(),[](Index x){return x!=0;});
-  bool translucent_strokes=std::any_of(line.opacity.begin(),line.opacity.end(),[](double x){return x>0 && x<1;});
   const Index items=static_cast<Index>(scene.items.size());
   std::vector<Span> spans(items);
   std::vector<int> tile_start(static_cast<std::size_t>(canvas.tiles_x)*canvas.tiles_y+1,0);
@@ -852,7 +877,7 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   parallel_tiles(tiles,threads,[&](int worker,int tile) {
     int tx=tile%canvas.tiles_x,ty=tile/canvas.tiles_x;
     render_tile(shapes,canvas,spans,tile_items.data()+tile_start[tile],tile_start[tile+1]-tile_start[tile],
-      tx,ty,retained,translucent_strokes,traced,keep_buffers,scratch[worker],buffers,worker_passes[worker]);
+      tx,ty,retained,traced,keep_buffers,scratch[worker],buffers,worker_passes[worker]);
   });
   scratch.clear();
   buffers.passes=*std::max_element(worker_passes.begin(),worker_passes.end());
