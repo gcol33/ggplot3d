@@ -1,6 +1,7 @@
 #ifndef GGPLOT3D_GEOMETRY_ISOSURFACE_H
 #define GGPLOT3D_GEOMETRY_ISOSURFACE_H
 #include "field.h"
+#include "tetrahedron.h"
 #include <string>
 namespace ggplot3d_geometry {
 
@@ -18,18 +19,11 @@ constexpr int tets[6][4]={{0,1,3,7},{0,3,2,7},{0,2,6,7},{0,6,4,7},{0,4,5,7},{0,5
 constexpr int faces[4][3]={{0,1,2},{0,1,3},{0,2,3},{1,2,3}};
 
 static inline void tetrahedron(Mesh& mesh,LevelState& s,const ScalarGrid& grid,const std::array<int,4>& t) {
-  double level=s.level; int hi[4],lo[4],nh=0,nl=0;
-  for(int a:t) { if(grid.high(a,level)) hi[nh++]=a; else lo[nl++]=a; }
-  if(!nh||!nl) return;
-  V direction=sub(grid.point(hi[0]),grid.point(lo[0]));
-  auto e=[&](int a,int b) { return edge_vertex(mesh,s.slab,grid,a,b,level); };
-  if(nh==1||nl==1) {
-    int a=nh==1?hi[0]:lo[0]; const int* others=nh==1?lo:hi;
-    mesh.triangle(e(a,others[0]),e(a,others[1]),e(a,others[2]),direction,level);
-  } else {
-    int a=e(hi[0],lo[0]),b=e(hi[0],lo[1]),c=e(hi[1],lo[0]),d=e(hi[1],lo[1]);
-    mesh.triangle(a,b,d,direction,level); mesh.triangle(a,d,c,direction,level);
-  }
+  auto edge=[&](int a,int b) { return edge_vertex(mesh,s.slab,grid,a,b,s.level); };
+  tetrahedron_level(t,[&](int a) { return grid.high(a,s.level); },edge,
+    [&](int a,int b,int c,int hi,int lo) {
+      mesh.triangle(a,b,c,sub(grid.point(hi),grid.point(lo)),s.level);
+    });
 }
 
 static inline void cell(Mesh& mesh,LevelState& s,const ScalarGrid& grid,const Cell& c,bool caps) {

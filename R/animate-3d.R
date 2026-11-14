@@ -67,6 +67,10 @@
 #' @param isometry A list of one canonical-space isometry matrix per frame,
 #'   a matrix shared by all frames, or a function of frame times returning the
 #'   list. Re-emits geometry through the space adapter; limits remain fixed.
+#' @param tour A [tour_grand()] specification or tourr history array. Applies
+#'   Grassmann-interpolated bases to stat_project_3d() layers with orthographic
+#'   or finite perspective projection. Uses fixed limits across frames. Requires static
+#'   input data, linear position scales, and no tween or trail.
 #' @return A ggplot3d_animation list with `file`, `frame_count`, `fps`, `camera`
 #'   (one row per frame with the time, the camera angles, zoom, projection,
 #'   field of view, distance (NA when automatic) and target, and the frame's
@@ -129,7 +133,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        renderer = c("raster", "vector"), roll = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
-                       path = NULL, workers = 1L, tween = NULL, trail = NULL, isometry = NULL, ...) {
+                       path = NULL, workers = 1L, tween = NULL, trail = NULL, isometry = NULL, tour = NULL, ...) {
   renderer <- match.arg(renderer)
   motion_dimensions_3d(width, height, dpi)
   coord <- motion_plot_coord_3d(plot)
@@ -176,7 +180,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   options <- if (output$kind == "scene") motion_export_options_3d(...)
   if (is.null(path)) {
     times <- (seq_len(frames) - 1) / fps
-    steps <- motion_track_steps_3d(coord, list(azimuth = if (is.null(azimuth) && is.null(time) && is.null(isometry))
+    steps <- motion_track_steps_3d(coord, list(azimuth = if (is.null(azimuth) && is.null(time) && is.null(isometry) && is.null(tour))
       coord$camera$azimuth + 360 * (seq_len(frames) - 1) / frames else azimuth,
       elevation = elevation, zoom = zoom, roll = roll), frames, times)
     cameras <- lapply(steps, motion_camera_3d, base = coord$camera)
@@ -208,6 +212,13 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     steps <- sampled$steps
     cameras <- lapply(steps, motion_camera_3d, base = coord$camera)
   }
+  tour_state <- NULL
+  if (!is.null(tour)) {
+    if (!is.null(time) || !is.null(tween) || !is.null(trail)) stop("A grand tour requires static input data.", call. = FALSE)
+    tour_state <- motion_tour_prepare_3d(plot, tour, frames)
+    plot <- tour_state$plot
+    built <- ggplot2::ggplotGrob(motion_tour_plot_3d(plot, tour_state$bases[[1L]]))
+  }
   isometries <- motion_isometries_3d(isometry, times, frames)
   grDevices::dev.off(device)
   paths <- switch(output$kind, sequence = motion_sequence_paths_3d(file, frames), pages = file,
@@ -216,7 +227,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   # Repelled labels start each frame where the previous frame of the same
   # worker left them.
   job <- list(built = built, plot = plot, time = time, values = values, limits = limits,
-    isometries = isometries,
+    isometries = isometries, tour_bases = tour_state$bases,
     keyframes = keyframes, schedule = schedule, tween = tween,
     trail = trail, trail_layers = if (!is.null(trail)) motion_trail_layers_3d(plot, time, trail),
     trail_history = new.env(parent = emptyenv()),
@@ -238,7 +249,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   structure(list(file = file, frame_count = as.integer(frames), fps = fps, camera = camera,
     timings = vapply(rendered, `[[`, numeric(1), "timing"), build_seconds = build_seconds,
     frame = job$frame, panel_extents = lapply(rendered, `[[`, "extents"),
-    isometries = isometries,
+    isometries = isometries, tour_bases = tour_state$bases,
     transition = if (is.null(schedule)) NULL else data.frame(from = states[schedule$from], to = states[schedule$to], fraction = schedule$fraction),
     frames = if (is.null(file) || output$kind == "sequence") paths else character()),
     class = "ggplot3d_animation")
@@ -336,7 +347,8 @@ motion_panel_grob_3d <- function(panel, camera, base, backend, frame, registry, 
 }
 
 motion_frame_grob_3d <- function(job, i) {
-  built <- if (!is.null(job$tween)) motion_tween_build_3d(job$keyframes, job$schedule, i, job$tween) else
+  built <- if (!is.null(job$tour_bases)) ggplot2::ggplotGrob(motion_tour_plot_3d(job$plot, job$tour_bases[[i]])) else
+    if (!is.null(job$tween)) motion_tween_build_3d(job$keyframes, job$schedule, i, job$tween) else
     if (!is.null(job$keyframes)) ggplot2::ggplot_gtable(job$keyframes[[i]]) else
     if (is.null(job$time) || i == 1L) job$built else
     ggplot2::ggplotGrob(motion_frame_plot_3d(job$plot, job$time, job$values[[i]], job$limits))
@@ -582,4 +594,53 @@ motion_isometry_panel_3d <- function(panel, isometry) {
     do.call(emit_scene_3d, recipe)
   })
   panel
+}
+
+
+motion_tour_plot_3d <- function(plot, basis) {
+  plot@layers <- lapply(plot@layers, function(layer) {
+    if (!inherits(layer$stat, "StatProject3D")) return(layer)
+    stat_params <- layer$stat_params
+    geom_params <- layer$geom_params
+    stat_params$basis <- basis
+    geom_params$basis <- basis
+    ggplot2::ggproto(NULL, layer, stat_params = stat_params, geom_params = geom_params)
+  })
+  plot
+}
+
+motion_tour_prepare_3d <- function(plot, tour, frames) {
+  index <- which(vapply(plot@layers, function(layer) inherits(layer$stat, "StatProject3D"), logical(1)))
+  if (!length(index)) stop("A tour requires a stat_project_3d() layer.", call. = FALSE)
+  dimensions <- lapply(plot@layers[index], function(layer) layer$stat_params$dimensions)
+  p <- length(dimensions[[1L]])
+  if (any(lengths(dimensions) != p) || any(vapply(plot@layers[index], function(layer) layer$stat_params$projection == "stereographic", logical(1)))) {
+    stop("Tour layers require the same input dimension and orthographic or finite perspective projection; stereographic pole crossings require #16.", call. = FALSE)
+  }
+  built <- ggplot2::ggplot_build(plot)
+  for (axis in c("x", "y", "z")) {
+    scale <- built$plot@scales$get_scales(axis)
+    if (!is.null(scale) && !identical(scale$get_transformation()$name, "identity")) {
+      stop("Use linear position scales for tours; transform input dimensions before plotting.", call. = FALSE)
+    }
+  }
+  bases <- tour_basis_frames_3d(tour, p, frames)
+  radius <- max(vapply(index, function(i) {
+    X <- as.matrix(built$data[[i]][paste0(".nd", seq_len(p))])
+    params <- plot@layers[[i]]$stat_params
+    if (params$projection == "orthographic") return(max(sqrt(rowSums(X^2))))
+    max(vapply(bases, function(basis) max(sqrt(rowSums(project_nd_3d(X, basis, params$projection, params$eye)^2))), numeric(1)))
+  }, numeric(1)))
+  for (i in setdiff(seq_along(built$data), index)) {
+    d <- built$data[[i]]
+    values <- unlist(d[intersect(names(d), c("x", "y", "z", "xend", "yend", "zend"))], use.names = FALSE)
+    if (any(is.finite(values))) radius <- max(radius, abs(values[is.finite(values)]))
+  }
+  if (!is.finite(radius)) stop("Tour coordinates must be finite.", call. = FALSE)
+  if (radius == 0) radius <- 1
+  parent_coord <- plot@coordinates
+  coord <- ggplot2::ggproto(NULL, parent_coord)
+  coord$limits <- lapply(coord$limits, function(limits) limits %or3d% c(-radius, radius))
+  plot@coordinates <- coord
+  list(plot = plot, bases = bases)
 }

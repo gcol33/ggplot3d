@@ -591,6 +591,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_section_mesh_cpp
+List geometry_section_mesh_cpp(NumericMatrix positions, NumericVector signed_distance, IntegerMatrix cells);
+RcppExport SEXP _ggplot3d_geometry_section_mesh_cpp(SEXP positionsSEXP, SEXP signed_distanceSEXP, SEXP cellsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type positions(positionsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type signed_distance(signed_distanceSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type cells(cellsSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_section_mesh_cpp(positions, signed_distance, cells));
+    return rcpp_result_gen;
+END_RCPP
+}
 // streamlines_cpp
 Rcpp::DataFrame streamlines_cpp(Rcpp::List axes, Rcpp::NumericMatrix values, Rcpp::NumericMatrix seeds, double step, int max_steps, std::string method, std::string direction, double tolerance, double separation, double dtest, int slice_axis, int max_lines);
 RcppExport SEXP _ggplot3d_streamlines_cpp(SEXP axesSEXP, SEXP valuesSEXP, SEXP seedsSEXP, SEXP stepSEXP, SEXP max_stepsSEXP, SEXP methodSEXP, SEXP directionSEXP, SEXP toleranceSEXP, SEXP separationSEXP, SEXP dtestSEXP, SEXP slice_axisSEXP, SEXP max_linesSEXP) {
@@ -681,6 +694,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_point_normals_cpp", (DL_FUNC) &_ggplot3d_geometry_point_normals_cpp, 2},
     {"_ggplot3d_geometry_poisson_cpp", (DL_FUNC) &_ggplot3d_geometry_poisson_cpp, 7},
     {"_ggplot3d_repel_labels_cpp", (DL_FUNC) &_ggplot3d_repel_labels_cpp, 14},
+    {"_ggplot3d_geometry_section_mesh_cpp", (DL_FUNC) &_ggplot3d_geometry_section_mesh_cpp, 3},
     {"_ggplot3d_streamlines_cpp", (DL_FUNC) &_ggplot3d_streamlines_cpp, 12},
     {"_ggplot3d_sweep_frames_cpp", (DL_FUNC) &_ggplot3d_sweep_frames_cpp, 3},
     {"_ggplot3d_voxel_faces_cpp", (DL_FUNC) &_ggplot3d_voxel_faces_cpp, 4},

@@ -2,7 +2,7 @@ CXX_STD = CXX17
 PKG_CPPFLAGS = -Ivendor/manifold3d/include -Ivendor/clipper2/include -DMANIFOLD_PAR=-1 -DMANIFOLD_CROSS_SECTION -DMANIFOLD_NO_IOSTREAM -DMANIFOLD_NO_FILESYSTEM -DCLIPPER2_NO_IOSTREAM
 PKG_CXXFLAGS = $(SHLIB_PTHREAD_FLAGS)
 PKG_LIBS = $(SHLIB_PTHREAD_FLAGS)
-OBJECTS = engine.o geometry.o intersections.o mesh.o \
+OBJECTS = engine.o geometry.o intersections.o section4d.o mesh.o \
     outline.o parametric.o png.o \
     printing.o raster.o raymarch.o \
     RcppExports.o reconstruct.o repel.o \

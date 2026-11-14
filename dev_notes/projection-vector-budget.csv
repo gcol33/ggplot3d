@@ -1,0 +1,3 @@
+"polytope","vertices","faces","budget_bytes","outcome","fragments","result_bytes"
+"tesseract",16,24,33554432,"exact_visibility",64,40096
+"120-cell",600,720,67108864,"exact_visibility",6478,3371712

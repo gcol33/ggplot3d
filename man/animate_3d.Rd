@@ -25,6 +25,7 @@ animate_3d(
   tween = NULL,
   trail = NULL,
   isometry = NULL,
+  tour = NULL,
   ...
 )
 }
@@ -107,6 +108,11 @@ the window. Static layers stay fixed. Missing observations break a trail.}
 \item{isometry}{A list of one canonical-space isometry matrix per frame,
 a matrix shared by all frames, or a function of frame times returning the
 list. Re-emits geometry through the space adapter; limits remain fixed.}
+
+\item{tour}{A \code{\link[=tour_grand]{tour_grand()}} specification or tourr history array. Applies
+Grassmann-interpolated bases to stat_project_3d() layers with orthographic
+or finite perspective projection. Uses fixed limits across frames. Requires static
+input data, linear position scales, and no tween or trail.}
 
 \item{...}{Arguments to \code{\link[=export_3d]{export_3d()}} for glTF output: \code{furniture}, \code{lines},
 \code{points} and \code{size}.}

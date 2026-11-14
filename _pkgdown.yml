@@ -80,6 +80,10 @@ reference:
 - title: Tilings and honeycombs
   contents:
   - stat_tiling_3d
+  - stat_project_3d
+  - rotate_4d
+  - tour_grand
+  - stat_section_4d
   - stat_honeycomb_3d
 - title: Hyperbolic data
   contents:

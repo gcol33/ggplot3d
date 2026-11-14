@@ -169,6 +169,10 @@ repel_labels_cpp <- function(anchors, radius, owner, start, half, bounds, force,
     .Call(`_ggplot3d_repel_labels_cpp`, anchors, radius, owner, start, half, bounds, force, force_pull, max_iter, max_time, max_overlaps, direction, seed, jitter)
 }
 
+geometry_section_mesh_cpp <- function(positions, signed_distance, cells) {
+    .Call(`_ggplot3d_geometry_section_mesh_cpp`, positions, signed_distance, cells)
+}
+
 streamlines_cpp <- function(axes, values, seeds, step, max_steps, method, direction, tolerance, separation, dtest, slice_axis, max_lines) {
     .Call(`_ggplot3d_streamlines_cpp`, axes, values, seeds, step, max_steps, method, direction, tolerance, separation, dtest, slice_axis, max_lines)
 }
