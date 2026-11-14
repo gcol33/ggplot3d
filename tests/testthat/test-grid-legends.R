@@ -17,6 +17,35 @@ lit_keys <- function(g) {
   unlist(lapply(children, lit_keys), recursive = FALSE)
 }
 
+test_that("glyph legend keys report their size and leave room around the disc", {
+  key <- draw_key_glyph_3d(data.frame(fill = "red", colour = NA, linewidth = 0.3), list(), NULL)
+  expect_equal(c(attr(key, "width"), attr(key, "height")), c(0.33, 0.33))
+  expect_equal(grid::convertUnit(key$r, "mm", valueOnly = TRUE), 1.5)
+  big <- draw_key_glyph_3d(data.frame(fill = "red", size = 12, linewidth = NA), list(), NULL)
+  expect_equal(attr(big, "width"), 1.2)
+  d <- data.frame(x = c(0, 3, 6), y = 0, z = 0, shape = c("Linear", "Planar", "Isotropic"))
+  d$tensor <- list(diag(c(1, 0.25, 0.25)), diag(c(1, 1, 0.25)), diag(3))
+  legend_widths <- function(plot) {
+    grDevices::pdf(tempfile(fileext = ".pdf"), width = 7, height = 4)
+    on.exit(grDevices::dev.off(), add = TRUE)
+    g <- ggplot2::ggplotGrob(plot)
+    box <- g$grobs[[which(g$layout$name == "guide-box-bottom")]]
+    guide <- box$grobs[[which(box$layout$name == "guides")]]
+    keys <- guide$layout$l[grepl("^key-.*-bg$", guide$layout$name)]
+    grid::convertWidth(guide$widths[keys], "mm", valueOnly = TRUE)
+  }
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, tensor = tensor, fill = shape)) +
+    geom_tensor_3d() + coord_3d(aspect = "data") +
+    ggplot2::theme_minimal(base_size = 17) + ggplot2::theme(legend.position = "bottom")
+  widths <- legend_widths(p)
+  expect_length(widths, 3L)
+  expect_true(all(widths - 3.3 >= 2.5))
+  sized <- ggplot2::ggplot(data.frame(x = 1:3, y = 1, z = 1, g = c("a", "b", "c")),
+    ggplot2::aes(x, y, z = z, fill = g)) + geom_glyph_3d(size = 12) + coord_3d() +
+    ggplot2::theme(legend.position = "bottom")
+  expect_true(all(legend_widths(sized) >= 12.3 - 1e-6))
+})
+
 test_that("axis colourbars use the selected position edge, colours and shared ticks", {
   p <- legend_surface() + ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d(nbin = 16))
   built <- ggplot2::ggplot_build(p)

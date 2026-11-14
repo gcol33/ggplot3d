@@ -5,6 +5,9 @@
   in the overlap test, and labels are visited in ggplot2's `check.overlap`
   priority (both ends, then midpoints), so short axes under `aspect = "data"`
   drop labels instead of overlapping them.
+* Glyph, sphere, ellipsoid, tensor and ray-marched legend keys are discs of
+  the layer's `size` (default 3 mm) and report their extent to the legend,
+  so wide labels in horizontal legends no longer run into the next key.
 
 * `stat_hull_3d()` draws colour gamuts with interpolated vertex colours:
   `aes(fill = I(hex), group = 1)` with `shading = "smooth"` gives every hull

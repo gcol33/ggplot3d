@@ -1,11 +1,20 @@
 glyph_default_radius_3d <- 0.025
 glyph_default_size_3d <- 3
 
+# A disc `size` millimetres across (the glyph default for layers without a
+# size), sized like a point key so the key cell keeps clear space around it.
+# Width and height in centimetres tell the legend how much room the disc and
+# its outline take, as ggplot2's draw_key_* functions do.
 draw_key_glyph_3d <- function(data, params, size) {
   fill <- if (is.na(data$fill %or3d% NA)) NA else scales::alpha(data$fill, data$alpha %or3d% 1)
-  r <- if (is.null(data$size)) grid::unit(0.38, "npc") else grid::unit(data$size / 2, "mm")
-  grid::circleGrob(r = r,
-    gp = grid::gpar(fill = fill, col = data$colour %or3d% NA, lwd = (data$linewidth %or3d% 0.3) * ggplot2::.pt))
+  linewidth <- data$linewidth %or3d% 0.3
+  diameter <- data$size %or3d% glyph_default_size_3d
+  if (!is.finite(diameter[1L])) diameter <- glyph_default_size_3d
+  grob <- grid::circleGrob(r = grid::unit(diameter[1L] / 2, "mm"),
+    gp = grid::gpar(fill = fill, col = data$colour %or3d% NA, lwd = linewidth * ggplot2::.pt))
+  outline <- if (is.finite(linewidth[1L])) linewidth[1L] else 0
+  attr(grob, "width") <- attr(grob, "height") <- (diameter[1L] + outline) / 10
+  grob
 }
 
 identity_maps_3d <- function(scale) {
