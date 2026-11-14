@@ -268,7 +268,7 @@ test_that("an unbounded image draws the stand-in facets", {
   expect_s3_class(drawn$grob, "polygon")
 })
 
-test_that("viewer and export packets carry inscribed meshes of the quadrics", {
+test_that("export packets carry inscribed meshes of the quadrics", {
   linear <- matrix(c(0.2, 0.05, 0, 0, 0.1, 0.03, 0.02, 0, 0.15), 3L)
   packet <- quadric_packet(quadric_rows(c(1L, 3L), c(linear, linear), c(0.5, 0.5, 0.5, 0.2, 0.2, 0.2), radius_ratio = c(1, 0.5)))
   finite <- ggplot3d:::scene_finite_packet_3d(packet)

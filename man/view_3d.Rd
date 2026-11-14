@@ -68,7 +68,9 @@ moves), link_group (the group name, or NULL), selection settings and
 capabilities.
 Each panel holds its rectangle in the frame, scene and furniture
 (schema-1 geometry whose table columns are base64 little-endian arrays,
-with mapped materials and the alpha_mode sheet key of every face), axes, bounds, camera, framing, viewport, light,
+with mapped materials, the alpha_mode sheet key of every face, and
+quadric rows with their placement after camera pre and its inverse),
+axes, bounds, camera, framing, viewport, light,
 background, layers (the source rows, keys and tooltips of its
 primitives) and, with \code{path}, the sampled camera views. Geometry is
 transferred once; camera interaction and playback stay in the browser.
@@ -107,6 +109,10 @@ depth pass per sheet keeps only the nearest fragment of each sheet, so a
 sheet folding over itself does not darken while other sheets show
 through it. Sheets whose screen extents do not overlap share a pass;
 past 32 passes, the remaining sheets blend face by face.
+Spheres, cylinders and cones are ray cast (Sigg et al. 2006): each
+pixel's ray meets the exact surface, which writes its own depth and is
+lit at its exact normal; a translucent one enters the transparency once
+per side.
 Strokes and markers widen to their physical size
 in the vertex shader, and face lighting uses the same linear-light colour
 calculation as static output. Text uses plain browser text drawn over

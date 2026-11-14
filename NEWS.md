@@ -84,8 +84,17 @@
   exact depth and normals. `geom_sphere_3d()`, opaque `geom_tube_3d()` (a
   cylinder or cone per segment, mitred joints, spheres at sharp joints and
   round ends), streamtubes and the cone heads and tube shafts of
-  `geom_quiver_3d()` and `geom_cone_3d()` use them; the viewer, exporters and
-  shadows take an inscribed mesh.
+  `geom_quiver_3d()` and `geom_cone_3d()` use them; exporters and shadows
+  take an inscribed mesh.
+
+* `view_3d()` ray casts spheres, cylinders and cones (Sigg, Weyrich, Botsch
+  and Gross 2006; Toledo and Levy 2004): one screen rectangle per quadric, a
+  fragment shader that intersects each pixel's ray with the unit primitive
+  through the inverse placement, writes the exact depth and lights the exact
+  normal with the shading kernel. Translucent quadrics enter the weighted
+  blended transparency once per side, and cut quadrics show their far side.
+  Quadrics whose image is unbounded after camera `pre` keep the inscribed
+  mesh (#65).
 
 * The scene engine paints each side of a translucent quadric in one run
   wherever the occlusion edges allow: pieces of one quadric part seen from

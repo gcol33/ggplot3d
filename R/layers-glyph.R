@@ -121,9 +121,10 @@ register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = 
 #' Spheres with an edge `colour`, or drawn as wireframes, are icospheres that
 #' show their edges: an icosahedron subdivided `detail` times, 20 * 4^detail
 #' triangles. In curvilinear frames each sphere is placed at its mapped centre
-#' and keeps its shape. The interactive viewer and the exporters receive an
-#' inscribed mesh of every analytic sphere (`options(ggplot3d.quadric_segments)`
-#' points around the equator, 32 by default).
+#' and keeps its shape. The interactive viewer intersects each pixel's ray
+#' with every analytic sphere as well; the exporters receive an inscribed mesh
+#' of it (`options(ggplot3d.quadric_segments)` points around the equator, 32 by
+#' default).
 #'
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param radius.unit Unit of the `radius` aesthetic: `"data"` or `"mm"`.

@@ -4,8 +4,8 @@ utils::globalVariables(c("quadric_outline_cpp", "quadric_cast_cpp", "quadric_fra
 # into the panel box (Sigg, Weyrich, Botsch and Gross 2006). The engine orders
 # them through a refined polyhedral stand-in and returns its visible pieces as
 # fragments of kind 5; the vector backend draws the exact outline inside
-# them, the raster backend casts each sample's ray against the quadric, and
-# the viewer, exporters and shadows take an inscribed mesh.
+# them, the raster backend and the viewer cast each sample's ray against the
+# quadric, and exporters and shadows take an inscribed mesh.
 
 primitive_kinds_3d <- c("faces", "polylines", "markers", "text", "quadrics")
 
@@ -20,8 +20,8 @@ renumber_primitives_3d <- function(packet) {
   packet
 }
 
-# Points around a quadric's circles in the inscribed meshes of the viewer,
-# exporters, shadows and clipped quadrics.
+# Points around a quadric's circles in the inscribed meshes of exporters,
+# shadows, clipped quadrics and viewer quadrics whose image is unbounded.
 quadric_segments_3d <- function() {
   n <- getOption("ggplot3d.quadric_segments", 32L)
   scene_assert(is.numeric(n) && length(n) == 1L && is.finite(n) && n >= 3 && n == trunc(n),

@@ -58,7 +58,9 @@
 #'   capabilities.
 #'   Each panel holds its rectangle in the frame, scene and furniture
 #'   (schema-1 geometry whose table columns are base64 little-endian arrays,
-#'   with mapped materials and the alpha_mode sheet key of every face), axes, bounds, camera, framing, viewport, light,
+#'   with mapped materials, the alpha_mode sheet key of every face, and
+#'   quadric rows with their placement after camera pre and its inverse),
+#'   axes, bounds, camera, framing, viewport, light,
 #'   background, layers (the source rows, keys and tooltips of its
 #'   primitives) and, with `path`, the sampled camera views. Geometry is
 #'   transferred once; camera interaction and playback stay in the browser.
@@ -71,6 +73,10 @@
 #'   sheet folding over itself does not darken while other sheets show
 #'   through it. Sheets whose screen extents do not overlap share a pass;
 #'   past 32 passes, the remaining sheets blend face by face.
+#'   Spheres, cylinders and cones are ray cast (Sigg et al. 2006): each
+#'   pixel's ray meets the exact surface, which writes its own depth and is
+#'   lit at its exact normal; a translucent one enters the transparency once
+#'   per side.
 #'   Strokes and markers widen to their physical size
 #'   in the vertex shader, and face lighting uses the same linear-light colour
 #'   calculation as static output. Text uses plain browser text drawn over
@@ -159,7 +165,8 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
       group = if (is.null(shared)) NULL else shared$groupName()),
     capabilities = list(opaque_visibility = "depth-buffer",
       transparency = "weighted-blended", text = "plain-anchor", geometry_schema = 1L,
-      picking = "id-buffer", buffers = "interleaved-per-kind", markers = "instanced-disc-quads"))
+      picking = "id-buffer", buffers = "interleaved-per-kind", markers = "instanced-disc-quads",
+      quadrics = "ray-cast"))
   htmlwidgets::createWidget("ggplot3d_view", x, width = width, height = height,
     package = "ggplot3d", elementId = elementId,
     dependencies = if (is.null(shared)) NULL else crosstalk::crosstalkLibs(),
@@ -401,9 +408,22 @@ view_line_style_3d <- function(element) {
 }
 
 # The viewer has no homogeneous clipper: it receives finite vertices with the
-# camera pre already applied.
+# camera pre already applied. Quadrics with a bounded image are ray cast in
+# the browser and travel as quadric rows; the others become inscribed meshes.
 view_packet_3d <- function(packet, pre = diag(4)) {
+  cast <- view_quadrics_3d(packet$quadrics, pre)
+  quadrics <- NULL
+  if (length(cast$rows)) {
+    quadrics <- lapply(packet$quadrics[c("layer_id", "source_row", "style_id", "partition", "opacity", "kind",
+      "radius_ratio", "cap_0", "cap_1")], `[`, cast$rows)
+    packet <- subset_quadrics_3d(packet, setdiff(seq_along(packet$quadrics$kind), cast$rows))
+  }
   packet <- scene_finite_packet_3d(packet, pre)
+  if (!is.null(quadrics)) {
+    last <- max(0L, unlist(lapply(packet[primitive_kinds_3d], `[[`, "primitive_id")))
+    packet$quadrics <- c(list(primitive_id = last + seq_along(cast$rows)), quadrics,
+      list(to_box = as.double(cast$to_box), to_local = as.double(cast$to_local)))
+  }
   styles <- packet$styles
   metrics <- paint_metrics_3d(styles)
   materials <- lapply(seq_len(nrow(styles)), function(i) {
@@ -436,6 +456,25 @@ view_packet_3d <- function(packet, pre = diag(4)) {
   packet <- unclass(packet)
   packet$face_sheet <- view_column_3d(sheet)
   packet
+}
+
+# Quadric rows the viewer ray casts (Sigg, Weyrich, Botsch and Gross 2006):
+# those whose local bounding box lies at positive w after camera pre, so that
+# the image is bounded and a screen rectangle covers it. Per row the
+# placement composed with pre and its inverse, 16 column-major entries each.
+view_quadrics_3d <- function(q, pre) {
+  pre <- matrix(as.double(pre), 4L, 4L)
+  n <- length(q$kind)
+  to_box <- to_local <- matrix(0, 16L, n)
+  keep <- logical(n)
+  for (i in seq_len(n)) {
+    m <- pre %*% matrix(vapply(quadric_transform_columns, function(column) q[[column]][i], numeric(1)), 4L, 4L)
+    r <- max(1, if (q$kind[i] == 3L) q$radius_ratio[i] else 1)
+    corners <- cbind(as.matrix(expand.grid(c(-r, r), c(-r, r), c(if (q$kind[i] == 1L) -1 else 0, 1))), 1)
+    keep[i] <- all((m %*% t(corners))[4L, ] > 0)
+    if (keep[i]) { to_box[, i] <- m; to_local[, i] <- solve(m) }
+  }
+  list(rows = which(keep), to_box = to_box[, keep, drop = FALSE], to_local = to_local[, keep, drop = FALSE])
 }
 
 # Lights the viewer can show at once (the uniform arrays of its kernel).

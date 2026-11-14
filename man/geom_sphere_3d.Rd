@@ -54,9 +54,10 @@ spheres stay round whatever the box proportions. Rows without a radius get
 Spheres with an edge \code{colour}, or drawn as wireframes, are icospheres that
 show their edges: an icosahedron subdivided \code{detail} times, 20 * 4^detail
 triangles. In curvilinear frames each sphere is placed at its mapped centre
-and keeps its shape. The interactive viewer and the exporters receive an
-inscribed mesh of every analytic sphere (\code{options(ggplot3d.quadric_segments)}
-points around the equator, 32 by default).
+and keeps its shape. The interactive viewer intersects each pixel's ray
+with every analytic sphere as well; the exporters receive an inscribed mesh
+of it (\code{options(ggplot3d.quadric_segments)} points around the equator, 32 by
+default).
 }
 \examples{
 d <- data.frame(x = c(1, 2, 3, 2), y = c(1, 3, 1, 2), z = c(1, 1, 1, 2.5),
