@@ -8,8 +8,11 @@
 #include "quadric.h"
 
 namespace ggplot3d { namespace engine {
+// A stable partition cuts cyclic overlaps on planes chosen from the geometry
+// alone and refines quadric stand-ins for every viewing direction, so that
+// cut edges stay in place while the camera moves over fixed geometry.
 static inline CompiledScene compile(const ScenePacket& packet, const Projection& projection,
-                                   ResourceBudget& budget) {
+                                   ResourceBudget& budget, bool stable = false) {
   CompiledScene out;
   out.camera = projection.resolved;
   std::vector<Piece> pieces;
@@ -65,6 +68,14 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       for(auto& face:out) {
         emit(faces,face.row,Kind::face,std::move(face.polygon),face.clipped,face.normal);
         pieces.back().solid=solid_components[face.row];
+        if(stable) {
+          std::uint64_t key=0;
+          for(Index j=0;j<faces.count[face.row];++j) {
+            const Index v=packet.corners.vertex[faces.offset[face.row]+j];
+            for(double x:{packet.vertices.x[v],packet.vertices.y[v],packet.vertices.z[v],packet.vertices.w[v]}) key=mix_key(key,x);
+          }
+          pieces.back().key=key;
+        }
       }
       out.clear();
     });
@@ -80,7 +91,12 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
     const Point4 centre=transform_point(shape.to_box,quadric_centre(shape));
     const bool oriented=centre[3]>0;
     const Vec3 middle=oriented ? projection.model({centre[0]/centre[3],centre[1]/centre[3],centre[2]/centre[3]}):Vec3{0,0,0};
-    for(auto& facet:quadric_facets(shape,quadric_segments(shape,projection),true)) {
+    const int segments=stable ? quadric_orbit_segments(shape,projection) : quadric_segments(shape,projection);
+    std::uint64_t quadric_key=mix_key(mix_key(0,packet.quadrics.kind[row]),packet.quadrics.radius_ratio[row]);
+    for(double x:packet.quadrics.transform[row]) quadric_key=mix_key(quadric_key,x);
+    double facet_index=0;
+    for(auto& facet:quadric_facets(shape,segments,true)) {
+      const std::uint64_t facet_key=mix_key(quadric_key,facet_index++);
       Polygon polygon;
       for(const auto& x:facet.points) polygon.push_back(box_vertex(transform_point(shape.to_box,x)));
       bool clipped=false;
@@ -96,6 +112,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       const Vec3 view=projection.camera.perspective ? subtract(centroid,projection.resolved.eye):projection.resolved.ray;
       if(dot(normal,view)>=0 && !back) continue;
       emit(quadric_table,row,Kind::face,std::move(polygon),clipped,normal);
+      pieces.back().key=facet_key;
       if(!back && packet.quadrics.partition[row]==1)
         pieces.back().solid=static_cast<Index>(faces.count.size()+row);
     }
@@ -304,7 +321,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
   pieces.clear(); pieces.shrink_to_fit();
   PartitionStats stats;
   Index seam_groups = 0;
-  partitions[1] = order_scene(std::move(partitions[1]), packet, projection, stats, budget, true, &seam_groups);
+  partitions[1] = order_scene(std::move(partitions[1]), packet, projection, stats, budget, true, &seam_groups, stable);
 #ifdef GGPLOT3D_ENGINE_METRICS
   Rcpp::Rcout << "graph_metrics candidates=" << stats.pairs << " classifications="
               << stats.classifications << " splits=" << stats.splits << " nodes=" << stats.nodes

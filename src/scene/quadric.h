@@ -487,12 +487,19 @@ static inline double quadric_facet_error(const QuadricShape& s, int segments) {
 static constexpr int quadric_segment_steps[] = {8, 12, 16, 24, 32, 48, 64, 96, 128};
 
 // Fewest segments whose stand-in departs from the surface by less than half a
+// device pixel when a local unit measures `unit` millimetres on screen.
+static inline int quadric_fitting_segments(const QuadricShape& s, double unit, const Projection& p) {
+  const double tolerance = 12.7/p.viewport.dpi;
+  for (int n : quadric_segment_steps) if (quadric_facet_error(s, n)*unit <= tolerance) return n;
+  return quadric_segment_steps[sizeof(quadric_segment_steps)/sizeof(int)-1];
+}
+
+// Fewest segments whose stand-in departs from the surface by less than half a
 // device pixel on screen. A local unit is measured on screen at the centre,
 // and enlarged by the ratio of the centre's depth to the nearest corner's
 // under perspective.
 static inline int quadric_segments(const QuadricShape& s, const Projection& p) {
   const int finest = quadric_segment_steps[sizeof(quadric_segment_steps)/sizeof(int)-1];
-  const double tolerance = 12.7/p.viewport.dpi;
   std::array<double, 2> centre, xy;
   const Point4 c = quadric_centre(s);
   const Point4 box = transform_point(s.to_box, c);
@@ -512,8 +519,43 @@ static inline int quadric_segments(const QuadricShape& s, const Projection& p) {
     }
     unit *= depth/nearest;
   }
-  for (int n : quadric_segment_steps) if (quadric_facet_error(s, n)*unit <= tolerance) return n;
-  return finest;
+  return quadric_fitting_segments(s, unit, p);
+}
+
+// Segments that keep this tolerance from every viewing direction at the
+// camera's distance, zoom and viewport, so that the stand-in does not change
+// while the camera turns. A local unit counts at its full model length, which
+// bounds its screen length from any direction, and under perspective at the
+// nearest depth any corner of the bounding box can take.
+static inline int quadric_orbit_segments(const QuadricShape& s, const Projection& p) {
+  const int finest = quadric_segment_steps[sizeof(quadric_segment_steps)/sizeof(int)-1];
+  const Point4 c = quadric_centre(s);
+  const Point4 box = transform_point(s.to_box, c);
+  if (!(box[3] > 0)) return finest;
+  auto model = [&](const Point4& x) {return p.model({x[0]/x[3], x[1]/x[3], x[2]/x[3]});};
+  const Vec3 centre = model(box);
+  double unit = 0;
+  for (int k = 0; k < 3; ++k) for (double sign : {-1.0, 1.0}) {
+    Point4 x = c; x[k] += sign;
+    const Point4 y = transform_point(s.to_box, x);
+    if (!(y[3] > 0)) return finest;
+    const Vec3 d = subtract(model(y), centre);
+    unit = std::max(unit, std::sqrt(dot(d, d)));
+  }
+  double scale = 0.5*p.sy*p.viewport.height_mm;
+  if (p.camera.perspective) {
+    double reach = 0;
+    for (const auto& corner : quadric_corners(s)) {
+      const Point4 y = transform_point(s.to_box, corner);
+      if (!(y[3] > 0)) return finest;
+      const Vec3 d = subtract(model(y), p.target);
+      reach = std::max(reach, std::sqrt(dot(d, d)));
+    }
+    const double nearest = std::max(p.resolved.distance - reach, p.resolved.near);
+    if (!(nearest > 0)) return finest;
+    scale /= nearest;
+  }
+  return quadric_fitting_segments(s, unit*scale, p);
 }
 
 // Common primitive columns of the quadrics, so that their stand-in pieces

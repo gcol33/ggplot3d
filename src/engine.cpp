@@ -435,5 +435,13 @@ Rcpp::List scene_compile_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List vi
   require(device.width_mm > 0 && device.height_mm > 0 && device.dpi > 0,
           "viewport dimensions and dpi must be positive");
   const Projection projection(view, device);
-  return write_result(compile(scene, projection,budget), scene, device);
+  bool stable=false;
+  SEXP stable_attribute=Rf_getAttrib(viewport,Rf_install("engine_stable_partition"));
+  if(!Rf_isNull(stable_attribute)) {
+    require(TYPEOF(stable_attribute)==LGLSXP && Rf_xlength(stable_attribute)==1 &&
+            LOGICAL(stable_attribute)[0]!=NA_LOGICAL, "engine_stable_partition must be TRUE or FALSE");
+    stable=LOGICAL(stable_attribute)[0];
+  }
+  return write_result(compile(scene, projection,budget,stable), scene, device);
 }
+

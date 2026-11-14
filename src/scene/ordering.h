@@ -329,7 +329,7 @@ static inline bool single_cut_component(std::vector<Piece>& pieces,const ScenePa
 
 static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const ScenePacket& packet,const Projection& p,
                                             PartitionStats& stats,ResourceBudget& budget,bool group_solids=true,
-                                            Index* seam_groups=nullptr) {
+                                            Index* seam_groups=nullptr,bool stable=false) {
   Index local_groups=0;
   Index& groups=seam_groups ? *seam_groups : local_groups;
   if(group_solids) {
@@ -538,9 +538,11 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
         if(pieces[i].members.empty()) local.push_back(std::move(pieces[i]));
         else {compound=true;for(auto& member:pieces[i].members) local.push_back(std::move(member));}
       }
-      if(compound) local=order_scene(std::move(local),packet,p,stats,budget,false,&groups);
+      if(compound) local=order_scene(std::move(local),packet,p,stats,budget,false,&groups,stable);
       else {
-        if(!single_cut_component(local,packet,p,stats,budget)) local=partition_scene(std::move(local),p,stats,budget);
+        // A stable partition takes its cuts from the geometry alone.
+        if(stable || !single_cut_component(local,packet,p,stats,budget))
+          local=partition_scene(std::move(local),p,stats,budget,stable);
         for(auto& piece:local) piece.seam_group=++groups;
       }
       for(auto& piece:local) ordered.push_back(std::move(piece));

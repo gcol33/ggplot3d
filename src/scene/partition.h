@@ -1,6 +1,8 @@
 #pragma once
 #include "projection.h"
 #include "budget.h"
+#include <cstdint>
+#include <cstring>
 #include <map>
 
 namespace ggplot3d { namespace engine {
@@ -23,10 +25,23 @@ struct Piece {
   Index solid = -1;
   Index seam_group = 0;
   bool behind_halo = false;
+  // Hash of the source primitive's geometry, the order of stable cuts.
+  std::uint64_t key = 0;
   std::vector<Piece> members;
 };
 
 struct SplitPlane { Vec3 normal, origin; };
+
+// splitmix64 (Steele, Lea and Flood 2014) over the bits of a value sequence.
+static inline std::uint64_t mix_key(std::uint64_t key, double value) {
+  std::uint64_t bits;
+  if (value == 0) value = 0;
+  std::memcpy(&bits, &value, sizeof bits);
+  key += bits + 0x9E3779B97F4A7C15ull;
+  key = (key ^ (key >> 30)) * 0xBF58476D1CE4E5B9ull;
+  key = (key ^ (key >> 27)) * 0x94D049BB133111EBull;
+  return key ^ (key >> 31);
+}
 
 static inline void budget_split(const Piece& piece,ResourceBudget& budget) {
   budget.piece(piece.polygon.size()+piece.anchor.size()+piece.mask.size()+1);
@@ -185,9 +200,27 @@ static inline bool tie_less(const Piece& a, const Piece& b) {
     std::tie(y.role[b.row],y.layer_id[b.row],y.source_row[b.row],b.serial);
 }
 
+// The face whose plane cuts a set in a stable partition: the one first in a
+// fixed order of the primitives, which is a hash of their geometry. This is
+// Paterson and Yao's (1990) autopartition with a random order, drawn from the
+// geometry so that it is the same in every frame; the cuts of a set then
+// depend on its members alone, never on the camera, and a member that joins or
+// leaves changes only the cuts of the cells it reaches first.
+static inline const Piece* stable_splitter(const std::vector<Piece>& pieces) {
+  const Piece* first = nullptr;
+  for (const Piece& piece : pieces)
+    if (piece.kind == Kind::face && piece.members.empty() &&
+        (!first || std::tie(piece.key, piece.serial) < std::tie(first->key, first->serial))) first = &piece;
+  return first;
+}
+
+// Back-to-front order of pieces by recursive partition (Fuchs, Kedem and
+// Naylor 1980). A stable partition cuts on the planes of its stable splitters
+// while the set holds a face.
 static inline std::vector<Piece> partition_scene(std::vector<Piece> pieces,
                                                 const Projection& projection,
-                                                PartitionStats& stats, ResourceBudget& budget) {
+                                                PartitionStats& stats, ResourceBudget& budget,
+                                                bool stable = false) {
   struct Work { std::vector<Piece> pieces; bool terminal; };
   std::vector<Work> stack;
   stack.push_back({std::move(pieces), false});
@@ -201,7 +234,9 @@ static inline std::vector<Piece> partition_scene(std::vector<Piece> pieces,
       continue;
     }
     if (stats.nodes++ % 256 == 0) Rcpp::checkUserInterrupt();
-    SplitPlane plane = choose_plane(work.pieces, projection, stats);
+    const Piece* splitter = stable ? stable_splitter(work.pieces) : nullptr;
+    const SplitPlane plane = splitter ? supporting_plane(*splitter, projection) :
+      choose_plane(work.pieces, projection, stats);
     std::vector<Piece> positive, negative, coplanar;
     for (Piece& piece : work.pieces) {
       int c = classify(piece, plane, projection);

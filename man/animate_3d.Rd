@@ -26,6 +26,7 @@ animate_3d(
   trail = NULL,
   isometry = NULL,
   tour = NULL,
+  stable_partition = FALSE,
   ...
 )
 }
@@ -115,6 +116,18 @@ model) changes only the camera pre-transform. Limits remain fixed.}
 Grassmann-interpolated bases to stat_project_3d() layers with orthographic
 or finite perspective projection. Uses fixed limits across frames. Requires static
 input data, linear position scales, and no tween or trail.}
+
+\item{stable_partition}{Cut overlapping faces on planes fixed by the
+geometry, default FALSE. Faces that occlude one another in a cycle must be
+cut before they can be painted back to front. By default each frame
+chooses its cuts from the view, so cut edges move between frames. With
+TRUE, the cuts come from one partition of the plot's faces and quadric
+surfaces by their own planes (Fuchs, Kedem and Naylor 1980), built once
+and reused while the geometry stays the same; each frame only walks it
+back to front for its camera. The drawn image is the same as without it;
+only the position of the cut edges differs. Quadric stand-ins are then
+refined for every viewing direction at the camera's distance and zoom.
+Applies to scenes the vector and hybrid renderers draw.}
 
 \item{...}{Arguments to \code{\link[=export_3d]{export_3d()}} for glTF output: \code{furniture}, \code{lines},
 \code{points} and \code{size}.}

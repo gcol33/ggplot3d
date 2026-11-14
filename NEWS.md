@@ -26,6 +26,21 @@
   linear from R^4 to homogeneous coordinates, perspective geometry is clipped
   to the half-space in front of the eye with explicit points at infinity,
   and the scene engine clips it to the panel box before division (#20).
+
+
+* `animate_3d(stable_partition = TRUE)` keeps cut edges in place while the
+  camera moves over fixed geometry (#72). Faces that occlude one another in
+  a cycle are cut on the plane of the member that comes first in a fixed
+  order hashed from each primitive's geometry, Paterson and Yao's (1990)
+  autopartition with its random order drawn from the geometry instead of the
+  view; quadric stand-ins are refined for every viewing direction at the
+  camera's distance and zoom. The drawn image is the one a cold compile
+  draws; only the cut edges differ. On a 12-frame orbit in 30 degree steps
+  of 300 overlapping translucent triangles, 96.5% to 100% of the fragments
+  of one frame recur in the next, against 8% to 87% without it; that scene
+  has about 40% more fragments, while two intersecting surfaces keep the
+  fragment count of a cold compile.
+
 * Spheres, cylinders and cones are analytic primitives of the scene contract
   (Sigg, Weyrich, Botsch and Gross 2006): a unit primitive per row placed by an
   affine map, with flat or open end disks. The engine orders them through a

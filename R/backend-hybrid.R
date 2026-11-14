@@ -54,7 +54,8 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   scene_assert(all(partitions == 1L), "Rasterised layers of a hybrid panel need occlusion = \"depth\".")
   vector_packet <- device_text_metrics_3d(merge_scene_packets(c(list(furniture$packet), x$packets[!rasterised]), panel))
   vector_marker_limit_3d(vector_packet)
-  scene <- scene_compile(vector_packet, camera, viewport)
+  scene <- scene_compile(vector_packet, camera, viewport,
+                         stable_partition = isTRUE(x$panel_params$coord_params$stable_partition))
   result <- raster_scene_3d(raster_packet, camera, viewport, backend$antialias, light,
     buffers = TRUE, blend = backend$blend, traced = specs, edl = depth_cue_edl_3d(x$panel_params))
   occlusion <- raster_occlusion_3d(vector_packet, camera, viewport, result)

@@ -73,6 +73,17 @@
 #'   Grassmann-interpolated bases to stat_project_3d() layers with orthographic
 #'   or finite perspective projection. Uses fixed limits across frames. Requires static
 #'   input data, linear position scales, and no tween or trail.
+#' @param stable_partition Cut overlapping faces on planes fixed by the
+#'   geometry, default FALSE. Faces that occlude one another in a cycle must be
+#'   cut before they can be painted back to front. By default each frame
+#'   chooses its cuts from the view, so cut edges move between frames. With
+#'   TRUE, the cuts come from one partition of the plot's faces and quadric
+#'   surfaces by their own planes (Fuchs, Kedem and Naylor 1980), built once
+#'   and reused while the geometry stays the same; each frame only walks it
+#'   back to front for its camera. The drawn image is the same as without it;
+#'   only the position of the cut edges differs. Quadric stand-ins are then
+#'   refined for every viewing direction at the camera's distance and zoom.
+#'   Applies to scenes the vector and hybrid renderers draw.
 #' @return A ggplot3d_animation list with `file`, `frame_count`, `fps`, `camera`
 #'   (one row per frame with the time, the camera angles, zoom, projection,
 #'   field of view, distance (NA when automatic) and target, and the frame's
@@ -135,8 +146,11 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        renderer = c("raster", "vector"), roll = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
-                       path = NULL, workers = 1L, tween = NULL, trail = NULL, isometry = NULL, tour = NULL, ...) {
+                       path = NULL, workers = 1L, tween = NULL, trail = NULL, isometry = NULL, tour = NULL,
+                       stable_partition = FALSE, ...) {
   renderer <- match.arg(renderer)
+  scene_assert(is.logical(stable_partition) && length(stable_partition) == 1L && !is.na(stable_partition),
+    "stable_partition must be TRUE or FALSE")
   motion_dimensions_3d(width, height, dpi)
   coord <- motion_plot_coord_3d(plot)
   trail <- motion_trail_spec_3d(trail, time)
@@ -236,6 +250,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     cameras = cameras, base = coord$camera, backend = backend, frame = motion_frame_mode_3d(steps),
     device = output$device, per_file = output$kind != "pages", paths = paths, frames = frames,
     width = width, height = height, dpi = dpi, label_state = new.env(parent = emptyenv()),
+    stable_partition = stable_partition,
     export = if (output$kind == "scene") list(options = options, layer_names = export_layer_names_3d(plot)),
     progress = progress && is.null(workers$cluster) && workers$count == 1L)
   if (output$kind == "scene") {
@@ -338,13 +353,15 @@ motion_ratio_3d <- function(built, camera, backend) {
   }
 }
 
-motion_panel_grob_3d <- function(panel, camera, base, backend, frame, registry, label_state = NULL) {
+motion_panel_grob_3d <- function(panel, camera, base, backend, frame, registry, label_state = NULL,
+                                 stable_partition = FALSE) {
   params <- panel$panel_params
   params$camera <- motion_panel_camera_3d(camera, params$camera, base)
   params$coord_params$backend <- backend
   params$coord_params$frame <- frame
   params$coord_params$frame_registry <- registry
   params$coord_params$label_state <- label_state
+  params$coord_params$stable_partition <- stable_partition
   scene_panel_grob(panel$packets, params, panel$theme, panel$underlay, panel$overlay)
 }
 
@@ -359,7 +376,8 @@ motion_frame_grob_3d <- function(job, i) {
   motion_map_panels_3d(built, function(panel) {
     if (!is.null(trails)) panel$packets <- c(panel$packets, motion_trail_packets_3d(trails, panel$panel_params, job$trail))
     if (!is.null(job$isometries)) panel <- motion_isometry_panel_3d(panel, job$isometries[[i]])
-    motion_panel_grob_3d(panel, job$cameras[[i]], job$base, job$backend, job$frame, registry, job$label_state)
+    motion_panel_grob_3d(panel, job$cameras[[i]], job$base, job$backend, job$frame, registry, job$label_state,
+      job$stable_partition)
   })
 }
 

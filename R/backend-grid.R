@@ -63,7 +63,8 @@ makeContent.scene_panel_grob <- function(x) {
   } else {
     packet <- device_text_metrics_3d(merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id))
     vector_marker_limit_3d(packet)
-    scene <- scene_compile(packet, furniture$camera, furniture$viewport)
+    scene <- scene_compile(packet, furniture$camera, furniture$viewport,
+                           stable_partition = isTRUE(x$panel_params$coord_params$stable_partition))
     rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light)
   }
   fit <- furniture$overlay$fit
