@@ -1,4 +1,5 @@
-utils::globalVariables(c("geometry_delaunay_cpp", "geometry_delaunay3_cpp", "geometry_alpha_shape_cpp", "geometry_rbf_cpp"))
+utils::globalVariables(c("geometry_delaunay_cpp", "geometry_delaunay3_cpp", "geometry_alpha_shape_cpp", "geometry_rbf_cpp",
+  "geometry_point_normals_cpp", "geometry_poisson_cpp"))
 
 stats_continuous_3d <- function(scales, what) {
   if (any(vapply(scales[c("x", "y", "z")], function(s) !is.null(s) && s$is_discrete(), logical(1))))
@@ -34,36 +35,7 @@ StatAlphaShape3D <- ggplot2::ggproto("StatAlphaShape3D", StatGeometry3D,
 # neighbours, oriented consistently by propagation along a minimum spanning
 # tree of the neighbour graph weighted by 1 - |n_i . n_j| (Hoppe et al.
 # 1992); each tree starts at its highest point with an upward normal.
-point_normals_3d <- function(xyz, k) {
-  n <- nrow(xyz)
-  k <- min(k, n - 1L)
-  d2 <- as.matrix(stats::dist(xyz))^2
-  near <- t(apply(d2, 1L, function(r) order(r)[seq_len(k + 1L)]))
-  normal <- t(vapply(seq_len(n), function(i) {
-    p <- xyz[near[i, ], , drop = FALSE]
-    e <- eigen(stats::cov(p), symmetric = TRUE)
-    e$vectors[, 3L]
-  }, numeric(3)))
-  weight <- matrix(Inf, n, n)
-  edges <- cbind(rep(seq_len(n), each = k), as.vector(t(near[, -1L, drop = FALSE])))
-  w <- 1 - abs(rowSums(normal[edges[, 1L], , drop = FALSE] * normal[edges[, 2L], , drop = FALSE]))
-  weight[edges] <- w; weight[edges[, 2:1]] <- pmin(weight[edges[, 2:1]], w)
-  done <- logical(n); best <- rep(Inf, n); parent <- integer(n)
-  for (step in seq_len(n)) {
-    open <- which(!done)
-    if (all(is.infinite(best[open]))) {
-      v <- open[which.max(xyz[open, 3L])]
-      if (normal[v, 3L] < 0) normal[v, ] <- -normal[v, ]
-    } else {
-      v <- open[which.min(best[open])]
-      if (sum(normal[v, ] * normal[parent[v], ]) < 0) normal[v, ] <- -normal[v, ]
-    }
-    done[v] <- TRUE
-    closer <- !done & weight[v, ] < best
-    best[closer] <- weight[v, closer]; parent[closer] <- v
-  }
-  normal
-}
+point_normals_3d <- function(xyz, k) geometry_point_normals_cpp(xyz, as.integer(min(k, nrow(xyz) - 1L)))
 
 # Polyharmonic interpolant s(x) = sum_i w_i |x - c_i| + p0 + p . x through
 # the points (s = 0) and through off-surface points p_i +- e_i n_i (s = +-
@@ -97,28 +69,45 @@ StatImplicitFit3D <- ggplot2::ggproto("StatImplicitFit3D", StatGeometry3D,
   required_aes = c("x", "y", "z"),
   optional_aes = c("nx", "ny", "nz"),
   dropped_aes = c(".source", "value", "weight", "nx", "ny", "nz"),
-  compute_group = function(data, scales, method = "rbf", n = 32L, k = 10L, smooth = 0, extractor = "cubes", refine = 2L) {
+  compute_group = function(data, scales, method = "rbf", n = 32L, k = 10L, smooth = 0, depth = 8L, screening = 4,
+                           samples_per_node = 1.5, extractor = NULL, refine = 2L) {
     stats_continuous_3d(scales, "Implicit surface fits")
-    method <- match.arg(method, "rbf")
+    method <- match.arg(method, c("rbf", "poisson"))
     if (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 3 || k != trunc(k)) stop("k must be an integer of at least three.", call. = FALSE)
-    if (!is.numeric(smooth) || length(smooth) != 1L || !is.finite(smooth) || smooth < 0) stop("smooth must be a non-negative number.", call. = FALSE)
+    if (!is.numeric(refine) || length(refine) != 1L || !is.finite(refine) || refine < 0 || refine != trunc(refine))
+      stop("refine must be a non-negative integer.", call. = FALSE)
     xyz <- as.matrix(data[c("x", "y", "z")])
     keep <- stats::complete.cases(xyz) & !duplicated(xyz)
     xyz <- xyz[keep, , drop = FALSE]
     if (nrow(xyz) < 4L) stop("An implicit surface fit needs at least four distinct points.", call. = FALSE)
-    if (nrow(xyz) > 2000L) stop("The dense radial basis function solve takes at most 2000 points; thin the data first.", call. = FALSE)
+    if (method == "rbf") {
+      if (!is.numeric(smooth) || length(smooth) != 1L || !is.finite(smooth) || smooth < 0) stop("smooth must be a non-negative number.", call. = FALSE)
+      if (!(length(n) %in% c(1L, 3L)) || any(!is.finite(n) | n < 2 | n != trunc(n))) stop("n must contain integers of at least two, one per grid axis.", call. = FALSE)
+      if (nrow(xyz) > 2000L) stop("The dense radial basis function solve takes at most 2000 points; thin the data first or use method = \"poisson\".", call. = FALSE)
+    } else {
+      if (!is.numeric(depth) || length(depth) != 1L || !is.finite(depth) || depth < 1 || depth > 10 || depth != trunc(depth))
+        stop("depth must be an integer between 1 and 10.", call. = FALSE)
+      if (!is.numeric(screening) || length(screening) != 1L || !is.finite(screening) || screening < 0) stop("screening must be a non-negative number.", call. = FALSE)
+      if (!is.numeric(samples_per_node) || length(samples_per_node) != 1L || !is.finite(samples_per_node) || samples_per_node <= 0)
+        stop("samples_per_node must be a positive number.", call. = FALSE)
+    }
     normal <- if (all(c("nx", "ny", "nz") %in% names(data))) {
       given <- as.matrix(data[keep, c("nx", "ny", "nz")])
       given / sqrt(rowSums(given^2))
     } else point_normals_3d(xyz, as.integer(k))
     if (any(!is.finite(normal))) stop("Point normals must be finite and nonzero.", call. = FALSE)
-    if (!(length(n) %in% c(1L, 3L)) || any(!is.finite(n) | n < 2 | n != trunc(n))) stop("n must contain integers of at least two, one per grid axis.", call. = FALSE)
+    if (method == "poisson") {
+      extractor <- if (is.null(extractor)) "nets" else extractor
+      if (!extractor %in% c("dual", "nets")) stop('Poisson fits extract with extractor = "dual" or "nets".', call. = FALSE)
+      out <- geometry_poisson_cpp(xyz, normal, as.integer(depth), screening, samples_per_node, extractor, as.integer(refine))
+      return(isosurface_finish_3d(as.data.frame(out), NULL, NULL, NULL, 0L))
+    }
     fun <- rbf_fit_3d(xyz, normal, smooth)
     span <- apply(xyz, 2L, function(a) diff(range(a)))
     pad <- 0.1 * span + 0.05 * sqrt(sum(span^2))
     axes <- lapply(1:3, function(a) seq(min(xyz[, a]) - pad[a], max(xyz[, a]) + pad[a], length.out = rep_len(n, 3L)[a]))
     grid <- stats::setNames(expand.grid(axes), c("x", "y", "z"))
     grid$value <- fun(grid$x, grid$y, grid$z)
-    stats_field_3d(grid, 0, FALSE, extractor, fun, list(), as.integer(refine))
+    stats_field_3d(grid, 0, FALSE, if (is.null(extractor)) "cubes" else extractor, fun, list(), as.integer(refine))
   }
 )

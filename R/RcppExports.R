@@ -141,6 +141,14 @@ geometry_rbf_cpp <- function(centres, weights, poly, points) {
     .Call(`_ggplot3d_geometry_rbf_cpp`, centres, weights, poly, points)
 }
 
+geometry_point_normals_cpp <- function(xyz, k) {
+    .Call(`_ggplot3d_geometry_point_normals_cpp`, xyz, k)
+}
+
+geometry_poisson_cpp <- function(xyz, normal, depth, screening, samples_per_node, method, refine) {
+    .Call(`_ggplot3d_geometry_poisson_cpp`, xyz, normal, depth, screening, samples_per_node, method, refine)
+}
+
 repel_labels_cpp <- function(anchors, radius, owner, start, half, bounds, force, force_pull, max_iter, max_time, max_overlaps, direction, seed, jitter) {
     .Call(`_ggplot3d_repel_labels_cpp`, anchors, radius, owner, start, half, bounds, force, force_pull, max_iter, max_time, max_overlaps, direction, seed, jitter)
 }

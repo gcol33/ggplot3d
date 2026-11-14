@@ -119,7 +119,93 @@ test_that("radial basis function fits reconstruct closed surfaces from points", 
   expect_true(reconstruct_topology(given)$oriented)
   expect_lt(max(error(given)), 0.02)
   expect_warning(ggplot2::ggplot_build(ggplot2::ggplot(ell, ggplot2::aes(x, y, z = z)) + stat_implicit_fit_3d(k = 1) + coord_3d()), "k must")
-  expect_error(stat_implicit_fit_3d(method = "poisson"), "should be")
+  expect_error(stat_implicit_fit_3d(method = "spline"), "should be")
   big <- data.frame(x = runif(2001), y = runif(2001), z = runif(2001))
   expect_warning(ggplot2::ggplot_build(ggplot2::ggplot(big, ggplot2::aes(x, y, z = z)) + stat_implicit_fit_3d() + coord_3d()), "2000")
+})
+
+test_that("native normal estimation orients normals outwards on closed surfaces", {
+  set.seed(8)
+  s <- matrix(rnorm(3000), ncol = 3); s <- s / sqrt(rowSums(s^2))
+  n <- ggplot3d:::point_normals_3d(s, 10L)
+  expect_equal(sqrt(rowSums(n^2)), rep(1, nrow(s)), tolerance = 1e-12)
+  expect_gt(min(rowSums(n * s)), 0.98)
+  u <- runif(2000, 0, 2 * pi); v <- runif(2000, 0, 2 * pi)
+  t <- cbind((1 + 0.4 * cos(v)) * cos(u), (1 + 0.4 * cos(v)) * sin(u), 0.4 * sin(v))
+  n <- ggplot3d:::point_normals_3d(t, 10L)
+  expect_true(all(rowSums(n * cbind(cos(v) * cos(u), cos(v) * sin(u), sin(v))) > 0.9))
+})
+
+poisson_shape <- function(n, sd, seed, torus = FALSE) {
+  set.seed(seed)
+  if (torus) {
+    u <- runif(n, 0, 2 * pi); v <- runif(n, 0, 2 * pi)
+    p <- cbind((1 + 0.4 * cos(v)) * cos(u), (1 + 0.4 * cos(v)) * sin(u), 0.4 * sin(v))
+  } else {
+    p <- matrix(rnorm(3 * n), ncol = 3); p <- p / sqrt(rowSums(p^2))
+  }
+  p <- p + rnorm(3 * n, sd = sd)
+  data.frame(x = p[, 1], y = p[, 2], z = p[, 3])
+}
+sphere_error <- function(b) abs(sqrt(b$x^2 + b$y^2 + b$z^2) - 1)
+torus_error <- function(b) abs(sqrt((sqrt(b$x^2 + b$y^2) - 1)^2 + b$z^2) - 0.4)
+fit_points <- function(d, ...) ggplot2::ggplot_build(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + stat_implicit_fit_3d(...) + coord_3d())$data[[1L]]
+
+test_that("screened Poisson fits reconstruct closed, outward surfaces of noisy spheres and tori", {
+  ball <- poisson_shape(4000, 0.003, 3)
+  fit <- fit_points(ball, method = "poisson", depth = 6)
+  m <- reconstruct_topology(fit)
+  expect_true(m$closed && m$oriented); expect_equal(m$chi, 2)
+  expect_lt(max(sphere_error(fit)), 0.015)
+  expect_lt(mean(sphere_error(fit)), 0.003)
+  expect_gt(signed_volume(fit), 0)
+  expect_equal(mean(fit$nx * fit$x + fit$ny * fit$y + fit$nz * fit$z > 0), 1)
+
+  ring <- poisson_shape(5000, 0.003, 5, torus = TRUE)
+  fit <- fit_points(ring, method = "poisson", depth = 6)
+  m <- reconstruct_topology(fit)
+  expect_true(m$closed && m$oriented); expect_equal(m$chi, 0)
+  expect_lt(max(torus_error(fit)), 0.025)
+  expect_lt(mean(torus_error(fit)), 0.003)
+  r <- sqrt(fit$x^2 + fit$y^2)
+  expect_equal(mean(fit$nx * (fit$x - fit$x / r) + fit$ny * (fit$y - fit$y / r) + fit$nz * fit$z > 0), 1)
+
+  # Screening pulls the surface onto the points: the unscreened fit
+  # (Kazhdan, Bolitho and Hoppe 2006) of the same clean points is further off.
+  clean <- poisson_shape(5000, 0, 5, torus = TRUE)
+  screened <- mean(torus_error(fit_points(clean, method = "poisson", depth = 6)))
+  plain <- fit_points(clean, method = "poisson", depth = 6, screening = 0)
+  expect_true(reconstruct_topology(plain)$closed)
+  expect_lt(screened, 0.7 * mean(torus_error(plain)))
+})
+
+test_that("screened Poisson and radial basis function fits agree at equal point counts", {
+  for (torus in c(FALSE, TRUE)) {
+    d <- poisson_shape(1000, 0.005, 11, torus)
+    error <- if (torus) torus_error else sphere_error
+    rbf <- fit_points(d, n = 32)
+    poisson <- fit_points(d, method = "poisson", depth = 6)
+    expect_true(reconstruct_topology(poisson)$closed)
+    expect_lt(mean(error(poisson)), 1.25 * mean(error(rbf)))
+    expect_lt(max(error(poisson)), 3 * max(error(rbf)))
+  }
+})
+
+test_that("screened Poisson fits take normals from aesthetics and validate their parameters", {
+  d <- poisson_shape(3000, 0, 13)
+  d[c("nx", "ny", "nz")] <- d[c("x", "y", "z")]
+  given <- ggplot2::ggplot_build(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, nx = nx, ny = ny, nz = nz)) +
+    stat_implicit_fit_3d(method = "poisson", depth = 6, extractor = "dual") + coord_3d())$data[[1L]]
+  expect_true(reconstruct_topology(given)$closed)
+  expect_lt(mean(sphere_error(given)), 0.004)
+  flipped <- d; flipped[c("nx", "ny", "nz")] <- -d[c("x", "y", "z")]
+  inward <- ggplot2::ggplot_build(ggplot2::ggplot(flipped, ggplot2::aes(x, y, z = z, nx = nx, ny = ny, nz = nz)) +
+    stat_implicit_fit_3d(method = "poisson", depth = 6) + coord_3d())$data[[1L]]
+  expect_lt(signed_volume(inward), 0)
+  build <- function(...) ggplot2::ggplot_build(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+    stat_implicit_fit_3d(method = "poisson", ...) + coord_3d())
+  expect_warning(build(depth = 11), "depth")
+  expect_warning(build(screening = -1), "screening")
+  expect_warning(build(samples_per_node = 0), "samples_per_node")
+  expect_warning(build(extractor = "cubes"), "dual")
 })

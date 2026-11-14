@@ -490,6 +490,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_point_normals_cpp
+Rcpp::NumericMatrix geometry_point_normals_cpp(Rcpp::NumericMatrix xyz, int k);
+RcppExport SEXP _ggplot3d_geometry_point_normals_cpp(SEXP xyzSEXP, SEXP kSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_point_normals_cpp(xyz, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geometry_poisson_cpp
+Rcpp::DataFrame geometry_poisson_cpp(Rcpp::NumericMatrix xyz, Rcpp::NumericMatrix normal, int depth, double screening, double samples_per_node, std::string method, int refine);
+RcppExport SEXP _ggplot3d_geometry_poisson_cpp(SEXP xyzSEXP, SEXP normalSEXP, SEXP depthSEXP, SEXP screeningSEXP, SEXP samples_per_nodeSEXP, SEXP methodSEXP, SEXP refineSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type normal(normalSEXP);
+    Rcpp::traits::input_parameter< int >::type depth(depthSEXP);
+    Rcpp::traits::input_parameter< double >::type screening(screeningSEXP);
+    Rcpp::traits::input_parameter< double >::type samples_per_node(samples_per_nodeSEXP);
+    Rcpp::traits::input_parameter< std::string >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< int >::type refine(refineSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_poisson_cpp(xyz, normal, depth, screening, samples_per_node, method, refine));
+    return rcpp_result_gen;
+END_RCPP
+}
 // repel_labels_cpp
 Rcpp::List repel_labels_cpp(Rcpp::NumericMatrix anchors, Rcpp::NumericVector radius, Rcpp::IntegerVector owner, Rcpp::NumericMatrix start, Rcpp::NumericMatrix half, Rcpp::NumericVector bounds, double force, double force_pull, int max_iter, double max_time, int max_overlaps, int direction, double seed, bool jitter);
 RcppExport SEXP _ggplot3d_repel_labels_cpp(SEXP anchorsSEXP, SEXP radiusSEXP, SEXP ownerSEXP, SEXP startSEXP, SEXP halfSEXP, SEXP boundsSEXP, SEXP forceSEXP, SEXP force_pullSEXP, SEXP max_iterSEXP, SEXP max_timeSEXP, SEXP max_overlapsSEXP, SEXP directionSEXP, SEXP seedSEXP, SEXP jitterSEXP) {
@@ -596,6 +623,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_delaunay3_cpp", (DL_FUNC) &_ggplot3d_geometry_delaunay3_cpp, 1},
     {"_ggplot3d_geometry_alpha_shape_cpp", (DL_FUNC) &_ggplot3d_geometry_alpha_shape_cpp, 2},
     {"_ggplot3d_geometry_rbf_cpp", (DL_FUNC) &_ggplot3d_geometry_rbf_cpp, 4},
+    {"_ggplot3d_geometry_point_normals_cpp", (DL_FUNC) &_ggplot3d_geometry_point_normals_cpp, 2},
+    {"_ggplot3d_geometry_poisson_cpp", (DL_FUNC) &_ggplot3d_geometry_poisson_cpp, 7},
     {"_ggplot3d_repel_labels_cpp", (DL_FUNC) &_ggplot3d_repel_labels_cpp, 14},
     {"_ggplot3d_streamlines_cpp", (DL_FUNC) &_ggplot3d_streamlines_cpp, 12},
     {"_ggplot3d_sweep_frames_cpp", (DL_FUNC) &_ggplot3d_sweep_frames_cpp, 3},

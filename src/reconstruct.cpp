@@ -1,4 +1,6 @@
 #include "geometry/alpha.h"
+#include "geometry/normals.h"
+#include "geometry/poisson.h"
 using namespace ggplot3d_geometry;
 
 namespace {
@@ -71,5 +73,42 @@ Rcpp::NumericVector geometry_rbf_cpp(Rcpp::NumericMatrix centres,Rcpp::NumericVe
     }
     out[j]=s;
   }
+  return out;
+}
+
+// Unit normals of the rows of an n x 3 matrix from their k nearest
+// neighbours, consistently oriented (outwards on a closed surface).
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericMatrix geometry_point_normals_cpp(Rcpp::NumericMatrix xyz,int k) {
+  if(xyz.ncol()!=3||xyz.nrow()<2) Rcpp::stop("Normal estimation needs at least two points in three columns.");
+  if(k<1) Rcpp::stop("k must be positive.");
+  std::vector<V> n=normals::estimate(rows(xyz),k);
+  Rcpp::NumericMatrix out(n.size(),3);
+  for(size_t i=0;i<n.size();++i) for(int a=0;a<3;++a) out(i,a)=n[i][a];
+  return out;
+}
+
+// Screened Poisson surface of oriented points (rows of xyz with unit normals
+// in the rows of normal), extracted by octree dual contouring ("dual") or
+// surface nets ("nets") with `refine` regula falsi steps per crossing. The
+// iso-value, the nodes and conjugate gradient iterations per depth, and the
+// seconds spent on the octree, right-hand sides, solve and extraction are
+// returned as attributes.
+// [[Rcpp::export(rng = false)]]
+Rcpp::DataFrame geometry_poisson_cpp(Rcpp::NumericMatrix xyz,Rcpp::NumericMatrix normal,int depth,double screening,
+                                     double samples_per_node,std::string method,int refine) {
+  if(xyz.ncol()!=3||normal.ncol()!=3||normal.nrow()!=xyz.nrow()||xyz.nrow()<1) Rcpp::stop("Invalid Poisson reconstruction input.");
+  if(depth<1||depth>10) Rcpp::stop("depth must lie between 1 and 10.");
+  if(method!="dual"&&method!="nets") Rcpp::stop("Poisson reconstruction extracts with the \"dual\" or \"nets\" method.");
+  poisson::Options opt; opt.depth=depth; opt.screening=screening; opt.samples_per_node=samples_per_node;
+  poisson::Fit f=poisson::fit(rows(xyz),rows(normal),opt);
+  auto clock=std::chrono::steady_clock::now();
+  Mesh mesh=method=="dual"?poisson::extract<true>(f,refine):poisson::extract<false>(f,refine);
+  f.seconds.push_back(poisson::seconds_since(clock));
+  Rcpp::DataFrame out=mesh.output();
+  out.attr("iso")=f.iso;
+  out.attr("nodes")=Rcpp::wrap(f.nodes);
+  out.attr("iterations")=Rcpp::wrap(f.iterations);
+  out.attr("seconds")=Rcpp::wrap(f.seconds);
   return out;
 }

@@ -14,7 +14,10 @@ stat_implicit_fit_3d(
   n = 32L,
   k = 10L,
   smooth = 0,
-  extractor = "cubes",
+  depth = 8L,
+  screening = 4,
+  samples_per_node = 1.5,
+  extractor = NULL,
   refine = 2L,
   na.rm = FALSE,
   show.legend = NA,
@@ -26,44 +29,85 @@ stat_implicit_fit_3d(
 
 \item{geom}{Geom prototype for keyed triangle corners.}
 
-\item{method}{Fitting method; \code{"rbf"}.}
+\item{method}{Fitting method, \code{"rbf"} or \code{"poisson"}.}
 
-\item{n}{Grid resolution for the extraction, scalar or three integers.}
+\item{n}{Grid resolution for the \code{"rbf"} extraction, scalar or three
+integers.}
 
-\item{k}{Number of neighbours for normal estimation.}
+\item{k}{Number of neighbours for normal estimation and, for
+\code{"poisson"}, for the area per point.}
 
-\item{smooth}{Value added to the diagonal of the interpolation matrix;
-positive values trade interpolation for smoothness.}
+\item{smooth}{Value added to the diagonal of the \code{"rbf"} interpolation
+matrix; positive values trade interpolation for smoothness.}
+
+\item{depth}{Maximum octree depth of the \code{"poisson"} fit, from 1 to 10;
+the finest cells are at least 1.1 / 2^depth of the largest extent of
+the points.}
+
+\item{screening}{Weight of the point values against the normal field in
+the \code{"poisson"} fit (PoissonRecon's point weight); 0 gives unscreened
+Poisson reconstruction.}
+
+\item{samples_per_node}{Number of points an octree cell should meet at
+the depth where a point is splatted in the \code{"poisson"} fit.}
 
 \item{extractor}{Isosurface extraction method, as \code{method} in
-\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()}}.}
+\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()}}; \code{NULL} uses \code{"cubes"} for \code{"rbf"} and \code{"nets"}
+for \code{"poisson"}, which takes \code{"nets"} or \code{"dual"}.}
 
 \item{refine}{Number of regula falsi steps per edge vertex.}
 }
 \description{
 Fits a function s(x) whose zero set passes through the points and draws
-that level surface. \code{method = "rbf"} is the polyharmonic radial basis
-function fit of Carr et al. (2001): s(x) = sum_i w_i |x - c_i| + p(x)
-with a linear polynomial p, the biharmonic spline in three dimensions,
-interpolating s = 0 at every point and s = +e and -e at two off-surface
-points moved by e along the point's normal outwards and inwards. e starts
-at 1 \% of the bounding box diagonal and is halved for a point until that
-point is the data point nearest to both of its off-surface points. The
-(3n + 4)-square system is solved densely, so at most 2000 points are taken.
+that level surface. Surface triangles face increasing s, outwards.
 }
 \details{
+\code{method = "rbf"} is the polyharmonic radial basis function fit of Carr et
+al. (2001): s(x) = sum_i w_i |x - c_i| + p(x) with a linear polynomial p,
+the biharmonic spline in three dimensions, interpolating s = 0 at every
+point and s = +e and -e at two off-surface points moved by e along the
+point's normal outwards and inwards. e starts at 1 \% of the bounding box
+diagonal and is halved for a point until that point is the data point
+nearest to both of its off-surface points. The (3n + 4)-square system is
+solved densely, so at most 2000 points are taken. s is sampled on an
+\code{n}-point grid over the bounding box of the points, enlarged on each side
+by 10 \% of its extent plus 5 \% of its diagonal, and its zero set is
+extracted as in stat_isofunction_3d with \code{extractor} as the extraction
+method, \code{refine} regula falsi steps per edge vertex and vertex normals
+from s.
+
+\code{method = "poisson"} is screened Poisson surface reconstruction (Kazhdan
+and Hoppe 2013), for large point sets. Each point's surface area is
+estimated from the disc reaching its \code{k}-th nearest neighbour, and its
+normal is splatted, as a kernel of that area, at the octree depth where a
+cell meets about \code{samples_per_node} points (interpolated between the two
+nearest depths). The octree, of maximum depth \code{depth}, spans a cube 1.1
+times the largest extent of the points, enlarged where needed so that it
+reaches two splat cells beyond every point. The octree is complete to depth 5 and conforming, so every node sees the
+functions of the coarser nodes around it. The indicator function chi
+is a combination of quadratic B-splines, one per octree node at every
+depth, reflected at the cube faces (Neumann boundary), and minimises
+the squared distance of its gradient to the splatted normal field plus
+\code{screening} times the mean squared value of chi at the points, scaled
+by the surface area; the screening of depth d is weighted by 2^d. The
+system is solved by one cascadic pass from the root down, each depth by
+conjugate gradients with the coarser solution fixed (Kazhdan and Hoppe
+2013, algorithm 2). The surface is the level of chi at its mean over the
+points, extracted on the leaves of the octree by surface nets
+(\code{extractor = "nets"}, the default for this method, which placed vertices
+closer to smooth test surfaces) or dual contouring (\code{"dual"}), with
+\code{refine} regula falsi steps per crossing and normals from the gradient
+of chi. \code{screening = 0} gives the unscreened reconstruction of Kazhdan,
+Bolitho and Hoppe (2006). The parameters follow PoissonRecon: \code{depth},
+\code{screening} (\code{--pointWeight}) and \code{samples_per_node}
+(\code{--samplesPerNode}); larger \code{samples_per_node} smooths noisy points.
+
 Normals come from the \code{nx}, \code{ny} and \code{nz} aesthetics when all three are
 mapped. Otherwise each point's normal is the least principal axis of its
 \code{k} nearest neighbours, and normals are oriented consistently by
 propagation along a minimum spanning tree of the neighbour graph weighted
 by 1 - |n_i . n_j|, starting at the highest point with an upward normal
 (Hoppe et al. 1992); a closed surface then gets outward normals.
-
-s is sampled on an \code{n}-point grid over the bounding box of the points,
-enlarged on each side by 10 \% of its extent plus 5 \% of its diagonal, and
-its zero set is extracted as in stat_isofunction_3d with \code{extractor} as
-the extraction method, \code{refine} regula falsi steps per edge vertex and
-vertex normals from s. Surface triangles face increasing s, outwards.
 }
 \examples{
 set.seed(2)
@@ -72,6 +116,13 @@ p <- p / sqrt(rowSums(p^2))
 d <- data.frame(x = p[, 1], y = p[, 2], z = 0.6 * p[, 3])
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   stat_implicit_fit_3d(n = 20, fill = "steelblue") + coord_3d()
+
+# Screened Poisson reconstruction of a noisy torus from 5000 points
+u <- runif(5000, 0, 2 * pi); v <- runif(5000, 0, 2 * pi)
+torus <- data.frame(x = (1 + 0.4 * cos(v)) * cos(u), y = (1 + 0.4 * cos(v)) * sin(u),
+                    z = 0.4 * sin(v) + rnorm(5000, sd = 0.005))
+ggplot2::ggplot(torus, ggplot2::aes(x, y, z = z)) +
+  stat_implicit_fit_3d(method = "poisson", depth = 6, fill = "steelblue") + coord_3d()
 }
 \references{
 Carr, Beatson, Cherrie, Mitchell, Fright, McCallum and Evans
@@ -81,4 +132,10 @@ basis functions. SIGGRAPH 2001, 67-76. \doi{10.1145/383259.383266}
 Hoppe, DeRose, Duchamp, McDonald and Stuetzle (1992). Surface
 reconstruction from unorganized points. SIGGRAPH 1992, 71-78.
 \doi{10.1145/133994.134011}
+
+Kazhdan, Bolitho and Hoppe (2006). Poisson surface reconstruction.
+Symposium on Geometry Processing 2006, 61-70.
+
+Kazhdan and Hoppe (2013). Screened Poisson surface reconstruction. ACM
+Transactions on Graphics 32, 29. \doi{10.1145/2487228.2487237}
 }
