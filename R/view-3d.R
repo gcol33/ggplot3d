@@ -63,9 +63,10 @@
 #'   primitives) and, with `path`, the sampled camera views. Geometry is
 #'   transferred once; camera interaction and playback stay in the browser.
 #' @details Requires htmlwidgets and a browser with WebGL 2. Opaque geometry
-#'   uses a depth buffer. Transparent primitives are sorted back to front by
-#'   centre depth; crossing transparent surfaces can differ from the exact
-#'   static vector backend. Strokes and markers widen to their physical size
+#'   uses a depth buffer. Transparent geometry uses
+#'   weighted blended order-independent transparency in linear light, an
+#'   approximation requiring WebGL 2's `EXT_color_buffer_float` extension.
+#'   Strokes and markers widen to their physical size
 #'   in the vertex shader, and face lighting uses the same linear-light colour
 #'   calculation as static output. Text uses plain browser text, with
 #'   whole-anchor visibility for scene labels. Furniture and its labels rotate
@@ -152,8 +153,8 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
     selection = list(mode = selection, dim = 0.2,
       group = if (is.null(shared)) NULL else shared$groupName()),
     capabilities = list(opaque_visibility = "depth-buffer",
-      transparency = "primitive-centroid", text = "plain-anchor", geometry_schema = 1L,
-      picking = "id-buffer", buffers = "interleaved-per-kind"))
+      transparency = "weighted-blended", text = "plain-anchor", geometry_schema = 1L,
+      picking = "id-buffer", buffers = "interleaved-per-kind", markers = "instanced-disc-quads"))
   htmlwidgets::createWidget("ggplot3d_view", x, width = width, height = height,
     package = "ggplot3d", elementId = elementId,
     dependencies = if (is.null(shared)) NULL else crosstalk::crosstalkLibs(),

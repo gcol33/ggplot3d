@@ -11,7 +11,9 @@
   // Viewers in one link group share every orbit, zoom and reset: angle
   // changes add and zoom factors multiply, so each keeps its offset.
   const linkGroups = new Map();
-  const FACE = 0, STROKE = 1, MARKER = 2, TEXT = 3, KINDS = [FACE, STROKE, MARKER, TEXT];
+  const FACE = 0, STROKE = 1, MARKER = 2, TEXT = 3, DISC = 4, KINDS = [FACE, STROKE, MARKER, TEXT, DISC];
+  const DRAW_KINDS = [FACE, STROKE, MARKER, DISC];
+  const INSTANCED = new Set([DISC]);
 
   // Table columns arrive as base64 little-endian typed arrays.
   function column(c) {
@@ -67,10 +69,14 @@
       return vec4(uOrigin+(xy+0.5)*uInner, z, w);
     }
     vec4 clipPosition(vec2 px, float z, float w) { return vec4((2.0*px/uSize-1.0)*w, z*w, w); }`;
+  const COLOUR_SPACE = `
+    vec3 toLinear(vec3 c) { return mix(c/12.92, pow((c+0.055)/1.055, vec3(2.4)), step(vec3(0.04045), c)); }
+    vec3 toSrgb(vec3 l) { return mix(12.92*l, 1.055*pow(l, vec3(1.0/2.4))-0.055, step(vec3(0.0031308), l)); }`;
   const FRAGMENT = `
-    uniform float uClipData;
+    uniform float uClipData; uniform int uOitPass;
     in vec3 vModel; in vec4 vColour; flat in uint vId; flat in float vClip;
     out vec4 outColour;
+    ${COLOUR_SPACE}
     void clipData() {
       if (uClipData > 0.5 && vClip > 0.5 && (any(lessThan(vModel, vec3(0.0))) || any(greaterThan(vModel, vec3(1.0))))) discard;
     }
@@ -79,31 +85,37 @@
       outColour = vec4(float(vId & 255u), float((vId >> 8) & 255u), float((vId >> 16) & 255u), float((vId >> 24) & 255u))/255.0;
     #else
       if (c.a <= 0.0) discard;
-      outColour = c;
+      if (uOitPass == 1) {
+        float weight = clamp(pow(c.a+0.01, 3.0)*1000.0*pow(1.0-gl_FragCoord.z*0.9, 3.0), 0.01, 30.0);
+        outColour = vec4(toLinear(c.rgb)*c.a, c.a)*weight;
+      } else if (uOitPass == 2) outColour = vec4(c.a);
+      else outColour = c;
     #endif
     }`;
   const VARYINGS = 'out vec3 vModel; out vec4 vColour; flat out uint vId; flat out float vClip;';
 
   // Vertex layouts: one interleaved buffer per kind. A per-vertex state
   // stream (opacity factor of selection dimming) and, for strokes, the dash
-  // phase at each segment start follow as separate streams.
+  // phase at each segment start follow as separate streams. Discs carry
+  // their selection state inside the instance record.
   const LAYOUTS = {
     [FACE]: [['aPos', 3, 'f32'], ['aNormal', 3, 'f32'], ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
     [STROKE]: [['aA', 3, 'f32'], ['aB', 3, 'f32'], ['aCorner', 4, 'f32'], ['aWidth', 1, 'f32'],
       ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
     [MARKER]: [['aPos', 3, 'f32'], ['aOffset', 2, 'f32'], ['aLocal', 2, 'f32'], ['aShape', 3, 'f32'],
       ['aColour', 4, 'u8n'], ['aOutline', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
+    [DISC]: [['aPos', 3, 'f32'], ['aAngle', 1, 'f32'], ['aShape', 3, 'f32'],
+      ['aColour', 4, 'u8n'], ['aOutline', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'], ['aState', 1, 'f32']],
     [TEXT]: [['aPos', 3, 'f32'], ['aCorner', 2, 'f32'], ['aBox', 4, 'f32'], ['aAngle', 1, 'f32'], ['aId', 1, 'u32']]
   };
-  const STREAMS = {[FACE]: ['aState'], [STROKE]: ['aState', 'aDashStart'], [MARKER]: ['aState'], [TEXT]: ['aState']};
+  const STREAMS = {[FACE]: ['aState'], [STROKE]: ['aState', 'aDashStart'], [MARKER]: ['aState'], [TEXT]: ['aState'], [DISC]: []};
 
   const SHADERS = {
     [FACE]: [`
       in vec3 aPos; in vec3 aNormal; in vec4 aColour; in uint aId; in vec4 aFlags; in float aState;
       uniform float uLight, uAmbient, uDiffuse, uMultiply; uniform vec3 uLightDir, uRay;
       ${VARYINGS}
-      vec3 toLinear(vec3 c) { return mix(c/12.92, pow((c+0.055)/1.055, vec3(2.4)), step(vec3(0.04045), c)); }
-      vec3 toSrgb(vec3 l) { return mix(12.92*l, 1.055*pow(l, vec3(1.0/2.4))-0.055, step(vec3(0.0031308), l)); }
+      ${COLOUR_SPACE}
       void main() {
         float d; vec4 p = project(aPos, d);
         gl_Position = clipPosition(p.xy, p.z, p.w);
@@ -168,16 +180,28 @@
         emit(vColour);
       }`],
     [MARKER]: [`
-      in vec3 aPos; in vec2 aOffset; in vec2 aLocal; in vec3 aShape; in vec4 aColour; in vec4 aOutline;
+      in vec3 aPos; in vec3 aShape; in vec4 aColour; in vec4 aOutline;
+      #ifdef INSTANCED
+      in float aAngle;
+      #else
+      in vec2 aOffset; in vec2 aLocal;
+      #endif
       in uint aId; in vec4 aFlags; in float aState;
       ${VARYINGS}
       out vec2 vLocal; flat out vec3 vShape; flat out vec4 vOutline; flat out vec3 vMode;
       void main() {
         float d; vec4 p = project(aPos, d);
-        gl_Position = clipPosition(p.xy+aOffset*uPpm, p.z, p.w);
+        #ifdef INSTANCED
+        vec2 local = vec2((gl_VertexID & 1) == 0 ? -1.0 : 1.0, (gl_VertexID & 2) == 0 ? -1.0 : 1.0);
+        vec2 offset = local*aShape.xy;
+        offset = mat2(cos(aAngle), sin(aAngle), -sin(aAngle), cos(aAngle))*offset;
+        #else
+        vec2 local = aLocal, offset = aOffset;
+        #endif
+        gl_Position = clipPosition(p.xy+offset*uPpm, p.z, p.w);
         vColour = vec4(aColour.rgb, aColour.a*aState); vOutline = vec4(aOutline.rgb, aOutline.a*aState);
         vModel = aPos; vId = aId; vClip = aFlags.y;
-        vLocal = aLocal; vShape = aShape; vMode = aFlags.xzw;
+        vLocal = local; vShape = aShape; vMode = aFlags.xzw;
       }`, `
       in vec2 vLocal; flat in vec3 vShape; flat in vec4 vOutline; flat in vec3 vMode;
       void main() {
@@ -207,23 +231,98 @@
       }`, `
       void main() { emit(vColour); }`]
   };
+  SHADERS[DISC] = SHADERS[MARKER];
 
   function compile(gl, kind, pick) {
-    const header = '#version 300 es\nprecision highp float;\nprecision highp int;\n' + (pick ? '#define PICK\n' : '');
+    const header = '#version 300 es\nprecision highp float;\nprecision highp int;\n' + (pick ? '#define PICK\n' : '') + (INSTANCED.has(kind) ? '#define INSTANCED\n' : '');
+    return shaderProgram(gl, header+PROJECT+SHADERS[kind][0], header+FRAGMENT+SHADERS[kind][1],
+      LAYOUTS[kind].concat(STREAMS[kind].map(n => [n])).map(a => a[0]));
+  }
+  function shaderProgram(gl, vertex, fragment, attributes = []) {
     const shader = (type, source) => {
       const s = gl.createShader(type); gl.shaderSource(s, source); gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(s));
       return s;
     };
     const p = gl.createProgram();
-    gl.attachShader(p, shader(gl.VERTEX_SHADER, header + PROJECT + SHADERS[kind][0]));
-    gl.attachShader(p, shader(gl.FRAGMENT_SHADER, header + FRAGMENT + SHADERS[kind][1]));
-    LAYOUTS[kind].concat(STREAMS[kind].map(n => [n])).forEach((a, loc) => gl.bindAttribLocation(p, loc, a[0]));
+    const shaders = [shader(gl.VERTEX_SHADER, vertex), shader(gl.FRAGMENT_SHADER, fragment)];
+    shaders.forEach(s => gl.attachShader(p, s));
+    attributes.forEach((a, loc) => gl.bindAttribLocation(p, loc, a));
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(p));
+    shaders.forEach(s => gl.deleteShader(s));
     const cache = {};
     p.uniform = name => name in cache ? cache[name] : (cache[name] = gl.getUniformLocation(p, name));
     return p;
+  }
+
+  // Weighted blended transparency accumulates linear-light colour and alpha
+  // weights separately from the product of fragment transmittances.
+  class Transparency {
+    constructor(gl) {
+      this.gl = gl;
+      if (!gl.getExtension('EXT_color_buffer_float')) throw Error('Transparent scenes need WebGL 2 with EXT_color_buffer_float.');
+      this.depth = gl.createRenderbuffer();
+      this.targets = [gl.RGBA8, gl.RGBA8, gl.RGBA16F, gl.RGBA8].map(format =>
+        ({format, framebuffer: gl.createFramebuffer(), texture: gl.createTexture()}));
+      this.vao = gl.createVertexArray();
+      this.program = shaderProgram(gl, `#version 300 es
+        void main() { vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Position = vec4(p*2.0-1.0, 0.0, 1.0); }`,
+        `#version 300 es
+        precision highp float;
+        uniform sampler2D uScene, uAccum, uReveal; uniform vec2 uSize; uniform bool uCopy;
+        out vec4 colour;
+        ${COLOUR_SPACE}
+        void main() {
+          vec2 uv = gl_FragCoord.xy/uSize;
+          vec4 base = texture(uScene, uv);
+          if (uCopy) { colour = base; return; }
+          vec4 accum = texture(uAccum, uv);
+          float alpha = 1.0-texture(uReveal, uv).r;
+          vec3 average = accum.rgb/max(accum.a, 1e-8);
+          float total = alpha+base.a*(1.0-alpha);
+          vec3 rgb = average*alpha+toLinear(base.rgb/max(base.a, 1e-8))*base.a*(1.0-alpha);
+          colour = vec4(toSrgb(clamp(rgb/max(total, 1e-8), 0.0, 1.0))*total, total);
+        }`);
+    }
+    resize(width, height) {
+      if (width === this.width && height === this.height) return;
+      const gl = this.gl; this.width = width; this.height = height;
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.depth); gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, width, height);
+      this.targets.forEach(t => {
+        gl.bindTexture(gl.TEXTURE_2D, t.texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, t.format, width, height, 0, gl.RGBA, t.format === gl.RGBA16F ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE, null);
+        [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(f => gl.texParameteri(gl.TEXTURE_2D, f, gl.NEAREST));
+        [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(f => gl.texParameteri(gl.TEXTURE_2D, f, gl.CLAMP_TO_EDGE));
+        gl.bindFramebuffer(gl.FRAMEBUFFER, t.framebuffer);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t.texture, 0);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depth);
+        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error('The transparency framebuffer is unavailable.');
+      });
+    }
+    bind(index, clear) {
+      const gl = this.gl;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.targets[index].framebuffer);
+      if (clear != null) { gl.clearColor(clear, clear, clear, clear); gl.clear(gl.COLOR_BUFFER_BIT); }
+    }
+    resolve(source, copy = false) {
+      const gl = this.gl, p = this.program;
+      if (copy) gl.bindFramebuffer(gl.FRAMEBUFFER, null); else this.bind(1-source);
+      gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
+      gl.useProgram(p); gl.bindVertexArray(this.vao); gl.uniform2f(p.uniform('uSize'), this.width, this.height);
+      gl.uniform1i(p.uniform('uCopy'), copy ? 1 : 0);
+      [source, 2, 3].forEach((index, unit) => {
+        gl.activeTexture(gl.TEXTURE0+unit); gl.bindTexture(gl.TEXTURE_2D, this.targets[index].texture);
+        gl.uniform1i(p.uniform(['uScene', 'uAccum', 'uReveal'][unit]), unit);
+      });
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      return 1-source;
+    }
+    release() {
+      const gl = this.gl;
+      this.targets.forEach(t => { gl.deleteFramebuffer(t.framebuffer); gl.deleteTexture(t.texture); });
+      gl.deleteRenderbuffer(this.depth); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.program);
+    }
   }
 
   // An interleaved vertex array that grows as primitives are added.
@@ -259,6 +358,16 @@
     data() { return this.u8.subarray(0, this.count*this.stride); }
   }
 
+  function bindAttributes(gl, vertices, start = 0, divisor = 0) {
+    vertices.attrs.forEach((a, loc) => {
+      const offset = a.offset+start*vertices.stride;
+      gl.enableVertexAttribArray(loc);
+      if (a.type === 'u32') gl.vertexAttribIPointer(loc, a.size, gl.UNSIGNED_INT, vertices.stride, offset);
+      else gl.vertexAttribPointer(loc, a.size, a.type === 'f32' ? gl.FLOAT : gl.UNSIGNED_BYTE, a.type === 'u8n', vertices.stride, offset);
+      gl.vertexAttribDivisor(loc, divisor);
+    });
+  }
+
   function packetPrimitives(packet, furniture) {
     ['vertices','corners','faces','polylines','markers','text','footprints','footprint_vertices'].forEach(name => {
       Object.keys(packet[name]).forEach(key => { packet[name][key] = column(packet[name][key]); });
@@ -284,7 +393,7 @@
   // Paint colour of a primitive before lighting and selection.
   function baseColour(p) {
     const m = p.material;
-    const c = (p.kind === FACE ? m.fill : p.kind === MARKER && Number(m.shape) >= 21 ? m.fill : m.colour).slice();
+    const c = (p.kind === FACE ? m.fill : (p.kind === MARKER || p.kind === DISC) && Number(m.shape) >= 21 ? m.fill : m.colour).slice();
     c[3] = c[3] > 0 ? p.opacity : 0;
     return c;
   }
@@ -293,6 +402,9 @@
   // furniture carries 0 and is never picked.
   function buildScene(gl, panel) {
     const prims = packetPrimitives(panel.scene, false).concat(packetPrimitives(panel.furniture, true));
+    prims.forEach(p => {
+      if (p.kind === MARKER && p.packet.footprints.kind[p.packet.markers.footprint_id[p.row]-1] === 1) p.kind = DISC;
+    });
     const vertices = {}, elements = {};
     KINDS.forEach(k => { vertices[k] = new Vertices(LAYOUTS[k]); elements[k] = []; });
     const dashes = [], dashRows = new Map(), dashed = [];
@@ -305,8 +417,6 @@
       p.index = i; p.colour = baseColour(p);
       const id = p.furniture ? 0 : i+1, clip = p.furniture ? 0 : 1, V = vertices[p.kind], E = elements[p.kind];
       p.vertexStart = V.count; p.elementStart = E.length;
-      const centre = [0, 1, 2].map(a => p.points.reduce((s, v) => s+v[a], 0)/p.points.length);
-      p.centre = centre;
       if (p.colour[3] <= 0 && p.kind !== TEXT) { p.skip = true; }
       else if (p.kind === FACE && p.points.length >= 3) {
         const shade = p.material.shade ? 1 : 0;
@@ -327,7 +437,7 @@
           segments.push(start);
         }
         if (row) dashed.push({p, segments, period: pattern.reduce((s, v) => s+v, 0)});
-      } else if (p.kind === MARKER) {
+      } else if (p.kind === MARKER || p.kind === DISC) {
         markerGeometry(p, V, E, id, clip);
       } else if (p.kind === TEXT) {
         const t = p.table, r = p.row, box = [t.width_mm[r], t.height_mm[r], t.hjust[r], t.vjust[r]];
@@ -341,13 +451,8 @@
     KINDS.forEach(k => {
       const V = vertices[k], vao = gl.createVertexArray(), buffer = gl.createBuffer();
       gl.bindVertexArray(vao);
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, V.data(), gl.STATIC_DRAW);
-      V.attrs.forEach((a, loc) => {
-        gl.enableVertexAttribArray(loc);
-        if (a.type === 'u32') gl.vertexAttribIPointer(loc, a.size, gl.UNSIGNED_INT, V.stride, a.offset);
-        else if (a.type === 'f32') gl.vertexAttribPointer(loc, a.size, gl.FLOAT, false, V.stride, a.offset);
-        else gl.vertexAttribPointer(loc, a.size, gl.UNSIGNED_BYTE, a.type === 'u8n', V.stride, a.offset);
-      });
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, INSTANCED.has(k) ? 0 : V.data(), gl.STATIC_DRAW);
+      bindAttributes(gl, V);
       const streams = STREAMS[k].map((name, j) => {
         const b = gl.createBuffer(), values = new Float32Array(Math.max(1, V.count)).fill(name === 'aState' ? 1 : 0), loc = V.attrs.length+j;
         gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, values, gl.DYNAMIC_DRAW);
@@ -356,7 +461,8 @@
       });
       gl.bindVertexArray(null);
       const all = new Uint32Array(elements[k]);
-      scene.kinds[k] = {vao, buffer, streams, elements: all, count: V.count,
+      scene.kinds[k] = {vao, buffer, streams, elements: all, count: V.count, vertices: V, instanced: INSTANCED.has(k),
+        states: streams.length ? streams[0].values : new Float32Array(V.count).fill(1),
         fixed: gl.createBuffer(), frame: gl.createBuffer(), fixedRanges: [[0, 0], [0, 0], [0, 0]],
         fixedData: new Uint32Array(all.length), frameData: new Uint32Array(all.length)};
     });
@@ -384,9 +490,9 @@
     const start = V.count;
     if (fp.kind[i] === 1) {
       const rx = fp.radius_x_mm[i], ry = fp.radius_y_mm[i];
-      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(l => V.add({aPos: p.points[0], aOffset: rotate([l[0]*rx, l[1]*ry]), aLocal: l,
-        aShape: [rx, ry, border], aColour: p.colour, aOutline: outline, aId: id, aFlags: [1, clip, hollow ? 1 : 0, separate ? 1 : 0]}));
-      E.push(start, start+1, start+2, start+2, start+1, start+3);
+      V.add({aPos: p.points[0], aAngle: [angle], aState: [1], aShape: [rx, ry, border],
+        aColour: p.colour, aOutline: outline, aId: id, aFlags: [1, clip, hollow ? 1 : 0, separate ? 1 : 0]});
+      E.push(start);
       return;
     }
     const fv = p.packet.footprint_vertices, rings = []; let ring, last;
@@ -439,6 +545,7 @@
       const programs = {}, pickPrograms = {};
       KINDS.forEach(k => { programs[k] = compile(gl, k, false); pickPrograms[k] = compile(gl, k, true); });
       const pickTarget = {framebuffer: gl.createFramebuffer(), colour: gl.createRenderbuffer(), depth: gl.createRenderbuffer(), panel: -1};
+      let transparency = null;
       let data, views = [], frame, active = 0, frameRequest, pickRequest, hovered = null;
       let selected = new Set(), filter = null, selectionHandle = null, filterHandle = null;
       let playback = null, pathIndex = 0, group = null;
@@ -481,18 +588,32 @@
 
       // Selection state: dimmed primitives move to the translucent pass,
       // filtered primitives leave the scene.
+      function uploadOrder(g, buffer, indices, count, usage) {
+        if (g.instanced) {
+          const source = g.vertices, bytes = new Uint8Array(count*source.stride);
+          for (let i = 0; i < count; i++) {
+            const j = indices[i], begin = j*source.stride;
+            source.f32[(begin+source.byName.aState.offset)/4] = g.states[j];
+            bytes.set(source.u8.subarray(begin, begin+source.stride), i*source.stride);
+          }
+          gl.bindBuffer(gl.ARRAY_BUFFER, g[buffer]); gl.bufferData(gl.ARRAY_BUFFER, bytes, usage);
+        } else {
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g[buffer]); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices.subarray(0, count), usage);
+        }
+      }
       function applyState(V) {
         const S = V.scene, dim = data.selection.dim;
-        KINDS.forEach(k => S.kinds[k].streams[0].values.fill(1));
+        KINDS.forEach(k => S.kinds[k].states.fill(1));
         S.prims.forEach(p => {
           p.hidden = !p.furniture && filter && p.crosstalk && !filter.has(p.key);
           p.dimmed = !p.furniture && selected.size > 0 && !selected.has(p.key);
-          if (p.dimmed && !p.skip) S.kinds[p.kind].streams[0].values.fill(dim, p.vertexStart, p.vertexStart+p.vertexCount);
-          p.translucent = p.colour[3] < 1 || p.dimmed;
+          if (p.dimmed && !p.skip) S.kinds[p.kind].states.fill(dim, p.vertexStart, p.vertexStart+p.vertexCount);
+          const outline = (p.kind === MARKER || p.kind === DISC) && p.material.colour[3]*p.opacity < 1;
+          p.translucent = p.colour[3] < 1 || outline || p.dimmed;
         });
         KINDS.forEach(k => {
           const g = S.kinds[k], s = g.streams[0];
-          gl.bindBuffer(gl.ARRAY_BUFFER, s.buffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, s.values);
+          if (s) { gl.bindBuffer(gl.ARRAY_BUFFER, s.buffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, s.values); }
           let n = 0;
           [0, 1, 2].forEach(part => {
             const start = n;
@@ -502,19 +623,18 @@
             });
             g.fixedRanges[part] = [start, n-start];
           });
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.fixed); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, g.fixedData.subarray(0, n), gl.DYNAMIC_DRAW);
+          uploadOrder(g, 'fixed', g.fixedData, n, gl.DYNAMIC_DRAW);
         });
         V.translucent = S.prims.filter(p => !p.furniture && !p.skip && !p.hidden && p.translucent && p.kind !== TEXT);
         V.pickDirty = true;
       }
 
       // Per-frame lists: furniture (camera-dependent panes and edges),
-      // translucent primitives in back-to-front runs of one kind, and the
+      // translucent primitives batched by kind, and the
       // labels that are visible for picking.
       function prepare(V) {
-        const S = V.scene, b = V.basis, c = V.camera;
+        const S = V.scene;
         const furniture = S.prims.filter(p => p.furniture && !p.skip && p.kind !== TEXT && furnitureVisible(V, p));
-        const depth = p => dot(p.centre.map((v, i) => (v-c.target[i])*b.scale[i]), b.forward);
         const fill = {}; KINDS.forEach(k => { fill[k] = 0; });
         const push = p => { const g = S.kinds[p.kind]; g.frameData.set(g.elements.subarray(p.elementStart, p.elementStart+p.elementCount), fill[p.kind]); fill[p.kind] += p.elementCount; };
         V.furnitureRanges = [0, 1, 2].map(part => {
@@ -528,12 +648,11 @@
         });
         const translucent = V.translucent.concat(furniture.filter(p => p.translucent));
         V.runs = [0, 1, 2].map(part => {
-          const group = translucent.filter(p => p.partition === part).map(p => [depth(p), p]).sort((a, b) => b[0]-a[0]);
           const runs = [];
-          group.forEach(([, p]) => {
-            const last = runs[runs.length-1];
-            if (last && last.kind === p.kind) { last.count += p.elementCount; push(p); return; }
-            runs.push({kind: p.kind, start: fill[p.kind], count: p.elementCount}); push(p);
+          DRAW_KINDS.forEach(kind => {
+            const start = fill[kind];
+            translucent.forEach(p => { if (p.partition === part && p.kind === kind) push(p); });
+            if (fill[kind] > start) runs.push({kind, start, count: fill[kind]-start});
           });
           return runs;
         });
@@ -544,7 +663,7 @@
         V.textRange = [textStart, fill[TEXT]-textStart];
         KINDS.forEach(k => {
           const g = S.kinds[k];
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.frame); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, g.frameData.subarray(0, fill[k]), gl.STREAM_DRAW);
+          uploadOrder(g, 'frame', g.frameData, fill[k], gl.STREAM_DRAW);
         });
         if (S.dashed.length) dashPhases(V);
       }
@@ -598,10 +717,17 @@
         gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, V.scene.dashTexture);
         gl.uniform1i(prog.uniform('uDash'), 0);
       }
-      function drawRange(V, kind, buffer, range, set) {
+      function drawRange(V, kind, buffer, range, set, oitPass = 0) {
         if (!range || range[1] <= 0) return;
         uniforms(set[kind], V);
+        gl.uniform1i(set[kind].uniform('uOitPass'), oitPass);
         const g = V.scene.kinds[kind];
+        if (g.instanced) {
+          gl.bindVertexArray(g.vao); gl.bindBuffer(gl.ARRAY_BUFFER, g[buffer]);
+          bindAttributes(gl, g.vertices, range[0], 1);
+          gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, range[1]);
+          return;
+        }
         gl.bindVertexArray(g.vao); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g[buffer]);
         gl.drawElements(gl.TRIANGLES, range[1], gl.UNSIGNED_INT, range[0]*4);
       }
@@ -611,10 +737,16 @@
       }
       function drawPanel(V, pick) {
         const set = pick ? pickPrograms : programs, L = V.layout;
+        const oit = !pick && V.runs.some(runs => runs.length);
+        let source = 0;
+        if (oit) {
+          if (!transparency) transparency = new Transparency(gl);
+          transparency.resize(canvas.width, canvas.height); transparency.bind(source);
+        }
         gl.enable(gl.SCISSOR_TEST);
         gl.scissor(...rect([L.px, L.py, L.pw, L.ph]));
         const bg = pick ? [0, 0, 0, 0] : V.data.background;
-        gl.clearColor(...bg); gl.clearDepth(1); gl.depthMask(true);
+        gl.clearColor(...(oit ? bg.map((v, i) => i < 3 ? v*bg[3] : v) : bg)); gl.clearDepth(1); gl.depthMask(true);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         if (V.camera.clip) gl.scissor(...rect([L.ox, L.oy, L.iw, L.ih]));
         else gl.disable(gl.SCISSOR_TEST);
@@ -622,17 +754,35 @@
         else { gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); }
         gl.depthFunc(gl.LEQUAL);
         [0, 1, 2].forEach(part => {
+          if (oit) {
+            transparency.bind(source);
+            gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+          }
           if (part === 1) gl.enable(gl.DEPTH_TEST); else gl.disable(gl.DEPTH_TEST);
           gl.depthMask(part === 1);
-          [FACE, STROKE, MARKER].forEach(k => {
+          DRAW_KINDS.forEach(k => {
             drawRange(V, k, 'fixed', V.scene.kinds[k].fixedRanges[part], set);
             drawRange(V, k, 'frame', V.furnitureRanges[part][k], set);
           });
           gl.depthMask(pick && part === 1);
-          V.runs[part].forEach(r => drawRange(V, r.kind, 'frame', [r.start, r.count], set));
+          if (oit && V.runs[part].length) {
+            [1, 2].forEach(pass => {
+              transparency.bind(pass+1, pass === 1 ? 0 : 1);
+              gl.enable(gl.BLEND);
+              if (pass === 1) gl.blendFunc(gl.ONE, gl.ONE);
+              else gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_COLOR);
+              V.runs[part].forEach(r => drawRange(V, r.kind, 'frame', [r.start, r.count], set, pass));
+            });
+            source = transparency.resolve(source);
+          } else V.runs[part].forEach(r => drawRange(V, r.kind, 'frame', [r.start, r.count], set));
         });
         if (pick) { gl.disable(gl.DEPTH_TEST); drawRange(V, TEXT, 'frame', V.textRange, set); }
         gl.depthMask(true); gl.disable(gl.SCISSOR_TEST); gl.bindVertexArray(null);
+        if (oit) {
+          gl.enable(gl.SCISSOR_TEST); gl.scissor(...rect([L.px, L.py, L.pw, L.ph]));
+          transparency.resolve(source, true);
+          gl.depthMask(true); gl.disable(gl.SCISSOR_TEST); gl.bindVertexArray(null);
+        }
       }
 
       function text(label, xy, style, angle, hjust, vjust, ppm) {
@@ -1009,6 +1159,7 @@
           if (x.schema_version !== 3) throw Error('Unsupported ggplot3d viewer schema');
           stop(); pathIndex = 0;
           views.forEach(V => V.scene.release());
+          if (transparency) { transparency.release(); transparency = null; }
           data = x; frame = x.frame; active = 0; selected = new Set(); filter = null; hovered = null;
           chrome.innerHTML = x.chrome || '';
           const svg = chrome.querySelector('svg');

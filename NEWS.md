@@ -4,6 +4,8 @@
 
 * `annotate_3d()` forwards registered drawing parameters through the shared 3D layer constructor, including bracket types, offsets and dimension arrows. Fixed spans in the Layers article use annotation calls.
 
+* The HTML viewer uses weighted blended order-independent transparency with linear-light accumulation. Circular markers use instanced disc quads with one GPU record per point, retaining footprint rotation, borders, picking and selection.
+
 * `view_3d(panel = )` sizes the selected facet and its axis furniture for the widget, preserving the panel aspect. knitr and Quarto round figure dimensions to whole pixels for HTML viewers.
 
 * Domain recipes cover symmetric tensor glyphs, ordination biplots, molecular ball-and-stick views and sampled Lab colour gamuts. `geom_tensor_3d()` adds Kindlmann superquadrics through shared glyph instancing, `stat_biplot_3d()` composes score points, quivers and group regions, and `fortify.pdb()` joins atoms and bonds by serial number.

@@ -150,9 +150,14 @@ file.info(html)$size > 0
 
 ## Rendering behaviour
 
-Opaque geometry uses a depth buffer. Transparent primitives are sorted by
-their centre depth, so crossing transparent surfaces can differ from the
-static vector output. Text is drawn as plain browser text, with a label's
+Opaque geometry uses a depth buffer. Transparent geometry uses weighted
+blended order-independent transparency: linear-light colour weights and
+fragment transmittances accumulate in separate passes, then composite over
+the opaque scene. This approximates the colour of intersecting sheets and
+keeps it independent of primitive order. Transparent scenes require the
+WebGL 2 `EXT_color_buffer_float` extension. Circular markers use one GPU
+instance per point and a disc fragment shader for their fill and border.
+Text is drawn as plain browser text, with a label's
 visibility decided at its anchor. Geometry, mapped colours and lighting are
 transferred once; camera interaction runs in the browser.
 
