@@ -99,11 +99,13 @@ test_that("viewer replacement releases buffers and keeps one event subscription"
   expect_gt(b$eval("deleted"), 0)
   expect_equal(b$eval("handles"), 3)
   expect_equal(b$eval("document.querySelectorAll('#first-scene canvas.gg3d-surface').length"), 1)
-  b$eval("sent = []; document.getElementById('first-scene').ggplot3d.select(['Mazda RX4']); document.getElementById('first-scene').ggplot3d.turn({azimuth: 5});")
-  expect_equal(b$eval("sent.filter(x => x.id === 'first-scene_selected').length"), 1)
-  expect_equal(b$eval("sent.filter(x => x.id === 'first-scene_camera').length"), 1)
-  expect_equal(b$eval("sent.filter(x => x.id.startsWith('second-')).length"), 0)
-  expect_identical(b$eval("sent.find(x => x.id === 'first-scene_selected').value[0]"), "Mazda RX4")
+  events <- b$eval(paste0("sent = []; const api = document.getElementById('first-scene').ggplot3d;",
+    "api.select(['Mazda RX4']); api.turn({azimuth: 5}); api.redraw(); sent.slice();"))
+  ids <- vapply(events, `[[`, character(1), "id")
+  expect_equal(sum(ids == "first-scene_selected"), 1)
+  expect_equal(sum(ids == "first-scene_camera"), 1)
+  expect_false(any(startsWith(ids, "second-")))
+  expect_identical(events[[match("first-scene_selected", ids)]]$value[[1L]], "Mazda RX4")
 })
 
 
