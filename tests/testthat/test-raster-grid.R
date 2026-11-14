@@ -18,7 +18,7 @@ test_that("raster panels preserve vector furniture and bypass data ordering", {
   }
   panel <- find(grob)[[1L]]
   expect_s3_class(panel$children[[2L]], "rastergrob")
-  expect_false(panel$children[[2L]]$interpolate)
+  expect_true(panel$children[[2L]]$interpolate)
   expect_identical(panel$raster_result$passes, 1L)
 })
 

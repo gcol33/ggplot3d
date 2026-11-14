@@ -150,3 +150,27 @@ test_that("sampled textures keep labels last without graphics groups", {
     expect_true(all(tail(order, sum(order == 4L)) == 4L))
   }, grid_capabilities_3d = function(...) caps)
 })
+
+test_that("sampled texture runs set their own image filtering", {
+  skip_if_not_installed("ragg")
+  runs <- function(alpha) {
+    p <- ggplot2::ggplot(expand.grid(x = 0:1, y = 0:1), ggplot2::aes(x, y, z = 0)) +
+      geom_surface_3d(texture = texture_3d(matrix("#406080"), interpolate = FALSE), alpha = alpha) + coord_3d()
+    path <- tempfile(fileext = ".png")
+    on.exit(unlink(path))
+    ragg::agg_png(path, 160, 160)
+    forced <- grid::grid.force(ggplot2::ggplotGrob(p))
+    grDevices::dev.off()
+    find <- function(g) {
+      if (identical(g$texture_lighting, "sampled")) return(list(g))
+      unlist(lapply(c(as.list(g$children), g$grobs), find), recursive = FALSE)
+    }
+    vapply(find(forced), function(run) run$children[[1L]]$interpolate, logical(1))
+  }
+  opaque <- runs(1)
+  expect_gt(length(opaque), 0L)
+  expect_true(all(opaque))
+  translucent <- runs(0.5)
+  expect_length(translucent, 1L)
+  expect_false(translucent)
+})

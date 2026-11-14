@@ -1,5 +1,10 @@
 # ggplot3d 0.0.0.9000
 
+* Raster, hybrid, path-traced and ray-marched panel images are drawn with
+  `interpolate = TRUE`, so viewers scale them smoothly instead of by nearest
+  neighbour. Figures whose image is denser than the display, such as HTML
+  figures at `fig.retina = 2`, no longer show stepped face edges.
+
 * Binned fill and colour scales cut surface and mesh faces along interpolated
   scalar iso-lines. Each piece carries one band colour, with smooth normals
   shared across the cuts in vector, raster and interactive output.

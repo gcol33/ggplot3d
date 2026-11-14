@@ -208,7 +208,7 @@ raster_image_grob_3d <- function(result) {
   extent <- result$extent
   grid::rasterGrob(result$image, x = mean(extent[c(1L, 3L)]), y = mean(extent[c(2L, 4L)]),
     width = grid::unit(extent[3L] - extent[1L], "npc"),
-    height = grid::unit(extent[4L] - extent[2L], "npc"), interpolate = FALSE, name = "scene-raster-image-3d")
+    height = grid::unit(extent[4L] - extent[2L], "npc"), interpolate = TRUE, name = "scene-raster-image-3d")
 }
 
 # Panel assembly of every image-producing path (raster, ray-marched, path

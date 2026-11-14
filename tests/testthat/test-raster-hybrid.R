@@ -62,6 +62,7 @@ test_that("hybrid panels draw rasterised layers as one image between two vector 
   expect_identical(names(panel$children),
     c("scene-hybrid-behind-3d", "scene-raster-image-3d", "scene-hybrid-front-3d"))
   expect_s3_class(panel$children[[2L]], "rastergrob")
+  expect_true(panel$children[[2L]]$interpolate)
   expect_true(any(panel$raster_result$id != 0L))
   expect_identical(utils::tail(panel$occlusion$status$polylines, 1L), 2L)
   expect_error(ggplot2::ggplotGrob(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +

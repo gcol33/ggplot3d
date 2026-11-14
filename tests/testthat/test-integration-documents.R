@@ -124,7 +124,9 @@ test_that("raster3d draws dense geometry as one image and keeps the smaller file
   expect_lt(hybrid$bytes, vector$bytes)
   expect_true(figure(surface, "raster3d=0")$image)
   expect_false(figure(surface, "raster3d=1e9")$image)
-  expect_false(figure(document_plot(), "raster3d=0")$image)
+  sparse <- ggplot2::ggplot(data.frame(x = 1:3, y = 1:3, z = 1:3), ggplot2::aes(x, y, z = z)) +
+    geom_point_3d() + coord_3d()
+  expect_false(figure(sparse, "raster3d=0")$image)
   raster <- base + coord_3d(backend = backend_3d("raster", dpi = 30))
   expect_true(figure(raster, "raster3d=FALSE")$image)
   expect_error(knit_document_3d(surface, "html", chunk("raster3d='yes', error=FALSE")), "raster3d must be")
