@@ -220,7 +220,7 @@ test_that("the viewer receives frame-generic furniture and axis candidates", {
   d <- data.frame(month = 1:12, ring = 1, rain = 1:12)
   p <- ggplot2::ggplot(d, ggplot2::aes(month, ring, z = rain)) + geom_point_3d() + coord_cylindrical_3d()
   w <- view_3d(p, panel = 1)
-  expect_identical(w$x$schema_version, 3L)
+  expect_identical(w$x$schema_version, 4L)
   view <- w$x$panels[[1L]]
   tagged <- Filter(function(m) !is.null(m$frame), view$furniture$materials)
   expect_gt(length(tagged), 0L)

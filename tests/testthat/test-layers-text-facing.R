@@ -52,11 +52,13 @@ test_that("curved frame normals follow the inverse transpose of the local map", 
   spec <- glyph$orientation
   centre <- as.matrix(normalise_positions_3d(data.frame(x = c(.3, .7),
     y = c(.4, .6), z = c(.35, .65)), s$params)[c("x", "y", "z")])
-  jacobian <- frame_jacobian_3d(s$params$frame, centre)
   scale <- s$camera$aspect / max(s$camera$aspect)
   for (j in 1:2) {
     i <- c(1L, nrow(glyph$centre))[j]
-    normal <- solve(t(diag(scale) %*% jacobian[, , j]), c(1, 1, 1))
+    phi <- 2 * pi * centre[j, 1L]; radius <- centre[j, 2L] / 2
+    jacobian <- cbind(c(2 * pi * radius * cos(phi), -2 * pi * radius * sin(phi), 0),
+      c(sin(phi) / 2, cos(phi) / 2, 0), c(0, 0, 1))
+    normal <- solve(t(diag(scale) %*% jacobian), c(1, 1, 1))
     expect_equal(sum(normal * spec$u[i, ]), 0, tolerance = 1e-8)
     expect_equal(sum(normal * spec$v[i, ]), 0, tolerance = 1e-8)
   }
