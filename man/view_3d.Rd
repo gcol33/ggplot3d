@@ -99,9 +99,10 @@ pointer from an offscreen id image, by the same \code{primitive_id} the raster
 backend returns in its id buffer.
 
 Requires htmlwidgets and a browser with WebGL 2. Opaque geometry
-uses a depth buffer. Transparent primitives are sorted back to front by
-centre depth; crossing transparent surfaces can differ from the exact
-static vector backend. Strokes and markers widen to their physical size
+uses a depth buffer. Transparent geometry uses
+weighted blended order-independent transparency in linear light, an
+approximation requiring WebGL 2's \code{EXT_color_buffer_float} extension.
+Strokes and markers widen to their physical size
 in the vertex shader, and face lighting uses the same linear-light colour
 calculation as static output. Text uses plain browser text, with
 whole-anchor visibility for scene labels. Furniture and its labels rotate
