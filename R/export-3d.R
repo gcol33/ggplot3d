@@ -8,7 +8,7 @@
 #' scaled by the aspect of [coord_3d()], with its longest side `size` long.
 #' @param plot A ggplot with [coord_3d()].
 #' @param file Output path. Its extension selects the format: `.glb`,
-#'   `.gltf`, `.ply`, `.obj` or `.stl`.
+#'   `.gltf`, `.ply`, `.obj`, `.stl` or `.3mf`.
 #' @param panel Panel index in layout order, default 1.
 #' @param furniture Whether to include the panes, grid lines and box edges,
 #'   default FALSE.
@@ -23,6 +23,8 @@
 #'   default 640 each. Tubes and solids keep the size relative to the box that
 #'   lines and points have in a plot of this size.
 #' @param dpi Device resolution, default 96 dots per inch.
+#' @param print Optional [print_3d()] specification for closed millimetre solids
+#'   in STL or 3MF output.
 #' @return `file`, invisibly.
 #' @details
 #' glTF output follows the glTF 2.0 specification and is the route into
@@ -47,7 +49,8 @@
 #' STL keep the vertical axis of the plot as +z. STL holds triangles only, so
 #' it requires `lines = "tube"` and `points = "mesh"`.
 #'
-#' Text is not written, and dashed lines are written solid.
+#' Ordinary model exports omit text and write dashed lines solid. Printing
+#' exports include extruded text according to [print_3d()].
 #' @seealso [animate_3d()] for animated glTF files.
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))
@@ -59,8 +62,17 @@
 #' export_3d(p, tempfile(fileext = ".stl"), size = 50)
 #' @export
 export_3d <- function(plot, file, panel = 1L, furniture = FALSE, lines = c("tube", "line"),
-                      points = c("mesh", "point"), size = 1, width = 640L, height = 640L, dpi = 96) {
+                      points = c("mesh", "point"), size = 1, width = 640L, height = 640L, dpi = 96, print = NULL) {
   writer <- export_writer_3d(file)
+  if (!is.null(print)) {
+    scene_assert(inherits(print, "ggplot3d_print"), "print must be a print_3d() specification")
+    scene_assert(writer$printing, "This file format does not support printing solids")
+    options <- export_options_3d(FALSE, "tube", "mesh", 1)
+    scene <- print_scene_3d(export_scene_3d(plot, panel, options, width, height, dpi), print)
+    writer$write(list(scene), file, options, fps = NULL)
+    return(invisible(file))
+  }
+  scene_assert(!writer$print_only, "This file format requires print = print_3d()")
   options <- export_options_3d(furniture, match.arg(lines), match.arg(points), size)
   scene_assert(!writer$triangles || (options$lines == "tube" && options$points == "mesh"),
     sprintf("%s files hold triangles only; use lines = \"tube\" and points = \"mesh\"", toupper(writer$extension)))
@@ -74,9 +86,9 @@ export_3d <- function(plot, file, panel = 1L, furniture = FALSE, lines = c("tube
 # A format writer receives the captured scenes (one per animation frame), the
 # path and the export options. `animation` marks writers that store more than
 # one frame; `triangles` marks formats without line or point primitives.
-register_exporter_3d <- function(extension, write, animation = FALSE, triangles = FALSE) {
+register_exporter_3d <- function(extension, write, animation = FALSE, triangles = FALSE, printing = FALSE, print_only = FALSE) {
   .exporters_3d[[extension]] <- list(extension = extension, write = write,
-    animation = animation, triangles = triangles)
+    animation = animation, triangles = triangles, printing = printing, print_only = print_only)
   if (animation) motion_outputs_3d[[extension]] <- list(device = "pdf", kind = "scene",
     packages = character(), write = write)
   invisible(extension)
@@ -114,7 +126,10 @@ export_scene_3d <- function(plot, panel, options, width, height, dpi) {
     panel >= 1 && panel == trunc(panel), "panel must be a positive integer")
   device <- export_device_3d(width, height, dpi)
   on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE)
-  export_capture_3d(ggplot2::ggplotGrob(plot), panel, options, export_layer_names_3d(plot))
+  scene <- export_capture_3d(ggplot2::ggplotGrob(plot), panel, options, export_layer_names_3d(plot))
+  scene$layers <- data.frame(name = export_layer_names_3d(plot), text = vapply(plot$layers,
+    function(layer) inherits(layer$geom, c("GeomText", "GeomLabel")), logical(1)))
+  scene
 }
 
 # A device without output fixes the physical panel size and text metrics.
@@ -174,7 +189,8 @@ export_capture_3d <- function(grob, panel, options, layer_names, mm = NULL) {
     }
     nodes <- c(nodes, export_nodes_3d(furniture$packet, scale, NULL, mm, furniture_key, parent = "furniture"))
   }
-  list(nodes = nodes, camera = camera, up = as.integer(params$camera$up), mm = mm, viewport = furniture$viewport)
+  list(nodes = nodes, camera = camera, up = as.integer(params$camera$up), mm = mm, viewport = furniture$viewport,
+    box = scale, furniture_layout = furniture)
 }
 
 # The glTF-style camera of a resolved scene camera: eye and orthonormal basis
@@ -231,6 +247,7 @@ export_nodes_3d <- function(packet, scale, light, mm, key, parent = NULL) {
     if (length(face)) {
       corners <- rbind(f$offset[face], f$offset[face] + j, f$offset[face] + j + 1L)
       parts$triangles <- list(position = model[vertex[as.vector(corners)], , drop = FALSE],
+        identity = vertex[as.vector(corners)],
         colour = fill[face, , drop = FALSE], lit = lit[face], key = keys[face])
     }
     stroke <- export_rgba_3d(style_value_3d(s, "colour", NA_character_), f$opacity)
@@ -297,6 +314,8 @@ export_nodes_3d <- function(packet, scale, light, mm, key, parent = NULL) {
       parts$text <- list(position = model[vertex[tx$offset[drawn]], , drop = FALSE], label = label[drawn],
         colour = rgba[drawn, , drop = FALSE],
         fontsize = style_value_3d(s, "fontsize", style_value_3d(s, "size", 3.88) * 72.27 / 25.4)[drawn],
+        family = style_value_3d(s, "family", "")[drawn], fontface = style_value_3d(s, "fontface", 1)[drawn],
+        hjust = tx$hjust[drawn], vjust = tx$vjust[drawn], angle = tx$angle[drawn],
         key = table_key("text")[drawn])
     }
   }
@@ -307,6 +326,7 @@ export_nodes_3d <- function(packet, scale, light, mm, key, parent = NULL) {
     if (!is.null(tri) && any(tri$key == name)) {
       i <- which(tri$key == name)
       node$triangles <- list(position = tri$position[as.vector(rbind(3L * i - 2L, 3L * i - 1L, 3L * i)), , drop = FALSE],
+        identity = tri$identity[as.vector(rbind(3L * i - 2L, 3L * i - 1L, 3L * i))],
         colour = tri$colour[i, , drop = FALSE], lit = tri$lit[i])
     }
     p <- parts$paths
@@ -356,12 +376,7 @@ export_mesh_3d <- function(node, options) {
   prims <- list()
   soups <- Filter(Negate(is.null), soups)
   if (length(soups)) {
-    shift <- cumsum(c(0L, vapply(soups, function(s) nrow(s$position), integer(1))))
-    all <- list(position = do.call(rbind, lapply(soups, `[[`, "position")),
-      normal = do.call(rbind, lapply(soups, `[[`, "normal")),
-      colour = do.call(rbind, lapply(soups, `[[`, "colour")),
-      index = do.call(cbind, Map(function(s, k) s$index + k, soups, head(shift, -1L))),
-      lit = unlist(lapply(soups, `[[`, "lit"), use.names = FALSE))
+    all <- export_join_soups_3d(soups)
     alpha <- matrix(all$colour[all$index, 4L], 3L)
     blend <- colSums(alpha < 1) > 0
     for (lit in c(TRUE, FALSE)) for (translucent in c(FALSE, TRUE)) {
@@ -410,73 +425,33 @@ export_soup_3d <- function(position, index, colour, lit) {
     colour = colour[rows, , drop = FALSE], index = matrix(seq_len(3L * n), 3L), lit = rep_len(lit, length(index[1L, ]))[keep])
 }
 
-# Closed tubes along paths with `sides` vertices per ring. Ring frames are
-# carried along each path by projecting the previous normal onto the plane of
-# the next tangent, so tubes do not twist; flat caps close both ends.
-export_tubes_3d <- function(paths, sides = 8L) {
-  position <- paths$position; path <- paths$path
-  n <- nrow(position)
-  repeated <- c(FALSE, path[-1L] == path[-n] & rowSums(abs(position[-1L, , drop = FALSE] - position[-n, , drop = FALSE])) == 0)
-  position <- position[!repeated, , drop = FALSE]; path <- path[!repeated]
-  counts <- tabulate(path, nbins = length(paths$radius))
-  keep <- counts[path] >= 2L
-  position <- position[keep, , drop = FALSE]; path <- path[keep]
-  n <- nrow(position)
-  if (!n) return(NULL)
-  first <- c(TRUE, path[-1L] != path[-n]); last <- c(path[-1L] != path[-n], TRUE)
-  following <- position[pmin(seq_len(n) + 1L, n), , drop = FALSE]; following[last, ] <- position[last, ]
-  preceding <- position[pmax(seq_len(n) - 1L, 1L), , drop = FALSE]; preceding[first, ] <- position[first, ]
-  tangent <- export_unit_rows_3d(following - preceding)
-  normal <- matrix(0, n, 3L)
-  normal[first, ] <- export_perpendicular_3d(tangent[first, , drop = FALSE])
-  step <- sequence(rle(path)$lengths)
-  for (k in seq_len(max(step))[-1L]) {
-    rows <- which(step == k)
-    previous <- normal[rows - 1L, , drop = FALSE]
-    projected <- previous - rowSums(previous * tangent[rows, , drop = FALSE]) * tangent[rows, , drop = FALSE]
-    length <- sqrt(rowSums(projected^2))
-    bad <- !(length > 1e-12)
-    projected[!bad, ] <- projected[!bad, , drop = FALSE] / length[!bad]
-    if (any(bad)) projected[bad, ] <- export_perpendicular_3d(tangent[rows[bad], , drop = FALSE])
-    normal[rows, ] <- projected
-  }
-  binormal <- cross_rows_3d(tangent, normal)
-  theta <- 2 * pi * (seq_len(sides) - 1L) / sides
-  radius <- paths$radius[path]
-  ring <- function(rows) {
-    direction <- kronecker(normal[rows, , drop = FALSE], matrix(cos(theta))) +
-      kronecker(binormal[rows, , drop = FALSE], matrix(sin(theta)))
-    list(position = position[rep(rows, each = sides), , drop = FALSE] + direction * radius[rep(rows, each = sides)],
-      direction = direction)
-  }
-  body <- ring(seq_len(n))
-  vertex <- function(i, j) (i - 1L) * sides + (j %% sides) + 1L
-  segment <- which(!last)
-  i <- rep(segment, each = sides); j <- rep(seq_len(sides) - 1L, length(segment))
-  side <- rbind(vertex(i, j), vertex(i + 1L, j + 1L), vertex(i + 1L, j),
-    vertex(i, j), vertex(i, j + 1L), vertex(i + 1L, j + 1L))
-  side <- matrix(side, 3L)
-  colour <- paths$colour[path, , drop = FALSE]
-  caps <- lapply(list(list(rows = which(first), sign = -1), list(rows = which(last), sign = 1)), function(cap) {
-    r <- ring(cap$rows)
-    m <- length(cap$rows)
-    position <- rbind(position[cap$rows, , drop = FALSE], r$position)
-    normal <- cap$sign * tangent[c(cap$rows, rep(cap$rows, each = sides)), , drop = FALSE]
-    rim <- function(c, j) m + (c - 1L) * sides + (j %% sides) + 1L
-    cc <- rep(seq_len(m), each = sides); jj <- rep(seq_len(sides) - 1L, m)
-    index <- if (cap$sign > 0) rbind(cc, rim(cc, jj), rim(cc, jj + 1L)) else rbind(cc, rim(cc, jj + 1L), rim(cc, jj))
-    list(position = position, normal = normal, colour = colour[c(cap$rows, rep(cap$rows, each = sides)), , drop = FALSE],
-      index = index)
-  })
-  pieces <- c(list(list(position = body$position, normal = body$direction,
-    colour = colour[rep(seq_len(n), each = sides), , drop = FALSE], index = side)), caps)
-  shift <- cumsum(c(0L, vapply(pieces, function(p) nrow(p$position), integer(1))))
-  index <- do.call(cbind, Map(function(p, k) p$index + k, pieces, head(shift, -1L)))
+export_join_soups_3d <- function(soups) {
+  soups <- Filter(Negate(is.null), soups)
+  if (!length(soups)) return(NULL)
+  shift <- cumsum(c(0L, vapply(soups, function(s) nrow(s$position), integer(1))))
+  index <- do.call(cbind, Map(function(s, k) s$index + k, soups, head(shift, -1L)))
   storage.mode(index) <- "integer"
-  list(position = do.call(rbind, lapply(pieces, `[[`, "position")),
-    normal = do.call(rbind, lapply(pieces, `[[`, "normal")),
-    colour = do.call(rbind, lapply(pieces, `[[`, "colour")),
-    index = index, lit = rep(FALSE, ncol(index)))
+  list(position = do.call(rbind, lapply(soups, `[[`, "position")),
+    normal = do.call(rbind, lapply(soups, `[[`, "normal")), colour = do.call(rbind, lapply(soups, `[[`, "colour")),
+    index = index, lit = unlist(lapply(soups, function(s) s$lit %or3d% rep(FALSE, ncol(s$index))), use.names = FALSE))
+}
+
+# Closed tubes share the rotation-minimising sweep and cap geometry.
+export_tubes_3d <- function(paths, sides = 8L) {
+  pieces <- lapply(seq_along(paths$radius), function(i) {
+    xyz <- paths$position[paths$path == i, , drop = FALSE]
+    if (nrow(xyz) < 2L) return(NULL)
+    same <- c(FALSE, rowSums(abs(diff(xyz))) == 0)
+    xyz <- xyz[!same, , drop = FALSE]
+    if (nrow(xyz) < 2L) return(NULL)
+    closed <- nrow(xyz) >= 4L && all(xyz[1L, ] == xyz[nrow(xyz), ])
+    data <- curve_points_3d(stats::setNames(as.data.frame(xyz), c("x", "y", "z")), closed)
+    surface <- sweep_surface_3d(data, rep(paths$radius[i], nrow(data)), rep(0, nrow(data)),
+      sweep_profile_3d(NULL, sides, NULL), closed, "flat", NULL)
+    export_soup_3d(as.matrix(surface[c("x", "y", "z")]), matrix(seq_len(nrow(surface)), 3L),
+      paths$colour[rep(i, nrow(surface)), , drop = FALSE], FALSE)
+  })
+  export_join_soups_3d(pieces)
 }
 
 export_unit_rows_3d <- function(x) {
@@ -546,13 +521,7 @@ export_solids_3d <- function(markers) {
       index = template$index[, rep(seq_len(ncol(template$index)), length(rows)), drop = FALSE] +
         rep((seq_along(rows) - 1L) * nv, each = length(template$index)))
   })
-  shift <- cumsum(c(0L, vapply(pieces, function(p) nrow(p$position), integer(1))))
-  index <- do.call(cbind, Map(function(p, k) p$index + k, pieces, head(shift, -1L)))
-  storage.mode(index) <- "integer"
-  list(position = do.call(rbind, lapply(pieces, `[[`, "position")),
-    normal = do.call(rbind, lapply(pieces, `[[`, "normal")),
-    colour = do.call(rbind, lapply(pieces, `[[`, "colour")),
-    index = index, lit = rep(FALSE, ncol(index)))
+  export_join_soups_3d(pieces)
 }
 
 # All primitives of a scene merged into one indexed mesh in the z-up frame,

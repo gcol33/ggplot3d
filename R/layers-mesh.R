@@ -268,6 +268,7 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
 }
 
 emit_mesh_3d <- function(data, params, panel_params) {
+  params$.vertex_key <- vertex_identity_3d(data, c(".mesh", ".vertex", "x", "y", "z"))
   valid <- valid_rows_3d(data, params)
   rows <- order(data$.mesh, data$.face, data$.corner)
   first <- c(TRUE, diff(data$.mesh[rows]) != 0L | diff(data$.face[rows]) != 0L)

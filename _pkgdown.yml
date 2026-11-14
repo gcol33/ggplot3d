@@ -258,6 +258,7 @@ reference:
 - title: Export to 3D software
   contents:
   - export_3d
+  - print_3d
   - rgl-bridge-3d
   - as_rayrender_3d
 - title: Mesh input and extension API

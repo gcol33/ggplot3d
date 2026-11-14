@@ -207,7 +207,7 @@ test_that("deferred screen-sized glyphs export their resolved meshes", {
 
 test_that("export and animation arguments are checked", {
   p <- export_surface_plot()
-  expect_error(export_3d(p, tempfile(fileext = ".xyz")), "file must end in .glb, .gltf, .obj, .ply, .stl")
+  expect_error(export_3d(p, tempfile(fileext = ".xyz")), "file must end in .3mf, .glb, .gltf, .obj, .ply, .stl")
   expect_error(export_3d(p, tempfile(fileext = ".stl"), lines = "line"), "STL files hold triangles only")
   expect_error(export_3d(p, tempfile(fileext = ".glb"), size = 0), "size must be a positive finite number")
   expect_error(export_3d(p, tempfile(fileext = ".glb"), panel = 2), "panel is outside the plot layout")

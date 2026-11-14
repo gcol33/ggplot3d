@@ -356,6 +356,14 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL, sheets = NULL) 
   list(styles = styles, opacity = opacity, index = index)
 }
 
+vertex_identity_3d <- function(data, columns) {
+  if (!nrow(data)) return(integer())
+  values <- data[columns]
+  order <- do.call(order, c(values, list(method = "radix")))
+  id <- integer(nrow(data));id[order] <- cumsum(!duplicated(values[order, , drop = FALSE]))
+  id
+}
+
 packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id, counts) {
   if (!length(primitives)) return(new_scene_packet(panel_id = panel_id))
   offsets <- cumsum(c(1L, counts[-length(counts)]))
@@ -391,6 +399,12 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
   vertices <- lapply(data[used, c("x", "y", "z"), drop = FALSE], as.double)
   corners <- list(vertex = match(primitives, used),
                   source_row = as.integer(data$.source[primitives]))
+  if (!is.null(params$.vertex_key)) {
+    key <- params$.vertex_key[used]
+    representatives <- !duplicated(key)
+    vertices <- lapply(data[used[representatives], c("x", "y", "z"), drop = FALSE], as.double)
+    corners$vertex <- match(params$.vertex_key[primitives], key[representatives])
+  }
   tables <- list()
   for (kind in unique(kinds)) {
     i <- which(kinds == kind)

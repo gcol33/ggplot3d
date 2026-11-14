@@ -258,3 +258,37 @@ The PRC setting requests embedded 3D content in PDF. Compile with
 ocgx2. A PDF reader with PRC support supplies the interactive view.
 For a static PDF or ordinary SVG through an R graphics device, use
 [Output backends](backends.html).
+## 3D printing
+
+`print_3d()` maps the panel box into a physical bounding box in millimetres,
+keeping its aspect. Tube widths, marker sizes, shell thicknesses and the base
+plate are applied in millimetres after scaling. Open surfaces can become
+normal-offset shells or close vertically onto the base. Layer overrides use
+the exported layer names, such as `c(layer1_surface = "base")`.
+
+```{r printing, eval=FALSE}
+settings <- print_3d(size_mm = c(100, 100, 60), min_mm = 0.8,
+  shell_mm = 1.2, base_mm = 2, text = "raised", furniture = c("base", "axes"))
+export_3d(p, "cars.stl", print = settings)
+export_3d(p, "cars.3mf", print = settings)
+```
+
+Printing uses Python with `manifold3d` and `numpy` for Boolean union. Install
+these modules with `python -m pip install manifold3d numpy`, then set
+`GGPLOT3D_PYTHON` or pass the executable as `print_3d(python = )`. Manifold
+provides mesh union and property propagation; native checks validate edge
+incidence, closure, winding and self-intersection and identify failing layers.
+Disconnected closed components share one exported model object.
+
+Character labels use font outlines extruded on backing plaques. Raised labels
+project from the plaque; engraved labels cut into it. `text = "none"` omits
+labels. Axis geometry follows the plot's in-plane guide layout. Furniture and
+text can extend beyond the panel bounding box, so check the full model bounds
+in the slicer before printing.
+
+Binary STL stores geometry. 3MF stores millimetre units and triangle colours
+using the 3MF Materials and Properties colour-group extension. Import and
+re-export checks with PrusaSlicer 2.9.7 and Bambu Studio 2.9.1.70 preserved the
+test model's geometry and omitted its standard colour groups. Assigning these
+colours to printer filaments requires support in the target slicer; vendor
+paint formats are separate extensions.

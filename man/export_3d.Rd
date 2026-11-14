@@ -14,14 +14,15 @@ export_3d(
   size = 1,
   width = 640L,
   height = 640L,
-  dpi = 96
+  dpi = 96,
+  print = NULL
 )
 }
 \arguments{
 \item{plot}{A ggplot with \code{\link[=coord_3d]{coord_3d()}}.}
 
 \item{file}{Output path. Its extension selects the format: \code{.glb},
-\code{.gltf}, \code{.ply}, \code{.obj} or \code{.stl}.}
+\code{.gltf}, \code{.ply}, \code{.obj}, \code{.stl} or \verb{.3mf}.}
 
 \item{panel}{Panel index in layout order, default 1.}
 
@@ -43,6 +44,9 @@ default 640 each. Tubes and solids keep the size relative to the box that
 lines and points have in a plot of this size.}
 
 \item{dpi}{Device resolution, default 96 dots per inch.}
+
+\item{print}{Optional \code{\link[=print_3d]{print_3d()}} specification for closed millimetre solids
+in STL or 3MF output.}
 }
 \value{
 \code{file}, invisibly.
@@ -78,7 +82,8 @@ distinct colour; its vertical axis is +y, as OBJ importers expect. PLY and
 STL keep the vertical axis of the plot as +z. STL holds triangles only, so
 it requires \code{lines = "tube"} and \code{points = "mesh"}.
 
-Text is not written, and dashed lines are written solid.
+Ordinary model exports omit text and write dashed lines solid. Printing
+exports include extruded text according to \code{\link[=print_3d]{print_3d()}}.
 }
 \examples{
 d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))

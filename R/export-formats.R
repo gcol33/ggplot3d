@@ -1,6 +1,6 @@
 register_exporter_3d("ply", function(frames, file, options, fps) write_ply_3d(frames[[1L]], file, options))
 register_exporter_3d("obj", function(frames, file, options, fps) write_obj_3d(frames[[1L]], file, options))
-register_exporter_3d("stl", function(frames, file, options, fps) write_stl_3d(frames[[1L]], file, options), triangles = TRUE)
+register_exporter_3d("stl", function(frames, file, options, fps) write_stl_3d(frames[[1L]], file, options), triangles = TRUE, printing = TRUE)
 
 float_bytes_3d <- function(x) writeBin(as.double(x), raw(), size = 4L, endian = "little")
 int_bytes_3d <- function(x) writeBin(as.integer(x), raw(), size = 4L, endian = "little")
