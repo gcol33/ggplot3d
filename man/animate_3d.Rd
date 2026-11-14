@@ -150,6 +150,7 @@ data per frame. Projection, visibility and lighting are evaluated per frame.
 \details{
 Framing is "azimuth" when only the azimuth and zoom change, and
 "sphere" otherwise. Axis reserves and physical panel extents are fixed.
+Inside views keep the eye at the observer as the camera angles change.
 Zoom remains an explicit magnification. Optional packages are checked
 before rendering. Rendering streams frames to disk. A fixed scene is built
 once; with \code{time}, each frame is built from its subset with the scale

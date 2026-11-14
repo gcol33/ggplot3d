@@ -19,6 +19,7 @@ inside_coord_3d <- function(coord) {
     view_camera=function(self,view) inside_camera_3d(ggplot2::ggproto_parent(Coord3D,self)$view_camera(view)))
   coord$cameras <- lapply(coord$cameras,inside_camera_3d)
   coord$camera <- coord$cameras[[1L]]
+  coord$config$camera_transform <- inside_camera_3d
   coord$config$frame <- "sphere"
   coord
 }

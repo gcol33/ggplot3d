@@ -1,5 +1,8 @@
 # ggplot3d 0.0.0.9000
 
+* Inside-view animations retain sphere framing and rotate the camera about
+  the observer's fixed eye, including angle tracks and orbit paths (#15).
+
 * Vector texture lighting uses colour-correct multiply and screen groups for
   coloured light and specular highlights, with continuous images across each
   face run. Devices with limited compositing support use hybrid rendering (#64).

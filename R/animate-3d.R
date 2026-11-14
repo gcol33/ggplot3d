@@ -95,6 +95,7 @@
 #'   output). PNG frames returned with file = NULL belong to the caller.
 #' @details Framing is "azimuth" when only the azimuth and zoom change, and
 #'   "sphere" otherwise. Axis reserves and physical panel extents are fixed.
+#'   Inside views keep the eye at the observer as the camera angles change.
 #'   Zoom remains an explicit magnification. Optional packages are checked
 #'   before rendering. Rendering streams frames to disk. A fixed scene is built
 #'   once; with `time`, each frame is built from its subset with the scale
@@ -199,7 +200,6 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     steps <- motion_track_steps_3d(coord, list(azimuth = if (is.null(azimuth) && is.null(time) && is.null(isometry) && is.null(tour))
       coord$camera$azimuth + 360 * (seq_len(frames) - 1) / frames else azimuth,
       elevation = elevation, zoom = zoom, roll = roll), frames, times)
-    cameras <- lapply(steps, motion_camera_3d, base = coord$camera)
   }
   start <- proc.time()[["elapsed"]]
   directory <- tempfile("ggplot3d-frames-")
@@ -226,8 +226,8 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     frames <- length(sampled$times)
     times <- sampled$times
     steps <- sampled$steps
-    cameras <- lapply(steps, motion_camera_3d, base = coord$camera)
   }
+  cameras <- lapply(steps, motion_camera_3d, base = coord$camera, transform = coord$config$camera_transform)
   tour_state <- NULL
   if (!is.null(tour)) {
     if (!is.null(time) || !is.null(tween) || !is.null(trail)) stop("A grand tour requires static input data.", call. = FALSE)
@@ -247,7 +247,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     keyframes = keyframes, schedule = schedule, tween = tween,
     trail = trail, trail_layers = if (!is.null(trail)) motion_trail_layers_3d(plot, time, trail),
     trail_history = new.env(parent = emptyenv()),
-    cameras = cameras, base = coord$camera, backend = backend, frame = motion_frame_mode_3d(steps),
+    cameras = cameras, base = coord$camera, backend = backend, frame = motion_frame_mode_3d(steps, coord$config$frame),
     device = output$device, per_file = output$kind != "pages", paths = paths, frames = frames,
     width = width, height = height, dpi = dpi, label_state = new.env(parent = emptyenv()),
     stable_partition = stable_partition,
@@ -299,7 +299,8 @@ motion_camera_table_3d <- function(cameras, times) {
     distance = distance, target_x = targets[, 1L], target_y = targets[, 2L], target_z = targets[, 3L])
 }
 
-motion_frame_mode_3d <- function(steps) {
+motion_frame_mode_3d <- function(steps, frame = NULL) {
+  if (identical(frame, "sphere")) return("sphere")
   fixed <- c("elevation", "roll", "projection", "distance", "fov", "target", "shear")
   same <- vapply(fixed, function(key) {
     all(vapply(steps, function(step) identical(step[[key]], steps[[1L]][[key]]), logical(1)))
@@ -317,7 +318,7 @@ motion_workers_3d <- function(workers) {
 motion_path_context_3d <- function(camera, params, ratio) {
   list(camera = camera, ratio = ratio,
     to_box = function(points) motion_data_to_box_3d(points, params),
-    validate = function(values) motion_camera_3d(values, camera))
+    validate = function(values) motion_camera_3d(values, camera, params$coord_params$camera_transform))
 }
 
 # Data coordinates to the unit box of a panel: the scale transformation, the
@@ -356,7 +357,7 @@ motion_ratio_3d <- function(built, camera, backend) {
 motion_panel_grob_3d <- function(panel, camera, base, backend, frame, registry, label_state = NULL,
                                  stable_partition = FALSE) {
   params <- panel$panel_params
-  params$camera <- motion_panel_camera_3d(camera, params$camera, base)
+  params$camera <- motion_panel_camera_3d(camera, params$camera, base, params$coord_params$camera_transform)
   params$coord_params$backend <- backend
   params$coord_params$frame <- frame
   params$coord_params$frame_registry <- registry
@@ -548,13 +549,14 @@ motion_plot_coord_3d <- function(plot) {
 }
 
 # Camera of a frame: the coord's camera with the frame's values.
-motion_camera_3d <- function(values, base) {
+motion_camera_3d <- function(values, base, transform = NULL) {
   camera <- unclass(base)
   for (key in names(values)) camera[[key]] <- values[[key]]
   for (key in c("distance", "near", "far")) {
     if (is.na(camera[[key]])) camera[key] <- list(NULL)
   }
-  do.call(new_camera_3d, camera)
+  camera <- do.call(new_camera_3d, camera)
+  if (is.null(transform)) camera else transform(camera)
 }
 
 # A panel with its own view moves with the animated camera and keeps its
@@ -563,7 +565,7 @@ motion_camera_3d <- function(values, base) {
 # field of view, clipping planes and shear), target or vertical axis is set by
 # its own view keeps it; where it shares the coord's value, it follows the
 # animated camera, as a camera path moves these too.
-motion_panel_camera_3d <- function(camera, panel, base) {
+motion_panel_camera_3d <- function(camera, panel, base, transform = NULL) {
   out <- panel
   out$azimuth <- panel$azimuth + camera$azimuth - base$azimuth
   out$elevation <- max(-90, min(90, panel$elevation + camera$elevation - base$elevation))
@@ -574,7 +576,7 @@ motion_panel_camera_3d <- function(camera, panel, base) {
     shared <- all(vapply(keys, function(key) identical(panel[[key]], base[[key]]), logical(1)))
     if (shared) out[keys] <- unclass(camera)[keys]
   }
-  out
+  if (is.null(transform)) out else transform(out)
 }
 
 motion_panels_3d <- function(grob) {
