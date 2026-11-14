@@ -45,14 +45,14 @@ struct Texture {
     return l.at(static_cast<int>(std::floor(u*l.width)),static_cast<int>(std::floor((1-v)*l.height)));
   }
   // Sample at (u, v) where one canvas sample spans `footprint` level-0
-  // texels: bilinear under magnification (nearest for sharp pixels), and
-  // trilinear between the two mipmap levels around log2(footprint) under
-  // minification.
+  // texels: nearest at level zero for sharp pixels, otherwise bilinear under
+  // magnification and trilinear around log2(footprint) under minification.
   Texel sample(double u,double v,double footprint) const {
     if(!(u>=0 && u<=1 && v>=0 && v<=1)) return Texel{0,0,0,0};
+    if(!interpolate) return nearest(0,u,v);
     double lod=footprint>0 && std::isfinite(footprint) ? std::log2(footprint):0;
     const int last=static_cast<int>(levels.size())-1;
-    if(lod<=0 || last==0) return interpolate ? bilinear(0,u,v):nearest(0,u,v);
+    if(lod<=0 || last==0) return bilinear(0,u,v);
     lod=std::min(lod,static_cast<double>(last));
     int lower=static_cast<int>(std::floor(lod));
     double t=lod-lower;

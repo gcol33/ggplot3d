@@ -44,18 +44,6 @@ makeContent.scene_panel_grob <- function(x) {
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
   furniture <- shadow_furniture_3d(furniture, x$packets, x$panel_params)
   x$packets <- depth_cue_packets_3d(x$packets, x$panel_params, furniture$camera, furniture$viewport, x$theme)
-  if (backend$type %in% c("vector", "hybrid")) {
-    image <- texture_hybrid_packets_3d(x$packets, x$panel_params$coord_params$light)
-    if (any(image)) {
-      for (i in which(image)) x$packets[[i]]$styles$raster <- TRUE
-      if (backend$type == "vector") {
-        backend$type <- "hybrid"
-        backend$dpi <- furniture$viewport$dpi
-        backend$rasterise <- "marked"
-      }
-    }
-  }
-
   if (!is.null(x$panel_params$coord_params$light$ao) && !backend$type %in% c("pathtrace", "plotter")) {
     light <- x$panel_params$coord_params$light
     x$panel_params$coord_params$light <- ambient_light_3d(
@@ -807,8 +795,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       drawn <- quadric_run_grob_3d(scene, rows, quadric_info, styles, light, c(rows, underlay[[run]]))
       g <- drawn$grob; clip <- drawn$clip
     } else if (kind == 1L && textured[rows[1L]]) {
-      g <- textured_faces_grob_3d(scene, rows, s, f$opacity[rows], uv, textures$textures[[textures$index[rows[1L]]]],
-        viewport, caps, paste0("scene-run-", run), light)
+      g <- texture_lighting_grob_3d(scene, rows, viewport, light, paste0("scene-run-", run))
       if (any(!is.na(s$colour))) {
         outline <- material_gp_3d(s, f$opacity[rows], 1L); outline$fill <- NA
         id <- rep(seq_along(counts), counts)

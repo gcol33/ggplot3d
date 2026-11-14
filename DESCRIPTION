@@ -61,6 +61,7 @@ Suggests:
     MASS,
     mgcv,
     patchwork,
+    pdftools,
     pkgload,
     png,
     ragg,
@@ -93,7 +94,6 @@ Collate:
     'backend-raymarch.R'
     'backend-shading.R'
     'backend-texture-lighting.R'
-    'backend-texture.R'
     'backend-thurston.R'
     'base64.R'
     'binned-faces.R'

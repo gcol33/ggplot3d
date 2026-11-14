@@ -4,6 +4,11 @@
   scalar iso-lines. Each piece carries one band colour, with smooth normals
   shared across the cuts in vector, raster and interactive output.
 
+* Static texture backends share perspective-correct sampling across triangle
+  edges. Opaque vector textures use one supersampled image per face run at
+  300 dpi or the device resolution. Nearest-neighbour sampling keeps the
+  original texels under minification, preserving crisp boundaries on narrow faces.
+
 * `geom_mesh_3d()` and `geom_surface_3d()` accept colours given per vertex,
   such as `fill = I(hex)`, with `shading = "smooth"` and interpolate them
   across each face in linear light, as `stat_hull_3d()` does. A fill that

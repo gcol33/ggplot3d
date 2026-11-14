@@ -23,7 +23,9 @@ texture_lighting_case <- function(material, light, smooth = FALSE, triangles = F
 
 texture_lighting_compare <- function(case, camera = new_camera_3d(elevation = 90, azimuth = -90)) {
   viewport <- new_scene_viewport(40, 40, dpi = 100 * 25.4 / 40)
-  reference <- raster_scene_3d(case$packet, camera, viewport, 1L, case$light)$image
+  reference_path <- texture_reference_png(case$packet, camera, viewport, 100L, case$light, blend = "srgb")
+  on.exit(unlink(reference_path), add = TRUE)
+  reference <- png::readPNG(reference_path, native = TRUE)
   path <- tempfile(fileext = ".png")
   on.exit(unlink(path))
   ragg::agg_png(path, 100, 100, res = viewport$dpi, background = "transparent")
@@ -33,7 +35,7 @@ texture_lighting_compare <- function(case, camera = new_camera_3d(elevation = 90
   vector <- image_channels(path)
   raster <- image_channels(reference)
   at <- expand.grid(row = 5:96, col = 5:96)
-  alpha <- matrix(texture_alpha_3d(reference), nrow(reference), byrow = TRUE)
+  alpha <- round(png::readPNG(reference_path)[, , 4L] * 255)
   inside <- rep(TRUE, nrow(at))
   for (dy in -2:2) for (dx in -2:2)
     inside <- inside & alpha[cbind(at$row + dy, at$col + dx)] == 255L
@@ -68,7 +70,7 @@ test_that("one lighting group spans a triangulated face run without hairlines", 
   painted <- texture_lighting_compare(case)
   expect_lte(max(abs(painted$vector[30:70, 30:70, ] - painted$raster[30:70, 30:70, ])), 3)
   run <- painted$grob$children[[1L]]
-  expect_identical(run$texture_lighting, "multiply-screen")
+  expect_identical(run$texture_lighting, "sampled")
 })
 
 test_that("textured lighting retains canonical attributes with ambient occlusion", {
@@ -110,7 +112,9 @@ test_that("split texture runs paint only their own source fragments", {
     kinds <- scene$fragments$kind[scene$draw_order]
     expect_gte(sum(diff(c(FALSE, kinds == 1L, FALSE)) == 1L), 2L)
     # R graphics composites separate runs in encoded sRGB.
-    reference <- raster_scene_3d(packet, camera, viewport, 1L, light, blend = "srgb")$image
+    reference_path <- texture_reference_png(packet, camera, viewport, pixels, light, blend = "srgb")
+    on.exit(unlink(reference_path), add = TRUE)
+    reference <- png::readPNG(reference_path, native = TRUE)
     expect_equal(ncol(reference), pixels)
     path <- tempfile(fileext = ".png")
     on.exit(unlink(path), add = TRUE)
@@ -118,14 +122,16 @@ test_that("split texture runs paint only their own source fragments", {
     grid::grid.draw(render_scene_grid(scene, viewport, light = light))
     grDevices::dev.off()
     vector <- png::readPNG(path)
-    alpha <- matrix(texture_alpha_3d(reference), nrow(reference), byrow = TRUE)
+    alpha <- round(png::readPNG(reference_path)[, , 4L] * 255)
     expect_lte(max(abs(round(vector[32:43, 32:68, 4L] * 255) - alpha[32:43, 32:68])), 1)
     expect_lte(max(abs(image_channels(path)[32:43, 32:68, ] - image_channels(reference)[32:43, 32:68, ])), 3)
   }
 })
 
-test_that("missing texture blend operators use the hybrid panel and keep labels last", {
+test_that("sampled textures keep labels last without graphics groups", {
   skip_if_not_installed("ragg")
+  caps <- grid_capabilities_3d()
+  caps$group_over <- caps$group_atop <- caps$masks <- FALSE
   testthat::with_mocked_bindings({
     d <- data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1), label = c("a", "b"))
     p <- ggplot2::ggplot(expand.grid(x = 0:1, y = 0:1), ggplot2::aes(x, y, z = 0)) +
@@ -138,9 +144,9 @@ test_that("missing texture blend operators use the hybrid panel and keep labels 
     grid::grid.draw(forced)
     grDevices::dev.off()
     panel <- motion_panels_3d(forced)[[1L]]
-    expect_true(any(grepl("scene-hybrid-3d", names(panel$children), fixed = TRUE)))
+    expect_true(any(grepl("scene-raster-image-3d", grid::grid.ls(forced, print = FALSE)$name, fixed = TRUE)))
     order <- panel$scene$fragments$kind[panel$scene$draw_order]
     expect_true(any(order == 4L))
     expect_true(all(tail(order, sum(order == 4L)) == 4L))
-  }, texture_lighting_device_ok_3d = function(...) FALSE)
+  }, grid_capabilities_3d = function(...) caps)
 })

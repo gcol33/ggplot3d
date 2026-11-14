@@ -39,17 +39,6 @@ test_that("a textured checkerboard matches the geometric one under perspective",
   expect_lte(mean(abs(vector[, , 1L][both] - raster[, , 1L][both]) > 8), 0.002)
 })
 
-test_that("vector textures split triangles under perspective only", {
-  P <- list(rbind(c(0, 0)), rbind(c(40, 0)), rbind(c(0, 40)))
-  UV <- list(rbind(c(0, 0)), rbind(c(1, 0)), rbind(c(0, 1)))
-  flat <- subdivide_texture_triangles_3d(P, UV, list(1, 1, 1), 0.05)
-  expect_identical(nrow(flat$P[[1L]]), 1L)
-  deep <- subdivide_texture_triangles_3d(P, UV, list(1, 0.25, 1), 0.05)
-  expect_gt(nrow(deep$P[[1L]]), 16L)
-  A <- texture_affine_3d(deep$P, deep$UV)
-  expect_true(all(is.finite(A)))
-})
-
 test_that("raster textures are bilinear in linear light and mipmapped when minified", {
   ramp <- texture_3d(matrix(c("black", "white"), 1L))
   packet <- texture_square_packet(ramp)
@@ -58,7 +47,7 @@ test_that("raster textures are bilinear in linear light and mipmapped when minif
   expect_equal(img[50, 50, 1L], round(255 * (1.055 * 0.5^(1 / 2.4) - 0.055)), tolerance = 2)
   expect_equal(img[50, 28, 1L], 0)
   expect_equal(img[50, 72, 1L], 255)
-  fine <- texture_square_packet(texture_3d(checker_colours(256L), interpolate = FALSE))
+  fine <- texture_square_packet(texture_3d(checker_colours(256L), interpolate = TRUE))
   small <- image_channels(raster_scene_3d(fine, texture_top_camera(), viewport, 1L)$image)[30:70, 30:70, 1L]
   expect_lt(stats::sd(small), 3)
   expect_equal(mean(small), 255 * (1.055 * 0.5^(1 / 2.4) - 0.055), tolerance = 0.02)
