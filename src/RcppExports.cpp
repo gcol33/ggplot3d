@@ -627,15 +627,18 @@ BEGIN_RCPP
 END_RCPP
 }
 // shade_cpp
-Rcpp::NumericMatrix shade_cpp(Rcpp::NumericMatrix normal, Rcpp::NumericMatrix toward, Rcpp::NumericMatrix base, Rcpp::List light);
-RcppExport SEXP _ggplot3d_shade_cpp(SEXP normalSEXP, SEXP towardSEXP, SEXP baseSEXP, SEXP lightSEXP) {
+Rcpp::NumericMatrix shade_cpp(Rcpp::NumericMatrix normal, Rcpp::NumericMatrix position, Rcpp::NumericMatrix base, Rcpp::IntegerVector material, Rcpp::List materials, Rcpp::List lights, Rcpp::List view);
+RcppExport SEXP _ggplot3d_shade_cpp(SEXP normalSEXP, SEXP positionSEXP, SEXP baseSEXP, SEXP materialSEXP, SEXP materialsSEXP, SEXP lightsSEXP, SEXP viewSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type normal(normalSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type toward(towardSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type position(positionSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type base(baseSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type light(lightSEXP);
-    rcpp_result_gen = Rcpp::wrap(shade_cpp(normal, toward, base, light));
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type material(materialSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type materials(materialsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type lights(lightsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type view(viewSEXP);
+    rcpp_result_gen = Rcpp::wrap(shade_cpp(normal, position, base, material, materials, lights, view));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -648,6 +651,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type brightness(brightnessSEXP);
     Rcpp::traits::input_parameter< bool >::type multiply(multiplySEXP);
     rcpp_result_gen = Rcpp::wrap(shade_transfer_cpp(linear, brightness, multiply));
+    return rcpp_result_gen;
+END_RCPP
+}
+// shade_glsl_cpp
+std::string shade_glsl_cpp(int max_lights);
+RcppExport SEXP _ggplot3d_shade_glsl_cpp(SEXP max_lightsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< int >::type max_lights(max_lightsSEXP);
+    rcpp_result_gen = Rcpp::wrap(shade_glsl_cpp(max_lights));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -743,8 +756,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_poisson_cpp", (DL_FUNC) &_ggplot3d_geometry_poisson_cpp, 7},
     {"_ggplot3d_repel_labels_cpp", (DL_FUNC) &_ggplot3d_repel_labels_cpp, 14},
     {"_ggplot3d_geometry_section_mesh_cpp", (DL_FUNC) &_ggplot3d_geometry_section_mesh_cpp, 3},
-    {"_ggplot3d_shade_cpp", (DL_FUNC) &_ggplot3d_shade_cpp, 4},
+    {"_ggplot3d_shade_cpp", (DL_FUNC) &_ggplot3d_shade_cpp, 7},
     {"_ggplot3d_shade_transfer_cpp", (DL_FUNC) &_ggplot3d_shade_transfer_cpp, 3},
+    {"_ggplot3d_shade_glsl_cpp", (DL_FUNC) &_ggplot3d_shade_glsl_cpp, 1},
     {"_ggplot3d_streamlines_cpp", (DL_FUNC) &_ggplot3d_streamlines_cpp, 12},
     {"_ggplot3d_sweep_frames_cpp", (DL_FUNC) &_ggplot3d_sweep_frames_cpp, 3},
     {"_ggplot3d_voxel_faces_cpp", (DL_FUNC) &_ggplot3d_voxel_faces_cpp, 4},

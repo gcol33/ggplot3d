@@ -181,7 +181,7 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
 }
 
 # Drawing parameters of the geoms that draw triangulated surfaces.
-surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat")
+surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat", material = NULL)
 
 shading_mode_3d <- function(shading) {
   if (!is.character(shading) || length(shading) != 1L || !(shading %in% c("flat", "smooth")))
@@ -462,6 +462,7 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     }
   }
   material <- styles_3d(data, rows, kinds, params, normals, sheets)
+  if (!is.null(params$material)) material$styles$material_id <- 1L
   used <- which(tabulate(primitives, nrow(data)) > 0L)
   vertices <- lapply(data[used, c("x", "y", "z"), drop = FALSE], as.double)
   if (!is.null(data$.w)) vertices$w <- as.double(data$.w[used])
@@ -513,7 +514,8 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     tables$footprint_vertices <- footprints$vertices
   }
   packet <- do.call(new_scene_packet, c(list(vertices = vertices, corners = corners), tables,
-                             list(styles = material$styles, panel_id = panel_id)))
+                             list(styles = material$styles, panel_id = panel_id,
+                                  materials = material_table_3d(params$material))))
   if (space_mapped) {
     attr(packet, "space_mapped") <- TRUE
     attr(packet, "model_space") <- TRUE
@@ -616,6 +618,8 @@ merge_scene_packets <- function(packets, panel_id) {
   scene_assert(all(totals <= .Machine$integer.max), "merged packet exceeds integer index capacity")
   shifts <- sizes
   for (key in rownames(sizes)) shifts[key, ] <- c(0, head(cumsum(sizes[key, ]), -1L))
+  material_count <- vapply(packets, function(p) nrow(p$materials), integer(1))
+  material_shift <- c(0L, head(cumsum(material_count), -1L))
   for (j in seq_along(packets)) {
     packet <- packets[[j]]
     shift <- shifts[, j]
@@ -637,6 +641,7 @@ merge_scene_packets <- function(packets, panel_id) {
     quadric$style_id <- as.integer(quadric$style_id + shift[["style"]])
     packet$quadrics <- quadric
     packet$styles$style_id <- as.integer(packet$styles$style_id + shift[["style"]])
+    if (!is.null(packet$styles$material_id)) packet$styles$material_id <- as.integer(packet$styles$material_id + material_shift[j])
     packets[[j]] <- packet
   }
   # An optional column supplied by some packets is NA (not supplied) in the others.
@@ -667,10 +672,19 @@ merge_scene_packets <- function(packets, panel_id) {
   material <- structure(material, class = "data.frame", row.names = .set_row_names(as.integer(totals[["style"]])))
   result <- c(list(schema_version = scene_schema_version, panel_id = as.integer(panel_id),
                    style_count = as.integer(totals[["style"]])), tables,
-              list(styles = material))
+              list(styles = material, materials = merge_materials_3d(packets)))
   class(result) <- "ggplot3d_scene_packet"
   validate_scene_packet(result)
   result
+}
+
+merge_materials_3d <- function(packets) {
+  tables <- Filter(nrow, lapply(packets, `[[`, "materials"))
+  if (!length(tables)) return(data.frame(material_id = integer()))
+  out <- do.call(rbind, tables)
+  out$material_id <- seq_len(nrow(out))
+  rownames(out) <- NULL
+  out
 }
 
 collect_scene_layers <- function(panel, panel_params, theme) {

@@ -188,7 +188,8 @@ svg_scene_3d <- function(panel, layers, prefix, interactive) {
   fills <- style_value_3d(scene$styles[f$style_id, , drop = FALSE], "fill", NA_character_)
   shaded <- which(style_value_3d(scene$styles[f$style_id, , drop = FALSE], "shade", FALSE) %in% TRUE & f$kind == 1L)
   if (length(shaded)) fills[shaded] <- shade_fill_3d(fills[shaded], f, shaded, scene$camera,
-    panel$panel_params$coord_params$light, scene$styles[f$style_id[shaded], , drop = FALSE])
+    panel_lights_3d(panel$panel_params$coord_params$light, panel$panel_params),
+    scene$styles[f$style_id[shaded], , drop = FALSE], fragment_centres_3d(scene, shaded), scene$materials)
   definitions <- character(); commands <- character()
   for (run in seq_along(runs)) {
     rows <- runs[[run]]; first <- rows[1L]; mask <- NULL

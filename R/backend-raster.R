@@ -20,11 +20,13 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
         lit <- !is.null(light) & style_value_3d(styles, "shade", FALSE) %in% TRUE
         smooth <- list(base = linear_rgb_3d(colour),
           lit = lit, normal = face_shading_normals_3d(fragments, seq_along(colour), prepared$camera, styles),
-          light = if (!is.null(light)) resolved_light_3d(light, prepared$camera),
-          toward = view_toward_3d(prepared$camera))
+          material = material_index_3d(styles), materials = kernel_materials_3d(packet$materials),
+          lights = if (!is.null(light)) resolved_light_3d(light, prepared$camera),
+          view = kernel_view_3d(prepared$camera))
         smooth$normal[!is.finite(smooth$normal)] <- 0
       }
-      colour[shade] <- shade_fill_3d(colour[shade], fragments, shade, prepared$camera, light, styles[shade, , drop = FALSE])
+      colour[shade] <- shade_fill_3d(colour[shade], fragments, shade, prepared$camera, light, styles[shade, , drop = FALSE],
+        prepared$centres[shade, , drop = FALSE], packet$materials)
     }
     if (!length(colour)) return(matrix(numeric(), 4L, 0L))
     rgba <- colour_channels_3d(colour, alpha = TRUE) / 255
@@ -102,8 +104,12 @@ raster_traced_input_3d <- function(specs, camera, viewport, canvas, resolved, li
     base <- if (is.null(hit$colour)) {
       matrix(srgb_decode_3d(colour_channels_3d(spec$fill) / 255), length(take), 3L, byrow = TRUE)
     } else hit$colour[take, , drop = FALSE]
-    if (!identical(spec$mode, 1L) && !is.null(light))
-      base <- shade_linear_3d(base, unit, resolved, light)
+    if (!identical(spec$mode, 1L) && !is.null(light)) {
+      point <- rays$origin[take, , drop = FALSE] + rays$direction[take, , drop = FALSE] * hit$distance[take]
+      lo <- vapply(spec$ranges, `[`, numeric(1), 1L)
+      model <- sweep(sweep(sweep(point, 2L, lo), 2L, span, "/"), 2L, resolved$model_scale, "*")
+      base <- shade_linear_3d(base, unit, resolved, light, model)
+    }
     depth[take] <- z[take]; layer[take] <- j
     colour[take, ] <- pmin(pmax(base, 0), 1); normal[take, ] <- unit
   }
@@ -119,7 +125,7 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
                            id_pass = FALSE, buffers = FALSE, blend = "linear", traced = list(), edl = 0) {
   blend <- match.arg(blend, c("linear", "srgb"))
   validate_camera_3d(camera)
-  prepared <- raster_prepare_cpp(packet[names(packet) != "styles"], camera, viewport)
+  prepared <- raster_prepare_cpp(scene_engine_packet_3d(packet), camera, viewport)
   colours <- raster_colours_3d(packet, prepared, light, edl)
   line <- packet$polylines
   styles <- packet$styles[match(line$style_id, packet$styles$style_id), , drop = FALSE]

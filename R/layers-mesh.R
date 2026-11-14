@@ -254,7 +254,7 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, position = "identity", ...,
                          vertices = NULL, faces = NULL, shade = TRUE, wireframe = FALSE, hidden = "hide",
                          subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L, curvature = FALSE, crease = NULL,
-                         outline = NULL, alpha_mode = "face", shading = "flat", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                         outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.null(vertices) || !is.null(faces)) {
     if (!is.null(data) && !is.null(vertices)) stop("Supply data or vertices/faces.", call. = FALSE)
     data <- mesh_3d(vertices %or3d% data, faces)
@@ -263,7 +263,8 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
   make_layer_3d(GeomMesh3D, mapping, data, stat, position,
     c(list(shade = shade, wireframe = wireframe, hidden = hidden, subdivide = subdivide, remesh = remesh,
       decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, outline = outline,
-      alpha_mode = alpha_mode_3d(alpha_mode), shading = shading_mode_3d(shading), na.rm = na.rm), list(...)),
+      alpha_mode = alpha_mode_3d(alpha_mode), shading = shading_mode_3d(shading), material = material_argument_3d(material),
+      na.rm = na.rm), list(...)),
     show.legend, inherit.aes)
 }
 

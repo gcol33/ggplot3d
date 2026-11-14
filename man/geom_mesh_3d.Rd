@@ -24,6 +24,7 @@ geom_mesh_3d(
   outline = NULL,
   alpha_mode = "face",
   shading = "flat",
+  material = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -85,6 +86,10 @@ steepest. Gradients
 follow the sRGB curve through their stops within the same tolerance. The
 layers that draw surfaces (\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()}}, \code{\link[=geom_mesh_3d]{geom_mesh_3d()}} and
 others) accept it too.}
+
+\item{material}{Surface material from \code{\link[=material_3d]{material_3d()}}: ambient, diffuse
+and specular strengths, shininess and an optional back-side colour. NULL
+reflects ambient and diffuse light fully, with no highlight.}
 }
 \value{
 A ggplot2 layer.

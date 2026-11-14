@@ -105,7 +105,7 @@ PrimitiveTable read_common(const Rcpp::List& x, int minimum, int nc, int styles,
 ScenePacket read_packet(const Rcpp::List& x) {
   fields(x, {"schema_version", "panel_id", "style_count", "vertices", "corners",
              "faces", "polylines", "markers", "text", "quadrics", "footprints",
-             "footprint_vertices"});
+             "footprint_vertices"}, {"materials"});
   ScenePacket p;
   p.schema_version = integer_scalar(x, "schema_version");
   p.panel_id = integer_scalar(x, "panel_id");

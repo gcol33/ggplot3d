@@ -94,7 +94,8 @@ over the data without grid lines), or pane names \code{"xmin"} to \code{"zmax"}.
 
 \item{crs}{Target spatial coordinate reference system.}
 
-\item{light}{Lighting configuration or NULL.}
+\item{light}{Lighting from \code{\link[=light_3d]{light_3d()}} or \code{\link[=lights_3d]{lights_3d()}}, one light such as
+\code{\link[=light_point]{light_point()}}, or NULL for none.}
 
 \item{backend}{Backend configuration.}
 

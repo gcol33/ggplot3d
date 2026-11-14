@@ -25,7 +25,10 @@ light_3d(
 A lighting configuration for coord_3d().
 }
 \description{
-Lighting for a 3D scene
+One directional light with an ambient term: the shorthand for
+\code{lights_3d(light_directional(direction, space, intensity = diffuse), ambient = ambient, mode = mode)}. See \code{\link[=lights_3d]{lights_3d()}} for several lights,
+point, head and hemisphere lights, and \code{\link[=material_3d]{material_3d()}} for specular
+highlights.
 }
 \examples{
 light_3d(direction = c(1, 1, 2), space = "camera")

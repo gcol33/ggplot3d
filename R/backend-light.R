@@ -1,4 +1,4 @@
-utils::globalVariables(c("shade_cpp", "shade_transfer_cpp"))
+utils::globalVariables(c("shade_cpp", "shade_transfer_cpp", "shade_glsl_cpp"))
 
 colour_channels_3d <- function(colour, alpha = FALSE) {
   palette <- unique(colour)
@@ -24,8 +24,9 @@ encode_rgb_3d <- function(linear) {
   grDevices::rgb(rgb[, 1L], rgb[, 2L], rgb[, 3L])
 }
 
-# Unit model-space direction toward the light, for a camera with right, up
-# and forward axes and the model scale of the panel box.
+# Unit model-space direction toward the first directional light of a
+# lighting configuration (see lights_3d()), for a camera with right, up and
+# forward axes and the model scale of the panel box.
 light_vector_3d <- function(camera, light) {
   direction <- light$direction
   if (light$space == "camera") direction <- camera$right * direction[1L] + camera$up * direction[2L] - camera$forward * direction[3L]
@@ -33,14 +34,45 @@ light_vector_3d <- function(camera, light) {
   direction / sqrt(sum(direction^2))
 }
 
-# The light as the shading kernel reads it (src/shade/read.h).
-resolved_light_3d <- function(light, camera) {
-  list(direction = light_vector_3d(camera, light), ambient = light$ambient,
-       diffuse = light$diffuse, mode = light$mode)
-}
-
 # Unit direction from the scene toward a parallel viewer.
 view_toward_3d <- function(camera) -(camera$ray %or3d% camera$forward)
+
+# Whether a resolved camera projects in perspective: its projection matrix
+# divides by depth (last row (0, 0, 1, 0)).
+camera_perspective_3d <- function(camera) {
+  if (!is.null(camera$perspective)) return(isTRUE(camera$perspective))
+  !is.null(camera$projection) && camera$projection[4L, 4L] == 0
+}
+
+# The viewing direction as the shading kernel reads it.
+kernel_view_3d <- function(camera) {
+  list(perspective = camera_perspective_3d(camera), eye = as.double(camera$eye %or3d% c(0, 0, 0)),
+       toward = view_toward_3d(camera))
+}
+
+# The materials table of a packet as the shading kernel reads it, back
+# colours in linear light (NA for none).
+kernel_materials_3d <- function(materials) {
+  if (is.null(materials) || !nrow(materials)) {
+    return(list(ambient = numeric(), diffuse = numeric(), specular = numeric(), shininess = numeric(),
+                specular_colour = numeric(), back = matrix(numeric(), 0L, 3L)))
+  }
+  back <- matrix(NA_real_, nrow(materials), 3L)
+  given <- !is.na(materials$back)
+  if (any(given)) back[given, ] <- linear_rgb_3d(materials$back[given])
+  list(ambient = as.double(materials$ambient), diffuse = as.double(materials$diffuse),
+       specular = as.double(materials$specular), shininess = as.double(materials$shininess),
+       specular_colour = as.double(materials$specular_colour), back = back)
+}
+
+# Kernel material index of each style row: its material_id, 0 for none.
+material_index_3d <- function(styles) {
+  id <- styles$material_id
+  if (is.null(id)) return(integer(NROW(styles)))
+  id <- as.integer(id)
+  id[is.na(id)] <- 0L
+  id
+}
 
 # Unit model-space normals from normals in normalised panel coordinates: the
 # aspect scaling maps a normal by its inverse transpose.
@@ -50,16 +82,31 @@ model_normals_3d <- function(normal, camera) {
 }
 
 # Linear-light colours (rows) lit by the shading kernel at unit model-space
-# normals, seen from `toward` (one row, or one per colour).
-shade_linear_3d <- function(linear, normal, camera, light, toward = view_toward_3d(camera)) {
-  if (!nrow(linear)) return(linear)
-  shade_cpp(normal, matrix(toward, ncol = 3L), linear, resolved_light_3d(light, camera))
+# normals and model-space positions, with kernel material indices into the
+# packet's materials table.
+shade_linear_3d <- function(linear, normal, camera, light, position = NULL, material = NULL, materials = NULL) {
+  n <- nrow(linear)
+  if (!n) return(linear)
+  if (is.null(position)) position <- matrix(camera$eye + camera$distance * camera$ray, n, 3L, byrow = TRUE)
+  position[!is.finite(position)] <- 0
+  shade_cpp(normal, position, linear, as.integer(material %or3d% integer(n)), kernel_materials_3d(materials),
+            resolved_light_3d(light, camera), kernel_view_3d(camera))
 }
 
-shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL) {
+# Model-space centroids of compiled fragments `rows`.
+fragment_centres_3d <- function(scene, rows) {
+  f <- scene$fragments
+  counts <- f$count[rows]
+  index <- rep(f$offset[rows], counts) + sequence(counts) - 1L
+  xyz <- cbind(scene$vertices$x[index], scene$vertices$y[index], scene$vertices$z[index])
+  sweep(rowsum(xyz, rep(seq_along(rows), counts), reorder = FALSE) / counts, 2L, scene$camera$model_scale, "*")
+}
+
+shade_fill_3d <- function(fill, fragments, rows, camera, light, styles = NULL, position = NULL, materials = NULL) {
   if (is.null(light) || !length(rows)) return(fill)
   normal <- face_shading_normals_3d(fragments, rows, camera, styles)
-  result <- encode_rgb_3d(shade_linear_3d(linear_rgb_3d(fill), normal, camera, light))
+  result <- encode_rgb_3d(shade_linear_3d(linear_rgb_3d(fill), normal, camera, light, position,
+    if (!is.null(styles)) material_index_3d(styles), materials))
   result[is.na(fill)] <- NA_character_
   result
 }

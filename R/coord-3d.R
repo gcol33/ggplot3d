@@ -1,4 +1,10 @@
 #' Lighting for a 3D scene
+#'
+#' One directional light with an ambient term: the shorthand for
+#' `lights_3d(light_directional(direction, space, intensity = diffuse),
+#' ambient = ambient, mode = mode)`. See [lights_3d()] for several lights,
+#' point, head and hemisphere lights, and [material_3d()] for specular
+#' highlights.
 #' @param direction Direction from a surface toward the light.
 #' @param space Coordinate space, camera or data.
 #' @param ambient,diffuse Nonnegative light contributions with sum at most one.
@@ -11,8 +17,8 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
   stopifnot(is.numeric(direction), length(direction) == 3L, all(is.finite(direction)), sum(direction^2) > 0,
             length(ambient) == 1L, length(diffuse) == 1L, is.finite(ambient), is.finite(diffuse),
             ambient >= 0, diffuse >= 0, ambient + diffuse <= 1)
-  list(direction = direction / sqrt(sum(direction^2)), space = match.arg(space, c("camera", "data")),
-       ambient = ambient, diffuse = diffuse, mode = match.arg(mode, c("multiply", "tint")))
+  lights_3d(light_directional(direction, match.arg(space, c("camera", "data")), intensity = diffuse),
+            ambient = ambient, mode = match.arg(mode, c("multiply", "tint")))
 }
 
 #' Select a 3D rendering backend
@@ -150,7 +156,8 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #'   value outside the panel range is moved to the nearest end of the range.
 #' @param z_scales Fixed or free z scales across panels.
 #' @param crs Target spatial coordinate reference system.
-#' @param light Lighting configuration or NULL.
+#' @param light Lighting from [light_3d()] or [lights_3d()], one light such as
+#'   [light_point()], or NULL for none.
 #' @param shadow Planar cast shadows from [shadow_3d()], or NULL for none.
 #' @param depth_cue Fog, depth-thinned strokes and eye-dome lighting from
 #'   [depth_cue_3d()], or NULL for none.
@@ -292,7 +299,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
                   axis_lines = match.arg(axis_lines, c("box", "origin", "none")), origin = check_origin_3d(origin),
-                  light = light, shadow = shadow, depth_cue = depth_cue, backend = backend, crs = crs, clip_planes = clip_planes, stereo = stereo,
+                  light = as_lights_3d(light), shadow = shadow, depth_cue = depth_cue, backend = backend, crs = crs, clip_planes = clip_planes, stereo = stereo,
                   frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
 }
 

@@ -73,7 +73,10 @@ fragment_vertex_linear_3d <- function(scene, rows, styles, attributes, light) {
       ok <- rowSums(is.finite(corner)) == 3L & rowSums(corner^2) > 0
       normal[ok, ] <- model_normals_3d(corner[ok, , drop = FALSE], scene$camera)
     }
-    linear[lit, ] <- shade_linear_3d(linear[lit, , drop = FALSE], normal[lit, , drop = FALSE], scene$camera, light)
+    position <- sweep(cbind(scene$vertices$x[index], scene$vertices$y[index], scene$vertices$z[index]), 2L,
+      scene$camera$model_scale, "*")
+    linear[lit, ] <- shade_linear_3d(linear[lit, , drop = FALSE], normal[lit, , drop = FALSE], scene$camera, light,
+      position[lit, , drop = FALSE], material_index_3d(styles)[owner][lit], scene$materials)
   }
   list(linear = pmin(pmax(linear, 0), 1), owner = owner)
 }

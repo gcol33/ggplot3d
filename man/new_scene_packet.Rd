@@ -15,7 +15,8 @@ new_scene_packet(
   footprint_vertices = list(),
   styles = data.frame(style_id = integer()),
   panel_id = 1L,
-  quadrics = list()
+  quadrics = list(),
+  materials = data.frame(material_id = integer())
 )
 }
 \arguments{
@@ -58,6 +59,12 @@ centre_x, centre_y, centre_z, the unit axis axis_x, axis_y, axis_z
 (default the z axis), radius_a, radius_b (cone end radius, default 0) and
 length, with the common primitive_id, layer_id, source_row, style_id,
 partition and opacity columns.}
+
+\item{materials}{Data frame of surface materials with contiguous integer
+material_id keys and columns ambient, diffuse, specular, shininess,
+specular_colour and back (a colour or NA), as made by \code{\link[=material_3d]{material_3d()}}.
+A style's optional integer material_id (NA for the default material)
+refers to it. The engine reads neither; the shading kernel does.}
 }
 \value{
 A validated ggplot3d_scene_packet containing geometry and styles.

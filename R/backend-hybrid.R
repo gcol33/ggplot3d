@@ -17,7 +17,7 @@ raster_occlusion_3d <- function(packet, camera, viewport, result) {
   ellipse <- packet$footprints$kind == 1L
   for (axis in c("radius_x_mm", "radius_y_mm"))
     packet$footprints[[axis]][ellipse] <- packet$footprints[[axis]][ellipse] + pixel
-  prepared <- raster_prepare_cpp(packet[names(packet) != "styles"], camera, viewport)
+  prepared <- raster_prepare_cpp(scene_engine_packet_3d(packet), camera, viewport)
   colours <- raster_colours_3d(packet, prepared, NULL)
   faces <- colours[[1L]]
   if (ncol(faces)) {

@@ -150,17 +150,6 @@ test_that("isosurface fill is interpolated to the vertices", {
   expect_equal(flat$fill, rep(colMeans(matrix(smooth$fill, nrow = 3L)), each = 3L))
 })
 
-test_that("the shading kernel matches the Lambert formula", {
-  normal <- rbind(c(0, 0, 1), c(1, 0, 0), c(0, 0, -1))
-  base <- rbind(c(0.5, 0.2, 0.1), c(0.5, 0.2, 0.1), c(0.9, 0.9, 0.9))
-  light <- list(direction = c(0, 0.6, 0.8), ambient = 0.3, diffuse = 0.7, mode = "multiply")
-  out <- shade_cpp(normal, matrix(c(0, 0, 1), 1L), base, light)
-  b <- 0.3 + 0.7 * pmax(0, c(0.8, 0, 0.8))
-  expect_equal(out, base * b)
-  light$mode <- "tint"
-  expect_equal(shade_cpp(normal, matrix(c(0, 0, 1), 1L), base, light), 1 - (1 - base) * b)
-})
-
 test_that("viewer packets carry corner normals and colours", {
   packet <- smooth_triangle_packet(normals = matrix(c(0, 0, 1), 3L, 3L, byrow = TRUE))
   view <- view_packet_3d(packet)

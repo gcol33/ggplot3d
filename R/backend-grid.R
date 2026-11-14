@@ -30,6 +30,7 @@ makeContent.scene_panel_grob <- function(x) {
     if (identical(backend$type, "raymarch")) stop("Intrinsic stereo needs separate observer and facing settings for each eye.", call. = FALSE)
     return(grid::setChildren(x, do.call(grid::gList, stereo_panel_children_3d(x, stereo))))
   }
+  x$panel_params$coord_params$light <- panel_lights_3d(x$panel_params$coord_params$light, x$panel_params)
   outer <- panel_outer_viewport_3d(x$panel_params)
   if (identical(backend$type, "raymarch")) {
     rendered <- render_thurston_panel_3d(x, outer, backend)
@@ -530,7 +531,8 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
     if (kind == 1L) {
       fill <- s$fill
       shade <- style_value_3d(s, "shade", FALSE)
-      if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light, s[shade, , drop = FALSE])
+      if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light, s[shade, , drop = FALSE],
+        fragment_centres_3d(scene, rows[shade]), scene$materials)
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
       if (any(smooth[rows])) {

@@ -120,6 +120,9 @@ reference:
   - facet_views
   - stereo_3d
   - light_3d
+  - lights_3d
+  - light_directional
+  - material_3d
   - shadow_3d
   - depth_cue_3d
   - clip_plane_3d

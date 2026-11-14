@@ -150,7 +150,7 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
   })
   grDevices::dev.off(device)
   frame <- if (is.null(panel)) device_mm else panels[[1L]]$rect_mm[3:4]
-  x <- list(schema_version = 4L,
+  x <- list(schema_version = 4L, shade_glsl = shade_glsl_cpp(view_max_lights_3d),
     frame = list(width_mm = frame[1L], height_mm = frame[2L]),
     chrome = if (is.null(panel)) view_chrome_3d(table, width, height) else NULL,
     panels = panels, link = !isFALSE(link),
@@ -281,7 +281,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
     viewport = c(furniture$viewport, list(outer_width_mm = outer$width_mm,
       outer_height_mm = outer$height_mm)),
     reference = list(corners_mm = unname(furniture_overlay_3d(furniture, NULL, selected$theme)$corners_mm)),
-    light = params$coord_params$light,
+    light = view_lights_3d(panel_lights_3d(params$coord_params$light, params)),
     depth_cue = view_depth_cue_3d(params$coord_params$depth_cue, selected$theme),
     background = if (visible_element_3d(bg)) view_rgba_3d(bg$fill) else c(0, 0, 0, 0),
     path = if (is.null(path)) NULL else view_path_3d(path, fps, params, furniture$viewport, frame$bounds()))
@@ -427,6 +427,7 @@ view_packet_3d <- function(packet, pre = diag(4)) {
       alpha_mode = get("alpha_mode", "face"),
       dash = dash)
   })
+  materials <- view_materials_3d(materials, styles, packet$materials)
   face_styles <- styles[match(packet$faces$style_id, styles$style_id), , drop = FALSE]
   sheet <- as.integer(surface_sheets_3d(face_styles, packet$faces$layer_id, packet$faces$opacity))
   packet$styles <- NULL
@@ -435,6 +436,36 @@ view_packet_3d <- function(packet, pre = diag(4)) {
   packet <- unclass(packet)
   packet$face_sheet <- view_column_3d(sheet)
   packet
+}
+
+# Lights the viewer can show at once (the uniform arrays of its kernel).
+view_max_lights_3d <- 8L
+
+# Kernel material of each viewer style: (ambient, diffuse, specular,
+# shininess) and (specular colour reflectance, linear back colour or -1).
+view_materials_3d <- function(materials, styles, table) {
+  kernel <- kernel_materials_3d(table)
+  index <- material_index_3d(styles)
+  for (i in seq_along(materials)) {
+    k <- index[i]
+    if (k == 0L) next
+    back <- kernel$back[k, ]
+    materials[[i]]$material <- c(kernel$ambient[k], kernel$diffuse[k], kernel$specular[k], kernel$shininess[k])
+    materials[[i]]$material2 <- c(kernel$specular_colour[k], if (all(is.finite(back))) back else c(-1, 0, 0))
+  }
+  materials
+}
+
+# Lights for the viewer, which resolves camera-space vectors per frame:
+# kind, space, vector, linear colours times intensity and falloff.
+view_lights_3d <- function(light) {
+  if (is.null(light)) return(NULL)
+  if (length(light$lights) > view_max_lights_3d) warning("view_3d() shows the first ", view_max_lights_3d, " lights.", call. = FALSE)
+  linear <- function(colour, intensity) unname(srgb_decode_3d(grDevices::col2rgb(colour)[, 1L] / 255) * intensity)
+  list(lights = lapply(light$lights, function(l) list(kind = l$kind, space = l$space, vector = l$vector,
+      colour = linear(l$colour, l$intensity), ground = linear(l$ground, l$intensity), falloff = l$falloff)),
+    ambient = rep(light$ambient, 3L), mode = light$mode, direction = light$direction, space = light$space,
+    diffuse = light$diffuse)
 }
 
 # A numeric column as a base64 typed array: little-endian float32 for

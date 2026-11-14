@@ -163,6 +163,7 @@ Collate:
     'layers-volume.R'
     'layers-voxel.R'
     'layout-3d.R'
+    'lights-3d.R'
     'mesh-geodesic.R'
     'mesh-processing.R'
     'mesh-readers.R'

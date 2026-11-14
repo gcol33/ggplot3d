@@ -127,7 +127,8 @@
   // phase at each segment start follow as separate streams. Discs carry
   // their selection state inside the instance record.
   const LAYOUTS = {
-    [FACE]: [['aPos', 3, 'f32'], ['aNormal', 3, 'f32'], ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
+    [FACE]: [['aPos', 3, 'f32'], ['aNormal', 3, 'f32'], ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'],
+      ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32']],
     [STROKE]: [['aA', 3, 'f32'], ['aB', 3, 'f32'], ['aCorner', 4, 'f32'], ['aWidth', 1, 'f32'],
       ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
     [MARKER]: [['aPos', 3, 'f32'], ['aOffset', 2, 'f32'], ['aLocal', 2, 'f32'], ['aShape', 3, 'f32'],
@@ -140,29 +141,33 @@
 
   const SHADERS = {
     // Faces interpolate the model-space normal and the linear-light colour
-    // of their vertices and are lit per fragment (Phong 1975), so a smooth
-    // layer's corner normals and colours vary across each face.
+    // of their vertices and are lit per fragment (Phong 1975) by the shading
+    // kernel, whose GLSL (SHADE_GLSL, from src/shade/shade.h) arrives with
+    // the widget data. Positions and point lights are relative to the camera
+    // target in aspect-scaled model units.
     [FACE]: [`
       in vec3 aPos; in vec3 aNormal; in vec4 aColour; in uint aId; in vec4 aFlags; in float aState;
+      in vec4 aMaterial; in vec4 aMaterial2;
       ${VARYINGS}
-      out vec3 vNormal; out vec3 vLinear; flat out float vShade;
+      out vec3 vNormal; out vec3 vLinear; flat out float vShade; flat out vec4 vMaterial; flat out vec4 vMaterial2;
       ${COLOUR_SPACE}
       void main() {
         float d; vec4 p = project(aPos, d);
         gl_Position = clipPosition(p.xy, p.z, p.w);
         vNormal = aNormal/uScale; vLinear = toLinear(aColour.rgb); vShade = aFlags.x;
+        vMaterial = aMaterial; vMaterial2 = aMaterial2;
         vColour = vec4(aColour.rgb, aColour.a*aState); vModel = aPos; vId = aId; vClip = aFlags.y;
       }`, `
-      uniform float uLight, uAmbient, uDiffuse, uMultiply; uniform vec3 uLightDir, uRay;
-      in vec3 vNormal; in vec3 vLinear; flat in float vShade;
+      uniform float uLight, uPerspective; uniform vec3 uRay;
+      in vec3 vNormal; in vec3 vLinear; flat in float vShade; flat in vec4 vMaterial; flat in vec4 vMaterial2;
+      SHADE_GLSL
       void main() {
         clipData();
         vec3 l = clamp(vLinear, 0.0, 1.0);
         if (vShade > 0.5 && uLight > 0.5 && dot(vNormal, vNormal) > 0.0) {
-          vec3 n = normalize(vNormal);
-          if (dot(n, uRay) > 0.0) n = -n;
-          float b = uAmbient+uDiffuse*max(0.0, dot(n, uLightDir));
-          l = clamp(uMultiply > 0.5 ? l*b : 1.0-(1.0-l)*b, 0.0, 1.0);
+          vec3 q = (vModel-uTarget)*uScale;
+          vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
+          l = clamp(shade(normalize(vNormal), q, v, l, vMaterial, vMaterial2), 0.0, 1.0);
         }
         emit(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a));
       }`],
@@ -268,10 +273,14 @@
   SHADERS[DISC] = SHADERS[MARKER];
 
   // mode: false for colour, true for pick ids, 'depth' for camera depth.
+  // The shading kernel's GLSL; face programs compile once the widget data
+  // has supplied it.
+  let shadeGlsl = '';
+  const MAX_LIGHTS = 8;
   function compile(gl, kind, mode) {
     const header = '#version 300 es\nprecision highp float;\nprecision highp int;\n' + (mode === true ? '#define PICK\n' : '') +
       (mode === 'depth' ? '#define DEPTH\n' : '') + (INSTANCED.has(kind) ? '#define INSTANCED\n' : '');
-    return shaderProgram(gl, header+PROJECT+SHADERS[kind][0], header+FRAGMENT+SHADERS[kind][1],
+    return shaderProgram(gl, header+PROJECT+SHADERS[kind][0], header+FRAGMENT+SHADERS[kind][1].replace('SHADE_GLSL', shadeGlsl),
       LAYOUTS[kind].concat(STREAMS[kind].map(n => [n])).map(a => a[0]));
   }
   function shaderProgram(gl, vertex, fragment, attributes = []) {
@@ -580,8 +589,10 @@
       if (p.colour[3] <= 0 && p.kind !== TEXT) { p.skip = true; }
       else if (p.kind === FACE && p.points.length >= 3) {
         const shade = p.material.shade ? 1 : 0;
+        const material = p.material.material || [1, 1, 0, 10], material2 = p.material.material2 || [1, -1, 0, 0];
         p.points.forEach((v, j) => V.add({aPos: v, aNormal: (p.normals && p.normals[j]) || p.normal,
-          aColour: p.colours && p.colours[j] ? p.colours[j].concat(p.colour[3]) : p.colour, aId: id, aFlags: [shade, clip, 0, 0]}));
+          aColour: p.colours && p.colours[j] ? p.colours[j].concat(p.colour[3]) : p.colour, aId: id, aFlags: [shade, clip, 0, 0],
+          aMaterial: material, aMaterial2: material2}));
         for (let j = 1; j < p.points.length-1; j++) E.push(p.vertexStart, p.vertexStart+j, p.vertexStart+j+1);
       } else if (p.kind === STROKE && !['blank', '0'].includes(String(p.material.linetype))) {
         const t = p.table, width = t.width_mm[p.row] || p.material.width_mm;
@@ -750,7 +761,7 @@
         return {renderValue: function () {}, resize: function () {}};
       }
       const programs = {}, pickPrograms = {};
-      KINDS.forEach(k => { programs[k] = compile(gl, k, false); pickPrograms[k] = compile(gl, k, true); });
+      KINDS.forEach(k => { if (k !== FACE) { programs[k] = compile(gl, k, false); pickPrograms[k] = compile(gl, k, true); } });
       const pickTarget = {framebuffer: gl.createFramebuffer(), colour: gl.createRenderbuffer(), depth: gl.createRenderbuffer(), panel: -1};
       let transparency = null, eyeDome = null, depthPrograms = null;
       let data, views = [], frame, active = 0, frameRequest, pickRequest, hovered = null;
@@ -952,11 +963,23 @@
         const light = V.data.light;
         set1('uLight', light ? 1 : 0);
         if (light) {
-          let direction = light.direction;
-          if (light.space === 'camera') direction = [0, 1, 2].map(i => b.orthoRight[i]*light.direction[0]+b.orthoUp[i]*light.direction[1]-b.forward[i]*light.direction[2]);
-          else if (light.space === 'data') direction = direction.map((v, i) => v*b.scale[i]);
-          set3('uLightDir', norm(direction)); set3('uRay', b.ray);
-          set1('uAmbient', light.ambient); set1('uDiffuse', light.diffuse); set1('uMultiply', light.mode === 'multiply' ? 1 : 0);
+          // Light vectors in the kernel's space: camera axes, aspect-scaled
+          // panel axes, or positions relative to the target.
+          const lights = arr(light.lights).slice(0, MAX_LIGHTS), n = MAX_LIGHTS;
+          const kind = new Int32Array(n), vector = new Float32Array(3*n), colour = new Float32Array(3*n),
+            ground = new Float32Array(3*n), falloff = new Float32Array(n);
+          const cameraAxes = v => [0, 1, 2].map(i => b.orthoRight[i]*v[0]+b.orthoUp[i]*v[1]-b.forward[i]*v[2]);
+          lights.forEach((l, i) => {
+            let v = arr(l.vector);
+            if (l.kind === 2) v = l.space === 'camera' ? cameraAxes(v) : v.map((x, k) => (x-V.camera.target[k])*b.scale[k]);
+            else if (l.kind !== 3) v = norm(l.space === 'camera' ? cameraAxes(v) : v.map((x, k) => x*b.scale[k]));
+            kind[i] = l.kind; vector.set(v, 3*i); colour.set(arr(l.colour), 3*i); ground.set(arr(l.ground), 3*i); falloff[i] = l.falloff;
+          });
+          gl.uniform1i(prog.uniform('uLightCount'), lights.length);
+          gl.uniform1iv(prog.uniform('uLightKind'), kind); gl.uniform3fv(prog.uniform('uLightVector'), vector);
+          gl.uniform3fv(prog.uniform('uLightColour'), colour); gl.uniform3fv(prog.uniform('uLightGround'), ground);
+          gl.uniform1fv(prog.uniform('uLightFalloff'), falloff);
+          set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray); set1('uMultiply', light.mode === 'multiply' ? 1 : 0);
         }
         const cue = V.data.depth_cue, depth = V.fogDepth || [0, 1];
         const fog = cue && cue.amount > 0 && cue.fog[3] > 0;
@@ -1451,6 +1474,11 @@
       return {
         renderValue: function (x) {
           if (x.schema_version !== 4) throw Error('Unsupported ggplot3d viewer schema');
+          if (x.shade_glsl !== shadeGlsl || !programs[FACE]) {
+            shadeGlsl = x.shade_glsl;
+            programs[FACE] = compile(gl, FACE, false); pickPrograms[FACE] = compile(gl, FACE, true);
+            depthPrograms = null;
+          }
           stop(); pathIndex = 0;
           views.forEach(V => V.scene.release());
           if (transparency) { transparency.release(); transparency = null; }

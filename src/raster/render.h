@@ -32,8 +32,10 @@ struct Paint {
 struct Smooth {
   std::vector<Vec3> base,normal;
   std::vector<bool> lit,item;
-  shade::Light light;
-  Vec3 toward{0,0,1};
+  std::vector<int> material;
+  std::vector<shade::Material> materials;
+  shade::Lights lights;
+  shade::View view;
   bool linear=true,active=false;
 };
 
@@ -611,7 +613,12 @@ static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const P
   if(sm.lit[item.row]) {
     Vec3 normal=blend(true);
     if(!std::isfinite(normal[0]+normal[1]+normal[2]) || !(dot(normal,normal)>0)) normal=sm.normal[item.row];
-    colour=shade::shade(shade::unit(normal),sm.toward,colour,sm.light);
+    Vec3 position{0,0,0};
+    for(int j=0;j<3;++j) for(int d=0;d<3;++d) position[d]+=w[j]*scene.shading[k[j]].position[d];
+    const shade::vec3 p=shade::to_vec3(position);
+    const shade::vec3 lit=shade::shade(shade::normalize(shade::to_vec3(normal)),p,sm.view.at(p),shade::to_vec3(colour),
+      sm.materials[sm.material[item.row]],sm.lights);
+    colour={lit.x,lit.y,lit.z};
   }
   Colour out{std::max(0.0,std::min(1.0,colour[0])),std::max(0.0,std::min(1.0,colour[1])),
              std::max(0.0,std::min(1.0,colour[2])),paint.colour.a};
@@ -876,25 +883,30 @@ static inline Traced traced_of(Rcpp::List input,const Canvas& canvas) {
 
 // The smooth-face input of a draw, from the "smooth" attribute of the face
 // colours: list(base = n x 3 unlit linear colours, lit, normal = n x 3 unit
-// model-space face normals, light (or NULL), toward).
+// model-space face normals, material (index, 0 for the default), materials,
+// lights (or NULL) and view, as read by src/shade/read.h).
 static inline Smooth smooth_of(const Scene& scene,Rcpp::NumericMatrix face_colours,bool linear) {
   Smooth sm; sm.linear=linear;
   if(!scene.corner.any() || !face_colours.hasAttribute("smooth")) return sm;
   Rcpp::List x=face_colours.attr("smooth");
   Rcpp::NumericMatrix base=x["base"],normal=x["normal"];
   Rcpp::LogicalVector lit=x["lit"];
+  Rcpp::IntegerVector material=x["material"];
   const std::size_t n=scene.packet.faces.count.size();
   require(static_cast<std::size_t>(base.nrow())==n && base.ncol()==3 && static_cast<std::size_t>(normal.nrow())==n &&
-          normal.ncol()==3 && static_cast<std::size_t>(lit.size())==n,"invalid raster smooth-face input");
-  sm.base.resize(n);sm.normal.resize(n);sm.lit.resize(n);
+          normal.ncol()==3 && static_cast<std::size_t>(lit.size())==n && static_cast<std::size_t>(material.size())==n,
+          "invalid raster smooth-face input");
+  sm.materials=shade::read_materials(x["materials"]);
+  sm.base.resize(n);sm.normal.resize(n);sm.lit.resize(n);sm.material.resize(n);
   for(std::size_t i=0;i<n;++i) {
     sm.base[i]={base(i,0),base(i,1),base(i,2)};
     sm.normal[i]={normal(i,0),normal(i,1),normal(i,2)};
     sm.lit[i]=lit[i]==TRUE;
+    require(material[i]>=0 && material[i]<static_cast<int>(sm.materials.size()),"invalid raster material index");
+    sm.material[i]=material[i];
   }
-  if(!Rf_isNull(x["light"])) sm.light=shade::read_light(x["light"]);
-  Rcpp::NumericVector toward=x["toward"];
-  sm.toward=shade::unit({toward[0],toward[1],toward[2]});
+  if(!Rf_isNull(x["lights"])) sm.lights=shade::read_lights(x["lights"]);
+  sm.view=shade::read_view(x["view"]);
   sm.item.assign(scene.items.size(),false);
   for(std::size_t i=0;i<scene.items.size();++i) {
     const Item& item=scene.items[i];

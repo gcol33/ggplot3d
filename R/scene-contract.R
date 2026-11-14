@@ -121,6 +121,11 @@ scene_table <- function(x, schema, defaults, name, optional = character()) {
 #'   and other rendering properties. Face lighting uses shade and optional
 #'   normal_x, normal_y, normal_z in normalised panel coordinates. An optional
 #'   integer texture_id (NA for none) names a texture held on the R side.
+#' @param materials Data frame of surface materials with contiguous integer
+#'   material_id keys and columns ambient, diffuse, specular, shininess,
+#'   specular_colour and back (a colour or NA), as made by [material_3d()].
+#'   A style's optional integer material_id (NA for the default material)
+#'   refers to it. The engine reads neither; the shading kernel does.
 #' @param panel_id Positive integer panel identifier.
 #' @return A validated ggplot3d_scene_packet containing geometry and styles.
 #' @examples
@@ -138,7 +143,8 @@ new_scene_packet <- function(vertices = list(), corners = list(),
                              markers = list(), text = list(),
                              footprints = list(), footprint_vertices = list(),
                              styles = data.frame(style_id = integer()),
-                             panel_id = 1L, quadrics = list()) {
+                             panel_id = 1L, quadrics = list(),
+                             materials = data.frame(material_id = integer())) {
   schema <- scene_schemas()
   optional <- scene_optional_schemas()
   tables <- list(vertices = vertices, corners = corners, faces = faces,
@@ -178,7 +184,7 @@ new_scene_packet <- function(vertices = list(), corners = list(),
                "panel_id must be a positive integer")
   scene_assert(is.data.frame(styles), "styles must be a data frame")
   packet <- c(list(schema_version = scene_schema_version, panel_id = as.integer(panel_id),
-                   style_count = nrow(styles)), tables, list(styles = styles))
+                   style_count = nrow(styles)), tables, list(styles = styles, materials = materials))
   class(packet) <- "ggplot3d_scene_packet"
   validate_scene_packet(packet)
   packet
@@ -186,7 +192,7 @@ new_scene_packet <- function(vertices = list(), corners = list(),
 
 validate_scene_packet <- function(packet) {
   schemas <- scene_schemas()
-  expected <- c("schema_version", "panel_id", "style_count", names(schemas), "styles")
+  expected <- c("schema_version", "panel_id", "style_count", names(schemas), "styles", "materials")
   scene_assert(is.list(packet) && identical(names(packet), expected),
                "packet has an invalid schema")
   for (key in c("schema_version", "panel_id", "style_count")) {
@@ -199,6 +205,7 @@ validate_scene_packet <- function(packet) {
                  identical(packet$styles$style_id, seq_len(nrow(packet$styles))) &&
                  packet$style_count == nrow(packet$styles),
                "styles must have contiguous integer style_id keys starting at 1")
+  validate_scene_materials_3d(packet$materials, packet$styles)
   optional <- scene_optional_schemas()
   texture <- packet$styles$texture_id
   scene_assert(is.null(texture) || (is.numeric(texture) && is.null(dim(texture)) &&
@@ -307,6 +314,30 @@ validate_scene_packet <- function(packet) {
                "text measurements must be nonnegative")
   invisible(packet)
 }
+
+# Materials table: contiguous material_id keys, nonnegative strengths,
+# positive shininess, reflectance in [0, 1], back a colour or NA; style
+# material_id NA or a key.
+validate_scene_materials_3d <- function(materials, styles) {
+  scene_assert(is.data.frame(materials) && identical(as.integer(materials$material_id), seq_len(nrow(materials))) &&
+                 is.integer(materials$material_id),
+               "materials must have contiguous integer material_id keys starting at 1")
+  if (nrow(materials)) {
+    columns <- c("ambient", "diffuse", "specular", "shininess", "specular_colour")
+    scene_assert(all(c(columns, "back") %in% names(materials)) &&
+                   all(vapply(materials[columns], function(x) is.numeric(x) && all(is.finite(x) & x >= 0), logical(1))) &&
+                   all(materials$shininess > 0) && all(materials$specular_colour <= 1) &&
+                   (is.character(materials$back) || all(is.na(materials$back))),
+                 "materials need nonnegative ambient, diffuse, specular, positive shininess, specular_colour in [0, 1] and back")
+  }
+  id <- styles$material_id
+  scene_assert(is.null(id) || (is.numeric(id) && all(is.na(id) | (id >= 1 & id <= nrow(materials) & id == trunc(id)))),
+               "styles material_id must be NA or a materials key")
+  invisible(materials)
+}
+
+# The packet as the engine reads it: without the R-side styles and materials.
+scene_engine_packet_3d <- function(packet) packet[!names(packet) %in% c("styles", "materials")]
 
 #' Normalise homogeneous positions to the panel box
 #'
@@ -529,11 +560,12 @@ scene_compile <- function(packet, camera = new_camera_3d(), viewport) {
   validate_scene_packet(packet)
   validate_camera_3d(camera)
   attr(viewport, "engine_threads") <- threads
-  result <- scene_compile_cpp(packet[names(packet) != "styles"], camera, viewport)
+  result <- scene_compile_cpp(scene_engine_packet_3d(packet), camera, viewport)
   attr(viewport, "engine_threads") <- NULL
   bytes <- as.numeric(utils::object.size(result)) + as.numeric(utils::object.size(packet))
   result$styles <- packet$styles
-  result$source <- packet[names(packet) != "styles"]
+  result$source <- scene_engine_packet_3d(packet)
+  result$materials <- packet$materials
   result$pre <- camera$pre
   class(result) <- "ggplot3d_compiled_scene"
   scene_cache_store(packet, camera, viewport, result, bytes, limit)

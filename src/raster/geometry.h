@@ -20,7 +20,7 @@ struct Item {
 // Interpolated corner attributes at a face vertex: the unit model-space
 // normal and the linear-light colour, each NaN where not supplied.
 struct Shading {
-  Vec3 normal{NAN, NAN, NAN}, colour{NAN, NAN, NAN};
+  Vec3 normal{NAN, NAN, NAN}, colour{NAN, NAN, NAN}, position{NAN, NAN, NAN};
 };
 // Optional corner columns of the packet, NaN for NA: normal_x/y/z and
 // red/green/blue.
@@ -35,6 +35,8 @@ struct Scene {
   std::vector<Screen> vertices;
   std::vector<Item> items;
   std::vector<Vec3> normals;
+  // Model-space centroid of each drawn face, NaN for faces not drawn.
+  std::vector<Vec3> centres;
   CornerAttributes corner;
   // Per vertex of the prepared face items; empty without corner attributes.
   std::vector<Shading> shading;
@@ -52,6 +54,11 @@ struct Scene {
     items.push_back({kind,row,static_cast<Index>(vertices.size()),static_cast<Index>(polygon.size()),start});
     const std::size_t first=vertices.size();
     for(const auto& v:polygon) vertices.push_back(project(v));
+    if(kind==1) {
+      Vec3 centre{0,0,0};
+      for(const auto& v:polygon) for(int k=0;k<3;++k) centre[k]+=v.xyz[k]*projection.resolved.model_scale[k]/polygon.size();
+      centres[row]=centre;
+    }
     if(corner.any()) {
       shading.resize(vertices.size());
       if(kind==1) for(std::size_t j=0;j<polygon.size();++j) shading[first+j]=interpolate_shading(polygon[j]);
@@ -62,6 +69,7 @@ struct Scene {
   std::vector<double> corner_w;
   Shading interpolate_shading(const Vertex& v) const {
     Shading out;
+    for(int k=0;k<3;++k) out.position[k]=v.xyz[k]*projection.resolved.model_scale[k];
     std::array<double,6> value{0,0,0,0,0,0};
     for(int k=0;k<6;++k) {
       const auto& column=corner.columns[k];
@@ -113,6 +121,7 @@ static inline void prepare_geometry(Scene& scene) {
   const std::size_t centre_end=planes.size()-(p.camera.clip ? 4:0);
   const auto points=homogeneous_points(scene.packet.vertices,p);
   scene.normals.resize(scene.packet.faces.count.size());
+  scene.centres.assign(scene.packet.faces.count.size(),Vec3{NAN,NAN,NAN});
   for(int kind=1;kind<=4;++kind) {
     const auto& table=scene.table(kind);
     for(Index row=0;row<static_cast<Index>(table.count.size());++row) {
@@ -212,12 +221,17 @@ static inline Rcpp::List prepare(Rcpp::List packet, Rcpp::List camera, Rcpp::Lis
   Rcpp::XPtr<Scene> scene(new Scene(read_packet(packet),read_camera(camera),v),true);
   read_corner_attributes(*scene,packet);
   prepare_geometry(*scene);
-  Rcpp::NumericMatrix normals(scene->normals.size(),3);
-  for(std::size_t i=0;i<scene->normals.size();++i) for(int k=0;k<3;++k) normals(i,k)=scene->normals[i][k];
+  Rcpp::NumericMatrix normals(scene->normals.size(),3),centres(scene->centres.size(),3);
+  for(std::size_t i=0;i<scene->normals.size();++i) for(int k=0;k<3;++k) {
+    normals(i,k)=scene->normals[i][k];
+    centres(i,k)=std::isfinite(scene->centres[i][k]) ? scene->centres[i][k]:NA_REAL;
+  }
   const auto& c=scene->projection.resolved;
-  return Rcpp::List::create(Rcpp::Named("pointer")=scene,Rcpp::Named("normals")=normals,
+  return Rcpp::List::create(Rcpp::Named("pointer")=scene,Rcpp::Named("normals")=normals,Rcpp::Named("centres")=centres,
     Rcpp::Named("camera")=Rcpp::List::create(Rcpp::Named("right")=c.right,Rcpp::Named("up")=c.up,
-      Rcpp::Named("forward")=c.forward,Rcpp::Named("ray")=c.ray,Rcpp::Named("model_scale")=c.model_scale,Rcpp::Named("tolerance")=c.tolerance),
+      Rcpp::Named("forward")=c.forward,Rcpp::Named("ray")=c.ray,Rcpp::Named("model_scale")=c.model_scale,Rcpp::Named("tolerance")=c.tolerance,
+      Rcpp::Named("eye")=c.eye,Rcpp::Named("distance")=c.distance,
+      Rcpp::Named("perspective")=scene->projection.camera.perspective),
     Rcpp::Named("engine_seconds")=seconds(start));
 }
 } }

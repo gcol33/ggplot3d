@@ -14,6 +14,9 @@
 #' @param wireframe Whether to draw triangle edges.
 #' @param hidden Hidden stroke policy.
 #' @param outline Feature lines from [outline_3d()], or NULL for none.
+#' @param material Surface material from [material_3d()]: ambient, diffuse
+#'   and specular strengths, shininess and an optional back-side colour. NULL
+#'   reflects ambient and diffuse light fully, with no highlight.
 #' @param shading `"flat"` lights and fills each face uniformly; `"smooth"`
 #'   interpolates vertex normals and vertex fills across faces. The raster
 #'   backend and the [view_3d()] viewer interpolate per sample, perspective
@@ -54,11 +57,11 @@
 geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
                              position = "identity", ..., method = "grid", max_edge = Inf,
                              shade = TRUE, wireframe = FALSE, hidden = "hide", outline = NULL,
-                             alpha_mode = "face", shading = "flat", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                             alpha_mode = "face", shading = "flat", material = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSurface3D, mapping, data, stat, position,
     c(list(method = method, max_edge = max_edge, shade = shade, wireframe = wireframe,
            hidden = hidden, outline = outline, alpha_mode = alpha_mode_3d(alpha_mode),
-           shading = shading_mode_3d(shading), na.rm = na.rm), list(...)),
+           shading = shading_mode_3d(shading), material = material_argument_3d(material), na.rm = na.rm), list(...)),
     show.legend, inherit.aes)
 }
 

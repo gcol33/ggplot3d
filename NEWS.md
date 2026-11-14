@@ -1,5 +1,18 @@
 # ggplot3d 0.0.0.9000
 
+* Lighting has materials and several lights. `lights_3d()` combines
+  `light_directional()`, `light_point(position, falloff)` (inverse-square at
+  `falloff = 2`, independent of the other geometry), `light_head()` (MATLAB's
+  `camlight headlight`) and `light_hemisphere(sky, ground)` (three.js) with
+  an ambient term; `light_3d()` stays the one-light shorthand.
+  `material_3d("matte" | "shiny" | "metal", ambient, diffuse, specular,
+  shininess, specular_colour, back)` follows MATLAB's `material` presets and
+  rgl's `material3d()`, with Blinn-Phong highlights and a back-side colour,
+  set with `material =` on the surface layers. Packets gain a `materials`
+  table and `styles$material_id`. One kernel, `src/shade/shade.h`, shades the
+  vector and raster backends, and its light terms, written once in a subset
+  shared by C++ and GLSL, are compiled by the viewer too (#54).
+
 * `shading = "smooth"` on `geom_surface_3d()`, `geom_mesh_3d()`,
   `stat_isosurface_3d()` and the other surface layers interpolates vertex
   normals (Phong shading) and vertex fills (Gouraud colours in linear light)
