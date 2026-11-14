@@ -23,11 +23,14 @@ annotate_3d(
 )
 }
 \arguments{
-\item{geom}{Name of a geom, as in \code{\link[ggplot2:annotate]{ggplot2::annotate()}}.}
+\item{geom}{Name of a registered geom, such as \code{"point"} or \code{"bracket"},
+or a ggplot2 geom prototype.}
 
 \item{x, y, z, xmin, xmax, ymin, ymax, zmin, zmax, xend, yend, zend}{Positions.}
 
-\item{..., na.rm}{Passed to \code{\link[ggplot2:annotate]{ggplot2::annotate()}}.}
+\item{...}{Fixed aesthetics and drawing parameters passed to the 3D layer.}
+
+\item{na.rm}{Whether to silently remove missing values.}
 }
 \value{
 A ggplot2 layer.

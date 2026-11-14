@@ -511,20 +511,18 @@ p + geom_point_3d(size = 3) +
     arrow = grid::arrow(length = grid::unit(3, "mm"))) + coord_3d()
 ```
 
-Annotate a span with [geom_bracket_3d()](../reference/geom_bracket_3d.html) to set its bracket or dimension-line parameters. The two endpoints use data coordinates; the offset uses fractions of the box dimensions. These examples label a supplied distance, with extension lines and arrowheads on the dimension version.
+Annotate a fixed span with `annotate_3d("bracket", ...)`. The two endpoints use data coordinates; the offset uses fractions of the box dimensions. These examples label a supplied distance, with extension lines and arrowheads on the dimension version. Use [geom_bracket_3d()](../reference/geom_bracket_3d.html) to map spans from a data table.
 
 ```{r bracket, fig.alt="Two points connected by a bracket labelled span."}
 span <- ggplot(data.frame(x = c(0, 2), y = 0, z = 1), aes(x, y, z = z)) +
   geom_point_3d(size = 3)
-span_data <- data.frame(x = 0, y = 0, z = 1, xend = 2, yend = 0, zend = 1)
-span_mapping <- aes(x, y, z = z, xend = xend, yend = yend, zend = zend)
-span + geom_bracket_3d(span_mapping, data = span_data,
+span + annotate_3d("bracket", x = 0, y = 0, z = 1, xend = 2, yend = 0, zend = 1,
   label = "span", size = 5, offset = c(0, 0, 0.12)) +
   coord_3d(clip_data = FALSE)
 ```
 
 ```{r dimension, fig.alt="Two points with a dimension line and extension lines labelled 2 m."}
-span + geom_bracket_3d(span_mapping, data = span_data,
+span + annotate_3d("bracket", x = 0, y = 0, z = 1, xend = 2, yend = 0, zend = 1,
   type = "dimension", label = "2 m", size = 5,
   offset = c(0, -0.12, 0)) + coord_3d(clip_data = FALSE)
 ```

@@ -168,7 +168,7 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
             is.numeric(default_z), length(default_z) == 1L, !is.na(default_z))
   name <- class(geom)[1L]
   if (exists(name, .emitters_3d, inherits = FALSE) && !replace) stop("Emitter already registered for ", name, ".", call. = FALSE)
-  .emitters_3d[[name]] <- list(name = name, emit = emit, aesthetics = aesthetics,
+  .emitters_3d[[name]] <- list(name = name, geom = geom, emit = emit, aesthetics = aesthetics,
                               setup_data = setup_data, stat_adapter = stat_adapter, position_check = position_check,
                               prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics,
                               parameters = parameters, default_z = default_z,
