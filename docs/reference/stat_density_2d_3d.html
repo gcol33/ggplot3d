@@ -77,12 +77,24 @@ Computed density, ndensity and count are averaged per triangle for fill mapping.
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -129,6 +141,7 @@ Computed density, ndensity and count are averaged per triangle for fill mapping.
 <span>  h <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">40L</span>,</span>
+<span>  plane <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"surface"</span>, <span class="st">"floor"</span><span class="op">)</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -158,12 +171,23 @@ Computed density, ndensity and count are averaged per triangle for fill mapping.
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
 <dd><p>Grid resolution, a scalar or two integers.</p></dd>
 
+
+<dt id="arg-plane">plane<a class="anchor" aria-label="anchor" href="#arg-plane"></a></dt>
+<dd><p><code>"surface"</code> draws density as height. <code>"floor"</code> or a numeric z
+in original units lays the density grid flat at that height, filled by
+density unless fill is mapped or set, and unshaded unless <code>shade = TRUE</code>.
+The density range still trains the z scale, as for contours. A flat
+plane is a shorthand for <code><a href="position_project_3d.html">position_project_3d()</a></code>.</p></dd>
+
 </dl></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">faithful</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">eruptions</span>, <span class="va">waiting</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">stat_density_2d_3d</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">stat_density_2d_3d</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">faithful</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">eruptions</span>, <span class="va">waiting</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">stat_density_2d_3d</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">20</span>, alpha <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">stat_density_2d_3d</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">40</span>, plane <span class="op">=</span> <span class="st">"floor"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

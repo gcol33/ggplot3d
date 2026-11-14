@@ -67,12 +67,24 @@
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -116,6 +128,15 @@
 <span>  shade <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  wireframe <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  hidden <span class="op">=</span> <span class="st">"hide"</span>,</span>
+<span>  subdivide <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  remesh <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  decimate <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  smooth <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  curvature <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  crease <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  outline <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  alpha_mode <span class="op">=</span> <span class="st">"face"</span>,</span>
+<span>  shading <span class="op">=</span> <span class="st">"flat"</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -146,6 +167,67 @@ With faces supplied, data may hold the vertices.</p></dd>
 <dt id="arg-hidden">hidden<a class="anchor" aria-label="anchor" href="#arg-hidden"></a></dt>
 <dd><p>Hidden stroke policy.</p></dd>
 
+
+<dt id="arg-subdivide-smooth">subdivide, smooth<a class="anchor" aria-label="anchor" href="#arg-subdivide-smooth"></a></dt>
+<dd><p>Rounds of <code><a href="mesh_processing.html">mesh_subdivide()</a></code> and iterations of
+<code><a href="mesh_processing.html">mesh_smooth()</a></code>.</p></dd>
+
+
+<dt id="arg-remesh">remesh<a class="anchor" aria-label="anchor" href="#arg-remesh"></a></dt>
+<dd><p>Target edge length for <code><a href="mesh_processing.html">mesh_remesh()</a></code>, or TRUE for the mean
+edge length.</p></dd>
+
+
+<dt id="arg-decimate">decimate<a class="anchor" aria-label="anchor" href="#arg-decimate"></a></dt>
+<dd><p>Target face count or fraction for <code><a href="mesh_processing.html">mesh_decimate()</a></code>.</p></dd>
+
+
+<dt id="arg-curvature">curvature<a class="anchor" aria-label="anchor" href="#arg-curvature"></a></dt>
+<dd><p>Whether to add the computed variables of
+<code><a href="mesh_processing.html">mesh_curvature()</a></code>, for use with <code><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat()</a></code>.</p></dd>
+
+
+<dt id="arg-crease">crease<a class="anchor" aria-label="anchor" href="#arg-crease"></a></dt>
+<dd><p>Crease angle for <code><a href="mesh_processing.html">mesh_normals()</a></code>; NULL keeps the input's
+normals.</p></dd>
+
+
+<dt id="arg-outline">outline<a class="anchor" aria-label="anchor" href="#arg-outline"></a></dt>
+<dd><p>Feature lines from <code><a href="outline_3d.html">outline_3d()</a></code>, or NULL for none.</p></dd>
+
+
+<dt id="arg-alpha-mode">alpha_mode<a class="anchor" aria-label="anchor" href="#arg-alpha-mode"></a></dt>
+<dd><p>How a translucent surface composites.
+<code>"face"</code> blends every face over what lies behind it, so a surface seen
+through itself darkens where it folds over. <code>"surface"</code> paints each sheet
+(a connected set of faces sharing vertices, such as one isosurface level)
+as one translucent film: other sheets show through it, its own pieces
+behind its nearer pieces do not. A sheet of several fill colours needs a
+device with Porter-Duff groups and alpha masks (ragg, cairo_pdf, svg);
+other devices, pdf() among them, paint it as <code>"face"</code>. The raster and
+hybrid backends keep, per sample, the nearest piece of each sheet and
+composite the sheets in depth order, with any fill colours; so does the
+<code><a href="view_3d.html">view_3d()</a></code> viewer. The layers
+that draw surfaces (<code><a href="stat_isosurface_3d.html">stat_isosurface_3d()</a></code>, <code><a href="stat_parametric_3d.html">stat_parametric_3d()</a></code>,
+<code>geom_mesh_3d()</code> and others) accept it too.</p></dd>
+
+
+<dt id="arg-shading">shading<a class="anchor" aria-label="anchor" href="#arg-shading"></a></dt>
+<dd><p><code>"flat"</code> lights and fills each face uniformly; <code>"smooth"</code>
+interpolates vertex normals and vertex fills across faces. The raster
+backend and the <code><a href="view_3d.html">view_3d()</a></code> viewer interpolate per sample, perspective
+correctly. The vector backend draws a face whose colour varies as one
+linear gradient when its colour varies along one direction and the device
+supports gradients, and otherwise as flat sub-triangles whose colours
+differ from the interpolated colour by at most the option
+<code>ggplot3d.shading_tolerance</code> (default 2 / 255 in encoded sRGB), splitting
+each triangle at most eight times (256 pieces along an edge), which can
+leave larger steps where a channel approaches black and the sRGB curve is
+steepest. Gradients
+follow the sRGB curve through their stops within the same tolerance. The
+layers that draw surfaces (<code><a href="stat_isosurface_3d.html">stat_isosurface_3d()</a></code>, <code>geom_mesh_3d()</code> and
+others) accept it too.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -156,12 +238,22 @@ With faces supplied, data may hold the vertices.</p></dd>
     <p>Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
 POLYGON Z or TIN Z objects. Numeric vertex fill is averaged per face before
 colour scaling. Other materials must be constant within each face.</p>
+<p>The mesh parameters run the <a href="mesh_processing.html">mesh processing</a> verbs on
+each mesh of a panel, in transformed position units, in the order
+subdivide, remesh, decimate, smooth, curvature, crease.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="va">v</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>, z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu">geom_mesh_3d</span><span class="op">(</span>vertices <span class="op">=</span> <span class="va">v</span>, faces <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu">geom_mesh_3d</span><span class="op">(</span>vertices <span class="op">=</span> <span class="va">v</span>, faces <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">cube</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, y <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, z <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">quads</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">8</span>, <span class="fl">7</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">6</span>, <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">7</span>, <span class="fl">8</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span>, <span class="fl">7</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">8</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_mesh_3d</span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">mean_curvature</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    vertices <span class="op">=</span> <span class="va">cube</span>, faces <span class="op">=</span> <span class="va">quads</span>, subdivide <span class="op">=</span> <span class="fl">3</span>, curvature <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

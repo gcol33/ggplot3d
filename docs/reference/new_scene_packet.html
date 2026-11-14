@@ -71,12 +71,24 @@ Indices start at one. Empty lists represent unused geometry kinds."><meta proper
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -121,7 +133,8 @@ Indices start at one. Empty lists represent unused geometry kinds.</p>
 <span>  footprints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  footprint_vertices <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  styles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>style_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  panel_id <span class="op">=</span> <span class="fl">1L</span></span>
+<span>  panel_id <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  quadrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -130,11 +143,20 @@ Indices start at one. Empty lists represent unused geometry kinds.</p>
 
 
 <dl><dt id="arg-vertices">vertices<a class="anchor" aria-label="anchor" href="#arg-vertices"></a></dt>
-<dd><p>List with x, y and z positions in normalised panel coordinates.</p></dd>
+<dd><p>List with x, y, z and optional w: homogeneous positions in
+normalised panel coordinates, see <code><a href="normalise_homogeneous_3d.html">normalise_homogeneous_3d()</a></code>. <code>w</code>
+defaults to 1, must be nonnegative, and <code>w = 0</code> places an ideal point (a
+direction) at infinity. Geometry through an ideal point is clipped by the
+panel box, the near and far planes or the viewport before it is drawn.</p></dd>
 
 
 <dt id="arg-corners">corners<a class="anchor" aria-label="anchor" href="#arg-corners"></a></dt>
-<dd><p>List with vertex indices and source_row input indices.</p></dd>
+<dd><p>List with vertex indices and source_row input indices, and
+optional per-corner attributes normal_x, normal_y, normal_z, red, green,
+blue, alpha (encoded sRGB colour channels in [0, 1], interpolated in
+linear light) and u, v (texture coordinates),
+in that order; NA marks a corner without the attribute. Compiled vertex
+weights carry them through clipping.</p></dd>
 
 
 <dt id="arg-faces-polylines-markers-text">faces, polylines, markers, text<a class="anchor" aria-label="anchor" href="#arg-faces-polylines-markers-text"></a></dt>
@@ -142,7 +164,10 @@ Indices start at one. Empty lists represent unused geometry kinds.</p>
 into corners. Faces default to three corners, polylines to two, and markers
 and text to one. Common columns include count, primitive_id, layer_id,
 source_row, style_id, role, partition and opacity. Markers also require
-footprint_id. Text sizes use width_mm and height_mm.</p></dd>
+footprint_id. Text sizes use width_mm and height_mm. Polylines take an
+optional mask_width_mm, at least width_mm and by default equal to it: the
+width of the band in which the line hides what lies behind it, while the
+line itself is drawn at width_mm (a haloed line, Appel 1967).</p></dd>
 
 
 <dt id="arg-footprints">footprints<a class="anchor" aria-label="anchor" href="#arg-footprints"></a></dt>
@@ -157,11 +182,20 @@ count, radius_x_mm, radius_y_mm and angle.</p></dd>
 <dt id="arg-styles">styles<a class="anchor" aria-label="anchor" href="#arg-styles"></a></dt>
 <dd><p>Data frame with contiguous integer style_id keys, fill, colour
 and other rendering properties. Face lighting uses shade and optional
-normal_x, normal_y, normal_z in normalised panel coordinates.</p></dd>
+normal_x, normal_y, normal_z in normalised panel coordinates. An optional
+integer texture_id (NA for none) names a texture held on the R side.</p></dd>
 
 
 <dt id="arg-panel-id">panel_id<a class="anchor" aria-label="anchor" href="#arg-panel-id"></a></dt>
 <dd><p>Positive integer panel identifier.</p></dd>
+
+
+<dt id="arg-quadrics">quadrics<a class="anchor" aria-label="anchor" href="#arg-quadrics"></a></dt>
+<dd><p>Analytic primitives: kind (1 sphere, 2 cylinder, 3 cone),
+centre_x, centre_y, centre_z, the unit axis axis_x, axis_y, axis_z
+(default the z axis), radius_a, radius_b (cone end radius, default 0) and
+length, with the common primitive_id, layer_id, source_row, style_id,
+partition and opacity columns.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -171,7 +205,14 @@ normal_x, normal_y, normal_z in normalised panel coordinates.</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">new_scene_packet</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">new_scene_packet</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co"># A triangle with one corner at infinity in the x direction.</span></span>
+<span><span class="fu">new_scene_packet</span><span class="op">(</span></span>
+<span>  vertices <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.2</span>, <span class="fl">1</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.8</span>, <span class="fl">0</span><span class="op">)</span>, z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>                  w <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  corners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>vertex <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span>,</span>
+<span>  faces <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>offset <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span>,</span>
+<span>  styles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>style_id <span class="op">=</span> <span class="fl">1L</span>, fill <span class="op">=</span> <span class="st">"grey60"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

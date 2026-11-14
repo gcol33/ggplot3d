@@ -67,12 +67,24 @@
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -114,7 +126,13 @@
 <span>  position_check <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  replace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  prepare_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  prepare_aesthetics <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  prepare_aesthetics <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  parameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  default_z <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  positions <span class="op">=</span> <span class="st">"nudge"</span>,</span>
+<span>  extents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  tween <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"group"</span>, <span class="st">"row"</span>, <span class="st">"path"</span>, <span class="st">"polygon"</span><span class="op">)</span>,</span>
+<span>  space <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -143,7 +161,8 @@
 
 
 <dt id="arg-position-check">position_check<a class="anchor" aria-label="anchor" href="#arg-position-check"></a></dt>
-<dd><p>Optional position validation function.</p></dd>
+<dd><p>Optional extra position validation, a function of
+the position and the panel's scales that signals an error.</p></dd>
 
 
 <dt id="arg-replace">replace<a class="anchor" aria-label="anchor" href="#arg-replace"></a></dt>
@@ -151,7 +170,52 @@
 
 
 <dt id="arg-prepare-data-prepare-aesthetics">prepare_data, prepare_aesthetics<a class="anchor" aria-label="anchor" href="#arg-prepare-data-prepare-aesthetics"></a></dt>
-<dd><p>Optional input and aesthetic preparation functions.</p></dd>
+<dd><p>Optional preparation functions applied
+to every layer drawing the geom inside <code><a href="coord_3d.html">coord_3d()</a></code>: <code>prepare_data(data)</code>
+receives the layer data, <code>prepare_aesthetics(out, data, plot, params)</code> the
+evaluated aesthetics with the layer data, plot and layer parameters.</p></dd>
+
+
+<dt id="arg-parameters">parameters<a class="anchor" aria-label="anchor" href="#arg-parameters"></a></dt>
+<dd><p>Named list of further drawing parameters the geom accepts,
+with their defaults. They reach the emitter in <code>params</code>.</p></dd>
+
+
+<dt id="arg-default-z">default_z<a class="anchor" aria-label="anchor" href="#arg-default-z"></a></dt>
+<dd><p>Height of a layer without a z mapping. The default 0
+trains the z scale; <code>-Inf</code> places the layer on the floor without training it.</p></dd>
+
+
+<dt id="arg-positions">positions<a class="anchor" aria-label="anchor" href="#arg-positions"></a></dt>
+<dd><p>Position adjustments the geometry accepts besides
+identity: any of <code>"nudge"</code> (<code><a href="position_nudge_3d.html">position_nudge_3d()</a></code>), <code>"jitter"</code>
+(<code><a href="position_jitter_3d.html">position_jitter_3d()</a></code>), <code>"dodge"</code> (<code><a href="position_dodge_3d.html">position_dodge_3d()</a></code>), <code>"stack"</code>
+(<code><a href="position_stack_3d.html">position_stack_3d()</a></code>, <code><a href="position_stack_3d.html">position_fill_3d()</a></code>) and <code>"planar"</code> (ggplot2's
+own nudge, jitter and dodge, which move x and y only).</p></dd>
+
+
+<dt id="arg-extents">extents<a class="anchor" aria-label="anchor" href="#arg-extents"></a></dt>
+<dd><p>Named list, by axis <code>"x"</code>, <code>"y"</code>, <code>"z"</code>, of the columns
+holding the geometry's interval along that axis, as character vectors
+<code>c(lower = , upper = , centre = )</code>; <code>lower</code> or <code>centre</code> may be <code>NA</code>.
+Stacking and dodging read and rewrite these columns. An axis not listed
+takes its own coordinate as both the interval end and the anchor.</p></dd>
+
+
+<dt id="arg-tween">tween<a class="anchor" aria-label="anchor" href="#arg-tween"></a></dt>
+<dd><p>How <code><a href="tween_3d.html">tween_3d()</a></code> pairs the layer's rows between two states.
+<code>"row"</code>: each row is one mark (points, text, columns), paired by group
+and order. <code>"path"</code> and <code>"polygon"</code>: the rows of a group form an open or
+closed line, resampled by arc length when the two states differ in
+length. <code>"group"</code> (default): the rows of a group form one shape (a
+surface, a mesh) that morphs row by row when its row count is unchanged
+and cross-fades otherwise.</p></dd>
+
+
+<dt id="arg-space">space<a class="anchor" aria-label="anchor" href="#arg-space"></a></dt>
+<dd><p>Optional function of data, params and panel_params returning a
+space specification. Layer-owned canonical geometry then shares coordinate
+munching and remunches against the final camera and viewport.</p></dd>
 
 </dl></div>
     <div class="section level2">

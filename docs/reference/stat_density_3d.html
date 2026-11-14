@@ -79,12 +79,24 @@ Computed level and density contain the resolved density threshold."><meta proper
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -134,6 +146,10 @@ Computed level and density contain the resolved density threshold.</p>
 <span>  n <span class="op">=</span> <span class="fl">32L</span>,</span>
 <span>  levels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  caps <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  space <span class="op">=</span> <span class="st">"data"</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"cubes"</span>,</span>
+<span>  simplify <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -171,7 +187,36 @@ Computed level and density contain the resolved density threshold.</p>
 
 
 <dt id="arg-caps">caps<a class="anchor" aria-label="anchor" href="#arg-caps"></a></dt>
-<dd><p>Whether to cap the sublevel region on the box faces.</p></dd>
+<dd><p>Whether to cap the sublevel region on the box faces (and on
+the clipping plane).</p></dd>
+
+
+<dt id="arg-space">space<a class="anchor" aria-label="anchor" href="#arg-space"></a></dt>
+<dd><p><code>"data"</code> estimates in the position scales. <code>"ilr"</code> estimates a
+composition mapped with <code>a</code>, <code>b</code>, <code>c</code> (and <code>d</code>) in isometric log-ratio
+coordinates, where a Gaussian kernel respects relative scale, and maps
+the surface back into the simplex. With three parts, z stays as it is.</p></dd>
+
+
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p>Extraction method: <code>"cubes"</code>, <code>"tetra"</code>, <code>"dual"</code> or <code>"nets"</code>.</p></dd>
+
+
+<dt id="arg-simplify">simplify<a class="anchor" aria-label="anchor" href="#arg-simplify"></a></dt>
+<dd><p>NULL, or a target face count (or fraction of the extracted
+faces) to which the surface is reduced by quadric edge collapse
+(<code><a href="mesh_processing.html">mesh_decimate()</a></code>). Normals are then recomputed from the decimated
+faces, or from <code>fun</code> in stat_isofunction_3d().</p></dd>
+
+
+<dt id="arg-clip">clip<a class="anchor" aria-label="anchor" href="#arg-clip"></a></dt>
+<dd><p>NULL, or a plane made with <code><a href="sdf_sphere.html">sdf_plane()</a></code>. The surface keeps the
+part on the side the plane normal points away from. With <code>caps = TRUE</code> the
+sublevel region is also closed on the plane, as with MATLAB's
+<code>isocaps</code>: each grid cell is split into the six tetrahedra of <code>method = "tetra"</code>, the plane cuts each in a triangle or quad on which the linear
+interpolant of the field is linear, and the part of that polygon below
+the level is filled, as on the box faces. Plane caps point along the
+plane normal. The plane is in transformed position coordinates.</p></dd>
 
 </dl></div>
 

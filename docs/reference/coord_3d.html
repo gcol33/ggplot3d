@@ -69,12 +69,24 @@ ggplot2 facets control x and y scales and have no z scale.'><meta property="og:i
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -113,6 +125,8 @@ ggplot2 facets control x and y scales and have no z scale.</p>
 <span>  azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">60</span>,</span>
 <span>  elevation <span class="op">=</span> <span class="fl">30</span>,</span>
 <span>  roll <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  oblique <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, ratio <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  up <span class="op">=</span> <span class="st">"z"</span>,</span>
 <span>  distance <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fov <span class="op">=</span> <span class="fl">35</span>,</span>
 <span>  zoom <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -134,7 +148,20 @@ ggplot2 facets control x and y scales and have no z scale.</p>
 <span>  light <span class="op">=</span> <span class="fu"><a href="light_3d.html">light_3d</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  backend <span class="op">=</span> <span class="fu"><a href="backend_3d.html">backend_3d</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  default <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  frame <span class="op">=</span> <span class="st">"view"</span></span>
+<span>  frame <span class="op">=</span> <span class="st">"view"</span>,</span>
+<span>  transform <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  axis_lines <span class="op">=</span> <span class="st">"box"</span>,</span>
+<span>  origin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">0</span>, y <span class="op">=</span> <span class="fl">0</span>, z <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
+<span>  clip_planes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  stereo <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  space <span class="op">=</span> <span class="st">"euclidean"</span>,</span>
+<span>  model <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  input <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  isometry <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  munch_tolerance <span class="op">=</span> <span class="fl">0.001</span>,</span>
+<span>  munch_max_depth <span class="op">=</span> <span class="fl">9L</span>,</span>
+<span>  shadow <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  depth_cue <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -143,15 +170,31 @@ ggplot2 facets control x and y scales and have no z scale.</p>
 
 
 <dl><dt id="arg-projection">projection<a class="anchor" aria-label="anchor" href="#arg-projection"></a></dt>
-<dd><p>Orthographic or perspective projection.</p></dd>
+<dd><p><code>"orthographic"</code>, <code>"perspective"</code> or <code>"oblique"</code>. An
+oblique projection is parallel with a sight ray that is not perpendicular
+to the image: depth recedes on the page along <code>oblique</code>.</p></dd>
 
 
 <dt id="arg-azimuth-elevation-roll">azimuth, elevation, roll<a class="anchor" aria-label="anchor" href="#arg-azimuth-elevation-roll"></a></dt>
 <dd><p>Camera angles in degrees.</p></dd>
 
 
+<dt id="arg-oblique">oblique<a class="anchor" aria-label="anchor" href="#arg-oblique"></a></dt>
+<dd><p>Receding direction of an oblique projection: <code>angle</code> in
+degrees counterclockwise from the page's right, and <code>ratio</code>, the drawn
+length of one unit of depth.</p></dd>
+
+
+<dt id="arg-up">up<a class="anchor" aria-label="anchor" href="#arg-up"></a></dt>
+<dd><p>Vertical axis, <code>"x"</code>, <code>"y"</code> or <code>"z"</code>. Azimuth turns about it and
+elevation rises toward it.</p></dd>
+
+
 <dt id="arg-distance-fov-zoom">distance, fov, zoom<a class="anchor" aria-label="anchor" href="#arg-distance-fov-zoom"></a></dt>
-<dd><p>Camera distance, field of view and magnification.</p></dd>
+<dd><p>Camera distance, field of view and magnification.
+Each camera argument from <code>azimuth</code> to <code>zoom</code> takes one value, shared by
+all panels, or one value per panel in layout order, so facets can show
+the scene from different views.</p></dd>
 
 
 <dt id="arg-target">target<a class="anchor" aria-label="anchor" href="#arg-target"></a></dt>
@@ -187,7 +230,10 @@ ggplot2 facets control x and y scales and have no z scale.</p>
 
 
 <dt id="arg-panes">panes<a class="anchor" aria-label="anchor" href="#arg-panes"></a></dt>
-<dd><p>Cube faces to draw.</p></dd>
+<dd><p>Cube faces to draw: <code>"back"</code> (the rear pane of each pair of
+walls), <code>"floor"</code>, <code>"front"</code> (the panes facing the viewer that are not
+drawn otherwise, styled by the theme element <code>panel.pane.front</code> and drawn
+over the data without grid lines), or pane names <code>"xmin"</code> to <code>"zmax"</code>.</p></dd>
 
 
 <dt id="arg-box">box<a class="anchor" aria-label="anchor" href="#arg-box"></a></dt>
@@ -217,11 +263,133 @@ ggplot2 facets control x and y scales and have no z scale.</p>
 <dt id="arg-frame">frame<a class="anchor" aria-label="anchor" href="#arg-frame"></a></dt>
 <dd><p>Fit the current view, all azimuths at this elevation, or a sphere.</p></dd>
 
+
+<dt id="arg-transform">transform<a class="anchor" aria-label="anchor" href="#arg-transform"></a></dt>
+<dd><p>Optional coordinate transformations applied after
+statistics, as a named list with entries <code>x</code>, <code>y</code> or <code>z</code>, each a
+transformation name such as <code>"log10"</code> or a scales transformation. Lines
+and faces are subdivided so their images bend with the transformation.</p></dd>
+
+
+<dt id="arg-axis-lines">axis_lines<a class="anchor" aria-label="anchor" href="#arg-axis-lines"></a></dt>
+<dd><p>Where axis lines and their ticks and labels sit:
+<code>"box"</code> on an edge of the box, <code>"origin"</code> through the point <code>origin</code>, or
+<code>"none"</code>, which keeps ticks and labels on the box edges and draws no axis
+lines. A guide with an explicit position (see <code><a href="guide_axis_3d.html">guide_axis_3d()</a></code>) keeps
+it. Origin axes, their ticks, tick labels and titles are part of the
+scene, so data in front of them hide them; the label at the point where
+origin axes cross is left out. Origin axis lines use the theme elements
+<code>axis.line.origin.x</code>, <code>.y</code> and <code>.z</code>, which inherit from
+<code>axis.line.origin</code>.</p></dd>
+
+
+<dt id="arg-origin">origin<a class="anchor" aria-label="anchor" href="#arg-origin"></a></dt>
+<dd><p>Named numeric vector with entries <code>x</code>, <code>y</code> and <code>z</code> in data
+units, the point through which origin axes pass. Missing entries are 0. A
+value outside the panel range is moved to the nearest end of the range.</p></dd>
+
+
+<dt id="arg-clip-planes">clip_planes<a class="anchor" aria-label="anchor" href="#arg-clip-planes"></a></dt>
+<dd><p>A list of <code><a href="clip_plane_3d.html">clip_plane_3d()</a></code> planes that cut every layer
+of the panel. A layer's own <code>clip_planes</code> argument replaces this list for
+that layer.</p></dd>
+
+
+<dt id="arg-stereo">stereo<a class="anchor" aria-label="anchor" href="#arg-stereo"></a></dt>
+<dd><p>Stereo output from <code><a href="stereo_3d.html">stereo_3d()</a></code>, or NULL for one view.</p></dd>
+
+
+<dt id="arg-space">space<a class="anchor" aria-label="anchor" href="#arg-space"></a></dt>
+<dd><p>Geometry of paths and faces: <code>"euclidean"</code> or an internal
+<code>Space3D</code> extension. Spaces define canonical points, chart conversions,
+distance, geodesics and isometries. See Details.</p></dd>
+
+
+<dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
+<dd><p>Display model supplied by the space; NULL uses its default.</p></dd>
+
+
+<dt id="arg-input">input<a class="anchor" aria-label="anchor" href="#arg-input"></a></dt>
+<dd><p>Input chart supplied by the space; NULL uses <code>model</code>.</p></dd>
+
+
+<dt id="arg-isometry">isometry<a class="anchor" aria-label="anchor" href="#arg-isometry"></a></dt>
+<dd><p>Optional space-specific action on canonical points.</p></dd>
+
+
+<dt id="arg-munch-tolerance">munch_tolerance<a class="anchor" aria-label="anchor" href="#arg-munch-tolerance"></a></dt>
+<dd><p>Positive chord-error tolerance in projected panel
+fractions, used for geodesic subdivision. The default is 0.001.</p></dd>
+
+
+<dt id="arg-munch-max-depth">munch_max_depth<a class="anchor" aria-label="anchor" href="#arg-munch-max-depth"></a></dt>
+<dd><p>Maximum binary subdivision depth, from 0 to 12.
+A space reports an error when this budget cannot meet the tolerance.</p></dd>
+
+
+<dt id="arg-shadow">shadow<a class="anchor" aria-label="anchor" href="#arg-shadow"></a></dt>
+<dd><p>Planar cast shadows from <code><a href="shadow_3d.html">shadow_3d()</a></code>, or NULL for none.</p></dd>
+
+
+<dt id="arg-depth-cue">depth_cue<a class="anchor" aria-label="anchor" href="#arg-depth-cue"></a></dt>
+<dd><p>Fog, depth-thinned strokes and eye-dome lighting from
+<code><a href="depth_cue_3d.html">depth_cue_3d()</a></code>, or NULL for none.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A Coord3D ggproto object.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Space extensions inherit from <code>ggplot3d:::Space3D</code>. They declare <code>charts</code>,
+<code>models</code> and <code>default_model</code>, and implement <code>to_canonical(data, chart)</code>,
+<code>from_canonical(X, model)</code>, <code>distance(X, Y)</code>, <code>geodesic(X, Y, s)</code> and
+<code>act(g, X)</code>. Canonical points are finite numeric row matrices of any
+dimension. Geodesic endpoints are paired rows and <code>s</code> is a scalar or one
+parameter per row, from zero to one. Input positions are scale-transformed
+chart coordinates. Model output has three columns in model axis units;
+<code>model_ranges(model, panel_params)</code> supplies named x, y, z bounds.
+Four-column homogeneous output (x, y, z, w) with w &gt;= 0 is also accepted
+and travels unchanged into the scene packet; w = 0 is a point at infinity.
+Projective models such as the Klein ball return (X, X0), so clipping to the
+panel box happens in homogeneous coordinates before division (Blinn and
+Newell 1978) and isometries stay linear. An edge whose image passes through
+infinity carries its ideal point as an explicit corner.</p>
+<p><code>chart_is_projective(model)</code> declares straight geodesic images and planar
+faces, allowing subdivision to be omitted. Other models share the frame
+subdivision machinery, sampling geodesics before projection. Faces use
+nested geodesic interpolation on a triangular lattice; shared edges use
+identical canonical samples. Continuous paint attributes interpolate by
+geodesic parameter, with piecewise constant paint on emitted primitives.
+Discrete attributes and source identities follow the starting corner.
+Polygon topology is triangulated in a planar input chart; curved models
+receive those triangles and closed boundary strokes. Panel furniture is
+supplied by the frame. Visibility is exact for the resulting tessellation.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="theme-elements">Theme elements<a class="anchor" aria-label="anchor" href="#theme-elements"></a></h2>
+
+
+<p>Besides the ggplot2 elements, panels read these theme elements:</p><ul><li><p><code>panel.pane</code>, <code>panel.pane.x</code>, <code>panel.pane.y</code>, <code>panel.pane.z</code>: pane
+fills, by the axis normal to the pane; <code>panel.pane.front</code> styles the
+panes selected with <code>panes = "front"</code>.</p></li>
+<li><p><code>panel.grid.major.x.xy</code>, <code>panel.grid.minor.z.yz</code> and so on: the grid
+lines of one axis on the panes of one plane. Each inherits from the
+grid element of its axis (<code>panel.grid.major.x.xy</code> from
+<code>panel.grid.major.x</code>), so <code><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank()</a></code> removes those lines from
+that plane only. In the default view the floor is the <code>xy</code> plane.</p></li>
+<li><p><code>panel.zero.x</code>, <code>panel.zero.y</code>, <code>panel.zero.z</code>: a plane through the
+panel at transformed value 0 of that axis, when 0 lies inside the range.
+They are blank by default; setting one to an <code><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">ggplot2::element_rect()</a></code>
+draws it, filled from <code>panel.zero</code>. Zero planes are part of the scene,
+so they hide data behind them.</p></li>
+<li><p><code>panel.zero.line.x</code>, <code>.y</code>, <code>.z</code>, inheriting from <code>panel.zero.line</code>
+(blank by default): the line at transformed value 0 on each drawn pane.</p></li>
+<li><p><code>panel.box.back</code>, <code>panel.box.front</code>: box edges.</p></li>
+<li><p><code>axis.line.origin.x</code>, <code>.y</code>, <code>.z</code>: origin axis lines.</p></li>
+<li><p><code>panel.margin.3d</code>: the margin around the projected box.</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
@@ -230,7 +398,29 @@ ggplot2 facets control x and y scales and have no z scale.</p>
 <span>  <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu">coord_3d</span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">45</span>, elevation <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">site</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">site</span><span class="op">)</span> <span class="op">+</span> <span class="fu">coord_3d</span><span class="op">(</span>z_scales <span class="op">=</span> <span class="st">"free"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">site</span><span class="op">)</span> <span class="op">+</span> <span class="fu">coord_3d</span><span class="op">(</span>z_scales <span class="op">=</span> <span class="st">"free"</span><span class="op">)</span></span>
+<span><span class="va">views</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">d</span>, view <span class="op">=</span> <span class="st">"front"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">d</span>, view <span class="op">=</span> <span class="st">"side"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">views</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">view</span><span class="op">)</span> <span class="op">+</span> <span class="fu">coord_3d</span><span class="op">(</span>azimuth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">60</span>, <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">centred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">centred</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">coord_3d</span><span class="op">(</span>axis_lines <span class="op">=</span> <span class="st">"origin"</span>, panes <span class="op">=</span> <span class="st">"floor"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>panel.zero.z <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_rect</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    panel.zero.line <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_line</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"grey30"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">centred</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">coord_3d</span><span class="op">(</span>panes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"back"</span>, <span class="st">"floor"</span>, <span class="st">"front"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>panel.grid.major.z.xz <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    panel.pane.front <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_rect</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"#4682B41A"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">coord_3d</span><span class="op">(</span>clip_planes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="clip_plane_3d.html">clip_plane_3d</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>z <span class="op">=</span> <span class="fl">2.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">coord_3d</span><span class="op">(</span>stereo <span class="op">=</span> <span class="fu"><a href="stereo_3d.html">stereo_3d</a></span><span class="op">(</span><span class="st">"cross"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">rotation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span></span>
+<span><span class="va">rotation</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_path_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">coord_3d</span><span class="op">(</span>isometry <span class="op">=</span> <span class="va">rotation</span>, xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">4</span>, <span class="fl">4</span><span class="op">)</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">4</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">4</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">coord_3d</span><span class="op">(</span>shadow <span class="op">=</span> <span class="fu"><a href="shadow_3d.html">shadow_3d</a></span><span class="op">(</span><span class="op">)</span>, depth_cue <span class="op">=</span> <span class="fu"><a href="depth_cue_3d.html">depth_cue_3d</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

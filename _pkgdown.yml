@@ -53,6 +53,7 @@ figures:
   bg: '#F5F6F8'
   fig.width: 6.5
   fig.height: 4.5
+  fig.asp: ~
 home:
   title: 'ggplot3d: Three-Dimensional Plots with ggplot2'
   sidebar:

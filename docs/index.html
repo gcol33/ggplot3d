@@ -17,8 +17,8 @@
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
 <meta property="og:title" content="ggplot3d: Three-Dimensional Plots with ggplot2">
-<meta name="description" content="Draws three-dimensional points, paths, surfaces and solids within the grammar of graphics provided by ggplot2. Trains a third position scale, combines layers into a shared panel scene, and resolves visibility for vector and raster output. Supports camera controls, faceting, statistical surfaces and indexed meshes.">
-<meta property="og:description" content="Draws three-dimensional points, paths, surfaces and solids within the grammar of graphics provided by ggplot2. Trains a third position scale, combines layers into a shared panel scene, and resolves visibility for vector and raster output. Supports camera controls, faceting, statistical surfaces and indexed meshes.">
+<meta name="description" content="Draws three-dimensional points, paths, surfaces and solids within the grammar of graphics provided by ggplot2. Trains a third position scale, combines layers into a shared panel scene, and resolves visibility for vector and raster output. Supports camera controls, faceting, statistical surfaces, indexed meshes, rasters and simple features.">
+<meta property="og:description" content="Draws three-dimensional points, paths, surfaces and solids within the grammar of graphics provided by ggplot2. Trains a third position scale, combines layers into a shared panel scene, and resolves visibility for vector and raster output. Supports camera controls, faceting, statistical surfaces, indexed meshes, rasters and simple features.">
 <meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg">
 <script>
 (function () {
@@ -92,12 +92,24 @@
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="articles/visibility.html">Visibility</a></li>
@@ -133,6 +145,8 @@
 <p><em>three-dimensional plots with ggplot2</em></p>
 <!-- badges: start -->
 
+<p align="center">
+<img src="reference/figures/ggplot3d-hero.svg" alt="Height bands of the Maunga Whau volcano every 10 metres, from blue at 90 metres through beige to red at 200 metres, drawn as a flat ggplot2 contour map on the left and, with coord_3d(), draped over the shaded volcano surface on the right." width="100%"></p>
 <p>ggplot3d draws three-dimensional points, paths, surfaces and solids with <a href="https://ggplot2.tidyverse.org/" class="external-link">ggplot2</a>.</p>
 <p>The package extends ggplot2’s grammar of graphics with a z position scale and a camera. Each panel combines its layers into a scene, the collection of geometry used to determine which parts are visible. You can map variables to position, colour and fill, choose a view, and save the plot with <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code>.</p>
 <p>ggplot3d supports:</p>
@@ -2516,6 +2530,7 @@
 <ul class="list-unstyled">
 <li>
 <a href="https://github.com/gcol33" class="external-link">Gilles Colling</a> <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0000-0003-3070-6066" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 

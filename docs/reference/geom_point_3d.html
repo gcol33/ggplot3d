@@ -67,12 +67,24 @@
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -144,6 +156,11 @@
 <span>  stat <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
+<span>  orientation <span class="op">=</span> <span class="st">"screen"</span>,</span>
+<span>  plane <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  normal <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  up <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  facing <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -168,10 +185,63 @@
 <dl><dt id="arg-mapping-data-stat-position-na-rm-show-legend-inherit-aes">mapping, data, stat, position, ..., na.rm, show.legend, inherit.aes<a class="anchor" aria-label="anchor" href="#arg-mapping-data-stat-position-na-rm-show-legend-inherit-aes"></a></dt>
 <dd><p>Standard ggplot2 layer arguments.</p></dd>
 
+
+<dt id="arg-orientation">orientation<a class="anchor" aria-label="anchor" href="#arg-orientation"></a></dt>
+<dd><p>Text layers: <code>"screen"</code> draws labels upright on the
+page, <code>"plane"</code> draws font outline geometry in three dimensions.</p></dd>
+
+
+<dt id="arg-plane">plane<a class="anchor" aria-label="anchor" href="#arg-plane"></a></dt>
+<dd><p>Text plane spanned by <code>"xy"</code>, <code>"xz"</code> or <code>"yz"</code>; defaults to
+<code>"xy"</code> when neither <code>normal</code> nor <code>facing</code> is supplied.</p></dd>
+
+
+<dt id="arg-normal">normal<a class="anchor" aria-label="anchor" href="#arg-normal"></a></dt>
+<dd><p>A finite nonzero numeric triple, the plane normal in
+normalized panel coordinates. Supply one of <code>plane</code>, <code>normal</code> or <code>facing</code>.</p></dd>
+
+
+<dt id="arg-up">up<a class="anchor" aria-label="anchor" href="#arg-up"></a></dt>
+<dd><p>A finite nonzero reading-up hint in normalized panel coordinates.
+With <code>normal</code>, defaults to the z axis (y for a z normal). Camera-facing
+text defaults to the camera's reading-up direction. A parallel hint uses
+the least aligned coordinate axis to define the reading direction.</p></dd>
+
+
+<dt id="arg-facing">facing<a class="anchor" aria-label="anchor" href="#arg-facing"></a></dt>
+<dd><p><code>"camera_plane"</code> gives labels a shared view-facing normal;
+<code>"camera_point"</code> faces each anchor toward the perspective eye. Parallel
+projections use the reversed sight ray, including oblique shear.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot2 layer emitting unprojected scene geometry.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Large point clouds: <code>geom_point_3d(render = "splat")</code> draws each
+point in a raster backend as a sphere of the point's size, depth-tested per
+pixel, and darkens points by eye-dome lighting, so an unlit cloud shows its
+depth structure. <code>edl</code> (default 1, 0 for none) sets the lighting strength.
+The vector backend draws splats as ordinary points and refuses panels with
+more markers than the option <code>ggplot3d.vector_markers</code> (default 50000).</p>
+<p>Text in a plane: <code>geom_text_3d(orientation = "plane", plane = "xy")</code> lays
+each label flat in the plane through its position spanned by two axes
+(<code>"xy"</code>, <code>"xz"</code> or <code>"yz"</code>), read along the first axis and turned within
+the plane by the <code>angle</code> aesthetic. The label is cut from the glyph
+outlines of its font (read with the 'systemfonts' package) into faces that
+the camera foreshortens and that hide and are hidden by the data; <code>size</code>
+is the text size at the camera target. Seen from behind the plane, a
+label reads in the turned direction instead of mirrored.</p>
+<p>Normals and up hints refer to positions after scale normalization.
+The frame's local Jacobian followed by aspect scaling transforms plane
+tangents into displayed model space. Their cross product transforms
+normals by the inverse transpose, preserving perpendicularity under
+unequal aspect ratios and curved frames. Glyphs remain rigid in the local
+tangent plane. <code>angle</code> rotates within that plane. Camera-facing geometry
+is resolved for each panel at draw time in every static backend and
+follows camera movement in the HTML viewer.</p>
     </div>
 
     <div class="section level2">
@@ -180,9 +250,21 @@
 <span>                label <span class="op">=</span> <span class="va">letters</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_point_3d</span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">cloud</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">2000</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">2000</span><span class="op">)</span>, z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">2000</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">cloud</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_point_3d</span><span class="op">(</span>render <span class="op">=</span> <span class="st">"splat"</span>, size <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>backend <span class="op">=</span> <span class="fu"><a href="backend_3d.html">backend_3d</a></span><span class="op">(</span><span class="st">"raster"</span>, dpi <span class="op">=</span> <span class="fl">96</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_path_3d</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_segment_3d</span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>xend <span class="op">=</span> <span class="va">x</span>, yend <span class="op">=</span> <span class="va">y</span>, zend <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_text_3d</span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">label</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"systemfonts"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">p</span> <span class="op">+</span> <span class="fu">geom_text_3d</span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">label</span><span class="op">)</span>, orientation <span class="op">=</span> <span class="st">"plane"</span>, plane <span class="op">=</span> <span class="st">"xy"</span>, size <span class="op">=</span> <span class="fl">8</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>projection <span class="op">=</span> <span class="st">"perspective"</span><span class="op">)</span></span>
+<span>  <span class="va">p</span> <span class="op">+</span> <span class="fu">geom_text_3d</span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">label</span><span class="op">)</span>, orientation <span class="op">=</span> <span class="st">"plane"</span>,</span>
+<span>    normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>, up <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="va">p</span> <span class="op">+</span> <span class="fu">geom_text_3d</span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">label</span><span class="op">)</span>, orientation <span class="op">=</span> <span class="st">"plane"</span>,</span>
+<span>    facing <span class="op">=</span> <span class="st">"camera_point"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>projection <span class="op">=</span> <span class="st">"perspective"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_polygon_3d</span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"steelblue"</span>, alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

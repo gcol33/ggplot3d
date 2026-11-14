@@ -69,12 +69,24 @@ data per frame. Projection, visibility and lighting are evaluated per frame."><m
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -123,7 +135,14 @@ data per frame. Projection, visibility and lighting are evaluated per frame.</p>
 <span>  dpi <span class="op">=</span> <span class="fl">96</span>,</span>
 <span>  antialias <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  progress <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  time <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  time <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  workers <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  tween <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  trail <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  isometry <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tour <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -138,14 +157,16 @@ data per frame. Projection, visibility and lighting are evaluated per frame.</p>
 <dt id="arg-azimuth-elevation-zoom-roll">azimuth, elevation, zoom, roll<a class="anchor" aria-label="anchor" href="#arg-azimuth-elevation-zoom-roll"></a></dt>
 <dd><p>A scalar, a numeric vector of length
 <code>frames</code>, or a function receiving times in seconds and returning either.
-NULL retains the plot setting, except azimuth without <code>time</code>, which makes
-one full turn.</p></dd>
+NULL retains the plot setting, except azimuth without <code>time</code> or <code>path</code>,
+which makes one full turn.</p></dd>
 
 
 <dt id="arg-frames">frames<a class="anchor" aria-label="anchor" href="#arg-frames"></a></dt>
 <dd><p>Number of frames, default 60. The closing view is excluded
 from the default turn so that looping repeats each view once. With <code>time</code>,
-one frame per distinct value of the time column.</p></dd>
+one frame per distinct value of the time column. With <code>path</code>, the default
+samples the path at <code>fps</code> frames per second, and a given number of frames
+is spread evenly over the path.</p></dd>
 
 
 <dt id="arg-fps">fps<a class="anchor" aria-label="anchor" href="#arg-fps"></a></dt>
@@ -153,12 +174,23 @@ one frame per distinct value of the time column.</p></dd>
 
 
 <dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
-<dd><p>Output path ending in .gif or .mp4. NULL returns PNG frame paths.</p></dd>
+<dd><p>Output path, or NULL to return PNG frame paths. The extension
+selects the output: <code>.gif</code> (needs gifski), <code>.mp4</code> or <code>.webm</code> (need av),
+<code>.apng</code> (an animated PNG), <code>.png</code> or <code>.svg</code> (one file per frame; svg needs
+svglite) and <code>.pdf</code> (one page per frame). A file per frame takes its
+number from a <code><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf()</a></code> pattern in the name, such as
+<code>"frames/turn-%03d.png"</code>, or else gets it appended, as in
+<code>turn-0001.png</code>.
+<code>.glb</code> and <code>.gltf</code> hold the first panel as an animated 3D scene for
+Blender and other glTF software: camera translation, rotation and zoom
+tracks, with per-frame visibility tracks for changing geometry.
+Each glTF animation uses one projection type; export perspective and
+orthographic paths separately.</p></dd>
 
 
 <dt id="arg-renderer">renderer<a class="anchor" aria-label="anchor" href="#arg-renderer"></a></dt>
-<dd><p>Scene backend, "raster" (default) or "vector".
-Both produce PNG frames for the encoder.</p></dd>
+<dd><p>Scene backend, "raster" (default) or "vector". Use "vector"
+for vector pages in SVG and PDF output.</p></dd>
 
 
 <dt id="arg-width-height">width, height<a class="anchor" aria-label="anchor" href="#arg-width-height"></a></dt>
@@ -166,7 +198,8 @@ Both produce PNG frames for the encoder.</p></dd>
 
 
 <dt id="arg-dpi">dpi<a class="anchor" aria-label="anchor" href="#arg-dpi"></a></dt>
-<dd><p>Device resolution, default 96 dots per inch.</p></dd>
+<dd><p>Device resolution, default 96 dots per inch. SVG and PDF pages
+measure <code>width / dpi</code> by <code>height / dpi</code> inches.</p></dd>
 
 
 <dt id="arg-antialias">antialias<a class="anchor" aria-label="anchor" href="#arg-antialias"></a></dt>
@@ -184,24 +217,95 @@ the <code>i</code>-th sorted distinct value; layers without the column appear in
 every frame. Scales are trained on all frames, so limits, breaks and colour
 mappings are the same in each frame.</p></dd>
 
+
+<dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
+<dd><p>A camera path from <code><a href="camera_path_3d.html">camera_path_3d()</a></code>, <code><a href="camera_path_3d.html">orbit_3d()</a></code>,
+<code><a href="camera_path_3d.html">fly_through_3d()</a></code> or <code><a href="camera_path_3d.html">dolly_zoom_3d()</a></code>, or NULL. A path replaces
+<code>azimuth</code>, <code>elevation</code>, <code>zoom</code> and <code>roll</code> and also moves the target,
+distance, field of view and projection.</p></dd>
+
+
+<dt id="arg-workers">workers<a class="anchor" aria-label="anchor" href="#arg-workers"></a></dt>
+<dd><p>Number of processes drawing frames, default 1, or a cluster
+from <code><a href="https://rdrr.io/r/parallel/makeCluster.html" class="external-link">parallel::makeCluster()</a></code> with ggplot3d loaded on its nodes. Each
+worker draws a contiguous run of frames on its own devices, so the frames
+are identical for every number of workers. Workers fork where the
+platform allows it and otherwise start socket processes, which load the
+installed ggplot3d. PDF pages are drawn in one process.</p></dd>
+
+
+<dt id="arg-tween">tween<a class="anchor" aria-label="anchor" href="#arg-tween"></a></dt>
+<dd><p>A <code><a href="tween_3d.html">tween_3d()</a></code> specification for in-between data frames, or NULL
+for one frame per state. Requires <code>time</code>. The number of frames is then
+<code>(number of states - 1) * (tween$n + 1) + 1</code>.</p></dd>
+
+
+<dt id="arg-trail">trail<a class="anchor" aria-label="anchor" href="#arg-trail"></a></dt>
+<dd><p>NULL (default), a positive integer giving the number of preceding
+rendered frames in a motion trail, or a list with <code>length</code> and optional
+<code>radius</code>, <code>width</code>, <code>sides</code> (default 8), <code>taper</code> (default FALSE), <code>normal</code>
+and <code>layers</code> (layer indices). Trails follow the anchors of time-varying
+row-based marks, including points, text and solid glyphs. Map <code>group</code> to a
+persistent object identifier. Trails use <code><a href="geom_tube_3d.html">geom_tube_3d()</a></code>'s sweep; setting
+<code>width</code> selects a ribbon. Cross-section sizes use transformed position
+units; the default radius is 0.5% of the panel range diagonal. Mapped
+<code>radius</code>, <code>width</code> and <code>twist</code> are retained. Alpha fades linearly with frame
+age, multiplying the mark's alpha. <code>taper = TRUE</code> also scales the cross
+section by this fraction. Requires <code>time</code>; tweened frames count towards
+the window. Static layers stay fixed. Missing observations break a trail.</p></dd>
+
+
+<dt id="arg-isometry">isometry<a class="anchor" aria-label="anchor" href="#arg-isometry"></a></dt>
+<dd><p>A list of one canonical-space isometry matrix per frame,
+a matrix shared by all frames, or a function of frame times returning the
+list. Re-emits geometry through the space adapter; an isometry that acts
+linearly on the display model (Lorentz transformations in the Klein
+model) changes only the camera pre-transform. Limits remain fixed.</p></dd>
+
+
+<dt id="arg-tour">tour<a class="anchor" aria-label="anchor" href="#arg-tour"></a></dt>
+<dd><p>A <code><a href="tour_grand.html">tour_grand()</a></code> specification or tourr history array. Applies
+Grassmann-interpolated bases to stat_project_3d() layers with orthographic
+or finite perspective projection. Uses fixed limits across frames. Requires static
+input data, linear position scales, and no tween or trail.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Arguments to <code><a href="export_3d.html">export_3d()</a></code> for glTF output: <code>furniture</code>, <code>lines</code>,
+<code>points</code> and <code>size</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot3d_animation list with <code>file</code>, <code>frame_count</code>, <code>fps</code>, <code>camera</code>
-(one row per frame, with the frame's <code>value</code> of the time column when
-<code>time</code> is set), <code>timings</code> in seconds, <code>build_seconds</code>, <code>frame</code>,
-<code>panel_extents</code> in millimetres, and <code>frames</code> (PNG paths when file is NULL).
-PNG frames returned with file = NULL belong to the caller.</p>
+(one row per frame with the time, the camera angles, zoom, projection,
+field of view, distance (NA when automatic) and target, and the frame's
+<code>value</code> of the time column when <code>time</code> is set), <code>timings</code> in seconds,
+<code>transition</code> (source state, destination state and eased fraction when
+tweening),
+<code>build_seconds</code>, <code>frame</code>, <code>panel_extents</code> in millimetres, and <code>frames</code>
+(the PNG paths when file is NULL, the written files of a per-frame
+output). PNG frames returned with file = NULL belong to the caller.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Framing is "azimuth" for constant elevation and roll, and "sphere"
-otherwise. Axis reserves and physical panel extents are fixed. Zoom remains
-an explicit magnification. GIF needs gifski; MP4 needs av. Optional packages
-are checked before rendering. Rendering streams frames to disk. A fixed
-scene is built once; with <code>time</code>, each frame is built from its subset with
-the scale limits of the full data, as in gganimate's <code>transition_manual()</code>
-and plotly's <code>frame</code> aesthetic.</p>
+    <p>Framing is "azimuth" when only the azimuth and zoom change, and
+"sphere" otherwise. Axis reserves and physical panel extents are fixed.
+Zoom remains an explicit magnification. Optional packages are checked
+before rendering. Rendering streams frames to disk. A fixed scene is built
+once; with <code>time</code>, each frame is built from its subset with the scale
+limits of the full data, as in gganimate's <code>transition_manual()</code> and
+plotly's <code>frame</code> aesthetic. The animated PNG follows the APNG 1.0
+specification: browsers play it and viewers without APNG support show its
+first frame.</p>
+<p>gganimate's <code>transition_states()</code> and <code>transition_time()</code> use a separate
+build pipeline. These transitions produce guidance to use
+<code>animate_3d(time = , tween = tween_3d())</code> for a 3D plot.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="camera_path_3d.html">camera_path_3d()</a></code> for keyframed camera moves, <code><a href="view_3d.html">view_3d()</a></code> to play
+a path in the browser.</p></div>
     </div>
 
     <div class="section level2">
@@ -213,6 +317,11 @@ and plotly's <code>frame</code> aesthetic.</p>
 <span>                      file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".gif"</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="va">movie</span><span class="op">$</span><span class="va">timings</span></span>
 <span><span class="op">}</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ragg"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">turn</span> <span class="op">&lt;-</span> <span class="fu">animate_3d</span><span class="op">(</span><span class="va">p</span>, path <span class="op">=</span> <span class="fu"><a href="camera_path_3d.html">orbit_3d</a></span><span class="op">(</span>degrees <span class="op">=</span> <span class="fl">90</span>, duration <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, fps <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>                     width <span class="op">=</span> <span class="fl">240</span>, height <span class="op">=</span> <span class="fl">240</span>, file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".apng"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">turn</span><span class="op">$</span><span class="va">camera</span><span class="op">$</span><span class="va">azimuth</span></span>
+<span><span class="op">}</span></span>
 <span><span class="va">waves</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,</span>
 <span>                     t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.75</span>, by <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">waves</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">waves</span><span class="op">$</span><span class="va">x</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">waves</span><span class="op">$</span><span class="va">y</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="va">waves</span><span class="op">$</span><span class="va">t</span><span class="op">)</span></span>
@@ -222,6 +331,15 @@ and plotly's <code>frame</code> aesthetic.</p>
 <span>  <span class="va">movie</span> <span class="op">&lt;-</span> <span class="fu">animate_3d</span><span class="op">(</span><span class="va">wave</span>, time <span class="op">=</span> <span class="st">"t"</span>, width <span class="op">=</span> <span class="fl">320</span>, height <span class="op">=</span> <span class="fl">320</span>,</span>
 <span>                      file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".gif"</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="va">movie</span><span class="op">$</span><span class="va">camera</span><span class="op">$</span><span class="va">value</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">track</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span>, z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">moving</span> <span class="op">&lt;-</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">track</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span>, group <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"steelblue"</span>, size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ragg"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">wake</span> <span class="op">&lt;-</span> <span class="fu">animate_3d</span><span class="op">(</span><span class="va">moving</span>, time <span class="op">=</span> <span class="st">"t"</span>, tween <span class="op">=</span> <span class="fu"><a href="tween_3d.html">tween_3d</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>    trail <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>length <span class="op">=</span> <span class="fl">3</span>, radius <span class="op">=</span> <span class="fl">0.04</span>, taper <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>    width <span class="op">=</span> <span class="fl">240</span>, height <span class="op">=</span> <span class="fl">240</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">wake</span><span class="op">$</span><span class="va">frames</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

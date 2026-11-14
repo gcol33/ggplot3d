@@ -69,12 +69,24 @@ Panel scenes resolve visibility across layers for vector and raster output."><me
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -108,6 +120,29 @@ Panel scenes resolve visibility across layers for vector and raster output.</p>
 
 
     <div class="section level2">
+    <h2 id="options">Options<a class="anchor" aria-label="anchor" href="#options"></a></h2>
+
+
+<dl><dt><code>ggplot3d.threads</code></dt>
+<dd><p>Number of threads the scene compiler uses to
+find which pieces of a panel occlude each other. Defaults to every
+logical core, or 2 when <code>_R_CHECK_LIMIT_CORES_</code> is set. The compiled
+scene is the same for every thread count.</p></dd>
+
+<dt><code>ggplot3d.cache_bytes</code></dt>
+<dd><p>Memory, in bytes, kept for recently compiled
+scenes, so that redrawing a plot at the same size and view skips the
+compiler. Defaults to 256 MiB; 0 turns the cache off.</p></dd>
+
+<dt><code>ggplot3d.max.overlaps</code></dt>
+<dd><p>Default <code>max.overlaps</code> of
+<code><a href="geom_label_3d.html">geom_text_repel_3d()</a></code> and <code><a href="geom_label_3d.html">geom_label_repel_3d()</a></code>: a label that
+overlaps more labels and points than this where it starts is not drawn.
+Defaults to 10.</p></dd>
+
+
+</dl></div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Useful links:</p><ul><li><p><a href="https://github.com/gcol33/ggplot3d" class="external-link">https://github.com/gcol33/ggplot3d</a></p></li>
 <li><p>Report bugs at <a href="https://github.com/gcol33/ggplot3d/issues" class="external-link">https://github.com/gcol33/ggplot3d/issues</a></p></li>
@@ -117,6 +152,13 @@ Panel scenes resolve visibility across layers for vector and raster output.</p>
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p><strong>Maintainer</strong>: Gilles Colling <a href="mailto:gilles.colling051@gmail.com">gilles.colling051@gmail.com</a> (<a href="https://orcid.org/0000-0003-3070-6066" class="external-link">ORCID</a>) [copyright holder]</p>
 <p>Authors:</p><ul><li><p>Gilles Colling <a href="mailto:gilles.colling051@gmail.com">gilles.colling051@gmail.com</a> (<a href="https://orcid.org/0000-0003-3070-6066" class="external-link">ORCID</a>) [copyright holder]</p></li>
+</ul><p>Other contributors:</p><ul><li><p>The Manifold Authors (Bundled Manifold library) [copyright holder]</p></li>
+<li><p>Angus Johnson (Bundled Clipper2 library) [copyright holder]</p></li>
+<li><p>Jared Hoberock (Manifold utilities) [copyright holder]</p></li>
+<li><p>Nathan Bell (Manifold utilities) [copyright holder]</p></li>
+<li><p>Wenzel Jakob (Disjoint-set implementation) [copyright holder]</p></li>
+<li><p>wi-re (Singular value decomposition) [copyright holder]</p></li>
+<li><p>Sun Microsystems, Inc. (Mathematical functions) [copyright holder]</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

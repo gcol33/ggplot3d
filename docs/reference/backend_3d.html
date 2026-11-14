@@ -67,12 +67,24 @@
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -105,7 +117,29 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">backend_3d</span><span class="op">(</span>type <span class="op">=</span> <span class="st">"vector"</span>, dpi <span class="op">=</span> <span class="fl">144</span>, antialias <span class="op">=</span> <span class="fl">2L</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">backend_3d</span><span class="op">(</span></span>
+<span>  type <span class="op">=</span> <span class="st">"vector"</span>,</span>
+<span>  dpi <span class="op">=</span> <span class="fl">144</span>,</span>
+<span>  antialias <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  blend <span class="op">=</span> <span class="st">"linear"</span>,</span>
+<span>  samples <span class="op">=</span> <span class="fl">64L</span>,</span>
+<span>  bounces <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  aperture <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  focus <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  light_radius <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  progressive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  batch_size <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  geometry <span class="op">=</span> <span class="st">"e3"</span>,</span>
+<span>  observer <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>  facing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span>,</span>
+<span>  fov <span class="op">=</span> <span class="fl">70</span>,</span>
+<span>  max_distance <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  tolerance <span class="op">=</span> <span class="fl">1e-05</span>,</span>
+<span>  max_steps <span class="op">=</span> <span class="fl">2048L</span>,</span>
+<span>  quotient <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  light_size <span class="op">=</span> <span class="fl">0.1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -113,7 +147,13 @@
 
 
 <dl><dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Backend, vector or raster.</p></dd>
+<dd><p>Backend: <code>"vector"</code>, <code>"raster"</code>, <code>"hybrid"</code>, <code>"pathtrace"</code>, or
+<code>"raymarch"</code> (an intrinsic view in a Thurston geometry). A hybrid panel
+rasterises the layers created with <code>raster = TRUE</code> (an argument of every
+<code>geom_*_3d()</code> layer and of <code><a href="layer_3d.html">layer_3d()</a></code>) into one image at <code>dpi</code> and draws
+the other layers, axes, panes and text as vector graphics. Vector
+geometry behind the image's opaque coverage is clipped at its pixels, so
+lines on or behind a rasterised surface stay exact where they are seen.</p></dd>
 
 
 <dt id="arg-dpi">dpi<a class="anchor" aria-label="anchor" href="#arg-dpi"></a></dt>
@@ -123,16 +163,129 @@
 <dt id="arg-antialias">antialias<a class="anchor" aria-label="anchor" href="#arg-antialias"></a></dt>
 <dd><p>Positive integer supersampling factor.</p></dd>
 
+
+<dt id="arg-blend">blend<a class="anchor" aria-label="anchor" href="#arg-blend"></a></dt>
+<dd><p>Colour space in which the raster backend composites
+translucent paint and averages antialiasing samples: <code>"linear"</code> light,
+encoded to sRGB after averaging, or <code>"srgb"</code>, which matches the
+compositing of vector graphics devices.</p></dd>
+
+
+<dt id="arg-samples">samples<a class="anchor" aria-label="anchor" href="#arg-samples"></a></dt>
+<dd><p>Path-tracing samples per pixel added by each render.</p></dd>
+
+
+<dt id="arg-bounces">bounces<a class="anchor" aria-label="anchor" href="#arg-bounces"></a></dt>
+<dd><p>Maximum diffuse surface interactions per path.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Nonnegative integer seed for pixel and sample indexed randomness.</p></dd>
+
+
+<dt id="arg-aperture">aperture<a class="anchor" aria-label="anchor" href="#arg-aperture"></a></dt>
+<dd><p>Thin-lens radius in aspect-scaled model units; zero is a pinhole.</p></dd>
+
+
+<dt id="arg-focus">focus<a class="anchor" aria-label="anchor" href="#arg-focus"></a></dt>
+<dd><p>Focal-plane distance along the camera forward axis, in model
+units. NULL focuses on the camera target.</p></dd>
+
+
+<dt id="arg-light-radius">light_radius<a class="anchor" aria-label="anchor" href="#arg-light-radius"></a></dt>
+<dd><p>Angular radius of the distant light in degrees.</p></dd>
+
+
+<dt id="arg-progressive">progressive<a class="anchor" aria-label="anchor" href="#arg-progressive"></a></dt>
+<dd><p>Accumulate samples across redraws of the same scene.
+Changes to geometry, camera, lighting or image dimensions reset accumulation.</p></dd>
+
+
+<dt id="arg-batch-size">batch_size<a class="anchor" aria-label="anchor" href="#arg-batch-size"></a></dt>
+<dd><p>Samples per native batch; accumulation is independent of
+batch size and worker count. R can interrupt between batches.</p></dd>
+
+
+<dt id="arg-geometry">geometry<a class="anchor" aria-label="anchor" href="#arg-geometry"></a></dt>
+<dd><p>Intrinsic geometry for the raymarch backend; see <code><a href="geodesic_3d.html">geodesic_3d()</a></code>.</p></dd>
+
+
+<dt id="arg-observer">observer<a class="anchor" aria-label="anchor" href="#arg-observer"></a></dt>
+<dd><p>Observer coordinates in that geometry's chart.</p></dd>
+
+
+<dt id="arg-facing">facing<a class="anchor" aria-label="anchor" href="#arg-facing"></a></dt>
+<dd><p>Orthonormal 3 by 3 matrix whose columns are the camera's right,
+up and forward tangent vectors in the observer's orthonormal frame.</p></dd>
+
+
+<dt id="arg-fov">fov<a class="anchor" aria-label="anchor" href="#arg-fov"></a></dt>
+<dd><p>Vertical intrinsic field of view in degrees.</p></dd>
+
+
+<dt id="arg-max-distance">max_distance<a class="anchor" aria-label="anchor" href="#arg-max-distance"></a></dt>
+<dd><p>Maximum intrinsic ray arc length.</p></dd>
+
+
+<dt id="arg-tolerance">tolerance<a class="anchor" aria-label="anchor" href="#arg-tolerance"></a></dt>
+<dd><p>Surface residual and quotient-boundary tolerance.</p></dd>
+
+
+<dt id="arg-max-steps">max_steps<a class="anchor" aria-label="anchor" href="#arg-max-steps"></a></dt>
+<dd><p>Maximum steps per intrinsic ray.</p></dd>
+
+
+<dt id="arg-quotient">quotient<a class="anchor" aria-label="anchor" href="#arg-quotient"></a></dt>
+<dd><p>List of paired <code><a href="thurston_portal_3d.html">thurston_portal_3d()</a></code> domain faces.</p></dd>
+
+
+<dt id="arg-light-size">light_size<a class="anchor" aria-label="anchor" href="#arg-light-size"></a></dt>
+<dd><p>Positive point-light softening radius for intrinsic views.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A backend configuration for coord_3d().</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The raster backend renders 64-pixel tiles in parallel. The number
+of worker threads is the option <code>ggplot3d.threads</code>; the default <code>0</code> uses
+one thread per hardware thread, at most two when <code>_R_CHECK_LIMIT_CORES_</code>
+is set. The image does not depend on the thread count.</p>
+<p>The native path tracer uses diffuse materials, a bounding-volume hierarchy,
+cosine-weighted reflection sampling and Russian roulette. The ambient light
+is a uniform environment; the diffuse light is a sampled distant disk.
+Points and paths use the solid conversion of <code><a href="export_3d.html">export_3d()</a></code>, and SDF layers
+use the shared sphere tracer. Furniture and text remain vector graphics.</p>
+<p>The raymarch backend traces geodesics from an observer inside the geometry.
+Use <code><a href="geom_thurston_3d.html">geom_thurston_3d()</a></code> for balls, cylinders and half-spaces, or traced SDF
+layers for chart-defined CSG. It draws a full-panel perspective image;
+Euclidean plot axes and exterior-camera settings have no intrinsic meaning.
+Lighting is an isotropic point light at the observer, with the ambient and
+diffuse strengths from <code><a href="light_3d.html">light_3d()</a></code>. Irradiance divides by the area density
+of geodesic spheres plus <code>light_size^2</code>. Each visible geodesic supplies its
+own light path, including paths through quotient faces. Intrinsic surfaces
+are opaque. See <code><a href="geodesic_3d.html">geodesic_3d()</a></code> for charts and numerical accuracy details.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Pharr, Jakob and Humphreys (2023). Physically Based Rendering,
+fourth edition. <a href="https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing" class="external-link">https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing</a></p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"vector"</span><span class="op">)</span></span>
-<span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"raster"</span>, dpi <span class="op">=</span> <span class="fl">144</span>, antialias <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"raster"</span>, dpi <span class="op">=</span> <span class="fl">144</span>, antialias <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"raster"</span>, blend <span class="op">=</span> <span class="st">"srgb"</span><span class="op">)</span></span>
+<span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"pathtrace"</span>, samples <span class="op">=</span> <span class="fl">8</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">40</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">40</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">d</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">y</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"grey80"</span>, colour <span class="op">=</span> <span class="cn">NA</span>, raster <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="geom_contour_3d.html">geom_contour_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>backend <span class="op">=</span> <span class="fu">backend_3d</span><span class="op">(</span><span class="st">"hybrid"</span>, dpi <span class="op">=</span> <span class="fl">150</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -67,12 +67,24 @@
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
     <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Animated solutions of four linear PDEs</a></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
@@ -115,6 +127,8 @@
 <span>  binwidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plane <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"surface"</span>, <span class="st">"floor"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grid"</span>, <span class="st">"delaunay"</span><span class="op">)</span>,</span>
+<span>  max_edge <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -149,7 +163,20 @@
 
 
 <dt id="arg-plane">plane<a class="anchor" aria-label="anchor" href="#arg-plane"></a></dt>
-<dd><p>Either surface, floor, or a numeric z in original units.</p></dd>
+<dd><p>Either surface, floor, or a numeric z in original units. A
+flat plane is a shorthand for <code>position = position_project_3d("zmin")</code> or
+<code>position_project_3d(list(axis = "z", at = plane))</code>; use
+<code><a href="position_project_3d.html">position_project_3d()</a></code> directly to draw contours on a side wall.</p></dd>
+
+
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p><code>"grid"</code> triangulates a complete x/y grid as
+geom_surface_3d() does; <code>"delaunay"</code> triangulates scattered x/y
+positions. Mesh input (<code><a href="mesh_3d.html">mesh_3d()</a></code>) uses its own faces.</p></dd>
+
+
+<dt id="arg-max-edge">max_edge<a class="anchor" aria-label="anchor" href="#arg-max-edge"></a></dt>
+<dd><p>Longest x/y edge kept in a Delaunay triangulation.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -158,10 +185,21 @@
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Isoband operates on the same grid triangles used by geom_surface_3d().
+    <p>Contour lines are traced by marching triangles on the triangles
+of the surface: the field is linear on each triangle, crossings on a
+shared edge are shared, and segments are chained into open lines and
+closed loops. The field is z, or the <code>value</code> aesthetic when mapped, so
+any scalar on any triangulated surface can be contoured: a variable
+measured on a terrain, or <code>value = n . p</code> for sections of the surface by
+parallel planes. Mesh input (a <code>mesh3d</code> or <code><a href="mesh_3d.html">mesh_3d()</a></code> data with <code>.face</code>,
+<code>.corner</code> and <code>.vertex</code> keys) is contoured on its own faces, polygons
+fanned from their first corner.
+Filled contours follow z only; isoband operates on the same grid
+triangles used by geom_surface_3d().
 Default levels are interior pretty(range, n = 10) values.
 Surface bands are lifted by barycentric interpolation within each triangle.
-Floor contours use the lower expanded panel boundary. The source height
+Floor contours use the lower expanded panel boundary and are painted with
+the floor pane. The source height
 range trains the z scale for either projection.</p>
     </div>
 
@@ -171,6 +209,9 @@ range trains the z scale for either projection.</p>
 <span><span class="va">d</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="va">d</span><span class="op">$</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span> <span class="op">-</span> <span class="va">d</span><span class="op">$</span><span class="va">y</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu">geom_contour_3d</span><span class="op">(</span>bins <span class="op">=</span> <span class="fl">4</span>, colour <span class="op">=</span> <span class="st">"navy"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_contour_3d</span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>value <span class="op">=</span> <span class="va">x</span> <span class="op">+</span> <span class="va">y</span><span class="op">)</span>, bins <span class="op">=</span> <span class="fl">6</span>, colour <span class="op">=</span> <span class="st">"navy"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_contour_filled_3d</span><span class="op">(</span>bins <span class="op">=</span> <span class="fl">4</span>, plane <span class="op">=</span> <span class="st">"floor"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
