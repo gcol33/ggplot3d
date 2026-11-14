@@ -62,8 +62,8 @@ test_that("point plane and line seeds build paths and reuse tube sweeps", {
   }
   tube <- stats_scene(p + stat_streamline_3d(seeds = seeds[[1L]], geom = "tube", radius = .04,
     sides = 6, max_steps = 6, cap = "flat") + coord_3d())
-  expect_gt(length(tube$packet$faces$offset), 0L)
-  expect_true(all(is.finite(tube$packet$vertices$x)))
+  expect_gt(length(tube$packet$quadrics$kind), 0L)
+  expect_true(all(is.finite(unlist(tube$packet$quadrics[ggplot3d:::quadric_transform_columns]))))
 })
 
 test_that("Jobard-Lefer slice placement respects spacing and projected fields", {

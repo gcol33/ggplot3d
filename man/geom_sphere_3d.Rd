@@ -23,7 +23,8 @@ geom_sphere_3d(
 
 \item{radius.unit}{Unit of the \code{radius} aesthetic: \code{"data"} or \code{"mm"}.}
 
-\item{detail}{Subdivision level of the icosphere, from 0 to 6.}
+\item{detail}{Subdivision level, from 0 to 6, of the icosphere of spheres
+that show their edges.}
 
 \item{shade}{Whether to apply lighting.}
 }
@@ -31,10 +32,13 @@ geom_sphere_3d(
 A ggplot2 layer.
 }
 \description{
-Draws one solid sphere per row, centred on x, y, z. Spheres are triangle
-meshes in the panel scene: they intersect surfaces and other solids exactly,
-take light from \code{\link[=light_3d]{light_3d()}}, and shrink with distance under a perspective
-camera, unlike the flat markers of \code{\link[=geom_point_3d]{geom_point_3d()}}.
+Draws one solid sphere per row, centred on x, y, z. Spheres are analytic
+quadrics in the panel scene (Sigg et al. 2006): the vector backend draws
+each one's exact outline, an ellipse under any projection, and the raster
+backend intersects every sample's ray with it for exact depth and normal.
+They intersect surfaces and other solids, take light from \code{\link[=light_3d]{light_3d()}},
+and shrink with distance under a perspective camera, unlike the flat
+markers of \code{\link[=geom_point_3d]{geom_point_3d()}}.
 }
 \details{
 With \code{radius.unit = "data"} the \code{radius} aesthetic is measured in the
@@ -47,9 +51,12 @@ radius is the on-screen radius of a sphere at the centre of the view, so
 spheres stay round whatever the box proportions. Rows without a radius get
 2.5\% of the longest box side.
 
-Each sphere is an icosahedron subdivided \code{detail} times: 20 * 4^detail
-triangles, 320 at the default \code{detail = 2}. In curvilinear frames each
-sphere is placed at its mapped centre and keeps its shape.
+Spheres with an edge \code{colour}, or drawn as wireframes, are icospheres that
+show their edges: an icosahedron subdivided \code{detail} times, 20 * 4^detail
+triangles. In curvilinear frames each sphere is placed at its mapped centre
+and keeps its shape. The interactive viewer and the exporters receive an
+inscribed mesh of every analytic sphere (\code{options(ggplot3d.quadric_segments)}
+points around the equator, 32 by default).
 }
 \examples{
 d <- data.frame(x = c(1, 2, 3, 2), y = c(1, 3, 1, 2), z = c(1, 1, 1, 2.5),
@@ -58,6 +65,11 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, radius = r, fill = g)) +
   geom_sphere_3d() + coord_3d(aspect = "data")
 ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = qsec, fill = hp)) +
   geom_sphere_3d(radius = 2, radius.unit = "mm", detail = 1) + coord_3d()
+}
+\references{
+Sigg, Weyrich, Botsch and Gross (2006). GPU-based ray-casting of
+quadratic surfaces. Symposium on Point-Based Graphics.
+\doi{10.2312/SPBG/SPBG06/059-065}
 }
 \seealso{
 \code{\link[=geom_ellipsoid_3d]{geom_ellipsoid_3d()}}, \code{\link[=geom_glyph_3d]{geom_glyph_3d()}}.

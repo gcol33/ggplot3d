@@ -332,6 +332,63 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// quadric_outline_cpp
+Rcpp::List quadric_outline_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport, Rcpp::IntegerVector rows, double tolerance_mm);
+RcppExport SEXP _ggplot3d_quadric_outline_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP, SEXP rowsSEXP, SEXP tolerance_mmSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type packet(packetSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type camera(cameraSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type viewport(viewportSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type rows(rowsSEXP);
+    Rcpp::traits::input_parameter< double >::type tolerance_mm(tolerance_mmSEXP);
+    rcpp_result_gen = Rcpp::wrap(quadric_outline_cpp(packet, camera, viewport, rows, tolerance_mm));
+    return rcpp_result_gen;
+END_RCPP
+}
+// quadric_cast_cpp
+Rcpp::List quadric_cast_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport, int row, Rcpp::NumericVector x_npc, Rcpp::NumericVector y_npc, int cast, bool back);
+RcppExport SEXP _ggplot3d_quadric_cast_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP, SEXP rowSEXP, SEXP x_npcSEXP, SEXP y_npcSEXP, SEXP castSEXP, SEXP backSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type packet(packetSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type camera(cameraSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type viewport(viewportSEXP);
+    Rcpp::traits::input_parameter< int >::type row(rowSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x_npc(x_npcSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y_npc(y_npcSEXP);
+    Rcpp::traits::input_parameter< int >::type cast(castSEXP);
+    Rcpp::traits::input_parameter< bool >::type back(backSEXP);
+    rcpp_result_gen = Rcpp::wrap(quadric_cast_cpp(packet, camera, viewport, row, x_npc, y_npc, cast, back));
+    return rcpp_result_gen;
+END_RCPP
+}
+// quadric_fragment_parts_cpp
+Rcpp::List quadric_fragment_parts_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport, Rcpp::IntegerVector rows, Rcpp::NumericMatrix normal, Rcpp::NumericMatrix point);
+RcppExport SEXP _ggplot3d_quadric_fragment_parts_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP, SEXP rowsSEXP, SEXP normalSEXP, SEXP pointSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type packet(packetSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type camera(cameraSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type viewport(viewportSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type rows(rowsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type normal(normalSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type point(pointSEXP);
+    rcpp_result_gen = Rcpp::wrap(quadric_fragment_parts_cpp(packet, camera, viewport, rows, normal, point));
+    return rcpp_result_gen;
+END_RCPP
+}
+// quadric_mesh_cpp
+Rcpp::List quadric_mesh_cpp(Rcpp::List packet, int segments);
+RcppExport SEXP _ggplot3d_quadric_mesh_cpp(SEXP packetSEXP, SEXP segmentsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type packet(packetSEXP);
+    Rcpp::traits::input_parameter< int >::type segments(segmentsSEXP);
+    rcpp_result_gen = Rcpp::wrap(quadric_mesh_cpp(packet, segments));
+    return rcpp_result_gen;
+END_RCPP
+}
 // raster_prepare_cpp
 Rcpp::List raster_prepare_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport);
 RcppExport SEXP _ggplot3d_raster_prepare_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP) {
@@ -735,6 +792,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_print_union_cpp", (DL_FUNC) &_ggplot3d_print_union_cpp, 2},
     {"_ggplot3d_print_mesh_cpp", (DL_FUNC) &_ggplot3d_print_mesh_cpp, 4},
     {"_ggplot3d_print_zip_cpp", (DL_FUNC) &_ggplot3d_print_zip_cpp, 2},
+    {"_ggplot3d_quadric_outline_cpp", (DL_FUNC) &_ggplot3d_quadric_outline_cpp, 5},
+    {"_ggplot3d_quadric_cast_cpp", (DL_FUNC) &_ggplot3d_quadric_cast_cpp, 8},
+    {"_ggplot3d_quadric_fragment_parts_cpp", (DL_FUNC) &_ggplot3d_quadric_fragment_parts_cpp, 6},
+    {"_ggplot3d_quadric_mesh_cpp", (DL_FUNC) &_ggplot3d_quadric_mesh_cpp, 2},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 11},
     {"_ggplot3d_raster_canvas_cpp", (DL_FUNC) &_ggplot3d_raster_canvas_cpp, 6},

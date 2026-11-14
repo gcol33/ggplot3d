@@ -47,6 +47,7 @@ struct Shapes {
   std::vector<std::array<double,2>> rotation;
   std::vector<double> area;
   const Smooth* smooth=nullptr;
+  const Smooth* quadric_lighting=nullptr;
 };
 
 // Where a sample hits a polygon item: fan triangle (0, i, i+1) and the screen
@@ -115,6 +116,10 @@ static inline double sample(const Shapes& shapes,const Item& item,const Paint& p
   const Screen* v=scene.vertices.data()+item.offset;
   if(x<paint.bounds[0] || y<paint.bounds[1] || x>paint.bounds[2] || y>paint.bounds[3]) return R_PosInf;
   if(border) *border=false;
+  if(item.kind==5) {
+    const QuadricHit hit=scene.quadric_hit(item,x,y);
+    return hit.valid ? hit.t:R_PosInf;
+  }
   if(item.geometry>0 && item.geometry<3 && item.kind==2 && !ignore_dash && !dash_on(paint,item.path_start,hidden)) return R_PosInf;
   if((item.kind==1 || item.geometry>=3) && paint.outline.a>0 && paint.width>0) {
     for(Index j=0;j<item.count-(item.geometry==4 ? 1:0);++j) {
@@ -186,7 +191,7 @@ static inline double halo_depth(const Scene& scene,const Item& item,double x,dou
 }
 
 static inline Shapes shapes_of(const Scene& scene,const std::vector<Paint>& paint) {
-  Shapes shapes{scene,paint,{},{}};
+  Shapes shapes{scene,paint,{},{},{}};
   const auto& f=scene.packet.footprints;
   shapes.rotation.resize(f.kind.size());
   for(std::size_t id=0;id<f.kind.size();++id) {
@@ -239,8 +244,9 @@ static inline std::vector<Paint> paints(const Scene& scene,Rcpp::List colours,Rc
   struct Table {
     Rcpp::NumericMatrix colour,outline; Rcpp::NumericVector width,edl; Rcpp::LogicalVector separate,splat; bool styled=false;
   };
-  std::array<Table,4> tables;
-  for(int kind=1;kind<=4;++kind) {
+  std::array<Table,5> tables;
+  require(colours.size()==5,"invalid raster colour tables");
+  for(int kind=1;kind<=5;++kind) {
     Table& t=tables[kind-1]; t.colour=Rcpp::as<Rcpp::NumericMatrix>(colours[kind-1]);
     require(t.colour.nrow()==4 && t.colour.ncol()==static_cast<int>(scene.table(kind).count.size()),"invalid raster colour table");
     t.styled=t.colour.hasAttribute("outline");
@@ -642,6 +648,25 @@ static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const P
   return out;
 }
 
+// Colour of a lit quadric item at a canvas point: its linear base colour
+// through the shading kernel at the exact hit point and normal, or its paint
+// colour where the quadric is unlit.
+static inline Colour quadric_colour(const Shapes& shapes,const Item& item,const Paint& paint,double x,double y) {
+  const Scene& scene=shapes.scene; const Smooth& sm=*shapes.quadric_lighting;
+  if(!sm.lit[item.row]) return paint.colour;
+  Ray ray;
+  const QuadricHit hit=scene.quadric_hit(item,x,y,&ray);
+  if(!hit.valid) return paint.colour;
+  const Vec3 box=ray_point(ray,hit.t);
+  const Vec3 normal=quadric_normal(scene.quadrics[item.row],scene.projection,box,hit.part);
+  const shade::vec3 position=shade::to_vec3(scene.projection.model(box));
+  const shade::vec3 lit=shade::shade(shade::to_vec3(normal),position,sm.view.at(position),
+    shade::to_vec3(sm.base[item.row]),sm.materials[sm.material[item.row]],sm.lights);
+  Colour out{std::max(0.0,std::min(1.0,lit.x)),std::max(0.0,std::min(1.0,lit.y)),std::max(0.0,std::min(1.0,lit.z)),paint.colour.a};
+  if(!sm.linear) {out.r=srgb_encode(out.r);out.g=srgb_encode(out.g);out.b=srgb_encode(out.b);}
+  return out;
+}
+
 static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const std::vector<Span>& spans,
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
                                bool retained,const Traced& traced,bool keep_buffers,
@@ -665,6 +690,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
   for(Index i:s.order) {
     const Item& item=scene.items[i]; const Paint& p=shapes.paint[i]; const Span& span=spans[i];
     const bool smooth_item=shapes.smooth && shapes.smooth->active && item.kind==1 && shapes.smooth->item[i];
+    const bool lit_quadric=item.kind==5 && shapes.quadric_lighting && shapes.quadric_lighting->active;
     int x0=std::max(span.samples[0],sx0),y0=std::max(span.samples[1],sy0);
     int x1=std::min(span.samples[2],sx1-1),y1=std::min(span.samples[3],sy1-1);
     for(int y=y0;y<=y1;++y) for(int x=x0;x<=x1;++x) {
@@ -690,6 +716,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       if(c.a==0 || occluder.hides(span.partition,z,tolerance)) continue;
       Fragment fragment{i,z,local,border};
       if(!border && smooth_item) {fragment.own=true;fragment.colour=smooth_colour(shapes,item,p,hit);}
+      if(lit_quadric) {fragment.own=true;fragment.colour=quadric_colour(shapes,item,p,xx,yy);}
       s.fragments.push_back(fragment);
       if(span.occluder && c.a==1) occluder.add(span.partition,z);
     }
@@ -944,6 +971,33 @@ static inline Smooth smooth_of(const Scene& scene,Rcpp::NumericMatrix face_colou
   return sm;
 }
 
+// Lighting of the quadrics, from the "smooth" attribute of their colour table
+// as for faces: per quadric row the linear base colour, whether it is lit and
+// its material, with the panel's materials, lights and view.
+static inline Smooth quadric_lighting_of(const Scene& scene,Rcpp::NumericMatrix colours,bool linear) {
+  Smooth sm; sm.linear=linear;
+  if(!colours.hasAttribute("smooth")) return sm;
+  Rcpp::List x=colours.attr("smooth");
+  Rcpp::NumericMatrix base=x["base"];
+  Rcpp::LogicalVector lit=x["lit"];
+  Rcpp::IntegerVector material=x["material"];
+  const std::size_t n=scene.packet.quadrics.kind.size();
+  require(static_cast<std::size_t>(base.nrow())==n && base.ncol()==3 && static_cast<std::size_t>(lit.size())==n &&
+          static_cast<std::size_t>(material.size())==n,"invalid raster quadric lighting");
+  sm.materials=shade::read_materials(x["materials"]);
+  sm.base.resize(n);sm.lit.resize(n);sm.material.resize(n);
+  for(std::size_t i=0;i<n;++i) {
+    sm.base[i]={base(i,0),base(i,1),base(i,2)};
+    sm.lit[i]=lit[i]==TRUE;
+    require(material[i]>=0 && material[i]<static_cast<int>(sm.materials.size()),"invalid raster material index");
+    sm.material[i]=material[i];
+    sm.active=sm.active || sm.lit[i];
+  }
+  if(!Rf_isNull(x["lights"])) sm.lights=shade::read_lights(x["lights"]);
+  sm.view=shade::read_view(x["view"]);
+  return sm;
+}
+
 static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
                               int width,int height,int aa,bool id_pass,int threads,bool keep_buffers,bool linear,
                               Rcpp::List traced_input) {
@@ -962,6 +1016,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   Shapes shapes=shapes_of(scene,paint);
   const Smooth smooth=smooth_of(scene,Rcpp::as<Rcpp::NumericMatrix>(colours[0]),linear);
   shapes.smooth=&smooth;
+  const Smooth quadric_lighting=quadric_lighting_of(scene,Rcpp::as<Rcpp::NumericMatrix>(colours[4]),linear);
+  shapes.quadric_lighting=&quadric_lighting;
   const auto& line=scene.packet.polylines;
   bool retained=std::any_of(line.hidden.begin(),line.hidden.end(),[](Index x){return x!=0;});
   const Index items=static_cast<Index>(scene.items.size());
@@ -978,7 +1034,7 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
     const Item& item=scene.items[i]; const Paint& p=paint[i]; Span& span=spans[i];
     span.partition=scene.table(item.kind).partition[item.row];
     span.lift=retained && item.kind==2 && line.hidden[item.row]!=0 && span.partition==1;
-    span.occluder=item.kind==1 || item.kind==3;
+    span.occluder=item.kind==1 || item.kind==3 || item.kind==5;
     span.retained_occluder=retained && item.kind==1 && p.colour.a==1 && span.partition==1;
     span.halo=item.kind==2 && item.geometry==0 && span.partition==1 &&
       line.mask_width_mm[item.row]>line.width_mm[item.row];
@@ -1077,7 +1133,7 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   if(keep_buffers) {
     // Buffers at device pixel resolution, rows from the top, read at each
     // pixel's centre sample: depth of the nearest painted fragment, depth at
-    // which coverage becomes opaque, its kind (5 for a traced layer) and
+    // which coverage becomes opaque, its kind (6 for a traced layer) and
     // 1-based row (table row, or traced layer), the model-space normal of a
     // face or traced surface, and the depth at which the accumulated alpha
     // reaches half its final value.
@@ -1092,10 +1148,19 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
       depth(y,x)=finite(buffers.depth[pixel]);
       opaque(y,x)=finite(buffers.opaque_depth[pixel]);
       coverage(y,x)=finite(buffers.coverage[pixel]);
-      kind(y,x)=i>=0 ? scene.items[i].kind:layer>0 ? 5:0;
+      kind(y,x)=i>=0 ? scene.items[i].kind:layer>0 ? 6:0;
       row(y,x)=i>=0 ? scene.items[i].row+1:layer>0 ? layer:NA_INTEGER;
       std::array<double,3> n{NA_REAL,NA_REAL,NA_REAL};
       if(i>=0 && scene.items[i].kind==1) n={scene.normals[scene.items[i].row][0],scene.normals[scene.items[i].row][1],scene.normals[scene.items[i].row][2]};
+      if(i>=0 && scene.items[i].kind==5) {
+        Ray ray;
+        const double px=canvas.origin_x+(x+.5)*canvas.pixel_x,py=canvas.origin_y+(height-1-y+.5)*canvas.pixel_y;
+        const QuadricHit hit=scene.quadric_hit(scene.items[i],px,py,&ray);
+        if(hit.valid) {
+          const Vec3 q=quadric_normal(scene.quadrics[scene.items[i].row],scene.projection,ray_point(ray,hit.t),hit.part);
+          n={q[0],q[1],q[2]};
+        }
+      }
       if(i<0 && layer>0) {
         std::size_t r=traced.ray(x*aa+aa/2,(height-1-y)*aa+aa/2);
         if(traced.layer[r]==layer) n={traced.normal[r][0],traced.normal[r][1],traced.normal[r][2]};
@@ -1205,8 +1270,8 @@ static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List da
     return std::array<double,2>{x,y};
   };
   struct State {std::vector<std::int64_t> hidden; bool shown=false;};
-  std::array<std::vector<State>,4> states;
-  for(int kind=1;kind<=4;++kind) states[kind-1].resize(scene.table(kind).count.size());
+  std::array<std::vector<State>,5> states;
+  for(int kind=1;kind<=5;++kind) states[kind-1].resize(scene.table(kind).count.size());
   for(std::size_t i=0;i<scene.items.size();++i) {
     if(i%4096==0) Rcpp::checkUserInterrupt();
     const Item& item=scene.items[i]; const Paint& p=paint[i];
@@ -1233,9 +1298,9 @@ static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List da
       else state.shown=true;
     }
   }
-  Rcpp::List status(4);
+  Rcpp::List status(5);
   CellRings rings; std::vector<int> ring_kind,ring_row;
-  for(int kind=1;kind<=4;++kind) {
+  for(int kind=1;kind<=5;++kind) {
     const auto& table=scene.table(kind);
     Rcpp::IntegerVector out(table.count.size());
     for(std::size_t row=0;row<table.count.size();++row) {
@@ -1254,7 +1319,7 @@ static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List da
     }
     status[kind-1]=out;
   }
-  status.names()=Rcpp::CharacterVector::create("faces","polylines","markers","text");
+  status.names()=Rcpp::CharacterVector::create("faces","polylines","markers","text","quadrics");
   Rcpp::NumericVector x(rings.x.size()),y(rings.y.size());
   for(std::size_t k=0;k<rings.x.size();++k) {
     x[k]=(canvas.origin_x+rings.x[k]*canvas.dx)/viewport.width_mm;

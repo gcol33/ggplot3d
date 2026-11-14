@@ -50,7 +50,7 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   rasterised <- traced | styled
   specs <- raster_traced_specs_3d(x$packets[rasterised])
   raster_packet <- merge_scene_packets(x$packets[rasterised], panel)
-  partitions <- unlist(lapply(c("faces", "polylines", "markers", "text"), function(k) raster_packet[[k]]$partition))
+  partitions <- unlist(lapply(primitive_kinds_3d, function(k) raster_packet[[k]]$partition))
   scene_assert(all(partitions == 1L), "Rasterised layers of a hybrid panel need occlusion = \"depth\".")
   vector_packet <- device_text_metrics_3d(merge_scene_packets(c(list(furniture$packet), x$packets[!rasterised]), panel))
   vector_marker_limit_3d(vector_packet)
@@ -59,7 +59,7 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
     buffers = TRUE, blend = backend$blend, traced = specs, edl = depth_cue_edl_3d(x$panel_params))
   occlusion <- raster_occlusion_3d(vector_packet, camera, viewport, result)
   f <- scene$fragments
-  kinds <- c("faces", "polylines", "markers", "text")
+  kinds <- primitive_kinds_3d
   status <- integer(length(f$kind))
   for (k in seq_along(kinds)) {
     i <- which(f$kind == k)
@@ -93,7 +93,7 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   front <- pass(c(0L, 2L), TRUE, "scene-hybrid-front-3d")
   children <- c(list(behind), raster_layer_children_3d(result, raster_packet), list(front))
   layers <- unlist(lapply(x$packets[rasterised], function(p)
-    attr(p, "raymarch")$layer_id %or3d% unique(unlist(lapply(p[c("faces", "polylines", "markers", "text")], `[[`, "layer_id")))))
+    attr(p, "raymarch")$layer_id %or3d% unique(unlist(lapply(p[primitive_kinds_3d], `[[`, "layer_id")))))
   capabilities <- utils::modifyList(grid_capabilities_3d(), list(raster = TRUE, image_layers = sort(unique(as.integer(layers)))))
   grob <- grid::gTree(children = do.call(grid::gList, children), raster_result = result,
     occlusion = occlusion, capabilities = capabilities, name = "scene-hybrid-3d")

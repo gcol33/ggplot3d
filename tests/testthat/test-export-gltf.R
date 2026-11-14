@@ -202,7 +202,12 @@ test_that("deferred screen-sized glyphs export their resolved meshes", {
   file <- tempfile(fileext = ".glb")
   export_3d(p, file)
   mesh <- read_glb(file)$json$meshes[[1L]]
-  expect_equal(length(glb_accessor(read_glb(file), mesh$primitives[[1L]]$indices)), 240L)
+  # The inscribed mesh of a quadric sphere, n points around and an odd number
+  # of latitude bands: 2 n polar triangles, the other bands of n quads of two
+  # triangles.
+  n <- ggplot3d:::quadric_segments_3d()
+  bands <- bitwOr(n %/% 2L, 1L)
+  expect_equal(length(glb_accessor(read_glb(file), mesh$primitives[[1L]]$indices)), 3L * (2L * n + 2L * n * (bands - 2L)))
 })
 
 test_that("export and animation arguments are checked", {

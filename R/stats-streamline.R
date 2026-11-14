@@ -76,9 +76,9 @@ StatStreamline3D <- ggplot2::ggproto("StatStreamline3D", StatGeometry3D,
     out <- do.call(rbind, pieces)
     if (is.null(out) || !nrow(out)) return(data.frame())
     if (!tube) return(out)
-    surfaces <- lapply(split(out, out$group), function(path) StatSweep3D$compute_group(path, scales,
+    tubes <- lapply(split(out, out$group), function(path) StatSweep3D$compute_group(path, scales,
       radius = radius, sides = sides, cap = cap))
-    stats_bind_faces_3d(surfaces)
+    do.call(rbind, tubes)
   }
 )
 
@@ -107,7 +107,8 @@ StatStreamline3D <- ggplot2::ggproto("StatStreamline3D", StatGeometry3D,
 #' @param max_lines Maximum curves per plane or explicit seed collection.
 #' @param radius,sides,cap Passed to [geom_tube_3d()]'s sweep machinery.
 #' @return A ggplot2 layer with computed `norm`, `step`, `arclength`, `time`
-#'   and `group`. Streamtubes retain face means of these variables.
+#'   and `group`. Streamtubes are drawn as [geom_tube_3d()] draws its tubes,
+#'   with these variables at their points.
 #' @references Dormand and Prince (1980), A family of embedded Runge-Kutta
 #'   formulae. Jobard and Lefer (1997), Creating evenly-spaced streamlines of
 #'   arbitrary density, \doi{10.1007/978-3-7091-6876-9_5}.
@@ -129,7 +130,7 @@ stat_streamline_3d <- function(mapping = NULL, data = NULL, geom = c("path", "tu
     value <- get(name)
     if (!is.numeric(value) || length(value) != 1L || !is.finite(value) || value <= 0) stop(name, " must be positive.", call. = FALSE)
   }
-  make_layer_3d(if (geom == "tube") GeomStatsSurface3D else ggplot2::GeomPath, mapping, data,
+  make_layer_3d(if (geom == "tube") GeomSweep3D else ggplot2::GeomPath, mapping, data,
     StatStreamline3D, position, stats_params_3d(list(seeds = seeds, n = n, step = step,
       method = match.arg(method), max_steps = mesh_count_3d(max_steps, "max_steps", 1L),
       direction = match.arg(direction), tolerance = tolerance, max_lines = mesh_count_3d(max_lines, "max_lines", 1L),

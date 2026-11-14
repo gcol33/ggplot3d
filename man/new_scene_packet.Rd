@@ -54,11 +54,16 @@ integer texture_id (NA for none) names a texture held on the R side.}
 
 \item{panel_id}{Positive integer panel identifier.}
 
-\item{quadrics}{Analytic primitives: kind (1 sphere, 2 cylinder, 3 cone),
-centre_x, centre_y, centre_z, the unit axis axis_x, axis_y, axis_z
-(default the z axis), radius_a, radius_b (cone end radius, default 0) and
-length, with the common primitive_id, layer_id, source_row, style_id,
-partition and opacity columns.}
+\item{quadrics}{Analytic primitives, each a unit primitive of \code{kind} (1
+sphere, 2 cylinder, 3 cone) placed by an affine map into normalised panel
+coordinates: \code{transform_1} to \code{transform_16}, the column-major entries of
+a 4 x 4 matrix whose last row is (0, 0, 0, 1), identity by default (Sigg
+et al. 2006). The unit sphere is the ball of radius 1 about the origin;
+unit cylinders and cones lie along the local z axis for z in [0, 1],
+with radius 1 at z = 0 and \code{radius_ratio} (default 1, exactly 1 for
+cylinders) at z = 1. \code{cap_0} and \code{cap_1} close the ends at z = 0 and z = 1
+with flat disks (1, the default) or leave them open (0). Common columns are
+primitive_id, layer_id, source_row, style_id, partition and opacity.}
 
 \item{materials}{Data frame of surface materials with contiguous integer
 material_id keys and columns ambient, diffuse, specular, shininess,

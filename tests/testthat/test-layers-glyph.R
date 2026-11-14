@@ -64,15 +64,14 @@ test_that("data-unit spheres have their radius on every axis and train the scale
   expect_equal(b$xmin, d$x - d$r); expect_equal(b$zmax, d$z + d$r)
   ranges <- s$built$layout$panel_params[[1L]]$ranges
   expect_true(ranges$y[1L] <= -1 && ranges$y[2L] >= 3)
-  v <- scene_vertices_xyz_3d(s$packet$vertices)
-  nv <- nrow(ggplot3d:::glyph_mesh_3d("sphere", 1L)$vertices)
-  expect_equal(nrow(v), 2L * nv)
-  expect_length(s$packet$faces$primitive_id, 2L * 80L)
+  q <- s$packet$quadrics
+  expect_identical(q$kind, c(1L, 1L))
+  expect_length(s$packet$faces$primitive_id, 0L)
   span <- vapply(ranges, diff, numeric(1))
-  second <- v[nv + seq_len(nv), ]
+  linear <- ggplot3d:::quadric_linear_3d(q, 2L)[, , 1L]
+  expect_equal(linear * span, diag(2, 3L), tolerance = 1e-12)
   centre <- (c(10, 1, 100) - vapply(ranges, `[`, numeric(1), 1L)) / span
-  data_units <- sweep(sweep(second, 2L, centre), 2L, span, "*")
-  expect_equal(sqrt(rowSums(data_units^2)), rep(2, nv), tolerance = 1e-10)
+  expect_equal(c(q$transform_13[2L], q$transform_14[2L], q$transform_15[2L]), unname(centre))
   expect_error(stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, radius = -r)) + geom_sphere_3d() + coord_3d()), "nonnegative")
   expect_error(geom_sphere_3d(radius.unit = "cm"), "radius.unit")
 })
@@ -85,16 +84,15 @@ test_that("millimetre spheres take their on-screen radius from the fitted view",
     coord_3d(projection = "orthographic", expand = FALSE, aspect = c(2, 1, 1))
   s <- integration_packets(p)
   packet <- s$grobs[[1L]]$packet
-  expect_false(is.null(attr(packet, "glyph_mm")))
+  expect_false(is.null(attr(packet, "quadric_mm")))
   camera <- s$params$camera
   viewport <- new_scene_viewport(120, 90, 96)
   resolved <- ggplot3d:::resolve_glyph_packets_3d(list(packet), camera, viewport)[[1L]]
-  scene <- scene_compile(resolved, camera, viewport)
-  x <- scene$vertices$x_npc * viewport$width_mm; y <- scene$vertices$y_npc * viewport$height_mm
-  expect_equal(diff(range(x)), 10, tolerance = 0.01)
-  expect_equal(diff(range(y)), 10, tolerance = 0.01)
+  outline <- ggplot3d:::quadric_outline_cpp(resolved[names(resolved) != "styles"], camera, viewport, 1L, 0.001)
+  expect_equal(diff(range(outline$x_npc * viewport$width_mm)), 10, tolerance = 1e-3)
+  expect_equal(diff(range(outline$y_npc * viewport$height_mm)), 10, tolerance = 1e-3)
   again <- ggplot3d:::resolve_glyph_packets_3d(list(resolved), camera, viewport)[[1L]]
-  expect_identical(again$vertices, resolved$vertices)
+  expect_identical(again$quadrics, resolved$quadrics)
 })
 
 test_that("glyphs follow u, v, w and scale with size", {
@@ -143,8 +141,7 @@ test_that("glyphs stay rigid in curvilinear frames and render in every backend",
   d <- data.frame(x = c(1, 2, 3), y = c(1, 2, 3), z = c(1, 2, 3))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_sphere_3d(radius = 2, radius.unit = "mm", detail = 1)
   s <- stats_scene(p + coord_cylindrical_3d())
-  nv <- nrow(ggplot3d:::glyph_mesh_3d("sphere", 1L)$vertices)
-  expect_equal(length(s$packet$vertices$x), 3L * nv)
+  expect_length(s$packet$quadrics$kind, 3L)
   skip_if_not_installed("ragg")
   for (backend in c("vector", "raster")) {
     grob <- ggplot2::ggplotGrob(p + coord_3d(backend = backend_3d(backend)))

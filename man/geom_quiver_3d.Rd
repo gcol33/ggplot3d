@@ -71,6 +71,9 @@ A ggplot2 layer.
 Maps x/y/z as anchors and u/v/w as vector components in original data
 units. Endpoints are transformed by the position scales. Cone orientation
 is calculated from the resulting endpoints after frame and aspect mapping.
+Filled cone heads and tube shafts are analytic quadrics (Sigg et al.
+2006) with exact outlines and per-sample depth; heads without a fill are
+drawn by the edges of a cone mesh of \code{detail} subdivisions.
 \code{normalize = TRUE} makes the input vectors unit length before applying
 \code{scale}. Computed variables \code{norm}, \code{xend}, \code{yend}, \code{zend} are available
 through \code{after_stat()}. Zero-length vectors draw no geometry.

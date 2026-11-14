@@ -76,6 +76,13 @@ the curve in proportion to arc length, so the surface closes without a
 seam.
 }
 \details{
+Opaque filled tubes without an edge colour are analytic quadrics: a
+cylinder, or a cone where the radius changes, along each segment of the
+path and a sphere at each joint, so the tube is the sweep of a ball along
+the path, drawn with exact outlines and per-sample depth (Sigg et al. 2006).
+A segment takes the colour of its first point. Translucent tubes, and tubes
+with edges, are swept meshes with \code{sides} points on each cross section.
+
 The \code{radius} (tubes) or \code{width} (ribbons) aesthetic varies the cross section
 per point, and \code{twist} turns it about the curve by that many degrees.
 Without either, the size is the \code{radius} or \code{width} parameter, by default
@@ -84,12 +91,14 @@ ends are closed with hemispheres (\code{cap = "round"}) or disks (\code{"flat"})
 left open (\code{"none"}). A ribbon starts with its surface normal as close to
 \code{normal} as the curve allows.
 
-Numeric aesthetics such as a continuous fill are taken at every point and
-averaged over each face, so they change gradually from ring to ring.
+Numeric aesthetics such as a continuous fill are taken at every point; on
+meshes they are averaged over each face, so they change gradually from
+ring to ring.
 \code{spline} passes the points through \code{\link[=stat_spline_3d]{stat_spline_3d()}} first, with \code{n}
 samples. Normals are angle-weighted and split where faces meet at more than
 60 degrees. Computed variables: \code{arc_length} from the first point and
-\code{z_mean}.
+\code{z_mean}, the height of the curve point for tubes and the mean height of a
+face for other sweeps.
 
 With \code{radius.unit = "mm"} (\code{width.unit} for ribbons) the size is measured
 on the page, like a line width: the cross section is swept when the plot is
@@ -117,4 +126,8 @@ ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, fill = t)) +
 \references{
 Wang, Juettler, Zheng and Liu (2008). Computation of rotation
 minimizing frames. ACM Transactions on Graphics 27, 2. \doi{10.1145/1330511.1330513}
+
+Sigg, Weyrich, Botsch and Gross (2006). GPU-based ray-casting of
+quadratic surfaces. Symposium on Point-Based Graphics.
+\doi{10.2312/SPBG/SPBG06/059-065}
 }

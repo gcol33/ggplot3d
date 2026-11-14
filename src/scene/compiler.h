@@ -5,6 +5,7 @@
 #include "ordering.h"
 #include "stroke.h"
 #include "solid.h"
+#include "quadric.h"
 
 namespace ggplot3d { namespace engine {
 static inline CompiledScene compile(const ScenePacket& packet, const Projection& projection,
@@ -67,6 +68,38 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       }
       out.clear();
     });
+  // Quadrics enter the ordering as the front facets of a circumscribed
+  // stand-in, refined until it departs from the surface by less than half a
+  // device pixel; the far facets join them where the far side can show. An
+  // opaque quadric showing only its front is a closed solid.
+  const PrimitiveTable quadric_table=quadric_primitives(packet.quadrics);
+  for(std::size_t row=0;row<packet.quadrics.kind.size();++row) {
+    if(packet.quadrics.opacity[row]<=0) continue;
+    const QuadricShape shape=quadric_shape(packet.quadrics,row,projection.camera.pre);
+    const bool back=quadric_shows_back(shape,projection,packet.quadrics.opacity[row]);
+    const Point4 centre=transform_point(shape.to_box,quadric_centre(shape));
+    const bool oriented=centre[3]>0;
+    const Vec3 middle=oriented ? projection.model({centre[0]/centre[3],centre[1]/centre[3],centre[2]/centre[3]}):Vec3{0,0,0};
+    for(auto& facet:quadric_facets(shape,quadric_segments(shape,projection),true)) {
+      Polygon polygon;
+      for(const auto& x:facet.points) polygon.push_back(box_vertex(transform_point(shape.to_box,x)));
+      bool clipped=false;
+      polygon=clip_polygon(std::move(polygon),planes,clipped);
+      if(polygon.size()<3) continue;
+      dehomogenise(polygon);
+      bool degenerate=false;
+      Vec3 normal=face_normal(polygon,projection,&degenerate);
+      if(degenerate) continue;
+      Vec3 centroid{0,0,0};
+      for(const auto& v:polygon) {auto m=projection.model(v.xyz);for(int k=0;k<3;++k) centroid[k]+=m[k]/polygon.size();}
+      if(oriented && dot(normal,subtract(centroid,middle))<0) for(double& x:normal) x=-x;
+      const Vec3 view=projection.camera.perspective ? subtract(centroid,projection.resolved.eye):projection.resolved.ray;
+      if(dot(normal,view)>=0 && !back) continue;
+      emit(quadric_table,row,Kind::face,std::move(polygon),clipped,normal);
+      if(!back && packet.quadrics.partition[row]==1)
+        pieces.back().solid=static_cast<Index>(faces.count.size()+row);
+    }
+  }
   const PrimitiveTable* tables[] = {&packet.faces, &packet.polylines, &packet.markers, &packet.text};
   for (int kind = 2; kind <= 4; ++kind) {
     const auto& table = *tables[kind-1];
@@ -330,7 +363,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       emitted_end[piece.row]=emitted_end[piece.row] || end;
     }
     out.draw_order[i] = out.fragments.count.size();
-    append_fragment(out, *piece.source, piece.row, piece.kind,
+    append_fragment(out, *piece.source, piece.row, piece.source==&quadric_table ? Kind::quadric : piece.kind,
                     piece.anchor.empty() ? piece.polygon : piece.anchor,
                     projection, piece.clipped, piece.kind==Kind::face ? piece.normal : Vec3{0,0,0}, piece.path_start,
                     piece.path_end,

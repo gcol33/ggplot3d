@@ -58,7 +58,8 @@ are \code{spacing} from accepted curves; tracing stops within \code{dtest}
 }
 \value{
 A ggplot2 layer with computed \code{norm}, \code{step}, \code{arclength}, \code{time}
-and \code{group}. Streamtubes retain face means of these variables.
+and \code{group}. Streamtubes are drawn as \code{\link[=geom_tube_3d]{geom_tube_3d()}} draws its tubes,
+with these variables at their points.
 }
 \description{
 A complete rectilinear x/y/z grid supplies u/v/w components. Trilinear

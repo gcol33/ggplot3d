@@ -158,17 +158,22 @@ sweep_surface_3d <- function(data, size, twist, profile, closed, cap, normal) {
 # parameter gives one: tube radius and ribbon width.
 sweep_default_mm_3d <- c(tube = 1, ribbon = 4)
 
-# Centre line of a sweep whose cross section is sized in millimetres: the
-# curve points with their size (.sweep_size, mm) and twist (.sweep_twist,
-# radians), swept by emit_sweep_3d() once the drawing camera and panel size
-# are known. arc_length is measured along the curve in data units and z_mean
-# is the height of the curve point.
-sweep_centreline_3d <- function(data, size, twist, closed) {
+# Centre line of a tube, or of a sweep whose cross section is sized in
+# millimetres: the curve points with their size (.sweep_size, data units or
+# mm) and twist (.sweep_twist, radians), drawn by emit_sweep_3d(). arc_length
+# is measured along the curve in data units and z_mean is the height of the
+# curve point. A data-unit size widens the position limits by the size, so
+# the scales contain the tube.
+sweep_centreline_3d <- function(data, size, twist, closed, millimetres = TRUE) {
   xyz <- as.matrix(data[c("x", "y", "z")])
   data$.sweep_size <- size
   data$.sweep_twist <- twist
   data$arc_length <- c(0, cumsum(sqrt(rowSums(diff(xyz)^2))))
   data$z_mean <- data$z
+  if (!millimetres) for (axis in c("x", "y", "z")) {
+    data[[paste0(axis, "min")]] <- data[[axis]] - size
+    data[[paste0(axis, "max")]] <- data[[axis]] + size
+  }
   data[setdiff(names(data), c("radius", "width", "twist"))]
 }
 
@@ -199,7 +204,7 @@ StatSweep3D <- ggplot2::ggproto("StatSweep3D", StatGeometry3D,
     size <- data$radius %or3d% data$width %or3d% rep(fallback, nrow(data))
     if (any(!is.finite(size) | size < 0)) stop("Radius and width must be finite and nonnegative.", call. = FALSE)
     twist <- (data$twist %or3d% rep(0, nrow(data))) * pi / 180
-    if (millimetres) return(sweep_centreline_3d(data, as.double(size), twist, closed))
+    if (millimetres || is.null(profile)) return(sweep_centreline_3d(data, as.double(size), twist, closed, millimetres))
     sweep_surface_3d(data, as.double(size), twist, shape, closed, cap, normal)
   }
 )

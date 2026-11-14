@@ -93,6 +93,22 @@ print_zip_cpp <- function(names, contents) {
     .Call(`_ggplot3d_print_zip_cpp`, names, contents)
 }
 
+quadric_outline_cpp <- function(packet, camera, viewport, rows, tolerance_mm) {
+    .Call(`_ggplot3d_quadric_outline_cpp`, packet, camera, viewport, rows, tolerance_mm)
+}
+
+quadric_cast_cpp <- function(packet, camera, viewport, row, x_npc, y_npc, cast, back) {
+    .Call(`_ggplot3d_quadric_cast_cpp`, packet, camera, viewport, row, x_npc, y_npc, cast, back)
+}
+
+quadric_fragment_parts_cpp <- function(packet, camera, viewport, rows, normal, point) {
+    .Call(`_ggplot3d_quadric_fragment_parts_cpp`, packet, camera, viewport, rows, normal, point)
+}
+
+quadric_mesh_cpp <- function(packet, segments) {
+    .Call(`_ggplot3d_quadric_mesh_cpp`, packet, segments)
+}
+
 raster_prepare_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_raster_prepare_cpp`, packet, camera, viewport)
 }

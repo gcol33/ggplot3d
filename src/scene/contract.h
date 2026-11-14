@@ -9,7 +9,7 @@ namespace ggplot3d {
 
 inline constexpr int scene_schema_version = 2;
 using Index = std::int32_t;
-enum class Kind : Index { face = 1, polyline = 2, marker = 3, text = 4 };
+enum class Kind : Index { face = 1, polyline = 2, marker = 3, text = 4, quadric = 5 };
 enum class QuadricKind : Index { sphere = 1, cylinder = 2, cone = 3 };
 enum class Role : Index { fill = 0, stroke = 1, marker = 2, text = 3 };
 enum class Partition : Index { underlay = 0, depth = 1, overlay = 2 };
@@ -51,11 +51,15 @@ struct TextAnchors : PrimitiveTable {
   std::vector<double> width_mm, height_mm, hjust, vjust, angle;
 };
 
-// Analytic primitives; the axis is a unit vector for cylinders and cones.
+// Analytic primitives: a unit sphere (|p| <= 1), or a unit cylinder or cone
+// along local z in [0, 1] with radius 1 at z = 0 and radius_ratio at z = 1,
+// placed by a column-major affine map into box fractions. cap_0 and cap_1 are
+// the end disks at z = 0 and z = 1 (1 flat, 0 open).
 struct Quadrics {
   std::vector<Index> primitive_id, layer_id, source_row, style_id, partition, kind;
-  std::vector<double> opacity, centre_x, centre_y, centre_z, axis_x, axis_y, axis_z;
-  std::vector<double> radius_a, radius_b, length;
+  std::vector<double> opacity, radius_ratio;
+  std::vector<std::array<double, 16>> transform;
+  std::vector<Index> cap_0, cap_1;
 };
 
 // Polygon rings use the even-odd rule; ellipses use radii and angle only.

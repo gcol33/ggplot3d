@@ -160,6 +160,7 @@ inside_planes_3d <- function(xyz, planes) {
 # cut. The result's "parent" attribute maps each primitive to the input row of
 # its kind it came from; a cap maps to a face around it.
 clip_packet_planes_3d <- function(packet, planes) {
+  packet <- quadric_clip_planes_3d(packet, planes)
   kinds <- c("faces", "polylines", "markers", "text")
   parent <- lapply(kinds, function(kind) seq_along(packet[[kind]]$offset))
   names(parent) <- kinds
@@ -192,12 +193,7 @@ clip_packet_plane_3d <- function(packet, plane, eps = 1e-12) {
     packet <- capped$packet
     parent$faces <- c(parent$faces, capped$source)
   }
-  next_id <- 0L
-  for (kind in c("faces", "polylines", "markers", "text")) {
-    n <- length(packet[[kind]]$offset)
-    packet[[kind]]$primitive_id <- as.integer(next_id + seq_len(n))
-    next_id <- next_id + n
-  }
+  packet <- renumber_primitives_3d(packet)
   attr(packet, "parent") <- parent
   packet
 }

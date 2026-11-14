@@ -187,6 +187,21 @@ glyph_limits_3d <- function(data, maps, unit, rows = rep(TRUE, nrow(data))) {
   data
 }
 
+# Rows of placed instances (glyphs, quadrics) that are drawn: valid positions
+# and finite maps; outside the identity frame the anchors are cut by the box
+# (with clip_data) and the layer's clip planes, since the instances skip the
+# frame.
+instance_rows_3d <- function(data, maps, params, panel_params) {
+  frame <- frame_of_3d(panel_params)
+  keep <- valid_rows_3d(data, params) & apply(maps, 3L, function(m) all(is.finite(m)))
+  if (!isTRUE(frame$identity) && isTRUE(panel_params$camera$clip_data)) {
+    keep <- keep & data$x >= 0 & data$x <= 1 & data$y >= 0 & data$y <= 1 & data$z >= 0 & data$z <= 1
+  }
+  if (!isTRUE(frame$identity)) keep <- keep & inside_planes_3d(as.matrix(data[c("x", "y", "z")]), params$clip_planes)
+  keep[is.na(keep)] <- FALSE
+  keep
+}
+
 # Places glyphs and returns a packet in model space.
 #   data: one row per glyph, positions normalised to the panel box.
 #   maps: 3 x 3 x n linear maps. Rows with space "data" map unit coordinates to
@@ -202,13 +217,7 @@ emit_glyph_instances_3d <- function(data, maps, space, unit, params, panel_param
   if (is.null(unit_index)) unit_index <- rep.int(1L, nrow(data))
   empty <- new_scene_packet(panel_id = panel_params$panel_id)
   frame <- frame_of_3d(panel_params)
-  keep <- valid_rows_3d(data, params) & apply(maps, 3L, function(m) all(is.finite(m)))
-  keep <- keep & (!is.na(data$fill) | !is.na(data$colour))
-  if (!isTRUE(frame$identity) && isTRUE(panel_params$camera$clip_data)) {
-    keep <- keep & data$x >= 0 & data$x <= 1 & data$y >= 0 & data$y <= 1 & data$z >= 0 & data$z <= 1
-  }
-  if (!isTRUE(frame$identity)) keep <- keep & inside_planes_3d(as.matrix(data[c("x", "y", "z")]), params$clip_planes)
-  keep[is.na(keep)] <- FALSE
+  keep <- instance_rows_3d(data, maps, params, panel_params) & (!is.na(data$fill) | !is.na(data$colour))
   if (!any(keep)) return(empty)
   data <- data[keep, , drop = FALSE]; maps <- maps[, , keep, drop = FALSE]; space <- space[keep]
   if (!is.null(orientation)) orientation <- text_orientation_rows_3d(orientation, which(keep))
@@ -291,9 +300,11 @@ model_units_per_mm_3d <- function(camera, viewport) {
 # Millimetre glyphs take their size from the fitted camera and viewport.
 resolve_glyph_packets_3d <- function(packets, camera, viewport) {
   deferred <- vapply(packets, function(p) !is.null(attr(p, "glyph_mm")), logical(1))
-  if (!any(deferred)) return(packets)
+  quadric <- vapply(packets, function(p) !is.null(attr(p, "quadric_mm")), logical(1))
+  if (!any(deferred | quadric)) return(packets)
   k <- model_units_per_mm_3d(camera, viewport)
   scale <- camera$aspect / max(camera$aspect)
+  for (i in which(quadric)) packets[[i]] <- resolve_quadric_mm_3d(packets[[i]], k, scale)
   for (i in which(deferred)) {
     glyph <- attr(packets[[i]], "glyph_mm")
     offset <- glyph$offset

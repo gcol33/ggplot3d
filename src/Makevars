@@ -4,7 +4,7 @@ PKG_CXXFLAGS = $(SHLIB_PTHREAD_FLAGS)
 PKG_LIBS = $(SHLIB_PTHREAD_FLAGS)
 OBJECTS = engine.o geometry.o grid-paths.o intersections.o section4d.o mesh.o \
     outline.o parametric.o png.o \
-    printing.o raster.o raymarch.o shade.o \
+    printing.o quadric.o raster.o raymarch.o shade.o \
     RcppExports.o reconstruct.o repel.o \
     streamline.o sweep.o vendor/clipper2/src/clipper.engine.o \
     vendor/clipper2/src/clipper.offset.o vendor/manifold3d/src/boolean_result.o vendor/manifold3d/src/boolean3.o \

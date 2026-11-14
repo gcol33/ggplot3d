@@ -1,5 +1,18 @@
 # ggplot3d 0.0.0.9000
 
+* Spheres, cylinders and cones are analytic primitives of the scene contract
+  (Sigg, Weyrich, Botsch and Gross 2006): a unit primitive per row placed by an
+  affine map, with flat or open end disks. The engine orders them through a
+  circumscribed polyhedral stand-in refined to half a device pixel, the vector
+  backend draws their exact outlines (the image of a sphere's contour circle,
+  Eberly 2003, or the hull of the end circles) with gradients from the shading
+  kernel, and the raster backend intersects every sample's ray with them for
+  exact depth and normals. `geom_sphere_3d()`, opaque `geom_tube_3d()` (a
+  cylinder or cone per segment, mitred joints, spheres at sharp joints and
+  round ends), streamtubes and the cone heads and tube shafts of
+  `geom_quiver_3d()` and `geom_cone_3d()` use them; the viewer, exporters and
+  shadows take an inscribed mesh.
+
 * `coord_spherical_geometry_3d()` draws fibres and faces through the
   stereographic pole up to the panel box: stereographic coordinates are
   homogeneous with the pole at infinity, and faces are sampled only where

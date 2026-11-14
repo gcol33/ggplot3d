@@ -179,18 +179,27 @@ box_depth_fraction_3d <- function(camera, viewport, frame) {
 }
 
 # Centre of every primitive, one matrix per kind (faces, polylines, markers,
-# text), in packet coordinates after the homogeneous matrix `pre`: the mean
-# of its homogeneous corners, NA where that mean lies at or beyond infinity.
+# text, quadrics), in packet coordinates after the homogeneous matrix `pre`:
+# the mean of its homogeneous corners (the placed local centre of a
+# quadric), NA where that mean lies at or beyond infinity.
 primitive_centres_3d <- function(packet, pre = diag(4)) {
   positions <- scene_vertex_matrix_3d(packet$vertices)
-  if (!identical(as.double(pre), as.double(diag(4)))) positions <- positions %*% t(matrix(as.double(pre), 4L, 4L))
-  lapply(c("faces", "polylines", "markers", "text"), function(kind) {
+  identity <- identical(as.double(pre), as.double(diag(4)))
+  if (!identity) positions <- positions %*% t(matrix(as.double(pre), 4L, 4L))
+  lapply(primitive_kinds_3d, function(kind) {
     tab <- packet[[kind]]
-    n <- length(tab$offset)
+    n <- length(tab$primitive_id)
     if (!n) return(matrix(numeric(), 0L, 3L))
-    group <- rep.int(seq_len(n), tab$count)
-    corner <- tab$offset[group] + sequence(tab$count) - 1L
-    mean <- rowsum(positions[packet$corners$vertex[corner], , drop = FALSE], group, reorder = TRUE)
+    if (kind == "quadrics") {
+      axial <- ifelse(tab$kind == 1L, 0, 0.5)
+      mean <- cbind(tab$transform_13 + axial * tab$transform_9, tab$transform_14 + axial * tab$transform_10,
+        tab$transform_15 + axial * tab$transform_11, 1)
+      if (!identity) mean <- mean %*% t(matrix(as.double(pre), 4L, 4L))
+    } else {
+      group <- rep.int(seq_len(n), tab$count)
+      corner <- tab$offset[group] + sequence(tab$count) - 1L
+      mean <- rowsum(positions[packet$corners$vertex[corner], , drop = FALSE], group, reorder = TRUE)
+    }
     centre <- mean[, 1:3, drop = FALSE] / mean[, 4L]
     centre[!(mean[, 4L] > 0), ] <- NA_real_
     centre
@@ -199,7 +208,7 @@ primitive_centres_3d <- function(packet, pre = diag(4)) {
 
 # Style rows of every primitive, kinds in table order.
 primitive_styles_3d <- function(packet) {
-  rows <- unlist(lapply(packet[c("faces", "polylines", "markers", "text")], function(tab)
+  rows <- unlist(lapply(packet[primitive_kinds_3d], function(tab)
     match(tab$style_id, packet$styles$style_id)), use.names = FALSE)
   packet$styles[rows, , drop = FALSE]
 }
@@ -212,7 +221,7 @@ restyle_primitives_3d <- function(packet, styles, sizes) {
   packet$styles <- rbind(packet$styles, styles)
   packet$style_count <- as.integer(nrow(packet$styles))
   index <- 0L
-  kinds <- c("faces", "polylines", "markers", "text")
+  kinds <- primitive_kinds_3d
   for (i in seq_along(kinds)) if (sizes[i]) {
     packet[[kinds[i]]]$style_id <- styles$style_id[index + seq_len(sizes[i])]
     index <- index + sizes[i]
@@ -241,13 +250,7 @@ split_polylines_3d <- function(packet) {
   opaque <- solid & tab$opacity >= 1 & colour_channels_3d(ifelse(is.na(styles$colour), "black", styles$colour), alpha = TRUE)[4L, ] == 255
   split$cap[opaque[row]] <- 1L
   packet$polylines <- split
-  next_id <- 0L
-  for (kind in c("faces", "polylines", "markers", "text")) {
-    m <- length(packet[[kind]]$primitive_id)
-    packet[[kind]]$primitive_id <- as.integer(next_id + seq_len(m))
-    next_id <- next_id + m
-  }
-  packet
+  renumber_primitives_3d(packet)
 }
 
 # Primitives whose centre lies at infinity take the full weight.
@@ -309,7 +312,7 @@ shadow_furniture_3d <- function(furniture, packets, panel_params) {
 # `base` followed by `extra`, keeping the primitive ids of `base` (furniture
 # queries refer to them) and numbering the extra primitives after them.
 append_scene_packet_3d <- function(base, extra) {
-  kinds <- c("faces", "polylines", "markers", "text")
+  kinds <- primitive_kinds_3d
   ids <- lapply(kinds, function(kind) base[[kind]]$primitive_id)
   merged <- merge_scene_packets(list(base, extra), base$panel_id)
   top <- max(c(0L, unlist(ids)))

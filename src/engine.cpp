@@ -182,8 +182,10 @@ ScenePacket read_packet(const Rcpp::List& x) {
   }
   Rcpp::List q = x["quadrics"];
   fields(q, {"primitive_id", "layer_id", "source_row", "style_id", "partition", "opacity",
-             "kind", "centre_x", "centre_y", "centre_z", "axis_x", "axis_y", "axis_z",
-             "radius_a", "radius_b", "length"});
+             "kind", "transform_1", "transform_2", "transform_3", "transform_4", "transform_5",
+             "transform_6", "transform_7", "transform_8", "transform_9", "transform_10",
+             "transform_11", "transform_12", "transform_13", "transform_14", "transform_15",
+             "transform_16", "radius_ratio", "cap_0", "cap_1"});
   auto& quadric = p.quadrics;
   quadric.primitive_id = integers(q, "primitive_id");
   int nq = quadric.primitive_id.size();
@@ -193,22 +195,32 @@ ScenePacket read_packet(const Rcpp::List& x) {
   quadric.partition = integers(q, "partition", nq);
   quadric.opacity = doubles(q, "opacity", nq);
   quadric.kind = integers(q, "kind", nq);
-  quadric.centre_x = doubles(q, "centre_x", nq); quadric.centre_y = doubles(q, "centre_y", nq);
-  quadric.centre_z = doubles(q, "centre_z", nq);
-  quadric.axis_x = doubles(q, "axis_x", nq); quadric.axis_y = doubles(q, "axis_y", nq);
-  quadric.axis_z = doubles(q, "axis_z", nq);
-  quadric.radius_a = doubles(q, "radius_a", nq); quadric.radius_b = doubles(q, "radius_b", nq);
-  quadric.length = doubles(q, "length", nq);
+  quadric.radius_ratio = doubles(q, "radius_ratio", nq);
+  quadric.cap_0 = integers(q, "cap_0", nq);
+  quadric.cap_1 = integers(q, "cap_1", nq);
+  quadric.transform.resize(nq);
+  for (int k = 0; k < 16; ++k) {
+    const std::string name = "transform_" + std::to_string(k+1);
+    auto entries = doubles(q, name.c_str(), nq);
+    for (int i = 0; i < nq; ++i) quadric.transform[i][k] = entries[i];
+  }
   for (int i = 0; i < nq; ++i) {
+    const auto& m = quadric.transform[i];
+    const double determinant = m[0]*(m[5]*m[10]-m[6]*m[9]) - m[4]*(m[1]*m[10]-m[2]*m[9]) +
+      m[8]*(m[1]*m[6]-m[2]*m[5]);
     require(quadric.primitive_id[i] > 0 && ids.insert(quadric.primitive_id[i]).second,
             "primitive_id must be positive and globally unique");
     require(quadric.layer_id[i] >= 0 && quadric.source_row[i] >= 0 &&
             quadric.style_id[i] >= 1 && quadric.style_id[i] <= p.style_count &&
             quadric.partition[i] >= 0 && quadric.partition[i] <= 2 &&
             quadric.opacity[i] >= 0 && quadric.opacity[i] <= 1 &&
-            quadric.kind[i] >= 1 && quadric.kind[i] <= 3 &&
-            quadric.radius_a[i] >= 0 && quadric.radius_b[i] >= 0 && quadric.length[i] >= 0,
+            quadric.kind[i] >= 1 && quadric.kind[i] <= 3 && quadric.radius_ratio[i] >= 0 &&
+            (quadric.kind[i] != 2 || quadric.radius_ratio[i] == 1) &&
+            (quadric.cap_0[i] == 0 || quadric.cap_0[i] == 1) &&
+            (quadric.cap_1[i] == 0 || quadric.cap_1[i] == 1),
             "invalid quadric");
+    require(m[3] == 0 && m[7] == 0 && m[11] == 0 && m[15] == 1 && determinant != 0,
+            "quadric transforms must be affine with an invertible linear part");
     --quadric.style_id[i];
   }
   Rcpp::List fp = x["footprints"], fv = x["footprint_vertices"];
@@ -393,10 +405,10 @@ Rcpp::List scene_compile_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List vi
     require(std::isfinite(limit) && limit>0,"engine_budget_bytes must be a positive finite scalar");
   }
   std::size_t inputs=0;
-  for(const char* name:{"faces","polylines","markers","text"}) {
+  for(const char* name:{"faces","polylines","markers","text","quadrics"}) {
     if(packet.containsElementNamed(name)) {
       Rcpp::List table=packet[name];
-      if(table.containsElementNamed("count")) inputs+=Rf_xlength(table["count"]);
+      if(table.containsElementNamed("primitive_id")) inputs+=Rf_xlength(table["primitive_id"]);
     }
   }
   ResourceBudget budget(inputs,limit);
@@ -422,7 +434,6 @@ Rcpp::List scene_compile_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List vi
   const Viewport device{scalar(viewport,"width_mm"), scalar(viewport,"height_mm"), scalar(viewport,"dpi")};
   require(device.width_mm > 0 && device.height_mm > 0 && device.dpi > 0,
           "viewport dimensions and dpi must be positive");
-  require(scene.quadrics.primitive_id.empty(), "the engine does not compile quadric primitives");
   const Projection projection(view, device);
   return write_result(compile(scene, projection,budget), scene, device);
 }

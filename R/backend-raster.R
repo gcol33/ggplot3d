@@ -1,9 +1,31 @@
 utils::globalVariables(c("raster_prepare_cpp", "raster_draw_cpp", "raster_canvas_cpp"))
 
+# Colour table of the quadrics: their fill and, as the "smooth" attribute of
+# lit faces, the linear base colours, lit flags and materials with the panel
+# lights and view, from which the rasteriser shades each sample at its exact
+# hit point and normal through the shading kernel.
+raster_quadric_colours_3d <- function(packet, prepared, light) {
+  tab <- packet$quadrics
+  styles <- packet$styles[match(tab$style_id, packet$styles$style_id), , drop = FALSE]
+  colour <- style_value_3d(styles, "fill", NA_character_)
+  if (!length(colour)) return(matrix(numeric(), 4L, 0L))
+  rgba <- colour_channels_3d(colour, alpha = TRUE) / 255
+  rgba[4L, ] <- as.double(!is.na(colour))
+  lit <- !is.null(light) & style_value_3d(styles, "shade", FALSE) %in% TRUE & !is.na(colour)
+  if (any(lit)) {
+    base <- linear_rgb_3d(colour)
+    base[!is.finite(base)] <- 0
+    attr(rgba, "smooth") <- list(base = base, lit = lit, material = material_index_3d(styles),
+      materials = kernel_materials_3d(packet$materials), lights = resolved_light_3d(light, prepared$camera),
+      view = kernel_view_3d(prepared$camera))
+  }
+  rgba
+}
+
 # `edl`: eye-dome lighting strength of every primitive that is not a splat;
 # splats keep the strength of their layer.
 raster_colours_3d <- function(packet, prepared, light, edl = 0) {
-  lapply(c("faces", "polylines", "markers", "text"), function(kind) {
+  tables <- lapply(c("faces", "polylines", "markers", "text"), function(kind) {
     tab <- packet[[kind]]
     styles <- packet$styles[match(tab$style_id, packet$styles$style_id), , drop = FALSE]
     colour <- style_value_3d(styles, if (kind == "faces") "fill" else "colour", NA_character_)
@@ -58,6 +80,7 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
     }
     rgba
   })
+  c(tables, list(raster_quadric_colours_3d(packet, prepared, light)))
 }
 
 # Worker threads of the tiled rasteriser: option `ggplot3d.threads`, 0 for one
@@ -138,7 +161,7 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
   if (length(traced)) {
     canvas <- raster_canvas_cpp(prepared$pointer, colours, dashes,
       as.integer(pixels[1L]), as.integer(pixels[2L]), as.integer(antialias))
-    ids <- unlist(lapply(packet[c("faces", "polylines", "markers", "text")], `[[`, "primitive_id"), use.names = FALSE)
+    ids <- unlist(lapply(packet[primitive_kinds_3d], `[[`, "primitive_id"), use.names = FALSE)
     input <- raster_traced_input_3d(traced, camera, viewport, canvas, prepared$camera, light, max(c(0L, ids)))
   }
   result <- raster_draw_cpp(prepared$pointer, colours, dashes,

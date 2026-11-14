@@ -1,5 +1,8 @@
 scene_schema_version <- 2L
 
+# Column-major entries of the 4 x 4 affine map of a quadric's unit primitive.
+quadric_transform_columns <- paste0("transform_", 1:16)
+
 scene_schemas <- function() {
   common <- c(primitive_id = "integer", layer_id = "integer",
               source_row = "integer", style_id = "integer", offset = "integer",
@@ -19,9 +22,8 @@ scene_schemas <- function() {
     quadrics = c(primitive_id = "integer", layer_id = "integer",
                  source_row = "integer", style_id = "integer",
                  partition = "integer", opacity = "double", kind = "integer",
-                 centre_x = "double", centre_y = "double", centre_z = "double",
-                 axis_x = "double", axis_y = "double", axis_z = "double",
-                 radius_a = "double", radius_b = "double", length = "double"),
+                 stats::setNames(rep("double", 16L), quadric_transform_columns),
+                 radius_ratio = "double", cap_0 = "integer", cap_1 = "integer"),
     footprints = c(kind = "integer", offset = "integer", count = "integer",
                    radius_x_mm = "double", radius_y_mm = "double",
                    angle = "double"),
@@ -109,11 +111,16 @@ scene_table <- function(x, schema, defaults, name, optional = character()) {
 #'   optional mask_width_mm, at least width_mm and by default equal to it: the
 #'   width of the band in which the line hides what lies behind it, while the
 #'   line itself is drawn at width_mm (a haloed line, Appel 1967).
-#' @param quadrics Analytic primitives: kind (1 sphere, 2 cylinder, 3 cone),
-#'   centre_x, centre_y, centre_z, the unit axis axis_x, axis_y, axis_z
-#'   (default the z axis), radius_a, radius_b (cone end radius, default 0) and
-#'   length, with the common primitive_id, layer_id, source_row, style_id,
-#'   partition and opacity columns.
+#' @param quadrics Analytic primitives, each a unit primitive of `kind` (1
+#'   sphere, 2 cylinder, 3 cone) placed by an affine map into normalised panel
+#'   coordinates: `transform_1` to `transform_16`, the column-major entries of
+#'   a 4 x 4 matrix whose last row is (0, 0, 0, 1), identity by default (Sigg
+#'   et al. 2006). The unit sphere is the ball of radius 1 about the origin;
+#'   unit cylinders and cones lie along the local z axis for z in \[0, 1\],
+#'   with radius 1 at z = 0 and `radius_ratio` (default 1, exactly 1 for
+#'   cylinders) at z = 1. `cap_0` and `cap_1` close the ends at z = 0 and z = 1
+#'   with flat disks (1, the default) or leave them open (0). Common columns are
+#'   primitive_id, layer_id, source_row, style_id, partition and opacity.
 #' @param footprints Marker shapes: kind (1 for ellipse, 2 for polygon), offset,
 #'   count, radius_x_mm, radius_y_mm and angle.
 #' @param footprint_vertices Polygon footprint coordinates x_mm, y_mm and ring.
@@ -160,7 +167,8 @@ new_scene_packet <- function(vertices = list(), corners = list(),
     if (name == "quadrics") {
       defaults <- c(defaults, list(primitive_id = next_id + seq_len(n) - 1L,
         layer_id = 1L, style_id = 1L, partition = 1L, opacity = 1,
-        axis_x = 0, axis_y = 0, axis_z = 1, radius_b = 0, length = 0))
+        radius_ratio = 1, cap_0 = 1L, cap_1 = 1L),
+        stats::setNames(as.list(as.double(diag(4))), quadric_transform_columns))
       next_id <- next_id + n
     }
     if (!is.na(kind)) {
@@ -260,13 +268,21 @@ validate_scene_packet <- function(packet) {
   }
   q <- packet$quadrics
   ids <- c(ids, q$primitive_id)
-  axis_length <- sqrt(q$axis_x^2 + q$axis_y^2 + q$axis_z^2)
+  m <- q[quadric_transform_columns]
+  linear <- function(i, j) m[[(j - 1L) * 4L + i]]
+  determinant <- linear(1, 1) * (linear(2, 2) * linear(3, 3) - linear(3, 2) * linear(2, 3)) -
+    linear(1, 2) * (linear(2, 1) * linear(3, 3) - linear(3, 1) * linear(2, 3)) +
+    linear(1, 3) * (linear(2, 1) * linear(3, 2) - linear(3, 1) * linear(2, 2))
   scene_assert(all(q$layer_id >= 0L & q$source_row >= 0L) &&
                  all(q$style_id >= 1L & q$style_id <= packet$style_count) &&
                  all(q$partition %in% 0:2) && all(q$opacity >= 0 & q$opacity <= 1) &&
-                 all(q$kind %in% 1:3) && all(q$radius_a >= 0 & q$radius_b >= 0 & q$length >= 0) &&
-                 all(q$kind == 1L | abs(axis_length - 1) <= sqrt(.Machine$double.eps)),
-               "quadrics has invalid metadata, sizes or axes")
+                 all(q$kind %in% 1:3) && all(q$radius_ratio >= 0) &&
+                 all(q$kind != 2L | q$radius_ratio == 1) &&
+                 all(q$cap_0 %in% 0:1 & q$cap_1 %in% 0:1),
+               "quadrics has invalid metadata, kind, radius ratio or caps")
+  scene_assert(all(m$transform_4 == 0 & m$transform_8 == 0 & m$transform_12 == 0 & m$transform_16 == 1) &&
+                 all(determinant != 0),
+               "quadric transforms must be affine with an invertible linear part")
   scene_assert(all(ids >= 1L) && !anyDuplicated(ids),
                "primitive_id must be positive and unique across the panel")
   line <- packet$polylines
@@ -431,6 +447,7 @@ scene_vertices_3d <- function(points) {
 # through infinity, or behind it after pre, is first cut to the panel box. For
 # consumers without a homogeneous clipper (viewer, export).
 scene_finite_packet_3d <- function(packet, pre = diag(4)) {
+  packet <- quadric_faces_3d(packet)
   xyzw <- scene_vertex_matrix_3d(packet$vertices)
   if (!identical(as.double(pre), as.double(diag(4)))) {
     xyzw <- xyzw %*% t(matrix(as.double(pre), 4L, 4L))
@@ -530,7 +547,7 @@ new_scene_viewport <- function(width_mm, height_mm, dpi = 144) {
 
 scene_layer_grob <- function(packet) {
   validate_scene_packet(packet)
-  n <- sum(vapply(packet[c("faces", "polylines", "markers", "text")],
+  n <- sum(vapply(packet[c("faces", "polylines", "markers", "text", "quadrics")],
                   function(x) length(x$primitive_id), integer(1)))
   if (n == 0L) return(ggplot2::zeroGrob())
   grid::gTree(packet = packet, cl = "scene_layer_grob")
@@ -567,6 +584,7 @@ scene_compile <- function(packet, camera = new_camera_3d(), viewport) {
   result$source <- scene_engine_packet_3d(packet)
   result$materials <- packet$materials
   result$pre <- camera$pre
+  result$camera_input <- camera
   class(result) <- "ggplot3d_compiled_scene"
   scene_cache_store(packet, camera, viewport, result, bytes, limit)
   result

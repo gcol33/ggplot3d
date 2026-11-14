@@ -155,17 +155,26 @@ test_that("clip planes interpolate corner attributes and keep w", {
   expect_true(all(cut$vertices$w == 1))
 })
 
-test_that("quadrics are part of the contract and rejected by the engine", {
+test_that("quadrics are part of the contract and compile to quadric fragments", {
   packet <- new_scene_packet(
-    quadrics = list(kind = c(1L, 2L), centre_x = c(0.5, 0.5), centre_y = c(0.5, 0.5),
-                    centre_z = c(0.5, 0.5), radius_a = c(0.1, 0.1), axis_x = c(0, 1),
-                    axis_z = c(1, 0), length = c(0, 0.3)),
+    quadrics = list(kind = c(1L, 3L), transform_1 = c(0.1, 0.1), transform_6 = c(0.1, 0.1),
+                    transform_11 = c(0.1, 0.3), transform_13 = c(0.3, 0.6), transform_14 = c(0.5, 0.5),
+                    transform_15 = c(0.5, 0.3), radius_ratio = c(1, 0)),
     styles = data.frame(style_id = 1L))
   expect_identical(packet$quadrics$primitive_id, 1:2)
-  expect_identical(packet$quadrics$radius_b, c(0, 0))
-  expect_error(new_scene_packet(quadrics = list(kind = 2L, centre_x = 0, centre_y = 0, centre_z = 0,
-    radius_a = 1, axis_z = 2), styles = data.frame(style_id = 1L)), "axes")
-  expect_error(scene_compile(packet, new_camera_3d(), homogeneous_viewport()), "quadric")
+  expect_identical(packet$quadrics$cap_0, c(1L, 1L))
+  expect_identical(packet$quadrics$transform_16, c(1, 1))
+  expect_error(new_scene_packet(quadrics = list(kind = 2L, radius_ratio = 2), styles = data.frame(style_id = 1L)),
+    "radius ratio")
+  expect_error(new_scene_packet(quadrics = list(kind = 1L, transform_4 = 1), styles = data.frame(style_id = 1L)),
+    "affine")
+  expect_error(new_scene_packet(quadrics = list(kind = 1L, transform_1 = 0), styles = data.frame(style_id = 1L)),
+    "invertible")
+  scene <- scene_compile(packet, new_camera_3d(), homogeneous_viewport())
+  f <- scene$fragments
+  expect_true(all(f$kind == 5L))
+  expect_setequal(f$source_index, 1:2)
+  expect_identical(f$primitive_id, f$source_index)
 })
 
 test_that("mask_width_mm defaults to width_mm and may not be narrower", {

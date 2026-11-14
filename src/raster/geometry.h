@@ -2,6 +2,7 @@
 #include "../scene/wire.h"
 #include "../scene/clipping.h"
 #include "../shade/shade.h"
+#include "../scene/quadric.h"
 #include <chrono>
 
 namespace ggplot3d { namespace raster {
@@ -17,6 +18,8 @@ struct Item {
   int geometry = 0;
   bool cap_start = true, cap_end = true;
 };
+// Quadric items (kind 5) cover the screen bounds of one quadric, near side
+// (geometry 0) or far side (geometry 1); their samples cast rays.
 // Interpolated corner attributes at a face vertex: the unit model-space
 // normal and the linear-light colour, each NaN where not supplied.
 struct Shading {
@@ -32,6 +35,9 @@ struct CornerAttributes {
 struct Scene {
   ScenePacket packet;
   Projection projection;
+  RayFrame rays;
+  PrimitiveTable quadric_table;
+  std::vector<QuadricShape> quadrics;
   std::vector<Screen> vertices;
   std::vector<Item> items;
   std::vector<Vec3> normals;
@@ -41,10 +47,18 @@ struct Scene {
   // Per vertex of the prepared face items; empty without corner attributes.
   std::vector<Shading> shading;
   Scene(ScenePacket p, const Camera& c, const Viewport& v)
-    : packet(std::move(p)), projection(c,v) {}
+    : packet(std::move(p)), projection(c,v), rays(projection), quadric_table(quadric_primitives(packet.quadrics)) {}
+  Scene(const Scene&) = delete;
+  Scene& operator=(const Scene&) = delete;
   const PrimitiveTable& table(int kind) const {
-    const PrimitiveTable* tables[] = {&packet.faces,&packet.polylines,&packet.markers,&packet.text};
+    const PrimitiveTable* tables[] = {&packet.faces,&packet.polylines,&packet.markers,&packet.text,&quadric_table};
     return *tables[kind-1];
+  }
+  // The visible hit of a quadric item at a canvas point in millimetres.
+  QuadricHit quadric_hit(const Item& item, double x, double y, Ray* ray = nullptr) const {
+    const Ray r = rays.ray(x/projection.viewport.width_mm, y/projection.viewport.height_mm);
+    if (ray) *ray = r;
+    return quadric_visible_hit(quadrics[item.row], projection, r, item.geometry == 1);
   }
   Screen project(const Vertex& v) const {
     auto c=projection.camera_point(dehomogenised(v).xyz); auto xy=projection.npc(c);
@@ -185,6 +199,35 @@ static inline void prepare_geometry(Scene& scene) {
         for(std::size_t j=0;j<centre_end;++j) visible=visible && signed_distance(planes[j],polygon[0])>=0;
         if(visible) scene.append(kind,row,polygon);
       }
+    }
+  }
+  const auto& q=scene.packet.quadrics;
+  for(Index row=0;row<static_cast<Index>(q.kind.size());++row) {
+    scene.quadrics.push_back(quadric_shape(q,row,p.camera.pre));
+    if(q.opacity[row]==0) continue;
+    const QuadricShape& shape=scene.quadrics.back();
+    std::array<double,4> b{R_PosInf,R_PosInf,R_NegInf,R_NegInf};
+    double nearest=R_PosInf;
+    bool bounded=true;
+    for(const auto& corner:quadric_corners(shape)) {
+      const Point4 x=transform_point(shape.to_box,corner);
+      std::array<double,2> xy;
+      if(!quadric_screen_mm(p,x,xy)) {bounded=false;break;}
+      b={std::min(b[0],xy[0]),std::min(b[1],xy[1]),std::max(b[2],xy[0]),std::max(b[3],xy[1])};
+      nearest=std::min(nearest,p.camera_point({x[0]/x[3],x[1]/x[3],x[2]/x[3]})[2]);
+    }
+    if(!bounded) {
+      // The image reaches the eye plane: every sample of the viewport may see it.
+      b={0,0,p.viewport.width_mm,p.viewport.height_mm};
+      nearest=p.resolved.near;
+    }
+    const bool back=quadric_shows_back(shape,p,q.opacity[row]);
+    for(int side=0;side<(back ? 2:1);++side) {
+      Item item{5,row,static_cast<Index>(scene.vertices.size()),4};
+      item.geometry=side;
+      for(auto xy:{std::array<double,2>{b[0],b[1]},{b[2],b[1]},{b[2],b[3]},{b[0],b[3]}})
+        scene.vertices.push_back({xy[0],xy[1],nearest});
+      scene.items.push_back(item);
     }
   }
 }

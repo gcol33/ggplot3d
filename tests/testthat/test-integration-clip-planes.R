@@ -137,5 +137,5 @@ test_that("clip planes apply in scale space before curved frames", {
   spheres <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_sphere_3d(radius = 0.2) +
     coord_cylindrical_3d(clip_planes = list(clip_plane_3d(c(0, 0, 1), c(z = 1.5))))
   packet <- integration_packets(spheres)$packet
-  expect_setequal(unique(packet$faces$source_row), 3:4)
+  expect_setequal(unique(packet$quadrics$source_row), 3:4)
 })

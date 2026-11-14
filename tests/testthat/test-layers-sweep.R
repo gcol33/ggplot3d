@@ -16,6 +16,12 @@ distance_to_curve <- function(m, curve) {
   vapply(seq_len(nrow(m)), function(i) min(sqrt(colSums((t(curve) - c(m$x[i], m$y[i], m$z[i]))^2))), numeric(1))
 }
 
+# A tube's circle as an explicit profile, swept as a mesh by stat_sweep_3d().
+circle_profile <- function(sides) {
+  a <- 2 * pi * (seq_len(sides) - 1L) / sides
+  cbind(cos(a), sin(a))
+}
+
 trefoil <- function(n) {
   u <- seq(0, 2 * pi, length.out = n + 1L)[-(n + 1L)]
   data.frame(x = sin(u) + 2 * sin(2 * u), y = cos(u) - 2 * cos(2 * u), z = -sin(3 * u))
@@ -43,33 +49,85 @@ test_that("double reflection frames are rotation minimising and close on closed 
   expect_lt(step[200L], 1.5 * max(step[-200L]))
 })
 
-test_that("tubes have the requested radius, caps and topology", {
+test_that("swept circles have the requested radius, caps and topology", {
   t <- seq(0, 2 * pi, length.out = 40)
   path <- data.frame(x = cos(t), y = sin(t), z = t / 3)
   curve <- as.matrix(path)
-  open <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z)) + geom_tube_3d(radius = 0.1, sides = 12, cap = "none"))
+  tube <- function(...) stat_sweep_3d(profile = circle_profile(12L), ...)
+  open <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z)) + tube(radius = 0.1, cap = "none"))
   expect_equal(max(open$.face), 2L * 12L * 39L)
   expect_equal(range(distance_to_curve(open, curve)), c(0.1, 0.1), tolerance = 1e-3)
-  round <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z)) + geom_tube_3d(radius = 0.1, sides = 12))
+  round <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z)) + tube(radius = 0.1))
   expect_true(closed_surface(round)); expect_equal(euler_number(round), 2L)
   expect_lt(max(distance_to_curve(round, curve)), 0.1 + 1e-9)
-  flat <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z)) + geom_tube_3d(radius = 0.1, sides = 12, cap = "flat"))
+  flat <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z)) + tube(radius = 0.1, cap = "flat"))
   expect_true(closed_surface(flat)); expect_equal(euler_number(flat), 2L)
   end <- flat$x == 1 & flat$y == 0 & flat$z == 0
   tangent <- c(0, 1, 1 / 3) / sqrt(1 + 1 / 9)
   cap_normals <- as.matrix(flat[end, c("nx", "ny", "nz")]) %*% tangent
   expect_true(all(abs(cap_normals) > 0.99))
-  ring <- sweep_data(ggplot2::ggplot(trefoil(60), ggplot2::aes(x, y, z = z)) + geom_tube_3d(radius = 0.2, closed = TRUE))
+  ring <- sweep_data(ggplot2::ggplot(trefoil(60), ggplot2::aes(x, y, z = z)) + stat_sweep_3d(profile = circle_profile(16L),
+    radius = 0.2, closed = TRUE))
   expect_true(closed_surface(ring)); expect_equal(euler_number(ring), 0L)
   expect_true(all(is.finite(ring$nx)))
 })
 
+test_that("opaque tubes are cylinders, cones and joint spheres of the requested radius", {
+  t <- seq(0, 2 * pi, length.out = 40)
+  path <- data.frame(x = cos(t), y = sin(t), z = t / 3)
+  quadrics <- function(...) stats_scene(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z)) + geom_tube_3d(radius = 0.1, ...) +
+    coord_3d())
+  radius_of <- function(s) {
+    span <- vapply(s$built$layout$panel_params[[1L]]$ranges, diff, numeric(1))
+    linear <- ggplot3d:::quadric_linear_3d(s$packet$quadrics)
+    apply(linear, 3L, function(m) sqrt(colSums((m[, 1:2, drop = FALSE] * span)^2)))
+  }
+  # The helix turns by about 9 degrees per point, within the mitre limit:
+  # the joints are mitred and only round ends take spheres.
+  open <- quadrics(cap = "none")
+  q <- open$packet$quadrics
+  expect_identical(c(sum(q$kind == 2L), sum(q$kind == 1L)), c(39L, 0L))
+  expect_equal(as.vector(radius_of(open)), rep(0.1, 2L * 39L), tolerance = 1e-12)
+  expect_identical(sum(c(q$cap_0, q$cap_1) == 0L), 2L)
+  round <- quadrics()$packet$quadrics
+  expect_identical(c(sum(round$kind == 2L), sum(round$kind == 1L)), c(39L, 2L))
+  expect_true(all(c(round$cap_0, round$cap_1) == 1L))
+  flat <- quadrics(cap = "flat")$packet$quadrics
+  expect_identical(sum(flat$kind == 1L), 0L)
+  expect_true(all(c(flat$cap_0, flat$cap_1) == 1L))
+  # A mitred joint extends each segment by r tan(bend / 2) along its axis.
+  span <- vapply(open$built$layout$panel_params[[1L]]$ranges, diff, numeric(1))
+  axis_length <- sqrt((q$transform_9 * span[1L])^2 + (q$transform_10 * span[2L])^2 + (q$transform_11 * span[3L])^2)
+  step <- sqrt(rowSums(diff(as.matrix(path))^2))
+  turn <- acos(rowSums(diff(as.matrix(path))[-39L, ] * diff(as.matrix(path))[-1L, ]) / step[-39L] / step[-1L])
+  extension <- 0.1 * tan(turn / 2)
+  expect_equal(axis_length, step + c(0, extension) + c(extension, 0), tolerance = 1e-9)
+  # The trefoil's sharper joints take spheres.
+  knot <- trefoil(60)
+  ring <- stats_scene(ggplot2::ggplot(knot, ggplot2::aes(x, y, z = z)) + geom_tube_3d(radius = 0.2, closed = TRUE) +
+    coord_3d())$packet$quadrics
+  edge <- as.matrix(knot[c(2:60, 1L), ]) - as.matrix(knot)
+  bend <- acos(rowSums(edge * edge[c(60L, 1:59), ]) / sqrt(rowSums(edge^2) * rowSums(edge[c(60L, 1:59), ]^2))) * 180 / pi
+  expect_identical(c(sum(ring$kind == 2L), sum(ring$kind == 1L)), c(60L, sum(bend > 15)))
+  expect_gt(sum(bend > 15), 0L)
+})
+
 test_that("tube radius, fill and twist follow the points", {
   path <- data.frame(x = 0:10, y = 0, z = 0, r = seq(0.1, 0.6, length.out = 11), v = 0:10)
-  d <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z, radius = r, fill = v)) + geom_tube_3d(cap = "none", sides = 8))
+  d <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z, radius = r, fill = v)) +
+    stat_sweep_3d(profile = circle_profile(8L), cap = "none"))
   expect_equal(sqrt(d$y^2 + d$z^2), 0.1 + 0.05 * d$x, tolerance = 1e-9)
   expect_equal(sort(unique(round(d$arc_length, 9))), (0:9) + 0.5)
   expect_equal(length(unique(d$fill)), 10L)
+  s <- stats_scene(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z, radius = r, fill = v)) + geom_tube_3d(cap = "none") + coord_3d())
+  q <- s$packet$quadrics
+  cone <- q$kind == 3L
+  expect_identical(c(sum(cone), sum(q$kind == 1L)), c(10L, 0L))
+  expect_equal(q$radius_ratio[cone], path$r[-1L] / path$r[-11L])
+  expect_equal(length(unique(s$packet$styles$fill[q$style_id[cone]])), 10L)
+  centre <- sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z, radius = r)) + geom_tube_3d())
+  expect_equal(centre$arc_length, 0:10)
+  expect_equal(centre$xmax, path$x + path$r)
   expect_error(sweep_data(ggplot2::ggplot(path[1, ], ggplot2::aes(x, y, z = z)) + geom_tube_3d()), "at least 2 distinct points")
   path$r[3] <- -1
   expect_error(sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z, radius = r)) + geom_tube_3d()), "nonnegative")
@@ -155,24 +213,37 @@ test_that("millimetre tubes are swept at draw time with their on-screen radius",
     ggplot2::lims(x = c(0, 1), y = c(0, 1)) + zlim(0, 1) +
     coord_3d(expand = FALSE, aspect = c(2, 1, 0.5))
   s <- integration_packets(p)
-  packet <- s$grobs[[1L]]$packet
-  expect_length(packet$faces$offset, 0L)
-  expect_false(is.null(attr(packet, "draw_recipe")))
   camera <- s$params$camera
   axis_packet <- new_scene_packet(vertices = list(x = d$x, y = d$y, z = d$z),
     corners = list(vertex = 1:2), polylines = list(offset = 1L, count = 2L), styles = data.frame(style_id = 1L))
-  half_width <- function(viewport) {
-    resolved <- resolve_draw_packets_3d(list(packet), camera, viewport)[[1L]]
-    xy <- screen_mm_3d(resolved, camera, viewport)
+  half_width <- function(packet, viewport) {
+    resolved <- resolve_glyph_packets_3d(resolve_draw_packets_3d(list(packet), camera, viewport), camera, viewport)[[1L]]
+    xy <- if (length(resolved$quadrics$kind)) {
+      outline <- quadric_outline_cpp(resolved[names(resolved) != "styles"], camera, viewport, 1L, 1e-4)
+      cbind(outline$x_npc * viewport$width_mm, outline$y_npc * viewport$height_mm)
+    } else screen_mm_3d(resolved, camera, viewport)
     axis <- screen_mm_3d(axis_packet, camera, viewport)
     direction <- (axis[2L, ] - axis[1L, ]) / sqrt(sum((axis[2L, ] - axis[1L, ])^2))
     list(resolved = resolved,
       across = max(abs((xy[, 1L] - axis[1L, 1L]) * direction[2L] - (xy[, 2L] - axis[1L, 2L]) * direction[1L])))
   }
-  small <- half_width(new_scene_viewport(120, 90, 96))
+  # Opaque: one cylinder, sized when the view is known.
+  packet <- s$grobs[[1L]]$packet
+  expect_identical(packet$quadrics$kind, 2L)
+  expect_false(is.null(attr(packet, "quadric_mm")))
+  small <- half_width(packet, new_scene_viewport(120, 90, 96))
+  expect_equal(small$across, 2, tolerance = 1e-3)
+  expect_equal(half_width(packet, new_scene_viewport(240, 180, 96))$across, 2, tolerance = 1e-3)
+  again <- resolve_glyph_packets_3d(list(small$resolved), camera, new_scene_viewport(120, 90, 96))[[1L]]
+  expect_identical(again$quadrics, small$resolved$quadrics)
+  # Translucent: a mesh swept at draw time.
+  packet <- integration_packets(p + ggplot2::aes(alpha = 0.5))$grobs[[1L]]$packet
+  expect_length(packet$faces$offset, 0L)
+  expect_false(is.null(attr(packet, "draw_recipe")))
+  small <- half_width(packet, new_scene_viewport(120, 90, 96))
   expect_gt(length(small$resolved$faces$offset), 100L)
   expect_equal(small$across, 2, tolerance = 2e-3)
-  expect_equal(half_width(new_scene_viewport(240, 180, 96))$across, 2, tolerance = 2e-3)
+  expect_equal(half_width(packet, new_scene_viewport(240, 180, 96))$across, 2, tolerance = 2e-3)
   again <- resolve_draw_packets_3d(list(small$resolved), camera, new_scene_viewport(120, 90, 96))[[1L]]
   expect_identical(again$vertices, small$resolved$vertices)
 })

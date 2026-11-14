@@ -62,13 +62,37 @@ GeomSphere3D <- ggplot2::ggproto("GeomSphere3D", ggplot2::Geom,
   }
 )
 
+# Filled spheres without an edge colour are analytic quadrics; spheres drawn
+# as wireframes or with edges keep the icosphere mesh, whose edges they show.
 emit_spheres_3d <- function(data, params, panel_params) {
   unit <- check_unit_3d(params$radius.unit, "radius.unit")
-  maps <- sphere_maps_3d(data)
-  space <- ifelse(is.finite(data$radius %or3d% rep(NA_real_, nrow(data))), unit, "model")
-  if (unit == "data") maps[, , space == "data"] <- normalise_maps_3d(maps[, , space == "data", drop = FALSE], panel_params)
-  maps[, , space == "model"] <- identity_maps_3d(rep(glyph_default_radius_3d, sum(space == "model")))
-  emit_glyph_instances_3d(data, maps, space, glyph_mesh_3d("sphere", params$detail), params, panel_params)
+  radius <- as.double(data$radius %or3d% rep(NA_real_, nrow(data)))
+  space <- ifelse(is.finite(radius), unit, "model")
+  maps <- identity_maps_3d(ifelse(space == "model", glyph_default_radius_3d, radius))
+  solid <- !isTRUE(params$wireframe) && is.null(panel_params$space_context)
+  analytic <- solid & instance_rows_3d(data, maps, params, panel_params) & !is.na(data$fill) &
+    is.na(data$colour %or3d% rep(NA, nrow(data)))
+  packets <- list()
+  if (any(!analytic)) {
+    mesh <- !analytic
+    glyph_maps <- maps[, , mesh, drop = FALSE]
+    data_rows <- space[mesh] == "data"
+    glyph_maps[, , data_rows] <- normalise_maps_3d(glyph_maps[, , data_rows, drop = FALSE], panel_params)
+    packets$mesh <- emit_glyph_instances_3d(data[mesh, , drop = FALSE], glyph_maps, space[mesh],
+      glyph_mesh_3d("sphere", params$detail), params, panel_params)
+  }
+  if (any(analytic)) {
+    packets$quadric <- emit_quadric_instances_3d(data[analytic, , drop = FALSE],
+      as.matrix(data[analytic, c("x", "y", "z")]), maps[, , analytic, drop = FALSE], space[analytic], 1L,
+      params, panel_params)
+  }
+  if (length(packets) == 1L) return(packets[[1L]])
+  if (!length(packets)) return(new_scene_packet(panel_id = panel_params$panel_id))
+  packet <- merge_scene_packets(unname(packets), panel_params$panel_id)
+  attr(packet, "model_space") <- TRUE
+  attr(packet, "glyph_mm") <- attr(packets$mesh, "glyph_mm")
+  attr(packet, "quadric_mm") <- attr(packets$quadric, "quadric_mm")
+  packet
 }
 
 register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = "data", detail = 2L),
@@ -76,10 +100,13 @@ register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = 
 
 #' Spheres
 #'
-#' Draws one solid sphere per row, centred on x, y, z. Spheres are triangle
-#' meshes in the panel scene: they intersect surfaces and other solids exactly,
-#' take light from [light_3d()], and shrink with distance under a perspective
-#' camera, unlike the flat markers of [geom_point_3d()].
+#' Draws one solid sphere per row, centred on x, y, z. Spheres are analytic
+#' quadrics in the panel scene (Sigg et al. 2006): the vector backend draws
+#' each one's exact outline, an ellipse under any projection, and the raster
+#' backend intersects every sample's ray with it for exact depth and normal.
+#' They intersect surfaces and other solids, take light from [light_3d()],
+#' and shrink with distance under a perspective camera, unlike the flat
+#' markers of [geom_point_3d()].
 #'
 #' With `radius.unit = "data"` the `radius` aesthetic is measured in the
 #' scale-transformed units of each position axis, as in Makie's `meshscatter`
@@ -91,15 +118,22 @@ register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = 
 #' spheres stay round whatever the box proportions. Rows without a radius get
 #' 2.5% of the longest box side.
 #'
-#' Each sphere is an icosahedron subdivided `detail` times: 20 * 4^detail
-#' triangles, 320 at the default `detail = 2`. In curvilinear frames each
-#' sphere is placed at its mapped centre and keeps its shape.
+#' Spheres with an edge `colour`, or drawn as wireframes, are icospheres that
+#' show their edges: an icosahedron subdivided `detail` times, 20 * 4^detail
+#' triangles. In curvilinear frames each sphere is placed at its mapped centre
+#' and keeps its shape. The interactive viewer and the exporters receive an
+#' inscribed mesh of every analytic sphere (`options(ggplot3d.quadric_segments)`
+#' points around the equator, 32 by default).
 #'
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param radius.unit Unit of the `radius` aesthetic: `"data"` or `"mm"`.
-#' @param detail Subdivision level of the icosphere, from 0 to 6.
+#' @param detail Subdivision level, from 0 to 6, of the icosphere of spheres
+#'   that show their edges.
 #' @param shade Whether to apply lighting.
 #' @return A ggplot2 layer.
+#' @references Sigg, Weyrich, Botsch and Gross (2006). GPU-based ray-casting of
+#'   quadratic surfaces. Symposium on Point-Based Graphics.
+#'   \doi{10.2312/SPBG/SPBG06/059-065}
 #' @seealso [geom_ellipsoid_3d()], [geom_glyph_3d()].
 #' @examples
 #' d <- data.frame(x = c(1, 2, 3, 2), y = c(1, 3, 1, 2), z = c(1, 1, 1, 2.5),

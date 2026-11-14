@@ -28,6 +28,28 @@ vector_maps_3d <- function(direction, radial, axial) {
   maps
 }
 
+# Shafts (kind 2) and heads (kind 3, radius ratio 0) of filled vectors as
+# quadrics from `base` along `axis` (mapped box positions and offsets) with
+# radius `radius` in model units about the model-space `direction`; rows
+# without fill keep the mesh of `mesh_rows(rows)`, drawn by its edges.
+emit_vector_solids_3d <- function(data, base, axis, direction, radius, kind, ratio, params, panel_params, mesh_rows) {
+  analytic <- !is.na(data$fill) & rowSums(axis^2) > 0
+  packets <- list()
+  if (any(!analytic)) packets$mesh <- mesh_rows(which(!analytic))
+  if (any(analytic)) {
+    rows <- which(analytic)
+    basis <- align_z_3d(direction[rows, , drop = FALSE])
+    maps <- array(0, c(3L, 3L, length(rows))); fixed <- maps
+    for (i in seq_along(rows)) {
+      maps[, 1:2, i] <- basis[, 1:2, i] * radius[rows[i]]
+      fixed[, 3L, i] <- axis[rows[i], ]
+    }
+    packets$quadric <- emit_quadric_instances_3d(data[rows, , drop = FALSE], NULL, maps, rep("model", length(rows)), kind,
+      params, panel_params, fixed = fixed, radius_ratio = ratio, centre = base[rows, , drop = FALSE])
+  }
+  merge_emitted_3d(unname(packets), panel_params)
+}
+
 emit_vectors_3d <- function(data, params, panel_params) {
   frame <- frame_of_3d(panel_params)
   scale <- model_scale_3d(panel_params)
@@ -52,10 +74,14 @@ emit_vectors_3d <- function(data, params, panel_params) {
     if (params$head == "flat") line_params$arrow <- grid::arrow(length = grid::unit(2.5, "mm"), type = "closed")
     packets[[1L]] <- emit_segments_3d(shaft, line_params, panel_params)
   } else if (params$shaft == "tube") {
-    mesh <- glyph_mesh_3d("cylinder", params$detail)
-    mesh$vertices[, 3L] <- mesh$vertices[, 3L] + 1
-    maps <- vector_maps_3d(direction, length * params$shaft_width, (length - head) / 2)
-    packets[[1L]] <- emit_glyph_instances_3d(data, maps, rep("model", nrow(data)), mesh, params, panel_params)
+    tip <- end - sweep(unit_direction * head, 2L, scale, "/")
+    packets[[1L]] <- emit_vector_solids_3d(data, start, tip - start, direction, length * params$shaft_width,
+      2L, 1, params, panel_params, function(rows) {
+        mesh <- glyph_mesh_3d("cylinder", params$detail)
+        mesh$vertices[, 3L] <- mesh$vertices[, 3L] + 1
+        maps <- vector_maps_3d(direction[rows, , drop = FALSE], length[rows] * params$shaft_width, (length[rows] - head[rows]) / 2)
+        emit_glyph_instances_3d(data[rows, , drop = FALSE], maps, rep("model", length(rows)), mesh, params, panel_params)
+      })
   }
   if (params$head == "flat" && params$shaft != "line") {
     arrow <- data
@@ -67,12 +93,16 @@ emit_vectors_3d <- function(data, params, panel_params) {
     packets[[length(packets) + 1L]] <- emit_segments_3d(arrow, line_params, panel_params)
   }
   if (params$head == "cone" && params$head_length > 0 && params$head_width > 0) {
-    mesh <- glyph_mesh_3d("cone", params$detail)
-    mesh$vertices[, 3L] <- mesh$vertices[, 3L] - 1
-    anchors <- data
-    anchors[c("x", "y", "z")] <- anchors[c("xend", "yend", "zend")]
-    maps <- vector_maps_3d(direction, length * params$head_width, head / 2)
-    packets[[length(packets) + 1L]] <- emit_glyph_instances_3d(anchors, maps, rep("model", nrow(data)), mesh, params, panel_params)
+    axis <- sweep(unit_direction * head, 2L, scale, "/")
+    packets[[length(packets) + 1L]] <- emit_vector_solids_3d(data, end - axis, axis, direction, length * params$head_width,
+      3L, 0, params, panel_params, function(rows) {
+        mesh <- glyph_mesh_3d("cone", params$detail)
+        mesh$vertices[, 3L] <- mesh$vertices[, 3L] - 1
+        anchors <- data[rows, , drop = FALSE]
+        anchors[c("x", "y", "z")] <- anchors[c("xend", "yend", "zend")]
+        maps <- vector_maps_3d(direction[rows, , drop = FALSE], length[rows] * params$head_width, head[rows] / 2)
+        emit_glyph_instances_3d(anchors, maps, rep("model", length(rows)), mesh, params, panel_params)
+      })
   }
   packet <- merge_emitted_3d(packets, panel_params)
   attr(packet, "model_space") <- TRUE
@@ -106,6 +136,9 @@ vector_layer_3d <- function(mapping, data, stat, position, extra, scale, normali
 #' Maps x/y/z as anchors and u/v/w as vector components in original data
 #' units. Endpoints are transformed by the position scales. Cone orientation
 #' is calculated from the resulting endpoints after frame and aspect mapping.
+#' Filled cone heads and tube shafts are analytic quadrics (Sigg et al.
+#' 2006) with exact outlines and per-sample depth; heads without a fill are
+#' drawn by the edges of a cone mesh of `detail` subdivisions.
 #' `normalize = TRUE` makes the input vectors unit length before applying
 #' `scale`. Computed variables `norm`, `xend`, `yend`, `zend` are available
 #' through `after_stat()`. Zero-length vectors draw no geometry.

@@ -119,7 +119,7 @@ test_that("traced primitive ids extend the raster ids and agree with the item bu
     traced = list(traced_sphere()))
   expect_identical(traced$traced$primitive_id, 2L)
   expect_identical(traced$traced$layer_id, 7L)
-  sphere <- traced$buffers$kind == 5L
+  sphere <- traced$buffers$kind == 6L
   expect_true(any(sphere) && any(!sphere))
   expect_true(all(traced$id[sphere] == 2L))
   expect_true(all(traced$buffers$row[sphere] == 1L))
@@ -139,7 +139,7 @@ test_that("traced and face depths share the camera coordinate under every projec
     }
     front <- draw(.9); behind <- draw(.1)
     expect_lt(front$buffers$depth[16, 16], behind$buffers$depth[16, 16])
-    expect_identical(c(front$buffers$kind[16, 16], behind$buffers$kind[16, 16]), c(1L, 5L))
+    expect_identical(c(front$buffers$kind[16, 16], behind$buffers$kind[16, 16]), c(1L, 6L))
     expect_equal(traced_pixel(behind, 16L, 16L), c(0, 0, 1, 1))
     expect_equal(traced_pixel(front, 16L, 16L), c(1, 0, 0, 1))
   }

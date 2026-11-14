@@ -458,6 +458,40 @@ arrow_heads_3d <- function(scene, rows, styles, viewport) {
   } else grid::polylineGrob(xx, yy, default.units = "mm", id = id, gp = gp)
 }
 
+# Fill of face fragments `rows`, shaded by the panel light where their style
+# asks for it.
+face_fill_3d <- function(scene, rows, styles, light) {
+  s <- styles[rows, , drop = FALSE]
+  fill <- s$fill
+  shade <- style_value_3d(s, "shade", FALSE)
+  if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], scene$fragments, rows[shade], scene$camera, light, s[shade, , drop = FALSE],
+    fragment_centres_3d(scene, rows[shade]), scene$materials)
+  fill
+}
+
+# Pieces of one opaque primitive split across several runs (a face or quadric
+# cut by the ordering, with other primitives drawn between its pieces): the
+# run that draws the primitive's first piece also paints its later pieces
+# underneath, which the later runs paint over again. A later piece's
+# antialiased edges then blend with the primitive's own colour instead of
+# opening a seam onto what lies behind; the extra paint is always covered,
+# since a piece drawn later lies in front of everything drawn before it.
+# `eligible` marks fragments whose primitive may be painted ahead.
+split_underlays_3d <- function(f, runs, eligible) {
+  out <- vector("list", length(runs))
+  run_of <- integer(length(f$kind))
+  for (i in seq_along(runs)) run_of[runs[[i]]] <- i
+  rows <- unlist(runs, use.names = FALSE)
+  rows <- rows[eligible[rows]]
+  if (!length(rows)) return(out)
+  key <- paste(f$kind[rows], f$parent_primitive_id[rows])
+  first <- stats::ave(run_of[rows], key, FUN = min)
+  later <- run_of[rows] > first
+  groups <- split(rows[later], first[later])
+  out[as.integer(names(groups))] <- unname(groups)
+  out
+}
+
 # Clips a run's grob to its fragment mask, to a region, or to both: the mask
 # as clipping path and the region as alpha mask, since a nested clipping path
 # replaces the outer one instead of intersecting it.
@@ -496,6 +530,12 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   }
   text <- which(f$kind == 4L)
   key[text] <- paste(key[text], scene$source$text$angle[f$source_index[text]], sep = ":")
+  quadric <- which(f$kind == 5L)
+  quadric_info <- NULL
+  if (length(quadric)) {
+    quadric_info <- quadric_fragment_info_3d(scene, quadric)
+    key[quadric] <- paste(key[quadric], f$source_index[quadric], quadric_info$part[quadric], quadric_info$back[quadric], sep = ":")
+  }
   # Adjacent pieces of one glyph share one paint operation over their disjoint masks.
   masked <- which(f$mask_count > 0L)
   key[masked] <- paste0(key[masked], ":mask:", f$mask_offset[masked], ":", f$mask_count[masked])
@@ -518,6 +558,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   path_cache <- new.env(parent = emptyenv())
+  underlay <- split_underlays_3d(f, runs, (f$kind == 5L & f$opacity >= 1) | (seam & !surface & f$opacity >= 1))
   grobs <- lapply(seq_along(runs), function(run) {
     masks <- runs[[run]]
     rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
@@ -528,11 +569,11 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
     gp <- material_gp_3d(s, f$opacity[rows], kind)
     clip <- NULL
     if (f$mask_count[rows[1L]] > 0L) clip <- mask_path_3d(scene, masks)
-    if (kind == 1L) {
-      fill <- s$fill
-      shade <- style_value_3d(s, "shade", FALSE)
-      if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], f, rows[shade], scene$camera, light, s[shade, , drop = FALSE],
-        fragment_centres_3d(scene, rows[shade]), scene$materials)
+    if (kind == 5L) {
+      drawn <- quadric_run_grob_3d(scene, rows, quadric_info, styles, light, c(rows, underlay[[run]]))
+      g <- drawn$grob; clip <- drawn$clip
+    } else if (kind == 1L) {
+      fill <- face_fill_3d(scene, rows, styles, light)
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
       if (any(smooth[rows])) {
@@ -544,6 +585,13 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
           style_value_3d(s, "sheet", 1L), f$opacity[rows[1L]], caps) else
         if (all(seam[rows])) seam_group_grob_3d(x, y, id, fill, gp, f$opacity[rows[1L]], caps) else
           grid::polygonGrob(x, y, id = id, gp = gp)
+      later <- underlay[[run]]
+      if (length(later)) {
+        n <- f$count[later]
+        at <- rep(f$offset[later], n) + sequence(n) - 1L
+        g <- grid::grobTree(grid::polygonGrob(scene$vertices$x_npc[at], scene$vertices$y_npc[at], id = rep(seq_along(later), n),
+          gp = grid::gpar(fill = face_fill_3d(scene, later, styles, light), col = NA)), g)
+      }
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]
       lty <- style_value_3d(s, "linetype", 1)

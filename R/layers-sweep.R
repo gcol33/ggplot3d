@@ -10,6 +10,13 @@
 #' the curve in proportion to arc length, so the surface closes without a
 #' seam.
 #'
+#' Opaque filled tubes without an edge colour are analytic quadrics: a
+#' cylinder, or a cone where the radius changes, along each segment of the
+#' path and a sphere at each joint, so the tube is the sweep of a ball along
+#' the path, drawn with exact outlines and per-sample depth (Sigg et al. 2006).
+#' A segment takes the colour of its first point. Translucent tubes, and tubes
+#' with edges, are swept meshes with `sides` points on each cross section.
+#'
 #' The `radius` (tubes) or `width` (ribbons) aesthetic varies the cross section
 #' per point, and `twist` turns it about the curve by that many degrees.
 #' Without either, the size is the `radius` or `width` parameter, by default
@@ -18,12 +25,14 @@
 #' left open (`"none"`). A ribbon starts with its surface normal as close to
 #' `normal` as the curve allows.
 #'
-#' Numeric aesthetics such as a continuous fill are taken at every point and
-#' averaged over each face, so they change gradually from ring to ring.
+#' Numeric aesthetics such as a continuous fill are taken at every point; on
+#' meshes they are averaged over each face, so they change gradually from
+#' ring to ring.
 #' `spline` passes the points through [stat_spline_3d()] first, with `n`
 #' samples. Normals are angle-weighted and split where faces meet at more than
 #' 60 degrees. Computed variables: `arc_length` from the first point and
-#' `z_mean`.
+#' `z_mean`, the height of the curve point for tubes and the mean height of a
+#' face for other sweeps.
 #'
 #' With `radius.unit = "mm"` (`width.unit` for ribbons) the size is measured
 #' on the page, like a line width: the cross section is swept when the plot is
@@ -48,6 +57,10 @@
 #' @return A ggplot2 layer.
 #' @references Wang, Juettler, Zheng and Liu (2008). Computation of rotation
 #'   minimizing frames. ACM Transactions on Graphics 27, 2. \doi{10.1145/1330511.1330513}
+#'
+#'   Sigg, Weyrich, Botsch and Gross (2006). GPU-based ray-casting of
+#'   quadratic surfaces. Symposium on Point-Based Graphics.
+#'   \doi{10.2312/SPBG/SPBG06/059-065}
 #' @export
 #' @examples
 #' t <- seq(0, 4 * pi, length.out = 120)
@@ -127,33 +140,55 @@ GeomSweep3D <- ggplot2::ggproto("GeomSweep3D", GeomStatsSurface3D,
   optional_aes = c(GeomStatsSurface3D$optional_aes, ".face", ".corner", ".sweep_size", ".sweep_twist")
 )
 
-# A millimetre cross section is swept at draw time, when the fitted camera
-# and the panel size are known: in the aspect-scaled model space the camera
-# sees, so it is round on screen, with millimetres converted to model units
-# at the centre of the view as for millimetre glyphs. Before then the layer
-# emits an empty packet, which emit_scene_3d() keeps with its recipe for
-# resolve_draw_packets_3d().
+# Tubes (a circular cross section, the centre line from StatSweep3D) are
+# analytic quadrics where they are opaque, filled and without edge colour: a
+# cylinder or cone per segment and a sphere at each joint, so the tube is the
+# sweep of a ball along the path (Sigg et al. 2006). Other tubes and
+# millimetre sweeps are meshes swept from the centre line.
 emit_sweep_3d <- function(data, params, panel_params) {
-  if (!identical(params$radius.unit, "mm")) return(emit_stats_surface_3d(data, params, panel_params))
-  if (!is.null(panel_params$space_context)) stop("radius.unit = \"mm\" needs the Euclidean coordinates of coord_3d().", call. = FALSE)
+  if (is.null(data$.sweep_size)) return(emit_stats_surface_3d(data, params, panel_params))
+  unit <- check_unit_3d(params$radius.unit, "radius.unit")
+  if (unit == "mm" && !is.null(panel_params$space_context)) stop("radius.unit = \"mm\" needs the Euclidean coordinates of coord_3d().", call. = FALSE)
+  if (sweep_quadrics_3d(data, params, panel_params)) return(emit_tube_quadrics_3d(data, params, panel_params, unit))
+  if (unit == "data") return(emit_stats_surface_3d(sweep_space_mesh_3d(data, params, panel_params, "data"), params, panel_params))
+  # A millimetre cross section is swept at draw time, when the fitted camera
+  # and the panel size are known: in the aspect-scaled model space the camera
+  # sees, so it is round on screen, with millimetres converted to model units
+  # at the centre of the view as for millimetre glyphs. Before then the layer
+  # emits an empty packet, which emit_scene_3d() keeps with its recipe for
+  # resolve_draw_packets_3d().
   packet <- if (is.null(panel_params$viewport)) new_scene_packet(panel_id = panel_params$panel_id) else
-    emit_stats_surface_3d(sweep_model_mesh_3d(data, params, panel_params), params, panel_params)
+    emit_stats_surface_3d(sweep_space_mesh_3d(data, params, panel_params, "mm"), params, panel_params)
   attr(packet, "draw_time") <- TRUE
   attr(packet, "model_space") <- TRUE
   packet
 }
 
-# Mesh in model space of the centre lines in data (positions normalised to
-# the panel box), with normals in the same space.
-sweep_model_mesh_3d <- function(data, params, panel_params) {
+# Whether a centre line is drawn as quadrics: a circular cross section,
+# opaque filled rows without edge colour, in the Euclidean space of coord_3d().
+sweep_quadrics_3d <- function(data, params, panel_params) {
+  if (!is.null(params$profile) || isTRUE(params$wireframe) || !is.null(panel_params$space_context) || !nrow(data)) return(FALSE)
+  fill <- data$fill
+  if (is.null(fill) || anyNA(fill) || !all(is.na(data$colour %or3d% NA))) return(FALSE)
+  alpha <- (data$alpha %or3d% 1) * colour_channels_3d(fill, alpha = TRUE)[4L, ] / 255
+  all(!is.na(alpha) & alpha >= 1)
+}
+
+# Mesh of the centre lines in data (positions normalised to the panel box),
+# swept in data space (unit "data": sizes in data units, the mesh mapped by
+# the frame afterwards) or in the aspect-scaled model space after the frame
+# (unit "mm": sizes in millimetres), with normals in the same space.
+sweep_space_mesh_3d <- function(data, params, panel_params, unit) {
   frame <- frame_of_3d(panel_params)
-  scale <- panel_params$camera$aspect / max(panel_params$camera$aspect)
-  k <- model_units_per_mm_3d(panel_params$camera, panel_params$viewport)
+  millimetres <- unit == "mm"
+  scale <- if (millimetres) model_scale_3d(panel_params) else vapply(panel_params$ranges[c("x", "y", "z")], diff, numeric(1))
+  k <- if (millimetres) model_units_per_mm_3d(panel_params$camera, panel_params$viewport) else 1
   shape <- sweep_profile_3d(params$profile, params$sides, params$profile_closed)
   axes <- c("x", "y", "z"); normals <- c("nx", "ny", "nz")
   meshes <- lapply(split(seq_len(nrow(data)), data$group), function(rows) {
     curve <- data[rows, , drop = FALSE]
-    curve[axes] <- as.data.frame(sweep(frame$map(as.matrix(curve[axes])), 2L, scale, "*"))
+    xyz <- as.matrix(curve[axes])
+    curve[axes] <- as.data.frame(sweep(if (millimetres) frame$map(xyz) else xyz, 2L, scale, "*"))
     mesh <- sweep_surface_3d(curve, curve$.sweep_size * k, curve$.sweep_twist, shape, params$closed, params$cap, params$normal)
     for (j in seq_len(if (nrow(mesh)) 3L else 0L)) {
       mesh[[axes[j]]] <- mesh[[axes[j]]] / scale[j]
@@ -162,6 +197,87 @@ sweep_model_mesh_3d <- function(data, params, panel_params) {
     mesh
   })
   do.call(rbind, meshes)
+}
+
+# Largest bend, in degrees, that a tube joint closes by extending its two
+# segments (a mitre) instead of with a sphere: the extended segments then
+# depart from the round joint by r (1 / cos(bend / 2) - 1), under 0.9% of the
+# radius.
+tube_mitre_degrees_3d <- 15
+
+# Quadrics of the tubes along the centre lines in data: per segment a
+# cylinder (equal end radii) or cone, closed by disks. A joint that bends by
+# at most tube_mitre_degrees_3d extends both segments by r tan(bend / 2), so
+# they overlap past the outer side; a sharper joint, and a round end, takes a
+# sphere, so the tube is the sweep of a ball along the path. The cross
+# section is round in data space (unit "data") or in the model space the
+# camera sees (unit "mm"); a segment takes the style of its first point.
+emit_tube_quadrics_3d <- function(data, params, panel_params, unit) {
+  frame <- frame_of_3d(panel_params)
+  span <- vapply(panel_params$ranges[c("x", "y", "z")], diff, numeric(1))
+  scale <- model_scale_3d(panel_params)
+  millimetres <- unit == "mm"
+  cap <- params$cap %or3d% "round"
+  closed <- isTRUE(params$closed)
+  parts <- list()
+  add <- function(...) parts[[length(parts) + 1L]] <<- list(...)
+  for (group in split(seq_len(nrow(data)), data$group)) {
+    n <- length(group)
+    xyz <- as.matrix(data[group, c("x", "y", "z")])
+    mapped <- frame$map(xyz)
+    size <- data$.sweep_size[group]
+    ends <- if (n < 2L) matrix(integer(), 0L, 2L) else if (closed && n > 2L) cbind(seq_len(n), c(seq.int(2L, n), 1L)) else
+      cbind(seq_len(n - 1L), seq.int(2L, n))
+    round_space <- if (millimetres) sweep(mapped, 2L, scale, "*") else sweep(xyz, 2L, span, "*")
+    direction <- round_space[ends[, 2L], , drop = FALSE] - round_space[ends[, 1L], , drop = FALSE]
+    length <- sqrt(rowSums(direction^2))
+    ends <- ends[length > 0, , drop = FALSE]
+    direction <- direction[length > 0, , drop = FALSE] / length[length > 0]
+    length <- length[length > 0]
+    # Bend and extension at each point between its incoming and outgoing segments.
+    extension <- numeric(n); sphere <- rep(FALSE, n)
+    incoming <- match(seq_len(n), ends[, 2L]); outgoing <- match(seq_len(n), ends[, 1L])
+    joint <- !is.na(incoming) & !is.na(outgoing)
+    bend <- rep(NA_real_, n)
+    bend[joint] <- acos(pmin(1, pmax(-1, rowSums(direction[incoming[joint], , drop = FALSE] * direction[outgoing[joint], , drop = FALSE]))))
+    mitre <- joint & bend <= tube_mitre_degrees_3d * pi / 180
+    extension[mitre] <- size[mitre] * tan(bend[mitre] / 2)
+    sphere[joint & !mitre] <- TRUE
+    if (!closed && cap == "round" && n >= 1L) sphere[c(1L, n)] <- TRUE
+    for (s in seq_len(nrow(ends))) {
+      a <- ends[s, 1L]; b <- ends[s, 2L]
+      if (size[a] == 0 && size[b] == 0) next
+      flip <- size[a] == 0
+      first <- if (flip) b else a; last <- if (flip) a else b
+      along <- if (flip) -direction[s, ] else direction[s, ]
+      basis <- align_z_3d(matrix(along, 1L))[, , 1L]
+      # An end disk is left open only at an end of an open path with cap = "none".
+      open <- !closed & cap == "none" & c(first, last) %in% c(1L, n)
+      axis <- mapped[last, ] - mapped[first, ]
+      start <- extension[first]; end <- extension[last]
+      map <- cbind(size[first] * basis[, 1L], size[first] * basis[, 2L], 0)
+      shift <- c(0, 0, 0)
+      if (millimetres) {
+        map[, 3L] <- (start + end) * along
+        shift <- -start * along
+        origin <- mapped[first, ]
+      } else {
+        origin <- mapped[first, ] - start / length[s] * axis
+        axis <- axis * (1 + (start + end) / length[s])
+      }
+      add(row = group[a], origin = xyz[first, ], centre = origin, kind = if (size[a] == size[b]) 2L else 3L,
+        ratio = size[last] / size[first], cap = as.integer(!open), map = map, fixed = cbind(0, 0, axis), shift = shift)
+    }
+    for (j in which(sphere & size > 0)) add(row = group[j], origin = xyz[j, ], centre = mapped[j, ], kind = 1L, ratio = 1,
+      cap = c(1L, 1L), map = diag(size[j], 3L), fixed = matrix(0, 3L, 3L), shift = c(0, 0, 0))
+  }
+  if (!length(parts)) return(new_scene_packet(panel_id = panel_params$panel_id))
+  field <- function(name) lapply(parts, `[[`, name)
+  caps <- do.call(rbind, field("cap"))
+  emit_quadric_instances_3d(data[unlist(field("row")), , drop = FALSE], do.call(rbind, field("origin")),
+    simplify2array(field("map")), rep(unit, length(parts)), unlist(field("kind")), params, panel_params,
+    fixed = simplify2array(field("fixed")), radius_ratio = unlist(field("ratio")), cap_0 = caps[, 1L], cap_1 = caps[, 2L],
+    centre = do.call(rbind, field("centre")), shift = do.call(rbind, field("shift")))
 }
 
 register_geom_3d(GeomSweep3D, emit_sweep_3d, parameters = c(surface_parameters_3d,
