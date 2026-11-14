@@ -131,7 +131,7 @@ See [annotation_plot_3d()](../reference/annotation_plot_3d.html) for all plane o
 cloud$side <- ifelse(cloud$x < 0, "negative", "positive")
 ggplot(cloud, aes(z)) +
   geom_density(fill = PAL["blue"], alpha = 0.6) +
-  facet_slices_3d(vars(side)) +
+  facet_slices_3d(vars(side), labels = FALSE) +
   coord_3d(up = "y", azimuth = 30, elevation = 20)
 ```
 
