@@ -5,6 +5,7 @@
 void raster_ambient_cpp(SEXP scene, SEXP context) {
   Rcpp::XPtr<ggplot3d::raster::Scene> prepared(scene);
   Rcpp::XPtr<ggplot3d::ambient::Context> ao(context);
+  prepared->accessibility.assign(prepared->vertices.size(),{NAN,NAN});
   for (const auto& item:prepared->items) if (item.kind==1) {
     Rcpp::checkUserInterrupt();
     for (ggplot3d::Index j=0;j<item.count;++j) {
@@ -12,9 +13,9 @@ void raster_ambient_cpp(SEXP scene, SEXP context) {
       auto normal=v.normal;
       if (!std::isfinite(normal[0]+normal[1]+normal[2]) || ggplot3d::engine::dot(normal,normal)==0)
         normal=prepared->normals[item.row];
-      v.accessibility[0]=ao->visibility(v.position,normal);
+      prepared->accessibility[item.offset+j][0]=ao->visibility(v.position,normal);
       for (auto& x:normal) x=-x;
-      v.accessibility[1]=ao->visibility(v.position,normal);
+      prepared->accessibility[item.offset+j][1]=ao->visibility(v.position,normal);
     }
   }
 }

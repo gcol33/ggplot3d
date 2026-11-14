@@ -26,7 +26,6 @@ struct Item {
 struct Shading {
   Vec3 normal{NAN, NAN, NAN}, colour{NAN, NAN, NAN}, position{NAN, NAN, NAN};
   std::array<double, 2> uv{NAN, NAN};
-  std::array<double, 2> accessibility{NAN, NAN};
 };
 // Optional corner columns of the packet, NaN for NA: normal_x/y/z,
 // red/green/blue and u/v.
@@ -49,6 +48,7 @@ struct Scene {
   CornerAttributes corner;
   // Per vertex of the prepared face items; empty without corner attributes.
   std::vector<Shading> shading;
+  std::vector<std::array<double,2>> accessibility;
   Scene(ScenePacket p, const Camera& c, const Viewport& v)
     : packet(std::move(p)), projection(c,v), rays(projection), quadric_table(quadric_primitives(packet.quadrics)) {}
   Scene(const Scene&) = delete;

@@ -25,6 +25,8 @@ struct Context {
     Vec3 origin = raymarch::point(p,n,epsilon);
     std::vector<raymarch::Jet> scratch;
     const Vec3 inward{-n[0],-n[1],-n[2]};
+    // Inset the contact toward its supporting triangle so rays start on
+    // the surface side of neighbouring faces at a crease.
     const auto surface=scene.intersect({origin,inward,0,4*epsilon},scratch);
     if(surface.found && surface.triangle>=0) {
       const auto& triangle=scene.triangles[surface.triangle];

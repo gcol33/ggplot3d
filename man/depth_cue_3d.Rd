@@ -32,7 +32,7 @@ by which strokes thin at full weight.}
 \item{edl}{\code{FALSE}, \code{TRUE} (1), or a nonnegative eye-dome lighting
 strength.}
 
-\item{ao}{\code{FALSE}, \code{TRUE} (1), or ambient occlusion strength in \link{0, 1}.
+\item{ao}{\code{FALSE}, \code{TRUE} (1), or ambient occlusion strength from 0 to 1.
 Acts on shaded mesh faces with enabled lighting.}
 
 \item{ao_radius}{Positive ray distance in aspect-scaled panel units.}
@@ -70,6 +70,7 @@ Shaded face colours are multiplied in the shared kernel by
 \code{1 - ao * (1 - accessibility)}. The vector, raster and hybrid backends
 interpolate these values over faces. Both sides of a surface have their
 own accessibility. Text and label boxes keep their colours and draw last.
+The interactive viewer uses \code{edl} for occlusion shading.
 
 Eye-dome lighting acts on the raster backend, the rasterised layers of the
 hybrid backend, and \code{\link[=view_3d]{view_3d()}}. A pixel darkens by

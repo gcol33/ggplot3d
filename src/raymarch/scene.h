@@ -12,8 +12,7 @@ inline Vec3 basis_sample(const Vec3& axis,double x,double y,double z) {
 }
 struct SurfaceHit {bool found=false;int illustrative=0,triangle=-1;double t=0,alpha=1;Vec3 normal{0,0,0},colour{0,0,0};std::array<double,2> uv{};};
 struct Triangle {
-  std::array<Vec3,3> p,n,c;std::array<double,3> alpha;int illustrative=0,texture=0;double fill_alpha=1;
-  std::array<std::array<double,2>,3> uv{};
+  std::array<Vec3,3> p,n,c;std::array<double,3> alpha;int illustrative=0;
   SurfaceHit intersect(const Ray& ray) const {
     SurfaceHit out;Vec3 e1=engine::subtract(p[1],p[0]),e2=engine::subtract(p[2],p[0]);
     Vec3 h=engine::cross(ray.direction,e2);double det=engine::dot(e1,h);
@@ -23,7 +22,7 @@ struct Triangle {
     double t=engine::dot(e2,q)/det;if(t<ray.near || t>ray.far)return out;
     out.found=true;out.t=t;out.illustrative=illustrative;double weights[3]={1-u-v,u,v};out.alpha=0;
     for(int i=0;i<3;++i) {out.alpha+=weights[i]*alpha[i];for(int k=0;k<3;++k){out.colour[k]+=weights[i]*c[i][k];out.normal[k]+=weights[i]*n[i][k];}}
-    for(int i=0;i<3;++i) for(int k=0;k<2;++k) out.uv[k]+=weights[i]*uv[i][k];
+    out.uv={u,v};
     out.normal=unit(out.normal);return out;
   }
 };
@@ -54,18 +53,20 @@ struct Bounds {
 };
 struct Object {Bounds bounds;int kind,index;double centre(int k)const{return (bounds.lo[k]+bounds.hi[k])/2;}};
 struct BvhNode {Bounds bounds;int begin=0,end=0,left=-1,right=-1;};
+struct TextureFace {int index=0;double fill_alpha=1;std::array<std::array<double,2>,3> uv{};};
 struct TraceScene {
   std::vector<Triangle> triangles;std::vector<Implicit> implicit;std::vector<Object> objects;std::vector<BvhNode> nodes;
   Vec3 model_scale;bool clip;
   std::vector<shade::Material> materials;
   shade::Lights lights;
   std::vector<raster::Texture> textures;
+  std::vector<TextureFace> texture_faces;
   TraceScene(const Rcpp::List& mesh,const Rcpp::List& fields,const Vec3& scale,bool clip_data):model_scale(scale),clip(clip_data) {
     Rcpp::NumericMatrix p=mesh["position"],n=mesh["normal"],c=mesh["colour"];Rcpp::IntegerMatrix index=mesh["triangles"];
     Rcpp::IntegerVector illustrative(index.ncol());
-    Rcpp::IntegerVector texture(index.ncol());
-    Rcpp::NumericVector fill_alpha(index.ncol(),1.0);
-    Rcpp::NumericMatrix uv(p.nrow(),2);
+    Rcpp::IntegerVector texture;
+    Rcpp::NumericVector fill_alpha;
+    Rcpp::NumericMatrix uv;
     if(mesh.containsElementNamed("textures")) {
       Rcpp::List images=mesh["textures"];Rcpp::LogicalVector interpolate=mesh["interpolate"];
       require(interpolate.size()==images.size(),"Invalid ambient texture interpolation");
@@ -75,6 +76,7 @@ struct TraceScene {
       uv=Rcpp::as<Rcpp::NumericMatrix>(mesh["uv"]);
       require(texture.size()==index.ncol() && fill_alpha.size()==index.ncol() && uv.nrow()==p.nrow() && uv.ncol()==2,
         "Invalid ambient texture coordinates");
+      texture_faces.resize(index.ncol());
     }
     if(mesh.containsElementNamed("illustrative")) illustrative=Rcpp::as<Rcpp::IntegerVector>(mesh["illustrative"]);
     if(mesh.containsElementNamed("materials")) materials=shade::read_materials(Rcpp::as<Rcpp::List>(mesh["materials"]));
@@ -83,12 +85,15 @@ struct TraceScene {
     require(p.ncol()==3 && n.ncol()==3 && c.ncol()==4 && p.nrow()==n.nrow() && p.nrow()==c.nrow() && index.nrow()==3,"Invalid path-trace mesh");
     for(int i=0;i<index.ncol();++i){Triangle t;Object o;o.kind=0;o.index=i;
       t.illustrative=illustrative[i];
-      t.texture=texture[i];t.fill_alpha=fill_alpha[i];
-      require(t.texture>=0 && t.texture<=int(textures.size()),"Invalid ambient texture index");
+      if(!texture_faces.empty()) {
+        texture_faces[i].index=texture[i];texture_faces[i].fill_alpha=fill_alpha[i];
+        require(texture[i]>=0 && texture[i]<=int(textures.size()),"Invalid ambient texture index");
+      }
       require(t.illustrative>=0 && (t.illustrative==0 || t.illustrative<int(materials.size())),"Invalid illustrative material");
       for(int j=0;j<3;++j){int row=index(j,i)-1;require(row>=0 && row<p.nrow(),"Invalid triangle index");
         for(int k=0;k<3;++k){t.p[j][k]=p(row,k);t.n[j][k]=n(row,k);t.c[j][k]=c(row,k);}t.alpha[j]=c(row,3);
-        for(int k=0;k<2;++k)t.uv[j][k]=uv(row,k);o.bounds.add(t.p[j]);}
+        if(!texture_faces.empty()) for(int k=0;k<2;++k)texture_faces[i].uv[j][k]=uv(row,k);
+        o.bounds.add(t.p[j]);}
       triangles.push_back(t);objects.push_back(o);
     }
     for(SEXP field:fields){Object o;o.kind=1;o.index=implicit.size();o.bounds.lo={0,0,0};o.bounds.hi=scale;implicit.emplace_back(Rcpp::as<Rcpp::List>(field),scale);objects.push_back(o);}
@@ -118,8 +123,11 @@ struct TraceScene {
     while(!stack.empty()) {int id=stack.back();stack.pop_back();const auto& node=nodes[id];if(!node.bounds.intersects(ray))continue;
       if(node.left>=0){stack.push_back(node.right);stack.push_back(node.left);continue;}
       for(int i=node.begin;i<node.end;++i){const auto& o=objects[i];SurfaceHit h=o.kind==0 ? triangles[o.index].intersect(ray):implicit[o.index].intersect(ray,scratch);
-        if(h.found && o.kind==0 && triangles[o.index].texture>0) {
-          const auto& t=triangles[o.index];double a=textures[t.texture-1].sample(h.uv[0],h.uv[1],1)[3];
+        if(h.found && o.kind==0 && !texture_faces.empty() && texture_faces[o.index].index>0) {
+          const auto& t=texture_faces[o.index];double weights[3]={1-h.uv[0]-h.uv[1],h.uv[0],h.uv[1]};
+          std::array<double,2> uv{};
+          for(int j=0;j<3;++j)for(int k=0;k<2;++k)uv[k]+=weights[j]*t.uv[j][k];
+          double a=textures[t.index-1].sample(uv[0],uv[1],1)[3];
           h.alpha*=a+(1-a)*t.fill_alpha;
         }
         if(h.found && (!hit.found || h.t<hit.t)){h.triangle=o.kind==0 ? o.index:-1;hit=h;ray.far=h.t;}}

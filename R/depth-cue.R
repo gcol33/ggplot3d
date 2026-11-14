@@ -80,6 +80,7 @@ print.ggplot3d_shadow <- function(x, ...) {
 #' `1 - ao * (1 - accessibility)`. The vector, raster and hybrid backends
 #' interpolate these values over faces. Both sides of a surface have their
 #' own accessibility. Text and label boxes keep their colours and draw last.
+#' The interactive viewer uses `edl` for occlusion shading.
 #'
 #' Eye-dome lighting acts on the raster backend, the rasterised layers of the
 #' hybrid backend, and [view_3d()]. A pixel darkens by
@@ -96,7 +97,7 @@ print.ggplot3d_shadow <- function(x, ...) {
 #'   by which strokes thin at full weight.
 #' @param edl `FALSE`, `TRUE` (1), or a nonnegative eye-dome lighting
 #'   strength.
-#' @param ao `FALSE`, `TRUE` (1), or ambient occlusion strength in [0, 1].
+#' @param ao `FALSE`, `TRUE` (1), or ambient occlusion strength from 0 to 1.
 #'   Acts on shaded mesh faces with enabled lighting.
 #' @param ao_radius Positive ray distance in aspect-scaled panel units.
 #' @param ao_samples Positive whole number of deterministic hemisphere rays.
