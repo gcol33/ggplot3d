@@ -109,7 +109,8 @@ fragment_vertex_linear_3d <- function(scene, rows, styles, attributes, light) {
 # How the vector backend paints a run of smooth faces whose colour a single
 # linear gradient cannot follow: "auto" draws the run as one image clipped
 # to the faces' outline when any triangle's colour varies over two screen
-# directions by more than the tolerance, "subdivide" splits such triangles
+# directions by more than the tolerance, or the run mixes flat and gradient
+# faces; "subdivide" splits such triangles
 # into flat pieces.
 smooth_vector_mode_3d <- function() {
   mode <- getOption("ggplot3d.smooth_vector", "auto")
@@ -177,7 +178,7 @@ midrange_rgb_3d <- function(L) {
 smooth_image_needed_3d <- function(x_mm, y_mm, id, linear, gradients, tolerance = shading_tolerance_3d()) {
   if (smooth_vector_mode_3d() != "auto") return(FALSE)
   fan <- smooth_fan_3d(x_mm, y_mm, id, linear, gradients)
-  any(!fan$gradient & fan$range > tolerance)
+  any(!fan$gradient & fan$range > tolerance) || (any(fan$flat_face) && any(fan$gradient))
 }
 
 # Vector paint of faces with per-vertex linear colours. Each face is
@@ -277,6 +278,12 @@ smooth_image_grob_3d <- function(x, y, id, linear, opacity, viewport, outer = NU
 # drawn as one polygon grob each, in face order, over a seam underlay when
 # `seam` is TRUE.
 smooth_face_grob_3d <- function(painted, styles, opacity, viewport, seam, caps) {
+  underlay <- grid::gList()
+  if (seam && length(painted$face) > 1L && all(opacity[painted$face] == 1)) {
+    underlay <- seam_underlay_3d(painted$x_mm / viewport$width_mm, painted$y_mm / viewport$height_mm,
+      painted$id, painted$flat)
+    seam <- FALSE
+  }
   segment <- cumsum(c(TRUE, diff(painted$gradient) != 0L))
   grobs <- lapply(split(seq_along(painted$face), segment), function(k) {
     keep <- painted$id %in% k
@@ -289,6 +296,7 @@ smooth_face_grob_3d <- function(painted, styles, opacity, viewport, seam, caps) 
     if (seam) seam_group_grob_3d(x, y, id, painted$flat[k], gp, opacity[face[1L]], caps) else
       grid::polygonGrob(x, y, id = id, gp = gp)
   })
+  grobs <- c(as.list(underlay), grobs)
   if (length(grobs) == 1L) grobs[[1L]] else grid::gTree(children = do.call(grid::gList, unname(grobs)))
 }
 

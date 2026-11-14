@@ -67,6 +67,20 @@ test_that("a face with colours varying in two directions is painted as an image 
   expect_true(all(c("rastergrob", "polygon") %in% grob_classes(bordered$grob)))
 })
 
+test_that("opaque flat and gradient faces share continuous seam coverage", {
+  xy <- expand.grid(x = c(0.1, 0.5, 0.9), y = c(0.1, 0.9))
+  faces <- rbind(c(1L, 2L, 4L), c(2L, 5L, 4L), c(2L, 3L, 5L), c(3L, 6L, 5L))
+  vertex <- as.vector(t(faces))
+  channel <- smooth_paint_encode(c(0.25, 0.5, 0.5, 0.25, 0.5, 0.5))[vertex]
+  packet <- new_scene_packet(vertices = list(x = xy$x, y = xy$y, z = rep(0.5, 6L)),
+    corners = list(vertex = vertex, red = channel, green = channel, blue = channel),
+    faces = list(offset = seq(1L, 10L, by = 3L), count = rep(3L, 4L), layer_id = rep(1L, 4L)),
+    styles = data.frame(style_id = 1L, fill = "grey50", colour = NA_character_, shade = FALSE))
+  out <- smooth_paint_compare(packet)
+  expect_gt(out$pixels, 0L)
+  expect_lte(out$error, 2)
+})
+
 test_that("forced subdivision is capped and its pieces overlap inside the face", {
   rgb <- rbind(c(1, 0.8, 0.8), c(0.8, 1, 0.8), c(0.8, 0.8, 1))
   out <- smooth_paint_compare(smooth_paint_packet(rgb), mode = "subdivide")
