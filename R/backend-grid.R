@@ -35,7 +35,7 @@ makeContent.scene_panel_grob <- function(x) {
     return(grid::setChildren(x, do.call(grid::gList, c(list(background), x$underlay, list(rendered, border)))))
   }
   furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, x$eye_group %or3d% as.list(x$frame_group))
-  x$packets <- resolve_space_packets_3d(x$packets, furniture$camera, furniture$viewport)
+  x$packets <- resolve_draw_packets_3d(x$packets, furniture$camera, furniture$viewport)
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
   if (identical(backend$type, "pathtrace")) {
     result <- render_pathtrace_panel_3d(x, furniture, backend)

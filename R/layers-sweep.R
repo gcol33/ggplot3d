@@ -24,9 +24,20 @@
 #' samples. Normals are angle-weighted and split where faces meet at more than
 #' 60 degrees. Computed variables: `arc_length` from the first point and
 #' `z_mean`.
+#'
+#' With `radius.unit = "mm"` (`width.unit` for ribbons) the size is measured
+#' on the page, like a line width: the cross section is swept when the plot is
+#' drawn, in the box the camera sees, so a tube is round on screen whatever
+#' the box proportions and has its radius in millimetres at the centre of the
+#' view, shrinking with distance under a perspective camera, as millimetre
+#' spheres of [geom_sphere_3d()] do. Sizes then default to 1 mm (tube radius)
+#' and 4 mm (ribbon width), and `z_mean` is the height of the curve point.
+#' Millimetre sizes need the Euclidean coordinates of [coord_3d()].
 #' @inheritParams stat_function_3d
 #' @param sides Number of points on the tube's circle.
 #' @param radius,width Cross-section size where the aesthetic is not mapped.
+#' @param radius.unit,width.unit Unit of the cross-section size: `"data"`
+#'   (transformed position units) or `"mm"` (millimetres on the page).
 #' @param cap End caps of a tube on an open curve: `"round"`, `"flat"` or `"none"`.
 #' @param normal Direction the first cross section is oriented towards: the
 #'   ribbon's surface normal, or the profile's first axis in stat_sweep_3d().
@@ -48,21 +59,25 @@
 #'   geom_tube_3d(radius = 0.3, closed = TRUE, spline = "catmull-rom", n = 200) + coord_3d()
 #' ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, twist = t * 20)) +
 #'   geom_ribbon_3d(width = 0.4) + coord_3d()
+#' ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, fill = t)) +
+#'   geom_tube_3d(radius = 1.5, radius.unit = "mm") + coord_3d(aspect = c(3, 1, 1))
 geom_tube_3d <- function(mapping = NULL, data = NULL, position = "identity", ..., sides = 16L, radius = NULL,
-                         cap = c("round", "flat", "none"), closed = FALSE, spline = NULL, n = 100L,
+                         radius.unit = "data", cap = c("round", "flat", "none"), closed = FALSE, spline = NULL, n = 100L,
                          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  make_layer_3d(GeomStatsSurface3D, mapping, data, StatSweep3D, position,
-    stats_params_3d(list(sides = sides, radius = radius, cap = match.arg(cap), closed = closed, spline = spline, n = n,
-      na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+  make_layer_3d(GeomSweep3D, mapping, data, StatSweep3D, position,
+    stats_params_3d(list(sides = sides, radius = radius, radius.unit = check_unit_3d(radius.unit, "radius.unit"),
+      cap = match.arg(cap), closed = closed, spline = spline, n = n, na.rm = na.rm, shade = TRUE), list(...)),
+    show.legend, inherit.aes)
 }
 
 #' @rdname geom_tube_3d
 #' @export
 geom_ribbon_3d <- function(mapping = NULL, data = NULL, position = "identity", ..., width = NULL,
-                           normal = c(0, 0, 1), closed = FALSE, spline = NULL, n = 100L,
+                           width.unit = "data", normal = c(0, 0, 1), closed = FALSE, spline = NULL, n = 100L,
                            na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  make_layer_3d(GeomStatsSurface3D, mapping, data, StatSweep3D, position,
-    stats_params_3d(list(profile = rbind(c(0, -0.5), c(0, 0.5)), width = width, normal = normal, closed = closed,
+  make_layer_3d(GeomSweep3D, mapping, data, StatSweep3D, position,
+    stats_params_3d(list(profile = rbind(c(0, -0.5), c(0, 0.5)), width = width,
+      radius.unit = check_unit_3d(width.unit, "width.unit"), normal = normal, closed = closed,
       spline = spline, n = n, cap = "none", na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
@@ -75,7 +90,8 @@ geom_ribbon_3d <- function(mapping = NULL, data = NULL, position = "identity", .
 #' aesthetic. A profile of three or more points is a closed polygon (a
 #' repeated last point is dropped), wound counterclockwise so that normals
 #' point outwards; two points, or `profile_closed = FALSE`, give an open
-#' strip. `radius` (aesthetic or parameter, default 1) scales the profile.
+#' strip. `radius` (aesthetic or parameter, default 1) scales the profile,
+#' in millimetres on the page with `radius.unit = "mm"`.
 #' @inheritParams geom_tube_3d
 #' @param geom Geom used to draw the surface.
 #' @param profile Two-column matrix or data frame of profile points.
@@ -89,18 +105,67 @@ geom_ribbon_3d <- function(mapping = NULL, data = NULL, position = "identity", .
 #' path <- data.frame(x = c(0, 1, 2, 3), y = c(0, 1, 0, 1), z = c(0, 0.5, 1, 1.5))
 #' ggplot2::ggplot(path, ggplot2::aes(x, y, z = z)) +
 #'   stat_sweep_3d(profile = star * 0.3, spline = "natural") + coord_3d()
-stat_sweep_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D, position = "identity", ...,
-                          profile, radius = 1, cap = c("round", "flat", "none"), normal = NULL, closed = FALSE,
-                          profile_closed = NULL, spline = NULL, n = 100L,
+stat_sweep_3d <- function(mapping = NULL, data = NULL, geom = GeomSweep3D, position = "identity", ...,
+                          profile, radius = 1, radius.unit = "data", cap = c("round", "flat", "none"), normal = NULL,
+                          closed = FALSE, profile_closed = NULL, spline = NULL, n = 100L,
                           na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, data, StatSweep3D, position,
-    stats_params_3d(list(profile = profile, radius = radius, cap = match.arg(cap), normal = normal, closed = closed,
-      profile_closed = profile_closed, spline = spline, n = n, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+    stats_params_3d(list(profile = profile, radius = radius, radius.unit = check_unit_3d(radius.unit, "radius.unit"),
+      cap = match.arg(cap), normal = normal, closed = closed, profile_closed = profile_closed, spline = spline, n = n,
+      na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
 #' @rdname stat_sweep_3d
 #' @export
 geom_sweep_3d <- function(...) stat_sweep_3d(...)
+
+# Swept surfaces: the mesh of StatSweep3D, or, with radius.unit = "mm", its
+# centre line.
+GeomSweep3D <- ggplot2::ggproto("GeomSweep3D", GeomStatsSurface3D,
+  required_aes = c("x", "y", "z"),
+  optional_aes = c(GeomStatsSurface3D$optional_aes, ".face", ".corner", ".sweep_size", ".sweep_twist")
+)
+
+# A millimetre cross section is swept at draw time, when the fitted camera
+# and the panel size are known: in the aspect-scaled model space the camera
+# sees, so it is round on screen, with millimetres converted to model units
+# at the centre of the view as for millimetre glyphs. Before then the layer
+# emits an empty packet, which emit_scene_3d() keeps with its recipe for
+# resolve_draw_packets_3d().
+emit_sweep_3d <- function(data, params, panel_params) {
+  if (!identical(params$radius.unit, "mm")) return(emit_stats_surface_3d(data, params, panel_params))
+  if (!is.null(panel_params$space_context)) stop("radius.unit = \"mm\" needs the Euclidean coordinates of coord_3d().", call. = FALSE)
+  packet <- if (is.null(panel_params$viewport)) new_scene_packet(panel_id = panel_params$panel_id) else
+    emit_stats_surface_3d(sweep_model_mesh_3d(data, params, panel_params), params, panel_params)
+  attr(packet, "draw_time") <- TRUE
+  attr(packet, "model_space") <- TRUE
+  packet
+}
+
+# Mesh in model space of the centre lines in data (positions normalised to
+# the panel box), with normals in the same space.
+sweep_model_mesh_3d <- function(data, params, panel_params) {
+  frame <- frame_of_3d(panel_params)
+  scale <- panel_params$camera$aspect / max(panel_params$camera$aspect)
+  k <- model_units_per_mm_3d(panel_params$camera, panel_params$viewport)
+  shape <- sweep_profile_3d(params$profile, params$sides, params$profile_closed)
+  axes <- c("x", "y", "z"); normals <- c("nx", "ny", "nz")
+  meshes <- lapply(split(seq_len(nrow(data)), data$group), function(rows) {
+    curve <- data[rows, , drop = FALSE]
+    curve[axes] <- as.data.frame(sweep(frame$map(as.matrix(curve[axes])), 2L, scale, "*"))
+    mesh <- sweep_surface_3d(curve, curve$.sweep_size * k, curve$.sweep_twist, shape, params$closed, params$cap, params$normal)
+    for (j in seq_len(if (nrow(mesh)) 3L else 0L)) {
+      mesh[[axes[j]]] <- mesh[[axes[j]]] / scale[j]
+      mesh[[normals[j]]] <- mesh[[normals[j]]] * scale[j]
+    }
+    mesh
+  })
+  do.call(rbind, meshes)
+}
+
+register_geom_3d(GeomSweep3D, emit_sweep_3d, parameters = c(surface_parameters_3d,
+  list(radius.unit = "data", profile = NULL, sides = 16L, cap = "round", closed = FALSE, normal = NULL,
+    profile_closed = NULL)))
 
 #' Surfaces of revolution
 #'

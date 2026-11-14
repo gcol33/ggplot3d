@@ -112,9 +112,9 @@ test_that("screen tolerance responds to zoom and perspective at drawing time", {
   packet <- result$grobs[[1]]$packet
   camera <- result$params$camera
   camera$zoom <- 4 * camera$zoom
-  resolved <- resolve_space_packets_3d(list(packet), camera, new_scene_viewport(150, 80))[[1]]
+  resolved <- resolve_draw_packets_3d(list(packet), camera, new_scene_viewport(150, 80))[[1]]
   expect_gt(resolved$polylines$count, packet$polylines$count)
-  context <- attr(resolved, "space_recipe")$panel_params$space_context
+  context <- attr(resolved, "draw_recipe")$panel_params$space_context
   context$camera$projection <- "perspective"
   context$camera$distance <- 3
   sampler <- space_subdivision_3d(context)

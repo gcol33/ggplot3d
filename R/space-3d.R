@@ -128,15 +128,19 @@ space_packet_3d <- function(packet, context) {
   packet
 }
 
-# Geodesic error uses the fitted drawing camera and the panel's final aspect.
-resolve_space_packets_3d <- function(packets, camera, viewport) {
+# Packets whose geometry depends on the fitted drawing camera and the panel's
+# final size are emitted again from their recipe: geodesic error in a
+# coordinate space, millimetre cross sections of swept surfaces.
+resolve_draw_packets_3d <- function(packets, camera, viewport) {
   lapply(packets, function(packet) {
-    recipe <- attr(packet, "space_recipe")
+    recipe <- attr(packet, "draw_recipe")
     if (is.null(recipe)) return(packet)
     recipe$panel_params$camera <- camera
     recipe$panel_params$viewport <- viewport
-    recipe$panel_params$space_context$camera <- camera
-    recipe$panel_params$space_context$viewport <- viewport
+    if (!is.null(recipe$panel_params$space_context)) {
+      recipe$panel_params$space_context$camera <- camera
+      recipe$panel_params$space_context$viewport <- viewport
+    }
     do.call(emit_scene_3d, recipe)
   })
 }

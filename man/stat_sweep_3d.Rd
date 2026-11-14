@@ -8,11 +8,12 @@
 stat_sweep_3d(
   mapping = NULL,
   data = NULL,
-  geom = GeomStatsSurface3D,
+  geom = GeomSweep3D,
   position = "identity",
   ...,
   profile,
   radius = 1,
+  radius.unit = "data",
   cap = c("round", "flat", "none"),
   normal = NULL,
   closed = FALSE,
@@ -60,7 +61,8 @@ normal and binormal at path point p, after turning by the \code{twist}
 aesthetic. A profile of three or more points is a closed polygon (a
 repeated last point is dropped), wound counterclockwise so that normals
 point outwards; two points, or \code{profile_closed = FALSE}, give an open
-strip. \code{radius} (aesthetic or parameter, default 1) scales the profile.
+strip. \code{radius} (aesthetic or parameter, default 1) scales the profile,
+in millimetres on the page with \code{radius.unit = "mm"}.
 }
 \examples{
 star <- t(sapply(0:9, function(k) (1 + (k \%\% 2)) / 2 * c(cos(k * pi / 5), sin(k * pi / 5))))

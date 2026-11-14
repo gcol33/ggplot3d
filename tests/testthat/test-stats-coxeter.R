@@ -76,10 +76,10 @@ test_that("layer-owned canonical spaces remunch against the final viewport", {
     coord_3d(axes=character(),panes=character(),box="none")
   collected <- suppressMessages(integration_packets(p))
   packet <- collected$grobs[[1L]]$packet
-  expect_true(inherits(attr(packet,"space_recipe")$panel_params$space_context$space,"SpaceCoxeter3D"))
+  expect_true(inherits(attr(packet,"draw_recipe")$panel_params$space_context$space,"SpaceCoxeter3D"))
   viewport <- new_scene_viewport(100,100)
-  top <- suppressMessages(resolve_space_packets_3d(list(packet),new_camera_3d(azimuth=17,elevation=90),viewport))[[1L]]
-  side <- suppressMessages(resolve_space_packets_3d(list(packet),new_camera_3d(azimuth=17,elevation=0),viewport))[[1L]]
+  top <- suppressMessages(resolve_draw_packets_3d(list(packet),new_camera_3d(azimuth=17,elevation=90),viewport))[[1L]]
+  side <- suppressMessages(resolve_draw_packets_3d(list(packet),new_camera_3d(azimuth=17,elevation=0),viewport))[[1L]]
   expect_gt(length(top$vertices$x),length(side$vertices$x))
   expect_silent(validate_scene_packet(top));expect_silent(validate_scene_packet(side))
 })

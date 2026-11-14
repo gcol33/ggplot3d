@@ -232,7 +232,9 @@ scene_draw_panel_3d <- function(entry) {
     if (!inherits(params$coord, "Coord3D")) stop("3D layers require coord_3d().", call. = FALSE)
     drawn <- emit_scene_3d(params$data, params[setdiff(names(params), c("data", "panel_params", "coord", ".layer_id"))],
       params$panel_params, params$.layer_id)
-    if (inherits(drawn, "grob")) drawn else scene_layer_grob(drawn)
+    if (inherits(drawn, "grob")) return(drawn)
+    # A packet resolved at draw time stays in the panel while still empty.
+    if (isTRUE(attr(drawn, "draw_time"))) grid::gTree(packet = drawn, cl = "scene_layer_grob") else scene_layer_grob(drawn)
   }
   arguments <- scene_draw_formals_3d()
   arguments$.emitter <- entry$name
@@ -249,7 +251,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   if (is.function(entry$space)) {
     panel_params$space_context <- bind_space_3d(entry$space(data, params, panel_params), panel_params)
   }
-  recipe <- if (!is.null(panel_params$space_context)) list(data = data, params = params, panel_params = panel_params, layer_id = layer_id) else NULL
+  recipe <- list(data = data, params = params, panel_params = panel_params, layer_id = layer_id)
   if (is.null(data$.source)) data$.source <- seq_len(nrow(data))
   if (!is.null(data$.origin)) data$.source <- data$.origin
   data$.layer <- rep.int(as.integer(layer_id), nrow(data))
@@ -282,7 +284,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
     packet <- clip_packet_planes_3d(packet, params$clip_planes)
     attr(packet, "parent") <- NULL
   }
-  if (!is.null(recipe)) attr(packet, "space_recipe") <- recipe
+  if (!is.null(panel_params$space_context) || isTRUE(attr(packet, "draw_time"))) attr(packet, "draw_recipe") <- recipe
   if (model_space) return(packet)
   frame_packet_3d(frame, packet, panel_params$camera$clip_data)
 }

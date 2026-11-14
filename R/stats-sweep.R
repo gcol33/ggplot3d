@@ -154,12 +154,31 @@ sweep_surface_3d <- function(data, size, twist, profile, closed, cap, normal) {
     list(arc_length = ring$arc), drop = c("radius", "width", "twist"))
 }
 
+# Cross-section sizes in millimetres where neither the aesthetic nor the
+# parameter gives one: tube radius and ribbon width.
+sweep_default_mm_3d <- c(tube = 1, ribbon = 4)
+
+# Centre line of a sweep whose cross section is sized in millimetres: the
+# curve points with their size (.sweep_size, mm) and twist (.sweep_twist,
+# radians), swept by emit_sweep_3d() once the drawing camera and panel size
+# are known. arc_length is measured along the curve in data units and z_mean
+# is the height of the curve point.
+sweep_centreline_3d <- function(data, size, twist, closed) {
+  xyz <- as.matrix(data[c("x", "y", "z")])
+  data$.sweep_size <- size
+  data$.sweep_twist <- twist
+  data$arc_length <- c(0, cumsum(sqrt(rowSums(diff(xyz)^2))))
+  data$z_mean <- data$z
+  data[setdiff(names(data), c("radius", "width", "twist"))]
+}
+
 StatSweep3D <- ggplot2::ggproto("StatSweep3D", StatGeometry3D,
   required_aes = c("x", "y", "z"),
   optional_aes = c("radius", "width", "twist"),
   dropped_aes = c(StatGeometry3D$dropped_aes, "radius", "width", "twist"),
   compute_group = function(data, scales, profile = NULL, sides = 16L, radius = NULL, width = NULL,
-                           cap = "round", normal = NULL, closed = FALSE, spline = NULL, n = 100L, profile_closed = NULL) {
+                           cap = "round", normal = NULL, closed = FALSE, spline = NULL, n = 100L, profile_closed = NULL,
+                           radius.unit = "data") {
     if (any(vapply(c("x", "y", "z"), function(a) stats_scale_3d(scales, a)$is_discrete(), logical(1))))
       stop("Swept surfaces require continuous position scales.", call. = FALSE)
     if (!is.logical(closed) || length(closed) != 1L || is.na(closed)) stop("closed must be TRUE or FALSE.", call. = FALSE)
@@ -173,11 +192,15 @@ StatSweep3D <- ggplot2::ggproto("StatSweep3D", StatGeometry3D,
       data <- curve_points_3d(data, closed)
     }
     shape <- sweep_profile_3d(profile, sides, profile_closed)
-    diagonal <- sqrt(sum(vapply(c("x", "y", "z"), function(a) diff(stats_scale_3d(scales, a)$dimension())^2, numeric(1))))
-    fallback <- radius %or3d% width %or3d% ((if (shape$closed) 0.02 else 0.08) * diagonal)
+    millimetres <- check_unit_3d(radius.unit, "radius.unit") == "mm"
+    default <- if (millimetres) sweep_default_mm_3d[[if (shape$closed) "tube" else "ribbon"]] else
+      (if (shape$closed) 0.02 else 0.08) * sqrt(sum(vapply(c("x", "y", "z"), function(a) diff(stats_scale_3d(scales, a)$dimension())^2, numeric(1))))
+    fallback <- radius %or3d% width %or3d% default
     size <- data$radius %or3d% data$width %or3d% rep(fallback, nrow(data))
     if (any(!is.finite(size) | size < 0)) stop("Radius and width must be finite and nonnegative.", call. = FALSE)
-    sweep_surface_3d(data, as.double(size), (data$twist %or3d% rep(0, nrow(data))) * pi / 180, shape, closed, cap, normal)
+    twist <- (data$twist %or3d% rep(0, nrow(data))) * pi / 180
+    if (millimetres) return(sweep_centreline_3d(data, as.double(size), twist, closed))
+    sweep_surface_3d(data, as.double(size), twist, shape, closed, cap, normal)
   }
 )
 

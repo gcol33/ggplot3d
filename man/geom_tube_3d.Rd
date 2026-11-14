@@ -12,6 +12,7 @@ geom_tube_3d(
   ...,
   sides = 16L,
   radius = NULL,
+  radius.unit = "data",
   cap = c("round", "flat", "none"),
   closed = FALSE,
   spline = NULL,
@@ -27,6 +28,7 @@ geom_ribbon_3d(
   position = "identity",
   ...,
   width = NULL,
+  width.unit = "data",
   normal = c(0, 0, 1),
   closed = FALSE,
   spline = NULL,
@@ -42,6 +44,9 @@ geom_ribbon_3d(
 \item{sides}{Number of points on the tube's circle.}
 
 \item{radius, width}{Cross-section size where the aesthetic is not mapped.}
+
+\item{radius.unit, width.unit}{Unit of the cross-section size: \code{"data"}
+(transformed position units) or \code{"mm"} (millimetres on the page).}
 
 \item{cap}{End caps of a tube on an open curve: \code{"round"}, \code{"flat"} or \code{"none"}.}
 
@@ -83,6 +88,15 @@ averaged over each face, so they change gradually from ring to ring.
 samples. Normals are angle-weighted and split where faces meet at more than
 60 degrees. Computed variables: \code{arc_length} from the first point and
 \code{z_mean}.
+
+With \code{radius.unit = "mm"} (\code{width.unit} for ribbons) the size is measured
+on the page, like a line width: the cross section is swept when the plot is
+drawn, in the box the camera sees, so a tube is round on screen whatever
+the box proportions and has its radius in millimetres at the centre of the
+view, shrinking with distance under a perspective camera, as millimetre
+spheres of \code{\link[=geom_sphere_3d]{geom_sphere_3d()}} do. Sizes then default to 1 mm (tube radius)
+and 4 mm (ribbon width), and \code{z_mean} is the height of the curve point.
+Millimetre sizes need the Euclidean coordinates of \code{\link[=coord_3d]{coord_3d()}}.
 }
 \examples{
 t <- seq(0, 4 * pi, length.out = 120)
@@ -95,6 +109,8 @@ ggplot2::ggplot(knot, ggplot2::aes(x, y, z = z)) +
   geom_tube_3d(radius = 0.3, closed = TRUE, spline = "catmull-rom", n = 200) + coord_3d()
 ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, twist = t * 20)) +
   geom_ribbon_3d(width = 0.4) + coord_3d()
+ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, fill = t)) +
+  geom_tube_3d(radius = 1.5, radius.unit = "mm") + coord_3d(aspect = c(3, 1, 1))
 }
 \references{
 Wang, Juettler, Zheng and Liu (2008). Computation of rotation

@@ -142,3 +142,75 @@ test_that("splines interpolate or approximate the points", {
   expect_equal(unlist(loop[1, c("x", "y", "z")]), unlist(loop[41, c("x", "y", "z")]))
   for (type in c("natural", "bspline")) expect_equal(nrow(layer(n = 30, type = type, closed = TRUE)), 31L)
 })
+
+screen_mm_3d <- function(packet, camera, viewport) {
+  scene <- scene_compile(packet, camera, viewport)
+  cbind(scene$vertices$x_npc * viewport$width_mm, scene$vertices$y_npc * viewport$height_mm)
+}
+
+test_that("millimetre tubes are swept at draw time with their on-screen radius", {
+  d <- data.frame(x = c(0.1, 0.9), y = 0.5, z = 0.5)
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+    geom_tube_3d(radius = 2, radius.unit = "mm", sides = 64L, cap = "none") +
+    ggplot2::lims(x = c(0, 1), y = c(0, 1)) + zlim(0, 1) +
+    coord_3d(expand = FALSE, aspect = c(2, 1, 0.5))
+  s <- integration_packets(p)
+  packet <- s$grobs[[1L]]$packet
+  expect_length(packet$faces$offset, 0L)
+  expect_false(is.null(attr(packet, "draw_recipe")))
+  camera <- s$params$camera
+  axis_packet <- new_scene_packet(vertices = list(x = d$x, y = d$y, z = d$z),
+    corners = list(vertex = 1:2), polylines = list(offset = 1L, count = 2L), styles = data.frame(style_id = 1L))
+  half_width <- function(viewport) {
+    resolved <- resolve_draw_packets_3d(list(packet), camera, viewport)[[1L]]
+    xy <- screen_mm_3d(resolved, camera, viewport)
+    axis <- screen_mm_3d(axis_packet, camera, viewport)
+    direction <- (axis[2L, ] - axis[1L, ]) / sqrt(sum((axis[2L, ] - axis[1L, ])^2))
+    list(resolved = resolved,
+      across = max(abs((xy[, 1L] - axis[1L, 1L]) * direction[2L] - (xy[, 2L] - axis[1L, 2L]) * direction[1L])))
+  }
+  small <- half_width(new_scene_viewport(120, 90, 96))
+  expect_gt(length(small$resolved$faces$offset), 100L)
+  expect_equal(small$across, 2, tolerance = 2e-3)
+  expect_equal(half_width(new_scene_viewport(240, 180, 96))$across, 2, tolerance = 2e-3)
+  again <- resolve_draw_packets_3d(list(small$resolved), camera, new_scene_viewport(120, 90, 96))[[1L]]
+  expect_identical(again$vertices, small$resolved$vertices)
+})
+
+test_that("millimetre ribbons take their width on the page", {
+  d <- data.frame(x = c(0.1, 0.5, 0.9), y = c(0.3, 0.5, 0.3), z = 0.5)
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+    geom_ribbon_3d(width = 4, width.unit = "mm") +
+    ggplot2::lims(x = c(0, 1), y = c(0, 1)) + zlim(0, 1) +
+    coord_3d(expand = FALSE, elevation = 90, azimuth = -90, aspect = c(1, 3, 1))
+  s <- integration_packets(p)
+  camera <- s$params$camera
+  viewport <- new_scene_viewport(100, 100, 96)
+  resolved <- resolve_draw_packets_3d(list(s$grobs[[1L]]$packet), camera, viewport)[[1L]]
+  xy <- screen_mm_3d(resolved, camera, viewport)
+  centre <- screen_mm_3d(new_scene_packet(vertices = list(x = d$x, y = d$y, z = d$z),
+    corners = list(vertex = 1:3), polylines = list(offset = 1L, count = 3L),
+    styles = data.frame(style_id = 1L)), camera, viewport)
+  near <- apply(xy, 1L, function(v) min(sqrt(colSums((t(centre) - v)^2))))
+  expect_equal(range(near), c(2, 2), tolerance = 1e-3)
+  expect_error(geom_tube_3d(radius.unit = "pt"), "radius.unit")
+})
+
+test_that("millimetre tubes draw alike in the vector, raster and hybrid backends", {
+  skip_if_not_installed("ragg")
+  d <- data.frame(x = c(0, 10), y = c(0, 1), z = c(0, 1))
+  painted <- function(type) {
+    backend <- if (type == "vector") backend_3d("vector") else backend_3d(type, dpi = 100)
+    p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+      geom_tube_3d(radius = 3, radius.unit = "mm", fill = "red", shade = FALSE, raster = type == "hybrid") +
+      coord_3d(backend = backend) + ggplot2::theme_void()
+    read <- ragg::agg_capture(width = 400, height = 400, res = 100, background = "white")
+    on.exit(grDevices::dev.off())
+    print(p)
+    rgb <- grDevices::col2rgb(read())
+    sum(rgb[1L, ] > 200 & rgb[2L, ] < 60 & rgb[3L, ] < 60)
+  }
+  counts <- vapply(c("vector", "raster", "hybrid"), painted, numeric(1))
+  expect_gt(min(counts), 1000)
+  expect_lt(max(counts) / min(counts), 1.05)
+})

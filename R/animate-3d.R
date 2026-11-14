@@ -588,7 +588,7 @@ motion_isometry_panel_3d <- function(panel, isometry) {
   if (is.null(context)) stop("Isometry animation requires a non-default coordinate space.", call. = FALSE)
   panel$panel_params$space_context$isometry <- isometry
   panel$packets <- lapply(panel$packets, function(packet) {
-    recipe <- attr(packet, "space_recipe")
+    recipe <- attr(packet, "draw_recipe")
     if (is.null(recipe) || !identical(recipe$panel_params$space_context$space, context$space)) return(packet)
     recipe$panel_params$space_context$isometry <- isometry
     do.call(emit_scene_3d, recipe)

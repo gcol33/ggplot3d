@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* `geom_tube_3d(radius.unit = "mm")`, `geom_ribbon_3d(width.unit = "mm")` and
+  `stat_sweep_3d(radius.unit = "mm")` size the cross section in millimetres on
+  the page. The sweep runs when the plot is drawn, in the box the camera
+  sees, so tubes stay round whatever the box proportions, in the vector,
+  raster and hybrid backends (#36).
+
 * The raster and hybrid backends honour `alpha_mode = "surface"`: each sample
   keeps the nearest fragment of every translucent sheet and composites the
   sheets front to back in linear light, so a sheet folding over itself does

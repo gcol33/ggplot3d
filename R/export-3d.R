@@ -162,7 +162,8 @@ export_capture_3d <- function(grob, panel, options, layer_names, mm = NULL) {
   mm <- mm %or3d% camera$mm_per_unit
   scale <- resolved$model_scale * options$size
   light <- params$coord_params$light
-  packet <- merge_scene_packets(resolve_glyph_packets_3d(selected$packets, furniture$camera, furniture$viewport), params$panel_id)
+  packets <- resolve_draw_packets_3d(selected$packets, furniture$camera, furniture$viewport)
+  packet <- merge_scene_packets(resolve_glyph_packets_3d(packets, furniture$camera, furniture$viewport), params$panel_id)
   layer_key <- function(table) {
     known <- table$layer_id >= 1L & table$layer_id <= length(layer_names)
     ifelse(known, layer_names[pmax(1L, pmin(length(layer_names), table$layer_id))],
