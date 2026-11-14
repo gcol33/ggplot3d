@@ -1,5 +1,6 @@
 ---
 title: "Maps and spatial data"
+description: "Draw raster terrain, simple features and XYZ geometry, prism maps, profiles, flow arcs and space-time paths."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Maps and spatial data}
@@ -25,10 +26,11 @@ theme_set(theme_minimal(base_size = 17) + theme(
   legend.position = "none"))
 has_sf <- requireNamespace("sf", quietly = TRUE)
 has_terra <- requireNamespace("terra", quietly = TRUE)
+has_stars <- requireNamespace("stars", quietly = TRUE)
 has_lidr <- requireNamespace("lidR", quietly = TRUE)
 ```
 
-A map has two coordinates, and a third axis can carry a value measured at each place: terrain height, a count per region, a time stamp. ggplot3d reads the usual spatial objects directly. [terra](https://rspatial.github.io/terra/) and [stars](https://r-spatial.github.io/stars/) rasters become height surfaces, [sf](https://r-spatial.github.io/sf/) simple features become markers, paths, flat polygons or prisms, and [lidR](https://r-lidar.github.io/lidRbook/) point clouds become data frames of points. All three packages are optional.
+A map has two coordinates, and a third axis can carry a value measured at each place: terrain height, a count per region, a time stamp. ggplot3d reads the usual spatial objects directly. [terra](https://rspatial.github.io/terra/) and [stars](https://r-spatial.github.io/stars/) rasters become height surfaces, [sf](https://r-spatial.github.io/sf/) simple features become markers, paths, flat polygons or prisms, and [lidR](https://r-lidar.github.io/lidRbook/) point clouds become data frames of points. All four packages are optional. Installation is covered in [Get started](ggplot3d.html).
 
 Planar drawing needs planar coordinates. Data in longitude and latitude are reprojected to the coordinate reference system (CRS) given by `coord_3d(crs = )`, which must be a projected one; data that are already projected are drawn in their own units.
 
@@ -47,6 +49,23 @@ ggplot() +
 
 Missing cells, here outside the border, leave holes. The same raster also works as ordinary data: `fortify()` returns one row per cell with `x`, `y`, `value` and `lyr` columns, so any layer that takes x/y/z data can draw it.
 
+A stars object uses the same height-surface layer. Convert a small part of
+the built-in volcano matrix to a stars array; its horizontal positions are
+matrix-cell coordinates. Each band becomes a separate surface, with the
+computed layer name available for grouping or faceting.
+
+```{r stars-terrain, eval=has_stars, fig.alt="A height surface from a stars array containing sampled volcano elevations."}
+terrain_stars <- stars::st_as_stars(volcano[seq(1, 87, by = 3), seq(1, 61, by = 3)])
+ggplot() + geom_spatraster_3d(data = terrain_stars, maxcell = 700) +
+  scale_fill_gradient(low = PAL["green"], high = "#E8E2C8") +
+  labs(z = "height (m)") + coord_3d(aspect = c(1.4, 1, 0.7))
+```
+
+The regular cell sample controls the amount of geometry drawn. Fortifying
+the raster directly returns its full resolution. See
+[geom_spatraster_3d()](../reference/geom_spatraster_3d.html) for raster inputs
+and the computed values.
+
 ## Prism maps
 
 Simple features keep their attributes, so any column can be mapped. `geom_sf_3d()` lays polygons on the floor of the box; mapping `height` raises each one into a prism. The counties of North Carolina, with the number of births in 1974 as height:
@@ -61,7 +80,7 @@ ggplot(nc) +
            backend = backend_3d("raster", dpi = 144))
 ```
 
-Prisms of detailed outlines are many faces; the raster backend draws them in a fraction of the time the vector backend needs (see [Backends](backends.html)). Plain `ggplot2::geom_sf()` layers are drawn the same way inside `coord_3d()`. Because `geom_sf()` adds its own default coordinate system, add `coord_3d()` after it.
+Prisms of detailed outlines are many faces; the raster backend draws them in a fraction of the time the vector backend needs (see [Backends](backends.html)). Plain `ggplot2::geom_sf()` layers are drawn the same way inside `coord_3d()`; add the 3D coordinates last so they supply the plot's final coordinate system.
 
 ## Cross-sections and fence diagrams
 
@@ -80,6 +99,30 @@ ggplot(volcano_grid, aes(x, y, z = z)) +
 ```
 
 The computed `distance` gives the position along each line; with `geom = ggplot2::GeomPath` the stat draws the profile line itself.
+
+## Heights stored in simple features
+
+An XYZ geometry stores height as its third coordinate. Build a three-dimensional
+line through one row of the volcano grid, preserving the measured elevation
+at each vertex. These are local coordinates in metres. The line and surface
+share those coordinates.
+
+```{r xyz-features, eval=has_sf, fig.alt="A red XYZ simple-feature line following a measured cross-section on the volcano surface."}
+ridge <- subset(volcano_grid, y == 300)
+ridge <- ridge[order(ridge$x), ]
+xyz <- sf::st_sf(geometry = sf::st_sfc(
+  sf::st_linestring(as.matrix(ridge[c("x", "y", "z")]))))
+ggplot(volcano_grid, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey85") +
+  geom_sf_3d(data = xyz, inherit.aes = FALSE,
+             colour = PAL["red"], linewidth = 1) +
+  coord_3d(aspect = c(870, 610, 300))
+```
+
+Points and lines with stored Z coordinates use their own heights. A flat
+polygon can receive a mapped height to become a prism. Geographic inputs
+need a projected target coordinate reference system, as in the county map.
+See [geom_sf_3d()](../reference/geom_sf_3d.html) for geometry and height mappings.
 
 ## Flows over a map
 
@@ -107,6 +150,7 @@ ggplot() +
 Airborne laser scanning records millions of points on ground and vegetation. lidR reads them as `LAS` objects; `fortify()` turns one into a data frame with `x`, `y`, `z`, `intensity`, `classification` and the other point attributes. A thinned sample of a mixed conifer stand, coloured by height:
 
 ```{r lidar, eval=has_lidr, fig.alt="A point cloud of a forest stand with tall tree crowns over a flat ground."}
+set.seed(8)
 las <- lidR::readLAS(system.file("extdata", "MixedConifer.laz", package = "lidR"),
                      filter = "-keep_random_fraction 0.1")
 points <- fortify(las)
