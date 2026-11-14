@@ -5,6 +5,12 @@
   neighbour. Figures whose image is denser than the display, such as HTML
   figures at `fig.retina = 2`, no longer show stepped face edges.
 
+* `animate_3d()` embeds GIF/APNG images and looping MP4/WebM videos in knitr
+  HTML output. Media follow the chunk figure path, document-relative URLs,
+  alt text and output width. Self-contained rmarkdown output embeds the media
+  in the document. The PDE article now uses function layers and direct
+  `animate_3d()` calls.
+
 * Function surfaces and isosurfaces evaluate one parameter set per data row,
   retain the parameter columns, and support facets, mapped aesthetics and
   `animate_3d(time = ...)`. Fixed extra arguments use `args`, as in ggplot2.

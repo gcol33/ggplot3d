@@ -158,3 +158,55 @@ knit_escape_3d <- function(text) {
   }
   text
 }
+
+#' @exportS3Method knitr::knit_print
+knit_print.ggplot3d_animation <- function(x, ..., options = knitr::opts_current$get(), inline = FALSE) {
+  extension <- tolower(tools::file_ext(x$file %or3d% ""))
+  if (inline) return(x$file %or3d% "")
+  if (!extension %in% c("gif", "apng", "mp4", "webm") || !knitr::is_html_output())
+    return(knitr::knit_print(unclass(x), options = options, ...))
+  options <- knit_figure_options_3d(options, "3D animation")
+  if (identical(options$fig.keep, "none")) return(invisible(NULL))
+  path <- knitr::fig_path(extension, options = options, number = options$fig.cur)
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  source <- normalizePath(x$file, winslash = "/", mustWork = TRUE)
+  destination <- normalizePath(path, winslash = "/", mustWork = FALSE)
+  if (!identical(source, destination) && !file.copy(source, path, overwrite = TRUE))
+    stop("Could not copy the animation to the chunk figure path.", call. = FALSE)
+  if (identical(options$fig.show, "hide")) return(invisible(NULL))
+  output_dir <- knitr::opts_knit$get("rmarkdown.output_dir") %or3d%
+    knitr::opts_knit$get("output.dir") %or3d% getwd()
+  if (!is.null(knitr::opts_knit$get("rmarkdown.output_dir"))) {
+    dependency <- rmarkdown::output_format_dependency("ggplot3d-animation",
+      pandoc = list(args = c("--resource-path", normalizePath(output_dir, winslash = "/"))))
+    knitr::knit_meta_add(list(dependency))
+  }
+  src <- knit_escape_3d(knit_relative_media_3d(path, output_dir))
+  alt <- knit_escape_3d(options$fig.alt)
+  width <- x$width %or3d% round(options$fig.width * options$dpi / (options$fig.retina %or3d% 1))
+  out_width <- options$out.width %or3d% width
+  if (is.numeric(out_width) || grepl("^[0-9.]+$", out_width)) out_width <- paste0(out_width, "px")
+  style <- knit_escape_3d(paste0("width: ", out_width, "; max-width: min(100%, ", width, "px); height: auto;"))
+  html <- if (extension %in% c("gif", "apng")) {
+    paste0('<img src="', src, '" alt="', alt, '" style="', style, '">')
+  } else {
+    paste0('<video src="', src, '" autoplay loop muted playsinline aria-label="', alt,
+      '" style="', style, '">', alt, '</video>')
+  }
+  knitr::asis_output(paste0("\n\n", html, "\n\n"))
+}
+
+# Resolve media against the final document directory, including absolute and
+# parent-relative figure paths used when articles are knitted elsewhere.
+knit_relative_media_3d <- function(path, output_dir) {
+  split_path <- function(x) strsplit(normalizePath(x, winslash = "/", mustWork = TRUE), "/", fixed = TRUE)[[1L]]
+  target <- split_path(path)
+  base <- split_path(output_dir)
+  compare <- if (.Platform$OS.type == "windows") tolower else identity
+  same <- compare(target[seq_len(min(length(target), length(base)))]) ==
+    compare(base[seq_len(min(length(target), length(base)))])
+  common <- if (all(same)) length(same) else which(!same)[1L] - 1L
+  if (!common) stop("Animation and output document must share a filesystem root.", call. = FALSE)
+  parts <- c(rep("..", length(base) - common), target[seq.int(common + 1L, length(target))])
+  paste(vapply(parts, utils::URLencode, character(1), reserved = TRUE), collapse = "/")
+}

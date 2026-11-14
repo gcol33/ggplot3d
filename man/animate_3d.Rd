@@ -142,6 +142,7 @@ tweening),
 \code{build_seconds}, \code{frame}, \code{panel_extents} in millimetres, and \code{frames}
 (the PNG paths when file is NULL, the written files of a per-frame
 output). PNG frames returned with file = NULL belong to the caller.
+\code{width} and \code{height} give the frame dimensions in pixels.
 }
 \description{
 Render a scene from successive camera positions, or draw one subset of the
@@ -158,6 +159,13 @@ limits of the full data, as in gganimate's \code{transition_manual()} and
 plotly's \code{frame} aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show its
 first frame.
+
+In knitr HTML documents, a returned GIF or APNG embeds as an image and
+MP4 or WebM embeds as a looping, muted, autoplaying inline video. The file
+is copied under the chunk's figure path, with a URL relative to the output
+document. \code{fig.alt} supplies the image description or the video's
+accessible label and fallback text. \code{out.width} sets the displayed width,
+capped at the frame width and the available page width.
 
 gganimate's \code{transition_states()} and \code{transition_time()} use a separate
 build pipeline. These transitions produce guidance to use

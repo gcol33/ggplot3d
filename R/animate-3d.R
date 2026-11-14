@@ -93,6 +93,7 @@
 #'   `build_seconds`, `frame`, `panel_extents` in millimetres, and `frames`
 #'   (the PNG paths when file is NULL, the written files of a per-frame
 #'   output). PNG frames returned with file = NULL belong to the caller.
+#'   `width` and `height` give the frame dimensions in pixels.
 #' @details Framing is "azimuth" when only the azimuth and zoom change, and
 #'   "sphere" otherwise. Axis reserves and physical panel extents are fixed.
 #'   Inside views keep the eye at the observer as the camera angles change.
@@ -103,6 +104,13 @@
 #'   plotly's `frame` aesthetic. The animated PNG follows the APNG 1.0
 #'   specification: browsers play it and viewers without APNG support show its
 #'   first frame.
+#'
+#'   In knitr HTML documents, a returned GIF or APNG embeds as an image and
+#'   MP4 or WebM embeds as a looping, muted, autoplaying inline video. The file
+#'   is copied under the chunk's figure path, with a URL relative to the output
+#'   document. `fig.alt` supplies the image description or the video's
+#'   accessible label and fallback text. `out.width` sets the displayed width,
+#'   capped at the frame width and the available page width.
 #'
 #'   gganimate's `transition_states()` and `transition_time()` use a separate
 #'   build pipeline. These transitions produce guidance to use
@@ -264,6 +272,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   camera <- motion_camera_table_3d(cameras, times)
   if (!is.null(time)) camera <- cbind(camera[1L], value = values, camera[-1L])
   structure(list(file = file, frame_count = as.integer(frames), fps = fps, camera = camera,
+    width = width, height = height,
     timings = vapply(rendered, `[[`, numeric(1), "timing"), build_seconds = build_seconds,
     frame = job$frame, panel_extents = lapply(rendered, `[[`, "extents"),
     isometries = isometries, tour_bases = tour_state$bases,
