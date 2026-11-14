@@ -285,6 +285,7 @@ articles:
   - combining-2d-3d
   - documents
   - spatial
+  - vector-fields
 - title: Examples
   navbar: Examples
   contents:
