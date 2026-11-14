@@ -12,6 +12,7 @@ Space3D <- ggplot2::ggproto("Space3D", NULL,
   geodesic = function(X, Y, s) stop("Space must implement geodesic().", call. = FALSE),
   act = function(g, X) stop("Space must implement act() for an isometry.", call. = FALSE),
   chart_is_projective = function(model) FALSE,
+  projective_action = function(g, model) NULL,
   style_packet = function(packet, context) packet,
   clip_segment = NULL,
   clip_polygon = NULL,
@@ -89,10 +90,35 @@ space_packet_coordinates_3d <- function(X, context) {
   normalise_homogeneous_3d(xyzw[, 1L], xyzw[, 2L], xyzw[, 3L], xyzw[, 4L], context$ranges)
 }
 
-# Euclidean model coordinates of a space packet's vertices.
+# Euclidean model coordinates of a space packet's vertices, seen by the
+# observer: an isometry carried by the camera pre-transform is applied.
 packet_model_points_3d <- function(packet, context) {
-  xyz <- scene_vertices_xyz_3d(packet$vertices)
+  xyzw <- scene_vertex_matrix_3d(packet$vertices)
+  pre <- space_action_pre_3d(context)
+  if (!is.null(pre)) xyzw <- xyzw %*% t(pre)
+  xyz <- homogeneous_xyz_3d(xyzw)
   sweep(sweep(xyz, 2L, vapply(context$ranges, diff, numeric(1)), "*"), 2L, vapply(context$ranges, `[`, numeric(1), 1L), "+")
+}
+
+# An isometry acting linearly on homogeneous model coordinates (a Lorentz
+# transformation in the Klein model) is carried by the camera pre-transform,
+# conjugated into panel-box fractions, so moving the observer recompiles the
+# scene without emitting it again (Weeks 2002).
+space_action_pre_3d <- function(context) {
+  if (is.null(context$action)) return(NULL)
+  lo <- vapply(context$ranges, `[`, numeric(1), 1L)
+  d <- vapply(context$ranges, diff, numeric(1))
+  to_box <- rbind(cbind(diag(1 / d), -lo / d), c(0, 0, 0, 1))
+  from_box <- rbind(cbind(diag(d), lo), c(0, 0, 0, 1))
+  to_box %*% context$action %*% from_box
+}
+
+# Camera of a panel whose space carries an isometry in its pre-transform.
+space_action_camera_3d <- function(camera, context) {
+  pre <- space_action_pre_3d(context)
+  if (is.null(pre)) return(camera)
+  camera$pre <- as.double(pre)
+  camera
 }
 
 bind_space_3d <- function(spec, panel_params) {
@@ -105,6 +131,12 @@ bind_space_3d <- function(spec, panel_params) {
   spec$ranges <- spec$ranges[c("x", "y", "z")]
   spec$input_ranges <- panel_params$ranges
   spec$frame <- frame_of_3d(panel_params)$space_frame %or3d% frame_of_3d(panel_params)
+  spec$linear_action <- isTRUE(spec$frame$linear) && isTRUE(spec$space$chart_is_projective(spec$model)) &&
+    !is.null(spec$space$projective_action(diag(4), spec$model))
+  if (spec$linear_action && !is.null(spec$isometry)) {
+    spec$action <- spec$space$projective_action(spec$isometry, spec$model)
+    spec$isometry <- NULL
+  }
   spec$camera <- panel_params$camera
   spec$viewport <- emit_viewport_3d(panel_params)
   spec

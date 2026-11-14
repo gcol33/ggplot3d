@@ -110,7 +110,7 @@ spherical_style_packet_3d <- function(packet,context) {
 # Each primitive receives the inverse geodesic-sphere area at its centre.
 space_depth_cue_3d <- function(packet,context,fog,area) {
   if(is.null(fog)||!length(packet$vertices$x)) return(packet)
-  centres <- primitive_centres_3d(packet)
+  centres <- primitive_centres_3d(packet,space_action_pre_3d(context) %or3d% diag(4))
   sizes <- vapply(centres,nrow,integer(1))
   if(!sum(sizes)) return(packet)
   P <- do.call(rbind,centres)

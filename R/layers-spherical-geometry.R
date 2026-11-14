@@ -92,8 +92,9 @@ SpaceSpherical3D <- ggplot2::ggproto("SpaceSpherical3D",Space3D,
 #'   panel box. Great-circle face edges clip before division. Near defaults to
 #'   sqrt(machine epsilon), and far to the farthest panel-box corner, in
 #'   normalised camera units. Azimuth, elevation and roll set facing. Observer
-#'   actions run before packing; compile-only camera-pre actions await
-#'   homogeneous scene support.
+#'   actions run before packing: SO(4) acts linearly on the gnomonic
+#'   coordinates (X1:3, X4), but turning the far hemisphere into view would
+#'   need packet vertices with w < 0, which the scene contract excludes.
 #' @references Johnson (2011). A visualization of the Hopf fibration.
 #' <https://nilesjohnson.net/hopf.html>. Obermeyer. Jenn3d.
 #' <https://jenn3d.org/>.

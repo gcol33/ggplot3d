@@ -107,7 +107,9 @@ the window. Static layers stay fixed. Missing observations break a trail.}
 
 \item{isometry}{A list of one canonical-space isometry matrix per frame,
 a matrix shared by all frames, or a function of frame times returning the
-list. Re-emits geometry through the space adapter; limits remain fixed.}
+list. Re-emits geometry through the space adapter; an isometry that acts
+linearly on the display model (Lorentz transformations in the Klein
+model) changes only the camera pre-transform. Limits remain fixed.}
 
 \item{tour}{A \code{\link[=tour_grand]{tour_grand()}} specification or tourr history array. Applies
 Grassmann-interpolated bases to stat_project_3d() layers with orthographic

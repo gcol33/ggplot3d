@@ -66,7 +66,9 @@
 #'   the window. Static layers stay fixed. Missing observations break a trail.
 #' @param isometry A list of one canonical-space isometry matrix per frame,
 #'   a matrix shared by all frames, or a function of frame times returning the
-#'   list. Re-emits geometry through the space adapter; limits remain fixed.
+#'   list. Re-emits geometry through the space adapter; an isometry that acts
+#'   linearly on the display model (Lorentz transformations in the Klein
+#'   model) changes only the camera pre-transform. Limits remain fixed.
 #' @param tour A [tour_grand()] specification or tourr history array. Applies
 #'   Grassmann-interpolated bases to stat_project_3d() layers with orthographic
 #'   or finite perspective projection. Uses fixed limits across frames. Requires static
@@ -586,6 +588,7 @@ motion_isometries_3d <- function(isometry, times, frames) {
 motion_isometry_panel_3d <- function(panel, isometry) {
   context <- panel$panel_params$space_context
   if (is.null(context)) stop("Isometry animation requires a non-default coordinate space.", call. = FALSE)
+  if (isTRUE(context$linear_action)) return(motion_action_panel_3d(panel, isometry))
   panel$panel_params$space_context$isometry <- isometry
   panel$packets <- lapply(panel$packets, function(packet) {
     recipe <- attr(packet, "draw_recipe")
@@ -596,6 +599,24 @@ motion_isometry_panel_3d <- function(panel, isometry) {
   panel
 }
 
+
+# A frame whose isometry acts linearly on the display model changes only the
+# camera pre-transform and the observer-dependent styles; the geometry is not
+# emitted again.
+motion_action_panel_3d <- function(panel, isometry) {
+  context <- panel$panel_params$space_context
+  context$action <- context$space$projective_action(isometry, context$model)
+  panel$panel_params$space_context <- context
+  panel$panel_params$camera <- space_action_camera_3d(panel$panel_params$camera, context)
+  panel$packets <- lapply(panel$packets, function(packet) {
+    unstyled <- attr(packet, "space_unstyled")
+    if (is.null(unstyled)) return(packet)
+    styled <- context$space$style_packet(unstyled, context)
+    for (name in setdiff(names(attributes(packet)), names(attributes(styled)))) attr(styled, name) <- attr(packet, name)
+    styled
+  })
+  panel
+}
 
 motion_tour_plot_3d <- function(plot, basis) {
   plot@layers <- lapply(plot@layers, function(layer) {

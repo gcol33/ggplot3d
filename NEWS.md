@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* In the Klein model of `coord_hyperbolic_3d()`, `observer`, `centre` and
+  `isometry` are Lorentz transformations carried by the camera
+  pre-transform (Weeks 2002), so the geometry is emitted once and
+  `animate_3d(isometry = )` frames only recompile; fog and intrinsic
+  normals follow the moved observer (#15).
+
 * Coordinate spaces emit homogeneous model coordinates: a space model may
   return (x, y, z, w) and w reaches the scene packet, so the Klein,
   Poincare and stereographic models are clipped to the panel box before

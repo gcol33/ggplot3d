@@ -273,7 +273,10 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   if (!is.null(panel_params$space_context) && !isTRUE(attr(packet, "space_mapped")) && !isTRUE(attr(packet, "model_space"))) {
     packet <- space_packet_3d(packet, panel_params$space_context)
   }
+  unstyled <- packet
   if (!is.null(panel_params$space_context)) packet <- panel_params$space_context$space$style_packet(packet, panel_params$space_context)
+  camera_free <- isTRUE(panel_params$space_context$linear_action) && isTRUE(attr(packet, "space_mapped"))
+  if (camera_free) attr(packet, "space_unstyled") <- unstyled
   validate_scene_packet(packet)
   if (raster && nrow(packet$styles)) packet$styles$raster <- TRUE
   frame <- frame_of_3d(panel_params)
@@ -284,7 +287,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
     packet <- clip_packet_planes_3d(packet, params$clip_planes)
     attr(packet, "parent") <- NULL
   }
-  if (!is.null(panel_params$space_context) || isTRUE(attr(packet, "draw_time"))) attr(packet, "draw_recipe") <- recipe
+  if ((!is.null(panel_params$space_context) && !camera_free) || isTRUE(attr(packet, "draw_time"))) attr(packet, "draw_recipe") <- recipe
   if (model_space) return(packet)
   frame_packet_3d(frame, packet, panel_params$camera$clip_data)
 }

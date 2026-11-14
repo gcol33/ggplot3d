@@ -119,6 +119,7 @@ SpaceHyperbolicFinite <- ggplot2::ggproto("SpaceHyperbolicFinite",Space3D,
     X%*%t(g)
   },
   chart_is_projective=function(model) model=="klein",
+  projective_action=function(g,model) if(model=="klein") check_lorentz_matrix_3d(g,3L) else NULL,
   style_packet=function(self,packet,context) space_depth_cue_3d(hyperbolic_style_packet_3d(packet,context),context,self$fog,
     function(X) rowSums(X[,1:3,drop=FALSE]^2)/(-self$curvature)),
   model_ranges=function(self,model,panel_params) {
@@ -140,6 +141,8 @@ FrameHyperbolicFinite <- ggplot2::ggproto("FrameHyperbolicFinite",FrameBox,
       breaks <- self$distance_breaks
       r <- breaks*sqrt(-self$space$curvature)
       X <- cbind(sinh(r),0,0,cosh(r))
+      action <- panel_params$space_context$action
+      if(!is.null(action)) X <- t(solve(action,t(X)))
       xyz <- space_model_xyz_3d(X,self$space,self$model)
       d <- data.frame(x=xyz[,1L],y=xyz[,2L],z=xyz[,3L],group=1L,
         colour="grey35",alpha=1,linewidth=.4,linetype=1,label=format(breaks,trim=TRUE),size=3,vjust=-.5)
@@ -196,9 +199,14 @@ FrameHyperbolicFinite <- ggplot2::ggproto("FrameHyperbolicFinite",FrameBox,
 #'   Klein lighting transports Minkowski plane normals to the origin.
 #'   Inside views use the existing vector visibility pipeline with a perspective
 #'   eye at the Klein origin. Near defaults to sqrt(machine epsilon), and far
-#'   to the farthest panel-box corner, in normalised camera units. Observer
-#'   actions are applied before packing; compile-only camera-pre actions await
-#'   homogeneous scene support. Camera azimuth, elevation and roll set facing.
+#'   to the farthest panel-box corner, in normalised camera units. In the
+#'   Klein model an observer, centre or isometry is a Lorentz transformation
+#'   of the homogeneous coordinates (X, X0) and is carried by the camera
+#'   pre-transform, as in Weeks (2002): the geometry is emitted once, and
+#'   animate_3d(isometry = ) frames only recompile, with fog and intrinsic
+#'   normals evaluated for the moved observer. Poincare and half-space
+#'   models apply the action before packing. Camera azimuth, elevation and
+#'   roll set facing.
 #' @examples
 #' d <- data.frame(x=c(-.7,.7),y=c(.2,.2),z=0)
 #' ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+coord_hyperbolic_3d()

@@ -64,9 +64,14 @@ common screen-error sampler. Position scales must be identity transforms.
 Klein lighting transports Minkowski plane normals to the origin.
 Inside views use the existing vector visibility pipeline with a perspective
 eye at the Klein origin. Near defaults to sqrt(machine epsilon), and far
-to the farthest panel-box corner, in normalised camera units. Observer
-actions are applied before packing; compile-only camera-pre actions await
-homogeneous scene support. Camera azimuth, elevation and roll set facing.
+to the farthest panel-box corner, in normalised camera units. In the
+Klein model an observer, centre or isometry is a Lorentz transformation
+of the homogeneous coordinates (X, X0) and is carried by the camera
+pre-transform, as in Weeks (2002): the geometry is emitted once, and
+animate_3d(isometry = ) frames only recompile, with fog and intrinsic
+normals evaluated for the moved observer. Poincare and half-space
+models apply the action before packing. Camera azimuth, elevation and
+roll set facing.
 }
 \examples{
 d <- data.frame(x=c(-.7,.7),y=c(.2,.2),z=0)
