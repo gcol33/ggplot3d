@@ -6,7 +6,9 @@ namespace ggplot3d { namespace shade {
 static inline vec3 row3(const Rcpp::NumericMatrix& m, int i) {return {m(i, 0), m(i, 1), m(i, 2)};}
 
 // Lights resolved on the R side (resolved_light_3d()): kind, vector, colour,
-// ground (rows), falloff, ambient (linear colour) and multiply.
+// ground (rows), falloff, ambient (linear colour), transfer (a kernel transfer
+// id), range (shadow and highlight moves), neutral (cosine), shadow and
+// highlight (linear tone colours).
 static inline Lights read_lights(const Rcpp::List& x) {
   Lights out;
   Rcpp::IntegerVector kind = x["kind"];
@@ -22,7 +24,13 @@ static inline Lights read_lights(const Rcpp::List& x) {
     out.list.push_back(l);
   }
   out.ambient = {ambient[0], ambient[1], ambient[2]};
-  out.multiply = Rcpp::as<bool>(x["multiply"]);
+  Rcpp::NumericVector range = x["range"], shadow = x["shadow"], highlight = x["highlight"];
+  if (range.size() != 2 || shadow.size() != 3 || highlight.size() != 3) Rcpp::stop("invalid resolved lights");
+  out.transfer = Rcpp::as<int>(x["transfer"]);
+  out.r0 = range[0]; out.r1 = range[1];
+  out.neutral = Rcpp::as<double>(x["neutral"]);
+  out.shadow = {shadow[0], shadow[1], shadow[2]};
+  out.highlight = {highlight[0], highlight[1], highlight[2]};
   return out;
 }
 

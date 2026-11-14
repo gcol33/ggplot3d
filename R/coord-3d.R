@@ -2,23 +2,26 @@
 #'
 #' One directional light with an ambient term: the shorthand for
 #' `lights_3d(light_directional(direction, space, intensity = diffuse),
-#' ambient = ambient, mode = mode)`. See [lights_3d()] for several lights,
-#' point, head and hemisphere lights, and [material_3d()] for specular
-#' highlights.
+#' ambient = ambient, mode = mode, ...)`. See [lights_3d()] for several
+#' lights, point, head and hemisphere lights and the colour modes, and
+#' [material_3d()] for specular highlights.
 #' @param direction Direction from a surface toward the light.
 #' @param space Coordinate space, camera or data.
 #' @param ambient,diffuse Nonnegative light contributions with sum at most one.
-#' @param mode Colour operation, multiply or tint.
+#' @param mode Colour operation: `"multiply"`, `"tint"`, `"lightness"`,
+#'   `"tone"`, `"overlay"` or `"soft"`; see [lights_3d()].
+#' @param ... `range`, `neutral`, `shadow` and `highlight` of [lights_3d()].
 #' @return A lighting configuration for coord_3d().
 #' @examples
 #' light_3d(direction = c(1, 1, 2), space = "camera")
+#' light_3d(mode = "lightness", range = c(-0.5, 0.2))
 #' @export
-light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, diffuse = 0.65, mode = "multiply") {
+light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, diffuse = 0.65, mode = "multiply", ...) {
   stopifnot(is.numeric(direction), length(direction) == 3L, all(is.finite(direction)), sum(direction^2) > 0,
             length(ambient) == 1L, length(diffuse) == 1L, is.finite(ambient), is.finite(diffuse),
             ambient >= 0, diffuse >= 0, ambient + diffuse <= 1)
   lights_3d(light_directional(direction, match.arg(space, c("camera", "data")), intensity = diffuse),
-            ambient = ambient, mode = match.arg(mode, c("multiply", "tint")))
+            ambient = ambient, mode = match.arg(mode, light_transfers_3d), ...)
 }
 
 #' Select a 3D rendering backend

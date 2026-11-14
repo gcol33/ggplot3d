@@ -2,50 +2,76 @@
 % Please edit documentation in R/guides-colour.R
 \name{guide_colourbar_3d}
 \alias{guide_colourbar_3d}
+\alias{guide_coloursteps_3d}
 \alias{guide_legend_3d}
-\title{Colourbars on position axes and lit legend keys}
+\alias{guide_bins_3d}
+\title{Colour guides that show the scene's shading}
 \usage{
 guide_colourbar_3d(
   along = "z",
   width = grid::unit(2, "mm"),
   gap = grid::unit(0.5, "mm"),
-  nbin = 128L
+  nbin = 128L,
+  shading.range = FALSE,
+  ...
 )
 
+guide_coloursteps_3d(..., shading.range = TRUE)
+
 guide_legend_3d(..., lit = TRUE, normal = c(0, 0, 1), shading.range = FALSE)
+
+guide_bins_3d(..., lit = TRUE, normal = c(0, 0, 1), shading.range = FALSE)
 }
 \arguments{
 \item{along}{Position axis beside which the bar is drawn, one of \code{"x"},
-\code{"y"}, \code{"z"}. A visible box position guide is required.}
+\code{"y"}, \code{"z"}, or NULL for a legend-box colourbar.}
 
-\item{width, gap}{Physical grid units for the colourbar width and its gap
-from the edge. Tick lengths include this space.}
+\item{width, gap}{Physical grid units for the axis colourbar width and its
+gap from the edge. Tick lengths include this space.}
 
 \item{nbin}{Number of colour intervals along the bar.}
 
-\item{...}{Arguments passed to \code{\link[ggplot2:guide_legend]{ggplot2::guide_legend()}}.}
+\item{shading.range}{\code{FALSE}, \code{TRUE}, or two angles in degrees in [0,
+180], the span of light shown.}
+
+\item{...}{Arguments passed to \code{\link[ggplot2:guide_colourbar]{ggplot2::guide_colourbar()}},
+\code{\link[ggplot2:guide_coloursteps]{ggplot2::guide_coloursteps()}}, \code{\link[ggplot2:guide_bins]{ggplot2::guide_bins()}} or
+\code{\link[ggplot2:guide_legend]{ggplot2::guide_legend()}}.}
 
 \item{lit}{Whether shaded layers use lit facet keys.}
 
 \item{normal}{Finite nonzero model-space facet normal, length three.}
-
-\item{shading.range}{Whether to display the colour's lighting range.}
 }
 \value{
 A ggplot2 guide.
 }
 \description{
-\code{guide_colourbar_3d()} draws a colourbar beside the selected box edge of a
-position guide. The axis supplies its ticks, labels and title. The colour
-aesthetic and that position must map the same expression in every layer
-using the colour scale. Scale transformations may differ: colours are
-evaluated at the position axis's original data values.
+\code{guide_colourbar_3d()} with \code{along} an axis draws a colourbar beside the
+selected box edge of that position guide. The axis supplies its ticks,
+labels and title. The colour aesthetic and that position must map the same
+expression in every layer using the colour scale. Scale transformations may
+differ: colours are evaluated at the position axis's original data values.
+With \code{along = NULL} it is an ordinary legend-box colourbar
+(\code{\link[ggplot2:guide_colourbar]{ggplot2::guide_colourbar()}}).
 }
 \details{
-\code{guide_legend_3d()} draws keys of shaded layers as a small facet lit by the
-plot's light and first camera. \code{normal} specifies the facet's model-space
-normal. \code{shading.range = TRUE} adds the light's ambient-to-diffuse colour
-range below each facet. Unshaded layers retain their own key geometry.
+\code{guide_coloursteps_3d()} and \code{guide_bins_3d()} are
+\code{\link[ggplot2:guide_coloursteps]{ggplot2::guide_coloursteps()}} and \code{\link[ggplot2:guide_bins]{ggplot2::guide_bins()}} with shading;
+\code{guide_legend_3d()} and \code{guide_bins_3d()} draw keys of shaded layers as a
+small facet lit by the plot's light and first camera. \code{normal} specifies the
+facet's model-space normal. Unshaded layers retain their own key geometry.
+
+\code{shading.range} shows what the light does to each colour. The colourbars
+and colour steps become a two-dimensional swatch, value along the bar and
+light across it; legend and bin keys get a strip below the facet. The
+colours come from the same shading kernel as the faces, for a surface whose
+normal makes each angle along the range with every light, without the
+specular term, using the material of the first layer with one. \code{TRUE}
+spans 90 to 0 degrees for the \code{"multiply"} and \code{"tint"} modes of
+\code{\link[=lights_3d]{lights_3d()}} (from ambient to full light) and 180 to 0 degrees for the
+signed modes; two angles in degrees, \code{c(from, to)}, set the span, and
+reversing them reverses the strip. With several facet panels, guides use
+the plot's light.
 }
 \examples{
 d <- expand.grid(x = 1:4, y = 1:4)
@@ -53,6 +79,12 @@ d$z <- with(d, x + y)
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z))
 p + geom_surface_3d() +
   ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d()) + coord_3d()
+p + geom_surface_3d() +
+  ggplot2::scale_fill_distiller(palette = "Spectral",
+    guide = guide_colourbar_3d(along = NULL, shading.range = TRUE)) +
+  coord_3d(light = light_3d(mode = "lightness"))
+p + geom_surface_3d() +
+  ggplot2::scale_fill_viridis_b(guide = guide_coloursteps_3d(shading.range = TRUE)) + coord_3d()
 p + geom_col_3d(ggplot2::aes(fill = factor(x))) +
   ggplot2::guides(fill = guide_legend_3d(shading.range = TRUE)) + coord_3d()
 }

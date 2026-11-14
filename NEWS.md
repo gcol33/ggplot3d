@@ -1,17 +1,31 @@
 # ggplot3d 0.0.0.9000
 
+# ggplot3d 0.0.0.9000
+
+* Shading can keep data colours readable against their legend.
+  `lights_3d(mode = "lightness" | "tone" | "overlay" | "soft", range, neutral)`
+  moves a colour by a signed level per light, 0 at the `neutral` angle
+  (ggcube's `ramp_smooth()`): OKLab lightness toward black or white with
+  hue kept and chroma reduced only to fit the gamut (Ottosson 2020; ggcube's
+  `tone_lightness()`), an OKLab mix toward `shadow` and `highlight` colours,
+  or matplotlib's `LightSource` overlay and soft-light blends. The transfers
+  live in the one shading kernel, so vector, raster and the viewer agree.
+  `guide_colourbar_3d(along = NULL)`, `guide_coloursteps_3d()`,
+  `guide_bins_3d()` and `guide_legend_3d()` take `shading.range` (`TRUE` or
+  two angles) and show value by light, sampled from the same kernel without
+  the specular term; the axis colourbar shades across its width (#59;
+  Szafir et al. 2016, Kovesi 2015).
+
 * `stat_tiling_3d()` and `stat_honeycomb_3d()` accept Schlafli symbols with
   ideal or hyperideal vertices and cells (Nelson and Segerman 2016): ideal
   vertices lie on the boundary of the ball models, hyperideal vertices are
   cut off by their polar planes, and honeycombs with infinite cells are
   generated face by face within `radius` (#21).
-
 * `stat_project_3d()` handles edges and faces that meet or cross the
   four-dimensional perspective eye or the stereographic pole: both maps are
   linear from R^4 to homogeneous coordinates, perspective geometry is clipped
   to the half-space in front of the eye with explicit points at infinity,
   and the scene engine clips it to the panel box before division (#20).
-
 * Spheres, cylinders and cones are analytic primitives of the scene contract
   (Sigg, Weyrich, Botsch and Gross 2006): a unit primitive per row placed by an
   affine map, with flat or open end disks. The engine orders them through a

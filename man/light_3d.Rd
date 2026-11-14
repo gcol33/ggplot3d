@@ -9,7 +9,8 @@ light_3d(
   space = "camera",
   ambient = 0.35,
   diffuse = 0.65,
-  mode = "multiply"
+  mode = "multiply",
+  ...
 )
 }
 \arguments{
@@ -19,17 +20,21 @@ light_3d(
 
 \item{ambient, diffuse}{Nonnegative light contributions with sum at most one.}
 
-\item{mode}{Colour operation, multiply or tint.}
+\item{mode}{Colour operation: \code{"multiply"}, \code{"tint"}, \code{"lightness"},
+\code{"tone"}, \code{"overlay"} or \code{"soft"}; see \code{\link[=lights_3d]{lights_3d()}}.}
+
+\item{...}{\code{range}, \code{neutral}, \code{shadow} and \code{highlight} of \code{\link[=lights_3d]{lights_3d()}}.}
 }
 \value{
 A lighting configuration for coord_3d().
 }
 \description{
 One directional light with an ambient term: the shorthand for
-\code{lights_3d(light_directional(direction, space, intensity = diffuse), ambient = ambient, mode = mode)}. See \code{\link[=lights_3d]{lights_3d()}} for several lights,
-point, head and hemisphere lights, and \code{\link[=material_3d]{material_3d()}} for specular
-highlights.
+\code{lights_3d(light_directional(direction, space, intensity = diffuse), ambient = ambient, mode = mode, ...)}. See \code{\link[=lights_3d]{lights_3d()}} for several
+lights, point, head and hemisphere lights and the colour modes, and
+\code{\link[=material_3d]{material_3d()}} for specular highlights.
 }
 \examples{
 light_3d(direction = c(1, 1, 2), space = "camera")
+light_3d(mode = "lightness", range = c(-0.5, 0.2))
 }

@@ -1,4 +1,4 @@
-utils::globalVariables(c("shade_cpp", "shade_transfer_cpp", "shade_glsl_cpp"))
+utils::globalVariables(c("shade_cpp", "shade_swatch_cpp", "shade_transfer_cpp", "shade_glsl_cpp"))
 
 colour_channels_3d <- function(colour, alpha = FALSE) {
   palette <- unique(colour)

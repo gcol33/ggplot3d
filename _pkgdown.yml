@@ -277,6 +277,8 @@ reference:
   - guide_triad_3d
   - guide_colourbar_3d
   - guide_legend_3d
+  - guide_coloursteps_3d
+  - guide_bins_3d
   - annotation_north_3d
   - annotation_scale_3d
 - title: Output backends

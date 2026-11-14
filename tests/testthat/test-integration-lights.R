@@ -4,7 +4,8 @@ kernel_lights <- function(...) {
     vector = do.call(rbind, lapply(lights, `[[`, "vector")),
     colour = do.call(rbind, lapply(lights, function(l) l$colour %||% c(1, 1, 1))),
     ground = do.call(rbind, lapply(lights, function(l) l$ground %||% c(0, 0, 0))),
-    falloff = vapply(lights, function(l) l$falloff %||% 0, numeric(1)), ambient = c(0, 0, 0), multiply = TRUE)
+    falloff = vapply(lights, function(l) l$falloff %||% 0, numeric(1)), ambient = c(0, 0, 0), transfer = 0L,
+    range = c(0, 0), neutral = cospi(1 / 4), shadow = c(0, 0, 0), highlight = c(1, 1, 1))
 }
 `%||%` <- function(x, y) if (is.null(x)) y else x
 parallel_view <- list(perspective = FALSE, eye = c(0, 0, 10), toward = c(0, 0, 1))

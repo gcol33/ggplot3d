@@ -699,6 +699,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// shade_swatch_cpp
+Rcpp::NumericMatrix shade_swatch_cpp(Rcpp::NumericMatrix base, Rcpp::NumericVector x, Rcpp::IntegerVector material, Rcpp::List materials, Rcpp::List lights);
+RcppExport SEXP _ggplot3d_shade_swatch_cpp(SEXP baseSEXP, SEXP xSEXP, SEXP materialSEXP, SEXP materialsSEXP, SEXP lightsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type base(baseSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type material(materialSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type materials(materialsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type lights(lightsSEXP);
+    rcpp_result_gen = Rcpp::wrap(shade_swatch_cpp(base, x, material, materials, lights));
+    return rcpp_result_gen;
+END_RCPP
+}
 // shade_transfer_cpp
 Rcpp::NumericMatrix shade_transfer_cpp(Rcpp::NumericMatrix linear, Rcpp::NumericVector brightness, bool multiply);
 RcppExport SEXP _ggplot3d_shade_transfer_cpp(SEXP linearSEXP, SEXP brightnessSEXP, SEXP multiplySEXP) {
@@ -818,6 +832,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_repel_labels_cpp", (DL_FUNC) &_ggplot3d_repel_labels_cpp, 14},
     {"_ggplot3d_geometry_section_mesh_cpp", (DL_FUNC) &_ggplot3d_geometry_section_mesh_cpp, 3},
     {"_ggplot3d_shade_cpp", (DL_FUNC) &_ggplot3d_shade_cpp, 7},
+    {"_ggplot3d_shade_swatch_cpp", (DL_FUNC) &_ggplot3d_shade_swatch_cpp, 5},
     {"_ggplot3d_shade_transfer_cpp", (DL_FUNC) &_ggplot3d_shade_transfer_cpp, 3},
     {"_ggplot3d_shade_glsl_cpp", (DL_FUNC) &_ggplot3d_shade_glsl_cpp, 1},
     {"_ggplot3d_streamlines_cpp", (DL_FUNC) &_ggplot3d_streamlines_cpp, 12},

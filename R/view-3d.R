@@ -457,15 +457,18 @@ view_materials_3d <- function(materials, styles, table) {
 }
 
 # Lights for the viewer, which resolves camera-space vectors per frame:
-# kind, space, vector, linear colours times intensity and falloff.
+# kind, space, vector, linear colours times intensity and falloff, and the
+# colour transfer as uTransfer = (transfer id, range, neutral cosine).
 view_lights_3d <- function(light) {
   if (is.null(light)) return(NULL)
   if (length(light$lights) > view_max_lights_3d) warning("view_3d() shows the first ", view_max_lights_3d, " lights.", call. = FALSE)
   linear <- function(colour, intensity) unname(srgb_decode_3d(grDevices::col2rgb(colour)[, 1L] / 255) * intensity)
+  transfer <- transfer_settings_3d(light)
   list(lights = lapply(light$lights, function(l) list(kind = l$kind, space = l$space, vector = l$vector,
       colour = linear(l$colour, l$intensity), ground = linear(l$ground, l$intensity), falloff = l$falloff)),
     ambient = rep(light$ambient, 3L), mode = light$mode, direction = light$direction, space = light$space,
-    diffuse = light$diffuse)
+    diffuse = light$diffuse, transfer = c(transfer$transfer, transfer$range, transfer$neutral),
+    shadow = transfer$shadow, highlight = transfer$highlight)
 }
 
 # A numeric column as a base64 typed array: little-endian float32 for

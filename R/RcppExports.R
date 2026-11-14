@@ -197,6 +197,10 @@ shade_cpp <- function(normal, position, base, material, materials, lights, view)
     .Call(`_ggplot3d_shade_cpp`, normal, position, base, material, materials, lights, view)
 }
 
+shade_swatch_cpp <- function(base, x, material, materials, lights) {
+    .Call(`_ggplot3d_shade_swatch_cpp`, base, x, material, materials, lights)
+}
+
 shade_transfer_cpp <- function(linear, brightness, multiply) {
     .Call(`_ggplot3d_shade_transfer_cpp`, linear, brightness, multiply)
 }

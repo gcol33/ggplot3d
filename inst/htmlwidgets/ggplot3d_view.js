@@ -979,7 +979,8 @@
           gl.uniform1iv(prog.uniform('uLightKind'), kind); gl.uniform3fv(prog.uniform('uLightVector'), vector);
           gl.uniform3fv(prog.uniform('uLightColour'), colour); gl.uniform3fv(prog.uniform('uLightGround'), ground);
           gl.uniform1fv(prog.uniform('uLightFalloff'), falloff);
-          set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray); set1('uMultiply', light.mode === 'multiply' ? 1 : 0);
+          set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray);
+          gl.uniform4fv(prog.uniform('uTransfer'), arr(light.transfer)); set3('uToneShadow', arr(light.shadow)); set3('uToneHighlight', arr(light.highlight));
         }
         const cue = V.data.depth_cue, depth = V.fogDepth || [0, 1];
         const fog = cue && cue.amount > 0 && cue.fog[3] > 0;

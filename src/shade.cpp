@@ -23,6 +23,26 @@ Rcpp::NumericMatrix shade_cpp(Rcpp::NumericMatrix normal, Rcpp::NumericMatrix po
   return out;
 }
 
+// Swatch colours: linear base colours lit as if every light met the surface
+// at light value x (the cosine of the angle to the light), without the
+// specular term, by the same kernel as shade_cpp().
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericMatrix shade_swatch_cpp(Rcpp::NumericMatrix base, Rcpp::NumericVector x, Rcpp::IntegerVector material,
+                                     Rcpp::List materials, Rcpp::List lights) {
+  const int n = base.nrow();
+  if (x.size() != n || material.size() != n || base.ncol() != 3) Rcpp::stop("shade_swatch_cpp needs n x 3 colours and n light values");
+  const Lights l = read_lights(lights);
+  const std::vector<Material> m = read_materials(materials);
+  const vec3 up(0, 0, 1), origin(0, 0, 0);
+  Rcpp::NumericMatrix out(n, 3);
+  for (int i = 0; i < n; ++i) {
+    if (material[i] < 0 || material[i] >= static_cast<int>(m.size())) Rcpp::stop("invalid material index");
+    const vec3 c = shade(up, origin, up, row3(base, i), m[material[i]], l, std::max(-1.0, std::min(1.0, static_cast<double>(x[i]))));
+    for (int k = 0; k < 3; ++k) out(i, k) = c[k];
+  }
+  return out;
+}
+
 // [[Rcpp::export(rng = false)]]
 Rcpp::NumericMatrix shade_transfer_cpp(Rcpp::NumericMatrix linear, Rcpp::NumericVector brightness, bool multiply) {
   const int n = linear.nrow();

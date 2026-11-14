@@ -95,28 +95,93 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 
 #' Combine lights for a 3D scene
 #'
+#' `mode` sets how the light changes a face colour. `"multiply"` scales the
+#' colour by the ambient and diffuse light and `"tint"` scales its distance
+#' from white; both darken every channel, so a shaded fill no longer matches
+#' its legend key. The signed modes keep the colour readable against its key
+#' (Szafir et al. 2016; Kovesi 2015). Each light gives a level in \[-1, 1\]
+#' from the angle between the normal and the light: 0 at `neutral` degrees,
+#' 1 facing the light and -1 facing away, linear in the cosine on each side
+#' (ggcube's `ramp_smooth()`). The levels are averaged over the lights,
+#' weighted by their luminance, and scaled by the material's diffuse
+#' strength. A level of 0 leaves the colour unchanged.
+#'
+#' - `"lightness"` moves the OKLab lightness (Ottosson 2020) toward black by
+#'   up to the fraction `abs(range[1])` in shadow and toward white by up to
+#'   `range[2]` in light, and keeps the hue; where the moved colour leaves the
+#'   sRGB gamut, its chroma is reduced until it fits (ggcube's
+#'   `tone_lightness()`).
+#' - `"tone"` moves the colour in OKLab toward `shadow` or `highlight`, up to
+#'   the fractions `abs(range)`.
+#' - `"overlay"` and `"soft"` are matplotlib's `LightSource` blend modes on the
+#'   encoded colour, with an intensity of `0.5 + level * abs(range) / 2`.
+#'
+#' Specular highlights of [material_3d()] are added on top in every mode.
+#' Lightness-monotone palettes such as viridis lose the most under shading;
+#' isoluminant or diverging palettes combine best with relief shading.
+#' [guide_colourbar_3d()], [guide_coloursteps_3d()], [guide_bins_3d()] and
+#' [guide_legend_3d()] show the shaded colours of a key.
 #' @param ... Lights made with [light_directional()], [light_point()],
 #'   [light_head()] or [light_hemisphere()].
 #' @param ambient Nonnegative strength of the uniform ambient light.
-#' @param mode Colour operation of the ambient and diffuse terms: `"multiply"`
-#'   scales a colour, `"tint"` scales its distance from white.
+#' @param mode Colour operation: `"multiply"`, `"tint"`, `"lightness"`,
+#'   `"tone"`, `"overlay"` or `"soft"`.
+#' @param range Moves at full shadow and full highlight, `c(shadow, highlight)`
+#'   with `-1 <= shadow <= 0 <= highlight <= 1`: fractions of the way to black
+#'   and white in OKLab lightness for `"lightness"`, to the tone colours for
+#'   `"tone"`, blend strengths for `"overlay"` and `"soft"`. NULL takes
+#'   `c(-0.45, 0.3)` for `"lightness"` and `c(-0.6, 0.6)` otherwise.
+#' @param neutral Angle in degrees, in \[0, 180), between the normal and the
+#'   light at which a signed mode leaves the colour unchanged.
+#' @param shadow,highlight Tone colours of `"tone"`.
 #' @return A lighting configuration for [coord_3d()]. The backends that take
 #'   one directional light (the path tracer and the raymarch backend) use the
 #'   first directional light.
+#' @references Szafir, Sarikaya, Gleicher (2016). Lightness constancy in
+#'   surface visualization. IEEE TVCG 22, 2107-2121.
+#'   \doi{10.1109/TVCG.2015.2500240}
+#'
+#'   Kovesi (2015). Good colour maps: how to design them.
+#'   \url{https://arxiv.org/abs/1509.03700}
+#'
+#'   Ottosson (2020). A perceptual color space for image processing.
+#'   \url{https://bottosson.github.io/posts/oklab/}
 #' @examples
 #' lights_3d(light_head(), light_hemisphere("lightblue", "brown"), ambient = 0.1)
+#' d <- expand.grid(x = seq(-2, 2, length.out = 25), y = seq(-2, 2, length.out = 25))
+#' d$z <- with(d, exp(-(x^2 + y^2)))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
+#'   geom_surface_3d(shading = "smooth", colour = NA) +
+#'   ggplot2::scale_fill_distiller(palette = "Spectral") +
+#'   coord_3d(light = lights_3d(light_directional(), mode = "lightness"))
 #' @export
-lights_3d <- function(..., ambient = 0.35, mode = "multiply") {
+lights_3d <- function(..., ambient = 0.35, mode = "multiply", range = NULL, neutral = 45,
+                      shadow = "#1d2b53", highlight = "#fff1d6") {
   lights <- list(...)
   if (!all(vapply(lights, inherits, logical(1), "ggplot3d_light"))) stop("lights_3d() takes lights made with light_*().", call. = FALSE)
   ambient <- check_light_number_3d(ambient, "ambient")
+  mode <- match.arg(mode, light_transfers_3d)
+  range <- range %or3d% if (mode == "lightness") c(-0.45, 0.3) else c(-0.6, 0.6)
+  if (!is.numeric(range) || length(range) != 2L || any(!is.finite(range)) || range[1L] > 0 || range[2L] < 0 || any(abs(range) > 1))
+    stop("range must be c(shadow, highlight) with -1 <= shadow <= 0 <= highlight <= 1.", call. = FALSE)
+  if (!is.numeric(neutral) || length(neutral) != 1L || !is.finite(neutral) || neutral < 0 || neutral >= 180)
+    stop("neutral must be one angle in [0, 180) degrees.", call. = FALSE)
   primary <- Filter(function(l) l$kind == light_kinds_3d[["directional"]], lights)
   primary <- if (length(primary)) primary[[1L]] else NULL
-  structure(list(lights = unname(lights), ambient = ambient, mode = match.arg(mode, c("multiply", "tint")),
+  structure(list(lights = unname(lights), ambient = ambient, mode = mode, range = as.double(range),
+    neutral = as.double(neutral), shadow = check_light_colour_3d(shadow, "shadow"),
+    highlight = check_light_colour_3d(highlight, "highlight"),
     direction = if (is.null(primary)) c(0, 0, 1) else primary$vector,
     space = if (is.null(primary)) "camera" else primary$space,
     diffuse = if (is.null(primary)) 0 else primary$intensity), class = "ggplot3d_lights")
 }
+
+# Colour transfers of lights_3d(), in the order of the kernel's transfer ids
+# (src/shade/shade.h), starting at 0.
+light_transfers_3d <- c("multiply", "tint", "lightness", "tone", "overlay", "soft")
+
+# Whether a transfer moves colours by a signed level instead of scaling them.
+signed_transfer_3d <- function(mode) !mode %in% c("multiply", "tint")
 
 # A lighting argument as a lights configuration: NULL, one light, or lights.
 as_lights_3d <- function(light) {
@@ -210,12 +275,21 @@ resolved_light_3d <- function(light, camera) {
     srgb_decode_3d(grDevices::col2rgb(l[[name]])[, 1L] / 255) * l$intensity
   }, numeric(3)))
   n <- length(light$lights)
-  list(kind = vapply(light$lights, `[[`, integer(1), "kind"),
+  c(list(kind = vapply(light$lights, `[[`, integer(1), "kind"),
     vector = if (n) do.call(rbind, vectors) else matrix(numeric(), 0L, 3L),
     colour = if (n) colour("colour") else matrix(numeric(), 0L, 3L),
     ground = if (n) colour("ground") else matrix(numeric(), 0L, 3L),
     falloff = vapply(light$lights, `[[`, numeric(1), "falloff"),
-    ambient = rep(light$ambient, 3L), multiply = light$mode == "multiply")
+    ambient = rep(light$ambient, 3L)), transfer_settings_3d(light))
+}
+
+# The colour transfer of lights as the kernel reads it: transfer id, range,
+# neutral cosine and linear tone colours.
+transfer_settings_3d <- function(light) {
+  linear <- function(colour) unname(srgb_decode_3d(grDevices::col2rgb(colour)[, 1L] / 255))
+  list(transfer = match(light$mode, light_transfers_3d) - 1L, range = light$range %or3d% c(0, 0),
+    neutral = cospi((light$neutral %or3d% 45) / 180), shadow = linear(light$shadow %or3d% "black"),
+    highlight = linear(light$highlight %or3d% "white"))
 }
 
 material_argument_3d <- function(material) {
