@@ -1201,26 +1201,59 @@ guide_at_origin_3d <- function(guide, params) {
 
 guide_on_box_3d <- function(guide, params) guide_visible_3d(guide, params) && !guide_at_origin_3d(guide, params)
 
-# Labels are visited in order along the axis; a label is kept when its
-# rectangle lies on the device and clears every rectangle kept before it by
-# gap. Without thinning (discrete axes) every finite label is kept, as in
-# ggplot2 with check.overlap = FALSE.
-thin_axis_labels_3d <- function(locations, size, tangent, occupied, viewport, gap = 0.5, thin = TRUE) {
+# Labels are visited in ggplot2's check.overlap priority along the axis (first,
+# last, then recursive midpoints); a label is kept when its rectangle lies on
+# the device and clears every rectangle kept before it by gap. For the overlap
+# test each rectangle grows by `margin` times its own width and height, so two
+# labels need room for (1 + margin) times their measured extent: text drawn
+# later with a substituted font (a web font in an SVG, a viewer without the
+# measured face) runs wider than the metrics it was laid out with. Without
+# thinning (discrete axes) every finite label is kept, as in ggplot2 with
+# check.overlap = FALSE.
+thin_axis_labels_3d <- function(locations, size, tangent, occupied, viewport, gap = 0.5, thin = TRUE,
+                                margin = axis_label_margin_3d) {
   boxes <- cbind(locations - size / 2, locations + size / 2)
   along <- if (is.null(tangent)) seq_len(nrow(locations)) else drop(locations %*% tangent)
   keep <- rep(FALSE, nrow(locations))
-  for (i in order(along, seq_along(along))) {
+  ranked <- order(along, seq_along(along))
+  for (i in ranked[axis_label_priority_3d(length(ranked))]) {
     box <- boxes[i, ]
     if (any(!is.finite(box))) next
     if (thin) {
       if (any(box[1:2] < 0) || box[3L] > viewport$width_mm || box[4L] > viewport$height_mm) next
-      if (nrow(occupied) && any(occupied[, 1L] < box[3L] + gap & occupied[, 3L] > box[1L] - gap &
-          occupied[, 2L] < box[4L] + gap & occupied[, 4L] > box[2L] - gap)) next
+      if (nrow(occupied)) {
+        grown <- grow_boxes_3d(occupied, margin / 2)
+        mine <- grow_boxes_3d(matrix(box, 1L), margin / 2)
+        if (any(grown[, 1L] < mine[3L] + gap & grown[, 3L] > mine[1L] - gap &
+            grown[, 2L] < mine[4L] + gap & grown[, 4L] > mine[2L] - gap)) next
+      }
     }
     keep[i] <- TRUE
     occupied <- rbind(occupied, box)
   }
   list(keep = keep, boxes = boxes, occupied = occupied)
+}
+
+# Font substitution allowance of axis label thinning, as a fraction of a label's
+# measured width and height.
+axis_label_margin_3d <- 0.2
+
+# Rectangles (x0, y0, x1, y1) grown on every side by `fraction` of their size.
+grow_boxes_3d <- function(boxes, fraction) {
+  pad <- (boxes[, 3:4, drop = FALSE] - boxes[, 1:2, drop = FALSE]) * fraction
+  boxes + cbind(-pad, pad)
+}
+
+# Visiting order of n labels sorted along an axis: both ends, then the midpoint
+# of each remaining run, recursively (ggplot2's axis_label_priority()).
+axis_label_priority_3d <- function(n) {
+  if (n <= 0L) return(integer())
+  between <- function(lo, hi) {
+    if (hi - lo + 1L <= 2L) return(integer())
+    mid <- lo - 1L + (hi - lo + 2L) %/% 2L
+    c(mid, between(lo, mid), between(mid, hi))
+  }
+  unique(c(1L, n, between(1L, n)))
 }
 
 # Discrete axes keep every label unless check.overlap asks for thinning.

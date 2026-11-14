@@ -392,6 +392,43 @@ test_that("thinned label rectangles are disjoint and unthinned labels are all ke
     new_scene_viewport(60, 40), thin = FALSE)$keep))
 })
 
+test_that("label thinning leaves a font-substitution margin and keeps both ends", {
+  none <- matrix(numeric(), 0, 4L)
+  page <- new_scene_viewport(60, 60)
+  # Labels 3.3 mm high, 4.09 mm apart up a vertical axis: clear by 0.79 mm on
+  # their metrics, too close once text renders 20% larger.
+  column <- cbind(rep(20, 5), 20 + 4.09 * 0:4)
+  size <- cbind(rep(7, 5), rep(3.3, 5))
+  result <- thin_axis_labels_3d(column, size, c(0, 1), none, page)
+  expect_equal(result$keep, c(TRUE, FALSE, TRUE, FALSE, TRUE))
+  expect_true(all(thin_axis_labels_3d(column, size, c(0, 1), none, page, margin = 0)$keep))
+  # Width counts as well as height: labels side by side along a horizontal axis.
+  row <- cbind(20 + 8 * 0:3, rep(20, 4))
+  wide <- thin_axis_labels_3d(row, cbind(rep(7, 4), rep(3.3, 4)), c(1, 0), none, page)
+  expect_true(wide$keep[1L] && wide$keep[4L])
+  expect_lt(sum(wide$keep), 4L)
+  expect_equal(axis_label_priority_3d(6L), c(1L, 6L, 3L, 2L, 4L, 5L))
+  expect_equal(axis_label_priority_3d(1L), 1L)
+})
+
+test_that("a short axis under aspect = 'data' keeps label rectangles apart with margin", {
+  d <- data.frame(x = c(-0.4, 0, 0.96), y = c(0, 0.93, 0), z = c(-0.25, 0, 0.25))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
+    coord_3d(aspect = "data") + ggplot2::theme_minimal(base_size = 17)
+  grDevices::pdf(tempfile(fileext = ".pdf"), width = 6, height = 5)
+  panel <- motion_panels_3d(grid::grid.force(ggplot2::ggplotGrob(p)))[[1L]]
+  grDevices::dev.off()
+  layout <- panel$furniture$label_layout$z
+  kept <- layout$boxes[layout$keep, , drop = FALSE]
+  expect_lt(sum(layout$keep), sum(is.finite(layout$boxes[, 1L])))
+  expect_gt(nrow(kept), 1L)
+  grown <- grow_boxes_3d(kept, axis_label_margin_3d / 2)
+  for (i in seq_len(nrow(grown) - 1L)) for (j in seq.int(i + 1L, nrow(grown))) {
+    expect_false(grown[i, 1L] < grown[j, 3L] && grown[j, 1L] < grown[i, 3L] &&
+      grown[i, 2L] < grown[j, 4L] && grown[j, 2L] < grown[i, 4L])
+  }
+})
+
 test_that("small facets thin tick labels and share a frame with free labels", {
   grid_test_device({
     data <- rbind(data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1), panel = "A"),

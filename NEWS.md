@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* Axis label thinning leaves room for text that renders wider than its
+  measured size (a web font in an SVG): each label rectangle counts 20% larger
+  in the overlap test, and labels are visited in ggplot2's `check.overlap`
+  priority (both ends, then midpoints), so short axes under `aspect = "data"`
+  drop labels instead of overlapping them.
+
 * `stat_hull_3d()` draws colour gamuts with interpolated vertex colours:
   `aes(fill = I(hex), group = 1)` with `shading = "smooth"` gives every hull
   vertex the colour of its point and each face their interpolation, exact at
