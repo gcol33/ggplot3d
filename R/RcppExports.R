@@ -117,6 +117,10 @@ quadric_mesh_cpp <- function(packet, segments) {
     .Call(`_ggplot3d_quadric_mesh_cpp`, packet, segments)
 }
 
+raster_ambient_cpp <- function(scene, context) {
+    invisible(.Call(`_ggplot3d_raster_ambient_cpp`, scene, context))
+}
+
 raster_prepare_cpp <- function(packet, camera, viewport) {
     .Call(`_ggplot3d_raster_prepare_cpp`, packet, camera, viewport)
 }
@@ -201,8 +205,16 @@ geometry_section_mesh_cpp <- function(positions, signed_distance, cells) {
     .Call(`_ggplot3d_geometry_section_mesh_cpp`, positions, signed_distance, cells)
 }
 
-shade_cpp <- function(normal, position, base, material, materials, lights, view) {
-    .Call(`_ggplot3d_shade_cpp`, normal, position, base, material, materials, lights, view)
+shade_cpp <- function(normal, position, base, material, materials, lights, view, occlusion = NULL) {
+    .Call(`_ggplot3d_shade_cpp`, normal, position, base, material, materials, lights, view, occlusion)
+}
+
+ambient_occlusion_prepare_cpp <- function(mesh, samples, radius, amount, epsilon) {
+    .Call(`_ggplot3d_ambient_occlusion_prepare_cpp`, mesh, samples, radius, amount, epsilon)
+}
+
+ambient_occlusion_cpp <- function(context, position, normal) {
+    .Call(`_ggplot3d_ambient_occlusion_cpp`, context, position, normal)
 }
 
 shade_swatch_cpp <- function(base, x, material, materials, lights) {

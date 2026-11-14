@@ -65,12 +65,21 @@ print.ggplot3d_shadow <- function(x, ...) {
 #' \deqn{w = \min(1, \max(0, (s - near) / (far - near))),}
 #' where \eqn{s} is the camera depth of the primitive's centre as a fraction
 #' of the depth extent of the panel box: 0 at the box corner nearest the
-#' camera, 1 at the farthest. Fill, stroke, text and label border colours move
+#' camera, 1 at the farthest. Geometry fill and stroke colours move
 #' toward the fog colour by `amount * w`, and with `linewidth` a stroke's width
 #' is multiplied by `1 - linewidth * w`. Panel furniture keeps its colours.
 #' The vector, raster and hybrid backends evaluate the weight once per
 #' primitive, so tessellated surfaces fade smoothly; [view_3d()] evaluates the
 #' same formula per pixel.
+#'
+#' Ambient occlusion samples the hemisphere above each mesh vertex against
+#' a mesh bounding-volume hierarchy, following Pharr and Green (GPU Gems,
+#' chapter 17). Its accessibility estimates mean hemisphere transmission
+#' with deterministic rays within `ao_radius`, including face and texture opacity.
+#' Shaded face colours are multiplied in the shared kernel by
+#' `1 - ao * (1 - accessibility)`. The vector, raster and hybrid backends
+#' interpolate these values over faces. Both sides of a surface have their
+#' own accessibility. Text and label boxes keep their colours and draw last.
 #'
 #' Eye-dome lighting acts on the raster backend, the rasterised layers of the
 #' hybrid backend, and [view_3d()]. A pixel darkens by
@@ -87,6 +96,12 @@ print.ggplot3d_shadow <- function(x, ...) {
 #'   by which strokes thin at full weight.
 #' @param edl `FALSE`, `TRUE` (1), or a nonnegative eye-dome lighting
 #'   strength.
+#' @param ao `FALSE`, `TRUE` (1), or ambient occlusion strength in [0, 1].
+#'   Acts on shaded mesh faces with enabled lighting.
+#' @param ao_radius Positive ray distance in aspect-scaled panel units.
+#' @param ao_samples Positive whole number of deterministic hemisphere rays.
+#' @references Pharr and Green (2004). Ambient Occlusion. GPU Gems, chapter 17.
+#'   <https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-17-ambient-occlusion>
 #' @references Boucheny, C. (2009). Visualisation scientifique de grands
 #'   volumes de donnees: pour une approche perceptive. PhD thesis, Universite
 #'   Joseph Fourier, Grenoble.
@@ -105,8 +120,14 @@ print.ggplot3d_shadow <- function(x, ...) {
 #'   geom_surface_3d(fill = "grey80", colour = NA, shade = FALSE) +
 #'   coord_3d(backend = backend_3d("raster", dpi = 72), light = NULL,
 #'     depth_cue = depth_cue_3d(fog = NA, edl = 2))
+#' a <- expand.grid(x = seq(0, 1, length.out = 7), y = seq(0, 1, length.out = 7))
+#' a$z <- with(a, abs(x - 0.5) + abs(y - 0.5))
+#' ggplot2::ggplot(a, ggplot2::aes(x, y, z = z)) +
+#'   geom_surface_3d(fill = "grey70", colour = NA) +
+#'   coord_3d(depth_cue = depth_cue_3d(fog = NA, ao = TRUE, ao_radius = 0.5))
 #' @export
-depth_cue_3d <- function(fog = NULL, near = 0, far = 1, amount = 0.6, linewidth = FALSE, edl = FALSE) {
+depth_cue_3d <- function(fog = NULL, near = 0, far = 1, amount = 0.6, linewidth = FALSE, edl = FALSE,
+                         ao = FALSE, ao_radius = 0.25, ao_samples = 64L) {
   if (!is.null(fog) && !(length(fog) == 1L && is.na(fog))) check_colour_3d(fog, "fog")
   if (!is.numeric(near) || !is.numeric(far) || length(near) != 1L || length(far) != 1L ||
       !is.finite(near) || !is.finite(far) || near >= far)
@@ -115,16 +136,23 @@ depth_cue_3d <- function(fog = NULL, near = 0, far = 1, amount = 0.6, linewidth 
     stop("amount must be a number from 0 to 1.", call. = FALSE)
   linewidth <- flag_strength_3d(linewidth, 0.5, "linewidth", 1)
   edl <- flag_strength_3d(edl, 1, "edl", Inf)
+  ao <- flag_strength_3d(ao, 1, "ao", 1)
+  ao_radius <- check_positive_3d(ao_radius, "ao_radius")
+  if (!is.numeric(ao_samples) || length(ao_samples) != 1L || !is.finite(ao_samples) ||
+      ao_samples < 1 || ao_samples > .Machine$integer.max || ao_samples != trunc(ao_samples))
+    stop("ao_samples must be a positive whole number.", call. = FALSE)
   structure(list(fog = if (is.null(fog)) NULL else if (is.na(fog)) NA_character_ else fog,
     near = as.double(near), far = as.double(far), amount = as.double(amount),
-    linewidth = linewidth, edl = edl), class = "ggplot3d_depth_cue")
+    linewidth = linewidth, edl = edl,
+    ao = if (ao > 0) list(amount = ao, radius = ao_radius, samples = as.integer(ao_samples))), class = "ggplot3d_depth_cue")
 }
 
 #' @export
 print.ggplot3d_depth_cue <- function(x, ...) {
   fog <- if (is.null(x$fog)) "panel background" else if (is.na(x$fog)) "none" else x$fog
   cat("<depth_cue_3d> fog ", fog, " (amount ", format(x$amount), ", near ", format(x$near), ", far ", format(x$far),
-      "), linewidth ", format(x$linewidth), ", edl ", format(x$edl), "\n", sep = "")
+      "), linewidth ", format(x$linewidth), ", edl ", format(x$edl),
+      ", ao ", format(x$ao$amount %or3d% 0), "\n", sep = "")
   invisible(x)
 }
 
@@ -269,10 +297,12 @@ depth_cue_packet_3d <- function(packet, cue, fog, depth_of, pre = diag(4)) {
   if (!sum(sizes)) return(packet)
   weight <- depth_cue_weight_3d(depth_of(do.call(rbind, centres)), cue)
   weight[is.na(weight)] <- 1
+  geometry <- rep(primitive_kinds_3d, sizes) != "text"
   styles <- primitive_styles_3d(packet)
   if (!is.na(fog) && cue$amount > 0) {
     for (name in intersect(c("colour", "fill", "border_colour", "arrow_fill"), names(styles)))
-      if (is.character(styles[[name]])) styles[[name]] <- fog_colours_3d(styles[[name]], cue$amount * weight, fog)
+      if (is.character(styles[[name]])) styles[[name]][geometry] <-
+        fog_colours_3d(styles[[name]][geometry], cue$amount * weight[geometry], fog)
   }
   if (cue$linewidth > 0 && sizes[2L]) {
     rows <- sizes[1L] + seq_len(sizes[2L])

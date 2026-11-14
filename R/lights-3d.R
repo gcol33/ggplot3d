@@ -322,6 +322,8 @@ material_legend_3d <- function(material, show.legend) {
 panel_lights_3d <- function(light, panel_params) {
   light <- as_lights_3d(light)
   if (is.null(light)) return(NULL)
+  light$occlusion <- NULL
+  light$ao <- panel_params$coord_params$depth_cue$ao
   light$lights <- lapply(light$lights, function(l) {
     if (l$kind != light_kinds_3d[["point"]] || l$space != "data") return(l)
     ranges <- panel_params$ranges %or3d% list(x = c(0, 1), y = c(0, 1), z = c(0, 1))

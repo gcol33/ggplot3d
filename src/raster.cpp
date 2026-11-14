@@ -1,4 +1,23 @@
 #include "raster/render.h"
+#include "shade/occlusion.h"
+
+// [[Rcpp::export(rng = false)]]
+void raster_ambient_cpp(SEXP scene, SEXP context) {
+  Rcpp::XPtr<ggplot3d::raster::Scene> prepared(scene);
+  Rcpp::XPtr<ggplot3d::ambient::Context> ao(context);
+  for (const auto& item:prepared->items) if (item.kind==1) {
+    Rcpp::checkUserInterrupt();
+    for (ggplot3d::Index j=0;j<item.count;++j) {
+      auto& v=prepared->shading[item.offset+j];
+      auto normal=v.normal;
+      if (!std::isfinite(normal[0]+normal[1]+normal[2]) || ggplot3d::engine::dot(normal,normal)==0)
+        normal=prepared->normals[item.row];
+      v.accessibility[0]=ao->visibility(v.position,normal);
+      for (auto& x:normal) x=-x;
+      v.accessibility[1]=ao->visibility(v.position,normal);
+    }
+  }
+}
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::List raster_prepare_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport) {

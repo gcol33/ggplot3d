@@ -710,8 +710,13 @@ static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const P
     Vec3 position{0,0,0};
     for(int j=0;j<3;++j) for(int d=0;d<3;++d) position[d]+=w[j]*scene.shading[k[j]].position[d];
     const shade::vec3 p=shade::to_vec3(position);
-    const shade::vec3 lit=shade::shade(shade::normalize(shade::to_vec3(normal)),p,sm.view.at(p),shade::to_vec3(colour),
-      sm.materials[sm.material[item.row]],sm.lights);
+    const shade::vec3 n=shade::normalize(shade::to_vec3(normal)), toward=sm.view.at(p);
+    const int side=shade::dot(n,toward)<0 ? 1:0;
+    double accessibility=0;
+    for(int j=0;j<3;++j) accessibility+=w[j]*scene.shading[k[j]].accessibility[side];
+    if(!std::isfinite(accessibility)) accessibility=1;
+    const shade::vec3 lit=shade::shade(n,p,toward,shade::to_vec3(colour),
+      sm.materials[sm.material[item.row]],sm.lights,-2,accessibility);
     colour={lit.x,lit.y,lit.z};
   }
   Colour out{std::max(0.0,std::min(1.0,colour[0])),std::max(0.0,std::min(1.0,colour[1])),
@@ -1078,6 +1083,7 @@ static inline Smooth smooth_of(const Scene& scene,Rcpp::NumericMatrix face_colou
     for(Index j=0;j<item.count && !varies;++j) {
       const Shading& v=scene.shading[item.offset+j];
       varies=std::isfinite(v.colour[0]+v.colour[1]+v.colour[2]) ||
+        (sm.lit[item.row] && std::isfinite(v.accessibility[0])) ||
         (sm.lit[item.row] && std::isfinite(v.normal[0]+v.normal[1]+v.normal[2])) ||
         (!sm.texture.empty() && sm.texture[item.row]>0 && std::isfinite(v.uv[0]+v.uv[1]));
     }

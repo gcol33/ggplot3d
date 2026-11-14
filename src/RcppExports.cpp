@@ -428,6 +428,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// raster_ambient_cpp
+void raster_ambient_cpp(SEXP scene, SEXP context);
+RcppExport SEXP _ggplot3d_raster_ambient_cpp(SEXP sceneSEXP, SEXP contextSEXP) {
+BEGIN_RCPP
+    Rcpp::traits::input_parameter< SEXP >::type scene(sceneSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type context(contextSEXP);
+    raster_ambient_cpp(scene, context);
+    return R_NilValue;
+END_RCPP
+}
 // raster_prepare_cpp
 Rcpp::List raster_prepare_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List viewport);
 RcppExport SEXP _ggplot3d_raster_prepare_cpp(SEXP packetSEXP, SEXP cameraSEXP, SEXP viewportSEXP) {
@@ -723,8 +733,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // shade_cpp
-Rcpp::NumericMatrix shade_cpp(Rcpp::NumericMatrix normal, Rcpp::NumericMatrix position, Rcpp::NumericMatrix base, Rcpp::IntegerVector material, Rcpp::List materials, Rcpp::List lights, Rcpp::List view);
-RcppExport SEXP _ggplot3d_shade_cpp(SEXP normalSEXP, SEXP positionSEXP, SEXP baseSEXP, SEXP materialSEXP, SEXP materialsSEXP, SEXP lightsSEXP, SEXP viewSEXP) {
+Rcpp::NumericMatrix shade_cpp(Rcpp::NumericMatrix normal, Rcpp::NumericMatrix position, Rcpp::NumericMatrix base, Rcpp::IntegerVector material, Rcpp::List materials, Rcpp::List lights, Rcpp::List view, SEXP occlusion);
+RcppExport SEXP _ggplot3d_shade_cpp(SEXP normalSEXP, SEXP positionSEXP, SEXP baseSEXP, SEXP materialSEXP, SEXP materialsSEXP, SEXP lightsSEXP, SEXP viewSEXP, SEXP occlusionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type normal(normalSEXP);
@@ -734,7 +744,34 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type materials(materialsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type lights(lightsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type view(viewSEXP);
-    rcpp_result_gen = Rcpp::wrap(shade_cpp(normal, position, base, material, materials, lights, view));
+    Rcpp::traits::input_parameter< SEXP >::type occlusion(occlusionSEXP);
+    rcpp_result_gen = Rcpp::wrap(shade_cpp(normal, position, base, material, materials, lights, view, occlusion));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ambient_occlusion_prepare_cpp
+SEXP ambient_occlusion_prepare_cpp(Rcpp::List mesh, int samples, double radius, double amount, double epsilon);
+RcppExport SEXP _ggplot3d_ambient_occlusion_prepare_cpp(SEXP meshSEXP, SEXP samplesSEXP, SEXP radiusSEXP, SEXP amountSEXP, SEXP epsilonSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type mesh(meshSEXP);
+    Rcpp::traits::input_parameter< int >::type samples(samplesSEXP);
+    Rcpp::traits::input_parameter< double >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< double >::type amount(amountSEXP);
+    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
+    rcpp_result_gen = Rcpp::wrap(ambient_occlusion_prepare_cpp(mesh, samples, radius, amount, epsilon));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ambient_occlusion_cpp
+Rcpp::NumericVector ambient_occlusion_cpp(SEXP context, Rcpp::NumericMatrix position, Rcpp::NumericMatrix normal);
+RcppExport SEXP _ggplot3d_ambient_occlusion_cpp(SEXP contextSEXP, SEXP positionSEXP, SEXP normalSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type context(contextSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type position(positionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type normal(normalSEXP);
+    rcpp_result_gen = Rcpp::wrap(ambient_occlusion_cpp(context, position, normal));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -865,6 +902,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_quadric_cast_cpp", (DL_FUNC) &_ggplot3d_quadric_cast_cpp, 8},
     {"_ggplot3d_quadric_fragment_parts_cpp", (DL_FUNC) &_ggplot3d_quadric_fragment_parts_cpp, 6},
     {"_ggplot3d_quadric_mesh_cpp", (DL_FUNC) &_ggplot3d_quadric_mesh_cpp, 2},
+    {"_ggplot3d_raster_ambient_cpp", (DL_FUNC) &_ggplot3d_raster_ambient_cpp, 2},
     {"_ggplot3d_raster_prepare_cpp", (DL_FUNC) &_ggplot3d_raster_prepare_cpp, 3},
     {"_ggplot3d_raster_draw_cpp", (DL_FUNC) &_ggplot3d_raster_draw_cpp, 11},
     {"_ggplot3d_raster_canvas_cpp", (DL_FUNC) &_ggplot3d_raster_canvas_cpp, 6},
@@ -886,7 +924,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_poisson_cpp", (DL_FUNC) &_ggplot3d_geometry_poisson_cpp, 7},
     {"_ggplot3d_repel_labels_cpp", (DL_FUNC) &_ggplot3d_repel_labels_cpp, 14},
     {"_ggplot3d_geometry_section_mesh_cpp", (DL_FUNC) &_ggplot3d_geometry_section_mesh_cpp, 3},
-    {"_ggplot3d_shade_cpp", (DL_FUNC) &_ggplot3d_shade_cpp, 7},
+    {"_ggplot3d_shade_cpp", (DL_FUNC) &_ggplot3d_shade_cpp, 8},
+    {"_ggplot3d_ambient_occlusion_prepare_cpp", (DL_FUNC) &_ggplot3d_ambient_occlusion_prepare_cpp, 5},
+    {"_ggplot3d_ambient_occlusion_cpp", (DL_FUNC) &_ggplot3d_ambient_occlusion_cpp, 3},
     {"_ggplot3d_shade_swatch_cpp", (DL_FUNC) &_ggplot3d_shade_swatch_cpp, 5},
     {"_ggplot3d_shade_transfer_cpp", (DL_FUNC) &_ggplot3d_shade_transfer_cpp, 3},
     {"_ggplot3d_hatch_lines_cpp", (DL_FUNC) &_ggplot3d_hatch_lines_cpp, 5},

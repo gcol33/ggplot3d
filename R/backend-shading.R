@@ -55,7 +55,7 @@ face_shading_normals_3d <- function(fragments, rows, camera, styles = NULL) {
 smooth_fragments_3d <- function(scene, attributes, styles, light) {
   f <- scene$fragments
   smooth <- logical(length(f$kind))
-  if (is.null(attributes)) return(smooth)
+  if (is.null(attributes) && is.null(light$occlusion)) return(smooth)
   faces <- which(f$kind == 1L)
   if (!length(faces)) return(smooth)
   counts <- f$count[faces]
@@ -68,7 +68,8 @@ smooth_fragments_3d <- function(scene, attributes, styles, light) {
     as.vector(rowsum(as.integer(ok), owner)) > 0L
   }
   lit <- !is.null(light) & style_value_3d(styles[faces, , drop = FALSE], "shade", FALSE) %in% TRUE
-  smooth[faces] <- has(c("red", "green", "blue")) | (lit & has(c("normal_x", "normal_y", "normal_z")))
+  smooth[faces] <- has(c("red", "green", "blue")) |
+    (lit & (has(c("normal_x", "normal_y", "normal_z")) | !is.null(light$occlusion)))
   smooth
 }
 

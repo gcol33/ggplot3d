@@ -115,7 +115,7 @@ shade_linear_3d <- function(linear, normal, camera, light, position = NULL, mate
   if (is.null(position)) position <- matrix(camera$eye + camera$distance * camera$ray, n, 3L, byrow = TRUE)
   position[!is.finite(position)] <- 0
   shade_cpp(normal, position, linear, as.integer(material %or3d% integer(n)), kernel_materials_3d(materials),
-            resolved_light_3d(light, camera), kernel_view_3d(camera))
+            resolved_light_3d(light, camera), kernel_view_3d(camera), light$occlusion)
 }
 
 # Model-space centroids of compiled fragments `rows`.

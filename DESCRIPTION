@@ -81,6 +81,7 @@ VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0
 Collate: 
     'RcppExports.R'
+    'ambient-occlusion.R'
     'animate-3d.R'
     'animate-output.R'
     'backend-grid.R'

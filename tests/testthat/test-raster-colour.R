@@ -3,13 +3,6 @@ source(testthat::test_path("..", "fixtures", "scenes", "builders.R"), local = TR
 
 srgb_decode <- function(v) ifelse(v <= 0.04045, v / 12.92, ((v + 0.055) / 1.055)^2.4)
 srgb_encode <- function(v) ifelse(v <= 0.0031308, 12.92 * v, 1.055 * v^(1 / 2.4) - 0.055)
-unpack_rgba <- function(image) {
-  n <- dim(image)
-  pixels <- as.vector(t(matrix(as.integer(image), n[1L], n[2L], byrow = TRUE)[n[1L]:1L, , drop = FALSE]))
-  vapply(c(0L, 8L, 16L, 24L), function(shift) bitwAnd(bitwShiftR(pixels, shift), 255L) / 255,
-         numeric(length(pixels)))
-}
-
 test_that("linear blending composites the translucent stack in linear light", {
   f <- ref_fixture("translucent_points", "pole")
   f$packet$styles <- data.frame(style_id = 1:3, fill = c("red", NA, NA), colour = c(NA, "blue", "green"))

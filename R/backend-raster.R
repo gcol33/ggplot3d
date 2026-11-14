@@ -158,7 +158,11 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
                            id_pass = FALSE, buffers = FALSE, blend = "linear", traced = list(), edl = 0) {
   blend <- match.arg(blend, c("linear", "srgb"))
   validate_camera_3d(camera)
+  light <- ambient_light_3d(packet, camera, viewport, light)
+  if (!is.null(light$occlusion)) for (name in c("normal_x", "normal_y", "normal_z"))
+    if (is.null(packet$corners[[name]])) packet$corners[[name]] <- rep(NA_real_, length(packet$corners$vertex))
   prepared <- raster_prepare_cpp(scene_engine_packet_3d(packet), camera, viewport)
+  if (!is.null(light$occlusion)) raster_ambient_cpp(prepared$pointer, light$occlusion)
   colours <- raster_colours_3d(packet, prepared, light, edl)
   line <- packet$polylines
   styles <- packet$styles[match(line$style_id, packet$styles$style_id), , drop = FALSE]

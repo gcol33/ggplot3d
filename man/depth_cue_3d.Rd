@@ -10,7 +10,10 @@ depth_cue_3d(
   far = 1,
   amount = 0.6,
   linewidth = FALSE,
-  edl = FALSE
+  edl = FALSE,
+  ao = FALSE,
+  ao_radius = 0.25,
+  ao_samples = 64L
 )
 }
 \arguments{
@@ -28,6 +31,13 @@ by which strokes thin at full weight.}
 
 \item{edl}{\code{FALSE}, \code{TRUE} (1), or a nonnegative eye-dome lighting
 strength.}
+
+\item{ao}{\code{FALSE}, \code{TRUE} (1), or ambient occlusion strength in \link{0, 1}.
+Acts on shaded mesh faces with enabled lighting.}
+
+\item{ao_radius}{Positive ray distance in aspect-scaled panel units.}
+
+\item{ao_samples}{Positive whole number of deterministic hemisphere rays.}
 }
 \value{
 A depth cue configuration for \code{\link[=coord_3d]{coord_3d()}}.
@@ -45,12 +55,21 @@ The fog weight of a primitive is
 \deqn{w = \min(1, \max(0, (s - near) / (far - near))),}
 where \eqn{s} is the camera depth of the primitive's centre as a fraction
 of the depth extent of the panel box: 0 at the box corner nearest the
-camera, 1 at the farthest. Fill, stroke, text and label border colours move
+camera, 1 at the farthest. Geometry fill and stroke colours move
 toward the fog colour by \code{amount * w}, and with \code{linewidth} a stroke's width
 is multiplied by \code{1 - linewidth * w}. Panel furniture keeps its colours.
 The vector, raster and hybrid backends evaluate the weight once per
 primitive, so tessellated surfaces fade smoothly; \code{\link[=view_3d]{view_3d()}} evaluates the
 same formula per pixel.
+
+Ambient occlusion samples the hemisphere above each mesh vertex against
+a mesh bounding-volume hierarchy, following Pharr and Green (GPU Gems,
+chapter 17). Its accessibility estimates mean hemisphere transmission
+with deterministic rays within \code{ao_radius}, including face and texture opacity.
+Shaded face colours are multiplied in the shared kernel by
+\code{1 - ao * (1 - accessibility)}. The vector, raster and hybrid backends
+interpolate these values over faces. Both sides of a surface have their
+own accessibility. Text and label boxes keep their colours and draw last.
 
 Eye-dome lighting acts on the raster backend, the rasterised layers of the
 hybrid backend, and \code{\link[=view_3d]{view_3d()}}. A pixel darkens by
@@ -69,8 +88,16 @@ ggplot2::ggplot(v, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", colour = NA, shade = FALSE) +
   coord_3d(backend = backend_3d("raster", dpi = 72), light = NULL,
     depth_cue = depth_cue_3d(fog = NA, edl = 2))
+a <- expand.grid(x = seq(0, 1, length.out = 7), y = seq(0, 1, length.out = 7))
+a$z <- with(a, abs(x - 0.5) + abs(y - 0.5))
+ggplot2::ggplot(a, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey70", colour = NA) +
+  coord_3d(depth_cue = depth_cue_3d(fog = NA, ao = TRUE, ao_radius = 0.5))
 }
 \references{
+Pharr and Green (2004). Ambient Occlusion. GPU Gems, chapter 17.
+\url{https://developer.nvidia.com/gpugems/gpugems/part-iii-materials/chapter-17-ambient-occlusion}
+
 Boucheny, C. (2009). Visualisation scientifique de grands
 volumes de donnees: pour une approche perceptive. PhD thesis, Universite
 Joseph Fourier, Grenoble.

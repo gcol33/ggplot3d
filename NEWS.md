@@ -27,6 +27,14 @@
   Rasterised retained outlines use centreline visibility against surfaces,
   preserving visible silhouette strokes and their full width in hybrid panels.
 
+* `depth_cue_3d(ao = TRUE, ao_radius, ao_samples)` adds geometric ambient
+  occlusion to shaded mesh faces in the vector, raster and hybrid backends.
+  Deterministic hemisphere rays share the path tracer's mesh hierarchy and
+  account for face and texture transparency. Visibility enters the shared
+  shading kernel and interpolates over each face, with separate values for
+  both sides. Fog preserves text and label colours, and labels draw above
+  all geometry (#60; Pharr and Green, GPU Gems chapter 17).
+
 * Textures: `texture_3d()` wraps an image (nativeRaster, colour matrix,
   numeric array or PNG file) that `texture =` drapes over the faces of
   `geom_surface_3d()`, `geom_mesh_3d()`, `stat_parametric_3d()` and the other

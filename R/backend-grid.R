@@ -55,6 +55,12 @@ makeContent.scene_panel_grob <- function(x) {
       }
     }
   }
+
+  if (!is.null(x$panel_params$coord_params$light$ao) && !backend$type %in% c("pathtrace", "plotter")) {
+    light <- x$panel_params$coord_params$light
+    x$panel_params$coord_params$light <- ambient_light_3d(
+      merge_scene_packets(x$packets, x$panel_params$panel_id), furniture$camera, furniture$viewport, light)
+  }
   if (identical(backend$type, "pathtrace")) {
     result <- render_pathtrace_panel_3d(x, furniture, backend)
     scene <- result$scene

@@ -1,5 +1,6 @@
 #include "shade/read.h"
 #include "shade/hatch.h"
+#include "shade/occlusion.h"
 
 using namespace ggplot3d::shade;
 
@@ -7,19 +8,41 @@ using namespace ggplot3d::shade;
 // base colours and material indices (0 for the default material).
 // [[Rcpp::export(rng = false)]]
 Rcpp::NumericMatrix shade_cpp(Rcpp::NumericMatrix normal, Rcpp::NumericMatrix position, Rcpp::NumericMatrix base,
-                              Rcpp::IntegerVector material, Rcpp::List materials, Rcpp::List lights, Rcpp::List view) {
+                              Rcpp::IntegerVector material, Rcpp::List materials, Rcpp::List lights, Rcpp::List view,
+                              SEXP occlusion = R_NilValue) {
   const int n = base.nrow();
   if (normal.nrow() != n || position.nrow() != n || material.size() != n || normal.ncol() != 3 ||
       position.ncol() != 3 || base.ncol() != 3) Rcpp::stop("shade_cpp needs n x 3 normals, positions and colours");
   const Lights l = read_lights(lights);
   const std::vector<Material> m = read_materials(materials);
   const View v = read_view(view);
+  ggplot3d::ambient::Context* ao = Rf_isNull(occlusion) ? nullptr : Rcpp::XPtr<ggplot3d::ambient::Context>(occlusion).get();
   Rcpp::NumericMatrix out(n, 3);
   for (int i = 0; i < n; ++i) {
     if (material[i] < 0 || material[i] >= static_cast<int>(m.size())) Rcpp::stop("invalid material index");
     const vec3 p = row3(position, i);
-    const vec3 c = shade(normalize(row3(normal, i)), p, v.at(p), row3(base, i), m[material[i]], l);
+    const vec3 n = normalize(row3(normal, i)), toward = v.at(p);
+    const vec3 hemisphere = dot(n,toward) < 0 ? -n : n;
+    const double visibility = ao ? ao->visibility({p.x,p.y,p.z},{hemisphere.x,hemisphere.y,hemisphere.z}) : 1;
+    const vec3 c = shade(n, p, toward, row3(base, i), m[material[i]], l, -2, visibility);
     for (int k = 0; k < 3; ++k) out(i, k) = c[k];
+  }
+  return out;
+}
+
+// [[Rcpp::export(rng = false)]]
+SEXP ambient_occlusion_prepare_cpp(Rcpp::List mesh, int samples, double radius, double amount, double epsilon) {
+  return Rcpp::XPtr<ggplot3d::ambient::Context>(new ggplot3d::ambient::Context(mesh,samples,radius,amount,epsilon),true);
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericVector ambient_occlusion_cpp(SEXP context, Rcpp::NumericMatrix position, Rcpp::NumericMatrix normal) {
+  Rcpp::XPtr<ggplot3d::ambient::Context> ao(context);
+  if (position.ncol()!=3 || normal.ncol()!=3 || normal.nrow()!=position.nrow()) Rcpp::stop("Invalid ambient occlusion queries");
+  Rcpp::NumericVector out(position.nrow());
+  for (int i=0;i<position.nrow();++i) {
+    if (i%256==0) Rcpp::checkUserInterrupt();
+    out[i]=ao->visibility({position(i,0),position(i,1),position(i,2)},{normal(i,0),normal(i,1),normal(i,2)});
   }
   return out;
 }

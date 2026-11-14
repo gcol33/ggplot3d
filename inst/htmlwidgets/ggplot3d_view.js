@@ -75,10 +75,6 @@
       float s = (d-uFogDepth.x)/uFogDepth.y;
       return clamp((s-uFogDepth.z)/(uFogDepth.w-uFogDepth.z), 0.0, 1.0);
     }`;
-  const fogWeight = (cue, depth, d) => {
-    const s = (d-depth[0])/depth[1];
-    return Math.min(1, Math.max(0, (s-cue.near)/(cue.far-cue.near)));
-  };
   const toLinear = c => c <= 0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
   const toSrgb = l => l <= 0.0031308 ? 12.92*l : 1.055*Math.pow(l, 1/2.4)-0.055;
 
@@ -1455,12 +1451,8 @@
       }
       function sceneLabels(V) {
         V.labels.forEach(p => {
-          const m = p.material, t = p.table, i = p.row, c = p.colour.slice(), cue = V.data.depth_cue;
+          const m = p.material, t = p.table, i = p.row, c = p.colour.slice();
           if (p.dimmed) c[3] *= data.selection.dim;
-          if (cue && cue.amount > 0 && cue.fog[3] > 0) {
-            const w = cue.amount*fogWeight(cue, V.fogDepth, project(V, p.points[0])[2]);
-            for (let k = 0; k < 3; k++) c[k] = Math.min(1, Math.max(0, toSrgb((1-w)*toLinear(c[k])+w*toLinear(cue.fog[k]))));
-          }
           text(m.label, project(V, p.points[0]), {visible: true, colour: c, size: m.fontsize, family: m.family, face: m.fontface}, t.angle[i], t.hjust[i], t.vjust[i], V.layout.ppm);
         });
       }

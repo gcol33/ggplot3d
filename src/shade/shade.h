@@ -244,7 +244,8 @@ struct Material {
 // (unit, toward the eye). A normal facing away from the eye is turned toward
 // it, and the back colour replaces the base colour there when the material
 // has one. A light value xs >= -1 replaces n . L (see the locals above).
-static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, const Lights& lights, real xs = -2) {
+static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, const Lights& lights, real xs = -2,
+                         real occlusion = 1) {
   if (dot(n, v) < 0) {
     n = -n;
     if (m.has_back) b = m.back;
@@ -270,7 +271,7 @@ static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, cons
     GGPLOT3D_LIGHT_SUM
   }
   GGPLOT3D_LIGHT_FINISH
-  return col;
+  return col * clamp(occlusion, 0.0, 1.0);
 }
 
 static inline real transfer(real linear, real brightness, bool multiply) {
