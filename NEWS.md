@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* `coord_hyperbolic_3d()` draws finite Poincare/Klein-ball networks and hyperboloid-sheet lifts through shared geodesic sampling. `stat_tree_hyperbolic_3d()` creates deterministic disk and ball layouts, and `hyperbolic_focus_3d()` supplies Lorentz focus paths for animation.
+
 * Relativity layers draw light cones, constant-interval hyperboloids, Schwarzschild spatial embeddings and equatorial timelike/null orbits. `coord_spacetime_3d()` and `lorentz_boost_3d()` support finite Lorentz transformations, including per-frame `animate_3d(isometry = )` schedules.
 
 * Complex-analysis layers draw Riemann-sphere phase portraits and inverse-parametrised Riemann surfaces. `mobius()` maps extended complex values, the finite Riemann sphere and hyperbolic half-space.

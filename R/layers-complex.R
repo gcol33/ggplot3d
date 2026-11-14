@@ -1,6 +1,8 @@
 #' @include stats-common.R
 NULL
 
+utils::globalVariables(c("domain_colour", "im_w"))
+
 complex_values_3d <- function(fun,z) {
   if(!is.function(fun)) stop("fun must be a vectorised complex function.",call.=FALSE)
   value <- fun(z)

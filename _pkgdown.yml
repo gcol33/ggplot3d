@@ -77,6 +77,11 @@ navbar:
       href: https://github.com/gcol33/ggplot3d
       aria-label: GitHub
 reference:
+- title: Hyperbolic data
+  contents:
+  - coord_hyperbolic_3d
+  - stat_tree_hyperbolic_3d
+  - hyperbolic_focus_3d
 - title: Relativity
   contents:
   - stat_light_cone_3d
