@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* Viewers and model exporters share physical panel measurement independently of the static renderer, so point-cloud widgets bypass the vector marker limit and static visibility compilation.
+
 * `export_3d(print = print_3d())` produces checked, closed millimetre solids as binary STL or coloured 3MF. Printing adds physical feature sizes, surface shells or base closures, extruded labels and axes, and Boolean union through the optional Manifold Python bridge.
 
 * `annotate_3d()` forwards registered drawing parameters through the shared 3D layer constructor, including bracket types, offsets and dimension arrows. Fixed spans in the Layers article use annotation calls.

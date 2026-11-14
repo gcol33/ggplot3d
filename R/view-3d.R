@@ -132,7 +132,7 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
   scene_assert(is.null(panel) || panel <= count, "panel is outside the plot layout")
   if (!is.null(panel)) table <- view_panel_layout_3d(table, panel)
   # Furniture layout supplies authoritative physical margins and text metrics.
-  forced <- motion_panels_3d(grid::grid.force(table))
+  forced <- layout_scene_panels_3d(table)
   device_mm <- unname(grDevices::dev.size("in") * 25.4)
   layers <- view_layers_3d(built, shared, tooltip)
   panels <- lapply(seq_along(forced), function(i) {
@@ -182,7 +182,7 @@ view_panel_layout_3d <- function(table, panel) {
 view_panel_3d <- function(selected, path = NULL, fps = 30) {
   params <- selected$panel_params
   outer <- selected$outer_viewport
-  furniture <- panel_furniture_3d(params, selected$theme, outer, as.list(selected$frame_group))
+  furniture <- selected$layout_furniture
   frame <- frame_of_3d(params)
   all_params <- params
   all_params$coord_params$panes <- vapply(frame$panes(), `[[`, character(1), "name")
@@ -226,7 +226,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
       back = as.list(frame$back_candidates()), floor = as.list(frame$floor_panes())),
     viewport = c(furniture$viewport, list(outer_width_mm = outer$width_mm,
       outer_height_mm = outer$height_mm)),
-    reference = list(corners_mm = unname(selected$furniture$corners_mm)),
+    reference = list(corners_mm = unname(furniture_overlay_3d(furniture, NULL, selected$theme)$corners_mm)),
     light = params$coord_params$light,
     background = if (visible_element_3d(bg)) view_rgba_3d(bg$fill) else c(0, 0, 0, 0),
     path = if (is.null(path)) NULL else view_path_3d(path, fps, params, furniture$viewport, frame$bounds()))

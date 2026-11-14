@@ -145,28 +145,17 @@ export_layer_names_3d <- function(plot) {
   }, character(1))
 }
 
-#' @export
-makeContent.scene_export_probe <- function(x) {
-  x$export_furniture <- panel_furniture_3d(x$panel_params, x$theme,
-    panel_outer_viewport_3d(x$panel_params), as.list(x$frame_group))
-  grid::setChildren(x, grid::gList())
-}
-
 # Lays out a built plot without drawing it and returns the scene of one panel:
 # its nodes in model coordinates, the camera and the vertical axis. `mm` fixes
 # the millimetres per model unit for tube and solid sizes; NULL takes it from
 # this layout.
 export_capture_3d <- function(grob, panel, options, layer_names, mm = NULL) {
-  probed <- motion_map_panels_3d(grob, function(p) {
-    class(p) <- c("scene_export_probe", class(p))
-    p
-  })
-  panels <- motion_panels_3d(grid::grid.force(probed))
+  panels <- layout_scene_panels_3d(grob)
   scene_assert(length(panels) > 0L, "plot has no 3D scene panels")
   scene_assert(panel <= length(panels), "panel is outside the plot layout")
   selected <- panels[[panel]]
   params <- selected$panel_params
-  furniture <- selected$export_furniture
+  furniture <- selected$layout_furniture
   resolved <- scene_compile(new_scene_packet(panel_id = params$panel_id),
     furniture$camera, furniture$viewport)$camera
   camera <- export_camera_3d(resolved, furniture$camera, furniture$viewport, options$size)
