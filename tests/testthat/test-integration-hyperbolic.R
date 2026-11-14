@@ -21,10 +21,10 @@ test_that("hyperbolic chart geodesics have their analytic circle shapes", {
   s <- SpaceHyperbolicFinite
   X <- s$to_canonical(data.frame(x=c(-.5,.5),y=.2,z=0),"poincare")
   Z <- s$geodesic(X[rep(1,21),,drop=FALSE],X[rep(2,21),,drop=FALSE],seq(0,1,length.out=21))
-  P <- s$from_canonical(Z,"poincare")
+  P <- space_model_xyz_3d(Z,s,"poincare")
   centre <- (1+.5^2+.2^2)/(2*.2)
   expect_equal(unname(P[,1]^2+(P[,2]-centre)^2),rep(centre^2-1,21),tolerance=1e-10)
-  H <- s$from_canonical(Z,"halfspace")
+  H <- space_model_xyz_3d(Z,s,"halfspace")
   expect_true(all(H[,3]>0))
   expect_equal(lorentz_dot_3d(Z,Z),rep(-1,21),tolerance=1e-12)
   expect_equal(s$geodesic(X[2,,drop=FALSE],X[1,,drop=FALSE],.25),s$geodesic(X[1,,drop=FALSE],X[2,,drop=FALSE],.75))

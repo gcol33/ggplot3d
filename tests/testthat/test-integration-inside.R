@@ -30,7 +30,7 @@ test_that("first-person projective angles agree with intrinsic tangent direction
   d <- data.frame(x=c(.2,.4),y=c(.1,.2),z=c(.05,.1))
   X <- coord$space$to_canonical(d,"poincare")
   context <- list(space=coord$space,model="klein",ranges=list(x=c(-1,1),y=c(-1,1),z=c(-1,1)))
-  xyz <- do.call(cbind,space_packet_coordinates_3d(X,context))
+  xyz <- homogeneous_xyz_3d(do.call(cbind,space_packet_coordinates_3d(X,context)))
   camera <- coord$camera; basis <- frame_basis_3d(camera,new_scene_viewport(100,100))
   eye <- frame_eye_coordinates_3d(xyz,camera,basis)
   expect_equal(unname(eye[,1]/eye[,3]),unname(-X[,2]/X[,1]),tolerance=1e-12)

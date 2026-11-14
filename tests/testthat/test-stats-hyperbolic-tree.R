@@ -4,15 +4,16 @@ test_that("hyperbolic chart conversions agree on finite points", {
   data <- as.data.frame(P); names(data) <- c("x","y","z")
   X <- s$to_canonical(data,"poincare")
   expect_equal(lorentz_dot_3d(X,X),rep(-1,3),tolerance=1e-12)
-  expect_equal(unname(s$from_canonical(X,"poincare")),P,tolerance=1e-12)
+  expect_equal(unname(space_model_xyz_3d(X,s,"poincare")),P,tolerance=1e-12)
   K <- 2*P/(1+rowSums(P^2)); data[] <- K
   expect_equal(unname(s$to_canonical(data,"klein")),unname(X),tolerance=1e-12)
-  H <- s$from_canonical(X,"halfspace"); data[] <- H
+  H <- space_model_xyz_3d(X,s,"halfspace"); data[] <- H
   expect_equal(unname(s$to_canonical(data,"halfspace")),unname(X),tolerance=1e-12)
   expect_equal(unname(s$distance(X[1,,drop=FALSE],X[2,,drop=FALSE])),log(3),tolerance=1e-12)
   middle <- s$geodesic(X[1,,drop=FALSE],X[2,,drop=FALSE],.5)
-  expect_equal(unname(s$from_canonical(middle,"poincare")),matrix(c(tanh(log(3)/4),0,0),1),tolerance=1e-12)
-  expect_error(s$to_canonical(data.frame(x=1,y=0,z=0),"poincare"),"strictly")
+  expect_equal(unname(space_model_xyz_3d(middle,s,"poincare")),matrix(c(tanh(log(3)/4),0,0),1),tolerance=1e-12)
+  expect_true(hyperbolic_ideal_3d(s$to_canonical(data.frame(x=1,y=0,z=0),"poincare")))
+  expect_error(s$to_canonical(data.frame(x=1.1,y=0,z=0),"poincare"),"closed unit ball")
 })
 
 test_that("network edges are munched as ball geodesics", {
@@ -20,7 +21,7 @@ test_that("network edges are munched as ball geodesics", {
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z,xend=xend,yend=yend,zend=zend))+
     geom_segment_3d()+coord_hyperbolic_3d(model="poincare")
   packet <- stats_scene(p)$packet
-  xyz <- do.call(cbind,packet$vertices[c("x","y","z")])*2-1
+  xyz <- scene_vertices_xyz_3d(packet$vertices)*2-1
   expect_gt(nrow(xyz),2)
   expect_lt(min(xyz[,2]),.2)
   expect_true(all(rowSums(xyz^2)<1))
@@ -65,7 +66,7 @@ test_that("focus boosts move the selected node continuously to the origin", {
   point <- c(.4,.2,.1); d <- data.frame(x=point[1],y=point[2],z=point[3])
   s <- SpaceHyperbolicFinite; X <- s$to_canonical(d,"poincare")
   frames <- hyperbolic_focus_3d(point,5)
-  moved <- do.call(rbind,lapply(frames,function(B) s$from_canonical(s$act(B,X),"poincare")))
+  moved <- do.call(rbind,lapply(frames,function(B) space_model_xyz_3d(s$act(B,X),s,"poincare")))
   expect_equal(unname(moved[1,]),point,tolerance=1e-12)
   expect_equal(unname(moved[5,]),c(0,0,0),tolerance=1e-12)
   expect_true(all(diff(rowSums(moved^2))<0))
@@ -80,9 +81,9 @@ test_that("tree layers register their Poincare input independently of display", 
     p <- ggplot2::ggplot(edges)+stat_tree_hyperbolic_3d(what="nodes",edge_length=1)+coord
     packet <- stats_scene(p)$packet
     ranges <- coord$space$model_ranges(model,NULL)
-    xyz <- do.call(cbind,packet$vertices[c("x","y","z")])
+    xyz <- scene_vertices_xyz_3d(packet$vertices)
     xyz <- sweep(sweep(xyz,2L,vapply(ranges,diff,numeric(1)),"*"),2L,vapply(ranges,`[`,numeric(1),1L),"+")
-    expect_equal(unname(xyz),unname(coord$space$from_canonical(tree$canonical,model)),tolerance=1e-12)
+    expect_equal(unname(xyz),unname(space_model_xyz_3d(tree$canonical,coord$space,model)),tolerance=1e-12)
   }
 })
 

@@ -180,8 +180,12 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
 #' parameter per row, from zero to one. Input positions are scale-transformed
 #' chart coordinates. Model output has three columns in model axis units;
 #' `model_ranges(model, panel_params)` supplies named x, y, z bounds.
-#' Four-column homogeneous output (x, y, z, w) with w > 0 is also accepted;
-#' points at infinity (w = 0) need homogeneous packet coordinates.
+#' Four-column homogeneous output (x, y, z, w) with w >= 0 is also accepted
+#' and travels unchanged into the scene packet; w = 0 is a point at infinity.
+#' Projective models such as the Klein ball return (X, X0), so clipping to the
+#' panel box happens in homogeneous coordinates before division (Blinn and
+#' Newell 1978) and isometries stay linear. An edge whose image passes through
+#' infinity carries its ideal point as an explicit corner.
 #'
 #' `chart_is_projective(model)` declares straight geodesic images and planar
 #' faces, allowing subdivision to be omitted. Other models share the frame
@@ -500,16 +504,19 @@ project_positions_3d <- function(data, panel_params) {
     coordinates <- rbind(coordinates, end)
   }
   valid <- which(Reduce(`&`, lapply(coordinates, is.finite)))
+  w <- rep(1, nrow(coordinates))
   if (length(valid) && !is.null(panel_params$space_context)) {
     context <- panel_params$space_context
     X <- space_canonical_3d(space_input_3d(coordinates[valid, , drop = FALSE], context), context)
-    coordinates[valid, ] <- as.data.frame(space_subdivision_3d(context)$map(X))
+    mapped <- space_subdivision_3d(context)$map(X)
+    coordinates[valid, ] <- as.data.frame(mapped[, 1:3, drop = FALSE])
+    w[valid] <- mapped[, 4L]
   }
   projected <- matrix(NA_real_, nrow(coordinates), 6L,
                       dimnames = list(NULL, c("x_npc", "y_npc", "x_camera", "y_camera", "depth", "clip_w")))
   if (length(valid)) {
     n <- length(valid)
-    packet <- new_scene_packet(vertices = lapply(coordinates[valid, , drop = FALSE], as.double),
+    packet <- new_scene_packet(vertices = c(lapply(coordinates[valid, , drop = FALSE], as.double), list(w = w[valid])),
       corners = list(vertex = seq_len(n), source_row = as.integer(valid)),
       markers = list(offset = seq_len(n), footprint_id = rep.int(1L, n), source_row = as.integer(valid)),
       footprints = list(kind = 1L, offset = 1L, count = 0L, radius_x_mm = 0, radius_y_mm = 0, angle = 0),
@@ -524,7 +531,7 @@ project_positions_3d <- function(data, panel_params) {
   start <- seq_len(nrow(data))
   out <- data
   out$x <- projected[start, "x_npc"]; out$y <- projected[start, "y_npc"]
-  for (axis in c("x", "y", "z")) out[[paste0(".", axis, "_model")]] <- if (is.null(panel_params$space_context)) normal[[axis]] else coordinates[[axis]][start]
+  for (axis in c("x", "y", "z")) out[[paste0(".", axis, "_model")]] <- if (is.null(panel_params$space_context)) normal[[axis]] else coordinates[[axis]][start] / w[start]
   for (name in c("x_camera", "y_camera", "depth", "clip_w")) out[[paste0(".", name)]] <- projected[start, name]
   out$.z_camera <- out$.depth
   out$.visible <- is.finite(out$x) & is.finite(out$y)

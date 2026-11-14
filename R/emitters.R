@@ -424,12 +424,14 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
   material <- styles_3d(data, rows, kinds, params, normals, sheets)
   used <- which(tabulate(primitives, nrow(data)) > 0L)
   vertices <- lapply(data[used, c("x", "y", "z"), drop = FALSE], as.double)
+  if (!is.null(data$.w)) vertices$w <- as.double(data$.w[used])
   corners <- list(vertex = match(primitives, used),
                   source_row = as.integer(data$.source[primitives]))
   if (!is.null(params$.vertex_key)) {
     key <- params$.vertex_key[used]
     representatives <- !duplicated(key)
     vertices <- lapply(data[used[representatives], c("x", "y", "z"), drop = FALSE], as.double)
+    if (!is.null(data$.w)) vertices$w <- as.double(data$.w[used[representatives]])
     corners$vertex <- match(params$.vertex_key[primitives], key[representatives])
   }
   tables <- list()

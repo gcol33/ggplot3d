@@ -164,8 +164,12 @@ dimension. Geodesic endpoints are paired rows and \code{s} is a scalar or one
 parameter per row, from zero to one. Input positions are scale-transformed
 chart coordinates. Model output has three columns in model axis units;
 \code{model_ranges(model, panel_params)} supplies named x, y, z bounds.
-Four-column homogeneous output (x, y, z, w) with w > 0 is also accepted;
-points at infinity (w = 0) need homogeneous packet coordinates.
+Four-column homogeneous output (x, y, z, w) with w >= 0 is also accepted
+and travels unchanged into the scene packet; w = 0 is a point at infinity.
+Projective models such as the Klein ball return (X, X0), so clipping to the
+panel box happens in homogeneous coordinates before division (Blinn and
+Newell 1978) and isometries stay linear. An edge whose image passes through
+infinity carries its ideal point as an explicit corner.
 
 \code{chart_is_projective(model)} declares straight geodesic images and planar
 faces, allowing subdivision to be omitted. Other models share the frame

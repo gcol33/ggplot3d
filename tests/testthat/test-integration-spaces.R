@@ -88,7 +88,7 @@ test_that("spherical polygon faces and boundaries reach both renderers", {
   }
 })
 
-test_that("canonical dimension, charts, projectivity and homogeneous guard are independent", {
+test_that("canonical dimension, charts, projectivity and homogeneous output are independent", {
   lifted <- ggplot2::ggproto("Lifted", SpaceEuclidean, identity = FALSE,
     to_canonical = function(data, chart) cbind(as.matrix(data[c("x", "y", "z")]), 1),
     from_canonical = function(X, model) X[, 1:3, drop = FALSE])
@@ -97,12 +97,12 @@ test_that("canonical dimension, charts, projectivity and homogeneous guard are i
   result <- integration_packets(p)
   expect_length(result$packet$vertices$x, 2L)
   context <- result$params$space_context
-  expect_equal(space_packet_coordinates_3d(matrix(c(0, 0, 0, 1), 1), context), list(x = 1/22, y = 1/22, z = 1/22))
+  expect_equal(space_packet_coordinates_3d(matrix(c(0, 0, 0, 1), 1), context), list(x = 1/22, y = 1/22, z = 1/22, w = 1))
   context$space <- ggplot2::ggproto(NULL, lifted, from_canonical = function(X, model) X)
-  expect_error(space_packet_coordinates_3d(matrix(c(1, 0, 0, 0), 1), context), "infinity")
-  expect_equal(space_packet_coordinates_3d(matrix(c(1, 0, 0, 2), 1), context),
-               space_packet_coordinates_3d(matrix(c(0.5, 0, 0, 1), 1), context))
-  ideal <- space_packet_coordinates_3d(matrix(c(1, 0, 0, 0), 1), context, homogeneous = TRUE)
+  expect_error(space_packet_coordinates_3d(matrix(c(1, 0, 0, -1), 1), context), "w >= 0")
+  expect_equal(homogeneous_xyz_3d(do.call(cbind, space_packet_coordinates_3d(matrix(c(1, 0, 0, 2), 1), context))),
+               homogeneous_xyz_3d(do.call(cbind, space_packet_coordinates_3d(matrix(c(0.5, 0, 0, 1), 1), context))))
+  ideal <- space_packet_coordinates_3d(matrix(c(1, 0, 0, 0), 1), context)
   expect_identical(ideal$w, 0)
   expect_equal(ideal$x, 1 / diff(context$ranges$x))
   sphere <- test_sphere_space()
@@ -193,6 +193,6 @@ test_that("the homogeneous adapter delegates all four coordinates to the schema 
   environment(adapter) <- list2env(list(normalise_homogeneous_3d = function(x, y, z, w, ranges) list(x, y, z, w, ranges)),
     parent = environment(adapter))
   X <- rbind(c(1, 2, 3, 0), c(4, 5, 6, 2))
-  value <- adapter(X, context, homogeneous = TRUE)
+  value <- adapter(X, context)
   expect_identical(value, list(X[, 1], X[, 2], X[, 3], X[, 4], context$ranges))
 })

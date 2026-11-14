@@ -4,7 +4,7 @@ test_that("stereographic and gnomonic charts preserve spherical points", {
   for(chart in c("stereographic","gnomonic")) {
     X <- s$to_canonical(P,chart)
     expect_equal(rowSums(X^2),rep(1,3),tolerance=1e-12)
-    expect_equal(unname(s$from_canonical(X,chart)),unname(as.matrix(P)),tolerance=1e-12)
+    expect_equal(unname(space_model_xyz_3d(X,s,chart)),unname(as.matrix(P)),tolerance=1e-12)
   }
   X <- s$to_canonical(P,"stereographic")
   G <- rotate_4d("xy",.4)%*%rotate_4d("zw",.2)
@@ -29,7 +29,7 @@ test_that("Hopf fibres lie on S3 and have constant Hopf image", {
 })
 
 test_that("distinct Hopf fibres have linking number one", {
-  project <- function(lon) SpaceSpherical3D$from_canonical(hopf_points_3d(lon,20,seq(0,2*pi,length.out=129)),"stereographic")
+  project <- function(lon) space_model_xyz_3d(hopf_points_3d(lon,20,seq(0,2*pi,length.out=129)),SpaceSpherical3D,"stereographic")
   A <- project(0); B <- project(120)
   dA <- diff(A); dB <- diff(B); A <- (head(A,-1L)+tail(A,-1L))/2; B <- (head(B,-1L)+tail(B,-1L))/2
   integral <- sum(vapply(seq_len(nrow(A)),function(i) {
@@ -46,7 +46,7 @@ test_that("pole-crossing fibres split into finite panel-box paths", {
   X <- hopf_points_3d(0,-90,seq(0,2*pi,length.out=17))
   paths <- space_path_samples_3d(X,context)
   expect_gte(length(paths),2)
-  xyz <- do.call(rbind,lapply(paths,`[[`,"model"))
+  xyz <- model_points_3d(do.call(rbind,lapply(paths,`[[`,"model")))
   expect_true(all(is.finite(xyz)))
   expect_true(all(xyz>=-1e-10&xyz<=1+1e-10))
   expect_equal(range(xyz[,3]),c(0,1),tolerance=1e-10)

@@ -135,13 +135,12 @@ SpaceCoxeter3D <- ggplot2::ggproto("SpaceCoxeter3D",Space3D,
   to_canonical=function(self,data,chart) as.matrix(data[paste0(".canonical",seq_len(self$dimension+1L))]),
   from_canonical=function(self,X,model) {
     d <- self$dimension; rank <- d+1L
-    out <- X[,seq_len(d),drop=FALSE]
-    if(self$kind=="hyperbolic") out <- out/if(model=="poincare") X[,rank]+1 else X[,rank]
-    if(self$kind=="spherical"&&model=="stereographic") {
-      den <- 1-X[,rank]
-      if(any(den<=1e-12)) stop("A stereographic sample reaches the projection pole; ideal output requires schema 2.",call.=FALSE)
-      out <- out/den
+    if(self$kind=="hyperbolic") {
+      out <- hyperbolic_ball_homogeneous_3d(X,model)
+      return(if(d==2L) cbind(out[,1:2,drop=FALSE],0,out[,3L]) else out)
     }
+    if(self$kind=="spherical"&&model=="stereographic") return(cbind(X[,seq_len(d),drop=FALSE],1-X[,rank]))
+    out <- X[,seq_len(d),drop=FALSE]
     if(d==2L) cbind(out,if(self$kind=="spherical") X[,3L] else 0) else out
   },
   distance=function(self,X,Y) {
@@ -180,7 +179,7 @@ coxeter_data_3d <- function(tiling,what,model) {
         }
         for(corners in triangles) {
           face_id <- face_id+1L
-          xyz <- space$from_canonical(corners,model)
+          xyz <- space_model_xyz_3d(corners,space,model)
           d <- as.data.frame(xyz); names(d) <- c("x","y","z")
           d[paste0(".canonical",seq_len(ncol(corners)))] <- as.data.frame(corners)
           d$.face <- face_id; d$cell <- cell; d$depth <- tiling$depth[cell]

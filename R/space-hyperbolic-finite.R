@@ -8,7 +8,43 @@ lorentz_dot_3d <- function(X,Y) {
   rowSums(X[,spatial,drop=FALSE]*Y[,spatial,drop=FALSE])-X[,n]*Y[,n]
 }
 
-hyperbolic_distance_3d <- function(X,Y) 2*asinh(sqrt(pmax(0,lorentz_dot_3d(X-Y,X-Y)))/2)
+# Canonical hyperbolic points are future hyperboloid points (q = 1) or ideal
+# points on the future light cone (q = 0), where q = -<X, X>.
+hyperbolic_ideal_3d <- function(X) abs(lorentz_dot_3d(X,X))<=1e-9*X[,ncol(X)]^2
+
+hyperbolic_distance_3d <- function(X,Y) {
+  out <- 2*asinh(sqrt(pmax(0,lorentz_dot_3d(X-Y,X-Y)))/2)
+  ideal <- hyperbolic_ideal_3d(X)|hyperbolic_ideal_3d(Y)
+  out[ideal] <- ifelse(rowSums(abs(X[ideal,,drop=FALSE]/X[ideal,ncol(X)]-Y[ideal,,drop=FALSE]/Y[ideal,ncol(Y)]))<1e-12,0,Inf)
+  out
+}
+
+# Geodesics with an ideal endpoint follow the projective (Klein) line, which
+# stays inside the future cone; the interior is lifted to the hyperboloid.
+hyperbolic_geodesic_3d <- function(X,Y,s) {
+  ideal <- hyperbolic_ideal_3d(X)|hyperbolic_ideal_3d(Y)
+  if(!any(ideal)) return(hyperbolic_slerp_3d(X,Y,s))
+  s <- rep_len(s,nrow(X)); n <- ncol(X)
+  out <- matrix(0,nrow(X),n)
+  if(any(!ideal)) out[!ideal,] <- hyperbolic_slerp_3d(X[!ideal,,drop=FALSE],Y[!ideal,,drop=FALSE],s[!ideal])
+  k <- which(ideal)
+  Z <- (1-s[k])*X[k,,drop=FALSE]/X[k,n]+s[k]*Y[k,,drop=FALSE]/Y[k,n]
+  q <- -lorentz_dot_3d(Z,Z)
+  interior <- q>1e-12*Z[,n]^2
+  Z[interior,] <- Z[interior,,drop=FALSE]/sqrt(q[interior])
+  out[k,] <- Z
+  out[k[s[k]==0],] <- X[k[s[k]==0],,drop=FALSE]
+  out[k[s[k]==1],] <- Y[k[s[k]==1],,drop=FALSE]
+  out
+}
+
+# Homogeneous ball coordinates: Klein (X, X0); Poincare (X, X0 + 1), which is
+# (X, X0) at an ideal point. Both are positively homogeneous in X.
+hyperbolic_ball_homogeneous_3d <- function(X,model) {
+  n <- ncol(X); spatial <- X[,seq_len(n-1L),drop=FALSE]
+  if(model=="klein") return(cbind(spatial,X[,n]))
+  cbind(spatial,X[,n]+ifelse(hyperbolic_ideal_3d(X),0,1))
+}
 
 hyperbolic_slerp_3d <- function(X,Y,s) {
   distance <- hyperbolic_distance_3d(X,Y); small <- distance<1e-8
@@ -57,21 +93,27 @@ SpaceHyperbolicFinite <- ggplot2::ggproto("SpaceHyperbolicFinite",Space3D,
       return(cbind(P[,1:2,drop=FALSE]/P[,3L],(norm-1)/(2*P[,3L]),(norm+1)/(2*P[,3L])))
     }
     norm <- rowSums(P^2)
-    if(any(norm>=1)) stop("Ball coordinates must lie strictly inside the unit ball; ideal points require schema 2.",call.=FALSE)
-    if(chart=="poincare") cbind(2*P/(1-norm),(1+norm)/(1-norm)) else cbind(P,1)/sqrt(1-norm)
+    ideal <- abs(norm-1)<=1e-10
+    if(any(norm>1&!ideal)) stop("Ball coordinates must lie in the closed unit ball; boundary points are ideal.",call.=FALSE)
+    out <- matrix(0,nrow(P),4L)
+    finite <- !ideal
+    if(any(finite)) out[finite,] <- if(chart=="poincare") cbind(2*P[finite,,drop=FALSE]/(1-norm[finite]),(1+norm[finite])/(1-norm[finite])) else
+      cbind(P[finite,,drop=FALSE],1)/sqrt(1-norm[finite])
+    if(any(ideal)) out[ideal,] <- cbind(P[ideal,,drop=FALSE]/sqrt(norm[ideal]),1)
+    out
   },
   from_canonical=function(X,model) {
-    if(model=="poincare") return(X[,1:3,drop=FALSE]/(X[,4L]+1))
-    if(model=="klein") return(X[,1:3,drop=FALSE]/X[,4L])
+    if(model%in%c("poincare","klein")) return(hyperbolic_ball_homogeneous_3d(X,model))
     if(model=="hyperboloid_sheet") {
       if(any(abs(X[,3L])>1e-9)) stop("hyperboloid_sheet requires points in the H^2 plane z=0.",call.=FALSE)
       return(cbind(X[,1:2,drop=FALSE],X[,4L]))
     }
-    den <- ifelse(X[,3L]>0,(1+rowSums(X[,1:2,drop=FALSE]^2))/(X[,4L]+X[,3L]),X[,4L]-X[,3L])
-    cbind(X[,1:2,drop=FALSE]/den,1/den)
+    q <- ifelse(hyperbolic_ideal_3d(X),0,1)
+    den <- ifelse(X[,3L]>0,(q+rowSums(X[,1:2,drop=FALSE]^2))/(X[,4L]+X[,3L]),X[,4L]-X[,3L])
+    cbind(X[,1:2,drop=FALSE],q,den)
   },
   distance=function(self,X,Y) hyperbolic_distance_3d(X,Y)/sqrt(-self$curvature),
-  geodesic=function(X,Y,s) hyperbolic_slerp_3d(X,Y,s),
+  geodesic=function(X,Y,s) hyperbolic_geodesic_3d(X,Y,s),
   act=function(g,X) {
     check_lorentz_matrix_3d(g,3L)
     X%*%t(g)
@@ -98,7 +140,7 @@ FrameHyperbolicFinite <- ggplot2::ggproto("FrameHyperbolicFinite",FrameBox,
       breaks <- self$distance_breaks
       r <- breaks*sqrt(-self$space$curvature)
       X <- cbind(sinh(r),0,0,cosh(r))
-      xyz <- self$space$from_canonical(X,self$model)
+      xyz <- space_model_xyz_3d(X,self$space,self$model)
       d <- data.frame(x=xyz[,1L],y=xyz[,2L],z=xyz[,3L],group=1L,
         colour="grey35",alpha=1,linewidth=.4,linetype=1,label=format(breaks,trim=TRUE),size=3,vjust=-.5)
       ranges <- self$space$model_ranges(self$model,panel_params)
@@ -186,6 +228,7 @@ coord_hyperbolic_3d <- function(model="klein",input=model,
     if(is.matrix(centre)) {check_lorentz_matrix_3d(centre,3L); args$isometry <- centre} else {
       if(!is.numeric(centre)||length(centre)!=3L||any(!is.finite(centre))) stop("centre must be a finite input-chart point or Lorentz matrix.",call.=FALSE)
       X <- space$to_canonical(data.frame(x=centre[1L],y=centre[2L],z=centre[3L]),input)
+      if(hyperbolic_ideal_3d(X)) stop("centre must lie strictly inside the model; boundary points are ideal.",call.=FALSE)
       args$isometry <- hyperbolic_origin_boost_3d(drop(X),TRUE)
     }
   }

@@ -1,5 +1,13 @@
 # ggplot3d 0.0.0.9000
 
+* Coordinate spaces emit homogeneous model coordinates: a space model may
+  return (x, y, z, w) and w reaches the scene packet, so the Klein,
+  Poincare and stereographic models are clipped to the panel box before
+  division and points at infinity (w = 0) are allowed. Ideal points of
+  hyperbolic space are boundary points of the Klein and Poincare balls, and
+  geodesic sampling measures screen error after the camera pre-transform
+  (#13).
+
 * `coord_3d(shadow = shadow_3d())` casts planar shadows (Blinn 1988) of
   faces, strokes and points along the light onto the floor or other panes,
   one translucent film per layer between the pane and its grid lines, exact

@@ -230,7 +230,26 @@ subdivision_points_3d <- function(frame, lo, hi, s) {
 }
 
 subdivision_metric_3d <- function(frame, xyz) {
-  if (is.function(frame$metric)) frame$metric(xyz) else xyz
+  if (is.function(frame$metric)) frame$metric(xyz) else model_points_3d(xyz)
+}
+
+# Euclidean rows of mapped model points, which are three Euclidean or four
+# homogeneous columns.
+model_points_3d <- function(xyz) if (ncol(xyz) == 4L) homogeneous_xyz_3d(xyz) else xyz
+
+# A frame applied to homogeneous rows (x, y, z, w). An affine frame maps a
+# finite point p/w to map(p/w) w, keeping w, and a direction d (w = 0) to
+# map(d) - map(0); other frames need finite points.
+frame_map_homogeneous_3d <- function(frame, xyzw) {
+  if (ncol(xyzw) == 3L) return(frame$map(xyzw))
+  if (isTRUE(frame$identity)) return(xyzw)
+  if (!isTRUE(frame$linear)) return(cbind(frame$map(homogeneous_xyz_3d(xyzw)), 1))
+  out <- xyzw
+  finite <- xyzw[, 4L] > 0
+  if (any(finite)) out[finite, 1:3] <- frame$map(xyzw[finite, 1:3, drop = FALSE] / xyzw[finite, 4L]) * xyzw[finite, 4L]
+  if (any(!finite)) out[!finite, 1:3] <- frame$map(xyzw[!finite, 1:3, drop = FALSE]) -
+    frame$map(matrix(0, sum(!finite), 3L))
+  out
 }
 
 triangle_points_3d <- function(frame, p0, p1, p2, a, b) {
@@ -312,10 +331,10 @@ munch_triangles_3d <- function(frame, p0, p1, p2, boundary = matrix(TRUE, nrow(p
     max_level = if (isTRUE(frame$strict)) max_level else 9L), integer(n))
   if (n == 1L) levels <- matrix(levels, 1L)
   levels[!boundary] <- 0L
-  m0 <- frame$map(p0); m1 <- frame$map(p1); m2 <- frame$map(p2)
+  m0 <- model_points_3d(frame$map(p0)); m1 <- model_points_3d(frame$map(p1)); m2 <- model_points_3d(frame$map(p2))
   normal <- cross_rows_3d(m1 - m0, m2 - m0)
   area <- sqrt(rowSums(normal^2))
-  offset <- frame$map(if (is.function(frame$interpolate)) triangle_points_3d(frame, p0, p1, p2, 1/3, 1/3) else (p0 + p1 + p2) / 3) - m0
+  offset <- model_points_3d(frame$map(if (is.function(frame$interpolate)) triangle_points_3d(frame, p0, p1, p2, 1/3, 1/3) else (p0 + p1 + p2) / 3)) - m0
   deviation <- ifelse(area > 0, abs(rowSums(offset * normal)) / area, sqrt(rowSums(offset^2)))
   interior <- ifelse(is.finite(deviation) & deviation > frame$tolerance, ceiling(log2(sqrt(deviation / frame$tolerance))), 0)
   levels <- pmin(levels, max_level)
@@ -367,7 +386,7 @@ triangle_level_3d <- function(frame, p0, p1, p2, level, max_level) {
     sample <- function(weights) frame$map(triangle_points_3d(frame,
       p0[rep(1L, nrow(weights)), , drop = FALSE], p1[rep(1L, nrow(weights)), , drop = FALSE],
       p2[rep(1L, nrow(weights)), , drop = FALSE], weights[, 1L], weights[, 2L]))
-    vertices <- sample(ab)
+    vertices <- model_points_3d(sample(ab))
     t <- lattice$triangles
     centroid <- (ab[t[, 1L], , drop = FALSE] + ab[t[, 2L], , drop = FALSE] + ab[t[, 3L], , drop = FALSE]) / 3
     chord <- (vertices[t[, 1L], , drop = FALSE] + vertices[t[, 2L], , drop = FALSE] + vertices[t[, 3L], , drop = FALSE]) / 3
@@ -387,15 +406,7 @@ triangle_level_3d <- function(frame, p0, p1, p2, level, max_level) {
 munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
   validate_scene_packet(packet)
   if (frame$linear) {
-    xyzw <- if (is.null(coordinates)) scene_vertex_matrix_3d(packet$vertices) else cbind(coordinates, 1)
-    finite <- xyzw[, 4L] > 0
-    out <- xyzw
-    if (any(finite)) {
-      out[finite, 1:3] <- frame$map(xyzw[finite, 1:3, drop = FALSE] / xyzw[finite, 4L])
-      out[finite, 4L] <- 1
-    }
-    if (any(!finite)) out[!finite, 1:3] <- frame$map(xyzw[!finite, 1:3, drop = FALSE]) -
-      frame$map(matrix(0, sum(!finite), 3L))
+    out <- if (is.null(coordinates)) frame_map_homogeneous_3d(frame, scene_vertex_matrix_3d(packet$vertices)) else frame$map(coordinates)
     packet$vertices <- scene_vertices_3d(out)
     validate_scene_packet(packet)
     return(packet)
@@ -435,6 +446,7 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
     a <- munched$model[munched$triangles[, 1L], , drop = FALSE]
     b <- munched$model[munched$triangles[, 2L], , drop = FALSE]
     c <- munched$model[munched$triangles[, 3L], , drop = FALSE]
+    a <- model_points_3d(a); b <- model_points_3d(b); c <- model_points_3d(c)
     area <- sqrt(rowSums(cross_rows_3d(b - a, c - a)^2))
     keep <- is.finite(area) & area > 1e-12
     ids <- emit(munched$model, faces$source_row[tri$parent[munched$point_parent]], munched$scale)
@@ -462,9 +474,10 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
     point_rows[[kind]]$corners <- if (length(rows$parent)) emit(frame$map(rows$xyz), packet[[kind]]$source_row[rows$parent], rows$xyz) else integer()
   }
   model <- if (length(out_xyz)) do.call(rbind, out_xyz) else matrix(numeric(), 0L, 3L)
+  if (ncol(model) == 3L) model <- cbind(model, 1)
   scale_points <- if (length(out_scale)) do.call(rbind, out_scale) else matrix(numeric(), 0L, 3L)
   source_rows <- as.integer(unlist(out_rows, use.names = FALSE))
-  key <- paste(sprintf("%.17g", model[, 1L]), sprintf("%.17g", model[, 2L]), sprintf("%.17g", model[, 3L]))
+  key <- paste(sprintf("%.17g", model[, 1L]), sprintf("%.17g", model[, 2L]), sprintf("%.17g", model[, 3L]), sprintf("%.17g", model[, 4L]))
   unique_index <- match(key, key)
   used <- sort(unique(unique_index))
   vertex_of <- match(unique_index, used)

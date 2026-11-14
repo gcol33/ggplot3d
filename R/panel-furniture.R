@@ -149,6 +149,18 @@ frame_positions_3d <- function(xyz, camera, basis) {
   coordinates
 }
 
+# Screen positions of homogeneous box fractions under the camera pre-transform,
+# divided only after pre; rows at or behind infinity get Inf.
+screen_positions_homogeneous_3d <- function(xyzw, camera, basis) {
+  if (ncol(xyzw) == 3L) xyzw <- cbind(xyzw, 1)
+  pre <- camera$pre %or3d% as.double(diag(4))
+  if (!identical(as.double(pre), as.double(diag(4)))) xyzw <- xyzw %*% t(matrix(pre, 4L, 4L))
+  out <- matrix(Inf, nrow(xyzw), 2L)
+  finite <- xyzw[, 4L] > 0
+  if (any(finite)) out[finite, ] <- frame_positions_3d(xyzw[finite, 1:3, drop = FALSE] / xyzw[finite, 4L], camera, basis)[, 1:2, drop = FALSE]
+  out
+}
+
 frame_camera_3d <- function(camera, viewport, frame, bounds = cube_edges_3d()$corners) {
   if (frame == "sphere") return(camera)
   geometry <- frame_basis_3d(camera, viewport)

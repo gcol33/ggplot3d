@@ -64,17 +64,35 @@ space_canonical_3d <- function(data, context) {
   X
 }
 
-# The sole conversion from a space's model coordinates to packet coordinates.
-# Homogeneous coordinates are normalised before any perspective division.
-space_packet_coordinates_3d <- function(X, context, homogeneous = FALSE) {
-  xyz <- space_matrix_3d(context$space$from_canonical(X, context$model), nrow(X), "from_canonical()")
+# Homogeneous model coordinates (x, y, z, w) of canonical points. A model may
+# return three Euclidean columns or four homogeneous ones with w >= 0; w = 0
+# is a point at infinity of the model.
+space_model_homogeneous_3d <- function(X, space, model) {
+  xyz <- space_matrix_3d(space$from_canonical(X, model), nrow(X), "from_canonical()")
   if (!ncol(xyz) %in% c(3L, 4L)) stop("A space model must return x, y, z and optional homogeneous w.", call. = FALSE)
-  w <- if (ncol(xyz) == 4L) xyz[, 4L] else rep(1, nrow(xyz))
-  if (homogeneous) return(normalise_homogeneous_3d(xyz[, 1L], xyz[, 2L], xyz[, 3L], w, context$ranges))
-  if (any(w <= 0)) stop("Points at infinity (w = 0) of a space model need homogeneous packet coordinates.", call. = FALSE)
-  out <- lapply(seq_len(3L), function(j) as.double((xyz[, j] / w - context$ranges[[j]][1L]) / diff(context$ranges[[j]])))
-  names(out) <- c("x", "y", "z")
-  out
+  if (ncol(xyz) == 3L) xyz <- cbind(xyz, 1)
+  if (any(xyz[, 4L] < 0) || any(rowSums(abs(xyz)) == 0)) {
+    stop("A space model must return nonzero homogeneous points with w >= 0.", call. = FALSE)
+  }
+  xyz
+}
+
+# Euclidean model coordinates, for steps that need finite points.
+space_model_xyz_3d <- function(X, space, model) {
+  homogeneous_xyz_3d(space_model_homogeneous_3d(X, space, model))
+}
+
+# The sole conversion from a space's model coordinates to packet coordinates:
+# homogeneous panel-box fractions, normalised before any perspective division.
+space_packet_coordinates_3d <- function(X, context) {
+  xyzw <- space_model_homogeneous_3d(X, context$space, context$model)
+  normalise_homogeneous_3d(xyzw[, 1L], xyzw[, 2L], xyzw[, 3L], xyzw[, 4L], context$ranges)
+}
+
+# Euclidean model coordinates of a space packet's vertices.
+packet_model_points_3d <- function(packet, context) {
+  xyz <- scene_vertices_xyz_3d(packet$vertices)
+  sweep(sweep(xyz, 2L, vapply(context$ranges, diff, numeric(1)), "*"), 2L, vapply(context$ranges, `[`, numeric(1), 1L), "+")
 }
 
 bind_space_3d <- function(spec, panel_params) {
@@ -107,13 +125,14 @@ space_subdivision_3d <- function(context) {
       if (ncol(out) != ncol(X)) stop("Space geodesic() changed canonical dimension.", call. = FALSE)
       out
     },
-    map = function(X) context$frame$map(do.call(cbind, space_packet_coordinates_3d(X, context))),
-    metric = function(xyz) frame_positions_3d(xyz, context$camera, basis)[, 1:2, drop = FALSE])
+    map = function(X) frame_map_homogeneous_3d(context$frame, do.call(cbind, space_packet_coordinates_3d(X, context))),
+    metric = function(xyzw) screen_positions_homogeneous_3d(xyzw, context$camera, basis))
 }
 
 space_packet_3d <- function(packet, context) {
   if (!length(packet$vertices$x)) return(packet)
-  points <- space_canonical_3d(space_input_3d(as.data.frame(packet$vertices), context), context)
+  xyz <- scene_vertices_xyz_3d(packet$vertices)
+  points <- space_canonical_3d(space_input_3d(data.frame(x = xyz[, 1L], y = xyz[, 2L], z = xyz[, 3L]), context), context)
   sampler <- space_subdivision_3d(context)
   sampler$linear <- sampler$projective
   packet <- munch_packet_3d(sampler, packet, clip = FALSE, coordinates = points)
@@ -173,7 +192,8 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
   offsets <- cumsum(c(1L, head(counts, -1L)))
   blocks <- list(); out_kinds <- list(); out_counts <- list(); starts <- list(); ends <- list()
   add <- function(d, xyz, kind, sizes, start = rep(TRUE, length(sizes)), end = rep(TRUE, length(sizes))) {
-    d[c("x", "y", "z")] <- as.data.frame(xyz)
+    d[c("x", "y", "z")] <- as.data.frame(xyz[, 1:3, drop = FALSE])
+    d$.w <- if (ncol(xyz) == 4L) xyz[, 4L] else rep(1, nrow(d))
     blocks[[length(blocks) + 1L]] <<- d
     out_kinds[[length(out_kinds) + 1L]] <<- rep(kind, length(sizes))
     out_counts[[length(out_counts) + 1L]] <<- sizes

@@ -77,8 +77,7 @@ spherical_clip_polygon_3d <- function(X,weights,extent) {
 
 projective_face_normals_3d <- function(packet,context,transport) {
   if(!length(packet$faces$offset)) return(packet)
-  P <- do.call(cbind,packet$vertices[c("x","y","z")])
-  P <- sweep(sweep(P,2L,vapply(context$ranges,diff,numeric(1)),"*"),2L,vapply(context$ranges,`[`,numeric(1),1L),"+")
+  P <- packet_model_points_3d(packet,context)
   normal <- t(vapply(seq_along(packet$faces$offset),function(i) {
     vertices <- packet$corners$vertex[seq.int(packet$faces$offset[i],length.out=packet$faces$count[i])]
     K <- P[vertices,,drop=FALSE]

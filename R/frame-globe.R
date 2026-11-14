@@ -50,7 +50,7 @@ FrameGlobe <- ggplot2::ggproto("FrameGlobe", Frame3D,
   map = function(self, xyz) {
     d <- sweep(sweep(xyz, 2L, vapply(self$ranges, diff, numeric(1)), "*"), 2L, vapply(self$ranges, `[`, numeric(1), 1L), "+")
     X <- self$space$to_canonical(as.data.frame(stats::setNames(as.data.frame(d), c("x", "y", "z"))), "lonlat")
-    do.call(cbind, space_packet_coordinates_3d(X, list(space = self$space, model = "embedded", ranges = self$model_ranges)))
+    homogeneous_xyz_3d(do.call(cbind, space_packet_coordinates_3d(X, list(space = self$space, model = "embedded", ranges = self$model_ranges))))
   },
   panes = function() list(), edges = function() list(),
   bounds = function() cube_edges_3d()$corners,

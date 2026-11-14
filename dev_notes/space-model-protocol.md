@@ -13,7 +13,7 @@ in `Coord3D$distance()`. The space's own distance is in intrinsic units.
   numeric row matrix. All input columns are available, including additional
   ambient coordinates supplied by a specialized stat or emitter.
 - `from_canonical(X, model)`: canonical points to three model coordinates,
-  or four homogeneous coordinates with unit w under schema 1.
+  or four homogeneous coordinates (x, y, z, w) with w >= 0.
 - `model_ranges(model, panel_params)`: named x/y/z intervals in model units.
   This can fix a ball's bounds independently of the trained input chart.
 - `distance(X, Y)`: one finite nonnegative intrinsic distance per paired row.
@@ -33,7 +33,7 @@ as model-space geometry keeps its explicit placement.
 
 `space_packet_coordinates_3d()` is the sole adapter from space output into
 packet coordinates. It checks matrix shapes, normalizes with model bounds
-and rejects non-unit w. Frame mapping follows the adapter. This also handles
+and keeps homogeneous w. Frame mapping follows the adapter. This also handles
 coordinate projection helpers and point/text anchors.
 
 ## Subdivision and rendering
@@ -54,7 +54,7 @@ for arbitrary user-supplied curves.
 
 Numeric paint attributes interpolate by geodesic parameter (barycentric
 weights on faces); colour channels interpolate in sRGB. Primitive paint
-remains piecewise constant in schema 1. Discrete attributes and source
+remains piecewise constant. Discrete attributes and source
 identities follow the first corner. Input-chart polygon triangulation retains
 the existing planar rings and holes contract. Canonical surface generators
 can supply triangles directly.
@@ -67,17 +67,25 @@ Specialized spaces can supply their own frame and guides in later coordinates.
 Perspective error evaluation requires sampled points in front of the eye;
 chart singularities and ambiguous geodesics must be handled by the space.
 
-## Schema 2 handoff
+## Homogeneous output
 
-`space_packet_coordinates_3d(..., homogeneous = TRUE)` is the named path
-that delegates to `normalise_homogeneous_3d(x, y, z, w, ranges)`. It is
-deliberately inactive in schema-1 emission. Activating it requires #16's
-constructor and homogeneous pipeline to land first, then carrying w through
-the primitive builder, frame mapping, packet remunching and projection/error
-measurement. Ideal vertices, segments meeting infinity, and unbounded faces
-must be tested through clipping in both backends. No scene-contract or
-native-engine files are changed by #13. Keep #13 open until this handoff is
-implemented and verified.
+`from_canonical()` may return four homogeneous columns (x, y, z, w), w >= 0.
+`space_packet_coordinates_3d()` normalises them with
+`normalise_homogeneous_3d()` and the packet keeps w: the primitive builder
+reads it from the internal `.w` column, affine frames map homogeneous rows
+without division (`frame_map_homogeneous_3d()`), and `munch_packet_3d()`
+keeps homogeneous rows. Projective models return (X, X0) for Klein, (X,
+X0 + 1) for Poincare and (X1:3, 1 - X4) for stereographic S^3, so box
+clipping is the engine's homogeneous clip. Subdivision measures screen error
+after the camera pre-transform and before division
+(`screen_positions_homogeneous_3d()`); rows at or behind infinity count as
+infinite error. Steps that need Euclidean model points use
+`space_model_xyz_3d()` or `packet_model_points_3d()`.
+
+Ideal points of H^3 are canonical future null vectors; Klein and Poincare
+inputs accept boundary points. Geodesics with an ideal endpoint follow the
+projective line. A space whose image of an edge passes through infinity
+emits the ideal point (w = 0) as an explicit corner.
 
 ## Validation
 
@@ -86,7 +94,7 @@ using great circles, embedded and longitude/latitude charts. Tests cover
 intrinsic distance, slerp, reverse-edge equality, screen chord error, depth
 budget errors, attributes, missing rows, paths/segments, filled spherical
 triangles, shared boundaries, draw-time camera changes, four-dimensional
-canonical points, projective models, custom packets, and the schema-2 guard.
+canonical points, projective models, custom packets, and homogeneous output (`test-integration-homogeneous-spaces.R`).
 Vector and raster rendering use ragg PNG devices.
 
 The audit in this lane compared serialized Euclidean path, point and segment

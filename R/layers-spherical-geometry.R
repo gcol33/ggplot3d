@@ -52,11 +52,7 @@ SpaceSpherical3D <- ggplot2::ggproto("SpaceSpherical3D",Space3D,
     r <- rowSums(P^2)
     cbind(2*P/(1+r),(r-1)/(1+r))
   },
-  from_canonical=function(X,model) {
-    den <- if(model=="stereographic") 1-X[,4L] else X[,4L]
-    if(any(den<=0)) stop("Projection pole requires clipping before division.",call.=FALSE)
-    X[,1:3,drop=FALSE]/den
-  },
+  from_canonical=function(X,model) cbind(X[,1:3,drop=FALSE],if(model=="stereographic") 1-X[,4L] else X[,4L]),
   distance=function(X,Y) sphere_angle_3d(X,Y),
   geodesic=function(X,Y,s) sphere_slerp_3d(X,Y,s),
   act=function(g,X) X%*%t(check_so4_3d(g)),
@@ -179,7 +175,7 @@ emit_hopf_fibre_3d <- function(data,params,panel_params) {
     X <- space_canonical_3d(data[rows,,drop=FALSE],context)
     for(path in space_path_samples_3d(X,context)) {
       d <- space_attributes_3d(data,cbind(rows[path$segment],rows[path$segment+1L]),cbind(1-path$s,path$s))
-      model <- path$model
+      model <- model_points_3d(path$model)
       xyz <- sweep(sweep(model,2L,vapply(context$ranges,diff,numeric(1)),"*"),2L,vapply(context$ranges,`[`,numeric(1),1L),"+")
       d[c("x","y","z")] <- as.data.frame(xyz)
       closed <- max(abs(xyz[1L,]-xyz[nrow(xyz),]))<1e-10
