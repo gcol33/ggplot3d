@@ -6,6 +6,11 @@
   sees, so tubes stay round whatever the box proportions, in the vector,
   raster and hybrid backends (#36).
 
+* `view_3d()` honours `alpha_mode = "surface"`: a depth pass per sheet keeps
+  the nearest fragment of each translucent sheet before the weighted blended
+  transparency accumulates it, so a sheet folding over itself does not darken
+  and nested isosurfaces show through each other (#58).
+
 * The raster and hybrid backends honour `alpha_mode = "surface"`: each sample
   keeps the nearest fragment of every translucent sheet and composites the
   sheets front to back in linear light, so a sheet folding over itself does

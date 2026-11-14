@@ -60,7 +60,8 @@ behind its nearer pieces do not. A sheet of several fill colours needs a
 device with Porter-Duff groups and alpha masks (ragg, cairo_pdf, svg);
 other devices, pdf() among them, paint it as \code{"face"}. The raster and
 hybrid backends keep, per sample, the nearest piece of each sheet and
-composite the sheets in depth order, with any fill colours. The layers
+composite the sheets in depth order, with any fill colours; so does the
+\code{\link[=view_3d]{view_3d()}} viewer. The layers
 that draw surfaces (\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()}}, \code{\link[=stat_parametric_3d]{stat_parametric_3d()}},
 \code{\link[=geom_mesh_3d]{geom_mesh_3d()}} and others) accept it too.}
 

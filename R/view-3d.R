@@ -58,7 +58,7 @@
 #'   capabilities.
 #'   Each panel holds its rectangle in the frame, scene and furniture
 #'   (schema-1 geometry whose table columns are base64 little-endian arrays,
-#'   with mapped materials), axes, bounds, camera, framing, viewport, light,
+#'   with mapped materials and the alpha_mode sheet key of every face), axes, bounds, camera, framing, viewport, light,
 #'   background, layers (the source rows, keys and tooltips of its
 #'   primitives) and, with `path`, the sampled camera views. Geometry is
 #'   transferred once; camera interaction and playback stay in the browser.
@@ -66,6 +66,11 @@
 #'   uses a depth buffer. Transparent geometry uses
 #'   weighted blended order-independent transparency in linear light, an
 #'   approximation requiring WebGL 2's `EXT_color_buffer_float` extension.
+#'   Faces drawn with `alpha_mode = "surface"` enter it once per sheet: a
+#'   depth pass per sheet keeps only the nearest fragment of each sheet, so a
+#'   sheet folding over itself does not darken while other sheets show
+#'   through it. Sheets whose screen extents do not overlap share a pass;
+#'   past 32 passes, the remaining sheets blend face by face.
 #'   Strokes and markers widen to their physical size
 #'   in the vertex shader, and face lighting uses the same linear-light colour
 #'   calculation as static output. Text uses plain browser text, with
@@ -416,12 +421,17 @@ view_packet_3d <- function(packet) {
       fontsize = get("fontsize", get("size", 3.88) * 72.27 / 25.4),
       family = get("family", "sans-serif"), fontface = get("fontface", 1),
       anchor = get(".anchor", FALSE),
+      alpha_mode = get("alpha_mode", "face"),
       dash = dash)
   })
+  face_styles <- styles[match(packet$faces$style_id, styles$style_id), , drop = FALSE]
+  sheet <- as.integer(surface_sheets_3d(face_styles, packet$faces$layer_id, packet$faces$opacity))
   packet$styles <- NULL
   packet$materials <- unname(materials)
   for (table in names(scene_schemas())) packet[[table]] <- lapply(packet[[table]], view_column_3d)
-  unclass(packet)
+  packet <- unclass(packet)
+  packet$face_sheet <- view_column_3d(sheet)
+  packet
 }
 
 # A numeric column as a base64 typed array: little-endian float32 for

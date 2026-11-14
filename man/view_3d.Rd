@@ -68,7 +68,7 @@ moves), link_group (the group name, or NULL), selection settings and
 capabilities.
 Each panel holds its rectangle in the frame, scene and furniture
 (schema-1 geometry whose table columns are base64 little-endian arrays,
-with mapped materials), axes, bounds, camera, framing, viewport, light,
+with mapped materials and the alpha_mode sheet key of every face), axes, bounds, camera, framing, viewport, light,
 background, layers (the source rows, keys and tooltips of its
 primitives) and, with \code{path}, the sampled camera views. Geometry is
 transferred once; camera interaction and playback stay in the browser.
@@ -102,6 +102,11 @@ Requires htmlwidgets and a browser with WebGL 2. Opaque geometry
 uses a depth buffer. Transparent geometry uses
 weighted blended order-independent transparency in linear light, an
 approximation requiring WebGL 2's \code{EXT_color_buffer_float} extension.
+Faces drawn with \code{alpha_mode = "surface"} enter it once per sheet: a
+depth pass per sheet keeps only the nearest fragment of each sheet, so a
+sheet folding over itself does not darken while other sheets show
+through it. Sheets whose screen extents do not overlap share a pass;
+past 32 passes, the remaining sheets blend face by face.
 Strokes and markers widen to their physical size
 in the vertex shader, and face lighting uses the same linear-light colour
 calculation as static output. Text uses plain browser text, with

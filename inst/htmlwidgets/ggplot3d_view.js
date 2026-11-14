@@ -14,6 +14,7 @@
   const FACE = 0, STROKE = 1, MARKER = 2, TEXT = 3, DISC = 4, KINDS = [FACE, STROKE, MARKER, TEXT, DISC];
   const DRAW_KINDS = [FACE, STROKE, MARKER, DISC];
   const INSTANCED = new Set([DISC]);
+  const MAX_SHEET_PASSES = 32;
 
   // Table columns arrive as base64 little-endian typed arrays.
   function column(c) {
@@ -256,8 +257,20 @@
     return p;
   }
 
-  // Weighted blended transparency accumulates linear-light colour and alpha
-  // weights separately from the product of fragment transmittances.
+  // Weighted blended transparency (McGuire and Bavoil 2013) accumulates
+  // linear-light colour and alpha weights separately from the product of
+  // fragment transmittances.
+  //
+  // Faces of an alpha_mode = "surface" sheet count once per pixel: only the
+  // nearest fragment of each sheet enters the accumulation, as in the static
+  // backends. A sheet pass copies the opaque depth into a second depth buffer,
+  // draws the sheet's faces depth-only with a LESS test, which leaves the
+  // nearest sheet depth where the sheet is in front of the opaque scene, and
+  // accumulates the same faces with an EQUAL test against it: a one-layer
+  // depth peel per sheet (Everitt 2001; Bavoil and Myers 2008). The same
+  // program and vertices write and test the depth, so the nearest fragment
+  // passes exactly, and the rasteriser's fill rule keeps shared edges from
+  // passing twice. Sheets whose screen boxes do not overlap share one pass.
   class Transparency {
     constructor(gl) {
       this.gl = gl;
@@ -265,6 +278,8 @@
       this.depth = gl.createRenderbuffer();
       this.targets = [gl.RGBA8, gl.RGBA8, gl.RGBA16F, gl.RGBA8].map(format =>
         ({format, framebuffer: gl.createFramebuffer(), texture: gl.createTexture()}));
+      this.sheetDepth = gl.createRenderbuffer();
+      this.sheetTargets = [null, 2, 3].map(texture => ({texture, framebuffer: gl.createFramebuffer()}));
       this.vao = gl.createVertexArray();
       this.program = shaderProgram(gl, `#version 300 es
         void main() { vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Position = vec4(p*2.0-1.0, 0.0, 1.0); }`,
@@ -299,7 +314,26 @@
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depth);
         if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error('The transparency framebuffer is unavailable.');
       });
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.sheetDepth); gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, width, height);
+      this.sheetTargets.forEach(t => {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, t.framebuffer);
+        if (t.texture != null) gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.targets[t.texture].texture, 0);
+        else gl.drawBuffers([gl.NONE]);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.sheetDepth);
+        if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) throw Error('The sheet framebuffer is unavailable.');
+      });
     }
+    // Starts a sheet pass: the opaque depth becomes the sheet depth, bound for
+    // the depth-only draw. bindSheet(1) and bindSheet(2) then select the
+    // accumulation and transmittance targets tested against it.
+    startSheet() {
+      const gl = this.gl;
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.targets[3].framebuffer);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.sheetTargets[0].framebuffer);
+      gl.blitFramebuffer(0, 0, this.width, this.height, 0, 0, this.width, this.height, gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.sheetTargets[0].framebuffer);
+    }
+    bindSheet(pass) { this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.sheetTargets[pass].framebuffer); }
     bind(index, clear) {
       const gl = this.gl;
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.targets[index].framebuffer);
@@ -321,6 +355,8 @@
     release() {
       const gl = this.gl;
       this.targets.forEach(t => { gl.deleteFramebuffer(t.framebuffer); gl.deleteTexture(t.texture); });
+      this.sheetTargets.forEach(t => gl.deleteFramebuffer(t.framebuffer));
+      gl.deleteRenderbuffer(this.sheetDepth);
       gl.deleteRenderbuffer(this.depth); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.program);
     }
   }
@@ -375,6 +411,7 @@
     ['vertices','corners','faces','polylines','markers','text','footprints','footprint_vertices'].forEach(name => {
       Object.keys(packet[name]).forEach(key => { packet[name][key] = column(packet[name][key]); });
     });
+    const sheet = packet.face_sheet = column(packet.face_sheet);
     const vx = packet.vertices.x, vy = packet.vertices.y, vz = packet.vertices.z, corner = packet.corners.vertex;
     const result = [];
     ['faces', 'polylines', 'markers', 'text'].forEach((name, kind) => {
@@ -388,7 +425,7 @@
           points.push([vx[v], vy[v], vz[v]]); glyph.push(glyphs.get(v+1));
         }
         const p = {kind, points, material, opacity: t.opacity[i], partition: t.partition[i], furniture, row: i, table: t, packet,
-          primitiveId: t.primitive_id[i], layer: t.layer_id[i], source: t.source_row[i]};
+          primitiveId: t.primitive_id[i], layer: t.layer_id[i], source: t.source_row[i], sheet: kind === FACE ? sheet[i] || 0 : 0};
         if (glyph.some(Boolean)) p.glyph = glyph;
         if (kind === FACE) p.normal = material.normal || cross(sub(points[1], points[0]), sub(points[2], points[0]));
         result.push(p);
@@ -709,14 +746,20 @@
           return out;
         });
         const translucent = V.translucent.concat(furniture.filter(p => p.translucent));
+        const batches = sheetBatches(V, translucent), isolated = new Set(batches.flat());
         V.runs = [0, 1, 2].map(part => {
           const runs = [];
           DRAW_KINDS.forEach(kind => {
             const start = fill[kind];
-            translucent.forEach(p => { if (p.partition === part && p.kind === kind) push(p); });
+            translucent.forEach(p => { if (p.partition === part && p.kind === kind && !isolated.has(p)) push(p); });
             if (fill[kind] > start) runs.push({kind, start, count: fill[kind]-start});
           });
           return runs;
+        });
+        V.sheetRuns = batches.map(batch => {
+          const start = fill[FACE];
+          batch.forEach(push);
+          return {kind: FACE, start, count: fill[FACE]-start};
         });
         V.labels = S.prims.filter(p => p.kind === TEXT && !p.furniture && !p.hidden && !p.skip && visiblePoint(V, p.points[0]) &&
           (p.partition !== 1 || !anchorHidden(V, p.points[0])));
@@ -728,6 +771,37 @@
           uploadOrder(g, 'frame', g.frameData, fill[k], gl.STREAM_DRAW);
         });
         if (S.dashed.length) dashPhases(V);
+      }
+      // Sheet passes of the translucent alpha_mode = "surface" faces of the
+      // data partition. Sheets are placed first fit, largest first, into the
+      // first pass whose sheets' screen boxes they do not overlap; a sheet
+      // that finds no room once MAX_SHEET_PASSES passes exist is composited
+      // face by face.
+      function sheetBatches(V, translucent) {
+        const sheets = new Map();
+        translucent.forEach(p => {
+          if (p.kind !== FACE || p.partition !== 1 || !(p.sheet > 0)) return;
+          if (!sheets.has(p.sheet)) sheets.set(p.sheet, []);
+          sheets.get(p.sheet).push(p);
+        });
+        if (sheets.size <= 1) return Array.from(sheets.values());
+        const items = Array.from(sheets.values()).sort((a, b) => b.length-a.length).map(faces => {
+          const box = [Infinity, Infinity, -Infinity, -Infinity];
+          faces.forEach(p => p.points.forEach(v => {
+            const q = project(V, v);
+            box[0] = Math.min(box[0], q[0]); box[1] = Math.min(box[1], q[1]);
+            box[2] = Math.max(box[2], q[0]); box[3] = Math.max(box[3], q[1]);
+          }));
+          return {faces, box};
+        });
+        const overlap = (a, b) => a[0] <= b[2]+1 && b[0] <= a[2]+1 && a[1] <= b[3]+1 && b[1] <= a[3]+1;
+        const passes = [];
+        items.forEach(item => {
+          let pass = passes.find(q => q.boxes.every(b => !overlap(b, item.box)));
+          if (!pass && passes.length < MAX_SHEET_PASSES) passes.push(pass = {boxes: [], faces: []});
+          if (pass) { pass.boxes.push(item.box); pass.faces.push(...item.faces); }
+        });
+        return passes.map(q => q.faces);
       }
       // Dashes continue along a polyline in projected millimetres.
       function dashPhases(V) {
@@ -799,7 +873,7 @@
       }
       function drawPanel(V, pick) {
         const set = pick ? pickPrograms : programs, L = V.layout;
-        const oit = !pick && V.runs.some(runs => runs.length);
+        const oit = !pick && (V.runs.some(runs => runs.length) || V.sheetRuns.length > 0);
         let source = 0;
         if (oit) {
           if (!transparency) transparency = new Transparency(gl);
@@ -827,16 +901,33 @@
             drawRange(V, k, 'frame', V.furnitureRanges[part][k], set);
           });
           gl.depthMask(pick && part === 1);
-          if (oit && V.runs[part].length) {
+          const sheetRuns = part === 1 ? V.sheetRuns : [];
+          const accumulate = pass => {
+            gl.enable(gl.BLEND);
+            if (pass === 1) gl.blendFunc(gl.ONE, gl.ONE);
+            else gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_COLOR);
+          };
+          if (oit && (V.runs[part].length || sheetRuns.length)) {
             [1, 2].forEach(pass => {
               transparency.bind(pass+1, pass === 1 ? 0 : 1);
-              gl.enable(gl.BLEND);
-              if (pass === 1) gl.blendFunc(gl.ONE, gl.ONE);
-              else gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_COLOR);
+              accumulate(pass);
               V.runs[part].forEach(r => drawRange(V, r.kind, 'frame', [r.start, r.count], set, pass));
             });
+            sheetRuns.forEach(r => {
+              transparency.startSheet();
+              gl.disable(gl.BLEND); gl.colorMask(false, false, false, false);
+              gl.depthMask(true); gl.depthFunc(gl.LESS);
+              drawRange(V, r.kind, 'frame', [r.start, r.count], set);
+              gl.colorMask(true, true, true, true); gl.depthMask(false); gl.depthFunc(gl.EQUAL);
+              [1, 2].forEach(pass => {
+                transparency.bindSheet(pass);
+                accumulate(pass);
+                drawRange(V, r.kind, 'frame', [r.start, r.count], set, pass);
+              });
+              gl.depthFunc(gl.LEQUAL);
+            });
             source = transparency.resolve(source);
-          } else V.runs[part].forEach(r => drawRange(V, r.kind, 'frame', [r.start, r.count], set));
+          } else V.runs[part].concat(sheetRuns).forEach(r => drawRange(V, r.kind, 'frame', [r.start, r.count], set));
         });
         if (pick) { gl.disable(gl.DEPTH_TEST); drawRange(V, TEXT, 'frame', V.textRange, set); }
         gl.depthMask(true); gl.disable(gl.SCISSOR_TEST); gl.bindVertexArray(null);
