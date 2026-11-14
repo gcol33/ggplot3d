@@ -63,6 +63,8 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
       out$camera <- if (is.null(view)) coord$panel_camera(i, nrow(self$layout)) else coord$view_camera(view)
       if (identical(coord$model_aspect, "data")) out$camera$aspect <- as.double(vapply(out$ranges, diff, numeric(1)))
       out$coord_params <- coord$config
+      if (!is.null(row$LIGHT) && !isTRUE(self$facet_params$inherit_light))
+        out$coord_params["light"] <- list(self$facet_params$lights[[row$LIGHT]])
       out$frame <- bind_frame_3d(coord$frame %or3d% FrameBox, out)
       out$space_context <- coord$bind_space(out)
       if (!is.null(out$space_context)) out$camera <- space_action_camera_3d(out$camera, out$space_context)
@@ -87,7 +89,10 @@ Layout3D <- ggplot2::ggproto("Layout3D", ggplot2::Layout,
       out
     })
     self$panel_params <- self$facet$setup_panel_params(panels, coord)
-    if (is.environment(self$context$key_context)) self$context$key_context$camera <- self$panel_params[[1L]]$camera
+    if (is.environment(self$context$key_context)) {
+      self$context$key_context$camera <- self$panel_params[[1L]]$camera
+      self$context$key_context$light <- self$panel_params[[1L]]$coord_params$light
+    }
     invisible()
   },
   setup_panel_guides = function(self, guides, layers) {

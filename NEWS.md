@@ -18,6 +18,12 @@
   WebGL texture array; glTF export writes `TEXCOORD_0` and embedded PNG
   textures (#64).
 
+* `facet_views(lights = , combine = "cross" | "pair")` compares panel
+  lighting through the existing light collections. Camera and light keys
+  retain each condition through layout changes; NULL entries select unlit
+  panels. `views = NULL` inherits the coordinate camera. Shared guides use
+  the first panel as their lighting reference (#79).
+
 * Illustrative path-trace surfaces return the shared shading kernel's colour
   at each hit, including back colours and indirect hits. Uniform hatching
   draws both requested families, and screen cross-hatching repeats each

@@ -10,7 +10,9 @@ facet_views(
   nrow = NULL,
   ncol = NULL,
   labeller = "label_value",
-  strip.position = "top"
+  strip.position = "top",
+  lights = NULL,
+  combine = c("cross", "pair")
 )
 }
 \arguments{
@@ -19,7 +21,8 @@ facet_views(
 names or lists of camera arguments such as \code{camera_3d("front")} or
 \code{list(azimuth = 30, elevation = 20)}. Camera arguments a view leaves out
 come from \code{\link[=coord_3d]{coord_3d()}}. Names label the panels; unnamed preset entries
-are labelled by the preset name.}
+are labelled by the preset name.
+\code{NULL} uses the coordinate's camera.}
 
 \item{layout}{Panel placement: \code{"wrap"} fills a grid row by row,
 \code{"third_angle"} and \code{"first_angle"} place the principal views by the
@@ -30,6 +33,15 @@ projection method.}
 \item{labeller, strip.position}{Panel strip labeller and position, as in
 \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}. Use \code{theme(strip.text = element_blank())} for a
 drawing without view names.}
+
+\item{lights}{NULL inherits coordinate lighting. A named list of lights
+from \code{\link[=lights_3d]{lights_3d()}}, \code{\link[=light_3d]{light_3d()}} or the individual light constructors
+supplies lighting conditions; a NULL list entry selects an unlit panel.}
+
+\item{combine}{\code{"cross"} visits the lights in order for each camera;
+\code{"pair"} pairs the specifications, broadcasting a singleton. Shared
+guides use the first panel's camera and lighting as their reference.
+Engineering layouts accept one lighting condition.}
 }
 \value{
 A ggplot2 Facet.
@@ -54,7 +66,7 @@ positions and views in one column their horizontal ones, so an edge seen in
 two adjacent views lines up across them.
 
 The layers and their statistics are computed once; the panels differ only
-in their camera. The plot's layer data therefore all belong to the first
+in their camera and lighting. The plot's layer data therefore all belong to the first
 panel.
 }
 \examples{
@@ -67,6 +79,9 @@ p + facet_views()
 p + facet_views(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
 p + facet_views(c("front", "top", "right", iso = "isometric"), layout = "first_angle")
 p + facet_views(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
+p + facet_views(views = NULL, lights = list(
+  left = lights_3d(light_directional(c(-1, 1, 2))),
+  right = lights_3d(light_directional(c(1, 1, 2)))))
 }
 \seealso{
 \code{\link[=camera_3d]{camera_3d()}} for the named views, \code{\link[=view_3d]{view_3d()}} with \code{link} to turn

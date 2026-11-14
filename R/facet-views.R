@@ -18,7 +18,7 @@
 #' two adjacent views lines up across them.
 #'
 #' The layers and their statistics are computed once; the panels differ only
-#' in their camera. The plot's layer data therefore all belong to the first
+#' in their camera and lighting. The plot's layer data therefore all belong to the first
 #' panel.
 #' @param views Views to draw, in panel order: a character vector of
 #'   [camera_3d()] preset names, or a named list whose entries are preset
@@ -26,6 +26,14 @@
 #'   `list(azimuth = 30, elevation = 20)`. Camera arguments a view leaves out
 #'   come from [coord_3d()]. Names label the panels; unnamed preset entries
 #'   are labelled by the preset name.
+#'   `NULL` uses the coordinate's camera.
+#' @param lights NULL inherits coordinate lighting. A named list of lights
+#'   from [lights_3d()], [light_3d()] or the individual light constructors
+#'   supplies lighting conditions; a NULL list entry selects an unlit panel.
+#' @param combine `"cross"` visits the lights in order for each camera;
+#'   `"pair"` pairs the specifications, broadcasting a singleton. Shared
+#'   guides use the first panel's camera and lighting as their reference.
+#'   Engineering layouts accept one lighting condition.
 #' @param layout Panel placement: `"wrap"` fills a grid row by row,
 #'   `"third_angle"` and `"first_angle"` place the principal views by the
 #'   projection method.
@@ -46,22 +54,61 @@
 #' p + facet_views(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
 #' p + facet_views(c("front", "top", "right", iso = "isometric"), layout = "first_angle")
 #' p + facet_views(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
+#' p + facet_views(views = NULL, lights = list(
+#'   left = lights_3d(light_directional(c(-1, 1, 2))),
+#'   right = lights_3d(light_directional(c(1, 1, 2)))))
 #' @export
 facet_views <- function(views = c("front", "top", "right", "isometric"),
                         layout = c("wrap", "third_angle", "first_angle"),
-                        nrow = NULL, ncol = NULL, labeller = "label_value", strip.position = "top") {
+                        nrow = NULL, ncol = NULL, labeller = "label_value", strip.position = "top",
+                        lights = NULL, combine = c("cross", "pair")) {
   layout <- match.arg(layout)
-  views <- views_spec_3d(views)
+  inherit_view <- is.null(views)
+  views <- if (inherit_view) list(camera = list()) else views_spec_3d(views)
+  inherit_light <- is.null(lights)
+  lights <- views_lights_3d(lights)
+  if (layout != "wrap" && length(lights) > 1L)
+    stop("Engineering layouts accept one lighting condition; use layout = 'wrap' for multiple lights.", call. = FALSE)
+  specification <- views_conditions_3d(views, lights, match.arg(combine), inherit_view, inherit_light, layout)
   for (dim in list(nrow = nrow, ncol = ncol)) {
     if (!is.null(dim) && !(is.numeric(dim) && length(dim) == 1L && is.finite(dim) && dim >= 1 && dim == trunc(dim)))
       stop("nrow and ncol must be NULL or one positive whole number.", call. = FALSE)
   }
   strip.position <- match.arg(strip.position, c("top", "bottom", "left", "right"))
   ggplot2::ggproto(NULL, FacetViews, shrink = TRUE,
-    params = list(views = views, layout = layout, nrow = nrow, ncol = ncol,
+    params = list(views = views, lights = lights, inherit_light = inherit_light, specification = specification,
+      layout = layout, nrow = nrow, ncol = ncol,
       facets = ggplot2::vars(view = !!as.name("view")), labeller = labeller, strip.position = strip.position,
       free = list(x = FALSE, y = FALSE), space_free = list(x = FALSE, y = FALSE),
       draw_axes = list(x = FALSE, y = FALSE), axis_labels = list(x = TRUE, y = TRUE)))
+}
+
+views_lights_3d <- function(lights) {
+  if (is.null(lights)) return(list(inherit = NULL))
+  if (!is.list(lights) || !length(lights) || inherits(lights, c("ggplot3d_light", "ggplot3d_lights")))
+    stop("lights must be a nonempty list of lighting conditions.", call. = FALSE)
+  labels <- names(lights) %or3d% rep("", length(lights))
+  if (anyNA(labels)) stop("Light names must be nonmissing and unique.", call. = FALSE)
+  labels[!nzchar(labels)] <- paste0("light", which(!nzchar(labels)))
+  if (anyDuplicated(labels)) stop("Light names must be unique.", call. = FALSE)
+  stats::setNames(lapply(lights, as_lights_3d), labels)
+}
+
+# Stable camera and light keys, in wrap visitation order.
+views_conditions_3d <- function(views, lights, combine, inherit_view, inherit_light, layout) {
+  nv <- length(views); nl <- length(lights)
+  if (combine == "cross") {
+    out <- expand.grid(LIGHT = seq_len(nl), VIEW = seq_len(nv))
+  } else {
+    n <- max(nv, nl)
+    if (nv != nl && min(nv, nl) != 1L)
+      stop("Paired views and lights need equal lengths or one singleton.", call. = FALSE)
+    out <- data.frame(LIGHT = rep(seq_len(nl), length.out = n), VIEW = rep(seq_len(nv), length.out = n))
+  }
+  view <- names(views)[out$VIEW]; light <- names(lights)[out$LIGHT]
+  out$label <- if (inherit_light || layout != "wrap") view else if (inherit_view) light else paste(view, light, sep = " / ")
+  out$label <- make.unique(out$label)
+  out
 }
 
 # Named list of camera argument lists, one per view.
@@ -124,7 +171,12 @@ views_layout_3d <- function(labels, layout, nrow = NULL, ncol = NULL) {
 
 FacetViews <- ggplot2::ggproto("FacetViews", ggplot2::FacetWrap,
   compute_layout = function(self, data, params) {
-    views_layout_3d(names(params$views), params$layout, params$nrow, params$ncol)
+    spec <- params$specification
+    out <- views_layout_3d(spec$label, params$layout, params$nrow, params$ncol)
+    keys <- match(as.character(out$view), spec$label)
+    out$VIEW <- spec$VIEW[keys]
+    out$LIGHT <- spec$LIGHT[keys]
+    out
   },
   # The scene is the same in every view: all rows belong to the first panel
   # and draw_panel_content() hands its layer grobs to every panel.

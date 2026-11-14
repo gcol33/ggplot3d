@@ -5,13 +5,6 @@ views_block <- function() {
     geom_voxel_3d(fill = "grey80", colour = "grey20")
 }
 
-views_panels <- function(plot, width = 8, height = 8) {
-  grDevices::pdf(tempfile(fileext = ".pdf"), width = width, height = height)
-  on.exit(grDevices::dev.off(), add = TRUE)
-  panels <- unname(motion_panels_3d(grid::grid.force(ggplot2::ggplotGrob(plot))))
-  panels[order(vapply(panels, function(q) q$panel_params$panel_id, integer(1)))]
-}
-
 test_that("principal views follow the third- and first-angle placements of ISO 5456-2", {
   labels <- c("front", "top", "right", "iso")
   third <- views_layout_3d(labels, "third_angle")
