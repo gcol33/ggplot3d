@@ -1,3 +1,6 @@
+#' @include layers-surface.R
+NULL
+
 utils::globalVariables(c("geometry_isosurface_cpp", "geometry_isosurface_methods_cpp", "geometry_hull_cpp", "geometry_kde_cpp", "density"))
 
 GeomStatsSurface3D <- ggplot2::ggproto("GeomStatsSurface3D", GeomSurface3D,

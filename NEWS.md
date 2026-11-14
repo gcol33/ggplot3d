@@ -1,5 +1,7 @@
 # ggplot3d 0.0.0.9000
 
+* `stat_self_intersection_3d()` extracts transverse triangle crossings as stitched paths. `stat_immersed_3d()` supplies Klein bottles, Boy's surface, a cross-cap and a Moebius band; `stat_knot_3d()` generates torus knots and closed tubes.
+
 * `coord_globe_3d()` maps longitude, latitude and height to a sphere, munches great-circle paths and faces, reprojects sf inputs, and draws a graticule and opaque lit globe.
 
 * `coord_3d()` accepts a space, input chart, display model and isometry. Its shared geodesic munch hook adaptively subdivides paths and polygon faces in projected panel coordinates; the Euclidean default preserves existing packets. Homogeneous models and ideal points await scene schema 2.

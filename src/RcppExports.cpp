@@ -148,6 +148,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geometry_intersections_cpp
+Rcpp::DataFrame geometry_intersections_cpp(Rcpp::NumericMatrix xyz, Rcpp::IntegerMatrix faces, Rcpp::IntegerVector parent, double tolerance);
+RcppExport SEXP _ggplot3d_geometry_intersections_cpp(SEXP xyzSEXP, SEXP facesSEXP, SEXP parentSEXP, SEXP toleranceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type faces(facesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type parent(parentSEXP);
+    Rcpp::traits::input_parameter< double >::type tolerance(toleranceSEXP);
+    rcpp_result_gen = Rcpp::wrap(geometry_intersections_cpp(xyz, faces, parent, tolerance));
+    return rcpp_result_gen;
+END_RCPP
+}
 // mesh_process_cpp
 Rcpp::List mesh_process_cpp(Rcpp::NumericMatrix xyz, Rcpp::IntegerMatrix tri, Rcpp::IntegerVector parent, Rcpp::NumericMatrix channels, std::string verb, Rcpp::List args);
 RcppExport SEXP _ggplot3d_mesh_process_cpp(SEXP xyzSEXP, SEXP triSEXP, SEXP parentSEXP, SEXP channelsSEXP, SEXP verbSEXP, SEXP argsSEXP) {
@@ -636,6 +649,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_geometry_triangulate_rings_cpp", (DL_FUNC) &_ggplot3d_geometry_triangulate_rings_cpp, 4},
+    {"_ggplot3d_geometry_intersections_cpp", (DL_FUNC) &_ggplot3d_geometry_intersections_cpp, 4},
     {"_ggplot3d_mesh_process_cpp", (DL_FUNC) &_ggplot3d_mesh_process_cpp, 6},
     {"_ggplot3d_mesh_geodesic_path_cpp", (DL_FUNC) &_ggplot3d_mesh_geodesic_path_cpp, 5},
     {"_ggplot3d_outline_lines_cpp", (DL_FUNC) &_ggplot3d_outline_lines_cpp, 9},

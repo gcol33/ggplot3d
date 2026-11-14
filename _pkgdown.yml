@@ -77,6 +77,12 @@ navbar:
       href: https://github.com/gcol33/ggplot3d
       aria-label: GitHub
 reference:
+- title: Immersed surfaces and knots
+  contents:
+  - stat_self_intersection_3d
+  - stat_immersed_3d
+  - stat_knot_3d
+
 - title: Coordinates and lighting
   contents:
   - coord_3d

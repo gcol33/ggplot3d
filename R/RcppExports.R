@@ -41,6 +41,10 @@ geometry_triangulate_rings_cpp <- function(xy, ring, tolerance = 0, strict = FAL
     .Call(`_ggplot3d_geometry_triangulate_rings_cpp`, xy, ring, tolerance, strict)
 }
 
+geometry_intersections_cpp <- function(xyz, faces, parent, tolerance) {
+    .Call(`_ggplot3d_geometry_intersections_cpp`, xyz, faces, parent, tolerance)
+}
+
 mesh_process_cpp <- function(xyz, tri, parent, channels, verb, args) {
     .Call(`_ggplot3d_mesh_process_cpp`, xyz, tri, parent, channels, verb, args)
 }
