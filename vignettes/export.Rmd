@@ -1,0 +1,260 @@
+---
+title: "Exporting plots and scenes"
+description: "Write model files, animated glTF, semantic SVG, TikZ and Asymptote, or pass scenes to rgl and rayrender."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exporting plots and scenes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+  fig.height = 4.5, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
+  dev.args = list(pointsize = 14))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
+         grey = "#5C6166")
+library(ggplot2)
+library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
+```
+
+Export a panel as a 3D model for another application, or save a projected
+figure with editable paths and source-row information. This article writes
+both kinds of output from small plots. Installation is covered in
+[Get started](ggplot3d.html). Optional bridges use
+[rgl](https://dmurdoch.github.io/rgl/), an R package for interactive 3D scenes,
+and [rayrender](https://www.rayrender.net), an R path tracer.
+
+## Example
+
+The built-in motor-car data record weight in thousands of pounds, fuel
+economy in miles per US gallon and gross horsepower. Model names provide
+hover text and selection keys. Start with a view of these three variables.
+
+```{r cars, fig.alt="Motor cars positioned by weight, fuel economy and horsepower."}
+cars <- data.frame(mtcars, model = rownames(mtcars))
+p <- ggplot(cars, aes(wt, mpg, z = hp, tooltip = model, data_id = model)) +
+  geom_point_3d(size = 3, colour = PAL["blue"]) +
+  coord_3d() + labs(x = "weight", y = "mpg", z = "horsepower")
+p
+```
+
+## Model files
+
+`export_3d()` writes one panel, selected by its index in layout order.
+The extension chooses the format. The following example writes a binary
+glTF model, called a GLB file, to a temporary directory and checks the file.
+
+```{r model-file}
+out <- tempfile("ggplot3d-export-")
+dir.create(out)
+glb <- file.path(out, "cars.glb")
+export_3d(p, glb)
+file.info(glb)$size > 0
+```
+
+The glTF 2.0 format transfers meshes, mapped vertex colours, materials and a
+camera to applications such as Blender. Each layer becomes a named node,
+so it can be selected and restyled after import. The plot's vertical axis
+becomes positive y. An oblique camera is exported as an orthographic camera
+along its viewing direction.
+
+Keep companion files together when copying an export. Text is omitted from
+these model formats, and dashed paths become solid. Panes, grid lines and
+box edges are included with `furniture = TRUE`.
+
+| Extension | Contents | Companion file |
+|---|---|---|
+| `.glb` | glTF scene and buffer in one binary file | None |
+| `.gltf` | glTF scene description | `.bin` buffer |
+| `.ply` | Binary vertices, normals, colours and faces; optional edges | None |
+| `.obj` | Objects, vertices, colours and faces | `.mtl` materials |
+| `.stl` | Binary triangles | None |
+
+Write the other formats with the same call. The temporary directory makes
+every example runnable without choosing an output folder first.
+
+```{r formats}
+formats <- c("gltf", "ply", "obj", "stl")
+for (extension in formats) {
+  export_3d(p, file.path(out, paste0("cars.", extension)))
+}
+list.files(out)
+```
+
+## Scale and primitive choices
+
+Model coordinates follow the aspect-scaled panel box. Its longest side is
+`size` file units long; expanded scale limits also contribute to that box.
+PLY and STL use positive z as the vertical axis. OBJ uses positive y.
+The format's units are interpreted by the importing application.
+
+Paths become closed tubes with their drawn width as diameter, and markers
+become small solids. Width and height set the layout used to convert physical
+line and point sizes relative to the box. Use line and point primitives when
+the receiving format and software support them.
+
+```{r primitive-options}
+export_3d(p, file.path(out, "points.ply"), points = "point")
+export_3d(p, file.path(out, "large.stl"), size = 50,
+  lines = "tube", points = "mesh")
+file.info(file.path(out, c("points.ply", "large.stl")))$size > 0
+```
+
+STL requires tube paths and mesh points because it stores triangles only.
+Exporting a surface to STL transfers its triangles; closing the entire model
+for manufacturing is a separate modelling step. Traced SDF and volume layers
+produce images in the plot. Use their mesh-producing surface counterparts
+when exporting model geometry, as shown in
+[Ray marching and volumes](ray-marching.html).
+
+## Animated glTF
+
+`animate_3d()` writes camera translation, rotation and zoom tracks to glTF.
+The first panel is exported. Start with a three-frame turn of the same motor
+cars; the result records the file and frame count.
+
+```{r animated-camera}
+turn <- animate_3d(p, azimuth = c(-60, -20, 20), frames = 3,
+  file = file.path(out, "turn.glb"), fps = 2, width = 320, height = 320,
+  workers = 1, progress = FALSE)
+turn$frame_count
+```
+
+For changing data, a time column selects the rows drawn in each frame.
+Scales train on all frames, and visibility tracks select the frame's geometry
+in the file. Here the horsepower coordinate increases by twenty in the
+second frame. These changed coordinates are an illustration of animation.
+
+```{r animated-data}
+states <- rbind(transform(cars, step = 1),
+  transform(cars, step = 2, hp = hp + 20))
+changing <- ggplot(states, aes(wt, mpg, z = hp)) +
+  geom_point_3d(size = 3, colour = PAL["blue"]) + coord_3d()
+motion <- animate_3d(changing, time = "step", azimuth = -60,
+  file = file.path(out, "states.gltf"), fps = 2,
+  width = 320, height = 320, workers = 1, progress = FALSE)
+motion$frame_count
+```
+
+Keep a projection type fixed within an animation. Camera paths and frame
+timing are described in [Camera animation and interaction](motion.html).
+
+## rgl meshes and scenes
+
+The rgl bridge dispatches through its own generic functions. Convert the
+plot to a mesh with vertex colours, then inspect the vertex and triangle
+counts. Point primitives can instead populate the mesh's point indices.
+
+```{r rgl-mesh}
+mesh <- rgl::as.mesh3d(p)
+c(vertices = ncol(mesh$vb), triangles = ncol(mesh$it))
+```
+
+Draw with the plot's camera angles and projection through `rgl::plot3d()`.
+This example uses rgl's null device so it also runs during document builds.
+rgl centres the drawn geometry itself, so its framing may differ from the
+original plot. The scene includes text through rgl's native text primitives.
+
+```{r rgl-scene}
+old <- options(rgl.useNULL = TRUE)
+ids <- rgl::plot3d(p)
+length(ids)
+rgl::close3d()
+options(old)
+```
+
+## rayrender scenes
+
+Build a rayrender scene to continue with that package's materials, lights
+and renderer. The bridge creates one diffuse mesh object per nonempty
+geometry layer, with the mapped vertex colours. Paths become tubes and points
+become solids; translucency is omitted.
+
+```{r rayrender-scene}
+scene <- as_rayrender_3d(p)
+nrow(scene)
+```
+
+Setting `render = TRUE` passes the scene and plot camera to rayrender's
+renderer. Additional arguments control that render. The native path tracer
+in [Ray marching and volumes](ray-marching.html) provides diffuse rendering
+directly within a ggplot panel.
+
+## Semantic SVG
+
+The native Scalable Vector Graphics (SVG) writer preserves the connection
+between a visible fragment and its source layer and row. Hovering or focusing
+a fragment highlights fragments from the same source row, and its title
+provides tooltip text. The projected view stays fixed.
+
+```{r semantic-svg}
+svg <- file.path(out, "cars.svg")
+save_svg_3d(p, svg, interactive = TRUE, width = 624, height = 432)
+doc <- xml2::read_xml(svg)
+fragments <- xml2::xml_find_all(doc, ".//*[@data-primitive]")
+head(unique(xml2::xml_attr(fragments, "data-layer")))
+```
+
+Each fragment carries `data-layer`, `data-row` and `data-primitive`
+attributes. Consecutive runs from each layer are grouped in paint order,
+preserving depth ordering across layers. Clipping paths and compound seam
+underlays retain the visibility of the compiled vector scene. Set
+`interactive = FALSE` for a file without the hover script.
+
+The embedded preview below retains hover and keyboard interaction. It uses
+an HTML object containing the exported SVG itself.
+
+```{r svg-preview, echo=FALSE, fig.alt="Semantic SVG of motor cars with linked source-row hover and model-name tooltips."}
+bytes <- readBin(svg, "raw", n = file.info(svg)$size)
+uri <- paste0("data:image/svg+xml;base64,", jsonlite::base64_enc(bytes))
+htmltools::tags$object(data = uri, type = "image/svg+xml",
+  width = "100%", height = 432, `aria-label` = "Motor-car SVG with hover",
+  "Motor-car scatterplot with weight, mpg and horsepower axes.")
+```
+
+Open the SVG directly in a browser or embed it as an HTML object to retain
+its interaction. An SVG displayed through an image element supplies a static
+preview. [Interactive viewing](viewer.html) provides a camera you can rotate.
+
+## TikZ
+
+TikZ is a LaTeX drawing language. Export the whole projected plot as editable
+fill, draw, text and clipping commands. The standalone setting includes a
+document preamble; disable it for code to insert into an existing document.
+
+```{r tikz}
+tikz <- export_code_3d(p, "tikz", file = file.path(out, "cars.tex"))
+cat(paste(head(strsplit(tikz, "\n")[[1]], 5), collapse = "\n"))
+```
+
+Compile the file with `pdflatex cars.tex`. The generated code uses TikZ's
+`svg.path` library, and TeX selects the text font. Raster colourbars and
+annotations become coloured pixel rectangles. The complete figure includes
+all panels, furniture and legends.
+
+## Asymptote and PRC
+
+Asymptote is a language for mathematical graphics. Its exporter writes
+model-space geometry, materials, text and a camera, which you can edit to
+render another view. The panel index selects the scene to export.
+
+```{r asymptote}
+asy <- export_code_3d(p, "asy", panel = 1,
+  file = file.path(out, "cars.asy"), prc = TRUE)
+cat(paste(head(strsplit(asy, "\n")[[1]], 5), collapse = "\n"))
+```
+
+The PRC setting requests embedded 3D content in PDF. Compile with
+`asy -tex pdflatex -f pdf cars.asy` and install the TeX packages media9 and
+ocgx2. A PDF reader with PRC support supplies the interactive view.
+For a static PDF or ordinary SVG through an R graphics device, use
+[Output backends](backends.html).
