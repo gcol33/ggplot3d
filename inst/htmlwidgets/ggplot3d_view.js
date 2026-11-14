@@ -143,7 +143,7 @@
   // their selection state inside the instance record.
   const LAYOUTS = {
     [FACE]: [['aPos', 3, 'f32'], ['aNormal', 3, 'f32'], ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'],
-      ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32']],
+      ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32'], ['aStyle', 4, 'f32'], ['aStyleA', 4, 'f32'], ['aStyleB', 4, 'f32']],
     [STROKE]: [['aA', 3, 'f32'], ['aB', 3, 'f32'], ['aCorner', 4, 'f32'], ['aWidth', 1, 'f32'],
       ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
     [MARKER]: [['aPos', 3, 'f32'], ['aOffset', 2, 'f32'], ['aLocal', 2, 'f32'], ['aShape', 3, 'f32'],
@@ -226,19 +226,21 @@
     // target in aspect-scaled model units.
     [FACE]: [`
       in vec3 aPos; in vec3 aNormal; in vec4 aColour; in uint aId; in vec4 aFlags; in float aState;
-      in vec4 aMaterial; in vec4 aMaterial2;
+      in vec4 aMaterial; in vec4 aMaterial2; in vec4 aStyle; in vec4 aStyleA; in vec4 aStyleB;
       ${VARYINGS}
       out vec3 vNormal; out vec3 vLinear; flat out float vShade; flat out vec4 vMaterial; flat out vec4 vMaterial2;
+      flat out vec4 vStyle; flat out vec4 vStyleA; flat out vec4 vStyleB;
       ${COLOUR_SPACE}
       void main() {
         float d; vec4 p = project(aPos, d);
         gl_Position = clipPosition(p.xy, p.z, p.w);
         vNormal = aNormal/uScale; vLinear = toLinear(aColour.rgb); vShade = aFlags.x;
-        vMaterial = aMaterial; vMaterial2 = aMaterial2;
+        vMaterial = aMaterial; vMaterial2 = aMaterial2; vStyle = aStyle; vStyleA = aStyleA; vStyleB = aStyleB;
         vColour = vec4(aColour.rgb, aColour.a*aState); vModel = aPos; vId = aId; vClip = aFlags.y;
       }`, `
       uniform float uLight, uPerspective; uniform vec3 uRay;
       in vec3 vNormal; in vec3 vLinear; flat in float vShade; flat in vec4 vMaterial; flat in vec4 vMaterial2;
+      flat in vec4 vStyle; flat in vec4 vStyleA; flat in vec4 vStyleB;
       SHADE_GLSL
       void main() {
         clipData();
@@ -246,7 +248,7 @@
         if (vShade > 0.5 && uLight > 0.5 && dot(vNormal, vNormal) > 0.0) {
           vec3 q = (vModel-uTarget)*uScale;
           vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
-          l = clamp(shade(normalize(vNormal), q, v, l, vMaterial, vMaterial2), 0.0, 1.0);
+          l = clamp(shade(normalize(vNormal), q, v, l, vMaterial, vMaterial2, vStyle, vStyleA, vStyleB), 0.0, 1.0);
         }
         emit(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a));
       }`],
@@ -438,7 +440,7 @@
         if (dot(n, n) > 0.0) {
           vec3 q = (m-uTarget)*uScale;
           vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
-          l = clamp(shade(normalize(n), q, v, l, vMaterial, vMaterial2), 0.0, 1.0);
+          l = clamp(shade(normalize(n), q, v, l, vMaterial, vMaterial2, vec4(0.0), vec4(0.0), vec4(0.0)), 0.0, 1.0);
         }
       }
       emitAt(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a), m, gl_FragDepth);
@@ -777,9 +779,10 @@
       else if (p.kind === FACE && p.points.length >= 3) {
         const shade = p.material.shade ? 1 : 0;
         const material = p.material.material || [1, 1, 0, 10], material2 = p.material.material2 || [1, -1, 0, 0];
+        const style = p.material.style || [0, 0, 0, 0], styleA = p.material.style_a || [0, 0, 0, 0], styleB = p.material.style_b || [0, 0, 0, 0];
         p.points.forEach((v, j) => V.add({aPos: v, aNormal: (p.normals && p.normals[j]) || p.normal,
           aColour: p.colours && p.colours[j] ? p.colours[j].concat(p.colour[3]) : p.colour, aId: id, aFlags: [shade, clip, 0, 0],
-          aMaterial: material, aMaterial2: material2}));
+          aMaterial: material, aMaterial2: material2, aStyle: style, aStyleA: styleA, aStyleB: styleB}));
         for (let j = 1; j < p.points.length-1; j++) E.push(p.vertexStart, p.vertexStart+j, p.vertexStart+j+1);
       } else if (p.kind === STROKE && !['blank', '0'].includes(String(p.material.linetype))) {
         const t = p.table, width = t.width_mm[p.row] || p.material.width_mm;
@@ -1161,6 +1164,7 @@
           gl.uniform1fv(prog.uniform('uLightFalloff'), falloff);
           set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray);
           gl.uniform4fv(prog.uniform('uTransfer'), arr(light.transfer)); set3('uToneShadow', arr(light.shadow)); set3('uToneHighlight', arr(light.highlight));
+          set3('uFrameScale', b.scale); set3('uFrameRight', b.orthoRight); set3('uFrameUp', b.orthoUp); set3('uFrameToward', b.forward.map(x => -x));
         }
         const cue = V.data.depth_cue, depth = V.fogDepth || [0, 1];
         const fog = cue && cue.amount > 0 && cue.fog[3] > 0;

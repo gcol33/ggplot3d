@@ -13,7 +13,7 @@ test_that("viewer outline buffers follow camera movement and match static geomet
         "const gl = el.querySelector('canvas').getContext('webgl2');",
         "const upload = gl.bufferSubData.bind(gl); gl.bufferSubData = (target, offset, bytes) => {",
         "if (bytes instanceof Uint8Array) { const d = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);",
-        "for (let i=0; i<bytes.length; i+=68) uploaded.push([0,4,8].map(k => d.getFloat32(i+k, true))); }",
+        "for (let i=0; i<bytes.length; i+=116) uploaded.push([0,4,8].map(k => d.getFloat32(i+k, true))); }",
         "return upload(target, offset, bytes); };"))
       for (azimuth in c(-25, 75)) {
         actual <- b$eval(sprintf(paste0("uploaded = []; el.ggplot3d.setCamera({azimuth: %f});",

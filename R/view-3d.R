@@ -481,7 +481,9 @@ view_quadrics_3d <- function(q, pre) {
 view_max_lights_3d <- 8L
 
 # Kernel material of each viewer style: (ambient, diffuse, specular,
-# shininess) and (specular colour reflectance, linear back colour or -1).
+# shininess), (specular colour reflectance, linear back colour or -1), the
+# style (id, quantised specular, bands or frame, break count) and its two
+# parameter rows.
 view_materials_3d <- function(materials, styles, table) {
   kernel <- kernel_materials_3d(table)
   index <- material_index_3d(styles)
@@ -491,6 +493,9 @@ view_materials_3d <- function(materials, styles, table) {
     back <- kernel$back[k, ]
     materials[[i]]$material <- c(kernel$ambient[k], kernel$diffuse[k], kernel$specular[k], kernel$shininess[k])
     materials[[i]]$material2 <- c(kernel$specular_colour[k], if (all(is.finite(back))) back else c(-1, 0, 0))
+    materials[[i]]$style <- c(kernel$style[k], kernel$steps[k], kernel$bands[k], kernel$breaks[k])
+    materials[[i]]$style_a <- kernel$a[k, ]
+    materials[[i]]$style_b <- kernel$b[k, ]
   }
   materials
 }

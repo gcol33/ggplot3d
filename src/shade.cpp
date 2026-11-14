@@ -1,4 +1,5 @@
 #include "shade/read.h"
+#include "shade/hatch.h"
 
 using namespace ggplot3d::shade;
 
@@ -50,6 +51,22 @@ Rcpp::NumericMatrix shade_transfer_cpp(Rcpp::NumericMatrix linear, Rcpp::Numeric
   Rcpp::NumericMatrix out(n, linear.ncol());
   for (int i = 0; i < n; ++i) for (int k = 0; k < linear.ncol(); ++k) out(i, k) = transfer(linear(i, k), brightness[i], multiply);
   return out;
+}
+
+// Hatching strokes of a mesh (src/shade/hatch.h): positions (n x 3), 0-based
+// triangle vertex indices (m x 3), unit plane normals per family (f x 3),
+// spacing and the ranks drawn per triangle and family (m x f). Returns the
+// polyline vertices with their 1-based line, family and 0-based face.
+// [[Rcpp::export(rng = false)]]
+Rcpp::List hatch_lines_cpp(Rcpp::NumericMatrix xyz, Rcpp::IntegerMatrix faces, Rcpp::NumericMatrix directions,
+                           double spacing, Rcpp::IntegerMatrix levels) {
+  if (xyz.ncol() != 3 || faces.ncol() != 3 || directions.ncol() != 3 || levels.nrow() != faces.nrow() ||
+      levels.ncol() != directions.nrow() || !(spacing > 0)) Rcpp::stop("invalid hatching input");
+  for (int i = 0; i < faces.size(); ++i) if (faces[i] < 0 || faces[i] >= xyz.nrow()) Rcpp::stop("invalid hatching face");
+  const ggplot3d::hatch::Lines out = ggplot3d::hatch::lines(&xyz[0], xyz.nrow(), faces.nrow() ? &faces[0] : nullptr, faces.nrow(),
+    &directions[0], directions.nrow(), spacing, levels.nrow() ? &levels[0] : nullptr);
+  return Rcpp::List::create(Rcpp::Named("x") = out.x, Rcpp::Named("y") = out.y, Rcpp::Named("z") = out.z,
+    Rcpp::Named("line") = out.line, Rcpp::Named("family") = out.family, Rcpp::Named("face") = out.face);
 }
 
 // The shading kernel as GLSL for the viewer.

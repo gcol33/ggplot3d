@@ -117,6 +117,7 @@ Collate:
     'guides-3d.R'
     'guides-colour.R'
     'guides-orientation.R'
+    'hatch-3d.R'
     'knitr-3d.R'
     'layers-annotation.R'
     'layers-arc.R'

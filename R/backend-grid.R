@@ -65,7 +65,8 @@ makeContent.scene_panel_grob <- function(x) {
     vector_marker_limit_3d(packet)
     scene <- scene_compile(packet, furniture$camera, furniture$viewport,
                            stable_partition = isTRUE(x$panel_params$coord_params$stable_partition))
-    rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light)
+    rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light,
+      strokes_only = identical(backend$type, "plotter"))
   }
   fit <- furniture$overlay$fit
   rendered$vp <- grid::viewport(x = grid::unit(fit$origin[1L], "mm"), y = grid::unit(fit$origin[2L], "mm"),
@@ -506,7 +507,7 @@ clip_grob_3d <- function(g, clip = NULL, region = NULL, caps = grid_capabilities
 
 # `regions`: optional list(id, grobs). Fragment i is clipped to grobs[[id[i]]]
 # when id[i] > 0.
-render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
+render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, strokes_only = FALSE) {
   f <- scene$fragments; order <- scene$draw_order
   styles <- scene$styles[match(f$style_id, scene$styles$style_id), , drop = FALSE]
   if (is.null(styles$colour)) styles$colour <- rep(NA_character_, nrow(styles))
@@ -570,7 +571,9 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
     gp <- material_gp_3d(s, f$opacity[rows], kind)
     clip <- NULL
     if (f$mask_count[rows[1L]] > 0L) clip <- mask_path_3d(scene, masks)
-    if (kind == 5L) {
+    if (strokes_only && kind %in% c(1L, 5L)) {
+      g <- grid::nullGrob()
+    } else if (kind == 5L) {
       drawn <- quadric_run_grob_3d(scene, rows, quadric_info, styles, light, c(rows, underlay[[run]]))
       g <- drawn$grob; clip <- drawn$clip
     } else if (kind == 1L) {
@@ -586,6 +589,8 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL) {
           style_value_3d(s, "sheet", 1L), f$opacity[rows[1L]], caps) else
         if (all(seam[rows])) seam_group_grob_3d(x, y, id, fill, gp, f$opacity[rows[1L]], caps) else
           grid::polygonGrob(x, y, id = id, gp = gp)
+      hatched <- hatch_face_grob_3d(scene, rows, styles, light, x, y, id)
+      if (!is.null(hatched)) g <- grid::grobTree(g, hatched)
       later <- underlay[[run]]
       if (length(later)) {
         n <- f$count[later]

@@ -31,22 +31,28 @@ static inline Lights read_lights(const Rcpp::List& x) {
   out.neutral = Rcpp::as<double>(x["neutral"]);
   out.shadow = {shadow[0], shadow[1], shadow[2]};
   out.highlight = {highlight[0], highlight[1], highlight[2]};
+  Rcpp::NumericMatrix frame = x["frame"];
+  if (frame.nrow() != 4 || frame.ncol() != 3) Rcpp::stop("invalid resolved lights");
+  out.scale = row3(frame, 0); out.right = row3(frame, 1); out.up = row3(frame, 2); out.toward = row3(frame, 3);
   return out;
 }
 
 // Materials resolved on the R side (kernel_materials_3d()): one entry per
-// row, after the default material at index 0.
+// row, after the default material at index 0, with their styles.
 static inline std::vector<Material> read_materials(const Rcpp::List& x) {
   std::vector<Material> out(1);
   Rcpp::NumericVector ambient = x["ambient"], diffuse = x["diffuse"], specular = x["specular"],
     shininess = x["shininess"], reflectance = x["specular_colour"];
-  Rcpp::NumericMatrix back = x["back"];
+  Rcpp::NumericMatrix back = x["back"], a = x["a"], b = x["b"];
+  Rcpp::NumericVector style = x["style"], steps = x["steps"], bands = x["bands"], breaks = x["breaks"];
   for (R_xlen_t i = 0; i < ambient.size(); ++i) {
     Material m;
     m.ambient = ambient[i]; m.diffuse = diffuse[i]; m.specular = specular[i];
     m.shininess = shininess[i]; m.specular_colour = reflectance[i];
     m.has_back = std::isfinite(back(i, 0) + back(i, 1) + back(i, 2));
     if (m.has_back) m.back = row3(back, i);
+    m.style = style[i]; m.steps = steps[i]; m.bands = bands[i]; m.breaks = breaks[i];
+    m.a = vec4(a(i, 0), a(i, 1), a(i, 2), a(i, 3)); m.b = vec4(b(i, 0), b(i, 1), b(i, 2), b(i, 3));
     out.push_back(m);
   }
   return out;

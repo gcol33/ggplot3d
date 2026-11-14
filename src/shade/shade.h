@@ -29,7 +29,8 @@
 // scales its chroma down until the colour lies in the linear sRGB cube.
 // shade_level() is the signed response of a light value x (cosine of the
 // angle between the normal and the light) around the neutral cosine c0, as in
-// ggcube's ramp_smooth().
+// ggcube's ramp_smooth(); shade_band() counts the explicit band breaks
+// (cosines, packed in two vec4s) that x lies at or beyond.
 #define GGPLOT3D_SHADE_FUNCTIONS(FN) \
   FN real shade_cbrt(real x) { return x < 0.0 ? -pow(-x, 1.0 / 3.0) : pow(x, 1.0 / 3.0); } \
   FN vec3 shade_oklab(vec3 c) { \
@@ -68,59 +69,108 @@
   FN real shade_overlay1(real e, real i) { return e <= 0.5 ? 2.0 * i * e : 1.0 - 2.0 * (1.0 - i) * (1.0 - e); } \
   FN real shade_level(real x, real c0) { \
     real t = x >= c0 ? (x - c0) / max(1.0 - c0, 1e-9) : (x - c0) / max(1.0 + c0, 1e-9); \
-    return clamp(t, -1.0, 1.0); }
+    return clamp(t, -1.0, 1.0); } \
+  FN real shade_break(vec4 a, vec4 b, int i) { \
+    return i == 0 ? a.x : i == 1 ? a.y : i == 2 ? a.z : i == 3 ? a.w : i == 4 ? b.x : i == 5 ? b.y : i == 6 ? b.z : b.w; } \
+  FN real shade_band(real x, vec4 a, vec4 b, int count) { \
+    real band = 0.0; \
+    for (int i = 0; i < 8; i++) { if (i < count && x <= shade_break(a, b, i) + 1e-6) band = band + 1.0; } \
+    return band; }
 
 // Locals the kernel body reads. Material: ka, kd, ks, sh (strengths and
-// specular exponent), sc (specular colour reflectance). Lights: tm
+// specular exponent), sc (specular colour reflectance), st (style: 0
+// standard, 1 toon, 2 Gooch, 3 normals), ss (1 for a quantised specular
+// spot), nb (number of toon bands, or the normal frame: 0 model, 1 camera,
+// 2 light), nk (number of explicit toon breaks), pa, pb (Gooch cool colour
+// and alpha, warm colour and beta; or the toon break cosines). Lights: tm
 // (transfer: 0 multiply, 1 tint, 2 lightness, 3 tone, 4 overlay, 5 soft),
 // r0, r1 (moves at full shadow and full highlight), c0 (neutral cosine),
-// tsh, thi (tone endpoint colours). xs is a fixed light value in [-1, 1]
-// that replaces n . L for every light when it is at least -1 (swatch
-// sampling), and no specular term is added then.
+// tsh, thi (tone endpoint colours), fs, fr, fu, ft (model scale and camera
+// right, up and toward axes). xs is a fixed light value in [-1, 1] that
+// replaces n . L for every light when it is at least -1 (swatch sampling),
+// and no specular term is added then.
 //
 // Accumulates one light: ambient (amb), diffuse (dif) and Blinn specular
-// (spe) sums, and the weighted signed level (lsum) with its weight (wsum).
+// (spe) sums, the weighted signed level (lsum) and Gooch blend (gsum) with
+// their weight (wsum), and the first light direction (l0).
 #define GGPLOT3D_LIGHT_SUM \
   if (a > 0.5) { amb = amb + c; } else { \
     real x = xs >= -1.0 ? xs : dot(n, L); \
+    real nl = max(x, 0.0); \
+    real lvl = shade_level(x, c0); \
+    if (st > 0.5 && st < 1.5) { \
+      if (nk > 0.5) { \
+        real band = shade_band(x, pa, pb, int(nk + 0.5)); \
+        nl = 1.0 - band / max(nk, 1.0); \
+        lvl = 2.0 * nl - 1.0; \
+      } else { \
+        real nbands = max(nb, 2.0); \
+        nl = min(floor(nl * nbands), nbands - 1.0) / (nbands - 1.0); \
+        real bk = min(floor((lvl + 1.0) * 0.5 * nbands), nbands - 1.0); \
+        lvl = -1.0 + 2.0 * bk / (nbands - 1.0); \
+      } \
+    } \
     real w = dot(c, vec3(0.2126, 0.7152, 0.0722)); \
-    lsum = lsum + w * shade_level(x, c0); wsum = wsum + w; \
-    dif = dif + c * max(x, 0.0); \
+    if (wl < 0.5) { l0 = L; wl = 1.0; } \
+    lsum = lsum + w * lvl; gsum = gsum + w * 0.5 * (1.0 + x); wsum = wsum + w; \
+    dif = dif + c * nl; \
     if (xs < -1.0 && max(dot(n, L), 0.0) > 0.0 && ks > 0.0) { \
       vec3 h = normalize(L + v); \
-      spe = spe + c * pow(max(dot(n, h), 0.0), sh); \
+      real g = pow(max(dot(n, h), 0.0), sh); \
+      if (ss > 0.5) g = g >= 0.5 ? 1.0 : 0.0; \
+      spe = spe + c * g; \
     } \
   }
 
-// The lit colour from the base colour b. Multiply scales b by the ambient
-// and diffuse sums, weighted by ka and kd; tint scales its distance from
-// white. The signed transfers move b by the level (weighted mean over the
-// lights, scaled by kd): OKLab lightness toward 0 or 1 by up to the fraction
-// r0 (shadow) or r1 (highlight), an OKLab mix toward the tone colours by
-// those fractions, or
+// The lit colour from the base colour b. Standard and toon styles pass the
+// ambient and diffuse sums, weighted by ka and kd, through the transfer:
+// multiply scales b, tint scales its distance from white; the signed
+// transfers move b by the level (weighted mean over the lights, scaled by
+// kd): OKLab lightness toward 0 or 1 by up to the fraction r0 (shadow) or r1
+// (highlight), an OKLab mix toward the tone colours by those fractions, or
 // matplotlib's overlay and soft-light blends of the encoded colour with an
 // intensity of 0.5 plus half the move; a move within 1e-7 of zero keeps b
-// exactly. The specular sum adds a highlight whose colour moves from white
-// toward b as sc goes from 1 to 0.
+// exactly. Gooch blends the cool and warm colours (each plus alpha or beta
+// times b) by the mean of (1 + n . L) / 2 (Gooch et al. 1998). The specular
+// sum adds a highlight whose colour moves from white toward b as sc goes from
+// 1 to 0. Normals encode the unit normal in the selected frame as (n + 1) / 2
+// in encoded sRGB and take no light.
 #define GGPLOT3D_LIGHT_FINISH \
   vec3 lit = amb * ka + dif * kd; \
   vec3 sc3 = mix(b, vec3(1.0, 1.0, 1.0), sc); \
   real level = wsum > 0.0 ? clamp(kd * lsum / wsum, -1.0, 1.0) : 0.0; \
   real move = level < 0.0 ? -level * r0 : level * r1; \
   vec3 col = b; \
-  if (tm < 0.5) { col = b * lit; } \
-  else if (tm < 1.5) { col = vec3(1.0, 1.0, 1.0) - (vec3(1.0, 1.0, 1.0) - b) * lit; } \
-  else if (abs(move) <= 1e-7) { col = b; } \
-  else if (tm < 2.5) { vec3 lab = shade_oklab(b); lab.x = move < 0.0 ? lab.x * (1.0 + move) : lab.x + move * (1.0 - lab.x); col = shade_fit(lab); } \
-  else if (tm < 3.5) { col = shade_fit(mix(shade_oklab(b), shade_oklab(level < 0.0 ? tsh : thi), clamp(abs(move), 0.0, 1.0))); } \
-  else { \
-    real i = 0.5 + 0.5 * (level < 0.0 ? -clamp(abs(move), 0.0, 1.0) : clamp(abs(move), 0.0, 1.0)); \
-    vec3 e = shade_encode(b); \
-    vec3 o = tm < 4.5 ? vec3(shade_overlay1(e.x, i), shade_overlay1(e.y, i), shade_overlay1(e.z, i)) : \
-      e * 2.0 * i + e * e * (1.0 - 2.0 * i); \
-    col = shade_decode(o); \
-  } \
-  col = col + sc3 * spe * ks;
+  if (st > 2.5) { \
+    vec3 q = n; \
+    if (nb > 1.5) { \
+      vec3 z = wl > 0.5 ? l0 : v; \
+      vec3 xa = fr - z * dot(fr, z); \
+      if (dot(xa, xa) < 1e-12) xa = fu - z * dot(fu, z); \
+      xa = normalize(xa); \
+      vec3 ya = vec3(z.y * xa.z - z.z * xa.y, z.z * xa.x - z.x * xa.z, z.x * xa.y - z.y * xa.x); \
+      q = vec3(dot(n, xa), dot(n, ya), dot(n, z)); \
+    } else if (nb > 0.5) { q = vec3(dot(n, fr), dot(n, fu), dot(n, ft)); } \
+    else { q = normalize(n * fs); } \
+    col = shade_decode(vec3(0.5 * q.x + 0.5, 0.5 * q.y + 0.5, 0.5 * q.z + 0.5)); \
+  } else { \
+    if (st > 1.5) { \
+      real t = wsum > 0.0 ? gsum / wsum : 0.5; \
+      col = mix(vec3(pa.x, pa.y, pa.z) + b * pa.w, vec3(pb.x, pb.y, pb.z) + b * pb.w, t); \
+    } else if (tm < 0.5) { col = b * lit; } \
+    else if (tm < 1.5) { col = vec3(1.0, 1.0, 1.0) - (vec3(1.0, 1.0, 1.0) - b) * lit; } \
+    else if (abs(move) <= 1e-7) { col = b; } \
+    else if (tm < 2.5) { vec3 lab = shade_oklab(b); lab.x = move < 0.0 ? lab.x * (1.0 + move) : lab.x + move * (1.0 - lab.x); col = shade_fit(lab); } \
+    else if (tm < 3.5) { col = shade_fit(mix(shade_oklab(b), shade_oklab(level < 0.0 ? tsh : thi), clamp(abs(move), 0.0, 1.0))); } \
+    else { \
+      real i = 0.5 + 0.5 * (level < 0.0 ? -clamp(abs(move), 0.0, 1.0) : clamp(abs(move), 0.0, 1.0)); \
+      vec3 e = shade_encode(b); \
+      vec3 o = tm < 4.5 ? vec3(shade_overlay1(e.x, i), shade_overlay1(e.y, i), shade_overlay1(e.z, i)) : \
+        e * 2.0 * i + e * e * (1.0 - 2.0 * i); \
+      col = shade_decode(o); \
+    } \
+    col = col + sc3 * spe * ks; \
+  }
 
 #define GGPLOT3D_STRINGIFY(...) #__VA_ARGS__
 #define GGPLOT3D_XSTRINGIFY(...) GGPLOT3D_STRINGIFY(__VA_ARGS__)
@@ -132,6 +182,11 @@ struct vec3 {
   vec3() = default;
   vec3(real a, real b, real c) : x(a), y(b), z(c) {}
   real operator[](int k) const {return k == 0 ? x : k == 1 ? y : z;}
+};
+struct vec4 {
+  real x = 0, y = 0, z = 0, w = 0;
+  vec4() = default;
+  vec4(real a, real b, real c, real d) : x(a), y(b), z(c), w(d) {}
 };
 static inline vec3 operator+(vec3 a, vec3 b) {return {a.x+b.x, a.y+b.y, a.z+b.z};}
 static inline vec3 operator-(vec3 a, vec3 b) {return {a.x-b.x, a.y-b.y, a.z-b.z};}
@@ -147,6 +202,7 @@ static inline real max(real a, real b) {return a > b ? a : b;}
 static inline real min(real a, real b) {return a < b ? a : b;}
 static inline real clamp(real x, real lo, real hi) {return x < lo ? lo : x > hi ? hi : x;}
 static inline real abs(real x) {return std::fabs(x);}
+static inline real floor(real x) {return std::floor(x);}
 static inline real pow(real a, real b) {return std::pow(a, b);}
 static inline vec3 mix(vec3 a, vec3 b, real t) {return a*(1-t)+b*t;}
 static inline vec3 to_vec3(const std::array<double, 3>& a) {return {a[0], a[1], a[2]};}
@@ -163,20 +219,25 @@ struct Light {
   vec3 vector{0, 0, 1}, colour{1, 1, 1}, ground{0, 0, 0};
   real falloff = 0;
 };
-// Lights with the ambient term and the colour transfer (see the locals above).
+// Lights with the ambient term, the colour transfer (see the locals above),
+// and the frame of normal colouring: model scale and camera axes.
 struct Lights {
   std::vector<Light> list;
   vec3 ambient{0.35, 0.35, 0.35};
   int transfer = 0;
   real r0 = 0, r1 = 0, neutral = 0.7071067811865476;
   vec3 shadow{0, 0, 0}, highlight{1, 1, 1};
+  vec3 scale{1, 1, 1}, right{1, 0, 0}, up{0, 1, 0}, toward{0, 0, 1};
 };
 // Strengths of the ambient, diffuse and specular terms, the specular exponent
-// and colour reflectance, and an optional colour for the back side of faces.
+// and colour reflectance, an optional colour for the back side of faces, and
+// the style with its parameters (see the locals above).
 struct Material {
   real ambient = 1, diffuse = 1, specular = 0, shininess = 10, specular_colour = 1;
   bool has_back = false;
   vec3 back{0, 0, 0};
+  real style = 0, steps = 0, bands = 0, breaks = 0;
+  vec4 a{0, 0, 0, 0}, b{0, 0, 0, 0};
 };
 
 // The lit colour of base colour b at unit normal n, position p, seen along v
@@ -189,10 +250,13 @@ static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, cons
     if (m.has_back) b = m.back;
   }
   const real ka = m.ambient, kd = m.diffuse, ks = m.specular, sh = m.shininess, sc = m.specular_colour;
+  const real st = m.style, ss = m.steps, nb = m.bands, nk = m.breaks;
+  const vec4 pa = m.a, pb = m.b;
   const real tm = lights.transfer, r0 = lights.r0, r1 = lights.r1, c0 = lights.neutral;
   const vec3 tsh = lights.shadow, thi = lights.highlight;
-  vec3 amb = lights.ambient, dif(0, 0, 0), spe(0, 0, 0);
-  real lsum = 0, wsum = 0;
+  const vec3 fs = lights.scale, fr = lights.right, fu = lights.up, ft = lights.toward;
+  vec3 amb = lights.ambient, dif(0, 0, 0), spe(0, 0, 0), l0(0, 0, 1);
+  real lsum = 0, gsum = 0, wsum = 0, wl = 0;
   for (const Light& light : lights.list) {
     const vec3 lv = light.vector, lc = light.colour, lg = light.ground;
     const real lf = light.falloff;
@@ -214,10 +278,12 @@ static inline real transfer(real linear, real brightness, bool multiply) {
 }
 
 // The kernel as a GLSL ES 3.0 function `vec3 shade(vec3 n, vec3 p, vec3 v,
-// vec3 b, vec4 material, vec4 material2)` over uniform light arrays of at
-// most `max_lights` entries; material = (ka, kd, ks, shininess), material2 =
-// (specular colour reflectance, back colour, or a negative red for none),
-// uTransfer = (transfer, r0, r1, neutral cosine).
+// vec3 b, vec4 material, vec4 material2, vec4 style, vec4 pa, vec4 pb)` over
+// uniform light arrays of at most `max_lights` entries; material = (ka, kd,
+// ks, shininess), material2 = (specular colour reflectance, back colour, or a
+// negative red for none), style = (style, quantised specular, bands or normal
+// frame, explicit breaks), pa and pb the style parameters, uTransfer =
+// (transfer, r0, r1, neutral cosine).
 static inline std::string shade_glsl(int max_lights) {
   std::string terms;
 #define GGPLOT3D_TERM(id, name, ...) terms += "case " #id ": { " GGPLOT3D_STRINGIFY(__VA_ARGS__) " } break; ";
@@ -227,16 +293,16 @@ static inline std::string shade_glsl(int max_lights) {
   return std::string("#define real float\n") +
     "uniform int uLightCount, uLightKind[" + count + "]; uniform vec3 uLightVector[" + count + "], uLightColour[" + count +
     "], uLightGround[" + count + "]; uniform float uLightFalloff[" + count + "]; uniform vec3 uAmbient;\n"
-    "uniform vec4 uTransfer; uniform vec3 uToneShadow, uToneHighlight;\n"
+    "uniform vec4 uTransfer; uniform vec3 uToneShadow, uToneHighlight, uFrameScale, uFrameRight, uFrameUp, uFrameToward;\n"
     GGPLOT3D_XSTRINGIFY(GGPLOT3D_SHADE_FUNCTIONS()) "\n"
-    "vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, vec4 material, vec4 material2) {\n"
+    "vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, vec4 material, vec4 material2, vec4 style, vec4 pa, vec4 pb) {\n"
     "  if (dot(n, v) < 0.0) { n = -n; if (material2.y >= 0.0) b = material2.yzw; }\n"
     "  real ka = material.x, kd = material.y, ks = material.z, sh = material.w, sc = material2.x;\n"
-    "  real xs = -2.0;\n"
+    "  real st = style.x, ss = style.y, nb = style.z, nk = style.w, xs = -2.0;\n"
     "  real tm = uTransfer.x, r0 = uTransfer.y, r1 = uTransfer.z, c0 = uTransfer.w;\n"
-    "  vec3 tsh = uToneShadow, thi = uToneHighlight;\n"
-    "  vec3 amb = uAmbient, dif = vec3(0.0), spe = vec3(0.0);\n"
-    "  real lsum = 0.0, wsum = 0.0;\n"
+    "  vec3 tsh = uToneShadow, thi = uToneHighlight, fs = uFrameScale, fr = uFrameRight, fu = uFrameUp, ft = uFrameToward;\n"
+    "  vec3 amb = uAmbient, dif = vec3(0.0), spe = vec3(0.0), l0 = vec3(0.0, 0.0, 1.0);\n"
+    "  real lsum = 0.0, gsum = 0.0, wsum = 0.0, wl = 0.0;\n"
     "  for (int i = 0; i < " + count + "; i++) {\n"
     "    if (i >= uLightCount) break;\n"
     "    vec3 lv = uLightVector[i], lc = uLightColour[i], lg = uLightGround[i]; real lf = uLightFalloff[i];\n"

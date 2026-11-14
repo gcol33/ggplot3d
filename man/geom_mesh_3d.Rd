@@ -25,6 +25,7 @@ geom_mesh_3d(
   alpha_mode = "face",
   shading = "flat",
   material = NULL,
+  hatch = NULL,
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -88,8 +89,11 @@ layers that draw surfaces (\code{\link[=stat_isosurface_3d]{stat_isosurface_3d()
 others) accept it too.}
 
 \item{material}{Surface material from \code{\link[=material_3d]{material_3d()}}: ambient, diffuse
-and specular strengths, shininess and an optional back-side colour. NULL
-reflects ambient and diffuse light fully, with no highlight.}
+and specular strengths, shininess, an optional back-side colour and an
+illustrative style (toon, Gooch, normal colours). NULL reflects ambient
+and diffuse light fully, with no highlight.}
+
+\item{hatch}{Hatching from \code{\link[=hatch_3d]{hatch_3d()}}, or NULL for none.}
 }
 \value{
 A ggplot2 layer.

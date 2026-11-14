@@ -51,18 +51,43 @@ kernel_view_3d <- function(camera) {
 }
 
 # The materials table of a packet as the shading kernel reads it, back
-# colours in linear light (NA for none).
+# colours in linear light (NA for none), with the style id, quantised
+# specular flag, bands (or the normal frame id), explicit break count and the
+# two style parameter rows (Gooch cool colour and alpha, warm colour and
+# beta; or the toon break cosines).
 kernel_materials_3d <- function(materials) {
   if (is.null(materials) || !nrow(materials)) {
     return(list(ambient = numeric(), diffuse = numeric(), specular = numeric(), shininess = numeric(),
-                specular_colour = numeric(), back = matrix(numeric(), 0L, 3L)))
+                specular_colour = numeric(), back = matrix(numeric(), 0L, 3L), style = numeric(), steps = numeric(),
+                bands = numeric(), breaks = numeric(), a = matrix(numeric(), 0L, 4L), b = matrix(numeric(), 0L, 4L)))
   }
-  back <- matrix(NA_real_, nrow(materials), 3L)
+  n <- nrow(materials)
+  back <- matrix(NA_real_, n, 3L)
   given <- !is.na(materials$back)
   if (any(given)) back[given, ] <- linear_rgb_3d(materials$back[given])
+  column <- function(name, default) if (is.null(materials[[name]])) rep(default, n) else materials[[name]]
+  style <- match(column("style", "standard"), material_styles_3d) - 1L
+  bands <- as.double(column("bands", 3L))
+  breaks <- column("breaks", rep(list(numeric()), n))
+  count <- lengths(breaks)
+  a <- b <- matrix(0, n, 4L)
+  gooch <- style == 2L
+  if (any(gooch)) {
+    a[gooch, ] <- cbind(linear_rgb_3d(column("cool", "#0000AA")[gooch]), column("alpha", 0.2)[gooch])
+    b[gooch, ] <- cbind(linear_rgb_3d(column("warm", "#AAAA00")[gooch]), column("beta", 0.6)[gooch])
+  }
+  toon <- which(style == 1L & count > 0L)
+  for (i in toon) {
+    cosines <- c(round(cospi(breaks[[i]] / 180), 15), rep(-2, 8L - count[i]))
+    a[i, ] <- cosines[1:4]; b[i, ] <- cosines[5:8]
+  }
+  normals <- style == 3L
+  bands[normals] <- match(column("normal_space", "model")[normals], c("model", "camera", "light")) - 1
   list(ambient = as.double(materials$ambient), diffuse = as.double(materials$diffuse),
        specular = as.double(materials$specular), shininess = as.double(materials$shininess),
-       specular_colour = as.double(materials$specular_colour), back = back)
+       specular_colour = as.double(materials$specular_colour), back = back, style = as.double(style),
+       steps = as.double(column("specular_steps", FALSE)), bands = bands,
+       breaks = as.double(ifelse(style == 1L, count, 0L)), a = a, b = b)
 }
 
 # Kernel material index of each style row: its material_id, 0 for none.

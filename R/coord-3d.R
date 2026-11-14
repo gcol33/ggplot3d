@@ -25,8 +25,14 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 }
 
 #' Select a 3D rendering backend
-#' @param type Backend: `"vector"`, `"raster"`, `"hybrid"`, `"pathtrace"`, or
-#'   `"raymarch"` (an intrinsic view in a Thurston geometry). A hybrid panel
+#' @param type Backend: `"vector"`, `"raster"`, `"hybrid"`, `"pathtrace"`,
+#'   `"raymarch"` (an intrinsic view in a Thurston geometry) or `"plotter"`.
+#'   The plotter backend is the vector backend drawing strokes only: faces
+#'   and analytic primitives still hide the strokes behind them but are not
+#'   painted, and consecutive visible pieces of one stroke are drawn as one
+#'   path, so an SVG device (`ggplot2::ggsave(device = "svg")`) writes a
+#'   drawing for a pen plotter. Feature lines ([outline_3d()]) and model-space
+#'   hatching ([hatch_3d()]) make line-only figures of surfaces. A hybrid panel
 #'   rasterises the layers created with `raster = TRUE` (an argument of every
 #'   `geom_*_3d()` layer and of [layer_3d()]) into one image at `dpi` and draws
 #'   the other layers, axes, panes and text as vector graphics. Vector
@@ -110,7 +116,7 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
                        quotient = NULL, light_size = 0.1, rasterise = "marked") {
   stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
             is.finite(antialias), antialias >= 1, antialias == trunc(antialias))
-  result <- list(type = match.arg(type, c("vector", "raster", "hybrid", "pathtrace", "raymarch")), dpi = dpi, antialias = as.integer(antialias),
+  result <- list(type = match.arg(type, c("vector", "raster", "hybrid", "pathtrace", "raymarch", "plotter")), dpi = dpi, antialias = as.integer(antialias),
        blend = match.arg(blend, c("linear", "srgb")))
   if (result$type == "hybrid") result$rasterise <- match.arg(rasterise, c("marked", "surfaces", "all"))
   if (result$type == "pathtrace") result <- c(result,

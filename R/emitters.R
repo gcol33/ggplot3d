@@ -181,7 +181,7 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
 }
 
 # Drawing parameters of the geoms that draw triangulated surfaces.
-surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat", material = NULL)
+surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL)
 
 shading_mode_3d <- function(shading) {
   if (!is.character(shading) || length(shading) != 1L || !(shading %in% c("flat", "smooth")))
@@ -402,6 +402,17 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL, sheets = NULL) 
   }
   styles$alpha <- 1
   styles$shade <- isTRUE(params$shade)
+  hatch <- params$hatch
+  if (inherits(hatch, "ggplot3d_hatch") && hatch$space == "screen") {
+    face <- kinds[representatives] == "faces"
+    styles$hatch_angle <- ifelse(face, hatch$angle, NA_real_)
+    styles$hatch_spacing <- hatch$spacing
+    styles$hatch_cross <- hatch$cross
+    styles$hatch_tone <- hatch$tone
+    styles$hatch_colour <- hatch$colour
+    styles$hatch_linewidth <- hatch$linewidth
+    styles$hatch_alpha <- hatch$alpha
+  }
   if (identical(params$render, "splat")) {
     styles$render <- "splat"
     styles$edl <- as.double(params$edl %or3d% 1)

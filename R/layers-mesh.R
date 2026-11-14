@@ -254,7 +254,8 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, position = "identity", ...,
                          vertices = NULL, faces = NULL, shade = TRUE, wireframe = FALSE, hidden = "hide",
                          subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L, curvature = FALSE, crease = NULL,
-                         outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                         outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL, na.rm = FALSE,
+                         show.legend = NA, inherit.aes = TRUE) {
   if (!is.null(vertices) || !is.null(faces)) {
     if (!is.null(data) && !is.null(vertices)) stop("Supply data or vertices/faces.", call. = FALSE)
     data <- mesh_3d(vertices %or3d% data, faces)
@@ -264,8 +265,8 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
     c(list(shade = shade, wireframe = wireframe, hidden = hidden, subdivide = subdivide, remesh = remesh,
       decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, outline = outline,
       alpha_mode = alpha_mode_3d(alpha_mode), shading = shading_mode_3d(shading), material = material_argument_3d(material),
-      na.rm = na.rm), list(...)),
-    show.legend, inherit.aes)
+      hatch = hatch_argument_3d(hatch), na.rm = na.rm), list(...)),
+    material_legend_3d(material, show.legend), inherit.aes)
 }
 
 emit_mesh_3d <- function(data, params, panel_params) {
@@ -283,7 +284,7 @@ emit_mesh_3d <- function(data, params, panel_params) {
     keep <- rowSums(matrix(valid[faces], ncol = 3L)) == 3L & !is.na(data$fill[faces[, 1L]])
     faces <- faces[keep, , drop = FALSE]
     packet <- packet_from_primitives_3d(data, as.vector(t(faces)), rep("faces", nrow(faces)), params, panel_params$panel_id, rep.int(3L, nrow(faces)))
-    return(outline_merge_3d(packet, data, faces, params, panel_params))
+    return(surface_strokes_3d(packet, data, faces, params, panel_params))
   }
   groups <- split(rows, rep(seq_along(counts), counts))
   groups <- Filter(function(r) all(valid[r]), groups)
@@ -298,7 +299,7 @@ emit_mesh_3d <- function(data, params, panel_params) {
   }
   e <- unique_edges_3d(do.call(rbind, edges), data$.vertex, data$.mesh)
   t <- do.call(rbind, triangles)
-  outline_merge_3d(packet_from_faces_edges_3d(data, t, e, params, panel_params), data, t, params, panel_params)
+  surface_strokes_3d(packet_from_faces_edges_3d(data, t, e, params, panel_params), data, t, params, panel_params)
 }
 
 # Triangles (rows of data) of the polygon face on rows r with rings given as

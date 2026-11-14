@@ -205,6 +205,10 @@ shade_transfer_cpp <- function(linear, brightness, multiply) {
     .Call(`_ggplot3d_shade_transfer_cpp`, linear, brightness, multiply)
 }
 
+hatch_lines_cpp <- function(xyz, faces, directions, spacing, levels) {
+    .Call(`_ggplot3d_hatch_lines_cpp`, xyz, faces, directions, spacing, levels)
+}
+
 shade_glsl_cpp <- function(max_lights) {
     .Call(`_ggplot3d_shade_glsl_cpp`, max_lights)
 }

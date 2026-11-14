@@ -11,7 +11,16 @@ material_3d(
   specular = NULL,
   shininess = NULL,
   specular_colour = NULL,
-  back = NULL
+  back = NULL,
+  style = "standard",
+  bands = 3L,
+  breaks = NULL,
+  specular_steps = NULL,
+  cool = "#0000AA",
+  warm = "#AAAA00",
+  alpha = 0.2,
+  beta = 0.6,
+  normal_space = "model"
 )
 }
 \arguments{
@@ -25,6 +34,22 @@ material_3d(
 the preset.}
 
 \item{back}{NULL or one colour for the back side of faces.}
+
+\item{style}{\code{"standard"}, \code{"toon"}, \code{"gooch"} or \code{"normals"}.}
+
+\item{bands}{Number of toon bands, at least two.}
+
+\item{breaks}{NULL or increasing toon band breaks in degrees in (0, 180).}
+
+\item{specular_steps}{Whether the highlight is a flat spot; NULL takes
+\code{TRUE} for toon and \code{FALSE} otherwise.}
+
+\item{cool, warm}{Gooch colours.}
+
+\item{alpha, beta}{Gooch weights of the fill in the cool and warm colours.}
+
+\item{normal_space}{Frame of the normal colours: \code{"model"}, \code{"camera"} or
+\code{"light"}.}
 }
 \value{
 A material for the \code{material} argument of the surface layers.
@@ -40,11 +65,48 @@ the face colour as \code{specular_colour} goes from 1 to 0 (MATLAB's
 \code{SpecularColorReflectance}). \code{back} colours the back side of faces, the
 side a face's normal points away from; NULL lights both sides alike.
 }
+\details{
+\code{style} selects an illustrative response, computed by the same shading
+kernel in the vector and raster backends and the viewer:
+\itemize{
+\item \code{"toon"} quantises each light's diffuse response into \code{bands} equal
+steps of the cosine, or at the angles \code{breaks} (degrees from the light,
+increasing, at most seven; a normal exactly at a break, within 1e-6 in
+cosine, falls in the darker band), as ggcube's \code{ramp_steps()}. With the
+signed modes of \code{\link[=lights_3d]{lights_3d()}} the steps divide the signed level instead.
+\code{specular_steps = TRUE} (the default for toon) turns the highlight into a
+flat spot where Blinn's term reaches one half.
+\item \code{"gooch"} is the cool-to-warm shading of Gooch et al. (1998): the colour
+blends from \code{cool + alpha * fill} to \code{warm + beta * fill} as
+\verb{(1 + n . l) / 2} goes from 0 to 1, averaged over the lights; the
+defaults are the paper's \verb{k_blue = (0, 0, 0.4)} and
+\verb{k_yellow = (0.4, 0.4, 0)} in linear light with \code{alpha = 0.2},
+\code{beta = 0.6}.
+\item \code{"normals"} replaces the fill by the unit normal encoded as
+\code{(n + 1) / 2} in sRGB (three.js \code{MeshNormalMaterial}), in the panel's
+axes (\code{normal_space = "model"}), the camera's right, up and toward axes
+(\code{"camera"}), or a frame whose third axis points at the first
+directional light (\code{"light"}). It takes no light and no specular term,
+and the layer's fill legend is dropped.
+}
+
+Styles need a light: with \code{coord_3d(light = NULL)} faces keep their fill.
+The path tracer ignores styles and uses the fill as the diffuse albedo.
+}
 \examples{
 material_3d("shiny")
 material_3d("metal", back = "grey40")
+material_3d(style = "toon", breaks = c(40, 75))
 d <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
 d$z <- with(d, x^2 - y^2)
-ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
-  geom_surface_3d(shading = "smooth", material = material_3d("shiny")) + coord_3d()
+p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
+p + geom_surface_3d(shading = "smooth", material = material_3d("shiny")) + coord_3d()
+p + geom_surface_3d(fill = "grey60", colour = NA, material = material_3d(style = "gooch")) + coord_3d()
+p + geom_surface_3d(fill = "tomato", colour = NA, material = material_3d(style = "toon", bands = 4)) + coord_3d()
+p + geom_surface_3d(colour = NA, shading = "smooth", material = material_3d(style = "normals")) + coord_3d()
+}
+\references{
+Gooch, Gooch, Shirley, Cohen (1998). A non-photorealistic
+lighting model for automatic technical illustration. SIGGRAPH '98,
+447-452. \doi{10.1145/280814.280950}
 }

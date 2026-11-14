@@ -19,6 +19,19 @@
   one in every backend. A hull whose groups all have fewer than three points
   warns that a discrete fill split them. The colour-gamuts article draws the
   sRGB gamut in Lab this way.
+* Non-photorealistic fills. `material_3d(style = "toon" | "gooch" |
+  "normals")` adds toon bands (equal cosine steps or explicit angular
+  `breaks`, as ggcube's `ramp_steps()`, with an optional flat specular spot),
+  Gooch et al. (1998) cool-to-warm shading and normal colours in the model,
+  camera or light frame (three.js `MeshNormalMaterial`; the fill legend is
+  dropped). All three are terms of the one shading kernel, so vector,
+  raster and the viewer agree. `hatch_3d()` draws tone as hatching: in model
+  space the strokes are plane sections of the mesh, chained across faces,
+  with nested densities after Praun et al. (2001), and are occluded exactly
+  as scene lines; in screen space faces get a `grid::pattern()` per tone
+  band. `backend_3d("plotter")` draws strokes only, for pen-plotter SVG
+  (#62). A new article, "Lighting and surface styles", walks through the
+  colour modes, guides, styles and line drawings.
 
 * Shading can keep data colours readable against their legend.
   `lights_3d(mode = "lightness" | "tone" | "overlay" | "soft", range, neutral)`

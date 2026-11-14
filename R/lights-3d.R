@@ -201,23 +201,67 @@ as_lights_3d <- function(light) {
 #' the face colour as `specular_colour` goes from 1 to 0 (MATLAB's
 #' `SpecularColorReflectance`). `back` colours the back side of faces, the
 #' side a face's normal points away from; NULL lights both sides alike.
+#'
+#' `style` selects an illustrative response, computed by the same shading
+#' kernel in the vector and raster backends and the viewer:
+#'
+#' - `"toon"` quantises each light's diffuse response into `bands` equal
+#'   steps of the cosine, or at the angles `breaks` (degrees from the light,
+#'   increasing, at most seven; a normal exactly at a break, within 1e-6 in
+#'   cosine, falls in the darker band), as ggcube's `ramp_steps()`. With the
+#'   signed modes of [lights_3d()] the steps divide the signed level instead.
+#'   `specular_steps = TRUE` (the default for toon) turns the highlight into a
+#'   flat spot where Blinn's term reaches one half.
+#' - `"gooch"` is the cool-to-warm shading of Gooch et al. (1998): the colour
+#'   blends from `cool + alpha * fill` to `warm + beta * fill` as
+#'   `(1 + n . l) / 2` goes from 0 to 1, averaged over the lights; the
+#'   defaults are the paper's `k_blue = (0, 0, 0.4)` and
+#'   `k_yellow = (0.4, 0.4, 0)` in linear light with `alpha = 0.2`,
+#'   `beta = 0.6`.
+#' - `"normals"` replaces the fill by the unit normal encoded as
+#'   `(n + 1) / 2` in sRGB (three.js `MeshNormalMaterial`), in the panel's
+#'   axes (`normal_space = "model"`), the camera's right, up and toward axes
+#'   (`"camera"`), or a frame whose third axis points at the first
+#'   directional light (`"light"`). It takes no light and no specular term,
+#'   and the layer's fill legend is dropped.
+#'
+#' Styles need a light: with `coord_3d(light = NULL)` faces keep their fill.
+#' The path tracer ignores styles and uses the fill as the diffuse albedo.
 #' @param type Preset: `"matte"`, `"shiny"` or `"metal"`.
 #' @param ambient,diffuse,specular Nonnegative strengths; NULL keeps the preset.
 #' @param shininess Positive specular exponent; NULL keeps the preset.
 #' @param specular_colour Specular colour reflectance in \[0, 1\]; NULL keeps
 #'   the preset.
 #' @param back NULL or one colour for the back side of faces.
+#' @param style `"standard"`, `"toon"`, `"gooch"` or `"normals"`.
+#' @param bands Number of toon bands, at least two.
+#' @param breaks NULL or increasing toon band breaks in degrees in (0, 180).
+#' @param specular_steps Whether the highlight is a flat spot; NULL takes
+#'   `TRUE` for toon and `FALSE` otherwise.
+#' @param cool,warm Gooch colours.
+#' @param alpha,beta Gooch weights of the fill in the cool and warm colours.
+#' @param normal_space Frame of the normal colours: `"model"`, `"camera"` or
+#'   `"light"`.
 #' @return A material for the `material` argument of the surface layers.
+#' @references Gooch, Gooch, Shirley, Cohen (1998). A non-photorealistic
+#'   lighting model for automatic technical illustration. SIGGRAPH '98,
+#'   447-452. \doi{10.1145/280814.280950}
 #' @examples
 #' material_3d("shiny")
 #' material_3d("metal", back = "grey40")
+#' material_3d(style = "toon", breaks = c(40, 75))
 #' d <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
 #' d$z <- with(d, x^2 - y^2)
-#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
-#'   geom_surface_3d(shading = "smooth", material = material_3d("shiny")) + coord_3d()
+#' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
+#' p + geom_surface_3d(shading = "smooth", material = material_3d("shiny")) + coord_3d()
+#' p + geom_surface_3d(fill = "grey60", colour = NA, material = material_3d(style = "gooch")) + coord_3d()
+#' p + geom_surface_3d(fill = "tomato", colour = NA, material = material_3d(style = "toon", bands = 4)) + coord_3d()
+#' p + geom_surface_3d(colour = NA, shading = "smooth", material = material_3d(style = "normals")) + coord_3d()
 #' @export
 material_3d <- function(type = "matte", ambient = NULL, diffuse = NULL, specular = NULL, shininess = NULL,
-                        specular_colour = NULL, back = NULL) {
+                        specular_colour = NULL, back = NULL, style = "standard", bands = 3L, breaks = NULL,
+                        specular_steps = NULL, cool = "#0000AA", warm = "#AAAA00", alpha = 0.2, beta = 0.6,
+                        normal_space = "model") {
   presets <- list(matte = c(1, 1, 0, 10, 1), shiny = c(1, 0.75, 0.9, 20, 1), metal = c(1, 0.375, 1, 25, 0.5))
   value <- presets[[match.arg(type, names(presets))]]
   names(value) <- c("ambient", "diffuse", "specular", "shininess", "specular_colour")
@@ -226,15 +270,49 @@ material_3d <- function(type = "matte", ambient = NULL, diffuse = NULL, specular
   if (value[["shininess"]] <= 0) stop("shininess must be positive.", call. = FALSE)
   if (value[["specular_colour"]] > 1) stop("specular_colour must lie in [0, 1].", call. = FALSE)
   if (!is.null(back)) back <- check_light_colour_3d(back, "back")
-  structure(c(as.list(value), list(back = back %or3d% NA_character_)), class = "ggplot3d_material")
+  style <- match.arg(style, material_styles_3d)
+  if (!is.numeric(bands) || length(bands) != 1L || !is.finite(bands) || bands < 2 || bands != round(bands))
+    stop("bands must be a whole number of at least two.", call. = FALSE)
+  if (!is.null(breaks) && (!is.numeric(breaks) || !length(breaks) || length(breaks) > 7L || any(!is.finite(breaks)) ||
+      any(breaks <= 0 | breaks >= 180) || any(diff(breaks) <= 0)))
+    stop("breaks must be at most seven increasing angles in (0, 180) degrees.", call. = FALSE)
+  specular_steps <- specular_steps %or3d% (style == "toon")
+  if (!is.logical(specular_steps) || length(specular_steps) != 1L || is.na(specular_steps)) stop("specular_steps must be TRUE or FALSE.", call. = FALSE)
+  alpha <- check_light_number_3d(alpha, "alpha"); beta <- check_light_number_3d(beta, "beta")
+  structure(c(as.list(value), list(back = back %or3d% NA_character_, style = style, bands = as.integer(bands),
+    breaks = if (is.null(breaks)) numeric() else as.double(breaks), specular_steps = specular_steps,
+    cool = check_light_colour_3d(cool, "cool"), warm = check_light_colour_3d(warm, "warm"), alpha = alpha, beta = beta,
+    normal_space = match.arg(normal_space, c("model", "camera", "light")))), class = "ggplot3d_material")
 }
+
+# Material styles in the order of the kernel's style ids (src/shade/shade.h),
+# starting at 0.
+material_styles_3d <- c("standard", "toon", "gooch", "normals")
 
 # The materials table of a packet from a material (or NULL for none).
 material_table_3d <- function(material) {
   if (is.null(material)) return(data.frame(material_id = integer()))
   if (!inherits(material, "ggplot3d_material")) stop("material must be made with material_3d().", call. = FALSE)
-  data.frame(material_id = 1L, ambient = material$ambient, diffuse = material$diffuse, specular = material$specular,
-    shininess = material$shininess, specular_colour = material$specular_colour, back = material$back)
+  out <- data.frame(material_id = 1L, ambient = material$ambient, diffuse = material$diffuse, specular = material$specular,
+    shininess = material$shininess, specular_colour = material$specular_colour, back = material$back,
+    style = material$style %or3d% "standard", bands = material$bands %or3d% 3L, specular_steps = material$specular_steps %or3d% FALSE,
+    cool = material$cool %or3d% "#0000AA", warm = material$warm %or3d% "#AAAA00", alpha = material$alpha %or3d% 0.2,
+    beta = material$beta %or3d% 0.6, normal_space = material$normal_space %or3d% "model")
+  out$breaks <- I(list(material$breaks %or3d% numeric()))
+  out
+}
+
+# A layer's show.legend with the fill legend dropped for normal colouring,
+# which replaces the fill.
+material_legend_3d <- function(material, show.legend) {
+  if (is.null(material) || !identical(material$style, "normals")) return(show.legend)
+  if (length(show.legend) == 1L && is.null(names(show.legend))) {
+    if (isTRUE(show.legend)) return(c(fill = FALSE, colour = TRUE))
+    if (isFALSE(show.legend)) return(FALSE)
+    return(c(fill = FALSE))
+  }
+  show.legend[["fill"]] <- FALSE
+  show.legend
 }
 
 # Lights with data-space point positions placed in the panel box (model
@@ -280,7 +358,8 @@ resolved_light_3d <- function(light, camera) {
     colour = if (n) colour("colour") else matrix(numeric(), 0L, 3L),
     ground = if (n) colour("ground") else matrix(numeric(), 0L, 3L),
     falloff = vapply(light$lights, `[[`, numeric(1), "falloff"),
-    ambient = rep(light$ambient, 3L)), transfer_settings_3d(light))
+    ambient = rep(light$ambient, 3L), frame = rbind(as.double(scale %or3d% c(1, 1, 1)), as.double(camera$right %or3d% c(1, 0, 0)),
+      as.double(camera$up %or3d% c(0, 1, 0)), -as.double(camera$forward %or3d% c(0, 0, -1)))), transfer_settings_3d(light))
 }
 
 # The colour transfer of lights as the kernel reads it: transfer id, range,

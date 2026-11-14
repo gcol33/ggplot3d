@@ -725,6 +725,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// hatch_lines_cpp
+Rcpp::List hatch_lines_cpp(Rcpp::NumericMatrix xyz, Rcpp::IntegerMatrix faces, Rcpp::NumericMatrix directions, double spacing, Rcpp::IntegerMatrix levels);
+RcppExport SEXP _ggplot3d_hatch_lines_cpp(SEXP xyzSEXP, SEXP facesSEXP, SEXP directionsSEXP, SEXP spacingSEXP, SEXP levelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type xyz(xyzSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type faces(facesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type directions(directionsSEXP);
+    Rcpp::traits::input_parameter< double >::type spacing(spacingSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerMatrix >::type levels(levelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(hatch_lines_cpp(xyz, faces, directions, spacing, levels));
+    return rcpp_result_gen;
+END_RCPP
+}
 // shade_glsl_cpp
 std::string shade_glsl_cpp(int max_lights);
 RcppExport SEXP _ggplot3d_shade_glsl_cpp(SEXP max_lightsSEXP) {
@@ -834,6 +848,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_shade_cpp", (DL_FUNC) &_ggplot3d_shade_cpp, 7},
     {"_ggplot3d_shade_swatch_cpp", (DL_FUNC) &_ggplot3d_shade_swatch_cpp, 5},
     {"_ggplot3d_shade_transfer_cpp", (DL_FUNC) &_ggplot3d_shade_transfer_cpp, 3},
+    {"_ggplot3d_hatch_lines_cpp", (DL_FUNC) &_ggplot3d_hatch_lines_cpp, 5},
     {"_ggplot3d_shade_glsl_cpp", (DL_FUNC) &_ggplot3d_shade_glsl_cpp, 1},
     {"_ggplot3d_streamlines_cpp", (DL_FUNC) &_ggplot3d_streamlines_cpp, 12},
     {"_ggplot3d_sweep_frames_cpp", (DL_FUNC) &_ggplot3d_sweep_frames_cpp, 3},
