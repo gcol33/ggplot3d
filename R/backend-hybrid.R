@@ -31,11 +31,22 @@ raster_occlusion_3d <- function(packet, camera, viewport, result) {
     as.integer(result$width), as.integer(result$height), as.integer(result$antialias), result$buffers$coverage_depth)
 }
 
-# Hybrid panels rasterise the layers drawn with `raster = TRUE` and the traced
-# layers, and compile the rest, with the panel furniture, into vector
-# fragments. Vector panels place their traced layers the same way. A vector primitive
-# lies in front of the raster image, behind it, or partly behind; the image is
-# drawn between two vector passes. The behind pass holds the primitives behind
+# Whether a hybrid panel draws an unmarked packet into its image: with
+# `rasterise = "surfaces"` a depth-tested packet that draws faces or quadrics,
+# with `"all"` one that draws any primitive other than text.
+hybrid_rasterised_packet_3d <- function(packet, rasterise) {
+  kinds <- switch(rasterise, marked = character(), surfaces = c("faces", "quadrics"),
+    all = c("faces", "quadrics", "polylines", "markers"))
+  sum(vapply(kinds, function(k) length(packet[[k]]$partition), integer(1))) > 0L &&
+    all(unlist(lapply(primitive_kinds_3d, function(k) packet[[k]]$partition)) == 1L)
+}
+
+# Hybrid panels rasterise the layers drawn with `raster = TRUE`, the layers
+# that `rasterise` selects, and the traced layers, and compile the
+# rest, with the panel furniture, into vector fragments. Vector panels place
+# their traced layers the same way. A vector primitive lies in front of the
+# raster image, behind it, or partly behind; the image is drawn between two
+# vector passes. The behind pass holds the primitives behind
 # the image and the hidden part of the partial ones, so the image's
 # antialiased edges composite over them; the front pass holds the rest. A
 # partial primitive is clipped to its hidden pixels in the first pass and to
@@ -47,8 +58,9 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   camera <- furniture$camera; viewport <- furniture$viewport
   light <- x$panel_params$coord_params$light
   traced <- vapply(x$packets, function(p) !is.null(attr(p, "raymarch")), logical(1))
+  rasterise <- backend$rasterise %or3d% "marked"
   styled <- identical(backend$type, "hybrid") &
-    vapply(x$packets, function(p) any(p$styles$raster %in% TRUE), logical(1))
+    vapply(x$packets, function(p) any(p$styles$raster %in% TRUE) || hybrid_rasterised_packet_3d(p, rasterise), logical(1))
   rasterised <- traced | styled
   specs <- raster_traced_specs_3d(x$packets[rasterised])
   raster_packet <- merge_scene_packets(x$packets[rasterised], panel)

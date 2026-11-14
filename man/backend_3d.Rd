@@ -25,7 +25,8 @@ backend_3d(
   tolerance = 1e-05,
   max_steps = 2048L,
   quotient = NULL,
-  light_size = 0.1
+  light_size = 0.1,
+  rasterise = "marked"
 )
 }
 \arguments{
@@ -83,6 +84,12 @@ up and forward tangent vectors in the observer's orthonormal frame.}
 \item{quotient}{List of paired \code{\link[=thurston_portal_3d]{thurston_portal_3d()}} domain faces.}
 
 \item{light_size}{Positive point-light softening radius for intrinsic views.}
+
+\item{rasterise}{Layers a hybrid panel draws into its image: \code{"marked"},
+the layers created with \code{raster = TRUE}; \code{"surfaces"}, which adds every
+depth-tested layer that draws faces or analytic quadrics; or \code{"all"},
+which adds every depth-tested layer with faces, paths or points. Text
+stays vector graphics, placed by the image's visibility.}
 }
 \value{
 A backend configuration for coord_3d().
@@ -123,6 +130,9 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", colour = NA, raster = TRUE) +
   geom_contour_3d(colour = "black") +
   coord_3d(backend = backend_3d("hybrid", dpi = 150))
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey80", colour = NA) +
+  coord_3d(backend = backend_3d("hybrid", dpi = 150, rasterise = "surfaces"))
 }
 \references{
 Pharr, Jakob and Humphreys (2023). Physically Based Rendering,

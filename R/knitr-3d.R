@@ -11,6 +11,17 @@
 #'   generated description. Widget dimensions follow `fig.width` and
 #'   `fig.height` in inches at 96 pixels per inch.
 #'
+#'   The chunk option `raster3d` keeps a static plot of dense geometry
+#'   small: `TRUE` draws its vector-backend panels with
+#'   `backend_3d("hybrid", rasterise = "all")`, which draws the faces, paths
+#'   and points of every depth-tested layer into one image while axes, panes,
+#'   grid lines and text stay vector graphics. A number is a file size in
+#'   bytes: the plot is drawn as vector graphics and, when the file exceeds
+#'   that size, again with the hybrid backend, and the smaller file is kept.
+#'   The image has the chunk's `dpi` pixels per inch, which knitr multiplies
+#'   by `fig.retina` for HTML output: the density of a raster figure from the
+#'   same chunk. Panels with another backend are left as they are.
+#'
 #'   For a raster scene saved with [ggplot2::ggsave()], set both
 #'   `backend_3d("raster", dpi = 300)` and `ggsave(..., dpi = 300)` for a
 #'   300 dpi image. The backend dpi controls scene sampling at its physical
@@ -63,11 +74,7 @@ knit_print.ggplot3d <- function(x, ..., options = knitr::opts_current$get(), inl
     return(result)
   }
   if (identical(options$fig.keep, "none")) return(invisible(NULL))
-  if (isTRUE(options$view3d)) {
-    coord <- x@coordinates
-    x@coordinates <- ggplot2::ggproto(NULL, coord)
-    x@coordinates$config$backend <- backend_3d("vector")
-  }
+  if (isTRUE(options$view3d)) x <- plot_backend_3d(x, backend_3d("vector"))
   device <- options$dev[[1L]]
   extension <- options$fig.ext[[1L]] %or3d% switch(device, svglite = "svg", cairo_pdf = "pdf", ragg_png = "png", device)
   path <- knitr::fig_path(extension, options = options, number = counter)
@@ -76,9 +83,26 @@ knit_print.ggplot3d <- function(x, ..., options = knitr::opts_current$get(), inl
     svglite = { rlang::check_installed("svglite"); svglite::svglite },
     ragg_png = { rlang::check_installed("ragg"); ragg::agg_png },
     cairo_pdf = grDevices::cairo_pdf, device)
-  ggplot2::ggsave(path, x, device = device, width = options$fig.width,
+  save <- function(plot) ggplot2::ggsave(path, plot, device = device, width = options$fig.width,
     height = options$fig.height, units = "in", dpi = options$dpi,
     limitsize = FALSE)
+  raster <- options$raster3d %or3d% FALSE
+  if (!(isTRUE(raster) || isFALSE(raster) || (is.numeric(raster) && length(raster) == 1L && !is.na(raster) && raster >= 0)))
+    stop("Chunk option raster3d must be TRUE, FALSE or a size in bytes.", call. = FALSE)
+  vector <- identical(x@coordinates$config$backend$type, "vector")
+  hybrid <- plot_backend_3d(x, backend_3d("hybrid", dpi = options$dpi, rasterise = "all"))
+  if (vector && isTRUE(raster)) {
+    save(hybrid)
+  } else {
+    save(x)
+    if (vector && is.numeric(raster) && file.size(path) > raster) {
+      drawn <- tempfile(fileext = paste0(".", extension))
+      on.exit(unlink(drawn), add = TRUE)
+      file.copy(path, drawn)
+      save(hybrid)
+      if (file.size(path) >= file.size(drawn)) file.copy(drawn, path, overwrite = TRUE)
+    }
+  }
   if (identical(options$fig.show, "hide")) return(invisible(NULL))
   options$fig.cur <- counter
   options$fig.num <- options$fig.num %or3d% counter

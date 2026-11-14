@@ -33,6 +33,11 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #'   geometry behind the image's opaque coverage is clipped at its pixels, so
 #'   lines on or behind a rasterised surface stay exact where they are seen.
 #' @param dpi Physical raster resolution.
+#' @param rasterise Layers a hybrid panel draws into its image: `"marked"`,
+#'   the layers created with `raster = TRUE`; `"surfaces"`, which adds every
+#'   depth-tested layer that draws faces or analytic quadrics; or `"all"`,
+#'   which adds every depth-tested layer with faces, paths or points. Text
+#'   stays vector graphics, placed by the image's visibility.
 #' @param antialias Positive integer supersampling factor.
 #' @param samples Path-tracing samples per pixel added by each render.
 #' @param bounces Maximum diffuse surface interactions per path.
@@ -93,22 +98,34 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #'   geom_surface_3d(fill = "grey80", colour = NA, raster = TRUE) +
 #'   geom_contour_3d(colour = "black") +
 #'   coord_3d(backend = backend_3d("hybrid", dpi = 150))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   geom_surface_3d(fill = "grey80", colour = NA) +
+#'   coord_3d(backend = backend_3d("hybrid", dpi = 150, rasterise = "surfaces"))
 #' @export
 backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "linear",
                        samples = 64L, bounces = 8L, seed = 1L, aperture = 0,
                        focus = NULL, light_radius = 5, progressive = FALSE, batch_size = 8L,
                        geometry = "e3", observer = c(0, 0, 0), facing = diag(3), fov = 70,
                        max_distance = 10, tolerance = 1e-5, max_steps = 2048L,
-                       quotient = NULL, light_size = 0.1) {
+                       quotient = NULL, light_size = 0.1, rasterise = "marked") {
   stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
             is.finite(antialias), antialias >= 1, antialias == trunc(antialias))
   result <- list(type = match.arg(type, c("vector", "raster", "hybrid", "pathtrace", "raymarch")), dpi = dpi, antialias = as.integer(antialias),
        blend = match.arg(blend, c("linear", "srgb")))
+  if (result$type == "hybrid") result$rasterise <- match.arg(rasterise, c("marked", "surfaces", "all"))
   if (result$type == "pathtrace") result <- c(result,
     pathtrace_settings_3d(samples, bounces, seed, aperture, focus, light_radius, progressive, batch_size))
   if (result$type == "raymarch") result <- c(result,
     thurston_settings_3d(geometry, observer, facing, fov, max_distance, tolerance, max_steps, quotient, light_size))
   result
+}
+
+# A copy of a plot whose coord_3d() draws with another backend.
+plot_backend_3d <- function(plot, backend) {
+  coord <- plot@coordinates
+  plot@coordinates <- ggplot2::ggproto(NULL, coord)
+  plot@coordinates$config$backend <- backend
+  plot
 }
 
 #' Exact three-dimensional panel coordinates

@@ -8,7 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
   dev.args = list(pointsize = 14))
 library(ggplot2)
 library(ggplot3d)

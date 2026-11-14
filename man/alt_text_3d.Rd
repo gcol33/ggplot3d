@@ -24,6 +24,17 @@ with the vector scene backend. The chunk's \code{fig.alt} overrides the
 generated description. Widget dimensions follow \code{fig.width} and
 \code{fig.height} in inches at 96 pixels per inch.
 
+The chunk option \code{raster3d} keeps a static plot of dense geometry
+small: \code{TRUE} draws its vector-backend panels with
+\code{backend_3d("hybrid", rasterise = "all")}, which draws the faces, paths
+and points of every depth-tested layer into one image while axes, panes,
+grid lines and text stay vector graphics. A number is a file size in
+bytes: the plot is drawn as vector graphics and, when the file exceeds
+that size, again with the hybrid backend, and the smaller file is kept.
+The image has the chunk's \code{dpi} pixels per inch, which knitr multiplies
+by \code{fig.retina} for HTML output: the density of a raster figure from the
+same chunk. Panels with another backend are left as they are.
+
 For a raster scene saved with \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}, set both
 \code{backend_3d("raster", dpi = 300)} and \code{ggsave(..., dpi = 300)} for a
 300 dpi image. The backend dpi controls scene sampling at its physical

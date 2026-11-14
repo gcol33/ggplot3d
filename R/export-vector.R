@@ -231,9 +231,7 @@ svg_scene_3d <- function(panel, layers, prefix, interactive) {
 native_svg_3d <- function(plot, width, height, interactive) {
   rlang::check_installed(c("svglite", "xml2"))
   motion_plot_coord_3d(plot);motion_dimensions_3d(width, height, 96)
-  coord <- plot@coordinates
-  plot@coordinates <- ggplot2::ggproto(NULL, coord)
-  plot@coordinates$config$backend <- backend_3d("vector")
+  plot <- plot_backend_3d(plot, backend_3d("vector"))
   device <- export_device_3d(width, height, 96)
   on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE)
   built <- ggplot2::ggplot_build(plot)

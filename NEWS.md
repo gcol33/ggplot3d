@@ -21,6 +21,21 @@
   vertices lie on the boundary of the ball models, hyperideal vertices are
   cut off by their polar planes, and honeycombs with infinite cells are
   generated face by face within `radius` (#21).
+
+* `backend_3d("hybrid", rasterise = "surfaces")` draws every depth-tested
+  layer with faces or quadrics into the panel image without `raster = TRUE`
+  on each layer, and `rasterise = "all"` adds paths and points. The knitr
+  chunk option `raster3d` draws static plots with `rasterise = "all"`:
+  `TRUE` always, or a size in bytes above which the vector figure is drawn
+  again as hybrid and the smaller file is kept. The articles set
+  `raster3d = 1e5` with `dpi = 120`, so dense meshes reach the page as one
+  image at twice the displayed resolution while axes, grid lines, panes and
+  text stay themeable vector graphics.
+
+* Smooth vector paint fills a fan triangle whose corners share one colour
+  flat instead of passing a zero-length gradient to the device; clipped
+  sphere caps no longer fail to draw.
+
 * `stat_project_3d()` handles edges and faces that meet or cross the
   four-dimensional perspective eye or the stereographic pole: both maps are
   linear from R^4 to homogeneous coordinates, perspective geometry is clipped

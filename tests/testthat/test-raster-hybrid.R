@@ -97,3 +97,31 @@ test_that("raster panels keep the furniture underlay, overlay and labels as dist
   expect_identical(panel$childrenOrder,
     c("scene-raster-underlay-3d", "scene-raster-image-3d", "scene-raster-overlay-3d", "scene-raster-labels-3d"))
 })
+
+test_that("hybrid panels with rasterise = \"surfaces\" draw unmarked surface layers into the image", {
+  d <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
+  d$z <- d$x * d$y
+  path <- data.frame(x = c(-1, 1), y = c(0, 0), z = c(-1.5, 1.5))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+    geom_surface_3d(fill = "grey80", colour = NA) +
+    geom_path_3d(data = path, colour = "red") +
+    geom_polygon_3d(data = data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = 1), fill = "blue", occlusion = "overlay")
+  find <- function(g) {
+    if (identical(g$name, "scene-hybrid-3d")) return(list(g))
+    unlist(lapply(c(as.list(g$children), g$grobs), find), recursive = FALSE)
+  }
+  panel <- function(backend) {
+    grDevices::pdf(NULL)
+    on.exit(grDevices::dev.off())
+    find(grid::grid.force(ggplot2::ggplotGrob(p + coord_3d(backend = backend))))[[1L]]
+  }
+  expect_identical(backend_3d("hybrid")$rasterise, "marked")
+  expect_null(backend_3d("raster")$rasterise)
+  expect_error(backend_3d("hybrid", rasterise = "every"), "should be one of")
+  expect_length(panel(backend_3d("hybrid", dpi = 50))$capabilities$image_layers, 0L)
+  surfaces <- panel(backend_3d("hybrid", dpi = 50, rasterise = "surfaces"))
+  expect_identical(surfaces$capabilities$image_layers, 1L)
+  expect_s3_class(surfaces$children[["scene-raster-image-3d"]], "rastergrob")
+  expect_true(any(surfaces$raster_result$id != 0L))
+  expect_identical(panel(backend_3d("hybrid", dpi = 50, rasterise = "all"))$capabilities$image_layers, 1:2)
+})
