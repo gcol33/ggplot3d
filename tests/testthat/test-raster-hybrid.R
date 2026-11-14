@@ -82,7 +82,7 @@ test_that("rasterised layers must be depth tested", {
   expect_error(grid::makeContent(find(ggplot2::ggplotGrob(p))[[1L]]), "occlusion = \"depth\"")
 })
 
-test_that("raster panels keep the furniture underlay and overlay as distinct children", {
+test_that("raster panels keep the furniture underlay, overlay and labels as distinct children", {
   d <- data.frame(x = 1:3, y = 1:3, z = 1:3)
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(occlusion = "overlay") +
     coord_3d(backend = backend_3d("raster", dpi = 50))
@@ -94,6 +94,6 @@ test_that("raster panels keep the furniture underlay and overlay as distinct chi
   }
   panel <- find(grid::grid.force(ggplot2::ggplotGrob(p)))[[1L]]
   expect_false(anyDuplicated(panel$childrenOrder) > 0L)
-  expect_identical(panel$childrenOrder[c(1L, length(panel$childrenOrder))],
-    c("scene-raster-underlay-3d", "scene-raster-overlay-3d"))
+  expect_identical(panel$childrenOrder,
+    c("scene-raster-underlay-3d", "scene-raster-image-3d", "scene-raster-overlay-3d", "scene-raster-labels-3d"))
 })

@@ -27,7 +27,6 @@
   to the half-space in front of the eye with explicit points at infinity,
   and the scene engine clips it to the panel box before division (#20).
 
-
 * `animate_3d(stable_partition = TRUE)` keeps cut edges in place while the
   camera moves over fixed geometry (#72). Faces that occlude one another in
   a cycle are cut on the plane of the member that comes first in a fixed
@@ -40,6 +39,19 @@
   of one frame recur in the next, against 8% to 87% without it; that scene
   has about 40% more fragments, while two intersecting surfaces keep the
   fragment count of a cold compile.
+
+* Text is drawn after all scene geometry in every backend: vector, raster,
+  hybrid, path-traced, the HTML viewer and the SVG and TikZ exports. Points,
+  surfaces and translucent regions no longer cover parts of a label, and a
+  label whose anchor lies behind a surface is no longer dropped; only a label
+  whose anchor is clipped by the panel or a clip plane is hidden. Labels keep
+  back-to-front order among themselves. Text in a plane
+  (`geom_text_3d(orientation = "plane")`) is font outline geometry and still
+  hides and is hidden by the data.
+
+* Strokes cut only by the panel viewport stay strokes in vector output instead
+  of becoming filled outlines; the viewport clip of the panel already cuts
+  them.
 
 * Spheres, cylinders and cones are analytic primitives of the scene contract
   (Sigg, Weyrich, Botsch and Gross 2006): a unit primitive per row placed by an
@@ -248,7 +260,7 @@
 * Draw points, paths, segments, text, polygons, surfaces, contours, meshes, bands, columns and extrusions in three dimensions.
 * Train continuous, discrete and date/time z scales, with fixed or free z ranges across facets.
 * Control camera angles, projection, lighting and framing with `coord_3d()`.
-* `coord_3d(axis_lines = "origin", origin = )` and `guide_axis_3d(position = "origin")` draw axes through a data point as part of the scene, with ticks, tick labels and titles that data can hide; `axis_lines = "none"` drops the box axis lines. `panes = "front"` adds translucent foreground panes (`panel.pane.front`). Theme elements `panel.grid.major.x.xy` and the like style or remove the grid of one axis on one plane, `panel.zero.x`, `.y`, `.z` draw a plane at transformed value 0 that depth-sorts with the data, and `panel.zero.line` marks 0 on the panes.
+* `coord_3d(axis_lines = "origin", origin = )` and `guide_axis_3d(position = "origin")` draw axes through a data point as part of the scene, with ticks that data can hide and tick labels and titles drawn over the scene; `axis_lines = "none"` drops the box axis lines. `panes = "front"` adds translucent foreground panes (`panel.pane.front`). Theme elements `panel.grid.major.x.xy` and the like style or remove the grid of one axis on one plane, `panel.zero.x`, `.y`, `.z` draw a plane at transformed value 0 that depth-sorts with the data, and `panel.zero.line` marks 0 on the panes.
 * Stereo output: `coord_3d(stereo = stereo_3d())` draws each panel for two eyes turned about the camera target by `separation` degrees, as a side-by-side pair for parallel (`"pair"`) or cross-eyed (`"cross"`) viewing, or as a red-cyan (or any two filter colours) anaglyph. Anaglyphs blend two luminance passes with a multiply group on devices that support it and otherwise composite per colour channel offscreen, as the raster backend always does; colour and fill scales then show luminance only, with a warning.
 * Panel frames: `coord_cylindrical_3d()` and `coord_spherical_3d()` bend paths and faces along angle, radius and height, with rear wall or shell panes and curved axes; `coord_ternary_3d()` and `coord_simplex_3d()` place three- or four-part compositions (aesthetics `a`, `b`, `c`, `d`) in a triangular prism or a regular tetrahedron.
 * `coord_3d(transform = )` applies coordinate transformations after statistics, with expansion in transformed space.

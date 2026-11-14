@@ -880,8 +880,9 @@
           batch.forEach(push);
           return {kind: FACE, start, count: fill[FACE]-start};
         });
-        V.labels = S.prims.filter(p => p.kind === TEXT && !p.furniture && !p.hidden && !p.skip && visiblePoint(V, p.points[0]) &&
-          (p.partition !== 1 || !anchorHidden(V, p.points[0])));
+        // Labels lie over all scene geometry, back to front by anchor depth.
+        V.labels = S.prims.filter(p => p.kind === TEXT && !p.furniture && !p.hidden && !p.skip && visiblePoint(V, p.points[0]))
+          .map(p => [project(V, p.points[0])[2], p]).sort((a, b) => b[0]-a[0]).map(e => e[1]);
         const textStart = fill[TEXT];
         V.labels.forEach(push);
         V.textRange = [textStart, fill[TEXT]-textStart];
@@ -935,22 +936,6 @@
         });
         gl.bindBuffer(gl.ARRAY_BUFFER, s.buffer); gl.bufferSubData(gl.ARRAY_BUFFER, 0, s.values);
       }
-      function anchorHidden(V, anchor) {
-        const p = project(V, anchor);
-        return V.opaqueFaces.some(face => {
-          for (let i = 1; i < face.points.length-1; i++) {
-            const q = [face.points[0], face.points[i], face.points[i+1]].map(v => project(V, v));
-            const a = sub(q[1], q[0]), b = sub(q[2], q[0]), d = sub(p, q[0]), den = a[0]*b[1]-a[1]*b[0];
-            if (Math.abs(den) < 1e-10) continue;
-            const u = (d[0]*b[1]-d[1]*b[0])/den, v = (a[0]*d[1]-a[1]*d[0])/den;
-            if (u < 0 || v < 0 || u+v > 1) continue;
-            const z = V.basis.perspective ? 1/((1-u-v)/q[0][2]+u/q[1][2]+v/q[2][2]) : (1-u-v)*q[0][2]+u*q[1][2]+v*q[2][2];
-            if (z < p[2]-1e-9) return true;
-          }
-          return false;
-        });
-      }
-
       function uniforms(prog, V) {
         const b = V.basis, L = V.layout, set3 = (n, v) => gl.uniform3fv(prog.uniform(n), v), set1 = (n, v) => gl.uniform1f(prog.uniform(n), v);
         gl.useProgram(prog);
@@ -1245,7 +1230,6 @@
             ox: px+(r[2]-vp.outer_width_mm)*ppm/2+V.data.framing.origin[0]*ppm,
             oy: py+(r[3]-vp.outer_height_mm)*ppm/2+V.data.framing.origin[1]*ppm,
             iw: vp.width_mm*ppm, ih: vp.height_mm*ppm};
-          V.opaqueFaces = V.scene.prims.filter(p => p.kind === FACE && !p.furniture && !p.skip && !p.hidden && p.partition === 1 && !p.translucent);
           prepare(V);
           drawPanel(V, false);
           shadeEyeDome(V);

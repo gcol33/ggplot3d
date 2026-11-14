@@ -109,8 +109,8 @@ through it. Sheets whose screen extents do not overlap share a pass;
 past 32 passes, the remaining sheets blend face by face.
 Strokes and markers widen to their physical size
 in the vertex shader, and face lighting uses the same linear-light colour
-calculation as static output. Text uses plain browser text, with
-whole-anchor visibility for scene labels. Furniture and its labels rotate
+calculation as static output. Text uses plain browser text drawn over
+the scene, hidden only when its anchor is clipped. Furniture and its labels rotate
 with the camera. The widget element receives \code{ggplot3d:camera},
 \code{ggplot3d:hover} and \code{ggplot3d:select} events. No external scripts load.
 

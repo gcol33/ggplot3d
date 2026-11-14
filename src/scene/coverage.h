@@ -212,29 +212,6 @@ public:
     return result;
   }
 
-  bool hidden(const Vertex& anchor) const {
-    auto s=projection.npc(projection.camera_point(anchor.xyz));
-    Vec3 model=projection.model(anchor.xyz);
-    Vec3 ray=projection.camera.perspective ? subtract(model,projection.resolved.eye) : projection.resolved.ray;
-    for(const CoverageFace* face:query({s[0],s[1],s[0],s[1]})) {
-      if(!face->opaque || face->halo) continue;
-      double t=face_ray_parameter(*face,anchor,projection);
-      if(t>=-projection.resolved.tolerance/std::sqrt(dot(ray,ray))) continue;
-      Vec3 hit=model;
-      for(int k=0;k<3;++k) hit[k]+=t*ray[k];
-      bool inside=true;
-      for(std::size_t i=0;i<face->polygon.size();++i) {
-        Vec3 a=projection.model(face->polygon[i].xyz);
-        Vec3 b=projection.model(face->polygon[(i+1)%face->polygon.size()].xyz);
-        Vec3 edge=subtract(b,a);
-        if(dot(cross(edge,subtract(hit,a)),face->plane.normal)<
-            -projection.resolved.tolerance*std::sqrt(dot(edge,edge))) {inside=false;break;}
-      }
-      if(inside) return true;
-    }
-    return false;
-  }
-
   std::vector<Piece> resolve_lines(std::vector<Piece> pieces,const ScenePacket& packet,
                                  ResourceBudget& budget) const {
     std::vector<Piece> result;

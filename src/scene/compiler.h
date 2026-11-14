@@ -202,12 +202,12 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
           Polygon carrier;
           for(auto xy:{Point2{bounds[0],bounds[1]},Point2{bounds[2],bounds[1]},Point2{bounds[2],bounds[3]},Point2{bounds[0],bounds[3]}})
             carrier.push_back(screen_vertex(xy[0],xy[1],depth,projection));
-          bool clipped=false;
+          bool cut=false;
           std::vector<Plane> screen_planes;
           if(projection.camera.clip) screen_planes.assign(planes.end()-4,planes.end());
-          carrier=clip_polygon(std::move(carrier),screen_planes,clipped);
+          carrier=clip_polygon(std::move(carrier),screen_planes,cut);
           if(carrier.size()>=3) {
-            emit(table,row,Kind::polyline,carrier,clipped,projection.resolved.forward,0,length,
+            emit(table,row,Kind::polyline,carrier,false,projection.resolved.forward,0,length,
                  packet.polylines.arrow_start[row],packet.polylines.arrow_end[row]);
             pieces.back().anchor=polygon;
             budget.add(192.0*polygon.size());
@@ -256,7 +256,11 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
                   piece.anchor=piece.polygon;
                   std::vector<Plane> screen_planes;
                   if(projection.camera.clip) screen_planes.assign(planes.end()-4,planes.end());
-                  piece.polygon=clip_polygon(std::move(bounds),screen_planes,piece.clipped);
+                  // The viewport cut bounds the stroke area for ordering but
+                  // adds no fragment mask: backends draw the panel inside a
+                  // viewport clip, so the stroke stays a stroke.
+                  bool cut=false;
+                  piece.polygon=clip_polygon(std::move(bounds),screen_planes,cut);
                   if(caps && !piece.clipped) piece.whole_stroke_parts=3;
                   piece.clipped=piece.clipped || caps;
                   if(piece.polygon.size()<3) continue;
@@ -298,14 +302,9 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
   }
   bool needs_coverage=false;
   for(const Piece& piece:pieces) if(piece.source->partition[piece.row]==1)
-    needs_coverage=needs_coverage || piece.kind==Kind::text ||
-      piece.kind==Kind::polyline;
+    needs_coverage=needs_coverage || piece.kind==Kind::polyline;
   if(needs_coverage) {
     CoverageIndex coverage(pieces,packet,projection);
-    pieces.erase(std::remove_if(pieces.begin(),pieces.end(),[&](const Piece& piece) {
-      return piece.kind==Kind::text && piece.source->partition[piece.row]==1 &&
-        coverage.hidden(piece.polygon[0]);
-    }),pieces.end());
     pieces=coverage.resolve_lines(std::move(pieces),packet,budget);
   }
   for(Piece& piece:pieces) if(piece.kind==Kind::text &&
@@ -315,9 +314,24 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       std::move(piece.mask);
     piece.mask.clear();
   }
-  std::vector<Piece> partitions[3];
+  // Text is drawn after all other geometry: a label is never covered by the
+  // scene, only removed when its anchor is clipped. Labels keep back-to-front
+  // order by anchor depth within each partition.
+  std::vector<Piece> partitions[3], labels[3];
   for (Piece& piece : pieces)
-    partitions[piece.source->partition[piece.row]].push_back(std::move(piece));
+    (piece.kind==Kind::text ? labels : partitions)[piece.source->partition[piece.row]].push_back(std::move(piece));
+  for (auto& partition : labels) {
+    std::vector<std::pair<double,std::size_t>> depth(partition.size());
+    for (std::size_t i=0;i<partition.size();++i) {
+      const Piece& piece=partition[i];
+      depth[i]={projection.camera_point((piece.anchor.empty() ? piece.polygon : piece.anchor)[0].xyz)[2],i};
+    }
+    std::stable_sort(depth.begin(),depth.end(),[](const auto& a,const auto& b) {return a.first>b.first;});
+    std::vector<Piece> sorted;
+    sorted.reserve(partition.size());
+    for (const auto& d : depth) sorted.push_back(std::move(partition[d.second]));
+    partition=std::move(sorted);
+  }
   pieces.clear(); pieces.shrink_to_fit();
   PartitionStats stats;
   Index seam_groups = 0;
@@ -339,6 +353,8 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
           return a.source->layer_id[a.row] < b.source->layer_id[b.row];
         return a.serial < b.serial;
       });
+  for (int partition = 0; partition < 3; ++partition)
+    for (Piece& piece : labels[partition]) partitions[2].push_back(std::move(piece));
   for (auto& partition : partitions)
     for (Piece& piece : partition) {
       if(piece.kind==Kind::marker && piece.clipped && piece.polygon.size()>=3) {

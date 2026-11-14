@@ -39,7 +39,9 @@ raster_occlusion_3d <- function(packet, camera, viewport, result) {
 # the image and the hidden part of the partial ones, so the image's
 # antialiased edges composite over them; the front pass holds the rest. A
 # partial primitive is clipped to its hidden pixels in the first pass and to
-# their complement in the second, so it is painted once.
+# their complement in the second, so it is painted once. Text is never
+# behind the image: vector labels close the front pass, whose draw order puts
+# text last, and the image layers' labels follow it.
 render_hybrid_panel_3d <- function(x, furniture, backend) {
   panel <- x$panel_params$panel_id
   camera <- furniture$camera; viewport <- furniture$viewport
@@ -70,6 +72,9 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   owner <- paste(rings$kind, rings$row)
   keys <- unique(owner)
   region_id <- match(paste(f$kind, f$source_index), keys, nomatch = 0L)
+  label <- f$kind == 4L
+  status[label] <- 0L
+  region_id[label] <- 0L
   # Rings wind counter-clockwise around hidden pixels and clockwise around
   # holes, so the nonzero winding rule, which clipping paths use, covers the
   # hidden pixels; a clockwise frame around the canvas turns that into the
@@ -92,7 +97,7 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   }
   behind <- pass(c(1L, 2L), FALSE, "scene-hybrid-behind-3d")
   front <- pass(c(0L, 2L), TRUE, "scene-hybrid-front-3d")
-  children <- c(list(behind), raster_layer_children_3d(result, raster_packet), list(front))
+  children <- c(list(behind, raster_image_grob_3d(result), front), raster_text_3d(result, raster_packet))
   layers <- unlist(lapply(x$packets[rasterised], function(p)
     attr(p, "raymarch")$layer_id %or3d% unique(unlist(lapply(p[primitive_kinds_3d], `[[`, "layer_id")))))
   capabilities <- utils::modifyList(grid_capabilities_3d(), list(raster = TRUE, image_layers = sort(unique(as.integer(layers)))))

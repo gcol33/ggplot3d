@@ -70,7 +70,7 @@ test_that("shared triangle edges paint translucent interiors exactly once", {
   }
 })
 
-test_that("whole text anchors are hidden by nearer opaque coverage", {
+test_that("text anchors behind opaque coverage stay drawn over the image", {
   f <- ref_fixture("coplanar_layers", "pole")
   f$packet$text <- ggplot3d:::new_scene_packet(
     vertices = list(x = .5, y = .5, z = .2), corners = list(vertex = 1L),
@@ -79,11 +79,11 @@ test_that("whole text anchors are hidden by nearer opaque coverage", {
   f$packet$text <- ggplot3d:::new_scene_packet()$text
   f$packet$styles$fill <- "red"
   packet <- ggplot3d:::merge_scene_packets(list(f$packet, text), 1L)
-  result <- ggplot3d:::raster_scene_3d(packet, f$camera, f$viewport, 1L)
-  expect_length(result$text$row, 0L)
-  packet$text$partition[] <- 2L
-  result <- ggplot3d:::raster_scene_3d(packet, f$camera, f$viewport, 1L)
-  expect_identical(result$text$row, 1L)
+  for (partition in 1:2) {
+    packet$text$partition[] <- partition
+    result <- ggplot3d:::raster_scene_3d(packet, f$camera, f$viewport, 1L)
+    expect_identical(result$text$row, 1L)
+  }
 })
 
 test_that("device-rendered translucent colours agree at shared interior samples", {

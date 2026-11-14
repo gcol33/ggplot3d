@@ -198,8 +198,8 @@ the opaque scene. This approximates the colour of intersecting sheets and
 keeps it independent of primitive order. Transparent scenes require the
 WebGL 2 `EXT_color_buffer_float` extension. Circular markers use one GPU
 instance per point and a disc fragment shader for their fill and border.
-Text is drawn as plain browser text, with a label's
-visibility decided at its anchor. Geometry, mapped colours and lighting are
+Text is drawn as plain browser text over the scene; a label is
+hidden only when its anchor is clipped. Geometry, mapped colours and lighting are
 transferred once; camera interaction runs in the browser.
 
 Stereo plots use their central camera in the viewer. Static eye pairs and

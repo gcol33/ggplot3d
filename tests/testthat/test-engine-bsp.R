@@ -149,28 +149,32 @@ test_that("marker masks partition physical coverage and preserve the anchor", {
   engine_weights(result,packet)
 })
 
-test_that("text is hidden as a whole only by opaque coverage at its anchor", {
+test_that("text is drawn after all scene geometry, whole and unmasked", {
   packet <- ggplot3d:::new_scene_packet(
     vertices=list(x=c(0,1,1,0,.5),y=c(0,0,1,1,.5),z=c(.6,.6,.6,.6,.4)),
     corners=list(vertex=1:5),faces=list(offset=1L,count=4L),
     text=list(offset=5L,width_mm=20,height_mm=5),styles=data.frame(style_id=1L))
-  expect_false(any(engine_compile(packet)$fragments$kind==4L))
-  packet$faces$opacity <- .5
-  expect_true(any(engine_compile(packet)$fragments$kind==4L))
+  for (opacity in c(1,.5)) {
+    packet$faces$opacity <- opacity
+    result <- engine_compile(packet)
+    f <- result$fragments
+    expect_identical(f$kind[result$draw_order],c(1L,4L))
+    expect_identical(f$mask_count[f$kind==4L],0L)
+    engine_weights(result,packet)
+  }
 })
 
-test_that("eligible text retains one anchor depth across disjoint compositing masks", {
+test_that("labels follow every partition and keep back-to-front order among themselves", {
   packet <- ggplot3d:::new_scene_packet(
-    vertices=list(x=c(0,1,1,0,.5),y=c(0,0,1,1,.5),z=c(.2,.8,.8,.2,.5)),
-    corners=list(vertex=1:5),faces=list(offset=1L,count=4L,opacity=.5),
-    text=list(offset=5L,width_mm=30,height_mm=6),styles=data.frame(style_id=1L))
+    vertices=list(x=c(0,1,1,0,.3,.5,.7),y=c(0,0,1,1,.5,.5,.5),z=c(.5,.5,.5,.5,.9,.1,.6)),
+    corners=list(vertex=1:7),faces=list(offset=1L,count=4L,partition=2L),
+    text=list(offset=5:7,width_mm=c(8,8,8),height_mm=c(4,4,4),partition=c(1L,1L,0L)),
+    styles=data.frame(style_id=1L))
   result <- engine_compile(packet)
-  text <- which(result$fragments$kind==4L)
-  expect_gte(length(text),2L)
-  expect_true(all(result$fragments$count[text]==1L))
-  expect_true(all(result$fragments$mask_count[text]>=3L))
-  expect_equal(result$fragments$depth_min[text],result$fragments$depth_max[text])
-  engine_weights(result,packet)
+  f <- result$fragments
+  order <- result$draw_order
+  expect_identical(f$kind[order],c(1L,4L,4L,4L))
+  expect_identical(f$source_index[order][-1L],c(3L,2L,1L))
 })
 
 test_that("native malformed and degenerate inputs fail without entering partition loops", {

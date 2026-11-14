@@ -1113,49 +1113,19 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
     ids(height-1-y,x)=buffers.id[static_cast<std::size_t>(height-1-y)*width+x];
   raster.attr("class")="nativeRaster";
   std::vector<int> text_rows; std::vector<double> text_x,text_y;
+  // Labels are drawn over the image, never covered by it, back to front by
+  // anchor depth; an anchor clipped away has no item.
   std::vector<Index> text_items;
   for(Index i=0;i<items;++i) if(scene.items[i].kind==4 && paint[i].colour.a!=0) text_items.push_back(i);
-  if(!text_items.empty()) {
-    // Opaque depth-partition items binned by their continuous bounds, so an
-    // anchor tests only the items whose bounds share its cell.
-    const double cell_x=ts*canvas.dx,cell_y=ts*canvas.dy;
-    auto cell=[&](double value,double origin,double size,int count) {
-      return static_cast<int>(std::max(0.0,std::min(static_cast<double>(count-1),std::floor((value-origin)/size))));
-    };
-    std::vector<int> cell_start(static_cast<std::size_t>(tiles)+1,0);
-    auto each_cell=[&](Index j,auto f) {
-      const auto& item=scene.items[j];
-      if(item.kind==4 || paint[j].colour.a<1 || spans[j].partition!=1) return;
-      const auto& b=paint[j].bounds;
-      for(int cy=cell(b[1],canvas.origin_y,cell_y,canvas.tiles_y);cy<=cell(b[3],canvas.origin_y,cell_y,canvas.tiles_y);++cy)
-        for(int cx=cell(b[0],canvas.origin_x,cell_x,canvas.tiles_x);cx<=cell(b[2],canvas.origin_x,cell_x,canvas.tiles_x);++cx)
-          f(static_cast<std::size_t>(cy)*canvas.tiles_x+cx);
-    };
-    for(Index j=0;j<items;++j) each_cell(j,[&](std::size_t t){++cell_start[t+1];});
-    for(int t=0;t<tiles;++t) cell_start[t+1]+=cell_start[t];
-    std::vector<Index> cell_items(cell_start.back());
-    {
-      std::vector<int> cursor(cell_start.begin(),cell_start.end()-1);
-      for(Index j=0;j<items;++j) each_cell(j,[&](std::size_t t){cell_items[cursor[t]++]=j;});
-    }
-    for(Index i:text_items) {
-      const auto& item=scene.items[i];
-      const auto& anchor=scene.vertices[item.offset]; bool hidden=false;
-      if(scene.packet.text.partition[item.row]==1) {
-        std::size_t t=static_cast<std::size_t>(cell(anchor.y,canvas.origin_y,cell_y,canvas.tiles_y))*canvas.tiles_x+
-          cell(anchor.x,canvas.origin_x,cell_x,canvas.tiles_x);
-        for(int k=cell_start[t];k<cell_start[t+1] && !hidden;++k) {
-          Index j=cell_items[k];
-          double z=sample(shapes,scene.items[j],paint[j],anchor.x,anchor.y);
-          hidden=std::isfinite(z) && before(scene,j,z,i,anchor.depth);
-        }
-        int sx=static_cast<int>(std::floor((anchor.x-canvas.origin_x)/canvas.dx));
-        int sy=static_cast<int>(std::floor((anchor.y-canvas.origin_y)/canvas.dy));
-        if(!hidden && traced.active && sx>=0 && sy>=0 && sx<canvas.w && sy<canvas.h)
-          hidden=traced.depth[traced.ray(sx,sy)]<anchor.depth-scene.projection.resolved.tolerance;
-      }
-      if(!hidden) {text_rows.push_back(item.row+1);text_x.push_back(anchor.x/scene.projection.viewport.width_mm);text_y.push_back(anchor.y/scene.projection.viewport.height_mm);}
-    }
+  std::stable_sort(text_items.begin(),text_items.end(),[&](Index a,Index b) {
+    return scene.vertices[scene.items[a].offset].depth>scene.vertices[scene.items[b].offset].depth;
+  });
+  for(Index i:text_items) {
+    const auto& item=scene.items[i];
+    const auto& anchor=scene.vertices[item.offset];
+    text_rows.push_back(item.row+1);
+    text_x.push_back(anchor.x/scene.projection.viewport.width_mm);
+    text_y.push_back(anchor.y/scene.projection.viewport.height_mm);
   }
   Rcpp::List result=Rcpp::List::create(Rcpp::Named("image")=raster,Rcpp::Named("id")=ids,
     Rcpp::Named("text")=Rcpp::List::create(Rcpp::Named("row")=text_rows,Rcpp::Named("x")=text_x,Rcpp::Named("y")=text_y),

@@ -192,26 +192,24 @@ raster_image_grob_3d <- function(result) {
     height = grid::unit(extent[4L] - extent[2L], "npc"), interpolate = FALSE, name = "scene-raster-image-3d")
 }
 
-# The image of a raster result and the text labels it leaves visible.
-raster_layer_children_3d <- function(result, packet) {
-  c(list(raster_image_grob_3d(result)), raster_text_3d(result, packet))
-}
-
 # Panel assembly of every image-producing path (raster, ray-marched, path
-# traced): the furniture underlay, the image with its text, the furniture
-# overlay. The two furniture parts carry distinct names: a gTree draws its
-# children by name.
+# traced): the furniture underlay, the image, the furniture overlay, then the
+# text of the furniture and of the image layers, so labels lie over all scene
+# geometry. The parts carry distinct names: a gTree draws its children by name.
 raster_panel_grob_3d <- function(result, packet, furniture, name) {
   scene <- scene_compile(furniture$packet, furniture$camera, furniture$viewport)
-  part <- function(partition, name) {
+  label <- scene$fragments$kind == 4L
+  part <- function(keep, name) {
     selected <- scene
-    selected$draw_order <- scene$draw_order[scene$fragments$partition[scene$draw_order] %in% partition]
+    selected$draw_order <- scene$draw_order[keep[scene$draw_order]]
     g <- render_scene_grid(selected, furniture$viewport)
     g$name <- name
     g
   }
-  children <- c(list(part(c(0L, 1L), "scene-raster-underlay-3d")), raster_layer_children_3d(result, packet),
-    list(part(2L, "scene-raster-overlay-3d")))
+  partition <- scene$fragments$partition
+  children <- c(list(part(partition %in% c(0L, 1L) & !label, "scene-raster-underlay-3d"),
+    raster_image_grob_3d(result), part(partition == 2L & !label, "scene-raster-overlay-3d"),
+    part(label, "scene-raster-labels-3d")), raster_text_3d(result, packet))
   list(scene = scene, grob = grid::gTree(children = do.call(grid::gList, children),
     raster_result = result, name = name))
 }
