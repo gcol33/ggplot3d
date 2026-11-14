@@ -26,7 +26,7 @@ An ordination places observations on a small set of axes computed from their mea
 fit <- prcomp(iris[1:4], scale. = TRUE)
 groups <- setNames(iris$Species, rownames(iris))
 ggplot() + stat_biplot_3d(fit, groups = groups, region = "ellipsoid",
-                        loading_scale = 2) + coord_3d()
+                        loading_scale = 2, label_size = 5) + coord_3d()
 ```
 
 For `prcomp`, sites use `fit$x` and arrows use `fit$rotation`. `loading_scale` explicitly multiplies the arrow vectors for display. The chosen multiplier therefore belongs in a figure's methods or caption. `choices` selects the three axes.
@@ -37,7 +37,7 @@ Site identifiers are the score matrix's row names, or sequential character ident
 membership <- data.frame(id = names(groups), group = unname(groups))
 membership <- membership[rev(seq_len(nrow(membership))), ]
 ggplot() + stat_biplot_3d(fit, groups = membership, region = "hull",
-                        loading_scale = 2) + coord_3d()
+                        loading_scale = 2, label_size = 5) + coord_3d()
 ```
 
 ## Vegan scores
@@ -47,7 +47,7 @@ ggplot() + stat_biplot_3d(fit, groups = membership, region = "hull",
 ```{r vegan, eval=requireNamespace("vegan", quietly=TRUE)}
 model <- vegan::rda(iris[1:4], scale = TRUE)
 ggplot() + stat_biplot_3d(model, groups = groups,
-                        scores_args = list(scaling = 2)) + coord_3d()
+                        scores_args = list(scaling = 2), label_size = 5) + coord_3d()
 ```
 
 The group ellipsoids use `stat_ellipsoid_3d(type = "norm")`. Their level describes the spread of observations under that covariance model. Individual point, quiver, text, hull and ellipsoid layers can also be composed directly when a figure needs separate mappings. [vegan3d](https://rdrr.io/cran/vegan3d/man/vegan3d-package.html) documents the corresponding ordination and group-region conventions.
