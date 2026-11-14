@@ -389,6 +389,7 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     kinds <- munched$kinds; counts <- munched$counts
     params$.munch_start <- munched$start; params$.munch_end <- munched$end
     params$.vertex_key <- NULL
+    if(!length(primitives)) return(new_scene_packet(panel_id=panel_id))
   }
   offsets <- cumsum(c(1L, counts[-length(counts)]))
   rows <- primitives[offsets]

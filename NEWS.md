@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* `coord_spherical_geometry_3d()` supplies S^3 stereographic and gnomonic
+  charts with great-circle munching and SO(4) actions. `stat_hopf_fibre_3d()`
+  draws fibres as paths or tubes, latitude tori including the Clifford torus,
+  and matching base-sphere points. Pole-crossing fibres clip analytically to
+  a finite panel box before projection (#19).
+
 * Hyperbolic coordinates default to Klein display, support negative curvature,
   observer centring, intrinsic radial distance guides and transported Minkowski
   normals for lighting. Poincare and upper half-space geodesics share adaptive

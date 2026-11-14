@@ -13,6 +13,8 @@ Space3D <- ggplot2::ggproto("Space3D", NULL,
   act = function(g, X) stop("Space must implement act() for an isometry.", call. = FALSE),
   chart_is_projective = function(model) FALSE,
   style_packet = function(packet, context) packet,
+  clip_segment = NULL,
+  contains = function(X, model) rep(TRUE, nrow(X)),
   model_ranges = function(model, panel_params) panel_params$ranges
 )
 
@@ -182,7 +184,7 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
     rows <- primitives[corners]; points <- X[lookup[corners], , drop = FALSE]
     kind <- kinds[i]
     if (kind == "polylines") {
-      path <- polyline_model_3d(sampler, points, context$max_depth)
+      for (path in space_path_samples_3d(points, context)) {
       endpoints <- cbind(rows[path$segment], rows[path$segment + 1L])
       d <- space_attributes_3d(data, endpoints, cbind(1 - path$s, path$s))
       fields <- intersect(c("colour", "alpha", "linewidth", "linetype"), names(d))
@@ -192,6 +194,7 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
         add(d[index, , drop = FALSE], path$model[index, , drop = FALSE], kind, rep.int(2L, length(pieces)),
           start = pieces == 1L, end = pieces == length(pieces))
       } else add(d, path$model, kind, nrow(d))
+      }
     } else if (kind == "faces" && !sampler$projective) {
       triangles <- cbind(1L, 2:(nrow(points) - 1L), 3:nrow(points))
       mesh <- munch_triangles_3d(sampler, points[triangles[, 1L], , drop = FALSE],
@@ -200,8 +203,12 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
       d <- space_attributes_3d(data, matrix(rows[parent], ncol = 3L), mesh$weights)
       index <- as.vector(t(mesh$triangles))
       add(d[index, , drop = FALSE], mesh$model[index, , drop = FALSE], kind, rep.int(3L, nrow(mesh$triangles)))
-    } else add(data[rows, , drop = FALSE], sampler$map(points), kind, length(rows))
+    } else {
+      keep <- if(kind %in% c("markers","text")) context$space$contains(points,context$model) else rep(TRUE,nrow(points))
+      if(any(keep)) add(data[rows[keep], , drop = FALSE], sampler$map(points[keep,,drop=FALSE]), kind, sum(keep))
+    }
   }
+  if(!length(blocks)) return(list(data=data[FALSE,,drop=FALSE],primitives=integer(),kinds=character(),counts=integer(),start=logical(),end=logical()))
   out <- do.call(rbind, blocks); rownames(out) <- NULL
   list(data = out, primitives = seq_len(nrow(out)), kinds = unlist(out_kinds, use.names = FALSE),
     counts = unlist(out_counts, use.names = FALSE), start = unlist(starts), end = unlist(ends))
@@ -215,3 +222,38 @@ emit_model_scene_3d <- function(data,params,panel_params,ranges,layer_id=scene_f
   panel_params$space_context$frame <- FrameBox
   emit_scene_3d(data,params,panel_params,layer_id)
 }
+# Subdivision happens only on visible canonical intervals, before projection.
+space_path_samples_3d <- function(points,context) {
+  sampler <- space_subdivision_3d(context)
+  if(is.null(context$space$clip_segment)) return(list(polyline_model_3d(sampler,points,context$max_depth)))
+  parts <- list(); current <- list(); last <- NULL
+  flush <- function() {
+    if(length(current)) parts[[length(parts)+1L]] <<- list(
+      model=do.call(rbind,lapply(current,`[[`,"model")),
+      segment=unlist(lapply(current,`[[`,"segment")),s=unlist(lapply(current,`[[`,"s")))
+    current <<- list(); last <<- NULL
+  }
+  for(i in seq_len(nrow(points)-1L)) {
+    X <- points[i,,drop=FALSE]; Y <- points[i+1L,,drop=FALSE]
+    intervals <- context$space$clip_segment(drop(X),drop(Y),context$model)
+    if(!nrow(intervals)) {flush(); next}
+    for(j in seq_len(nrow(intervals))) {
+      s <- intervals[j,]
+      if(diff(s)<1e-12) next
+      ends <- rbind(context$space$geodesic(X,Y,s[1L]),context$space$geodesic(X,Y,s[2L]))
+      path <- polyline_model_3d(sampler,ends,context$max_depth)
+      path$s <- s[1L]+diff(s)*path$s; path$segment[] <- i
+      contiguous <- !is.null(last)&&max(abs(last-head(path$model,1L)))<1e-10
+      if(!contiguous) flush()
+      last <- tail(path$model,1L)
+      if(length(current)) {
+        path$model <- path$model[-1L,,drop=FALSE]
+        path$s <- path$s[-1L]; path$segment <- path$segment[-1L]
+      }
+      current[[length(current)+1L]] <- path
+      if(s[2L]<1-1e-12) flush()
+    }
+  }
+  flush(); parts
+}
+
