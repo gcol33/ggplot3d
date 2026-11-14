@@ -104,6 +104,7 @@ flamm_surface_3d <- function(u,v,rs,sign=1) {
 #' through [stat_parametric_geodesic_3d()]. A square-root radial parameter
 #' keeps the throat regular. Set both=TRUE for both sheets of the bridge.
 #' @inheritParams stat_parametric_3d
+#' @inheritParams ggplot2::stat_identity
 #' @param metric Spatial metric, currently "schwarzschild".
 #' @param rs Positive Schwarzschild radius.
 #' @param r Radial range, beginning at or outside rs.
