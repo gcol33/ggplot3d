@@ -33,6 +33,8 @@ geom_sweep_3d(...)
 
 \item{profile}{Two-column matrix or data frame of profile points.}
 
+\item{radius}{Scale factor for the profile, also available as an aesthetic.}
+
 \item{cap}{End caps of a tube on an open curve: \code{"round"}, \code{"flat"} or \code{"none"}.}
 
 \item{normal}{Direction the first cross section is oriented towards: the

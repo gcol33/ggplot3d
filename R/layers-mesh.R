@@ -379,6 +379,7 @@ register_geom_3d(GeomGeodesicPath3D, emit_paths_3d,
 #' polylines lying on the surface. It computes `s`, the arc length along each
 #' path, and `length`, the length of the whole path.
 #' @inheritParams geom_mesh_3d
+#' @inheritParams ggplot2::geom_point
 #' @inheritParams mesh_geodesic
 #' @param geom Geom drawing the result.
 #' @return A ggplot2 layer.

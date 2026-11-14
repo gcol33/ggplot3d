@@ -141,6 +141,7 @@ StatBin3D <- ggplot2::ggproto("StatBin3D", ggplot2::Stat,
 #' (count divided by the total and by the box volume) and `ncount` (count
 #' relative to the largest). Empty boxes are not returned, so they draw as
 #' empty space.
+#' @inheritParams ggplot2::geom_point
 #' @inheritParams geom_voxel_3d
 #' @param geom Geom used to draw the boxes.
 #' @param bins Number of bins, scalar or one per axis.

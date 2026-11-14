@@ -40,6 +40,7 @@
 #'     scale-transformed units.}
 #'   \item{n}{Number of points in the group.}
 #' }
+#' @inheritParams ggplot2::geom_point
 #' @inheritParams geom_ellipsoid_3d
 #' @param geom The geometry drawing the ellipsoids, by default the one of
 #'   [geom_ellipsoid_3d()].
