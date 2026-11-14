@@ -52,8 +52,19 @@ test_that("clicks select keys, dim the rest and report through events", {
     " function(e) { window.events.push(e.detail.keys); });"))
   hits <- viewer_hits(b, "sel", step = 4)
   keys <- vapply(hits, `[[`, character(1), "key")
-  first <- hits[[1L]]
-  second <- hits[[which(keys != first$key)[1L]]]
+  centre <- function(key) {
+    own <- hits[keys == key]
+    x <- vapply(own, `[[`, numeric(1), "x"); y <- vapply(own, `[[`, numeric(1), "y")
+    own[[which.min((x - mean(x))^2 + (y - mean(y))^2)]]
+  }
+  hx <- vapply(hits, `[[`, numeric(1), "x"); hy <- vapply(hits, `[[`, numeric(1), "y")
+  isolation <- vapply(unique(keys), function(key) {
+    h <- centre(key)
+    min((hx[keys != key] - h$x)^2 + (hy[keys != key] - h$y)^2)
+  }, numeric(1))
+  ranked <- names(sort(isolation, decreasing = TRUE))
+  first <- centre(ranked[1L])
+  second <- centre(ranked[2L])
   viewer_click(b, "sel", first$x, first$y)
   expect_identical(unlist(b$eval("document.getElementById('sel').ggplot3d.getSelection()")), first$key)
   viewer_click(b, "sel", second$x, second$y, modifiers = 8L)

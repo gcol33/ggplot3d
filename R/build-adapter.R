@@ -18,7 +18,7 @@ ggplot_build.ggplot3d <- function(plot, ...) {
       if (is.null(context$mapping[[axis]]) && !is.null(layer$mapping[[axis]])) context$mapping[[axis]] <- layer$mapping[[axis]]
     }
   }
-  context$theme <- ggplot2::theme_get() + plot@theme
+  context$theme <- ggplot2::complete_theme(plot@theme)
   working <- plot
   working@coordinates <- ggplot2::ggproto(NULL, plot@coordinates)
   context$key_context <- new.env(parent = emptyenv())

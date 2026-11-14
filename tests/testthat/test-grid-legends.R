@@ -46,6 +46,19 @@ test_that("axis colourbars use the selected position edge, colours and shared ti
   expect_equal(params$axis_guides$z$labels, plain$axis_guides$z$labels)
 })
 
+test_that("the z axis text and title get the same default margins as x and y", {
+  pdf(NULL); on.exit(dev.off(), add = TRUE)
+  measure <- function(plot) {
+    params <- ggplot2::ggplot_build(plot)$layout$panel_params[[1L]]
+    measure_guides_3d(params, ggplot2::complete_theme(plot@theme), new_scene_viewport(150, 150))$metrics
+  }
+  m <- measure(legend_surface())
+  expect_equal(m$z$gap, m$x$gap)
+  expect_equal(m$z$title_gap, m$x$title_gap)
+  wide <- measure(legend_surface() + ggplot2::theme(axis.title.z = ggplot2::element_text(margin = ggplot2::margin(r = 10, unit = "mm"))))
+  expect_equal(wide$z$title_gap, 11.2)
+})
+
 test_that("axis colourbars match expressions and support distinct scale transformations", {
   p <- legend_surface() + ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d()) + scale_z_reverse()
   panel <- motion_panels_3d(legend_render(p))[[1L]]
