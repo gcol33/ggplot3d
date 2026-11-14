@@ -69,166 +69,22 @@
 <polyline points='119.30,185.04 119.30,83.96 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='130.69,175.18 130.69,74.10 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='142.07,165.32 142.07,64.24 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<defs>
-  <clipPath id='cp-0'>
-    <path d='M 88.44 211.26 L 149.64 211.26 L 149.64 158.07 L 88.44 158.07 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-0)'>
 <polyline points='88.94,210.71 149.09,158.62 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-1'>
-    <path d='M 88.44 201.40 L 149.64 201.40 L 149.64 148.21 L 88.44 148.21 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-1)'>
 <polyline points='88.94,200.85 149.09,148.76 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-2'>
-    <path d='M 88.44 191.54 L 149.64 191.54 L 149.64 138.35 L 88.44 138.35 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-2)'>
 <polyline points='88.94,190.99 149.09,138.90 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-3'>
-    <path d='M 88.44 181.68 L 149.64 181.68 L 149.64 128.49 L 88.44 128.49 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-3)'>
 <polyline points='88.94,181.13 149.09,129.04 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-4'>
-    <path d='M 88.44 171.82 L 149.64 171.82 L 149.64 118.63 L 88.44 118.63 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-4)'>
 <polyline points='88.94,171.27 149.09,119.18 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-5'>
-    <path d='M 88.44 161.96 L 149.64 161.96 L 149.64 108.77 L 88.44 108.77 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-5)'>
 <polyline points='88.94,161.41 149.09,109.31 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-6'>
-    <path d='M 88.44 152.09 L 149.64 152.09 L 149.64 98.91 L 88.44 98.91 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-6)'>
 <polyline points='88.94,151.55 149.09,99.45 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-7'>
-    <path d='M 88.44 142.23 L 149.64 142.23 L 149.64 89.04 L 88.44 89.04 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-7)'>
 <polyline points='88.94,141.69 149.09,89.59 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-8'>
-    <path d='M 88.44 132.37 L 149.64 132.37 L 149.64 79.18 L 88.44 79.18 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-8)'>
 <polyline points='88.94,131.82 149.09,79.73 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-9'>
-    <path d='M 88.44 122.51 L 149.64 122.51 L 149.64 69.32 L 88.44 69.32 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-9)'>
 <polyline points='88.94,121.96 149.09,69.87 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-10'>
-    <path d='M 88.44 112.65 L 149.64 112.65 L 149.64 59.46 L 88.44 59.46 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-10)'>
 <polyline points='88.94,112.10 149.09,60.01 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-11'>
-    <path d='M 88.44 201.95 L 150.19 201.95 L 150.19 147.66 L 88.44 147.66 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-11)'>
 <polyline points='88.94,200.85 149.09,148.76 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-12'>
-    <path d='M 88.44 182.23 L 150.19 182.23 L 150.19 127.94 L 88.44 127.94 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-12)'>
 <polyline points='88.94,181.13 149.09,129.04 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-13'>
-    <path d='M 88.44 162.50 L 150.19 162.50 L 150.19 108.22 L 88.44 108.22 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-13)'>
 <polyline points='88.94,161.41 149.09,109.31 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-14'>
-    <path d='M 88.44 142.78 L 150.19 142.78 L 150.19 88.50 L 88.44 88.50 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-14)'>
 <polyline points='88.94,141.69 149.09,89.59 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-15'>
-    <path d='M 88.44 123.06 L 150.19 123.06 L 150.19 68.78 L 88.44 68.78 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-15)'>
 <polyline points='88.94,121.96 149.09,69.87 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
 <polyline points='164.73,163.76 164.73,62.68 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='184.45,169.45 184.45,68.38 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='204.18,175.14 204.18,74.07 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
@@ -243,166 +99,22 @@
 <polyline points='243.62,186.53 243.62,85.46 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='283.07,197.92 283.07,96.84 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='322.51,209.30 322.51,108.23 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<defs>
-  <clipPath id='cp-16'>
-    <path d='M 148.54 213.67 L 338.38 213.67 L 338.38 158.07 L 148.54 158.07 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-16)'>
 <polyline points='149.09,158.62 337.88,213.12 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-17'>
-    <path d='M 148.54 203.81 L 338.38 203.81 L 338.38 148.21 L 148.54 148.21 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-17)'>
 <polyline points='149.09,148.76 337.88,203.26 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-18'>
-    <path d='M 148.54 193.94 L 338.38 193.94 L 338.38 138.35 L 148.54 138.35 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-18)'>
 <polyline points='149.09,138.90 337.88,193.40 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-19'>
-    <path d='M 148.54 184.08 L 338.38 184.08 L 338.38 128.49 L 148.54 128.49 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-19)'>
 <polyline points='149.09,129.04 337.88,183.54 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-20'>
-    <path d='M 148.54 174.22 L 338.38 174.22 L 338.38 118.63 L 148.54 118.63 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-20)'>
 <polyline points='149.09,119.18 337.88,173.67 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-21'>
-    <path d='M 148.54 164.36 L 338.38 164.36 L 338.38 108.77 L 148.54 108.77 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-21)'>
 <polyline points='149.09,109.31 337.88,163.81 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-22'>
-    <path d='M 148.54 154.50 L 338.38 154.50 L 338.38 98.91 L 148.54 98.91 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-22)'>
 <polyline points='149.09,99.45 337.88,153.95 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-23'>
-    <path d='M 148.54 144.64 L 338.38 144.64 L 338.38 89.04 L 148.54 89.04 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-23)'>
 <polyline points='149.09,89.59 337.88,144.09 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-24'>
-    <path d='M 148.54 134.78 L 338.38 134.78 L 338.38 79.18 L 148.54 79.18 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-24)'>
 <polyline points='149.09,79.73 337.88,134.23 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-25'>
-    <path d='M 148.54 124.92 L 338.38 124.92 L 338.38 69.32 L 148.54 69.32 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-25)'>
 <polyline points='149.09,69.87 337.88,124.37 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-26'>
-    <path d='M 148.54 115.06 L 338.38 115.06 L 338.38 59.46 L 148.54 59.46 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-26)'>
 <polyline points='149.09,60.01 337.88,114.51 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-27'>
-    <path d='M 147.99 204.35 L 338.38 204.35 L 338.38 147.66 L 147.99 147.66 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-27)'>
 <polyline points='149.09,148.76 337.88,203.26 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-28'>
-    <path d='M 147.99 184.63 L 338.38 184.63 L 338.38 127.94 L 147.99 127.94 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-28)'>
 <polyline points='149.09,129.04 337.88,183.54 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-29'>
-    <path d='M 147.99 164.91 L 338.38 164.91 L 338.38 108.22 L 147.99 108.22 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-29)'>
 <polyline points='149.09,109.31 337.88,163.81 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-30'>
-    <path d='M 147.99 145.19 L 338.38 145.19 L 338.38 88.50 L 147.99 88.50 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-30)'>
 <polyline points='149.09,89.59 337.88,144.09 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
-</g>
-<defs>
-  <clipPath id='cp-31'>
-    <path d='M 147.99 125.46 L 338.38 125.46 L 338.38 68.78 L 147.99 68.78 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-31)'>
 <polyline points='149.09,69.87 337.88,124.37 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpODguNDR8MzM4LjM4fDE2LjQ0fDMwNy41Ng==)'>
 <polyline points='104.58,215.85 164.73,163.76 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='124.30,221.54 184.45,169.45 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='144.02,227.24 204.18,175.14 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />

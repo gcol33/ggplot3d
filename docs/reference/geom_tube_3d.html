@@ -191,7 +191,7 @@ seam.</p>
 <dd><p>Cross-section size where the aesthetic is not mapped.</p></dd>
 
 
-<dt id="arg-radius-unit-width-unit">radius.unit, width.unit<a class="anchor" aria-label="anchor" href="#arg-radius-unit-width-unit"></a></dt>
+<dt id="arg-radius-unit">radius.unit<a class="anchor" aria-label="anchor" href="#arg-radius-unit"></a></dt>
 <dd><p>Unit of the cross-section size: <code>"data"</code>
 (transformed position units) or <code>"mm"</code> (millimetres on the page).</p></dd>
 
@@ -212,6 +212,10 @@ seam.</p>
 <dd><p>Number of spline samples.</p></dd>
 
 
+<dt id="arg-width-unit">width.unit<a class="anchor" aria-label="anchor" href="#arg-width-unit"></a></dt>
+<dd><p>Unit of ribbon width, with the same choices as <code>radius.unit</code>.</p></dd>
+
+
 <dt id="arg-normal">normal<a class="anchor" aria-label="anchor" href="#arg-normal"></a></dt>
 <dd><p>Direction the first cross section is oriented towards: the
 ribbon's surface normal, or the profile's first axis in stat_sweep_3d().</p></dd>
@@ -223,19 +227,27 @@ ribbon's surface normal, or the profile's first axis in stat_sweep_3d().</p></dd
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The <code>radius</code> (tubes) or <code>width</code> (ribbons) aesthetic varies the cross section
+    <p>Opaque filled tubes without an edge colour are analytic quadrics: a
+cylinder, or a cone where the radius changes, along each segment of the
+path and a sphere at each joint, so the tube is the sweep of a ball along
+the path, drawn with exact outlines and per-sample depth (Sigg et al. 2006).
+A segment takes the colour of its first point. Translucent tubes, and tubes
+with edges, are swept meshes with <code>sides</code> points on each cross section.</p>
+<p>The <code>radius</code> (tubes) or <code>width</code> (ribbons) aesthetic varies the cross section
 per point, and <code>twist</code> turns it about the curve by that many degrees.
 Without either, the size is the <code>radius</code> or <code>width</code> parameter, by default
 2% (tubes) or 8% (ribbons) of the diagonal of the position ranges. Tube
 ends are closed with hemispheres (<code>cap = "round"</code>) or disks (<code>"flat"</code>), or
 left open (<code>"none"</code>). A ribbon starts with its surface normal as close to
 <code>normal</code> as the curve allows.</p>
-<p>Numeric aesthetics such as a continuous fill are taken at every point and
-averaged over each face, so they change gradually from ring to ring.
+<p>Numeric aesthetics such as a continuous fill are taken at every point; on
+meshes they are averaged over each face, so they change gradually from
+ring to ring.
 <code>spline</code> passes the points through <code><a href="stat_spline_3d.html">stat_spline_3d()</a></code> first, with <code>n</code>
 samples. Normals are angle-weighted and split where faces meet at more than
 60 degrees. Computed variables: <code>arc_length</code> from the first point and
-<code>z_mean</code>.</p>
+<code>z_mean</code>, the height of the curve point for tubes and the mean height of a
+face for other sweeps.</p>
 <p>With <code>radius.unit = "mm"</code> (<code>width.unit</code> for ribbons) the size is measured
 on the page, like a line width: the cross section is swept when the plot is
 drawn, in the box the camera sees, so a tube is round on screen whatever
@@ -249,6 +261,9 @@ Millimetre sizes need the Euclidean coordinates of <code><a href="coord_3d.html"
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Wang, Juettler, Zheng and Liu (2008). Computation of rotation
 minimizing frames. ACM Transactions on Graphics 27, 2. <a href="https://doi.org/10.1145/1330511.1330513" class="external-link">doi:10.1145/1330511.1330513</a></p>
+<p>Sigg, Weyrich, Botsch and Gross (2006). GPU-based ray-casting of
+quadratic surfaces. Symposium on Point-Based Graphics.
+<a href="https://doi.org/10.2312/SPBG/SPBG06/059-065" class="external-link">doi:10.2312/SPBG/SPBG06/059-065</a></p>
     </div>
 
     <div class="section level2">

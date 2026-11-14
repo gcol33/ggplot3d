@@ -130,16 +130,7 @@
 <polyline points='284.07,186.30 196.81,261.87 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='313.30,194.74 226.05,270.30 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='342.54,203.18 255.28,278.74 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<defs>
-  <clipPath id='cp-0'>
-    <path d='M 283.42 287.85 L 372.87 287.85 L 372.87 210.52 L 283.42 210.52 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-0)'>
 <polyline points='371.77,211.61 284.51,287.18 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMTI2LjQ2fDM3OS41NnwxNi40NHwyODcuODU=)'>
 <polyline points='221.07,168.11 133.81,243.68 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='221.07,168.11 372.21,211.74 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='221.07,168.11 221.07,16.97 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />

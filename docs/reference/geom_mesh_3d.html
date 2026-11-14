@@ -137,6 +137,7 @@
 <span>  outline <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha_mode <span class="op">=</span> <span class="st">"face"</span>,</span>
 <span>  shading <span class="op">=</span> <span class="st">"flat"</span>,</span>
+<span>  material <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -227,6 +228,12 @@ steepest. Gradients
 follow the sRGB curve through their stops within the same tolerance. The
 layers that draw surfaces (<code><a href="stat_isosurface_3d.html">stat_isosurface_3d()</a></code>, <code>geom_mesh_3d()</code> and
 others) accept it too.</p></dd>
+
+
+<dt id="arg-material">material<a class="anchor" aria-label="anchor" href="#arg-material"></a></dt>
+<dd><p>Surface material from <code><a href="material_3d.html">material_3d()</a></code>: ambient, diffuse
+and specular strengths, shininess and an optional back-side colour. NULL
+reflects ambient and diffuse light fully, with no highlight.</p></dd>
 
 </dl></div>
     <div class="section level2">

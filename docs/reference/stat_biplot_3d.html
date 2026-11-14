@@ -3,11 +3,17 @@
 quiver arrows from the origin. Optional group regions use the existing
 ellipsoid or convex-hull statistic. For prcomp, the coordinates are x
 and rotation. For vegan fits, extraction and scaling use vegan::scores().
-A named list returned by that function can also be supplied directly."><meta property="og:description" content="Site scores become points; species or variable scores become solid-headed
+A named list returned by that function can also be supplied directly.
+Each arrow-tip label touches its tip on the side the arrow points to on the
+page, as vegan::ordiArrowTextXY() places biplot labels, and like all text
+it is drawn over the scene."><meta property="og:description" content="Site scores become points; species or variable scores become solid-headed
 quiver arrows from the origin. Optional group regions use the existing
 ellipsoid or convex-hull statistic. For prcomp, the coordinates are x
 and rotation. For vegan fits, extraction and scaling use vegan::scores().
-A named list returned by that function can also be supplied directly."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
+A named list returned by that function can also be supplied directly.
+Each arrow-tip label touches its tip on the side the arrow points to on the
+page, as vegan::ordiArrowTextXY() places biplot labels, and like all text
+it is drawn over the scene."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
 (function () {
   var D = String.fromCharCode(36);
   window.MathJax = {
@@ -124,7 +130,10 @@ A named list returned by that function can also be supplied directly."><meta pro
 quiver arrows from the origin. Optional group regions use the existing
 ellipsoid or convex-hull statistic. For prcomp, the coordinates are <code>x</code>
 and <code>rotation</code>. For vegan fits, extraction and scaling use <code><a href="https://vegandevs.github.io/vegan/reference/scores.html" class="external-link">vegan::scores()</a></code>.
-A named list returned by that function can also be supplied directly.</p>
+A named list returned by that function can also be supplied directly.
+Each arrow-tip label touches its tip on the side the arrow points to on the
+page, as <code><a href="https://vegandevs.github.io/vegan/reference/ordiArrowTextXY.html" class="external-link">vegan::ordiArrowTextXY()</a></code> places biplot labels, and like all text
+it is drawn over the scene.</p>
     </div>
 
     <div class="section level2">
@@ -137,6 +146,8 @@ A named list returned by that function can also be supplied directly.</p>
 <span>  loading_scale <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  point_size <span class="op">=</span> <span class="fl">1.5</span>,</span>
 <span>  label_loadings <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  label_size <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  arrow_colour <span class="op">=</span> <span class="st">"#5C6166"</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  scores_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -174,6 +185,14 @@ frame with id and group columns. Its row order is arbitrary.</p></dd>
 
 <dt id="arg-label-loadings">label_loadings<a class="anchor" aria-label="anchor" href="#arg-label-loadings"></a></dt>
 <dd><p>Whether to label arrow tips.</p></dd>
+
+
+<dt id="arg-label-size">label_size<a class="anchor" aria-label="anchor" href="#arg-label-size"></a></dt>
+<dd><p>Arrow-tip label size, in ggplot2 text size units (mm).</p></dd>
+
+
+<dt id="arg-arrow-colour">arrow_colour<a class="anchor" aria-label="anchor" href="#arg-arrow-colour"></a></dt>
+<dd><p>Colour of the arrow shafts and their unshaded cone heads.</p></dd>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>

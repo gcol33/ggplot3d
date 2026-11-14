@@ -143,7 +143,8 @@ chooses whether their hidden parts are left out, dashed or drawn.</p>
 <span>  linewidth <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  linetype <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  hidden <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hide"</span>, <span class="st">"dashed"</span>, <span class="st">"show"</span><span class="op">)</span></span>
+<span>  hidden <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hide"</span>, <span class="st">"dashed"</span>, <span class="st">"show"</span><span class="op">)</span>,</span>
+<span>  halo <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -171,6 +172,12 @@ chooses whether their hidden parts are left out, dashed or drawn.</p>
 <dd><p>Hidden stroke policy of the lines: <code>"hide"</code>, <code>"dashed"</code> or
 <code>"show"</code>.</p></dd>
 
+
+<dt id="arg-halo">halo<a class="anchor" aria-label="anchor" href="#arg-halo"></a></dt>
+<dd><p>Width of the gap left on each side of a line where farther
+lines pass behind it: a physical <code><a href="https://rdrr.io/r/grid/unit.html" class="external-link">grid::unit()</a></code> or a number in
+millimetres. <code>NULL</code> (the default) for no gap.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -194,10 +201,20 @@ triangles can hide short pieces of it. <code>silhouette = TRUE</code> takes the
 smooth contour for layers with vertex normals (<code>nx</code>, <code>ny</code>, <code>nz</code>, as grid,
 parametric and isosurface layers have) and the mesh silhouette otherwise.
 In the interactive viewer, silhouettes stay those of the initial camera.</p>
+<p><code>halo</code> draws haloed lines (Appel, Rohlf and Stein 1979): each feature line
+masks a band of the given width on both sides of its stroke, and any line
+behind it is cut back inside that band, so a line passing behind another
+stops short of it instead of touching it. The stroke itself stays
+<code>linewidth</code> wide. The band only cuts lines lying farther from the camera,
+never faces, and lines that end at a common vertex, such as the edges at
+a corner of a cube, still meet there.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Bénard and Hertzmann (2019). Line drawings from 3D models: a
+    <p>Appel, Rohlf and Stein (1979). The haloed line effect for
+hidden line elimination. SIGGRAPH '79.
+<a href="https://history.siggraph.org/?p=104577" class="external-link">https://history.siggraph.org/?p=104577</a></p>
+<p>Bénard and Hertzmann (2019). Line drawings from 3D models: a
 tutorial. Foundations and Trends in Computer Graphics and Vision 11,
 1-159. <a href="https://doi.org/10.1561/0600000075" class="external-link">doi:10.1561/0600000075</a></p>
 <p>Hertzmann and Zorin (2000). Illustrating smooth surfaces. SIGGRAPH 2000,
@@ -218,7 +235,11 @@ tutorial. Foundations and Trends in Computer Graphics and Vision 11,
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="geom_mesh_3d.html">geom_mesh_3d</a></span><span class="op">(</span>vertices <span class="op">=</span> <span class="va">cube</span>, faces <span class="op">=</span> <span class="va">quads</span>, fill <span class="op">=</span> <span class="st">"grey90"</span>,</span>
 <span>    outline <span class="op">=</span> <span class="fu">outline_3d</span><span class="op">(</span>hidden <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="stat_parametric_3d.html">geom_parametric_3d</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">torus</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">48</span>, <span class="fl">24</span><span class="op">)</span>, closed <span class="op">=</span> <span class="cn">TRUE</span>, fill <span class="op">=</span> <span class="st">"white"</span>,</span>
+<span>    outline <span class="op">=</span> <span class="fu">outline_3d</span><span class="op">(</span>crease <span class="op">=</span> <span class="cn">NULL</span>, hidden <span class="op">=</span> <span class="st">"show"</span>, halo <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">1</span>, <span class="st">"mm"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>elevation <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -215,27 +215,9 @@
 <polygon points='247.73,192.90 266.19,191.47 276.85,175.49 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
 <polygon points='287.50,159.50 305.96,158.07 316.62,142.09 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
 <polygon points='237.07,208.89 255.53,207.46 266.19,191.47 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
-</g>
-<defs>
-  <clipPath id='cp-0'>
-    <path d='M 213.53 157.94 L 213.53 176.23 L 215.23 176.23 L 215.23 157.21 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-0)'>
-<polyline points='214.38,116.54 214.38,176.23 ' style='stroke-width: 1.71; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMTEzLjgxfDM3OS41NnwxNi40NHwyOTMuNzE=)'>
+<path class='theme-fill-fg' d='M 215.23 157.21 L 213.53 157.94 L 213.53 176.23 L 215.23 176.23 Z' style='fill-rule: nonzero; fill: #3E3F3A; stroke-width: 0.75; stroke: none;' />
 <polygon points='195.21,166.64 213.67,165.21 224.32,149.22 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
-</g>
-<defs>
-  <clipPath id='cp-1'>
-    <path d='M 213.53 116.54 L 213.53 157.94 L 215.23 157.21 L 215.23 116.54 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-1)'>
-<polyline points='214.38,116.54 214.38,176.23 ' style='stroke-width: 1.71; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMTEzLjgxfDM3OS41NnwxNi40NHwyOTMuNzE=)'>
+<path class='theme-fill-fg' d='M 215.23 157.21 L 215.23 116.54 L 213.53 116.54 L 213.53 157.94 Z' style='fill-rule: nonzero; fill: #3E3F3A; stroke-width: 0.75; stroke: none;' />
 <path d='M 184.55 182.63 L 213.67 165.21 L 195.21 166.64 ZM 184.55 182.63 L 203.01 181.20 L 213.67 165.21 ZM 213.67 165.21 L 242.78 147.80 L 224.32 149.22 ZM 203.01 181.20 L 232.13 163.78 L 213.67 165.21 ZM 213.67 165.21 L 232.13 163.78 L 242.78 147.80 ZM 203.01 181.20 L 221.47 179.77 L 232.13 163.78 Z' style='fill-rule: nonzero; fill: #2C6B98; stroke-width: 0.75; stroke: none;' />
 <polygon points='184.55,182.63 213.67,165.21 195.21,166.64 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
 <polygon points='184.55,182.63 203.01,181.20 213.67,165.21 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
@@ -254,27 +236,9 @@
 <polygon points='239.93,178.34 269.04,160.93 250.59,162.36 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
 <polygon points='250.59,162.36 269.04,160.93 279.70,144.94 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
 <polygon points='239.93,178.34 258.39,176.91 269.04,160.93 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
-</g>
-<defs>
-  <clipPath id='cp-2'>
-    <path d='M 278.14 152.95 L 278.14 208.53 L 279.84 208.53 L 279.84 152.21 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-2)'>
-<polyline points='278.99,145.12 278.99,208.53 ' style='stroke-width: 1.71; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMTEzLjgxfDM3OS41NnwxNi40NHwyOTMuNzE=)'>
+<path class='theme-fill-fg' d='M 279.84 152.21 L 278.14 152.95 L 278.14 208.53 L 279.84 208.53 Z' style='fill-rule: nonzero; fill: #3E3F3A; stroke-width: 0.75; stroke: none;' />
 <polygon points='269.04,160.93 298.16,143.51 279.70,144.94 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
-</g>
-<defs>
-  <clipPath id='cp-3'>
-    <path d='M 278.14 145.12 L 278.14 152.95 L 279.84 152.21 L 279.84 145.12 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-3)'>
-<polyline points='278.99,145.12 278.99,208.53 ' style='stroke-width: 1.71; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMTEzLjgxfDM3OS41NnwxNi40NHwyOTMuNzE=)'>
+<path class='theme-fill-fg' d='M 279.84 152.21 L 279.84 145.12 L 278.14 145.12 L 278.14 152.95 Z' style='fill-rule: nonzero; fill: #3E3F3A; stroke-width: 0.75; stroke: none;' />
 <path d='M 258.39 176.91 L 287.50 159.50 L 269.04 160.93 ZM 269.04 160.93 L 287.50 159.50 L 298.16 143.51 ZM 258.39 176.91 L 276.85 175.49 L 287.50 159.50 ZM 276.85 175.49 L 305.96 158.07 L 287.50 159.50 ZM 266.19 191.47 L 295.31 174.06 L 276.85 175.49 ZM 276.85 175.49 L 295.31 174.06 L 305.96 158.07 ZM 255.53 207.46 L 284.65 190.04 L 266.19 191.47 ZM 266.19 191.47 L 284.65 190.04 L 295.31 174.06 ZM 255.53 207.46 L 273.99 206.03 L 284.65 190.04 Z' style='fill-rule: nonzero; fill: #2C6B98; stroke-width: 0.75; stroke: none;' />
 <polygon points='258.39,176.91 287.50,159.50 269.04,160.93 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />
 <polygon points='269.04,160.93 287.50,159.50 298.16,143.51 ' style='stroke-width: 0.64; stroke: none; fill: #2C6B98;' />

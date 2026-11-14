@@ -122,16 +122,7 @@
 <polyline points='190.70,189.13 344.42,233.51 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='200.29,180.83 354.01,225.20 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='209.88,172.52 363.60,216.90 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<defs>
-  <clipPath id='cp-0'>
-    <path d='M 122.48 292.41 L 278.38 292.41 L 278.38 246.17 L 122.48 246.17 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-0)'>
 <polyline points='123.57,247.27 277.29,291.64 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMTA5LjQ2fDM3OS41NnwxNi40NHwyOTIuNDE=)'>
 <polyline points='142.75,230.66 296.47,275.03 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='161.93,214.05 315.65,258.42 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='181.11,197.44 334.83,241.81 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
@@ -178,43 +169,25 @@
 <circle class='theme-fill-fg' cx='252.03' cy='176.55' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
 <circle class='theme-fill-fg' cx='249.03' cy='183.70' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
 <circle class='theme-fill-fg' cx='252.71' cy='173.41' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
-</g>
-<defs>
-  <clipPath id='cp-1'>
-    <path d='M 250.51 240.29 L 300.78 196.75 L 299.71 195.51 L 249.79 238.74 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-1)'>
-<polyline points='211.50,272.99 300.25,196.13 ' style='stroke-width: 1.65; stroke: #5C6166; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMTA5LjQ2fDM3OS41NnwxNi40NHwyOTIuNDE=)'>
+<path d='M 300.78 196.75 L 299.71 195.51 L 249.79 238.74 L 250.51 240.29 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
 <polyline points='161.93,214.05 315.65,258.42 ' style='stroke-width: 1.65; stroke: #5C6166; stroke-linecap: butt;' />
+<path d='M 250.51 240.29 L 249.79 238.74 L 210.96 272.36 L 212.04 273.61 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
+<circle class='theme-fill-fg' cx='209.82' cy='230.59' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
 </g>
 <defs>
-  <clipPath id='cp-2'>
-    <path d='M 212.04 273.61 L 250.51 240.29 L 249.79 238.74 L 210.96 272.36 Z'/>
-  </clipPath>
-</defs>
-<g clip-path='url(#cp-2)'>
-<polyline points='211.50,272.99 300.25,196.13 ' style='stroke-width: 1.65; stroke: #5C6166; stroke-linecap: butt;' />
-</g>
-<g clip-path='url(#cpMTA5LjQ2fDM3OS41NnwxNi40NHwyOTIuNDE=)'>
-</g>
-<defs>
-  <clipPath id='cp-3'>
+  <clipPath id='cp-0'>
     <path d='M 316.89 72.29 L 379.56 72.29 L 379.56 49.96 L 316.89 49.96 Z'/>
   </clipPath>
 </defs>
-<g clip-path='url(#cp-3)'>
+<g clip-path='url(#cp-0)'>
 <polygon class='theme-fill-bg' points='319.94,72.29 378.82,72.29 378.70,72.29 379.19,72.27 379.67,72.17 380.13,72.00 380.55,71.75 380.93,71.44 381.26,71.08 381.52,70.66 381.71,70.21 381.83,69.73 381.87,69.24 381.87,69.24 381.87,53.00 381.87,53.00 381.83,52.52 381.71,52.04 381.52,51.59 381.26,51.17 380.93,50.81 380.55,50.50 380.13,50.25 379.67,50.08 379.19,49.98 378.82,49.96 319.94,49.96 320.31,49.98 319.82,49.96 319.33,50.02 318.86,50.15 318.42,50.36 318.01,50.64 317.66,50.98 317.37,51.38 317.14,51.81 316.98,52.28 316.90,52.76 316.89,53.00 316.89,69.24 316.90,69.00 316.90,69.49 316.98,69.97 317.14,70.44 317.37,70.87 317.66,71.27 318.01,71.61 318.42,71.88 318.86,72.10 319.33,72.23 319.82,72.29 ' style='stroke-width: 0.82; fill: #F5F6F8;' />
 </g>
-<g clip-path='url(#cp-3)'>
+<g clip-path='url(#cp-0)'>
 <text x='321.98' y='67.21' style='font-size: 1.7em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>highest</text>
 </g>
-<g clip-path='url(#cp-3)'>
+<g clip-path='url(#cp-0)'>
 </g>
 <g clip-path='url(#cpMTA5LjQ2fDM3OS41NnwxNi40NHwyOTIuNDE=)'>
-<circle class='theme-fill-fg' cx='209.82' cy='230.59' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 <text x='134.81' y='268.22' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-2</text>

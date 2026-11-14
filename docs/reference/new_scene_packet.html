@@ -134,7 +134,8 @@ Indices start at one. Empty lists represent unused geometry kinds.</p>
 <span>  footprint_vertices <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  styles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>style_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  panel_id <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  quadrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  quadrics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  materials <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>material_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -191,11 +192,24 @@ integer texture_id (NA for none) names a texture held on the R side.</p></dd>
 
 
 <dt id="arg-quadrics">quadrics<a class="anchor" aria-label="anchor" href="#arg-quadrics"></a></dt>
-<dd><p>Analytic primitives: kind (1 sphere, 2 cylinder, 3 cone),
-centre_x, centre_y, centre_z, the unit axis axis_x, axis_y, axis_z
-(default the z axis), radius_a, radius_b (cone end radius, default 0) and
-length, with the common primitive_id, layer_id, source_row, style_id,
-partition and opacity columns.</p></dd>
+<dd><p>Analytic primitives, each a unit primitive of <code>kind</code> (1
+sphere, 2 cylinder, 3 cone) placed by an affine map into normalised panel
+coordinates: <code>transform_1</code> to <code>transform_16</code>, the column-major entries of
+a 4 x 4 matrix whose last row is (0, 0, 0, 1), identity by default (Sigg
+et al. 2006). The unit sphere is the ball of radius 1 about the origin;
+unit cylinders and cones lie along the local z axis for z in [0, 1],
+with radius 1 at z = 0 and <code>radius_ratio</code> (default 1, exactly 1 for
+cylinders) at z = 1. <code>cap_0</code> and <code>cap_1</code> close the ends at z = 0 and z = 1
+with flat disks (1, the default) or leave them open (0). Common columns are
+primitive_id, layer_id, source_row, style_id, partition and opacity.</p></dd>
+
+
+<dt id="arg-materials">materials<a class="anchor" aria-label="anchor" href="#arg-materials"></a></dt>
+<dd><p>Data frame of surface materials with contiguous integer
+material_id keys and columns ambient, diffuse, specular, shininess,
+specular_colour and back (a colour or NA), as made by <code><a href="material_3d.html">material_3d()</a></code>.
+A style's optional integer material_id (NA for the default material)
+refers to it. The engine reads neither; the shading kernel does.</p></dd>
 
 </dl></div>
     <div class="section level2">

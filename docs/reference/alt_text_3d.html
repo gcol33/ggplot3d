@@ -145,6 +145,16 @@ communicates a finding that needs words beyond its mapped variables.</p>
 with the vector scene backend. The chunk's <code>fig.alt</code> overrides the
 generated description. Widget dimensions follow <code>fig.width</code> and
 <code>fig.height</code> in inches at 96 pixels per inch.</p>
+<p>The chunk option <code>raster3d</code> keeps a static plot of dense geometry
+small: <code>TRUE</code> draws its vector-backend panels with
+<code>backend_3d("hybrid", rasterise = "all")</code>, which draws the faces, paths
+and points of every depth-tested layer into one image while axes, panes,
+grid lines and text stay vector graphics. A number is a file size in
+bytes: the plot is drawn as vector graphics and, when the file exceeds
+that size, again with the hybrid backend, and the smaller file is kept.
+The image has the chunk's <code>dpi</code> pixels per inch, which knitr multiplies
+by <code>fig.retina</code> for HTML output: the density of a raster figure from the
+same chunk. Panels with another backend are left as they are.</p>
 <p>For a raster scene saved with <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code>, set both
 <code>backend_3d("raster", dpi = 300)</code> and <code>ggsave(..., dpi = 300)</code> for a
 300 dpi image. The backend dpi controls scene sampling at its physical

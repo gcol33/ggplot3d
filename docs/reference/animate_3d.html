@@ -142,6 +142,7 @@ data per frame. Projection, visibility and lighting are evaluated per frame.</p>
 <span>  trail <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  isometry <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tour <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stable_partition <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -268,6 +269,20 @@ model) changes only the camera pre-transform. Limits remain fixed.</p></dd>
 Grassmann-interpolated bases to stat_project_3d() layers with orthographic
 or finite perspective projection. Uses fixed limits across frames. Requires static
 input data, linear position scales, and no tween or trail.</p></dd>
+
+
+<dt id="arg-stable-partition">stable_partition<a class="anchor" aria-label="anchor" href="#arg-stable-partition"></a></dt>
+<dd><p>Cut overlapping faces on planes fixed by the
+geometry, default FALSE. Faces that occlude one another in a cycle must be
+cut before they can be painted back to front. By default each frame
+chooses its cuts from the view, so cut edges move between frames. With
+TRUE, the cuts come from one partition of the plot's faces and quadric
+surfaces by their own planes (Fuchs, Kedem and Naylor 1980), built once
+and reused while the geometry stays the same; each frame only walks it
+back to front for its camera. The drawn image is the same as without it;
+only the position of the cut edges differs. Quadric stand-ins are then
+refined for every viewing direction at the camera's distance and zoom.
+Applies to scenes the vector and hybrid renderers draw.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
