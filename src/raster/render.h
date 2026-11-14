@@ -600,7 +600,10 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
     double weight=(1-out.colour.a)*c.a;
     out.colour.r+=weight*c.r; out.colour.g+=weight*c.g; out.colour.b+=weight*c.b; out.colour.a+=weight;
     if(++out.peels==1) {out.first=f[j].item;out.depth=f[j].z;}
-    if(steps) steps->push_back({f[j].z,out.colour.a,0,0,0,0,false});
+    if(steps) {
+      const int partition=scene.table(item.kind).partition[item.row];
+      steps->push_back({partition==0 ? R_PosInf:f[j].z,out.colour.a,0,0,0,0,false});
+    }
     if(c.a==1) {out.opaque_depth=f[j].z;opaque=true;break;}
     previous=f[j].item; previous_z=f[j].z;
   }
@@ -1199,7 +1202,7 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
     // which coverage becomes opaque, its kind (6 for a traced layer) and
     // 1-based row (table row, or traced layer), the model-space normal of a
     // face or traced surface, and the depth at which the accumulated alpha
-    // reaches half its final value.
+    // reaches half its final value, with underlay paint infinitely far.
     Rcpp::NumericMatrix depth(height,width),opaque(height,width),coverage(height,width),
       normal_x(height,width),normal_y(height,width),normal_z(height,width);
     Rcpp::IntegerMatrix kind(height,width),row(height,width);

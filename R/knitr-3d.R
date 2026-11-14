@@ -13,14 +13,17 @@
 #'
 #'   The chunk option `raster3d` keeps a static plot of dense geometry
 #'   small: `TRUE` draws its vector-backend panels with
-#'   `backend_3d("hybrid", rasterise = "all")`, which draws the faces, paths
-#'   and points of every depth-tested layer into one image while axes, panes,
-#'   grid lines and text stay vector graphics. A number is a file size in
-#'   bytes: the plot is drawn as vector graphics and, when the file exceeds
-#'   that size, again with the hybrid backend, and the smaller file is kept.
-#'   The image has the chunk's `dpi` pixels per inch, which knitr multiplies
-#'   by `fig.retina` for HTML output: the density of a raster figure from the
-#'   same chunk. Panels with another backend are left as they are.
+#'   `backend_3d("hybrid", rasterise = "surfaces")`, which draws the faces of
+#'   every depth-tested or rear-pane layer into one image while paths,
+#'   points, axes, panes, grid lines and text stay vector graphics. A number
+#'   is a file size in bytes: the plot is drawn as vector graphics and, while
+#'   the file exceeds that size, again with `rasterise = "surfaces"` and then
+#'   with `rasterise = "all"`, which also draws paths and points into the
+#'   image; the smallest file is kept. The image has the chunk's `dpi` pixels
+#'   per inch, which knitr multiplies by `fig.retina` for HTML output: the
+#'   density of a raster figure from the same chunk. Panels with another
+#'   backend are left as they are. The same applies to patchwork compositions
+#'   that contain ggplot3d plots.
 #'
 #'   For a raster scene saved with [ggplot2::ggsave()], set both
 #'   `backend_3d("raster", dpi = 300)` and `ggsave(..., dpi = 300)` for a
@@ -56,25 +59,59 @@ alt_text_3d <- function(plot) {
 #' @exportS3Method knitr::knit_print
 knit_print.ggplot3d <- function(x, ..., options = knitr::opts_current$get(), inline = FALSE) {
   if (inline) return(alt_text_3d(x))
+  options <- knit_figure_options_3d(options, alt_text_3d(x))
+  if (isTRUE(options$view3d) && knitr::is_html_output()) {
+    widget <- view_3d(x, width = round(options$fig.width * 96), height = round(options$fig.height * 96))
+    result <- knitr::knit_print(widget, options = options, ...)
+    result[] <- paste0('<div role="group" aria-label="', knit_escape_3d(options$fig.alt), '">', result, '</div>')
+    return(result)
+  }
+  if (isTRUE(options$view3d)) x <- map_plots_3d(x, function(p) plot_backend_3d(p, backend_3d("vector")))
+  knit_static_3d(x, options)
+}
+
+#' @exportS3Method knitr::knit_print
+knit_print.patchwork <- function(x, ..., options = knitr::opts_current$get(), inline = FALSE) {
+  plots <- list()
+  map_plots_3d(x, function(p) { plots[[length(plots) + 1L]] <<- p; p })
+  if (inline || !length(plots)) return(NextMethod())
+  options <- knit_figure_options_3d(options, paste(vapply(plots, alt_text_3d, character(1)), collapse = " "))
+  knit_static_3d(x, options)
+}
+
+# Applies `f` to every ggplot3d plot of a plot or a patchwork composition,
+# nested compositions included.
+map_plots_3d <- function(x, f) {
+  if (inherits(x, "patchwork")) {
+    patches <- x$patches
+    patches$plots <- lapply(patches$plots, map_plots_3d, f)
+    x$patches <- patches
+  }
+  if (inherits(x, "ggplot3d")) x <- f(x)
+  x
+}
+
+# Chunk options for the next figure of the chunk: its number, and the
+# chunk's alt text for it or `alt`.
+knit_figure_options_3d <- function(options, alt) {
   options <- utils::modifyList(knitr::opts_chunk$get(), options)
-  counter <- knitr::opts_current$get(".ggplot3d_count") %or3d% 0L
-  counter <- counter + 1L
+  counter <- (knitr::opts_current$get(".ggplot3d_count") %or3d% 0L) + 1L
   knitr::opts_current$lock(FALSE)
   knitr::opts_current$set(.ggplot3d_count = counter)
   knitr::opts_current$lock(TRUE)
   explicit <- options$fig.alt
   if (is.language(explicit)) explicit <- eval(explicit, knitr::knit_global())
-  alt <- if (length(explicit)) rep_len(explicit, counter)[counter] else NULL
-  if (is.null(alt) || is.na(alt) || !nzchar(alt)) alt <- alt_text_3d(x)
-  options$fig.alt <- alt
-  if (isTRUE(options$view3d) && knitr::is_html_output()) {
-    widget <- view_3d(x, width = round(options$fig.width * 96), height = round(options$fig.height * 96))
-    result <- knitr::knit_print(widget, options = options, ...)
-    result[] <- paste0('<div role="group" aria-label="', knit_escape_3d(alt), '">', result, '</div>')
-    return(result)
-  }
+  chosen <- if (length(explicit)) rep_len(explicit, counter)[counter] else NULL
+  options$fig.alt <- if (is.null(chosen) || is.na(chosen) || !nzchar(chosen)) alt else chosen
+  options$fig.cur <- counter
+  options
+}
+
+# Writes a static figure through the chunk's device, redrawing vector panels
+# with the hybrid backend as the raster3d option asks.
+knit_static_3d <- function(x, options) {
   if (identical(options$fig.keep, "none")) return(invisible(NULL))
-  if (isTRUE(options$view3d)) x <- plot_backend_3d(x, backend_3d("vector"))
+  counter <- options$fig.cur
   device <- options$dev[[1L]]
   extension <- options$fig.ext[[1L]] %or3d% switch(device, svglite = "svg", cairo_pdf = "pdf", ragg_png = "png", device)
   path <- knitr::fig_path(extension, options = options, number = counter)
@@ -89,22 +126,28 @@ knit_print.ggplot3d <- function(x, ..., options = knitr::opts_current$get(), inl
   raster <- options$raster3d %or3d% FALSE
   if (!(isTRUE(raster) || isFALSE(raster) || (is.numeric(raster) && length(raster) == 1L && !is.na(raster) && raster >= 0)))
     stop("Chunk option raster3d must be TRUE, FALSE or a size in bytes.", call. = FALSE)
-  vector <- identical(x@coordinates$config$backend$type, "vector")
-  hybrid <- plot_backend_3d(x, backend_3d("hybrid", dpi = options$dpi, rasterise = "all"))
+  vector <- FALSE
+  map_plots_3d(x, function(p) { vector <<- vector || identical(p@coordinates$config$backend$type, "vector"); p })
+  hybrid <- function(rasterise) map_plots_3d(x, function(p)
+    if (identical(p@coordinates$config$backend$type, "vector"))
+      plot_backend_3d(p, backend_3d("hybrid", dpi = options$dpi, rasterise = rasterise)) else p)
   if (vector && isTRUE(raster)) {
-    save(hybrid)
+    save(hybrid("surfaces"))
   } else {
     save(x)
-    if (vector && is.numeric(raster) && file.size(path) > raster) {
-      drawn <- tempfile(fileext = paste0(".", extension))
-      on.exit(unlink(drawn), add = TRUE)
-      file.copy(path, drawn)
-      save(hybrid)
-      if (file.size(path) >= file.size(drawn)) file.copy(drawn, path, overwrite = TRUE)
+    if (vector && is.numeric(raster)) {
+      best <- tempfile(fileext = paste0(".", extension))
+      on.exit(unlink(best), add = TRUE)
+      file.copy(path, best)
+      for (rasterise in c("surfaces", "all")) {
+        if (file.size(best) <= raster) break
+        save(hybrid(rasterise))
+        if (file.size(path) < file.size(best)) file.copy(path, best, overwrite = TRUE)
+      }
+      file.copy(best, path, overwrite = TRUE)
     }
   }
   if (identical(options$fig.show, "hide")) return(invisible(NULL))
-  options$fig.cur <- counter
   options$fig.num <- options$fig.num %or3d% counter
   knitr::asis_output(knitr::knit_hooks$get("plot")(path, options))
 }

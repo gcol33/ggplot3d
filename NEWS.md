@@ -92,13 +92,17 @@
 
 * `backend_3d("hybrid", rasterise = "surfaces")` draws every depth-tested
   layer with faces or quadrics into the panel image without `raster = TRUE`
-  on each layer, and `rasterise = "all"` adds paths and points. The knitr
-  chunk option `raster3d` draws static plots with `rasterise = "all"`:
-  `TRUE` always, or a size in bytes above which the vector figure is drawn
-  again as hybrid and the smaller file is kept. The articles set
-  `raster3d = 1e5` with `dpi = 120`, so dense meshes reach the page as one
-  image at twice the displayed resolution while axes, grid lines, panes and
-  text stay themeable vector graphics.
+  on each layer, and `rasterise = "all"` adds paths and points. Layers on a
+  rear pane (`plane = "floor"`, `position_project_3d()`) can be drawn into
+  the image too; the image then takes every rear-pane data layer of the
+  panel, under its depth-tested paint. The knitr chunk option `raster3d`
+  draws static plots with the hybrid backend: `TRUE` with
+  `rasterise = "surfaces"`, or a size in bytes above which the vector figure
+  is drawn again with `"surfaces"` and then `"all"` and the smallest file is
+  kept. Patchwork compositions that contain ggplot3d plots follow the same
+  option. The articles set `raster3d = 1e5` with `dpi = 120`, so dense meshes
+  reach the page as one image at twice the displayed resolution while paths,
+  points, axes, grid lines, panes and text stay themeable vector graphics.
 
 * Vector strokes on a hybrid panel's image are tested against its depth with
   a slope-scaled offset (OpenGL `glPolygonOffset`): contours lying on a

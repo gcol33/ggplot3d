@@ -31,14 +31,22 @@ raster_occlusion_3d <- function(packet, camera, viewport, result) {
     as.integer(result$width), as.integer(result$height), as.integer(result$antialias), result$buffers$coverage_depth)
 }
 
+# Partitions of a packet's primitives.
+packet_partitions_3d <- function(packet) unlist(lapply(primitive_kinds_3d, function(k) packet[[k]]$partition))
+
+# Whether a packet can be drawn into a hybrid panel's image: its primitives
+# are depth tested or lie on a rear pane. The image is composited between
+# the vector passes, so paint over every vector primitive (a front pane,
+# occlusion = "overlay") cannot be in it.
+hybrid_imageable_packet_3d <- function(packet) all(packet_partitions_3d(packet) %in% c(0L, 1L))
+
 # Whether a hybrid panel draws an unmarked packet into its image: with
-# `rasterise = "surfaces"` a depth-tested packet that draws faces or quadrics,
-# with `"all"` one that draws any primitive other than text.
+# `rasterise = "surfaces"` a packet that draws faces or quadrics, with `"all"`
+# one that draws any primitive other than text.
 hybrid_rasterised_packet_3d <- function(packet, rasterise) {
   kinds <- switch(rasterise, marked = character(), surfaces = c("faces", "quadrics"),
     all = c("faces", "quadrics", "polylines", "markers"))
-  sum(vapply(kinds, function(k) length(packet[[k]]$partition), integer(1))) > 0L &&
-    all(unlist(lapply(primitive_kinds_3d, function(k) packet[[k]]$partition)) == 1L)
+  sum(vapply(kinds, function(k) length(packet[[k]]$partition), integer(1))) > 0L && hybrid_imageable_packet_3d(packet)
 }
 
 # Hybrid panels rasterise the layers drawn with `raster = TRUE`, the layers
@@ -46,7 +54,12 @@ hybrid_rasterised_packet_3d <- function(packet, rasterise) {
 # rest, with the panel furniture, into vector fragments. Vector panels place
 # their traced layers the same way. A vector primitive lies in front of the
 # raster image, behind it, or partly behind; the image is drawn between two
-# vector passes. The behind pass holds the primitives behind
+# vector passes. Rear-pane paint in the image lies under its depth-tested
+# paint and hides no vector primitive; the vector rear-pane primitives, drawn
+# in the behind pass, lie under the image. A panel that draws any rear-pane
+# layer into the image therefore draws every rear-pane data layer there, so
+# their paint keeps its layer order and only the panel furniture stays under
+# the image. The behind pass holds the primitives behind
 # the image and the hidden part of the partial ones, so the image's
 # antialiased edges composite over them; the front pass holds the rest. A
 # partial primitive is clipped to its hidden pixels in the first pass and to
@@ -62,10 +75,13 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   styled <- identical(backend$type, "hybrid") &
     vapply(x$packets, function(p) any(p$styles$raster %in% TRUE) || hybrid_rasterised_packet_3d(p, rasterise), logical(1))
   rasterised <- traced | styled
+  if (identical(backend$type, "hybrid") && any(unlist(lapply(x$packets[rasterised], packet_partitions_3d)) == 0L))
+    rasterised <- rasterised | vapply(x$packets, function(p)
+      any(packet_partitions_3d(p) == 0L) && hybrid_imageable_packet_3d(p), logical(1))
   specs <- raster_traced_specs_3d(x$packets[rasterised])
   raster_packet <- merge_scene_packets(x$packets[rasterised], panel)
-  partitions <- unlist(lapply(primitive_kinds_3d, function(k) raster_packet[[k]]$partition))
-  scene_assert(all(partitions == 1L), "Rasterised layers of a hybrid panel need occlusion = \"depth\".")
+  scene_assert(hybrid_imageable_packet_3d(raster_packet),
+    "Rasterised layers of a hybrid panel need occlusion = \"depth\" or a rear pane.")
   vector_packet <- device_text_metrics_3d(merge_scene_packets(c(list(furniture$packet), x$packets[!rasterised]), panel))
   vector_marker_limit_3d(vector_packet)
   scene <- scene_compile(vector_packet, camera, viewport,

@@ -129,3 +129,25 @@ test_that("raster3d draws dense geometry as one image and keeps the smaller file
   expect_true(figure(raster, "raster3d=FALSE")$image)
   expect_error(knit_document_3d(surface, "html", chunk("raster3d='yes', error=FALSE")), "raster3d must be")
 })
+
+test_that("raster3d redraws the ggplot3d plots of a patchwork composition", {
+  skip_if_not_installed("knitr")
+  skip_if_not_installed("svglite")
+  skip_if_not_installed("patchwork")
+  d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
+  d$z <- sin(3 * d$x) * cos(3 * d$y)
+  surface <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_surface_3d(fill = "grey70", colour = NA) + coord_3d()
+  flat <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point()
+  chunk <- function(option) c(sprintf("```{r, echo=FALSE, dev='svglite', fig.ext='svg', dpi=30, %s}", option), "p", "```")
+  for (composed in list(patchwork::wrap_plots(surface, flat), patchwork::wrap_plots(flat, surface))) {
+    vector <- knit_document_3d(composed, "html", chunk("raster3d=FALSE"))
+    hybrid <- knit_document_3d(composed, "html", chunk("raster3d=0"))
+    expect_length(hybrid$files, 1L)
+    expect_false(any(grepl("<image", vector$content[[1L]], fixed = TRUE)))
+    expect_true(any(grepl("<image", hybrid$content[[1L]], fixed = TRUE)))
+    expect_lt(sum(nchar(hybrid$content[[1L]], type = "bytes")), sum(nchar(vector$content[[1L]], type = "bytes")))
+    expect_match(hybrid$text, "3D plot. Layers: Surface", fixed = TRUE)
+  }
+  plain <- knit_document_3d(patchwork::wrap_plots(flat, flat), "html", chunk("raster3d=0"))
+  expect_false(any(grepl("<image", plain$content[[1L]], fixed = TRUE)))
+})

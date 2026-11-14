@@ -149,3 +149,25 @@ test_that("vector contours on a rasterised surface are seen, and paths under it 
   expect_true(2L %in% status(20, contours))
 })
 
+test_that("hybrid images take rear-pane layers under their depth-tested paint", {
+  d <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
+  d$z <- exp(-2 * (d$x^2 + d$y^2))
+  above <- data.frame(x = c(0, 0.5), y = c(0, -0.5), z = c(1.2, 0.6))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+    geom_contour_filled_3d(plane = "floor", bins = 4) +
+    geom_contour_3d(plane = "floor", bins = 4, colour = "black") +
+    geom_point_3d(data = above, colour = "red", size = 3) +
+    coord_3d(elevation = 40, backend = backend_3d("hybrid", dpi = 50, rasterise = "surfaces"))
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+  find <- function(g) {
+    if (identical(g$name, "scene-hybrid-3d")) return(list(g))
+    unlist(lapply(c(as.list(g$children), g$grobs), find), recursive = FALSE)
+  }
+  panel <- find(grid::grid.force(ggplot2::ggplotGrob(p)))[[1L]]
+  expect_identical(panel$capabilities$image_layers, 1:2)
+  expect_true(all(panel$occlusion$status$markers == 0L))
+  covered <- !is.na(panel$raster_result$buffers$depth)
+  expect_true(any(covered))
+  expect_true(all(is.na(panel$raster_result$buffers$coverage_depth[covered])))
+})
