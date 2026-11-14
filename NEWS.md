@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* `geom_mesh_3d()` and `geom_surface_3d()` accept colours given per vertex,
+  such as `fill = I(hex)`, with `shading = "smooth"` and interpolate them
+  across each face in linear light, as `stat_hull_3d()` does. A fill that
+  varies within a face under flat shading is now an error at draw time, so
+  the mesh no longer disappears behind a stat warning.
+
 * Inside-view animations retain sphere framing and rotate the camera about
   the observer's fixed eye, including angle tracks and orbit paths (#15).
 

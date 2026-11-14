@@ -170,21 +170,11 @@ StatMesh3D <- ggplot2::ggproto("StatMesh3D", ggplot2::Stat,
   }
 )
 
-# Numeric fill averaged over the corners of each face (kept per vertex for
-# smooth shading); other materials must already be constant per face.
+# Numeric fill averaged over the corners of each face before scaling, kept
+# per vertex for smooth shading. The emitter checks that the scaled
+# materials are constant per face.
 mesh_face_materials_3d <- function(data, shading = "flat") {
-  rows <- order(data$.mesh, data$.face, data$.corner)
-  ids <- mesh_face_ids_3d(data, rows)
-  for (field in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
-    value <- data[[field]]
-    if (field == "fill" && is.numeric(value)) {
-      if (shading == "flat") data[[field]] <- mesh_face_mean_3d(value, ids)
-    } else {
-      keys <- match(value, unique(value))
-      adjacent <- head(rows, -1L); next_row <- tail(rows, -1L)
-      if (any(ids[adjacent] == ids[next_row] & keys[adjacent] != keys[next_row])) stop("Mesh materials must be constant per face; numeric vertex fill is averaged before scaling.", call. = FALSE)
-    }
-  }
+  if (is.numeric(data$fill) && shading == "flat") data$fill <- mesh_face_mean_3d(data$fill, mesh_face_ids_3d(data))
   data
 }
 
@@ -242,8 +232,13 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 #' @param outline Feature lines from [outline_3d()], or NULL for none.
 #' @inheritParams geom_surface_3d
 #' @details Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
-#'   POLYGON Z or TIN Z objects. Numeric vertex fill is averaged per face before
-#'   colour scaling. Other materials must be constant within each face.
+#'   POLYGON Z or TIN Z objects. With `shading = "flat"` a numeric vertex fill
+#'   is averaged per face before colour scaling, and every material must be
+#'   constant within each face. With `shading = "smooth"` the fill stays per
+#'   vertex, numeric or given as colours such as `fill = I(hex)`, and each face
+#'   interpolates its corner colours in linear light; `shade = FALSE` shows the
+#'   vertex colours exactly. A discrete fill splits the rows into groups, so
+#'   `group = 1` keeps one mesh.
 #'
 #'   The mesh parameters run the [mesh processing][mesh_processing] verbs on
 #'   each mesh of a panel, in transformed position units, in the order
@@ -290,6 +285,7 @@ emit_mesh_3d <- function(data, params, panel_params) {
   rows <- order(data$.mesh, data$.face, data$.corner)
   first <- c(TRUE, diff(data$.mesh[rows]) != 0L | diff(data$.face[rows]) != 0L)
   counts <- diff(c(which(first), length(rows) + 1L))
+  check_face_materials_3d(data, rows, cumsum(first), params, "Mesh")
   if (all(counts == 3L) && !isTRUE(params$wireframe) && all(is.na(data$colour)) && is.null(data$subgroup)) {
     faces <- matrix(rows, ncol = 3L, byrow = TRUE)
     corners <- matrix(data$.corner[faces], ncol = 3L)

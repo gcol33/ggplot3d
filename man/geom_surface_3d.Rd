@@ -113,9 +113,11 @@ Grid surfaces estimate vertex normals from height differences along each
 axis. With \code{shading = "flat"} lighting uses the normalised mean of each
 face's vertex normals and a numeric fill is averaged over each face. With
 \code{shading = "smooth"} the vertex normals are interpolated across each face
-(Phong 1975) and a fill that varies between vertices is interpolated in
-linear light (Gouraud 1971), as MATLAB's \verb{lighting gouraud} with
-\code{FaceColor = "interp"} and rgl's \code{smooth} material.
+(Phong 1975) and a fill that varies between vertices, numeric or given as
+colours such as \code{fill = I(hex)}, is interpolated in linear light (Gouraud
+1971), as MATLAB's \verb{lighting gouraud} with \code{FaceColor = "interp"} and rgl's
+\code{smooth} material. A discrete fill splits the rows into groups, so
+\code{group = 1} keeps one surface.
 }
 \examples{
 d <- expand.grid(x = seq(-1, 1, length.out = 6),

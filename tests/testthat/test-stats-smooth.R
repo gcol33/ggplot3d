@@ -145,7 +145,8 @@ test_that("se fill maps the standard error and residuals reach the surface", {
   s <- stats_scene(p); b <- s$built$data[[1L]]
   expect_equal(unique(b$surface), "fit")
   expect_gt(length(unique(b$fill)), 4L)
-  expect_true(constant_corners_3d(b$se, matrix(seq_len(nrow(b)), ncol = 3L, byrow = TRUE)))
+  se <- matrix(b$se, ncol = 3L, byrow = TRUE)
+  expect_true(all(se[, 1L] == se[, 2L] & se[, 1L] == se[, 3L]))
   expect_silent(validate_scene_packet(s$packet))
   set <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_smooth_3d(method = "lm", se = "fill", n = 5, fill = "red") + coord_3d()
   expect_equal(unique(ggplot2::ggplot_build(set)$data[[1L]]$fill), "red")

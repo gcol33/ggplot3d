@@ -4,9 +4,11 @@
 #' axis. With `shading = "flat"` lighting uses the normalised mean of each
 #' face's vertex normals and a numeric fill is averaged over each face. With
 #' `shading = "smooth"` the vertex normals are interpolated across each face
-#' (Phong 1975) and a fill that varies between vertices is interpolated in
-#' linear light (Gouraud 1971), as MATLAB's `lighting gouraud` with
-#' `FaceColor = "interp"` and rgl's `smooth` material.
+#' (Phong 1975) and a fill that varies between vertices, numeric or given as
+#' colours such as `fill = I(hex)`, is interpolated in linear light (Gouraud
+#' 1971), as MATLAB's `lighting gouraud` with `FaceColor = "interp"` and rgl's
+#' `smooth` material. A discrete fill splits the rows into groups, so
+#' `group = 1` keeps one surface.
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard ggplot2 layer arguments.
 #' @param method Grid connectivity or Delaunay triangulation.
 #' @param max_edge Maximum triangle edge length in transformed x/y units.
@@ -151,12 +153,7 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
     out$.face <- rep(seq_len(nrow(triangles)), each = 3L)
     out$.corner <- rep.int(1:3, nrow(triangles))
     out$z_mean <- rep(rowMeans(matrix(data$z[triangles], ncol = 3L)), each = 3L)
-    if ("fill" %in% names(data)) {
-      if (is.numeric(data$fill)) {
-        if (shading == "flat") out$fill <- rep(rowMeans(matrix(data$fill[triangles], ncol = 3L)), each = 3L)
-      }
-      else if (!constant_corners_3d(data$fill, triangles)) stop("Non-numeric surface fill must be constant on each triangle.", call. = FALSE)
-    }
+    if (is.numeric(data$fill) && shading == "flat") out$fill <- rep(rowMeans(matrix(data$fill[triangles], ncol = 3L)), each = 3L)
     out
   }
 )
@@ -181,10 +178,7 @@ emit_surface_3d <- function(data, params, panel_params) {
   faces <- matrix(rows, ncol = 3L, byrow = TRUE)
   corner <- matrix(data$.corner[faces], ncol = 3L)
   if (any(corner[, 1L] == corner[, 2L] | corner[, 2L] == corner[, 3L] | corner[, 1L] == corner[, 3L])) stop("Surface faces require three keyed corners.", call. = FALSE)
-  for (name in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
-    if (name == "fill" && identical(params$shading, "smooth")) next
-    if (!constant_corners_3d(data[[name]], faces)) stop("Surface materials must be constant per face; use fill = after_stat(z_mean) or shading = \"smooth\".", call. = FALSE)
-  }
+  check_face_materials_3d(data, as.vector(t(faces)), rep(seq_len(nrow(faces)), each = 3L), params, "Surface")
   edges <- matrix(integer(), ncol = 2L)
   if (isTRUE(params$wireframe) || any(!is.na(data$colour))) {
     edges <- matrix(as.vector(t(faces[, c(1L, 2L, 2L, 3L, 3L, 1L), drop = FALSE])), ncol = 2L, byrow = TRUE)
@@ -193,10 +187,20 @@ emit_surface_3d <- function(data, params, panel_params) {
   surface_strokes_3d(packet_from_faces_edges_3d(data, faces, edges, params, panel_params), data, faces, params, panel_params)
 }
 
-constant_corners_3d <- function(value, corners) {
-  ids <- match(value, unique(value))
-  all(ids[corners[, 1L]] == ids[corners[, 2L]] & ids[corners[, 1L]] == ids[corners[, 3L]])
+# Materials of the corner rows (rows, in face order, with face ids) must be
+# constant per face, except a fill under smooth shading, which is
+# interpolated across the face from its corner colours.
+check_face_materials_3d <- function(data, rows, face, params, label) {
+  same <- face[-1L] == face[-length(face)]
+  for (name in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
+    if (name == "fill" && identical(params$shading, "smooth")) next
+    value <- data[[name]][rows]
+    keys <- match(value, unique(value))
+    if (any(same & keys[-1L] != keys[-length(keys)])) stop(label, " materials must be constant per face; a fill that varies per vertex needs shading = \"smooth\".", call. = FALSE)
+  }
+  invisible(TRUE)
 }
+
 
 # Delaunay triangles of the x/y positions as a three-column matrix of row
 # indices, counterclockwise (native Bowyer-Watson with exact predicates).

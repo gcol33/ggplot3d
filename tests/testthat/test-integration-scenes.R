@@ -23,7 +23,11 @@ test_that("surface emission checks keyed materials and deduplicates wireframe ed
   expect_length(packet$faces$primitive_id, 0L)
   d$fill <- c("red", "blue", "red", "red")
   scales <- setNames(rep(list(ggplot2::scale_x_continuous()), 3L), c("x", "y", "z"))
-  expect_error(StatSurface3D$compute_group(d, scales, "grid", Inf), "constant")
+  s <- StatSurface3D$compute_group(d, scales, "grid", Inf)
+  s$group <- 1L; s$.source <- seq_len(nrow(s)); s$.layer <- 1L
+  panel <- list(panel_id = 1L)
+  expect_error(emit_surface_3d(s, list(shading = "flat", na.rm = TRUE), panel), "constant per face")
+  expect_s3_class(emit_surface_3d(s, list(shading = "smooth", na.rm = TRUE), panel), "ggplot3d_scene_packet")
 })
 
 test_that("columnar paths preserve material splits across interleaved groups", {

@@ -116,8 +116,13 @@ Draw an external triangle or polygon mesh
 }
 \details{
 Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
-POLYGON Z or TIN Z objects. Numeric vertex fill is averaged per face before
-colour scaling. Other materials must be constant within each face.
+POLYGON Z or TIN Z objects. With \code{shading = "flat"} a numeric vertex fill
+is averaged per face before colour scaling, and every material must be
+constant within each face. With \code{shading = "smooth"} the fill stays per
+vertex, numeric or given as colours such as \code{fill = I(hex)}, and each face
+interpolates its corner colours in linear light; \code{shade = FALSE} shows the
+vertex colours exactly. A discrete fill splits the rows into groups, so
+\code{group = 1} keeps one mesh.
 
 The mesh parameters run the \link[=mesh_processing]{mesh processing} verbs on
 each mesh of a panel, in transformed position units, in the order
