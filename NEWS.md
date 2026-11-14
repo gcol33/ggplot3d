@@ -1,5 +1,9 @@
 # ggplot3d 0.0.0.9000
 
+* Binned fill and colour scales cut surface and mesh faces along interpolated
+  scalar iso-lines. Each piece carries one band colour, with smooth normals
+  shared across the cuts in vector, raster and interactive output.
+
 * `geom_mesh_3d()` and `geom_surface_3d()` accept colours given per vertex,
   such as `fill = I(hex)`, with `shading = "smooth"` and interpolate them
   across each face in linear light, as `stat_hull_3d()` does. A fill that

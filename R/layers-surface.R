@@ -9,6 +9,9 @@
 #' 1971), as MATLAB's `lighting gouraud` with `FaceColor = "interp"` and rgl's
 #' `smooth` material. A discrete fill splits the rows into groups, so
 #' `group = 1` keeps one surface.
+#' Binned fill and colour scales split faces at the scalar iso-lines, using
+#' linear interpolation of the transformed aesthetic between vertices.
+#' Each piece has one band colour, with normals interpolated across its edges.
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard ggplot2 layer arguments.
 #' @param method Grid connectivity or Delaunay triangulation.
 #' @param max_edge Maximum triangle edge length in transformed x/y units.
@@ -153,8 +156,8 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
     out$.face <- rep(seq_len(nrow(triangles)), each = 3L)
     out$.corner <- rep.int(1:3, nrow(triangles))
     out$z_mean <- rep(rowMeans(matrix(data$z[triangles], ncol = 3L)), each = 3L)
-    if (is.numeric(data$fill) && shading == "flat") out$fill <- rep(rowMeans(matrix(data$fill[triangles], ncol = 3L)), each = 3L)
-    out
+    face_fill_samples_3d(out, out$.face, shading,
+      rep(rowMeans(matrix(data$fill[triangles], ncol = 3L)), each = 3L))
   }
 )
 
@@ -193,6 +196,7 @@ emit_surface_3d <- function(data, params, panel_params) {
 check_face_materials_3d <- function(data, rows, face, params, label) {
   same <- face[-1L] == face[-length(face)]
   for (name in intersect(c("fill", "colour", "alpha", "linewidth", "linetype"), names(data))) {
+    if (paste0(".band_", name) %in% names(data)) next
     if (name == "fill" && identical(params$shading, "smooth")) next
     value <- data[[name]][rows]
     keys <- match(value, unique(value))

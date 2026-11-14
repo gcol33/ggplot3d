@@ -66,7 +66,7 @@ emit_polygons_3d <- function(data, params, panel_params, strict = TRUE) {
     feature_id <- feature_id + 1L
     faces <- rows[unlist(topology$triangles, use.names = FALSE)]
     vertices <- integer(); sizes <- integer(); types <- character()
-    if (!all(is.na(feature$fill))) {
+    if (!all(is.na(feature$fill)) || ".band_fill" %in% names(feature)) {
       vertices <- faces
       sizes <- rep.int(3L, length(topology$triangles))
       types <- rep("faces", length(sizes))

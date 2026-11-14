@@ -192,7 +192,7 @@ shading_mode_3d <- function(shading) {
 # Per-corner attributes of a smooth-shaded layer: the unit vertex normals of
 # face corners and, where the fill varies within a face, the encoded sRGB fill
 # channels of every face corner. Other corners carry NA.
-smooth_corners_3d <- function(data, primitives, kinds, counts) {
+smooth_corners_3d <- function(data, primitives, kinds, counts, normalised = FALSE) {
   owner <- rep.int(seq_along(counts), counts)
   face <- kinds[owner] == "faces"
   out <- list()
@@ -201,7 +201,7 @@ smooth_corners_3d <- function(data, primitives, kinds, counts) {
     n <- cbind(data$nx, data$ny, data$nz)[primitives[face], , drop = FALSE]
     size <- sqrt(rowSums(n^2))
     good <- is.finite(size) & size > 0
-    n[good, ] <- n[good, , drop = FALSE] / size[good]
+    if (!normalised) n[good, ] <- n[good, , drop = FALSE] / size[good]
     n[!good, ] <- NA_real_
     normal[face, ] <- n
     out[c("normal_x", "normal_y", "normal_z")] <- lapply(1:3, function(k) normal[, k])
@@ -229,7 +229,7 @@ scene_draw_formals_3d <- function() {
     arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
     size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
     width = NULL, depth = NULL, face = "zmin", .project = NULL,
-    render = "marker", edl = 1, raster = FALSE, clip_planes = NULL)
+    render = "marker", edl = 1, raster = FALSE, clip_planes = NULL, .key_context = NULL)
 }
 
 find_emitter_3d <- function(geom) {
@@ -305,6 +305,7 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   data <- normalise_positions_3d(data, panel_params)
   params$.space_context <- panel_params$space_context
   params$.space_munch <- panel_params$space_munch
+  params$.band_scales <- params$.key_context$band_scales
   params$clip_planes <- layer_clip_planes_3d(params$clip_planes, panel_params)
   packet <- if (is.null(params$.project)) entry$emit(data, params, panel_params) else emit_projected_3d(entry, data, params, panel_params)
   if (inherits(packet, "grob")) return(packet)
@@ -435,6 +436,11 @@ vertex_identity_3d <- function(data, columns) {
 
 packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id, counts) {
   if (!length(primitives)) return(new_scene_packet(panel_id = panel_id))
+  if (length(params$.band_scales)) {
+    split <- band_split_primitives_3d(data, primitives, kinds, counts, params)
+    data <- split$data; primitives <- split$primitives; kinds <- split$kinds
+    counts <- split$counts; params <- split$params
+  }
   space_mapped <- !is.null(params$.space_context)
   if (space_mapped) {
     context <- list(space_context = params$.space_context)
@@ -464,6 +470,8 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     }
   }
   sheets <- NULL
+  if (all(c(".band_nx", ".band_ny", ".band_nz") %in% names(data)))
+    normals <- as.matrix(data[rows, c(".band_nx", ".band_ny", ".band_nz")])
   if (identical(params$alpha_mode, "surface")) {
     owner <- rep.int(seq_along(counts), counts)
     corner <- kinds[owner] == "faces"
@@ -485,7 +493,7 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
   if (!is.null(data$.w)) vertices$w <- as.double(data$.w[used])
   corners <- list(vertex = match(primitives, used),
                   source_row = as.integer(data$.source[primitives]))
-  if (identical(params$shading, "smooth")) corners <- c(corners, smooth_corners_3d(data, primitives, kinds, counts))
+  if (identical(params$shading, "smooth")) corners <- c(corners, smooth_corners_3d(data, primitives, kinds, counts, isTRUE(params$.band_normals)))
   if (!is.null(texture)) corners <- c(corners, uv)
   if (!is.null(params$.vertex_key)) {
     key <- params$.vertex_key[used]
@@ -568,7 +576,8 @@ packet_from_faces_edges_3d <- function(data, faces, edges, params, panel_params)
     faces <- list()
     if (all(is.na(data$colour))) data$colour <- "grey30"
   }
-  if (is.null(params$texture)) faces <- lapply(faces, function(f) f[!is.na(data$fill[f[, 1L]]), , drop = FALSE])
+  if (is.null(params$texture) && !".band_fill" %in% names(data))
+    faces <- lapply(faces, function(f) f[!is.na(data$fill[f[, 1L]]), , drop = FALSE])
   edges <- edges[!is.na(data$colour[edges[, 1L]]), , drop = FALSE]
   counts <- unlist(lapply(faces, function(f) rep.int(ncol(f), nrow(f))), use.names = FALSE)
   packet_from_primitives_3d(data, c(unlist(lapply(faces, function(f) as.vector(t(f))), use.names = FALSE), as.vector(t(edges))),

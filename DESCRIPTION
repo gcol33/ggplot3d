@@ -96,6 +96,7 @@ Collate:
     'backend-texture.R'
     'backend-thurston.R'
     'base64.R'
+    'binned-faces.R'
     'build-adapter.R'
     'camera-path.R'
     'clip-planes.R'

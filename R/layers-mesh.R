@@ -174,8 +174,7 @@ StatMesh3D <- ggplot2::ggproto("StatMesh3D", ggplot2::Stat,
 # per vertex for smooth shading. The emitter checks that the scaled
 # materials are constant per face.
 mesh_face_materials_3d <- function(data, shading = "flat") {
-  if (is.numeric(data$fill) && shading == "flat") data$fill <- mesh_face_mean_3d(data$fill, mesh_face_ids_3d(data))
-  data
+  face_fill_samples_3d(data, mesh_face_ids_3d(data), shading)
 }
 
 # Face number of every corner row, counting faces in the order of rows.
@@ -292,7 +291,8 @@ emit_mesh_3d <- function(data, params, panel_params) {
     vertices <- matrix(data$.vertex[faces], ncol = 3L)
     if (any(corners[, 1L] == corners[, 2L] | corners[, 2L] == corners[, 3L] | corners[, 1L] == corners[, 3L]) ||
         any(vertices[, 1L] == vertices[, 2L] | vertices[, 2L] == vertices[, 3L] | vertices[, 1L] == vertices[, 3L])) stop("Mesh face corners and vertices must be unique.", call. = FALSE)
-    keep <- rowSums(matrix(valid[faces], ncol = 3L)) == 3L & (!is.null(params$texture) | !is.na(data$fill[faces[, 1L]]))
+    keep <- rowSums(matrix(valid[faces], ncol = 3L)) == 3L &
+      (!is.null(params$texture) | ".band_fill" %in% names(data) | !is.na(data$fill[faces[, 1L]]))
     faces <- faces[keep, , drop = FALSE]
     packet <- packet_from_primitives_3d(data, as.vector(t(faces)), rep("faces", nrow(faces)), params, panel_params$panel_id, rep.int(3L, nrow(faces)))
     return(surface_strokes_3d(packet, data, faces, params, panel_params))

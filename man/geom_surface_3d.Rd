@@ -118,6 +118,9 @@ colours such as \code{fill = I(hex)}, is interpolated in linear light (Gouraud
 1971), as MATLAB's \verb{lighting gouraud} with \code{FaceColor = "interp"} and rgl's
 \code{smooth} material. A discrete fill splits the rows into groups, so
 \code{group = 1} keeps one surface.
+Binned fill and colour scales split faces at the scalar iso-lines, using
+linear interpolation of the transformed aesthetic between vertices.
+Each piece has one band colour, with normals interpolated across its edges.
 }
 \examples{
 d <- expand.grid(x = seq(-1, 1, length.out = 6),

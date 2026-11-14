@@ -54,6 +54,10 @@ scales_3d <- function(parent, context) {
       keep <- !vapply(self$scales, function(s) any(s$aesthetics %in% c("x", "y", z_aesthetics)), logical(1))
       ggplot2::ggproto(NULL, self, scales = self$scales[keep])
     },
+    map_df = function(self, df) {
+      df <- band_map_df_3d(df, self$scales, self$context)
+      ggplot2::ggproto_parent(parent, self)$map_df(df)
+    },
     transform_df = function(self, df) {
       position <- unique(unlist(lapply(Filter(function(s) any(s$aesthetics %in% c("x", "y", "z")), self$scales), `[[`, "aesthetics")))
       columns <- intersect(position, names(df))
