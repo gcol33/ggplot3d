@@ -106,7 +106,7 @@ brightness in this mode. A plot with a colour or fill scale produces a warning.
 
 ```{r stereo-anaglyph, fig.alt="Red-cyan anaglyph of the column scene for viewing through coloured glasses."}
 p + coord_3d(stereo = stereo_3d("anaglyph", separation = 5),
-  backend = backend_3d("raster", dpi = 80, antialias = 1))
+  backend = backend_3d("raster", dpi = 240))
 ```
 
 Vector and hybrid output use device multiply compositing when available.
