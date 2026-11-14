@@ -246,6 +246,8 @@ reference:
   - animate_3d
   - tween_3d
   - view_3d
+  - view3dOutput
+  - renderView3d
   - alt_text_3d
   - save_svg_3d
   - export_code_3d

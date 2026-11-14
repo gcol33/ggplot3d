@@ -54,6 +54,7 @@ Suggests:
     systemfonts,
     rmarkdown,
     sf,
+    shiny,
     stars,
     svglite,
     terra,

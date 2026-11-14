@@ -79,6 +79,47 @@ the widget identifier above gives the selected keys in
 `input[["cars-view_camera"]]`. Browser integrations can listen on the widget
 element for `ggplot3d:hover`, `ggplot3d:select` and `ggplot3d:camera` events.
 
+## Shiny applications
+
+[Shiny](https://shiny.posit.co/) connects user inputs to reactive R expressions.
+Use `view3dOutput()` for the output container and `renderView3d()` to return a
+viewer whenever its inputs change. This module filters the cars by horsepower.
+Its selected keys and camera values appear below the viewer. Each module's
+`NS()` namespace gives its viewer and input events independent identifiers.
+
+```{r shiny-example, eval=FALSE}
+carUI <- function(id) {
+  ns <- shiny::NS(id)
+  shiny::tagList(
+    shiny::sliderInput(ns("hp"), "Minimum horsepower", 50, 300, 50),
+    view3dOutput(ns("scene"), height = "400px"),
+    shiny::verbatimTextOutput(ns("events")))
+}
+carServer <- function(id) {
+  shiny::moduleServer(id, function(input, output, session) {
+    output$scene <- renderView3d({
+      filtered <- cars[cars$hp >= input$hp, ]
+      plot <- ggplot(filtered, aes(wt, mpg, z = hp,
+        tooltip = model, data_id = model)) + geom_point_3d(size = 4) + coord_3d()
+      view_3d(plot)
+    })
+    output$events <- shiny::renderPrint(list(
+      selected = input$scene_selected, camera = input$scene_camera))
+  })
+}
+ui <- shiny::fluidPage(carUI("first"), carUI("second"))
+server <- function(input, output, session) {
+  carServer("first")
+  carServer("second")
+}
+shiny::shinyApp(ui, server)
+```
+
+Inside the module, use the local input names `scene_selected` and
+`scene_camera`. The browser sends events with the output container's
+namespaced identifier. Leave `elementId` unset in `view_3d()` so Shiny
+assigns that identifier.
+
 ## Several panels
 
 Facets stay interactive and retain their strips, titles and legends. The

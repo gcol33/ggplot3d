@@ -161,6 +161,53 @@ view_3d <- function(plot, data = NULL, width = 640L, height = 640L, panel = NULL
     sizingPolicy = htmlwidgets::sizingPolicy(padding = 0, browser.fill = FALSE))
 }
 
+#' Shiny bindings for the interactive 3D viewer
+#'
+#' Place a viewer in a Shiny user interface and render a reactive expression
+#' returning [view_3d()]. In a module, pass `ns("scene")` to `view3dOutput()`
+#' and assign `output$scene` inside `shiny::moduleServer()`.
+#' Camera updates arrive in `input$scene_camera`; selected data keys arrive
+#' in `input$scene_selected`. Shiny supplies the widget identifier, so
+#' `view_3d()` can leave `elementId` at its default.
+#'
+#' @param outputId Output identifier, namespaced in a module's user interface.
+#' @param width,height CSS dimensions, default `"100%"` and `"400px"`.
+#' @param expr An expression returning a `ggplot3d_view` htmlwidget.
+#' @param env Environment in which to evaluate `expr`.
+#' @param quoted Whether `expr` is already quoted.
+#' @return `view3dOutput()` returns an HTML output container.
+#'   `renderView3d()` returns a Shiny render function.
+#' @examples
+#' if (requireNamespace("shiny", quietly = TRUE) &&
+#'     requireNamespace("htmlwidgets", quietly = TRUE)) {
+#'   ui <- shiny::fluidPage(view3dOutput("scene"))
+#'   server <- function(input, output, session) {
+#'     output$scene <- renderView3d({
+#'       p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
+#'         geom_point_3d() + coord_3d()
+#'       view_3d(p, panel = 1)
+#'     })
+#'   }
+#'   app <- shiny::shinyApp(ui, server)
+#' }
+#' @name view_3d-shiny
+#' @export
+view3dOutput <- function(outputId, width = "100%", height = "400px") {
+  motion_require_3d("shiny")
+  motion_require_3d("htmlwidgets")
+  htmlwidgets::shinyWidgetOutput(outputId, "ggplot3d_view", width, height,
+    package = "ggplot3d")
+}
+
+#' @rdname view_3d-shiny
+#' @export
+renderView3d <- function(expr, env = parent.frame(), quoted = FALSE) {
+  motion_require_3d("shiny")
+  motion_require_3d("htmlwidgets")
+  if (!quoted) expr <- substitute(expr)
+  htmlwidgets::shinyRenderWidget(expr, view3dOutput, env, quoted = TRUE)
+}
+
 # A standalone panel retains its layout aspect and measures furniture at the
 # widget size, with its own guides and camera supplying the framing group.
 view_panel_layout_3d <- function(table, panel) {
