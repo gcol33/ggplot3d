@@ -17,8 +17,8 @@
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
 <meta property="og:title" content="Linear and nonlinear PDEs">
-<meta name="description" content="Exact solutions of four linear and four nonlinear partial differential equations drawn as surfaces that change over time with animate_3d().">
-<meta property="og:description" content="Exact solutions of four linear and four nonlinear partial differential equations drawn as surfaces that change over time with animate_3d().">
+<meta name="description" content="Exact solutions of eight partial differential equations and a numerical magnetohydrodynamic solution drawn as surfaces that change over time with animate_3d().">
+<meta property="og:description" content="Exact solutions of eight partial differential equations and a numerical magnetohydrodynamic solution drawn as surfaces that change over time with animate_3d().">
 <meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg">
 <script>
 (function () {
@@ -165,13 +165,15 @@ nonlinear Schrödinger equations are four well-known nonlinear PDEs; for
 them no general solution formula exists, but particular solutions can be
 written in closed form. Each solution is evaluated on a grid of
 positions and times, drawn as a surface, and rendered one frame per time
-with <code><a href="../reference/animate_3d.html">animate_3d()</a></code>. Installation is covered in <a href="ggplot3d.html">Get started</a>; the videos need <a href="https://docs.ropensci.org/av/" class="external-link">av</a>.</p>
+with <code><a href="../reference/animate_3d.html">animate_3d()</a></code>. A final example solves incompressible
+magnetohydrodynamics numerically and draws the computed current density
+through the same plotting pipeline. Installation is covered in <a href="ggplot3d.html">Get started</a>; the videos need <a href="https://docs.ropensci.org/av/" class="external-link">av</a>.</p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Tabulate</strong> the solution
+<li><p><strong>Define</strong> the solution
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">u(x, y, t)</annotation></semantics></math>
-in a data frame with one row per position and time.</p></li>
+and a data frame with one row per time.</p></li>
 <li><p><strong>Draw</strong> one surface per time with
-<code><a href="../reference/geom_surface_3d.html">geom_surface_3d()</a></code>.</p></li>
+<code><a href="../reference/stat_function_3d.html">geom_function_3d()</a></code>.</p></li>
 <li><p><strong>Animate</strong> the frames with
 <code>animate_3d(time = "t")</code>.</p></li>
 </ol>
@@ -185,44 +187,19 @@ in a data frame with one row per position and time.</p></li>
 <span>  plot.background <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_rect</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  panel.background <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_rect</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"transparent"</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span>,</span>
 <span>  legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Every solution below is a function <code>u(x, y, t)</code> of two
-space coordinates and time. <code>solution_frames()</code> is a small
-helper written for this article, not a function of ggplot3d: it
-evaluates such a function on a square grid of <code>n</code> by
-<code>n</code> positions at each time in <code>times</code>, and returns
-one row per position and time with columns <code>x</code>,
-<code>y</code>, <code>t</code> and <code>u</code>.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">solution_frames</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">u</span>, <span class="va">times</span>, <span class="va">range</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>, <span class="va">n</span> <span class="op">=</span> <span class="fl">31</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="va">range</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">range</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, length.out <span class="op">=</span> <span class="va">n</span><span class="op">)</span>,</span>
-<span>                      y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="va">range</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">range</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, length.out <span class="op">=</span> <span class="va">n</span><span class="op">)</span>,</span>
-<span>                      t <span class="op">=</span> <span class="va">times</span><span class="op">)</span></span>
-<span>  <span class="va">grid</span><span class="op">$</span><span class="va">u</span> <span class="op">&lt;-</span> <span class="fu">u</span><span class="op">(</span><span class="va">grid</span><span class="op">$</span><span class="va">x</span>, <span class="va">grid</span><span class="op">$</span><span class="va">y</span>, <span class="va">grid</span><span class="op">$</span><span class="va">t</span><span class="op">)</span></span>
-<span>  <span class="va">grid</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p><code>animate_3d(time = "t")</code> draws the rows of one value of
-<code>t</code> per frame, in increasing order. The scales are trained on
-all frames, so the z axis and the fill colours keep the same range
-throughout, and a decaying solution is seen to decay.
-<code>animate()</code> below renders a plot at 480 by 480 pixels, writes
-an MP4 video into the article’s figure folder and returns a looping,
-muted <code>&lt;video&gt;</code> element that plays without controls,
-labelled with the chunk’s figure description. The page links the video
-by its last three path components, the figure folder next to the
-page.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">animate</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">plot</span>, <span class="va">fps</span> <span class="op">=</span> <span class="fl">12</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/fig_path.html" class="external-link">fig_path</a></span><span class="op">(</span><span class="st">".mp4"</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">dirname</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">plot</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="va">fps</span>, file <span class="op">=</span> <span class="va">path</span>, width <span class="op">=</span> <span class="fl">480</span>,</span>
-<span>             height <span class="op">=</span> <span class="fl">480</span>, progress <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span>
-<span>  <span class="va">alt</span> <span class="op">&lt;-</span> <span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_current</a></span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"fig.alt"</span><span class="op">)</span></span>
-<span>  <span class="va">parts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html" class="external-link">normalizePath</a></span><span class="op">(</span><span class="va">path</span>, winslash <span class="op">=</span> <span class="st">"/"</span><span class="op">)</span>, <span class="st">"/"</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
-<span>  <span class="va">src</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">parts</span>, <span class="fl">3</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"/"</span><span class="op">)</span></span>
-<span>  <span class="fu">htmltools</span><span class="fu">::</span><span class="va"><a href="https://rstudio.github.io/htmltools/reference/builder.html" class="external-link">tags</a></span><span class="op">$</span><span class="fu">video</span><span class="op">(</span>src <span class="op">=</span> <span class="va">src</span>, autoplay <span class="op">=</span> <span class="cn">NA</span>, loop <span class="op">=</span> <span class="cn">NA</span>, muted <span class="op">=</span> <span class="cn">NA</span>,</span>
-<span>    playsinline <span class="op">=</span> <span class="cn">NA</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>, `aria-label` <span class="op">=</span> <span class="va">alt</span>,</span>
-<span>    style <span class="op">=</span> <span class="st">"width: 100%; max-width: 480px; height: auto;"</span>, <span class="va">alt</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+<p>Each exact animated solution below is a function
+<code>u(x, y, t)</code> of two space coordinates and time.
+<code><a href="../reference/stat_function_3d.html">geom_function_3d()</a></code> evaluates the function on an
+<code>n</code> by <code>n</code> grid for each row of
+<code>data.frame(t = times)</code>, passing that row’s <code>t</code> as
+a named argument. The x and y scale limits set the spatial range. The
+layer retains <code>t</code> with each surface.</p>
+<p><code>animate_3d(time = "t")</code> draws one value of <code>t</code>
+per frame, in increasing order. The scales are trained on all frames, so
+the z axis and the fill colours keep the same range throughout, and a
+decaying solution is seen to decay. The calls below render MP4 videos at
+480 by 480 pixels. In the article, the returned animation embeds as a
+looping, muted video labelled with the chunk’s figure description.</p>
 </div>
 <div class="section level2">
 <h2 id="linear-equations">Linear equations<a class="anchor" aria-label="anchor" href="#linear-equations"></a>
@@ -248,19 +225,88 @@ it is back at its start, so the 32 frames from
 to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>3.875</mn></mrow><annotation encoding="application/x-tex">t = 3.875</annotation></semantics></math>
 loop without a jump.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">transport</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">t</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">3</span> <span class="op">*</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="op">(</span><span class="va">x</span> <span class="op">-</span> <span class="va">t</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fl">3</span> <span class="op">*</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="va">t</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="va">moving</span> <span class="op">&lt;-</span> <span class="fu">solution_frames</span><span class="op">(</span><span class="va">transport</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span>, length.out <span class="op">=</span> <span class="fl">33</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">33</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">moving</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">u</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">moving</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span>, length.out <span class="op">=</span> <span class="fl">33</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">33</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">moving</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/stat_function_3d.html">geom_function_3d</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">transport</span>, n <span class="op">=</span> <span class="fl">31</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<video src="pde_files/figure-html/transport-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner." style="width: 100%; max-width: 480px; height: auto;">Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner.</video>
+<span><span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="fl">12</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>,</span>
+<span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span></code></pre></div>
+<video src="pde_files/figure-html/transport-1.mp4" autoplay loop muted playsinline aria-label="Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner." style="width: 100%; max-width: min(100%, 480px); height: auto;">
+Animation of a blue bump on a flat surface that travels diagonally
+across the square and re-enters at the opposite corner.
+</video>
 </div>
 <div class="section level3">
 <h3 id="heat-equation">Heat equation<a class="anchor" aria-label="anchor" href="#heat-equation"></a>
@@ -282,17 +328,72 @@ while the integral of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>u</mi><annotation encoding="application/x-tex">u</annotation></semantics></math>
 over the plane stays at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>π</mi><annotation encoding="application/x-tex">\pi</annotation></semantics></math>.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">heat</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">t</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">x</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="va">y</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span></span>
-<span><span class="va">cooling</span> <span class="op">&lt;-</span> <span class="fu">solution_frames</span><span class="op">(</span><span class="va">heat</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">25</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">cooling</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">u</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">cooling</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">25</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">cooling</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/stat_function_3d.html">geom_function_3d</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">heat</span>, n <span class="op">=</span> <span class="fl">31</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"red"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">25</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<video src="pde_files/figure-html/heat-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one." style="width: 100%; max-width: 480px; height: auto;">Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one.</video>
+<span><span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="fl">12</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>,</span>
+<span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span></code></pre></div>
+<video src="pde_files/figure-html/heat-1.mp4" autoplay loop muted playsinline aria-label="Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one." style="width: 100%; max-width: min(100%, 480px); height: auto;">
+Animation of a tall red peak that flattens and widens into a low broad
+mound while the z axis stays fixed from zero to one.
+</video>
 </div>
 <div class="section level3">
 <h3 id="wave-equation">Wave equation<a class="anchor" aria-label="anchor" href="#wave-equation"></a>
@@ -316,23 +417,87 @@ centre:</p>
 so 30 frames over
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mi>T</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">[0, T)</annotation></semantics></math>
 loop.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">omega</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span> <span class="op">*</span> <span class="va">pi</span></span>
 <span><span class="va">wave</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">t</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">x</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="va">y</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">omega</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="va">x</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">y</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">omega</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="va">period</span> <span class="op">&lt;-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">/</span> <span class="va">omega</span></span>
-<span><span class="va">membrane</span> <span class="op">&lt;-</span> <span class="fu">solution_frames</span><span class="op">(</span><span class="va">wave</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">period</span>, length.out <span class="op">=</span> <span class="fl">31</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">31</span><span class="op">]</span>,</span>
-<span>                            range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">membrane</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">u</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">membrane</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">period</span>, length.out <span class="op">=</span> <span class="fl">31</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">31</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">membrane</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/stat_function_3d.html">geom_function_3d</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">wave</span>, n <span class="op">=</span> <span class="fl">31</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>low <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span>, mid <span class="op">=</span> <span class="st">"grey90"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"red"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">30</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<video src="pde_files/figure-html/wave-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero." style="width: 100%; max-width: 480px; height: auto;">Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero.</video>
+<span><span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="fl">12</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>,</span>
+<span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span></code></pre></div>
+<video src="pde_files/figure-html/wave-1.mp4" autoplay loop muted playsinline aria-label="Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero." style="width: 100%; max-width: min(100%, 480px); height: auto;">
+Animation of a square membrane with a raised red lobe and a lowered blue
+lobe that circle round its centre while the edges stay at zero.
+</video>
 </div>
 <div class="section level3">
 <h3 id="laplace-equation">Laplace equation<a class="anchor" aria-label="anchor" href="#laplace-equation"></a>
@@ -359,18 +524,94 @@ frames over
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>φ</mi><mo>∈</mo><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>2</mn><mi>π</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\varphi \in [0, 2\pi)</annotation></semantics></math>
 loop.</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>u</mi><mo>=</mo><msub><mi>u</mi><mrow><mi>x</mi><mi>x</mi></mrow></msub><mo>+</mo><msub><mi>u</mi><mrow><mi>y</mi><mi>y</mi></mrow></msub><mo>=</mo><mn>0</mn><mo>,</mo><mspace width="2.0em"></mspace><mi>u</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msup><mi>r</mi><mn>3</mn></msup><mrow><mi mathvariant="normal">cos</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mn>3</mn><mi>θ</mi><mo>−</mo><mi>φ</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">\Delta u = u_{xx} + u_{yy} = 0, \qquad u(x, y) = r^3 \cos(3\theta - \varphi).</annotation></semantics></math></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">laplace</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">t</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/complex.html" class="external-link">Re</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1i</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/complex.html" class="external-link">complex</a></span><span class="op">(</span>real <span class="op">=</span> <span class="va">x</span>, imaginary <span class="op">=</span> <span class="va">y</span><span class="op">)</span><span class="op">^</span><span class="fl">3</span><span class="op">)</span></span>
-<span><span class="va">saddle</span> <span class="op">&lt;-</span> <span class="fu">solution_frames</span><span class="op">(</span><span class="va">laplace</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span>, length.out <span class="op">=</span> <span class="fl">37</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">37</span><span class="op">]</span>,</span>
-<span>                          range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">saddle</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">u</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">saddle</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span>, length.out <span class="op">=</span> <span class="fl">37</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">37</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">saddle</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/stat_function_3d.html">geom_function_3d</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">laplace</span>, n <span class="op">=</span> <span class="fl">31</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>low <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span>, mid <span class="op">=</span> <span class="st">"grey90"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"red"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<video src="pde_files/figure-html/laplace-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis." style="width: 100%; max-width: 480px; height: auto;">Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis.</video>
+<span><span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="fl">12</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>,</span>
+<span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span></code></pre></div>
+<video src="pde_files/figure-html/laplace-1.mp4" autoplay loop muted playsinline aria-label="Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis." style="width: 100%; max-width: min(100%, 480px); height: auto;">
+Animation of a monkey saddle with three raised red ridges and three
+lowered blue valleys that rotate slowly about the vertical axis.
+</video>
 </div>
 </div>
 <div class="section level2">
@@ -410,7 +651,7 @@ direction at speed
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ω</mi><mn>1</mn></msub><mi>/</mi><msub><mi>k</mi><mn>1</mn></msub><mo>=</mo><mn>5.32</mn></mrow><annotation encoding="application/x-tex">\omega_1 / k_1 = 5.32</annotation></semantics></math>,
 and the segment where they meet is shifted forward and stands higher
 than either crest alone.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">l</span> <span class="op">&lt;-</span> <span class="fl">1.2</span></span>
 <span><span class="va">kp_omega</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">+</span> <span class="fl">3</span> <span class="op">*</span> <span class="va">l</span><span class="op">^</span><span class="fl">2</span></span>
 <span><span class="va">kp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">t</span><span class="op">)</span> <span class="op">{</span></span>
@@ -422,16 +663,100 @@ than either crest alone.</p>
 <span>  <span class="va">tau_xx</span> <span class="op">&lt;-</span> <span class="va">e1</span> <span class="op">+</span> <span class="va">e2</span> <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> <span class="va">a12</span> <span class="op">*</span> <span class="va">e1</span> <span class="op">*</span> <span class="va">e2</span></span>
 <span>  <span class="fl">2</span> <span class="op">*</span> <span class="op">(</span><span class="va">tau_xx</span> <span class="op">*</span> <span class="va">tau</span> <span class="op">-</span> <span class="va">tau_x</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">/</span> <span class="va">tau</span><span class="op">^</span><span class="fl">2</span></span>
 <span><span class="op">}</span></span>
-<span><span class="va">crossing</span> <span class="op">&lt;-</span> <span class="fu">solution_frames</span><span class="op">(</span><span class="va">kp</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2.2</span>, <span class="fl">2.2</span>, length.out <span class="op">=</span> <span class="fl">40</span><span class="op">)</span>,</span>
-<span>                            range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">61</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">crossing</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">u</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">crossing</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2.2</span>, <span class="fl">2.2</span>, length.out <span class="op">=</span> <span class="fl">40</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">crossing</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/stat_function_3d.html">geom_function_3d</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">kp</span>, n <span class="op">=</span> <span class="fl">61</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<video src="pde_files/figure-html/kp-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet." style="width: 100%; max-width: 480px; height: auto;">Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet.</video>
+<span><span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="fl">12</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>,</span>
+<span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span></code></pre></div>
+<video src="pde_files/figure-html/kp-1.mp4" autoplay loop muted playsinline aria-label="Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet." style="width: 100%; max-width: min(100%, 480px); height: auto;">
+Animation of two straight blue crests forming an X that travels across
+the square, with a raised segment where the crests meet.
+</video>
 </div>
 <div class="section level3">
 <h3 id="sine-gordon-equation">Sine-Gordon equation<a class="anchor" aria-label="anchor" href="#sine-gordon-equation"></a>
@@ -471,7 +796,7 @@ in the two opposite quadrants where exactly one of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>η</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\eta_2</annotation></semantics></math>
 is positive and lies near 0 in the other two; the corner where the
 fronts cross moves along the diagonal.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sine_gordon</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">t</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="fl">1.25</span></span>
 <span>  <span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">p</span><span class="op">^</span><span class="fl">2</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -480,16 +805,87 @@ fronts cross moves along the diagonal.</p>
 <span>  <span class="va">a12</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">^</span><span class="fl">2</span> <span class="op">-</span> <span class="fl">4</span> <span class="op">*</span> <span class="va">w</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">p</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
 <span>  <span class="fl">4</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">atan</a></span><span class="op">(</span><span class="op">(</span><span class="va">e1</span> <span class="op">+</span> <span class="va">e2</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">a12</span> <span class="op">*</span> <span class="va">e1</span> <span class="op">*</span> <span class="va">e2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="va">kinks</span> <span class="op">&lt;-</span> <span class="fu">solution_frames</span><span class="op">(</span><span class="va">sine_gordon</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">8</span>, <span class="fl">8</span>, length.out <span class="op">=</span> <span class="fl">33</span><span class="op">)</span>,</span>
-<span>                         range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">8</span>, <span class="fl">8</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">51</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">kinks</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">u</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">kinks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">8</span>, <span class="fl">8</span>, length.out <span class="op">=</span> <span class="fl">33</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">kinks</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/stat_function_3d.html">geom_function_3d</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">sine_gordon</span>, n <span class="op">=</span> <span class="fl">51</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">8</span>, <span class="fl">8</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">8</span>, <span class="fl">8</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"purple"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<video src="pde_files/figure-html/sg-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square." style="width: 100%; max-width: 480px; height: auto;">Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square.</video>
+<span><span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="fl">12</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>,</span>
+<span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span></code></pre></div>
+<video src="pde_files/figure-html/sg-1.mp4" autoplay loop muted playsinline aria-label="Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square." style="width: 100%; max-width: min(100%, 480px); height: auto;">
+Animation of a surface with two raised purple quadrants and two low
+quadrants; the corner where the fronts meet slides diagonally across the
+square.
+</video>
 </div>
 <div class="section level3">
 <h3 id="fisherkpp-equation">Fisher–KPP equation<a class="anchor" aria-label="anchor" href="#fisherkpp-equation"></a>
@@ -516,20 +912,90 @@ the occupied region at
 advances into the empty region at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo>≈</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">u \approx 0</annotation></semantics></math>
 without changing the shape of the front.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fisher</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">t</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="op">(</span><span class="fl">0.8</span> <span class="op">*</span> <span class="va">x</span> <span class="op">+</span> <span class="fl">0.6</span> <span class="op">*</span> <span class="va">y</span> <span class="op">-</span> <span class="fl">5</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">6</span><span class="op">)</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">6</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span></span>
 <span><span class="op">}</span></span>
-<span><span class="va">invasion</span> <span class="op">&lt;-</span> <span class="fu">solution_frames</span><span class="op">(</span><span class="va">fisher</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">6</span>, <span class="fl">6</span>, length.out <span class="op">=</span> <span class="fl">33</span><span class="op">)</span>,</span>
-<span>                            range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">20</span>, <span class="fl">20</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">41</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">invasion</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">u</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">invasion</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">6</span>, <span class="fl">6</span>, length.out <span class="op">=</span> <span class="fl">33</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">invasion</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/stat_function_3d.html">geom_function_3d</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">fisher</span>, n <span class="op">=</span> <span class="fl">41</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">20</span>, <span class="fl">20</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">20</span>, <span class="fl">20</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"green"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">30</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
-<video src="pde_files/figure-html/fisher-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square." style="width: 100%; max-width: 480px; height: auto;">Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square.</video>
+<span><span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="fl">12</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>,</span>
+<span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span>
+<span><span class="co">#&gt; Ignoring unknown labels:</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">z</span> : <span style="color: #0000BB;">"u"</span></span></span></code></pre></div>
+<video src="pde_files/figure-html/fisher-1.mp4" autoplay loop muted playsinline aria-label="Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square." style="width: 100%; max-width: min(100%, 480px); height: auto;">
+Animation of a green plateau whose sloping edge advances diagonally
+across a flat grey plain until it covers most of the square.
+</video>
 </div>
 <div class="section level3">
 <h3 id="nonlinear-schrödinger-equation">Nonlinear Schrödinger equation<a class="anchor" aria-label="anchor" href="#nonlinear-schr%C3%B6dinger-equation"></a>
@@ -552,12 +1018,12 @@ surface of
 over the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(x, t)</annotation></semantics></math>
 plane, drawn here as a still figure.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">peregrine</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">4</span>, <span class="fl">4</span>, length.out <span class="op">=</span> <span class="fl">81</span><span class="op">)</span>,</span>
 <span>                         t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">3</span>, <span class="fl">3</span>, length.out <span class="op">=</span> <span class="fl">61</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">peregrine</span><span class="op">$</span><span class="va">amplitude</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">peregrine</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/complex.html" class="external-link">Mod</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fl">4</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">2i</span> <span class="op">*</span> <span class="va">t</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> <span class="va">x</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> <span class="va">t</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">peregrine</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">t</span>, z <span class="op">=</span> <span class="va">amplitude</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"teal"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
@@ -716,6 +1182,186 @@ plane, drawn here as a still figure.</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="numerical-solutions">Numerical solutions<a class="anchor" aria-label="anchor" href="#numerical-solutions"></a>
+</h2>
+<p>A numerical solver supplies the values when a solution formula is
+unavailable. The Orszag–Tang vortex describes the coupled motion of an
+incompressible conducting fluid and its magnetic field in two
+dimensions. Orszag and Tang (1979) studied it with a spectral method on
+the periodic square
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>2</mn><mi>π</mi><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">[0,2\pi)^2</annotation></semantics></math>.</p>
+<p>Write the velocity as
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>ψ</mi><mi>y</mi></msub><mo>,</mo><mi>−</mi><msub><mi>ψ</mi><mi>x</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">u=(\psi_y,-\psi_x)</annotation></semantics></math>
+and the magnetic field, measured in velocity units, as
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>a</mi><mi>y</mi></msub><mo>,</mo><mi>−</mi><msub><mi>a</mi><mi>x</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">B=(a_y,-a_x)</annotation></semantics></math>.
+Here
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ψ</mi><annotation encoding="application/x-tex">\psi</annotation></semantics></math>
+is the streamfunction and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>
+the magnetic flux function. The vorticity
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ω</mi><annotation encoding="application/x-tex">\omega</annotation></semantics></math>
+and current density
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+are</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ω</mi><mo>=</mo><mi>−</mi><mi mathvariant="normal">Δ</mi><mi>ψ</mi><mo>,</mo><mspace width="2.0em"></mspace><mi>j</mi><mo>=</mo><mi>−</mi><mi mathvariant="normal">Δ</mi><mi>a</mi><mi>.</mi></mrow><annotation encoding="application/x-tex">\omega=-\Delta\psi,\qquad j=-\Delta a.</annotation></semantics></math></p>
+<p>With the bracket
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mi>f</mi><mo>,</mo><mi>g</mi><mo stretchy="false" form="postfix">]</mo><mo>=</mo><msub><mi>f</mi><mi>y</mi></msub><msub><mi>g</mi><mi>x</mi></msub><mo>−</mo><msub><mi>f</mi><mi>x</mi></msub><msub><mi>g</mi><mi>y</mi></msub></mrow><annotation encoding="application/x-tex">[f,g]=f_y g_x-f_x g_y</annotation></semantics></math>,
+we have
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mi>ψ</mi><mo>,</mo><mi>g</mi><mo stretchy="false" form="postfix">]</mo><mo>=</mo><mi>u</mi><mo>⋅</mo><mi>∇</mi><mi>g</mi></mrow><annotation encoding="application/x-tex">[\psi,g]=u\cdot\nabla g</annotation></semantics></math>.
+The equations, with kinematic viscosity
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ν</mi><annotation encoding="application/x-tex">\nu</annotation></semantics></math>
+and magnetic diffusivity
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>η</mi><annotation encoding="application/x-tex">\eta</annotation></semantics></math>,
+are</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>ω</mi><mi>t</mi></msub><mo>+</mo><mo stretchy="false" form="prefix">[</mo><mi>ψ</mi><mo>,</mo><mi>ω</mi><mo stretchy="false" form="postfix">]</mo></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mo stretchy="false" form="prefix">[</mo><mi>a</mi><mo>,</mo><mi>j</mi><mo stretchy="false" form="postfix">]</mo><mo>+</mo><mi>ν</mi><mi mathvariant="normal">Δ</mi><mi>ω</mi><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><msub><mi>a</mi><mi>t</mi></msub><mo>+</mo><mo stretchy="false" form="prefix">[</mo><mi>ψ</mi><mo>,</mo><mi>a</mi><mo stretchy="false" form="postfix">]</mo></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mi>η</mi><mi mathvariant="normal">Δ</mi><mi>a</mi><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">
+\begin{aligned}
+\omega_t+[\psi,\omega]&amp;=[a,j]+\nu\Delta\omega,\\
+a_t+[\psi,a]&amp;=\eta\Delta a.
+\end{aligned}
+</annotation></semantics></math></p>
+<p>Subscripts denote partial derivatives, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mo>=</mo><msubsup><mi>∂</mi><mi>x</mi><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>∂</mi><mi>y</mi><mn>2</mn></msubsup></mrow><annotation encoding="application/x-tex">\Delta=\partial_x^2+\partial_y^2</annotation></semantics></math>.
+These signs follow the curl convention in Orszag and Tang (1979). The
+initial data of Kraus, Tassi and Grasso (2016, section 4.1), translated
+from their opposite bracket convention, are</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ψ</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mn>0</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>−</mi><mn>2</mn><mrow><mi mathvariant="normal">cos</mi><mo>⁡</mo></mrow><mi>x</mi><mo>+</mo><mn>2</mn><mrow><mi mathvariant="normal">sin</mi><mo>⁡</mo></mrow><mi>y</mi><mo>,</mo><mspace width="2.0em"></mspace><mi>a</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mn>0</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>2</mn><mrow><mi mathvariant="normal">cos</mi><mo>⁡</mo></mrow><mi>x</mi><mo>−</mo><mrow><mi mathvariant="normal">cos</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mn>2</mn><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">\psi(x,y,0)=-2\cos x+2\sin y,\qquad a(x,y,0)=2\cos x-\cos(2y).</annotation></semantics></math></p>
+<p>The solver uses a
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>64</mn><mo>×</mo><mn>64</mn></mrow><annotation encoding="application/x-tex">64\times64</annotation></semantics></math>
+grid,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo>=</mo><mi>η</mi><mo>=</mo><mn>0.04</mn></mrow><annotation encoding="application/x-tex">\nu=\eta=0.04</annotation></semantics></math>
+and time step
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.0025</mn><annotation encoding="application/x-tex">0.0025</annotation></semantics></math>.
+Fourier differentiation gives spatial derivatives; products are
+evaluated on the physical grid. The two-thirds rule keeps only component
+wavenumbers
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">|</mo><msub><mi>k</mi><mi>x</mi></msub><mo stretchy="false" form="prefix">|</mo><mo>,</mo><mo stretchy="false" form="prefix">|</mo><msub><mi>k</mi><mi>y</mi></msub><mo stretchy="false" form="prefix">|</mo><mo>&lt;</mo><mi>n</mi><mi>/</mi><mn>3</mn></mrow><annotation encoding="application/x-tex">|k_x|,|k_y|&lt;n/3</annotation></semantics></math>
+in the initial state and every nonlinear term. The inverse Laplacian
+sets the mean streamfunction to zero.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">64L</span></span>
+<span><span class="va">nu</span> <span class="op">&lt;-</span> <span class="va">eta</span> <span class="op">&lt;-</span> <span class="fl">0.04</span></span>
+<span><span class="va">dt</span> <span class="op">&lt;-</span> <span class="fl">0.0025</span></span>
+<span><span class="va">steps</span> <span class="op">&lt;-</span> <span class="fl">480L</span></span>
+<span><span class="va">save_every</span> <span class="op">&lt;-</span> <span class="fl">30L</span></span>
+<span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">*</span> <span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="op">(</span><span class="va">n</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="va">n</span></span>
+<span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">x</span>, y <span class="op">=</span> <span class="va">x</span><span class="op">)</span></span>
+<span><span class="va">k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="op">(</span><span class="va">n</span> <span class="op">/</span> <span class="fl">2</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>, <span class="op">(</span><span class="op">-</span><span class="va">n</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span><span class="op">:</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">kx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="va">k</span>, <span class="va">n</span>, <span class="va">n</span><span class="op">)</span></span>
+<span><span class="va">ky</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">kx</span><span class="op">)</span></span>
+<span><span class="va">k2</span> <span class="op">&lt;-</span> <span class="va">kx</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="va">ky</span><span class="op">^</span><span class="fl">2</span></span>
+<span><span class="va">inverse_k2</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="va">k2</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">inverse_k2</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span><span class="va">keep</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">kx</span><span class="op">)</span> <span class="op">&lt;</span> <span class="va">n</span> <span class="op">/</span> <span class="fl">3</span> <span class="op">&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">ky</span><span class="op">)</span> <span class="op">&lt;</span> <span class="va">n</span> <span class="op">/</span> <span class="fl">3</span></span>
+<span><span class="va">physical</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/complex.html" class="external-link">Re</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fft.html" class="external-link">fft</a></span><span class="op">(</span><span class="va">f</span>, inverse <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="va">n</span><span class="op">^</span><span class="fl">2</span></span>
+<span><span class="va">gradient</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu">physical</span><span class="op">(</span><span class="fl">1i</span> <span class="op">*</span> <span class="va">kx</span> <span class="op">*</span> <span class="va">f</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu">physical</span><span class="op">(</span><span class="fl">1i</span> <span class="op">*</span> <span class="va">ky</span> <span class="op">*</span> <span class="va">f</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">bracket</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">dg</span><span class="op">)</span> <span class="va">df</span><span class="op">$</span><span class="va">y</span> <span class="op">*</span> <span class="va">dg</span><span class="op">$</span><span class="va">x</span> <span class="op">-</span> <span class="va">df</span><span class="op">$</span><span class="va">x</span> <span class="op">*</span> <span class="va">dg</span><span class="op">$</span><span class="va">y</span></span></code></pre></div>
+<p>The complex array <code>q</code> stores Fourier coefficients of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ω</mi><annotation encoding="application/x-tex">\omega</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>
+in its two slices. Each evaluation of the right-hand side recovers
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ψ</mi><annotation encoding="application/x-tex">\psi</annotation></semantics></math>,
+differentiates the four fields and transforms the two nonlinear terms
+back to Fourier space.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rhs</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">q</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">w</span> <span class="op">&lt;-</span> <span class="va">q</span><span class="op">[</span>, , <span class="fl">1</span><span class="op">]</span></span>
+<span>  <span class="va">a</span> <span class="op">&lt;-</span> <span class="va">q</span><span class="op">[</span>, , <span class="fl">2</span><span class="op">]</span></span>
+<span>  <span class="va">dp</span> <span class="op">&lt;-</span> <span class="fu">gradient</span><span class="op">(</span><span class="va">w</span> <span class="op">*</span> <span class="va">inverse_k2</span><span class="op">)</span></span>
+<span>  <span class="va">dw</span> <span class="op">&lt;-</span> <span class="fu">gradient</span><span class="op">(</span><span class="va">w</span><span class="op">)</span></span>
+<span>  <span class="va">da</span> <span class="op">&lt;-</span> <span class="fu">gradient</span><span class="op">(</span><span class="va">a</span><span class="op">)</span></span>
+<span>  <span class="va">dj</span> <span class="op">&lt;-</span> <span class="fu">gradient</span><span class="op">(</span><span class="va">k2</span> <span class="op">*</span> <span class="va">a</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/array.html" class="external-link">array</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">keep</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/fft.html" class="external-link">fft</a></span><span class="op">(</span><span class="op">-</span><span class="fu">bracket</span><span class="op">(</span><span class="va">dp</span>, <span class="va">dw</span><span class="op">)</span> <span class="op">+</span> <span class="fu">bracket</span><span class="op">(</span><span class="va">da</span>, <span class="va">dj</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="va">nu</span> <span class="op">*</span> <span class="va">k2</span> <span class="op">*</span> <span class="va">w</span>,</span>
+<span>          <span class="op">-</span><span class="va">keep</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/fft.html" class="external-link">fft</a></span><span class="op">(</span><span class="fu">bracket</span><span class="op">(</span><span class="va">dp</span>, <span class="va">da</span><span class="op">)</span><span class="op">)</span> <span class="op">-</span> <span class="va">eta</span> <span class="op">*</span> <span class="va">k2</span> <span class="op">*</span> <span class="va">a</span><span class="op">)</span>, dim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">q</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Classical fourth-order Runge–Kutta (RK4) advances both fields. With
+largest retained component wavenumber
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>21</mn></mrow><annotation encoding="application/x-tex">K=21</annotation></semantics></math>,
+the fixed step satisfies the Courant–Friedrichs–Lewy (CFL) bound</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>t</mi><mspace width="0.167em"></mspace><mi>K</mi><munder><mi mathvariant="normal">max</mi><mrow><mi>x</mi><mo>,</mo><mi>y</mi></mrow></munder><mo stretchy="false" form="prefix">(</mo><mo stretchy="false" form="prefix">|</mo><msub><mi>ψ</mi><mi>x</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>+</mi><mo stretchy="false" form="prefix">|</mo><msub><mi>ψ</mi><mi>y</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>+</mi><mo stretchy="false" form="prefix">|</mo><msub><mi>a</mi><mi>x</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>+</mi><mo stretchy="false" form="prefix">|</mo><msub><mi>a</mi><mi>y</mi></msub><mo stretchy="false" form="prefix">|</mo><mo stretchy="false" form="postfix">)</mo><mo>&lt;</mo><mn>1</mn><mi>.</mi></mrow><annotation encoding="application/x-tex">\Delta t\,K\max_{x,y}(|\psi_x|+|\psi_y|+|a_x|+|a_y|)&lt;1.</annotation></semantics></math></p>
+<p>Its measured maximum over the run is 0.409; the diffusion quantity
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>t</mi><mspace width="0.167em"></mspace><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mi>ν</mi><mo>,</mo><mi>η</mi><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mn>2</mn><msup><mi>K</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">\Delta t\,\max(\nu,\eta)\,2K^2</annotation></semantics></math>
+is 0.0882. These values allow diffusion to be integrated explicitly in
+the same RK4 stages. Every 30 steps the loop stores a complete grid of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>j</mi><annotation encoding="application/x-tex">j</annotation></semantics></math>
+in a data frame with columns <code>x</code>, <code>y</code>,
+<code>t</code> and <code>value</code>: 17 frames from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">t=0</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>1.2</mn></mrow><annotation encoding="application/x-tex">t=1.2</annotation></semantics></math>.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">psi0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">grid</span>, <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">a0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">grid</span>, <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="va">y</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">n</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/array.html" class="external-link">array</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">k2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/stats/fft.html" class="external-link">fft</a></span><span class="op">(</span><span class="va">psi0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/fft.html" class="external-link">fft</a></span><span class="op">(</span><span class="va">a0</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">n</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">q</span><span class="op">[</span>, , <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">keep</span> <span class="op">*</span> <span class="va">q</span><span class="op">[</span>, , <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="va">q</span><span class="op">[</span>, , <span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">keep</span> <span class="op">*</span> <span class="va">q</span><span class="op">[</span>, , <span class="fl">2</span><span class="op">]</span></span>
+<span><span class="va">frames</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">vector</a></span><span class="op">(</span><span class="st">"list"</span>, <span class="va">steps</span> <span class="op">/</span> <span class="va">save_every</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">step</span> <span class="kw">in</span> <span class="fl">0</span><span class="op">:</span><span class="va">steps</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">step</span> <span class="op"><a href="https://rdrr.io/r/base/Arithmetic.html" class="external-link">%%</a></span> <span class="va">save_every</span> <span class="op">==</span> <span class="fl">0L</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">frames</span><span class="op">[[</span><span class="va">step</span> <span class="op">/</span> <span class="va">save_every</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>      <span class="va">grid</span>, t <span class="op">=</span> <span class="va">step</span> <span class="op">*</span> <span class="va">dt</span>, value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu">physical</span><span class="op">(</span><span class="va">k2</span> <span class="op">*</span> <span class="va">q</span><span class="op">[</span>, , <span class="fl">2</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">step</span> <span class="op">==</span> <span class="va">steps</span><span class="op">)</span> <span class="kw">break</span></span>
+<span>  <span class="va">k1</span> <span class="op">&lt;-</span> <span class="fu">rhs</span><span class="op">(</span><span class="va">q</span><span class="op">)</span></span>
+<span>  <span class="va">k2_rk</span> <span class="op">&lt;-</span> <span class="fu">rhs</span><span class="op">(</span><span class="va">q</span> <span class="op">+</span> <span class="va">dt</span> <span class="op">*</span> <span class="va">k1</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span></span>
+<span>  <span class="va">k3</span> <span class="op">&lt;-</span> <span class="fu">rhs</span><span class="op">(</span><span class="va">q</span> <span class="op">+</span> <span class="va">dt</span> <span class="op">*</span> <span class="va">k2_rk</span> <span class="op">/</span> <span class="fl">2</span><span class="op">)</span></span>
+<span>  <span class="va">k4</span> <span class="op">&lt;-</span> <span class="fu">rhs</span><span class="op">(</span><span class="va">q</span> <span class="op">+</span> <span class="va">dt</span> <span class="op">*</span> <span class="va">k3</span><span class="op">)</span></span>
+<span>  <span class="va">q</span> <span class="op">&lt;-</span> <span class="va">q</span> <span class="op">+</span> <span class="va">dt</span> <span class="op">*</span> <span class="op">(</span><span class="va">k1</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">k2_rk</span> <span class="op">+</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">k3</span> <span class="op">+</span> <span class="va">k4</span><span class="op">)</span> <span class="op">/</span> <span class="fl">6</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">current</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">frames</span><span class="op">)</span></span></code></pre></div>
+<p>For validation, let angle brackets denote the spatial mean,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mo>=</mo><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo stretchy="false" form="prefix">⟨</mo><mo stretchy="false" form="prefix">|</mo><mi>u</mi><msup><mo stretchy="false" form="prefix">|</mo><mn>2</mn></msup><mo>+</mo><mo stretchy="false" form="prefix">|</mo><mi>B</mi><msup><mo stretchy="false" form="prefix">|</mo><mn>2</mn></msup><mo stretchy="false" form="postfix">⟩</mo></mrow><annotation encoding="application/x-tex">E=\tfrac12\langle|u|^2+|B|^2\rangle</annotation></semantics></math>
+the total energy and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo>=</mo><mo stretchy="false" form="prefix">⟨</mo><mi>u</mi><mo>⋅</mo><mi>B</mi><mo stretchy="false" form="postfix">⟩</mo></mrow><annotation encoding="application/x-tex">H=\langle u\cdot B\rangle</annotation></semantics></math>
+the cross helicity. The energy balance is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mi>d</mi><mi>E</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mo>=</mo><mi>−</mi><mi>ε</mi><mo>,</mo><mspace width="2.0em"></mspace><mi>ε</mi><mo>=</mo><mi>ν</mi><mo stretchy="false" form="prefix">⟨</mo><msup><mi>ω</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">⟩</mo><mo>+</mo><mi>η</mi><mo stretchy="false" form="prefix">⟨</mo><msup><mi>j</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">⟩</mo><mi>.</mi></mrow><annotation encoding="application/x-tex">\frac{dE}{dt}=-\varepsilon,\qquad
+\varepsilon=\nu\langle\omega^2\rangle+\eta\langle j^2\rangle.</annotation></semantics></math></p>
+<p>Using
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ℓ</mi><mi>d</mi></msub><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msup><mi>ν</mi><mn>3</mn></msup><mi>/</mi><mi>ε</mi><msup><mo stretchy="false" form="postfix">)</mo><mrow><mn>1</mn><mi>/</mi><mn>4</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\ell_d=(\nu^3/\varepsilon)^{1/4}</annotation></semantics></math>
+as a dissipation-length estimate gives
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mi>t</mi></msub><mi>K</mi><msub><mi>ℓ</mi><mi>d</mi></msub><mo>=</mo><mn>1.74</mn></mrow><annotation encoding="application/x-tex">\min_t K\ell_d=1.74</annotation></semantics></math>
+for these parameters. In the ideal Fourier truncation
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ν</mi><mo>=</mo><mi>η</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\nu=\eta=0</annotation></semantics></math>),
+the maximum relative energy and cross-helicity drifts over the same
+interval are
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.3</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>9</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.3\times10^{-9}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.6</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>10</mn></mrow></msup></mrow><annotation encoding="application/x-tex">1.6\times10^{-10}</annotation></semantics></math>;
+with diffusion, a centred time difference checks the energy balance to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>7.2</mn><mo>×</mo><msup><mn>10</mn><mrow><mi>−</mi><mn>6</mn></mrow></msup></mrow><annotation encoding="application/x-tex">7.2\times10^{-6}</annotation></semantics></math>
+relative to peak dissipation. Doubling the grid to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>128</mn><mn>2</mn></msup><annotation encoding="application/x-tex">128^2</annotation></semantics></math>
+changes final
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">|</mo><mi>j</mi><mo stretchy="false" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">\max|j|</annotation></semantics></math>
+from 25.7755 to 26.1306, or 1.36%.</p>
+<p>The current sheets sharpen as magnetic-field gradients grow. Peak
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">|</mo><mi>j</mi><mo stretchy="false" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">\max|j|</annotation></semantics></math>
+is about 32.2 at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>1.05</mn></mrow><annotation encoding="application/x-tex">t=1.05</annotation></semantics></math>;
+dissipation peaks near
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>1.0</mn></mrow><annotation encoding="application/x-tex">t=1.0</annotation></semantics></math>,
+consistent with the growth and decay in Orszag and Tang’s published
+curves. The computed values now pass directly to
+<code><a href="../reference/geom_surface_3d.html">geom_surface_3d()</a></code> and
+<code>animate_3d(time = "t")</code>.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">current</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">value</span>, fill <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat</a></span><span class="op">(</span><span class="va">z_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>low <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span>, mid <span class="op">=</span> <span class="st">"grey90"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"red"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"j"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="fl">8</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>,</span>
+<span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".mp4"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<video src="pde_files/figure-html/mhd-1.mp4" autoplay loop muted playsinline aria-label="Animation of current density in the incompressible Orszag-Tang vortex, with blue and red current sheets sharpening into narrow ridges and valleys." style="width: 100%; max-width: min(100%, 480px); height: auto;">
+Animation of current density in the incompressible Orszag-Tang vortex,
+with blue and red current sheets sharpening into narrow ridges and
+valleys.
+</video>
+</div>
+<div class="section level2">
 <h2 id="where-next">Where next<a class="anchor" aria-label="anchor" href="#where-next"></a>
 </h2>
 <ul>
@@ -738,6 +1384,12 @@ Society.</p>
 <em>Annals of Eugenics</em>, 7, 355–369.</p>
 <p>Hirota, R. (2004). <em>The Direct Method in Soliton Theory</em>.
 Cambridge University Press.</p>
+<p>Kraus, M., Tassi, E., &amp; Grasso, D. (2016). Variational
+integrators for reduced magnetohydrodynamics. <em>Journal of
+Computational Physics</em>, 321, 435–458. <a href="https://doi.org/10.1016/j.jcp.2016.05.047" class="external-link uri">https://doi.org/10.1016/j.jcp.2016.05.047</a></p>
+<p>Orszag, S. A., &amp; Tang, C.-M. (1979). Small-scale structure of
+two-dimensional magnetohydrodynamic turbulence. <em>Journal of Fluid
+Mechanics</em>, 90, 129–143. <a href="https://doi.org/10.1017/S002211207900210X" class="external-link uri">https://doi.org/10.1017/S002211207900210X</a></p>
 <p>Peregrine, D. H. (1983). Water waves, nonlinear Schrödinger equations
 and their solutions. <em>Journal of the Australian Mathematical Society,
 Series B</em>, 25, 16–43.</p>

@@ -844,8 +844,9 @@ A BibTeX entry for LaTeX users is
 - [Linear and nonlinear
   PDEs](https://gillescolling.com/ggplot3d/articles/pde.md):
 
-  Exact solutions of four linear and four nonlinear partial differential
-  equations drawn as surfaces that change over time with animate_3d().
+  Exact solutions of eight partial differential equations and a
+  numerical magnetohydrodynamic solution drawn as surfaces that change
+  over time with animate_3d().
 
 - [Implicit
   surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md):

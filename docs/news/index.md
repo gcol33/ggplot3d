@@ -2,11 +2,25 @@
 
 ## ggplot3d 0.0.0.9000
 
-- Raster, hybrid, path-traced and ray-marched panel images are drawn
-  with `interpolate = TRUE`, so viewers scale them smoothly instead of
-  by nearest neighbour. Figures whose image is denser than the display,
-  such as HTML figures at `fig.retina = 2`, no longer show stepped face
-  edges.
+- Raster, hybrid, path-traced and ray-marched panel images and
+  composited anaglyphs are drawn with `interpolate = TRUE`, so viewers
+  scale them smoothly instead of by nearest neighbour. Figures whose
+  image is denser than the display, such as HTML figures at
+  `fig.retina = 2`, no longer show stepped face edges.
+
+- [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+  embeds GIF/APNG images and looping MP4/WebM videos in knitr HTML
+  output. Media follow the chunk figure path, document-relative URLs,
+  alt text and output width. Self-contained rmarkdown output embeds the
+  media in the document. The PDE article now uses function layers and
+  direct
+  [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+  calls.
+
+- Function surfaces and isosurfaces evaluate one parameter set per data
+  row, retain the parameter columns, and support facets, mapped
+  aesthetics and `animate_3d(time = ...)`. Fixed extra arguments use
+  `args`, as in ggplot2.
 
 - Binned fill and colour scales cut surface and mesh faces along
   interpolated scalar iso-lines. Each piece carries one band colour,

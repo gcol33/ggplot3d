@@ -28,6 +28,10 @@ lie on no grid edge (merged "tetra" clusters, centre vertices of
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -77,10 +81,12 @@ lie on no grid edge (merged "tetra" clusters, centre vertices of
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -189,7 +195,8 @@ function (<code><a href="sdf_sphere.html">sdf_sphere()</a></code>).</p></dd>
 
 
 <dt id="arg-args">args<a class="anchor" aria-label="anchor" href="#arg-args"></a></dt>
-<dd><p>Additional named arguments passed to fun.</p></dd>
+<dd><p>List of fixed extra arguments passed to <code>fun</code>. Names must
+differ from data parameters; see <code><a href="stat_function_3d.html">stat_function_3d()</a></code>.</p></dd>
 
 
 <dt id="arg-levels">levels<a class="anchor" aria-label="anchor" href="#arg-levels"></a></dt>
@@ -293,6 +300,9 @@ with an error that names the call.</p>
 <code><a href="sdf_blend.html">sdf_blend()</a></code>. levels then defaults to 0, and vertex normals (with the
 crossing normals of <code>"dual"</code>) come from the exact gradient of its
 expression tree in place of central differences.</p>
+<p>For mesh extraction, each data row supplies one set of constant named
+parameters and produces its own isosurface. Columns and grouping follow
+<code><a href="stat_function_3d.html">stat_function_3d()</a></code>, including facets and <code><a href="animate_3d.html">animate_3d()</a></code>'s time column.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

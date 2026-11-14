@@ -197,12 +197,13 @@ field of view, distance (NA when automatic) and target, and the frame's
 tweening), `build_seconds`, `frame`, `panel_extents` in millimetres, and
 `frames` (the PNG paths when file is NULL, the written files of a
 per-frame output). PNG frames returned with file = NULL belong to the
-caller.
+caller. `width` and `height` give the frame dimensions in pixels.
 
 ## Details
 
 Framing is "azimuth" when only the azimuth and zoom change, and "sphere"
-otherwise. Axis reserves and physical panel extents are fixed. Zoom
+otherwise. Axis reserves and physical panel extents are fixed. Inside
+views keep the eye at the observer as the camera angles change. Zoom
 remains an explicit magnification. Optional packages are checked before
 rendering. Rendering streams frames to disk. A fixed scene is built
 once; with `time`, each frame is built from its subset with the scale
@@ -210,6 +211,13 @@ limits of the full data, as in gganimate's `transition_manual()` and
 plotly's `frame` aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show
 its first frame.
+
+In knitr HTML documents, a returned GIF or APNG embeds as an image and
+MP4 or WebM embeds as a looping, muted, autoplaying inline video. The
+file is copied under the chunk's figure path, with a URL relative to the
+output document. `fig.alt` supplies the image description or the video's
+accessible label and fallback text. `out.width` sets the displayed
+width, capped at the frame width and the available page width.
 
 gganimate's `transition_states()` and `transition_time()` use a separate
 build pipeline. These transitions produce guidance to use

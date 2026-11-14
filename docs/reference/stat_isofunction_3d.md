@@ -64,7 +64,9 @@ geom_isofunction_3d(...)
 
 - args:
 
-  Additional named arguments passed to fun.
+  List of fixed extra arguments passed to `fun`. Names must differ from
+  data parameters; see
+  [`stat_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md).
 
 - levels:
 
@@ -194,6 +196,13 @@ and
 levels then defaults to 0, and vertex normals (with the crossing normals
 of `"dual"`) come from the exact gradient of its expression tree in
 place of central differences.
+
+For mesh extraction, each data row supplies one set of constant named
+parameters and produces its own isosurface. Columns and grouping follow
+[`stat_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md),
+including facets and
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)'s
+time column.
 
 ## References
 

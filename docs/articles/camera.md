@@ -130,7 +130,7 @@ produces a warning.
 ``` r
 
 p + coord_3d(stereo = stereo_3d("anaglyph", separation = 5),
-  backend = backend_3d("raster", dpi = 80, antialias = 1))
+  backend = backend_3d("raster", dpi = 240))
 ```
 
 ![Red-cyan anaglyph of the column scene for viewing through coloured

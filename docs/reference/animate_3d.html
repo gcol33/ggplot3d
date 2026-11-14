@@ -16,6 +16,10 @@ data per frame. Projection, visibility and lighting are evaluated per frame."><m
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -65,10 +69,12 @@ data per frame. Projection, visibility and lighting are evaluated per frame."><m
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -300,12 +306,14 @@ field of view, distance (NA when automatic) and target, and the frame's
 tweening),
 <code>build_seconds</code>, <code>frame</code>, <code>panel_extents</code> in millimetres, and <code>frames</code>
 (the PNG paths when file is NULL, the written files of a per-frame
-output). PNG frames returned with file = NULL belong to the caller.</p>
+output). PNG frames returned with file = NULL belong to the caller.
+<code>width</code> and <code>height</code> give the frame dimensions in pixels.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Framing is "azimuth" when only the azimuth and zoom change, and
 "sphere" otherwise. Axis reserves and physical panel extents are fixed.
+Inside views keep the eye at the observer as the camera angles change.
 Zoom remains an explicit magnification. Optional packages are checked
 before rendering. Rendering streams frames to disk. A fixed scene is built
 once; with <code>time</code>, each frame is built from its subset with the scale
@@ -313,6 +321,12 @@ limits of the full data, as in gganimate's <code>transition_manual()</code> and
 plotly's <code>frame</code> aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show its
 first frame.</p>
+<p>In knitr HTML documents, a returned GIF or APNG embeds as an image and
+MP4 or WebM embeds as a looping, muted, autoplaying inline video. The file
+is copied under the chunk's figure path, with a URL relative to the output
+document. <code>fig.alt</code> supplies the image description or the video's
+accessible label and fallback text. <code>out.width</code> sets the displayed width,
+capped at the frame width and the available page width.</p>
 <p>gganimate's <code>transition_states()</code> and <code>transition_time()</code> use a separate
 build pipeline. These transitions produce guidance to use
 <code>animate_3d(time = , tween = tween_3d())</code> for a 3D plot.</p>

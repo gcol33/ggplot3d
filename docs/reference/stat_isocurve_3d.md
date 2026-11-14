@@ -59,7 +59,9 @@ geom_isocurve_3d(...)
 
 - args:
 
-  Additional named arguments passed to fun.
+  List of fixed extra arguments passed to `fun`. Names must differ from
+  data parameters; see
+  [`stat_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md).
 
 - levels:
 
