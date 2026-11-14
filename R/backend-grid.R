@@ -1,4 +1,4 @@
-utils::globalVariables("grid_clip_paths_cpp")
+utils::globalVariables(c("grid_clip_paths_cpp", "grid_stroke_intervals_cpp"))
 
 grid_capabilities_3d <- function() {
   caps <- grDevices::dev.capabilities()
@@ -508,6 +508,142 @@ clip_grob_3d <- function(g, clip = NULL, region = NULL, caps = grid_capabilities
   if (is.null(g$vp)) { g$vp <- vp; g } else grid::grobTree(g, vp = vp)
 }
 
+# Polylines of a run of stroke fragments `rows`, with the stroke's paint:
+# solid strokes as one path per continued chain of fragments, dashed ones as
+# one path per dash.
+stroke_run_grob_3d <- function(scene, rows, s, x, y, counts, starts, viewport) {
+  f <- scene$fragments; tab <- scene$source$polylines; source <- f$source_index[rows]
+  lty <- style_value_3d(s, "linetype", 1)
+  widths <- source
+  if (all(lty %in% c("solid", "1") & !f$hidden[rows])) {
+    # Consecutive fragments of one path that continue where the previous
+    # one ended are drawn as one polyline, so their joint takes the line
+    # join instead of two line ends.
+    n <- length(rows); previous <- rows[-n]; current <- rows[-1L]
+    join <- c(FALSE, f$parent_primitive_id[current] == f$parent_primitive_id[previous] &
+      f$style_id[current] == f$style_id[previous] & f$opacity[current] == f$opacity[previous] &
+      abs(f$path_start_mm[current] - f$path_end_mm[previous]) <= 1e-9 * pmax(1, abs(f$path_end_mm[previous])))
+    path <- cumsum(!join); lead <- which(!join)
+    repeated <- rep(join, counts) & sequence(counts) == 1L
+    path_x <- x[!repeated]; path_y <- y[!repeated]
+    path_counts <- as.vector(rowsum(counts - join, path))
+    npaths <- rep.int(1L, length(lead)); widths <- source[lead]
+    gp <- material_gp_3d(s[lead, , drop = FALSE], f$opacity[rows[lead]], 2L)
+  } else {
+    paths <- lapply(seq_along(rows), function(j) {
+      i <- seq.int(starts[j], length.out = counts[j])
+      pattern <- if (f$hidden[rows[j]] && tab$hidden[source[j]] == 1L) "dashed" else lty[j]
+      dash_segments_3d(x[i], y[i], f$path_start_mm[rows[j]], dash_pattern_3d(pattern, tab$width_mm[source[j]]), viewport)
+    })
+    npaths <- vapply(paths, function(p) length(p$count), integer(1))
+    path_x <- unlist(lapply(paths, `[[`, "x")); path_y <- unlist(lapply(paths, `[[`, "y"))
+    path_counts <- unlist(lapply(paths, `[[`, "count"))
+    gp <- material_gp_3d(s[rep(seq_along(rows), npaths), , drop = FALSE], rep(f$opacity[rows], npaths), 2L)
+  }
+  gp$lty <- 1; gp$lwd <- rep(tab$width_mm[widths] * 96 / 25.4, npaths)
+  gp$lineend <- c("butt", "round", "square")[tab$cap[source[1L]] + 1L]
+  gp$linejoin <- c("round", "mitre", "bevel")[tab$join[source[1L]] + 1L]
+  gp$linemitre <- tab$mitre_limit[source[1L]]
+  if (!sum(npaths)) return(grid::nullGrob())
+  grid::polylineGrob(path_x, path_y, default.units = "npc", id = rep(seq_len(sum(npaths)), path_counts), gp = gp)
+}
+
+# Masked stroke runs drawn as ordinary strokes along the visible intervals
+# of their centrelines (object-space hidden-line removal, Appel 1967) instead
+# of filled outlines clipped to the visible footprint. Each run draws the
+# centreline inside its own footprint piece; pieces of one polyline that meet
+# across the centreline end square at the same point and tile the stroke.
+# Pieces that split the stroke along its length cannot be drawn as strokes,
+# since each holds part of the width at its own place in the draw order. The
+# polyline's visible
+# footprint is the union of its pieces, and the strokes depart from it only
+# where the visible centreline ends (a stroke ends square to the centreline,
+# the footprint along an occluding edge) and where the footprint boundary
+# comes closer to the centreline than the stroke's reach. A polyline is drawn
+# as strokes when every such departure, measured as the Hausdorff distance
+# between the two paints, is at most `tolerance_mm`; otherwise all its runs
+# keep the clipped outline.
+masked_stroke_runs_3d <- function(scene, runs, styles, viewport, geometry,
+                                  tolerance_mm = min(0.1, 12.7 / viewport$dpi)) {
+  f <- scene$fragments; tab <- scene$source$polylines
+  n <- length(runs)
+  out <- list(polylines = vector("list", n), intervals = vector("list", n), segments = logical(n))
+  first <- vapply(runs, `[`, integer(1), 1L)
+  masked <- which(f$kind[first] == 2L & f$mask_count[first] > 0L)
+  masked <- masked[tab$width_mm[f$source_index[first[masked]]] > 0]
+  if (!length(masked)) return(out)
+  width <- viewport$width_mm; height <- viewport$height_mm
+  intervals_of <- function(polyline, clip, source, pieces) grid_stroke_intervals_cpp(
+    as.numeric(polyline$x) * width, as.numeric(polyline$y) * height, polyline$id,
+    as.numeric(clip$x) * width, as.numeric(clip$y) * height, as.integer(clip$id),
+    tab$width_mm[source], tab$cap[source], tab$join[source], tab$mitre_limit[source], pieces)
+  clips <- vector("list", n)
+  for (run in masked) {
+    g <- geometry(runs[[run]])
+    rows <- g$rows
+    polyline <- stroke_run_grob_3d(scene, rows, styles[rows, , drop = FALSE], g$x, g$y, g$counts, g$starts, viewport)
+    out$polylines[[run]] <- polyline
+    if (inherits(polyline, "null")) next
+    clips[[run]] <- mask_path_3d(scene, runs[[run]])
+    out$intervals[[run]] <- intervals_of(polyline, clips[[run]], f$source_index[rows[1L]], TRUE)
+  }
+  drawn <- masked[!vapply(out$polylines[masked], inherits, logical(1), "null")]
+  if (!length(drawn)) return(out)
+  # Runs that draw the same geometry of one polyline, in different places of
+  # the draw order, are judged together on the union of their footprints.
+  r <- first[drawn]
+  group <- paste(f$source_index[r], f$parent_primitive_id[r], f$style_id[r], f$path_start_mm[r],
+    f$path_end_mm[r], f$count[r], f$hidden[r])
+  ends <- list(); worst <- list()
+  for (members in split(drawn, group)) {
+    source <- f$source_index[first[members[1L]]]
+    ids <- lapply(seq_along(members), function(k) paste(k, clips[[members[k]]]$id))
+    union <- list(x = unlist(lapply(clips[members], `[[`, "x")), y = unlist(lapply(clips[members], `[[`, "y")),
+      id = match(unlist(ids), unique(unlist(ids))))
+    visible <- intervals_of(out$polylines[[members[1L]]], union, source, FALSE)
+    worst[[length(worst) + 1L]] <- data.frame(source = source, deviation = max(c(0, visible$lateral, visible$uncovered)))
+    if (!length(visible$id)) next
+    last <- cumsum(rle(visible$id)$lengths); start <- c(1L, utils::head(last, -1L) + 1L)
+    ends[[length(ends) + 1L]] <- data.frame(source = source, group = members[1L],
+      x = c(visible$x[start], visible$x[last]), y = c(visible$y[start], visible$y[last]),
+      kind = c(visible$start_kind, visible$end_kind),
+      deviation = c(visible$start_deviation, visible$end_deviation))
+  }
+  # A piece whose footprint boundary runs within the half width of its own
+  # centreline holds part of the stroke's width only: the rest is painted by
+  # another piece, at another place in the draw order.
+  worst <- rbind(do.call(rbind, worst), data.frame(source = f$source_index[first[drawn]],
+    deviation = vapply(out$intervals[drawn], function(i) max(c(0, i$lateral)), numeric(1))))
+  if (length(ends)) {
+    ends <- do.call(rbind, ends)
+    # A cut end that meets an end of another drawn piece of the same polyline
+    # (another geometry, or an unmasked fragment) continues the stroke.
+    plain <- intersect(which(f$kind == 2L & f$mask_count == 0L & f$source_index %in% ends$source), scene$draw_order)
+    at <- c(f$offset[plain], f$offset[plain] + f$count[plain] - 1L)
+    others <- rbind(ends[c("source", "group", "x", "y")], data.frame(source = rep(f$source_index[plain], 2L), group = rep(0L, length(at)),
+      x = scene$vertices$x_npc[at] * width, y = scene$vertices$y_npc[at] * height))
+    scale <- 1e-7 * (1 + abs(ends$x) + abs(ends$y))
+    continued <- vapply(seq_len(nrow(ends)), function(i) ends$kind[i] == 1L && any(others$source == ends$source[i] &
+      others$group != ends$group[i] & abs(others$x - ends$x[i]) <= scale[i] & abs(others$y - ends$y[i]) <= scale[i]),
+      logical(1))
+    radius <- tab$width_mm[ends$source] / 2
+    deviation <- ifelse(continued, ifelse(tab$cap[ends$source] == 0L, 0, radius), ends$deviation)
+    worst <- rbind(worst, data.frame(source = ends$source, deviation = deviation))
+  }
+  worst <- tapply(worst$deviation, worst$source, max)
+  out$segments[drawn] <- worst[as.character(f$source_index[first[drawn]])] <= tolerance_mm
+  out
+}
+
+# Visible stroke intervals as one polyline grob, with the run's paint.
+stroke_intervals_grob_3d <- function(intervals, gp, viewport) {
+  if (!length(intervals$x)) return(grid::nullGrob())
+  for (field in c("col", "lwd", "alpha", "fill"))
+    if (length(gp[[field]]) > 1L) gp[[field]] <- gp[[field]][intervals$path]
+  grid::polylineGrob(intervals$x / viewport$width_mm, intervals$y / viewport$height_mm,
+    default.units = "npc", id = intervals$id, gp = gp)
+}
+
 # `regions`: optional list(id, grobs). Fragment i is clipped to grobs[[id[i]]]
 # when id[i] > 0.
 render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, strokes_only = FALSE) {
@@ -574,13 +710,20 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   runs <- unname(split(order, run_id))
   path_cache <- new.env(parent = emptyenv())
   underlay <- split_underlays_3d(f, runs, (f$kind == 5L & f$opacity >= 1) | (seam & !surface & f$opacity >= 1))
+  geometry <- function(masks) {
+    rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
+    counts <- f$count[rows]
+    indices <- rep(f$offset[rows], counts) + sequence(counts) - 1L
+    list(rows = rows, counts = counts, starts = cumsum(c(1L, head(counts, -1L))),
+         x = scene$vertices$x_npc[indices], y = scene$vertices$y_npc[indices])
+  }
+  strokes <- masked_stroke_runs_3d(scene, runs, styles, viewport, geometry)
   grobs <- lapply(seq_along(runs), function(run) {
     masks <- runs[[run]]
-    rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
+    run_geometry <- geometry(masks)
+    rows <- run_geometry$rows; counts <- run_geometry$counts; starts <- run_geometry$starts
+    x <- run_geometry$x; y <- run_geometry$y
     kind <- f$kind[rows[1L]]; s <- styles[rows, , drop = FALSE]
-    counts <- f$count[rows]; starts <- cumsum(c(1L, head(counts, -1L)))
-    indices <- rep(f$offset[rows], counts) + sequence(counts) - 1L
-    x <- scene$vertices$x_npc[indices]; y <- scene$vertices$y_npc[indices]
     gp <- material_gp_3d(s, f$opacity[rows], kind)
     clip <- NULL
     if (f$mask_count[rows[1L]] > 0L) clip <- mask_path_3d(scene, masks)
@@ -639,39 +782,13 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       }
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]
-      lty <- style_value_3d(s, "linetype", 1)
-      widths <- source
-      if (all(lty %in% c("solid", "1") & !f$hidden[rows])) {
-        # Consecutive fragments of one path that continue where the previous
-        # one ended are drawn as one polyline, so their joint takes the line
-        # join instead of two line ends.
-        n <- length(rows); previous <- rows[-n]; current <- rows[-1L]
-        join <- c(FALSE, f$parent_primitive_id[current] == f$parent_primitive_id[previous] &
-          f$style_id[current] == f$style_id[previous] & f$opacity[current] == f$opacity[previous] &
-          abs(f$path_start_mm[current] - f$path_end_mm[previous]) <= 1e-9 * pmax(1, abs(f$path_end_mm[previous])))
-        path <- cumsum(!join); lead <- which(!join)
-        repeated <- rep(join, counts) & sequence(counts) == 1L
-        path_x <- x[!repeated]; path_y <- y[!repeated]
-        path_counts <- as.vector(rowsum(counts - join, path))
-        npaths <- rep.int(1L, length(lead)); widths <- source[lead]
-        gp <- material_gp_3d(s[lead, , drop = FALSE], f$opacity[rows[lead]], kind)
-      } else {
-        paths <- lapply(seq_along(rows), function(j) {
-          i <- seq.int(starts[j], length.out = counts[j])
-          pattern <- if (f$hidden[rows[j]] && tab$hidden[source[j]] == 1L) "dashed" else lty[j]
-          dash_segments_3d(x[i], y[i], f$path_start_mm[rows[j]], dash_pattern_3d(pattern, tab$width_mm[source[j]]), viewport)
-        })
-        npaths <- vapply(paths, function(p) length(p$count), integer(1))
-        path_x <- unlist(lapply(paths, `[[`, "x")); path_y <- unlist(lapply(paths, `[[`, "y"))
-        path_counts <- unlist(lapply(paths, `[[`, "count"))
-        gp <- material_gp_3d(s[rep(seq_along(rows), npaths), , drop = FALSE], rep(f$opacity[rows], npaths), kind)
+      g <- if (is.null(strokes$polylines[[run]])) stroke_run_grob_3d(scene, rows, s, x, y, counts, starts, viewport) else
+        strokes$polylines[[run]]
+      gp <- g$gp
+      if (!is.null(clip) && isTRUE(strokes$segments[run])) {
+        g <- stroke_intervals_grob_3d(strokes$intervals[[run]], gp, viewport)
+        clip <- NULL
       }
-      gp$lty <- 1; gp$lwd <- rep(tab$width_mm[widths] * 96 / 25.4, npaths)
-      gp$lineend <- c("butt", "round", "square")[tab$cap[source[1L]] + 1L]
-      gp$linejoin <- c("round", "mitre", "bevel")[tab$join[source[1L]] + 1L]
-      gp$linemitre <- tab$mitre_limit[source[1L]]
-      g <- if (!sum(npaths)) grid::nullGrob() else grid::polylineGrob(
-        path_x, path_y, default.units = "npc", id = rep(seq_len(sum(npaths)), path_counts), gp = gp)
       if (!is.null(clip) && (inherits(g, "null") || tab$width_mm[source[1L]] > 0)) {
         if (inherits(g, "null")) clip <- NULL else {
           painted <- clipped_path_grob_3d(as.numeric(g$x), as.numeric(g$y), g$id,

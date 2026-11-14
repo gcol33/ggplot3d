@@ -273,3 +273,284 @@ Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::Numeric
   raster.attr("class") = "nativeRaster";
   return raster;
 }
+
+namespace {
+struct MaskEdge { Clipper2Lib::PointD a, b; };
+
+std::vector<MaskEdge> mask_edges(const Clipper2Lib::PathsD& rings) {
+  std::vector<MaskEdge> edges;
+  for (const auto& ring : rings) {
+    size_t n = ring.size();
+    if (n > 1 && ring.front() == ring.back()) --n;
+    if (n < 3) continue;
+    for (size_t i = 0; i < n; ++i) {
+      const auto& a = ring[i]; const auto& b = ring[(i + 1) % n];
+      if (a != b) edges.push_back({a, b});
+    }
+  }
+  return edges;
+}
+
+bool even_odd_inside(const std::vector<MaskEdge>& edges, double x, double y) {
+  bool inside = false;
+  for (const auto& e : edges)
+    if ((e.a.y > y) != (e.b.y > y) && x < e.a.x + (y - e.a.y) * (e.b.x - e.a.x) / (e.b.y - e.a.y)) inside = !inside;
+  return inside;
+}
+
+double point_segment_distance(const Clipper2Lib::PointD& p, const Clipper2Lib::PointD& a, const Clipper2Lib::PointD& b) {
+  double dx = b.x - a.x, dy = b.y - a.y, length2 = dx * dx + dy * dy;
+  double t = length2 > 0 ? std::max(0.0, std::min(1.0, ((p.x - a.x) * dx + (p.y - a.y) * dy) / length2)) : 0;
+  return std::hypot(p.x - a.x - t * dx, p.y - a.y - t * dy);
+}
+
+double segment_distance(const Clipper2Lib::PointD& a, const Clipper2Lib::PointD& b,
+                        const Clipper2Lib::PointD& c, const Clipper2Lib::PointD& d) {
+  double ux = b.x - a.x, uy = b.y - a.y, vx = d.x - c.x, vy = d.y - c.y;
+  double cross = ux * vy - uy * vx;
+  if (cross != 0) {
+    double s = ((c.x - a.x) * vy - (c.y - a.y) * vx) / cross, t = ((c.x - a.x) * uy - (c.y - a.y) * ux) / cross;
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1) return 0;
+  }
+  return std::min(std::min(point_segment_distance(a, c, d), point_segment_distance(b, c, d)),
+                  std::min(point_segment_distance(c, a, b), point_segment_distance(d, a, b)));
+}
+
+// Whether a segment enters the interior of a triangle, shrunk by a relative
+// margin towards its centroid so that segments along its sides do not count.
+bool crosses_triangle(const MaskEdge& edge, Clipper2Lib::PointD p, Clipper2Lib::PointD q, Clipper2Lib::PointD r) {
+  using Clipper2Lib::PointD;
+  PointD centre((p.x + q.x + r.x) / 3, (p.y + q.y + r.y) / 3);
+  auto shrink = [&](const PointD& v) { return PointD(centre.x + (v.x - centre.x) * (1 - 1e-6), centre.y + (v.y - centre.y) * (1 - 1e-6)); };
+  p = shrink(p); q = shrink(q); r = shrink(r);
+  auto side = [](const PointD& a, const PointD& b, const PointD& c) { return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x); };
+  auto inside = [&](const PointD& v) {
+    double d1 = side(p, q, v), d2 = side(q, r, v), d3 = side(r, p, v);
+    return (d1 > 0 && d2 > 0 && d3 > 0) || (d1 < 0 && d2 < 0 && d3 < 0);
+  };
+  if (inside(edge.a) || inside(edge.b)) return true;
+  const PointD corners[3] = {p, q, r};
+  for (int i = 0; i < 3; ++i) {
+    const PointD& c = corners[i]; const PointD& d = corners[(i + 1) % 3];
+    if ((side(c, d, edge.a) > 0) != (side(c, d, edge.b) > 0) && (side(edge.a, edge.b, c) > 0) != (side(edge.a, edge.b, d) > 0)) return true;
+  }
+  return false;
+}
+
+
+// Distance by which a stroke drawn up to a cut point, with the given line
+// end, departs from the same stroke cut along the mask edge through that
+// point at an angle with this sine and cosine: the Hausdorff distance
+// between the two ends.
+double cut_deviation(double radius, int cap, double sine, double cosine) {
+  if (sine <= 0) return R_PosInf;
+  double cot = cosine / sine;
+  if (cap == 1) return radius * std::max(1.0, 1 / sine - 1);
+  if (cap == 2) return radius * (1 + cot);
+  return radius * cot;
+}
+}
+
+// Visible intervals of polylines inside an even-odd footprint, in
+// millimetres, for drawing a masked stroke as ordinary stroke segments
+// (object-space hidden-line removal, Appel 1967). Each interval ends at an
+// end of its input path (kind 0) or where it leaves the footprint (kind 1).
+// Deviations bound how far a stroke of that width and line end drawn along
+// the interval departs from the stroke clipped to the footprint: at each cut
+// end (`start_deviation`, `end_deviation`, zero at a path end), and along the
+// interval where the footprint boundary passes closer than the stroke's
+// reach to its sides, mitre joins or square caps (`lateral`), and by
+// footprint that no interval paints: a ring that no interval meets, or
+// footprint within the half width of a hidden part of the centreline away
+// from its cuts (`uncovered`). With `pieces`, the footprint is one piece of
+// a stroke whose other pieces are drawn elsewhere, and `lateral` reports
+// only a piece boundary that runs along the centreline.
+// [[Rcpp::export(rng = false)]]
+Rcpp::List grid_stroke_intervals_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id,
+                                     Rcpp::NumericVector mask_x, Rcpp::NumericVector mask_y, Rcpp::IntegerVector mask_id,
+                                     double width, int cap, int join, double mitre, bool pieces = false) {
+  using namespace Clipper2Lib;
+  if (!R_finite(width) || width < 0 || cap < 0 || cap > 2 || join < 0 || join > 2)
+    Rcpp::stop("Invalid stroke interval parameters.");
+  const double radius = width / 2;
+  PathsD paths = grid_paths(x, y, id);
+  PathsD rings = Union(grid_paths(mask_x, mask_y, mask_id), FillRule::EvenOdd, 8);
+  std::vector<MaskEdge> edges = mask_edges(rings);
+  std::vector<double> xx, yy, lateral, start_deviation, end_deviation;
+  std::vector<int> interval, path_index, start_kind, end_kind;
+  int count = 0;
+  double beside = 0;
+  for (size_t k = 0; k < paths.size(); ++k) {
+    const PathD& path = paths[k];
+    if (path.size() < 2) continue;
+    PathD points; std::vector<size_t> segment_of;
+    int opened_kind = 0; double worst = 0, opened = 0, ended = 0;
+    std::vector<std::pair<size_t, size_t>> exempt;
+    auto close = [&](int kind) {
+      double drawn = 0;
+      for (size_t s = 1; s < points.size(); ++s) drawn += std::hypot(points[s].x - points[s - 1].x, points[s].y - points[s - 1].y);
+      if (points.size() < 2 || drawn <= 1e-9 * (1 + radius)) { points.clear(); segment_of.clear(); exempt.clear(); return; }
+      const size_t last = points.size() - 2;
+      const double scale = 1e-7;
+      for (size_t e = 0; e < edges.size(); ++e) {
+        const auto& edge = edges[e];
+        // An edge through a path end cuts the stroke there, at its angle to
+        // the end segment: the footprint's own square end is a cut at a right
+        // angle, an edge along the centreline is no cut at all.
+        // Between two pieces of one stroke, such an edge only moves which
+        // piece paints the corner beside it, unless it runs along the
+        // centreline for half the interval or more.
+        auto end_cut = [&](const PointD& p, const PointD& q) {
+          double ux = q.x - p.x, uy = q.y - p.y, vx = edge.b.x - edge.a.x, vy = edge.b.y - edge.a.y;
+          double norm = std::hypot(ux, uy) * std::hypot(vx, vy);
+          if (norm <= 0) return R_PosInf;
+          double sine = std::abs(ux * vy - uy * vx) / norm, cosine = std::abs(ux * vx + uy * vy) / norm;
+          if (pieces) return radius >= sine * drawn / 2 ? radius : 0.0;
+          return cut_deviation(radius, cap, sine, cosine);
+        };
+        bool through_start = opened_kind == 0 && point_segment_distance(points.front(), edge.a, edge.b) <= scale;
+        bool through_end = kind == 0 && point_segment_distance(points.back(), edge.a, edge.b) <= scale;
+        if (through_start) worst = std::max(worst, end_cut(points[0], points[1]));
+        if (through_end) worst = std::max(worst, end_cut(points[last + 1], points[last]));
+        for (size_t s = 0; s <= last; ++s) {
+          bool skip = (s == 0 && through_start) || (s == last && through_end);
+          for (const auto& ex : exempt) if (ex.first == e && ex.second == segment_of[s]) skip = true;
+          if (!skip) worst = std::max(worst, radius - segment_distance(points[s], points[s + 1], edge.a, edge.b));
+        }
+        if (join == 1) for (size_t s = 1; s <= last; ++s) {
+          const auto& a = points[s - 1]; const auto& p = points[s]; const auto& b = points[s + 1];
+          double ax = p.x - a.x, ay = p.y - a.y, bx = b.x - p.x, by = b.y - p.y;
+          double la = std::hypot(ax, ay), lb = std::hypot(bx, by);
+          double half = std::sqrt(std::max(0.0, (1 + (ax * bx + ay * by) / (la * lb)) / 2));
+          if (half <= 0 || radius / half > radius * mitre) continue;
+          double tip = radius / half;
+          if (tip - radius <= scale) continue;
+          double sign = ax * by - ay * bx > 0 ? 1 : -1;
+          PointD corner(p.x + sign * (ay / la + by / lb) * radius / (2 * half * half), p.y - sign * (ax / la + bx / lb) * radius / (2 * half * half));
+          PointD left(p.x + sign * ay / la * radius, p.y - sign * ax / la * radius);
+          PointD right(p.x + sign * by / lb * radius, p.y - sign * bx / lb * radius);
+          if (crosses_triangle(edge, left, corner, right)) worst = std::max(worst, tip - radius);
+        }
+      }
+      if (cap == 2 && (opened_kind == 0 || kind == 0)) worst = std::max(worst, radius * (std::sqrt(2.0) - 1));
+      ++count;
+      for (const auto& p : points) { xx.push_back(p.x); yy.push_back(p.y); interval.push_back(count); }
+      path_index.push_back(static_cast<int>(k) + 1); start_kind.push_back(opened_kind); end_kind.push_back(kind);
+      lateral.push_back(worst); start_deviation.push_back(opened); end_deviation.push_back(ended);
+      points.clear(); segment_of.clear(); exempt.clear();
+    };
+    struct Hidden { PointD a, b; double from, to; size_t segment; };
+    struct Window { double at, reach; size_t segment; };
+    std::vector<Hidden> hidden; std::vector<Window> windows;
+    double travelled = 0;
+    for (size_t j = 0; j + 1 < path.size(); ++j) {
+      const PointD& a = path[j]; const PointD& b = path[j + 1];
+      double ux = b.x - a.x, uy = b.y - a.y, length = std::hypot(ux, uy);
+      std::vector<double> crossings;
+      for (size_t e = 0; e < edges.size(); ++e) {
+        const auto& edge = edges[e];
+        double vx = edge.b.x - edge.a.x, vy = edge.b.y - edge.a.y;
+        double cross = ux * vy - uy * vx;
+        if (cross == 0) continue;
+        double t = ((edge.a.x - a.x) * vy - (edge.a.y - a.y) * vx) / cross;
+        double s = ((edge.a.x - a.x) * uy - (edge.a.y - a.y) * ux) / cross;
+        const double snap = 1e-9;
+        if (t < -snap || t > 1 + snap || s < -snap || s > 1 + snap) continue;
+        t = t < snap ? 0 : t > 1 - snap ? 1 : t;
+        crossings.push_back(t);
+      }
+      std::sort(crossings.begin(), crossings.end());
+      // Crossings closer than the footprint's coordinate precision are one
+      // cut: the corner of two footprint edges on the centreline.
+      const double merge = 1e-7 / length;
+      std::vector<double> cuts{0};
+      for (double t : crossings) if (t > cuts.back() + merge) cuts.push_back(t);
+      if (cuts.back() < 1 - merge) cuts.push_back(1); else cuts.back() = 1;
+      auto at = [&](double t) { return PointD(a.x + t * ux, a.y + t * uy); };
+      // The footprint edges through a cut point, within the footprint's
+      // coordinate precision, make the cut.
+      auto cut_end = [&](double t) {
+        double d = 0, reach = 0; bool found = false;
+        const PointD point = at(t);
+        for (size_t e = 0; e < edges.size(); ++e) {
+          const auto& edge = edges[e];
+          if (point_segment_distance(point, edge.a, edge.b) > 1e-7) continue;
+          double vx = edge.b.x - edge.a.x, vy = edge.b.y - edge.a.y, norm = length * std::hypot(vx, vy);
+          double sine = std::abs(ux * vy - uy * vx) / norm, cosine = std::abs(ux * vx + uy * vy) / norm;
+          found = true; d = std::max(d, cut_deviation(radius, cap, sine, cosine));
+          reach = std::max(reach, sine > 0 ? radius / sine : R_PosInf);
+          exempt.emplace_back(e, j);
+        }
+        windows.push_back({travelled + t * length, found ? reach : R_PosInf, j});
+        return found ? d : R_PosInf;
+      };
+      for (size_t i = 0; i + 1 < cuts.size(); ++i) {
+        double lo = cuts[i], hi = cuts[i + 1];
+        // A centreline along a boundary between two footprint pieces of one
+        // stroke belongs to the piece on its left, so exactly one draws it.
+        PointD middle = at((lo + hi) / 2);
+        middle.x -= 1e-6 * uy / length; middle.y += 1e-6 * ux / length;
+        bool inside = even_odd_inside(edges, middle.x, middle.y);
+        if (inside && points.empty()) {
+          bool path_start = j == 0 && lo == 0;
+          opened_kind = path_start ? 0 : 1;
+          worst = 0; ended = 0;
+          opened = path_start ? 0 : cut_end(lo);
+          points.push_back(at(lo));
+        }
+        if (inside) {
+          points.push_back(at(hi)); segment_of.push_back(j);
+          if (j + 2 == path.size() && hi == 1) close(0);
+        } else {
+          if (!points.empty()) { ended = cut_end(lo); close(1); }
+          hidden.push_back({at(lo), at(hi), travelled + lo * length, travelled + hi * length, j});
+        }
+      }
+      travelled += length;
+    }
+    // Paint of the hidden centreline lies in the footprint only within the
+    // reach of a cut along the same straight segment, r / sin(angle), which
+    // the cut's own deviation covers; elsewhere the footprint boundary has to
+    // keep the stroke's half width from the hidden centreline.
+    for (const auto& h : hidden) {
+      std::vector<std::pair<double, double>> keep{{h.from, h.to}};
+      for (const auto& w : windows) {
+        if (w.segment != h.segment) continue;
+        std::vector<std::pair<double, double>> next;
+        for (const auto& k : keep) {
+          if (w.at - w.reach > k.first) next.emplace_back(k.first, std::min(k.second, w.at - w.reach));
+          if (w.at + w.reach < k.second) next.emplace_back(std::max(k.first, w.at + w.reach), k.second);
+        }
+        keep.swap(next);
+      }
+      double span = h.to - h.from;
+      for (const auto& k : keep) {
+        if (k.second <= k.first || span <= 0) continue;
+        PointD p(h.a.x + (h.b.x - h.a.x) * (k.first - h.from) / span, h.a.y + (h.b.y - h.a.y) * (k.first - h.from) / span);
+        PointD q(h.a.x + (h.b.x - h.a.x) * (k.second - h.from) / span, h.a.y + (h.b.y - h.a.y) * (k.second - h.from) / span);
+        for (const auto& e : edges) beside = std::max(beside, radius - segment_distance(p, q, e.a, e.b));
+      }
+    }
+  }
+  // A footprint ring met by no interval paints a sliver of the stroke beside
+  // a hidden centreline, up to the stroke's half width.
+  double uncovered = 0;
+  for (const auto& ring : rings) {
+    std::vector<MaskEdge> own = mask_edges({ring});
+    if (own.empty()) continue;
+    bool met = false;
+    for (size_t i = 0; i < xx.size() && !met; ++i) {
+      if (even_odd_inside(own, xx[i], yy[i])) met = true;
+      if (i + 1 < xx.size() && interval[i] == interval[i + 1]) {
+        PointD a(xx[i], yy[i]), b(xx[i + 1], yy[i + 1]);
+        for (const auto& e : own) if (segment_distance(a, b, e.a, e.b) == 0) { met = true; break; }
+      }
+    }
+    if (!met) uncovered = radius;
+  }
+  uncovered = std::max(uncovered, beside);
+  return Rcpp::List::create(Rcpp::Named("x") = xx, Rcpp::Named("y") = yy, Rcpp::Named("id") = interval,
+                            Rcpp::Named("uncovered") = uncovered, Rcpp::Named("path") = path_index, Rcpp::Named("start_kind") = start_kind,
+                            Rcpp::Named("end_kind") = end_kind, Rcpp::Named("start_deviation") = start_deviation,
+                            Rcpp::Named("end_deviation") = end_deviation, Rcpp::Named("lateral") = lateral);
+}

@@ -93,12 +93,52 @@ test_that("solid butt-ended masked strokes paint exact geometry without device c
   expect_no_error(render_scene_grid(scene, scene$viewport))
 })
 
-test_that("curved caps and dash patterns use filled visible outlines", {
-  for (scene in list(clipped_grid_stroke(1L), clipped_grid_stroke(linetype = "dashed"))) {
+test_that("curved caps and obliquely cut dashes use filled visible outlines", {
+  dashed <- clipped_grid_stroke(linetype = "dashed")
+  dashed$masks$x_npc <- c(0, 0.35, 0.35, 0)
+  for (scene in list(clipped_grid_stroke(1L), dashed)) {
     grob <- render_scene_grid(scene, scene$viewport)$children[[1L]]
     expect_s3_class(grob, "pathgrob")
     expect_null(grob$vp)
   }
+})
+
+test_that("visible centreline intervals bound the departure of stroke ends", {
+  square <- function(x0, x1, y0 = -1, y1 = 1) list(x = c(x0, x1, x1, x0), y = c(y0, y0, y1, y1), id = rep(1L, 4L))
+  intervals <- function(mask, cap = 0L) grid_stroke_intervals_cpp(c(0, 10), c(0, 0), c(1L, 1L),
+    mask$x, mask$y, mask$id, 0.5, cap, 0L, 10)
+  straight <- intervals(square(2, 6))
+  expect_equal(straight$x, c(2, 6))
+  expect_identical(c(straight$start_kind, straight$end_kind), c(1L, 1L))
+  expect_equal(c(straight$start_deviation, straight$end_deviation, straight$lateral), c(0, 0, 0))
+  expect_equal(intervals(square(2, 6), cap = 1L)$end_deviation, 0.25)
+  oblique <- intervals(list(x = c(2, 6, 7, 3), y = c(-1, -1, 1, 1), id = rep(1L, 4L)))
+  expect_equal(oblique$x, c(2.5, 6.5))
+  expect_equal(c(oblique$start_deviation, oblique$end_deviation), c(0.125, 0.125))
+  whole <- intervals(square(-1, 11))
+  expect_identical(c(whole$start_kind, whole$end_kind), c(0L, 0L))
+  expect_equal(whole$lateral, 0)
+  expect_equal(intervals(square(-1, 11, 0.1, 1))$uncovered, 0.25)
+  narrow <- intervals(square(-1, 11, -0.2, 1))
+  expect_equal(narrow$lateral, 0.05, tolerance = 1e-6)
+})
+
+test_that("masked strokes cut square to their centreline are drawn as strokes", {
+  packet <- new_scene_packet(
+    vertices = list(x = c(0.1, 0.9), y = c(0.5, 0.5), z = c(0.5, 0.5)),
+    corners = list(vertex = 1:2), polylines = list(offset = 1L, cap = 0L, width_mm = 1),
+    styles = data.frame(style_id = 1L, colour = "red"))
+  scene <- scene_compile(packet, new_camera_3d(azimuth = -90, elevation = 90), new_scene_viewport(100, 100))
+  scene$fragments$mask_offset[] <- 1L
+  scene$fragments$mask_count[] <- 4L
+  scene$masks <- list(x_npc = c(0, 0.5, 0.5, 0), y_npc = c(0, 0, 1, 1), ring = rep(1L, 4L))
+  grob <- render_scene_grid(scene, scene$viewport)$children[[1L]]
+  expect_s3_class(grob, "polyline")
+  expect_null(grob$vp)
+  expect_identical(grob$gp$lineend, "butt")
+  f <- scene$fragments
+  start <- scene$vertices$x_npc[f$offset[1L]]
+  expect_equal(sort(as.numeric(grob$x)), sort(c(start, 0.5)))
 })
 
 test_that("filled marker footprints preserve native fill and border paint", {
@@ -162,7 +202,10 @@ test_that("crossing offset joins preserve the native masked pixels", {
   scene$fragments$mask_count[] <- 4L
   scene$masks <- list(x_npc = c(0, 1, 1, 0), y_npc = c(0, 0, 1, 1), ring = rep(1L, 4L))
   masked <- capture(scene)
-  expect_s3_class(masked$grob, "gTree")
-  expect_false(is.null(masked$grob$vp$mask))
+  expect_s3_class(masked$grob, "polyline")
   expect_identical(masked$pixels, native$pixels)
+  scene$masks$x_npc <- c(0, 0.5025, 0.5025, 0)
+  cut <- capture(scene)
+  expect_s3_class(cut$grob, "gTree")
+  expect_false(is.null(cut$grob$vp$mask))
 })

@@ -105,6 +105,13 @@
   rasterised surface are no longer cut where the surface folds between
   pixels.
 
+* Partly hidden strokes in vector output are drawn as ordinary strokes along
+  the visible intervals of their centrelines (Appel 1967) instead of filled
+  outlines, wherever the square stroke ends depart from the exact clipped
+  outline by at most 0.1 mm or half a device pixel. Grid lines crossing each
+  other stay strokes, so themes and dark-mode stylesheets that restyle
+  strokes reach them, and figures get smaller.
+
 * Smooth vector paint fills a fan triangle whose corners share one colour
   flat instead of passing a zero-length gradient to the device; clipped
   sphere caps no longer fail to draw.

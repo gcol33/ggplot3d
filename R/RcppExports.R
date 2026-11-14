@@ -49,6 +49,10 @@ smooth_faces_raster_cpp <- function(x, y, id, linear, alpha, width, height, reac
     .Call(`_ggplot3d_smooth_faces_raster_cpp`, x, y, id, linear, alpha, width, height, reach)
 }
 
+grid_stroke_intervals_cpp <- function(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, pieces = FALSE) {
+    .Call(`_ggplot3d_grid_stroke_intervals_cpp`, x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, pieces)
+}
+
 geometry_intersections_cpp <- function(xyz, faces, parent, tolerance) {
     .Call(`_ggplot3d_geometry_intersections_cpp`, xyz, faces, parent, tolerance)
 }
