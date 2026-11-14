@@ -24,6 +24,10 @@ struct Piece {
   bool cap_start = true, cap_end = true;
   Index solid = -1;
   Index seam_group = 0;
+  // Pieces of one primitive with the same nonzero patch form one smooth
+  // surface seen from one side (a quadric part, front or back), which a
+  // backend paints in one operation.
+  int patch = 0;
   bool behind_halo = false;
   // Hash of the source primitive's geometry, the order of stable cuts.
   std::uint64_t key = 0;

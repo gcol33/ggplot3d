@@ -87,6 +87,13 @@
   `geom_quiver_3d()` and `geom_cone_3d()` use them; the viewer, exporters and
   shadows take an inscribed mesh.
 
+* The scene engine paints each side of a translucent quadric in one run
+  wherever the occlusion edges allow: pieces of one quadric part seen from
+  one side wait until all of them can be drawn and then follow each other,
+  pieces cut from a cycle are ordered again, and the far side of a quadric
+  precedes its near side only where their images overlap. Translucent spheres
+  in vector output no longer show seams between their pieces (#65).
+
 * `coord_spherical_geometry_3d()` draws fibres and faces through the
   stereographic pole up to the panel box: stereographic coordinates are
   homogeneous with the pole at infinity, and faces are sampled only where

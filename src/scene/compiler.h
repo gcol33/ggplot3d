@@ -110,9 +110,14 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       for(const auto& v:polygon) {auto m=projection.model(v.xyz);for(int k=0;k<3;++k) centroid[k]+=m[k]/polygon.size();}
       if(oriented && dot(normal,subtract(centroid,middle))<0) for(double& x:normal) x=-x;
       const Vec3 view=projection.camera.perspective ? subtract(centroid,projection.resolved.eye):projection.resolved.ray;
-      if(dot(normal,view)>=0 && !back) continue;
+      const bool far_side=dot(normal,view)>=0;
+      if(far_side && !back) continue;
+      Vec3 box{0,0,0};
+      for(const auto& v:polygon) for(int k=0;k<3;++k) box[k]+=v.xyz[k]/polygon.size();
+      const int part=quadric_facet_part(shape,projection,normal,box);
       emit(quadric_table,row,Kind::face,std::move(polygon),clipped,normal);
       pieces.back().key=facet_key;
+      pieces.back().patch=1+part+(far_side ? 3:0);
       if(!back && packet.quadrics.partition[row]==1)
         pieces.back().solid=static_cast<Index>(faces.count.size()+row);
     }

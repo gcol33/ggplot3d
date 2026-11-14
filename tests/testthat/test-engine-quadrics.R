@@ -1,15 +1,3 @@
-quadric_rows <- function(kind, linear, origin, ...) {
-  n <- length(kind)
-  linear <- array(linear, c(3L, 3L, n))
-  c(list(kind = as.integer(kind)), ggplot3d:::quadric_transforms_3d(linear, matrix(origin, n, 3L, byrow = TRUE)), list(...))
-}
-quadric_packet <- function(quadrics, faces = NULL, fill = "red") {
-  styles <- data.frame(style_id = 1:2, fill = c(fill, "grey50"), shade = FALSE)
-  if (is.null(faces)) return(new_scene_packet(quadrics = quadrics, styles = styles))
-  quadrics$style_id <- rep(1L, length(quadrics$kind))
-  new_scene_packet(vertices = faces$vertices, corners = list(vertex = seq_along(faces$vertices$x)),
-    faces = list(offset = 1L, count = length(faces$vertices$x), style_id = 2L), quadrics = quadrics, styles = styles)
-}
 horizontal_quad <- function(z) list(vertices = list(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1), z = rep(z, 4L)))
 # A square viewport of `px` raster pixels a side at 144 dpi (a hair under, so
 # that rounding the size up to whole pixels cannot add one).
@@ -175,16 +163,19 @@ test_that("raster samples take the exact depth and normal of the quadric", {
 test_that("quadric compilation and rasterisation do not depend on the thread count", {
   quadrics <- quadric_rows(c(1L, 3L, 1L), c(diag(0.2, 3L), cbind(c(0.1, 0, 0), c(0, 0.1, 0), c(0, 0, 0.6)), diag(0.1, 3L)),
     c(0.5, 0.5, 0.5, 0.3, 0.6, 0.1, 0.7, 0.3, 0.6), radius_ratio = c(1, 0.3, 1))
-  packet <- quadric_packet(quadrics, horizontal_quad(0.55))
   camera <- new_camera_3d(azimuth = 25, elevation = 30)
   viewport <- quadric_view(120L)
   old <- options(ggplot3d.threads = 1L, ggplot3d.cache_bytes = 0); on.exit(options(old))
-  serial <- scene_compile(packet, camera, viewport)
-  image <- ggplot3d:::raster_scene_3d(packet, camera, viewport, 2L)$image
-  options(ggplot3d.threads = 3L)
-  threaded <- scene_compile(packet, camera, viewport)
-  expect_identical(threaded[c("vertices", "fragments", "draw_order", "masks")], serial[c("vertices", "fragments", "draw_order", "masks")])
-  expect_identical(ggplot3d:::raster_scene_3d(packet, camera, viewport, 2L)$image, image)
+  for (opacity in c(1, 0.5)) {
+    packet <- quadric_packet(c(quadrics, list(opacity = rep(opacity, 3L))), horizontal_quad(0.55))
+    options(ggplot3d.threads = 1L)
+    serial <- scene_compile(packet, camera, viewport)
+    image <- ggplot3d:::raster_scene_3d(packet, camera, viewport, 2L)$image
+    options(ggplot3d.threads = 3L)
+    threaded <- scene_compile(packet, camera, viewport)
+    expect_identical(threaded[c("vertices", "fragments", "draw_order", "masks")], serial[c("vertices", "fragments", "draw_order", "masks")])
+    expect_identical(ggplot3d:::raster_scene_3d(packet, camera, viewport, 2L)$image, image)
+  }
 })
 
 test_that("the far side is ordered where translucency, an open end or a cut shows it", {
@@ -210,6 +201,57 @@ test_that("the far side is ordered where translucency, an open end or a cut show
   open_sides <- sides(open)
   expect_true(any(open_sides$back))
   expect_false(2L %in% open_sides$part)
+})
+
+# Three translucent spheres that overlap on screen without touching in space.
+translucent_spheres <- function() {
+  quadric_packet(c(quadric_rows(rep(1L, 3L), rep(diag(0.12, 3L), 3L), c(0.3, 0.5, 0.3, 0.5, 0.5, 0.5, 0.7, 0.5, 0.7)),
+    list(opacity = rep(0.5, 3L))), fill = "#2050C0")
+}
+
+test_that("each visible side of a translucent quadric is painted in one run", {
+  packet <- translucent_spheres()
+  for (camera in list(new_camera_3d(azimuth = -30, elevation = 25), new_camera_3d(projection = "perspective", azimuth = 70, elevation = 10))) {
+    viewport <- quadric_view(200L)
+    scene <- scene_compile(packet, camera, viewport)
+    grDevices::pdf(NULL)
+    runs <- render_scene_grid(scene, viewport)$fragment_runs
+    grDevices::dev.off()
+    f <- scene$fragments
+    info <- ggplot3d:::quadric_fragment_info_3d(scene, which(f$kind == 5L))
+    side <- vapply(runs, function(run) paste(f$source_index[run[1L]], info$part[run[1L]], info$back[run[1L]]), character(1))
+    expect_setequal(side, paste(rep(1:3, each = 2L), 0L, c(TRUE, FALSE)))
+    expect_false(anyDuplicated(side) > 0L)
+  }
+})
+
+test_that("translucent quadrics show no seams inside their vector images", {
+  skip_if_not_installed("ragg")
+  px <- 300L; viewport <- quadric_view(px)
+  scene <- scene_compile(translucent_spheres(), new_camera_3d(azimuth = -30, elevation = 25), viewport)
+  colour <- colSums(vector_pixels(scene, viewport, px) * c(65536, 256, 1))
+  # Pixel centres in pixels from the bottom left, in the column-major order
+  # of the captured image.
+  grid <- expand.grid(row = seq_len(px), col = seq_len(px))
+  x <- grid$col - 0.5; y <- px - grid$row + 0.5
+  # Flat films have one colour wherever the same set of outlines encloses a
+  # pixel; pixels within 1.5 px of an outline take antialiased colours.
+  rings <- ggplot3d:::quadric_fragment_info_3d(scene, which(scene$fragments$kind == 5L))$ring
+  inside <- matrix(FALSE, length(x), length(rings)); near <- rep(FALSE, length(x))
+  for (k in seq_along(rings)) {
+    rx <- rings[[k]]$x * px; ry <- rings[[k]]$y * px; n <- length(rx); nxt <- c(2:n, 1L)
+    for (i in seq_len(n)) {
+      ax <- rx[i]; ay <- ry[i]; bx <- rx[nxt[i]]; by <- ry[nxt[i]]
+      crosses <- (ay > y) != (by > y) & x < ax + (y - ay) * (bx - ax) / (by - ay)
+      inside[crosses, k] <- !inside[crosses, k]
+      t <- pmin(1, pmax(0, ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax)^2 + (by - ay)^2)))
+      near <- near | (x - ax - t * (bx - ax))^2 + (y - ay - t * (by - ay))^2 < 1.5^2
+    }
+  }
+  key <- apply(inside, 1L, paste, collapse = "")[!near]
+  shades <- tapply(colour[!near], key, function(v) length(unique(v)))
+  expect_gte(length(shades), 5L)
+  expect_true(all(shades == 1L))
 })
 
 test_that("an unbounded image draws the stand-in facets", {

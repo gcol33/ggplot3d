@@ -254,6 +254,13 @@ static inline int occlusion_relation(const Piece& a,const Piece& b,const Project
     }
     return 3;
   }
+  // Pieces of one quadric, a convex solid: its near side lies in front of its
+  // far side wherever their images overlap, and the pieces of one side never
+  // overlap, so nearly edge-on pieces at the outline cannot form cycles.
+  if(a.patch && b.patch && a.source==b.source && a.row==b.row) {
+    if((a.patch>3)==(b.patch>3) || projected_overlap(x,y,p).empty()) return 0;
+    return a.patch>3 ? 1:2;
+  }
   if(a.kind==Kind::face && b.kind==Kind::face && x.area && y.area) {
     if(separated_convex(x.ring,y.ring)) return 0;
     int sign=0;
@@ -329,7 +336,8 @@ static inline bool single_cut_component(std::vector<Piece>& pieces,const ScenePa
 
 static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const ScenePacket& packet,const Projection& p,
                                             PartitionStats& stats,ResourceBudget& budget,bool group_solids=true,
-                                            Index* seam_groups=nullptr,bool stable=false) {
+                                            Index* seam_groups=nullptr,bool stable=false,
+                                            bool partitioned=false) {
   Index local_groups=0;
   Index& groups=seam_groups ? *seam_groups : local_groups;
   if(group_solids) {
@@ -462,10 +470,37 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   // any face drawn later in the group.
   std::vector<Index> piece_group(n,-1),latest_group(components.size(),-1),deferred;
   Index current_group=-1,current_material=-1;
-  auto make_ready=[&](Index c) {
-    is_ready[c]=true;ready.push(c);
+  // Patches (a quadric part seen from one side) are painted whole wherever the
+  // occlusion edges allow: a patch's pieces wait until all of them are ready
+  // or nothing else is, and after a piece of a patch another ready piece of it
+  // comes first.
+  using PatchKey=std::tuple<const PrimitiveTable*,Index,int>;
+  struct Patch {std::size_t waiting=0;bool open=false;std::vector<Index> held,ready;};
+  std::map<PatchKey,Patch> patches;
+  auto patch_of=[&](Index c)->Patch* {
+    const Piece& r=pieces[representative[c]];
+    if(components[c].size()!=1 || !r.members.empty() || r.patch==0) return nullptr;
+    return &patches[PatchKey(r.source,r.row,r.patch)];
+  };
+  for(std::size_t c=0;c<components.size();++c) if(Patch* patch=patch_of(c)) ++patch->waiting;
+  auto enqueue=[&](Index c) {
+    ready.push(c);
     if(current_group>=0 && latest_group[c]==current_group) deferred.push_back(c);
     else ready_by_material[material[c]].push(c);
+  };
+  auto open_patch=[&](Patch& patch) {
+    patch.open=true;
+    for(Index c:patch.held) enqueue(c);
+    patch.held.clear();
+  };
+  auto make_ready=[&](Index c) {
+    is_ready[c]=true;
+    Patch* patch=patch_of(c);
+    if(!patch) {enqueue(c);return;}
+    patch->ready.push_back(c);
+    if(patch->open) {enqueue(c);return;}
+    patch->held.push_back(c);
+    if(--patch->waiting==0) open_patch(*patch);
   };
   auto release_deferred=[&]() {
     for(Index c:deferred) if(!emitted[c]) ready_by_material[material[c]].push(c);
@@ -499,6 +534,11 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
   auto next_ready=[&](Index last)->Index {
     Index follow=continuation();
     if(follow>=0) return follow;
+    if(Patch* patch=last>=0 ? patch_of(last):nullptr) {
+      auto& same=patch->ready;
+      while(!same.empty() && emitted[same.back()]) same.pop_back();
+      if(!same.empty()) {Index c=same.back();same.pop_back();return c;}
+    }
     if(last>=0) {
       auto& same=ready_by_material[material[last]];
       for(int pass=0;pass<2;++pass) {
@@ -507,7 +547,13 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
         release_deferred();
       }
     }
-    while(emitted[ready.top()]) ready.pop();
+    while(!ready.empty() && emitted[ready.top()]) ready.pop();
+    if(ready.empty()) {
+      Patch* best=nullptr;Index first=-1;
+      for(auto& entry:patches) for(Index c:entry.second.held)
+        if(first<0 || later(first,c)) {first=c;best=&entry.second;}
+      open_patch(*best);
+    }
     Index c=ready.top();ready.pop();return c;
   };
   std::size_t pending=0;
@@ -538,13 +584,23 @@ static inline std::vector<Piece> order_scene(std::vector<Piece> pieces,const Sce
         if(pieces[i].members.empty()) local.push_back(std::move(pieces[i]));
         else {compound=true;for(auto& member:pieces[i].members) local.push_back(std::move(member));}
       }
+      // A cycle is cut into pieces in a painter's order. Pieces of patches are
+      // ordered again, acyclic now, so that each patch is painted in as few
+      // runs as the cut allows; a cycle left by the cut keeps the cut's order.
+      bool patched=false;
       if(compound) local=order_scene(std::move(local),packet,p,stats,budget,false,&groups,stable);
-      else {
+      else if(!partitioned) {
         // A stable partition takes its cuts from the geometry alone.
         if(stable || !single_cut_component(local,packet,p,stats,budget))
           local=partition_scene(std::move(local),p,stats,budget,stable);
-        for(auto& piece:local) piece.seam_group=++groups;
+        for(const auto& piece:local) patched=patched || piece.patch!=0;
+        if(patched) {
+          const std::size_t count=stats.components;
+          local=order_scene(std::move(local),packet,p,stats,budget,false,&groups,stable,true);
+          stats.components=count;
+        }
       }
+      if(!compound && !patched) for(auto& piece:local) piece.seam_group=++groups;
       for(auto& piece:local) ordered.push_back(std::move(piece));
       current_group=-1;current_material=-1;release_deferred();
     }
