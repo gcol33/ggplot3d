@@ -368,17 +368,20 @@ double cut_deviation(double radius, int cap, double sine, double cosine) {
 // footprint within the half width of a hidden part of the centreline away
 // from its cuts (`uncovered`). With `pieces`, the footprint is one piece of
 // a stroke whose other pieces are drawn elsewhere, and `lateral` reports
-// only a piece boundary that runs along the centreline.
+// only a piece boundary that runs along the centreline. `reach` retains
+// centrelines within that distance of visible paint, including smooth-normal
+// contours whose finite-width strokes extend beyond the faceted surface.
 // [[Rcpp::export(rng = false)]]
 Rcpp::List grid_stroke_intervals_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id,
                                      Rcpp::NumericVector mask_x, Rcpp::NumericVector mask_y, Rcpp::IntegerVector mask_id,
-                                     double width, int cap, int join, double mitre, bool pieces = false) {
+                                     double width, int cap, int join, double mitre, bool pieces = false, double reach = 0) {
   using namespace Clipper2Lib;
-  if (!R_finite(width) || width < 0 || cap < 0 || cap > 2 || join < 0 || join > 2)
+  if (!R_finite(width) || width < 0 || !R_finite(reach) || reach < 0 || cap < 0 || cap > 2 || join < 0 || join > 2)
     Rcpp::stop("Invalid stroke interval parameters.");
   const double radius = width / 2;
   PathsD paths = grid_paths(x, y, id);
   PathsD rings = Union(grid_paths(mask_x, mask_y, mask_id), FillRule::EvenOdd, 8);
+  if (reach > 0) rings = InflatePaths(rings, reach, JoinType::Miter, EndType::Polygon, 2, 8);
   std::vector<MaskEdge> edges = mask_edges(rings);
   std::vector<double> xx, yy, lateral, start_deviation, end_deviation;
   std::vector<int> interval, path_index, start_kind, end_kind;

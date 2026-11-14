@@ -3,6 +3,9 @@
 * Inside-view animations retain sphere framing and rotate the camera about
   the observer's fixed eye, including angle tracks and orbit paths (#15).
 
+* Plotter silhouettes retain intervals with visible stroke paint beside the
+  centreline, keeping smooth-normal contours continuous along faceted surfaces.
+
 * Vector texture lighting uses colour-correct multiply and screen groups for
   coloured light and specular highlights, with continuous images across each
   face run. Devices with limited compositing support use hybrid rendering (#64).

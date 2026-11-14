@@ -1,9 +1,9 @@
-plotter_hatch_plot <- function() {
+plotter_hatch_plot <- function(hatch = TRUE) {
   d <- expand.grid(x = seq(-2, 2, length.out = 36), y = seq(-2, 2, length.out = 36))
   d$z <- with(d, exp(-(x^2 + y^2)) + 0.5 * exp(-((x - 1)^2 + (y + 1)^2) * 2))
   ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
     geom_surface_3d(fill = "white", colour = NA,
-      hatch = hatch_3d(angle = 0, spacing = 0.02), outline = outline_3d(linewidth = 0.4)) +
+      hatch = if (hatch) hatch_3d(angle = 0, spacing = 0.02), outline = outline_3d(linewidth = 0.4)) +
     coord_3d(backend = backend_3d("plotter"), panes = character(), box = "none") +
     ggplot2::theme_minimal(17)
 }
@@ -95,4 +95,29 @@ test_that("plotter and grid visible hatch strokes agree at interior pixels", {
   expect_gt(sum(vector), 1000)
   expect_lt(mean(vector & !near(plotter)), 0.001)
   expect_lt(mean(plotter & !near(vector)), 0.001)
+})
+
+test_that("smooth surface silhouettes retain the vector visible length and runs", {
+  skip_if_not_installed("ragg")
+  packet <- stats_scene(plotter_hatch_plot(hatch = FALSE))$packet
+  vp <- new_scene_viewport(152.4, 101.6, 150)
+  scene <- scene_compile(packet, new_camera_3d(), vp)
+  capture <- function(plotter) {
+    read <- ragg::agg_capture(width = 900, height = 600, res = 150, background = "white")
+    on.exit(grDevices::dev.off())
+    grid::grid.draw(render_scene_grid(scene, vp, strokes_only = plotter))
+    matrix(grDevices::col2rgb(read())[1L, ], 600, 900) < 250
+  }
+  profile <- function(ink) {
+    strip <- ink[180:345, 320:455]
+    visible <- rowSums(strip) > 0
+    x <- max.col(strip, ties.method = "first")[visible]
+    list(length = sum(sqrt(1 + diff(x)^2)), runs = sum(diff(c(FALSE, visible)) == 1L),
+         covered = sum(visible))
+  }
+  vector <- profile(capture(FALSE)); plotter <- profile(capture(TRUE))
+  expect_equal(vector$runs, 1L)
+  expect_lte(plotter$runs, vector$runs)
+  expect_gte(plotter$covered, vector$covered - 1L)
+  expect_equal(plotter$length, vector$length, tolerance = 0.03)
 })

@@ -598,7 +598,8 @@ masked_stroke_runs_3d <- function(scene, runs, styles, viewport, geometry,
   intervals_of <- function(polyline, clip, source, pieces) grid_stroke_intervals_cpp(
     as.numeric(polyline$x) * width, as.numeric(polyline$y) * height, polyline$id,
     as.numeric(clip$x) * width, as.numeric(clip$y) * height, as.integer(clip$id),
-    tab$width_mm[source], tab$cap[source], tab$join[source], tab$mitre_limit[source], pieces)
+    tab$width_mm[source], tab$cap[source], tab$join[source], tab$mitre_limit[source], pieces,
+    if (centreline && !pieces) tab$width_mm[source] / 2 else 0)
   clips <- vector("list", n)
   for (run in masked) {
     g <- geometry(runs[[run]])
