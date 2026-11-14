@@ -169,9 +169,9 @@
 <circle class='theme-fill-fg' cx='252.03' cy='176.55' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
 <circle class='theme-fill-fg' cx='249.03' cy='183.70' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
 <circle class='theme-fill-fg' cx='252.71' cy='173.41' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
-<path d='M 300.78 196.75 L 299.71 195.51 L 249.79 238.74 L 250.51 240.29 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
+<polyline points='250.15,239.51 300.25,196.13 ' style='stroke-width: 1.65; stroke: #5C6166; stroke-linecap: butt;' />
 <polyline points='161.93,214.05 315.65,258.42 ' style='stroke-width: 1.65; stroke: #5C6166; stroke-linecap: butt;' />
-<path d='M 250.51 240.29 L 249.79 238.74 L 210.96 272.36 L 212.04 273.61 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
+<polyline points='211.50,272.99 250.15,239.51 ' style='stroke-width: 1.65; stroke: #5C6166; stroke-linecap: butt;' />
 <circle class='theme-fill-fg' cx='209.82' cy='230.59' r='3.22' style='stroke-width: 1.10; fill: #3E3F3A;' />
 </g>
 <defs>

@@ -143,7 +143,7 @@
   // their selection state inside the instance record.
   const LAYOUTS = {
     [FACE]: [['aPos', 3, 'f32'], ['aNormal', 3, 'f32'], ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'],
-      ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32']],
+      ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32'], ['aStyle', 4, 'f32'], ['aStyleA', 4, 'f32'], ['aStyleB', 4, 'f32'], ['aTexture', 4, 'f32']],
     [STROKE]: [['aA', 3, 'f32'], ['aB', 3, 'f32'], ['aCorner', 4, 'f32'], ['aWidth', 1, 'f32'],
       ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
     [MARKER]: [['aPos', 3, 'f32'], ['aOffset', 2, 'f32'], ['aLocal', 2, 'f32'], ['aShape', 3, 'f32'],
@@ -223,32 +223,48 @@
     // of their vertices and are lit per fragment (Phong 1975) by the shading
     // kernel, whose GLSL (SHADE_GLSL, from src/shade/shade.h) arrives with
     // the widget data. Positions and point lights are relative to the camera
-    // target in aspect-scaled model units.
+    // target in aspect-scaled model units. A textured face (aTexture: u, v,
+    // layer of the texture array or -1, alpha of the fill under it) samples
+    // its sRGB texture layer, filtered in linear light and mipmapped by the
+    // GPU, perspective-correctly, and paints it over its fill; outside
+    // [0, 1] it shows the fill alone.
     [FACE]: [`
       in vec3 aPos; in vec3 aNormal; in vec4 aColour; in uint aId; in vec4 aFlags; in float aState;
-      in vec4 aMaterial; in vec4 aMaterial2;
+      in vec4 aMaterial; in vec4 aMaterial2; in vec4 aStyle; in vec4 aStyleA; in vec4 aStyleB; in vec4 aTexture;
       ${VARYINGS}
       out vec3 vNormal; out vec3 vLinear; flat out float vShade; flat out vec4 vMaterial; flat out vec4 vMaterial2;
+      flat out vec4 vStyle; flat out vec4 vStyleA; flat out vec4 vStyleB;
+      out vec2 vUv; flat out vec2 vLayer;
       ${COLOUR_SPACE}
       void main() {
         float d; vec4 p = project(aPos, d);
         gl_Position = clipPosition(p.xy, p.z, p.w);
         vNormal = aNormal/uScale; vLinear = toLinear(aColour.rgb); vShade = aFlags.x;
-        vMaterial = aMaterial; vMaterial2 = aMaterial2;
+        vMaterial = aMaterial; vMaterial2 = aMaterial2; vStyle = aStyle; vStyleA = aStyleA; vStyleB = aStyleB; vUv = aTexture.xy; vLayer = aTexture.zw;
         vColour = vec4(aColour.rgb, aColour.a*aState); vModel = aPos; vId = aId; vClip = aFlags.y;
       }`, `
-      uniform float uLight, uPerspective; uniform vec3 uRay;
+      uniform float uLight, uPerspective; uniform vec3 uRay; uniform highp sampler2DArray uTextures;
       in vec3 vNormal; in vec3 vLinear; flat in float vShade; flat in vec4 vMaterial; flat in vec4 vMaterial2;
+      flat in vec4 vStyle; flat in vec4 vStyleA; flat in vec4 vStyleB;
+      in vec2 vUv; flat in vec2 vLayer;
       SHADE_GLSL
       void main() {
         clipData();
         vec3 l = clamp(vLinear, 0.0, 1.0);
+        float a = 1.0;
+        if (vLayer.x >= 0.0) {
+          vec4 t = all(greaterThanEqual(vUv, vec2(0.0))) && all(lessThanEqual(vUv, vec2(1.0))) ?
+            texture(uTextures, vec3(vUv, vLayer.x)) : vec4(0.0);
+          float under = vLayer.y*(1.0-t.a);
+          a = t.a+under;
+          if (a > 0.0) l = (t.rgb*t.a+l*under)/a;
+        }
         if (vShade > 0.5 && uLight > 0.5 && dot(vNormal, vNormal) > 0.0) {
           vec3 q = (vModel-uTarget)*uScale;
           vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
-          l = clamp(shade(normalize(vNormal), q, v, l, vMaterial, vMaterial2), 0.0, 1.0);
+          l = clamp(shade(normalize(vNormal), q, v, l, vMaterial, vMaterial2, vStyle, vStyleA, vStyleB), 0.0, 1.0);
         }
-        emit(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a));
+        emit(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a*a));
       }`],
     [STROKE]: [`
       in vec3 aA; in vec3 aB; in vec4 aCorner; in float aWidth; in vec4 aColour; in uint aId; in vec4 aFlags;
@@ -438,7 +454,7 @@
         if (dot(n, n) > 0.0) {
           vec3 q = (m-uTarget)*uScale;
           vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
-          l = clamp(shade(normalize(n), q, v, l, vMaterial, vMaterial2), 0.0, 1.0);
+          l = clamp(shade(normalize(n), q, v, l, vMaterial, vMaterial2, vec4(0.0), vec4(0.0), vec4(0.0)), 0.0, 1.0);
         }
       }
       emitAt(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a), m, gl_FragDepth);
@@ -694,6 +710,7 @@
     // Optional corner normals and encoded colours of smooth layers.
     const cornerColumns = names => names.every(n => packet.corners[n]) ? names.map(n => packet.corners[n]) : null;
     const cornerNormal = cornerColumns(['normal_x', 'normal_y', 'normal_z']), cornerColour = cornerColumns(['red', 'green', 'blue']);
+    const cornerUv = cornerColumns(['u', 'v']);
     const cornerValue = (columns, c) => {
       if (!columns) return null;
       const v = columns.map(x => x[c]);
@@ -705,17 +722,18 @@
       for (let i = 0; i < t.offset.length; i++) {
         const material = packet.materials[t.style_id[i]-1];
         if (material.anchor) continue;
-        const points = [], glyph = [], normals = [], colours = [];
+        const points = [], glyph = [], normals = [], colours = [], uvs = [];
         for (let j = 0; j < t.count[i]; j++) {
           const c = t.offset[i]+j-1, v = corner[c]-1;
           points.push([vx[v], vy[v], vz[v]]); glyph.push(glyphs.get(v+1));
-          if (kind === FACE) { normals.push(cornerValue(cornerNormal, c)); colours.push(cornerValue(cornerColour, c)); }
+          if (kind === FACE) { normals.push(cornerValue(cornerNormal, c)); colours.push(cornerValue(cornerColour, c)); uvs.push(cornerValue(cornerUv, c)); }
         }
         const p = {kind, points, material, opacity: t.opacity[i], partition: t.partition[i], furniture, row: i, table: t, packet,
           primitiveId: t.primitive_id[i], layer: t.layer_id[i], source: t.source_row[i], sheet: kind === FACE ? sheet[i] || 0 : 0};
         if (glyph.some(Boolean)) p.glyph = glyph;
         if (normals.some(Boolean)) p.normals = normals;
         if (colours.some(Boolean)) p.colours = colours;
+        if (uvs.some(Boolean)) p.uvs = uvs;
         if (kind === FACE) p.normal = material.normal || cross(sub(points[1], points[0]), sub(points[2], points[0]));
         result.push(p);
       }
@@ -741,13 +759,55 @@
   function baseColour(p) {
     const m = p.material;
     const c = (p.kind === FACE || p.kind === QUADRIC ? m.fill : (p.kind === MARKER || p.kind === DISC) && Number(m.shape) >= 21 ? m.fill : m.colour).slice();
-    c[3] = c[3] > 0 ? p.opacity : 0;
+    c[3] = c[3] > 0 || (p.kind === FACE && m.texture >= 0) ? p.opacity : 0;
     return c;
   }
 
   // GPU geometry of one panel. Primitive i (0-based) carries pick id i+1;
   // furniture carries 0 and is never picked.
-  function buildScene(gl, panel) {
+  // Textures of a panel as one sRGB texture array, filled as the PNG images
+  // decode; `ready` runs once they are uploaded. Every layer is resampled to
+  // the largest image side (at most the GPU limit), smoothly or, for sharp
+  // pixels, by nearest neighbour. Magnification is linear when every texture
+  // interpolates and nearest when none does; a mix is resampled to at least
+  // 1024 texels a side and magnified linearly. Minification is mipmapped,
+  // anisotropic where the GPU offers it. An empty layer is transparent.
+  function textureArray(gl, sources, ready) {
+    const texture = gl.createTexture(), layers = Math.max(1, sources.length);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, texture);
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.SRGB8_ALPHA8, 1, 1, layers, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4*layers));
+    [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(w => gl.texParameteri(gl.TEXTURE_2D_ARRAY, w, gl.CLAMP_TO_EDGE));
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    if (!sources.length) return texture;
+    const images = sources.map(s => { const image = new Image(); image.src = 'data:image/png;base64,'+s.png; return image; });
+    Promise.all(images.map(image => image.decode())).then(() => {
+      const limit = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+      const smooth = sources.map(s => !!s.interpolate), mixed = smooth.some(Boolean) && !smooth.every(Boolean);
+      const side = Math.min(limit, Math.max(mixed ? 1024 : 1, ...images.map(i => Math.max(i.naturalWidth, i.naturalHeight)))), w = side, h = side;
+      const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+      const context = canvas.getContext('2d');
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, texture);
+      gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.SRGB8_ALPHA8, w, h, layers, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      images.forEach((image, k) => {
+        context.clearRect(0, 0, w, h); context.imageSmoothingEnabled = !!sources[k].interpolate;
+        context.drawImage(image, 0, 0, w, h);
+        gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, k, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+      });
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+      gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, mixed || smooth[0] ? gl.LINEAR : gl.NEAREST);
+      const anisotropic = gl.getExtension('EXT_texture_filter_anisotropic');
+      if (anisotropic) gl.texParameterf(gl.TEXTURE_2D_ARRAY, anisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
+        Math.min(16, gl.getParameter(anisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+      ready();
+    }, () => {});
+    return texture;
+  }
+
+  function buildScene(gl, panel, ready = () => {}) {
     const glyphs = new Map();
     arr(panel.glyphs).forEach(g => {
       const rows = column(g.rows), angle = column(g.angle);
@@ -777,9 +837,12 @@
       else if (p.kind === FACE && p.points.length >= 3) {
         const shade = p.material.shade ? 1 : 0;
         const material = p.material.material || [1, 1, 0, 10], material2 = p.material.material2 || [1, -1, 0, 0];
+        const layer = p.material.texture >= 0 ? p.material.texture : -1, under = p.material.fill[3] > 0 ? 1 : 0;
+        const style = p.material.style || [0, 0, 0, 0], styleA = p.material.style_a || [0, 0, 0, 0], styleB = p.material.style_b || [0, 0, 0, 0];
         p.points.forEach((v, j) => V.add({aPos: v, aNormal: (p.normals && p.normals[j]) || p.normal,
           aColour: p.colours && p.colours[j] ? p.colours[j].concat(p.colour[3]) : p.colour, aId: id, aFlags: [shade, clip, 0, 0],
-          aMaterial: material, aMaterial2: material2}));
+          aMaterial: material, aMaterial2: material2, aStyle: style, aStyleA: styleA, aStyleB: styleB,
+          aTexture: layer >= 0 && p.uvs && p.uvs[j] ? p.uvs[j].concat([layer, under]) : [0, 0, -1, 0]}));
         for (let j = 1; j < p.points.length-1; j++) E.push(p.vertexStart, p.vertexStart+j, p.vertexStart+j+1);
       } else if (p.kind === STROKE && !['blank', '0'].includes(String(p.material.linetype))) {
         const t = p.table, width = t.width_mm[p.row] || p.material.width_mm;
@@ -838,9 +901,10 @@
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, 9, rows, 0, gl.RED, gl.FLOAT, texels);
     [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(f => gl.texParameteri(gl.TEXTURE_2D, f, gl.NEAREST));
     scene.dashTexture = dashTexture;
+    scene.textures = textureArray(gl, arr(panel.scene.textures), ready);
     scene.release = () => {
       KINDS.forEach(k => { const g = scene.kinds[k]; gl.deleteVertexArray(g.vao); [g.buffer, g.fixed, g.frame, ...g.streams.map(s => s.buffer)].forEach(b => gl.deleteBuffer(b)); });
-      gl.deleteTexture(dashTexture);
+      gl.deleteTexture(dashTexture); gl.deleteTexture(scene.textures);
     };
     return scene;
   }
@@ -1161,6 +1225,7 @@
           gl.uniform1fv(prog.uniform('uLightFalloff'), falloff);
           set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray);
           gl.uniform4fv(prog.uniform('uTransfer'), arr(light.transfer)); set3('uToneShadow', arr(light.shadow)); set3('uToneHighlight', arr(light.highlight));
+          set3('uFrameScale', b.scale); set3('uFrameRight', b.orthoRight); set3('uFrameUp', b.orthoUp); set3('uFrameToward', b.forward.map(x => -x));
         }
         const cue = V.data.depth_cue, depth = V.fogDepth || [0, 1];
         const fog = cue && cue.amount > 0 && cue.fog[3] > 0;
@@ -1169,6 +1234,9 @@
         set1('uFogWidth', cue ? cue.linewidth : 0);
         gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, V.scene.dashTexture);
         gl.uniform1i(prog.uniform('uDash'), 0);
+        gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D_ARRAY, V.scene.textures);
+        gl.uniform1i(prog.uniform('uTextures'), 5);
+        gl.activeTexture(gl.TEXTURE0);
       }
       // Nearest camera depth of the panel box and its depth extent.
       function boxDepth(V) {
@@ -1674,7 +1742,7 @@
           if (svg) { svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); }
           views = arr(x.panels).map(panel => {
             if (panel.scene.schema_version !== 2) throw Error('Unsupported ggplot3d scene schema');
-            const scene = buildScene(gl, panel), entries = new Map(), crosstalkKeys = new Set();
+            const scene = buildScene(gl, panel, () => schedule()), entries = new Map(), crosstalkKeys = new Set();
             arr(panel.layers).forEach(l => {
               const rows = arr(l.rows), keys = arr(l.key), tips = arr(l.tooltip), map = new Map();
               rows.forEach((r, j) => map.set(r, j));

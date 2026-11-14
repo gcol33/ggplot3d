@@ -18,6 +18,10 @@ Indices start at one. Empty lists represent unused geometry kinds."><meta proper
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -71,6 +75,7 @@ Indices start at one. Empty lists represent unused geometry kinds."><meta proper
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -146,9 +151,12 @@ Indices start at one. Empty lists represent unused geometry kinds.</p>
 <dl><dt id="arg-vertices">vertices<a class="anchor" aria-label="anchor" href="#arg-vertices"></a></dt>
 <dd><p>List with x, y, z and optional w: homogeneous positions in
 normalised panel coordinates, see <code><a href="normalise_homogeneous_3d.html">normalise_homogeneous_3d()</a></code>. <code>w</code>
-defaults to 1, must be nonnegative, and <code>w = 0</code> places an ideal point (a
-direction) at infinity. Geometry through an ideal point is clipped by the
-panel box, the near and far planes or the viewport before it is drawn.</p></dd>
+defaults to 1 and may take either sign: rows are points of oriented
+projective space (Stolfi 1991), so (x, y, z, w) and (-x, -y, -z, -w) are
+distinct points, and <code>w = 0</code> places an ideal point (a direction) at
+infinity. Only the half <code>w &gt;= 0</code> after the camera <code>pre</code> map is drawn.
+Geometry through an ideal point is clipped by the panel box, the near and
+far planes or the viewport before it is drawn.</p></dd>
 
 
 <dt id="arg-corners">corners<a class="anchor" aria-label="anchor" href="#arg-corners"></a></dt>

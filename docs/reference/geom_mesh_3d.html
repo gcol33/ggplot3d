@@ -14,6 +14,10 @@
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -67,6 +71,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -138,6 +143,8 @@
 <span>  alpha_mode <span class="op">=</span> <span class="st">"face"</span>,</span>
 <span>  shading <span class="op">=</span> <span class="st">"flat"</span>,</span>
 <span>  material <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  hatch <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  texture <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -217,23 +224,42 @@ that draw surfaces (<code><a href="stat_isosurface_3d.html">stat_isosurface_3d()
 <dd><p><code>"flat"</code> lights and fills each face uniformly; <code>"smooth"</code>
 interpolates vertex normals and vertex fills across faces. The raster
 backend and the <code><a href="view_3d.html">view_3d()</a></code> viewer interpolate per sample, perspective
-correctly. The vector backend draws a face whose colour varies as one
-linear gradient when its colour varies along one direction and the device
-supports gradients, and otherwise as flat sub-triangles whose colours
-differ from the interpolated colour by at most the option
-<code>ggplot3d.shading_tolerance</code> (default 2 / 255 in encoded sRGB), splitting
-each triangle at most eight times (256 pieces along an edge), which can
-leave larger steps where a channel approaches black and the sRGB curve is
-steepest. Gradients
-follow the sRGB curve through their stops within the same tolerance. The
-layers that draw surfaces (<code><a href="stat_isosurface_3d.html">stat_isosurface_3d()</a></code>, <code>geom_mesh_3d()</code> and
-others) accept it too.</p></dd>
+correctly. The vector backend draws a triangle whose colour varies along
+one direction as one linear gradient, with stops that follow the sRGB
+curve within the option <code>ggplot3d.shading_tolerance</code> (default 2 / 255 in
+encoded sRGB), and a triangle whose colour stays within that tolerance as
+one flat polygon. A run of faces that holds a triangle whose colour
+varies in two directions by more than the tolerance, which no gradient
+of R graphics can paint, is drawn as one image clipped to the faces'
+outline, in its place in the drawing order, at the device resolution
+and at least <code>options(ggplot3d.smooth_dpi)</code> (default 150) dots per inch.
+<code>options(ggplot3d.smooth_vector = "subdivide")</code> splits such triangles
+into flat overlapping pieces instead, at most four times (256 pieces per
+triangle) and not into pieces narrower than a device pixel, so large
+faces with distant colours show steps. The layers that draw surfaces
+(<code><a href="stat_isosurface_3d.html">stat_isosurface_3d()</a></code>, <code>geom_mesh_3d()</code> and others) accept it too.</p></dd>
 
 
 <dt id="arg-material">material<a class="anchor" aria-label="anchor" href="#arg-material"></a></dt>
 <dd><p>Surface material from <code><a href="material_3d.html">material_3d()</a></code>: ambient, diffuse
-and specular strengths, shininess and an optional back-side colour. NULL
-reflects ambient and diffuse light fully, with no highlight.</p></dd>
+and specular strengths, shininess, an optional back-side colour and an
+illustrative style (toon, Gooch, normal colours). NULL reflects ambient
+and diffuse light fully, with no highlight.</p></dd>
+
+
+<dt id="arg-hatch">hatch<a class="anchor" aria-label="anchor" href="#arg-hatch"></a></dt>
+<dd><p>Hatching from <code><a href="hatch_3d.html">hatch_3d()</a></code>, or NULL for none.</p></dd>
+
+
+<dt id="arg-texture">texture<a class="anchor" aria-label="anchor" href="#arg-texture"></a></dt>
+<dd><p>An image draped over the faces: a <code><a href="texture_3d.html">texture_3d()</a></code> object or
+anything it accepts. Texture coordinates come from the <code>u</code> and <code>v</code>
+aesthetics when mapped, and otherwise from x and y, spread over the
+texture's extent (default the range of the layer). <code><a href="stat_parametric_3d.html">stat_parametric_3d()</a></code>
+surfaces use their parameters and rgl meshes their <code>texcoords</code>, whose
+<code>texture</code> file is read when this is <code>NULL</code>. Each face shows the image
+over its fill; <code>fill = NA</code> shows the image alone. The layers that draw
+surfaces accept it too.</p></dd>
 
 </dl></div>
     <div class="section level2">

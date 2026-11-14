@@ -11,6 +11,7 @@
 <url><loc>https://gillescolling.com/ggplot3d/articles/implicit-surfaces.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/articles/index.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/articles/layers.html</loc></url>
+<url><loc>https://gillescolling.com/ggplot3d/articles/lighting.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/articles/molecules.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/articles/motion.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/articles/ordination.html</loc></url>
@@ -34,6 +35,7 @@
 <url><loc>https://gillescolling.com/ggplot3d/reference/animate_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/annotate_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/annotation_plot_3d.html</loc></url>
+<url><loc>https://gillescolling.com/ggplot3d/reference/annotation_raster_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/annotation_scale_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/as_rayrender_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/backend_3d.html</loc></url>
@@ -76,6 +78,7 @@
 <url><loc>https://gillescolling.com/ggplot3d/reference/geom_plane_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/geom_point_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/geom_quiver_3d.html</loc></url>
+<url><loc>https://gillescolling.com/ggplot3d/reference/geom_raster_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/geom_refline_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/geom_rug_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/geom_sf_3d.html</loc></url>
@@ -93,6 +96,7 @@
 <url><loc>https://gillescolling.com/ggplot3d/reference/guide_axis_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/guide_triad_3d.html</loc></url>
+<url><loc>https://gillescolling.com/ggplot3d/reference/hatch_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/hyperbolic_focus_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/index.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/layer_3d.html</loc></url>
@@ -168,6 +172,7 @@
 <url><loc>https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/stat_tree_hyperbolic_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/stereo_3d.html</loc></url>
+<url><loc>https://gillescolling.com/ggplot3d/reference/texture_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/thurston_portal_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/tour_grand.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/tween_3d.html</loc></url>

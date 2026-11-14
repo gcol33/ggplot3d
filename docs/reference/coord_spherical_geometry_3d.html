@@ -3,7 +3,11 @@
 Paths and faces follow shorter great circles through the shared sampler.
 Ambient inputs map x, y, z and w. Stereographic input is the inverse chart
 (2p, |p|^2-1)/(1+|p|^2). The display map is X[1:3]/(1-X[4]).
-Gnomonic display X[1:3]/X[4] covers the positive fourth-coordinate hemisphere.
+Gnomonic coordinates are the homogeneous point X itself, (X1:3, X4), read
+in oriented projective space (Stolfi 1991): X and -X are distinct points, so
+the chart covers the whole sphere, and the display X[1:3]/X[4] shows the
+hemisphere X4 &amp;gt; 0. Great circles are straight lines and totally geodesic
+faces are planar, so SO(4) acts linearly.
 Stereographic coordinates are homogeneous, (X1:3, 1 - X4), so the pole is
 the point at infinity and box clipping happens before division. Paths are
 clipped analytically on their great circles against the box planes, which
@@ -14,7 +18,11 @@ faces through the pole are drawn up to the panel box."><meta property="og:descri
 Paths and faces follow shorter great circles through the shared sampler.
 Ambient inputs map x, y, z and w. Stereographic input is the inverse chart
 (2p, |p|^2-1)/(1+|p|^2). The display map is X[1:3]/(1-X[4]).
-Gnomonic display X[1:3]/X[4] covers the positive fourth-coordinate hemisphere.
+Gnomonic coordinates are the homogeneous point X itself, (X1:3, X4), read
+in oriented projective space (Stolfi 1991): X and -X are distinct points, so
+the chart covers the whole sphere, and the display X[1:3]/X[4] shows the
+hemisphere X4 &amp;gt; 0. Great circles are straight lines and totally geodesic
+faces are planar, so SO(4) acts linearly.
 Stereographic coordinates are homogeneous, (X1:3, 1 - X4), so the pole is
 the point at infinity and box clipping happens before division. Paths are
 clipped analytically on their great circles against the box planes, which
@@ -36,6 +44,10 @@ faces through the pole are drawn up to the panel box."><meta property="og:image"
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -89,6 +101,7 @@ faces through the pole are drawn up to the panel box."><meta property="og:image"
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -138,7 +151,11 @@ faces through the pole are drawn up to the panel box."><meta property="og:image"
 Paths and faces follow shorter great circles through the shared sampler.
 Ambient inputs map x, y, z and w. Stereographic input is the inverse chart
 (2p, |p|^2-1)/(1+|p|^2). The display map is <code>X[1:3]/(1-X[4])</code>.
-Gnomonic display <code>X[1:3]/X[4]</code> covers the positive fourth-coordinate hemisphere.
+Gnomonic coordinates are the homogeneous point X itself, (X1:3, X4), read
+in oriented projective space (Stolfi 1991): X and -X are distinct points, so
+the chart covers the whole sphere, and the display <code>X[1:3]/X[4]</code> shows the
+hemisphere X4 &gt; 0. Great circles are straight lines and totally geodesic
+faces are planar, so SO(4) acts linearly.
 Stereographic coordinates are homogeneous, (X1:3, 1 - X4), so the pole is
 the point at infinity and box clipping happens before division. Paths are
 clipped analytically on their great circles against the box planes, which
@@ -176,7 +193,8 @@ faces through the pole are drawn up to the panel box.</p>
 
 <dt id="arg-extent">extent<a class="anchor" aria-label="anchor" href="#arg-extent"></a></dt>
 <dd><p>Positive half-width of the finite display box. Gnomonic
-geometry clips to the finite positive-hemisphere box.</p></dd>
+geometry is clipped to the finite box of the hemisphere in front of the
+observer.</p></dd>
 
 
 <dt id="arg-inside">inside<a class="anchor" aria-label="anchor" href="#arg-inside"></a></dt>
@@ -204,13 +222,19 @@ from <code><a href="rotate_4d.html">rotate_4d()</a></code>. These also work in a
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Inside views restrict geometry to the observer hemisphere and finite
-panel box. Great-circle face edges clip before division. Near defaults to
-sqrt(machine epsilon), and far to the farthest panel-box corner, in
-normalised camera units. Azimuth, elevation and roll set facing. Observer
-actions run before packing: SO(4) acts linearly on the gnomonic
-coordinates (X1:3, X4), but turning the far hemisphere into view would
-need packet vertices with w &lt; 0, which the scene contract excludes.</p>
+    <p>In the gnomonic model an observer or isometry is an SO(4) matrix
+acting on the homogeneous coordinates (X1:3, X4), carried by the camera
+pre-transform as in Weeks (2002). The geometry of the whole sphere is
+emitted once, with packet vertices of either sign of w; the scene engine
+applies the action and clips in homogeneous coordinates to w &gt;= 0 and the
+panel box (Blinn and Newell 1978), so the hemisphere within a quarter
+turn of the observer is drawn and a rotation brings the far hemisphere
+into view. animate_3d(isometry = ) frames, such as Clifford translations
+from <code><a href="rotate_4d.html">rotate_4d()</a></code> with left or right quaternions, only recompile. Inside
+views restrict geometry to the observer hemisphere and finite panel box.
+Near defaults to sqrt(machine epsilon), and far to the farthest panel-box
+corner, in normalised camera units. Azimuth, elevation and roll set
+facing. The stereographic model applies the action before packing.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -220,7 +244,10 @@ need packet vertices with w &lt; 0, which the scene contract excludes.</p>
 Weeks (2002). Real-time rendering in curved spaces.
 <a href="https://doi.org/10.1109/MCG.2002.1046633" class="external-link">doi:10.1109/MCG.2002.1046633</a>
 . Coulon et al. (2022), Section 7.
-<a href="https://arxiv.org/abs/2010.15801" class="external-link">https://arxiv.org/abs/2010.15801</a>.</p>
+<a href="https://arxiv.org/abs/2010.15801" class="external-link">https://arxiv.org/abs/2010.15801</a>. Stolfi (1991). Oriented projective
+geometry. Academic Press. Hart, Francis and Kauffman (1994). Visualizing
+quaternion rotation. <a href="https://doi.org/10.1145/195784.197480" class="external-link">doi:10.1145/195784.197480</a>
+.</p>
     </div>
 
     <div class="section level2">

@@ -265,17 +265,11 @@
 <circle cx='205.46' cy='109.00' r='2.15' style='stroke-width: 1.10; stroke: #00BA38; fill: #00BA38;' />
 <circle cx='166.14' cy='146.46' r='2.15' style='stroke-width: 1.10; stroke: #F8766D; fill: #F8766D;' />
 <circle cx='170.22' cy='133.51' r='2.15' style='stroke-width: 1.10; stroke: #F8766D; fill: #F8766D;' />
-<path d='M 199.97 146.99 L 199.68 146.42 L 199.78 147.09 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
-<path d='M 286.52 216.73 L 200.08 145.93 L 199.68 146.42 L 199.87 147.41 L 285.71 217.72 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
-<path d='M 291.22 183.07 L 199.92 145.83 L 199.68 146.42 L 199.86 147.19 L 290.73 184.26 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
+<polyline points='199.68,146.42 286.11,217.22 ' style='stroke-width: 1.28; stroke: #5C6166; stroke-linecap: butt;' />
+<polyline points='199.68,146.42 290.98,183.67 ' style='stroke-width: 1.28; stroke: #5C6166; stroke-linecap: butt;' />
 <circle cx='205.95' cy='146.82' r='2.15' style='stroke-width: 1.10; stroke: #00BA38; fill: #00BA38;' />
 <polyline points='199.68,146.42 261.72,141.66 ' style='stroke-width: 1.28; stroke: #5C6166; stroke-linecap: butt;' />
-<path d='M 199.68 146.42 L 199.63 147.21 L 199.75 147.31 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
-<path d='M 199.68 146.42 L 199.44 147.02 L 199.71 147.13 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
-<path d='M 199.68 146.42 L 199.27 146.92 L 199.63 147.21 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
-<path d='M 199.78 147.09 L 199.68 146.42 L 199.39 145.85 L 104.63 194.25 L 105.21 195.39 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
-<path d='M 199.68 146.42 L 199.75 147.31 L 199.87 147.41 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
-<path d='M 199.68 146.42 L 199.71 147.13 L 199.86 147.19 Z' style='fill-rule: nonzero; fill: #5C6166; stroke-width: 0.75; stroke: none;' />
+<polyline points='199.68,146.42 104.92,194.82 ' style='stroke-width: 1.28; stroke: #5C6166; stroke-linecap: butt;' />
 </g>
 <defs>
   <clipPath id='cp-0'>

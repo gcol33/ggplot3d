@@ -30,6 +30,10 @@ side a face's normal points away from; NULL lights both sides alike."><meta prop
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -83,6 +87,7 @@ side a face's normal points away from; NULL lights both sides alike."><meta prop
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -148,7 +153,16 @@ side a face's normal points away from; NULL lights both sides alike.</p>
 <span>  specular <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  shininess <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  specular_colour <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  back <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  back <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  style <span class="op">=</span> <span class="st">"standard"</span>,</span>
+<span>  bands <span class="op">=</span> <span class="fl">3L</span>,</span>
+<span>  breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  specular_steps <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cool <span class="op">=</span> <span class="st">"#0000AA"</span>,</span>
+<span>  warm <span class="op">=</span> <span class="st">"#AAAA00"</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  beta <span class="op">=</span> <span class="fl">0.6</span>,</span>
+<span>  normal_space <span class="op">=</span> <span class="st">"model"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -176,20 +190,86 @@ the preset.</p></dd>
 <dt id="arg-back">back<a class="anchor" aria-label="anchor" href="#arg-back"></a></dt>
 <dd><p>NULL or one colour for the back side of faces.</p></dd>
 
+
+<dt id="arg-style">style<a class="anchor" aria-label="anchor" href="#arg-style"></a></dt>
+<dd><p><code>"standard"</code>, <code>"toon"</code>, <code>"gooch"</code> or <code>"normals"</code>.</p></dd>
+
+
+<dt id="arg-bands">bands<a class="anchor" aria-label="anchor" href="#arg-bands"></a></dt>
+<dd><p>Number of toon bands, at least two.</p></dd>
+
+
+<dt id="arg-breaks">breaks<a class="anchor" aria-label="anchor" href="#arg-breaks"></a></dt>
+<dd><p>NULL or increasing toon band breaks in degrees in (0, 180).</p></dd>
+
+
+<dt id="arg-specular-steps">specular_steps<a class="anchor" aria-label="anchor" href="#arg-specular-steps"></a></dt>
+<dd><p>Whether the highlight is a flat spot; NULL takes
+<code>TRUE</code> for toon and <code>FALSE</code> otherwise.</p></dd>
+
+
+<dt id="arg-cool-warm">cool, warm<a class="anchor" aria-label="anchor" href="#arg-cool-warm"></a></dt>
+<dd><p>Gooch colours.</p></dd>
+
+
+<dt id="arg-alpha-beta">alpha, beta<a class="anchor" aria-label="anchor" href="#arg-alpha-beta"></a></dt>
+<dd><p>Gooch weights of the fill in the cool and warm colours.</p></dd>
+
+
+<dt id="arg-normal-space">normal_space<a class="anchor" aria-label="anchor" href="#arg-normal-space"></a></dt>
+<dd><p>Frame of the normal colours: <code>"model"</code>, <code>"camera"</code> or
+<code>"light"</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A material for the <code>material</code> argument of the surface layers.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><code>style</code> selects an illustrative response, computed by the same shading
+kernel in the vector and raster backends and the viewer:</p><ul><li><p><code>"toon"</code> quantises each light's diffuse response into <code>bands</code> equal
+steps of the cosine, or at the angles <code>breaks</code> (degrees from the light,
+increasing, at most seven; a normal exactly at a break, within 1e-6 in
+cosine, falls in the darker band), as ggcube's <code>ramp_steps()</code>. With the
+signed modes of <code><a href="lights_3d.html">lights_3d()</a></code> the steps divide the signed level instead.
+<code>specular_steps = TRUE</code> (the default for toon) turns the highlight into a
+flat spot where Blinn's term reaches one half.</p></li>
+<li><p><code>"gooch"</code> is the cool-to-warm shading of Gooch et al. (1998): the colour
+blends from <code>cool + alpha * fill</code> to <code>warm + beta * fill</code> as
+<code>(1 + n . l) / 2</code> goes from 0 to 1, averaged over the lights; the
+defaults are the paper's <code>k_blue = (0, 0, 0.4)</code> and
+<code>k_yellow = (0.4, 0.4, 0)</code> in linear light with <code>alpha = 0.2</code>,
+<code>beta = 0.6</code>.</p></li>
+<li><p><code>"normals"</code> replaces the fill by the unit normal encoded as
+<code>(n + 1) / 2</code> in sRGB (three.js <code>MeshNormalMaterial</code>), in the panel's
+axes (<code>normal_space = "model"</code>), the camera's right, up and toward axes
+(<code>"camera"</code>), or a frame whose third axis points at the first
+contributing light (<code>"light"</code>). It takes no light and no specular term,
+and the layer's fill legend is dropped.</p></li>
+</ul><p>Styles need a light: with <code>coord_3d(light = NULL)</code> faces keep their fill.
+In the path tracer, illustrative surfaces return the shared kernel's
+colour at the hit point and terminate the path, including indirect hits.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Gooch, Gooch, Shirley, Cohen (1998). A non-photorealistic
+lighting model for automatic technical illustration. SIGGRAPH '98,
+447-452. <a href="https://doi.org/10.1145/280814.280950" class="external-link">doi:10.1145/280814.280950</a></p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">material_3d</span><span class="op">(</span><span class="st">"shiny"</span><span class="op">)</span></span>
 <span><span class="fu">material_3d</span><span class="op">(</span><span class="st">"metal"</span>, back <span class="op">=</span> <span class="st">"grey40"</span><span class="op">)</span></span>
+<span><span class="fu">material_3d</span><span class="op">(</span>style <span class="op">=</span> <span class="st">"toon"</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40</span>, <span class="fl">75</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">x</span><span class="op">^</span><span class="fl">2</span> <span class="op">-</span> <span class="va">y</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
-<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>shading <span class="op">=</span> <span class="st">"smooth"</span>, material <span class="op">=</span> <span class="fu">material_3d</span><span class="op">(</span><span class="st">"shiny"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>shading <span class="op">=</span> <span class="st">"smooth"</span>, material <span class="op">=</span> <span class="fu">material_3d</span><span class="op">(</span><span class="st">"shiny"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"grey60"</span>, colour <span class="op">=</span> <span class="cn">NA</span>, material <span class="op">=</span> <span class="fu">material_3d</span><span class="op">(</span>style <span class="op">=</span> <span class="st">"gooch"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"tomato"</span>, colour <span class="op">=</span> <span class="cn">NA</span>, material <span class="op">=</span> <span class="fu">material_3d</span><span class="op">(</span>style <span class="op">=</span> <span class="st">"toon"</span>, bands <span class="op">=</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="cn">NA</span>, shading <span class="op">=</span> <span class="st">"smooth"</span>, material <span class="op">=</span> <span class="fu">material_3d</span><span class="op">(</span>style <span class="op">=</span> <span class="st">"normals"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

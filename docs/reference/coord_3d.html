@@ -16,6 +16,10 @@ ggplot2 facets control x and y scales and have no z scale.'><meta property="og:i
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -69,6 +73,7 @@ ggplot2 facets control x and y scales and have no z scale.'><meta property="og:i
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -351,8 +356,10 @@ dimension. Geodesic endpoints are paired rows and <code>s</code> is a scalar or 
 parameter per row, from zero to one. Input positions are scale-transformed
 chart coordinates. Model output has three columns in model axis units;
 <code>model_ranges(model, panel_params)</code> supplies named x, y, z bounds.
-Four-column homogeneous output (x, y, z, w) with w &gt;= 0 is also accepted
-and travels unchanged into the scene packet; w = 0 is a point at infinity.
+Four-column homogeneous output (x, y, z, w) is also accepted and travels
+unchanged into the scene packet; w = 0 is a point at infinity, and w &lt; 0 a
+point of the far half of oriented projective space (Stolfi 1991), drawn
+only where the camera <code>pre</code> map brings it to w &gt;= 0.
 Projective models such as the Klein ball return (X, X0), so clipping to the
 panel box happens in homogeneous coordinates before division (Blinn and
 Newell 1978) and isometries stay linear. An edge whose image passes through

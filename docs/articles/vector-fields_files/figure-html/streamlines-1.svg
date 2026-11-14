@@ -120,21 +120,18 @@
 <polyline points='175.51,166.68 330.47,211.42 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='86.06,244.15 175.51,166.68 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='175.51,166.68 175.51,27.21 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<path d='M 222.38 147.57 L 222.08 148.48 L 222.11 148.49 Z' style='fill-rule: nonzero; fill: #666A7B; stroke-width: 0.75; stroke: none;' />
 <polyline points='228.73,149.67 222.38,147.57 ' style='stroke-width: 1.92; stroke: #656B7C; stroke-linecap: butt;' />
-<path d='M 222.38 147.57 L 222.64 146.65 L 216.19 144.80 L 215.67 146.65 L 222.08 148.48 Z' style='fill-rule: nonzero; fill: #666A7B; stroke-width: 0.75; stroke: none;' />
+<polyline points='222.38,147.57 215.93,145.73 ' style='stroke-width: 1.92; stroke: #666A7B; stroke-linecap: butt;' />
 <polyline points='215.93,145.73 209.43,144.14 ' style='stroke-width: 1.92; stroke: #686A79; stroke-linecap: butt;' />
 <polyline points='234.96,152.02 228.73,149.67 ' style='stroke-width: 1.92; stroke: #636B7E; stroke-linecap: butt;' />
-<path d='M 217.97 160.09 L 217.62 160.98 L 217.62 160.98 Z' style='fill-rule: nonzero; fill: #5B6C85; stroke-width: 0.75; stroke: none;' />
 <polyline points='222.34,161.97 217.97,160.09 ' style='stroke-width: 1.92; stroke: #5A6C86; stroke-linecap: butt;' />
-<path d='M 217.97 160.09 L 218.31 159.19 L 213.88 157.48 L 213.19 159.27 L 217.62 160.98 Z' style='fill-rule: nonzero; fill: #5B6C85; stroke-width: 0.75; stroke: none;' />
+<polyline points='217.97,160.09 213.53,158.38 ' style='stroke-width: 1.92; stroke: #5B6C85; stroke-linecap: butt;' />
 <polyline points='209.43,144.14 202.93,142.81 ' style='stroke-width: 1.92; stroke: #696A78; stroke-linecap: butt;' />
 <polyline points='241.01,154.62 234.96,152.02 ' style='stroke-width: 1.92; stroke: #626B7F; stroke-linecap: butt;' />
 <polyline points='226.62,164.03 222.34,161.97 ' style='stroke-width: 1.92; stroke: #596C87; stroke-linecap: butt;' />
 <polyline points='213.53,158.38 209.07,156.85 ' style='stroke-width: 1.92; stroke: #5C6C84; stroke-linecap: butt;' />
-<path d='M 220.54 177.89 L 219.92 178.62 L 219.94 178.63 Z' style='fill-rule: nonzero; fill: #4B6D90; stroke-width: 0.75; stroke: none;' />
 <polyline points='222.74,179.83 220.54,177.89 ' style='stroke-width: 1.92; stroke: #4A6D91; stroke-linecap: butt;' />
-<path d='M 220.54 177.89 L 221.15 177.15 L 218.88 175.29 L 217.67 176.78 L 219.92 178.62 Z' style='fill-rule: nonzero; fill: #4B6D90; stroke-width: 0.75; stroke: none;' />
+<polyline points='220.54,177.89 218.27,176.04 ' style='stroke-width: 1.92; stroke: #4B6D90; stroke-linecap: butt;' />
 <polyline points='202.93,142.81 196.46,141.75 ' style='stroke-width: 1.92; stroke: #6A6A76; stroke-linecap: butt;' />
 <polyline points='246.86,157.46 241.01,154.62 ' style='stroke-width: 1.92; stroke: #606B80; stroke-linecap: butt;' />
 <polyline points='230.78,166.26 226.62,164.03 ' style='stroke-width: 1.92; stroke: #576C88; stroke-linecap: butt;' />
@@ -301,9 +298,8 @@
 <polyline points='183.53,158.97 182.18,158.58 ' style='stroke-width: 1.92; stroke: #5A6C85; stroke-linecap: butt;' />
 <polyline points='154.93,153.86 153.75,154.61 ' style='stroke-width: 1.92; stroke: #6E6972; stroke-linecap: butt;' />
 <polyline points='128.98,151.77 127.78,153.56 ' style='stroke-width: 1.92; stroke: #7D675F; stroke-linecap: butt;' />
-<path d='M 221.98 135.91 L 220.75 134.45 L 218.53 136.31 L 219.12 137.07 L 219.74 137.80 Z' style='fill-rule: nonzero; fill: #6F6971; stroke-width: 0.75; stroke: none;' />
+<polyline points='219.12,137.07 221.37,135.18 ' style='stroke-width: 1.92; stroke: #6F6971; stroke-linecap: butt;' />
 <polyline points='216.81,138.87 219.12,137.07 ' style='stroke-width: 1.92; stroke: #6F6972; stroke-linecap: butt;' />
-<path d='M 218.53 136.31 L 218.50 136.33 L 219.12 137.07 Z' style='fill-rule: nonzero; fill: #6F6971; stroke-width: 0.75; stroke: none;' />
 <polyline points='236.77,224.04 237.55,221.48 ' style='stroke-width: 1.92; stroke: #326F9D; stroke-linecap: butt;' />
 <polyline points='263.03,221.45 263.76,217.84 ' style='stroke-width: 1.92; stroke: #396E9A; stroke-linecap: butt;' />
 <polyline points='182.18,158.58 181.00,158.24 ' style='stroke-width: 1.92; stroke: #5B6C85; stroke-linecap: butt;' />
@@ -388,13 +384,11 @@
 <polyline points='201.79,159.04 206.25,157.80 ' style='stroke-width: 1.92; stroke: #7F665B; stroke-linecap: butt;' />
 <polyline points='205.34,170.50 211.84,169.08 ' style='stroke-width: 1.92; stroke: #8F633E; stroke-linecap: butt;' />
 <polyline points='206.25,157.80 210.72,156.39 ' style='stroke-width: 1.92; stroke: #80665A; stroke-linecap: butt;' />
-<path d='M 225.02 166.38 L 224.47 164.54 L 218.07 166.47 L 218.32 167.40 L 218.60 168.32 Z' style='fill-rule: nonzero; fill: #90623B; stroke-width: 0.75; stroke: none;' />
+<polyline points='218.32,167.40 224.74,165.46 ' style='stroke-width: 1.92; stroke: #90623B; stroke-linecap: butt;' />
 <polyline points='211.84,169.08 218.32,167.40 ' style='stroke-width: 1.92; stroke: #90633D; stroke-linecap: butt;' />
-<path d='M 218.07 166.47 L 218.05 166.48 L 218.32 167.40 Z' style='fill-rule: nonzero; fill: #90623B; stroke-width: 0.75; stroke: none;' />
 <polyline points='210.72,156.39 215.18,154.79 ' style='stroke-width: 1.92; stroke: #806659; stroke-linecap: butt;' />
-<path d='M 224.33 151.94 L 223.54 150.19 L 219.22 152.13 L 219.59 153.01 L 219.99 153.89 Z' style='fill-rule: nonzero; fill: #826657; stroke-width: 0.75; stroke: none;' />
+<polyline points='219.59,153.01 223.93,151.07 ' style='stroke-width: 1.92; stroke: #826657; stroke-linecap: butt;' />
 <polyline points='215.18,154.79 219.59,153.01 ' style='stroke-width: 1.92; stroke: #816658; stroke-linecap: butt;' />
-<path d='M 219.22 152.13 L 219.20 152.14 L 219.59 153.01 Z' style='fill-rule: nonzero; fill: #826657; stroke-width: 0.75; stroke: none;' />
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 <text x='115.73' y='271.72' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-0.5</text>
