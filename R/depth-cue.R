@@ -179,16 +179,21 @@ box_depth_fraction_3d <- function(camera, viewport, frame) {
 }
 
 # Centre of every primitive, one matrix per kind (faces, polylines, markers,
-# text), in packet coordinates.
-primitive_centres_3d <- function(packet) {
-  positions <- do.call(cbind, packet$vertices[c("x", "y", "z")])
+# text), in packet coordinates after the homogeneous matrix `pre`: the mean
+# of its homogeneous corners, NA where that mean lies at or beyond infinity.
+primitive_centres_3d <- function(packet, pre = diag(4)) {
+  positions <- scene_vertex_matrix_3d(packet$vertices)
+  if (!identical(as.double(pre), as.double(diag(4)))) positions <- positions %*% t(matrix(as.double(pre), 4L, 4L))
   lapply(c("faces", "polylines", "markers", "text"), function(kind) {
     tab <- packet[[kind]]
     n <- length(tab$offset)
     if (!n) return(matrix(numeric(), 0L, 3L))
     group <- rep.int(seq_len(n), tab$count)
     corner <- tab$offset[group] + sequence(tab$count) - 1L
-    rowsum(positions[packet$corners$vertex[corner], , drop = FALSE], group, reorder = TRUE) / tab$count
+    mean <- rowsum(positions[packet$corners$vertex[corner], , drop = FALSE], group, reorder = TRUE)
+    centre <- mean[, 1:3, drop = FALSE] / mean[, 4L]
+    centre[!(mean[, 4L] > 0), ] <- NA_real_
+    centre
   })
 }
 
@@ -245,12 +250,14 @@ split_polylines_3d <- function(packet) {
   packet
 }
 
-depth_cue_packet_3d <- function(packet, cue, fog, depth_of) {
+# Primitives whose centre lies at infinity take the full weight.
+depth_cue_packet_3d <- function(packet, cue, fog, depth_of, pre = diag(4)) {
   packet <- split_polylines_3d(packet)
-  centres <- primitive_centres_3d(packet)
+  centres <- primitive_centres_3d(packet, pre)
   sizes <- vapply(centres, nrow, integer(1))
   if (!sum(sizes)) return(packet)
   weight <- depth_cue_weight_3d(depth_of(do.call(rbind, centres)), cue)
+  weight[is.na(weight)] <- 1
   styles <- primitive_styles_3d(packet)
   if (!is.na(fog) && cue$amount > 0) {
     for (name in intersect(c("colour", "fill", "border_colour", "arrow_fill"), names(styles)))
@@ -272,7 +279,7 @@ depth_cue_packets_3d <- function(packets, panel_params, camera, viewport, theme)
   fog <- depth_cue_fog_3d(cue, theme)
   if ((is.na(fog) || cue$amount == 0) && cue$linewidth == 0) return(packets)
   depth_of <- box_depth_fraction_3d(camera, viewport, frame_of_3d(panel_params))
-  lapply(packets, depth_cue_packet_3d, cue = cue, fog = fog, depth_of = depth_of)
+  lapply(packets, depth_cue_packet_3d, cue = cue, fog = fog, depth_of = depth_of, pre = camera$pre %or3d% diag(4))
 }
 
 # Eye-dome lighting strength of a panel.
@@ -352,7 +359,8 @@ shadow_packet_3d <- function(packets, spec, panel_params, camera, viewport) {
 # stroke ribbons and point discs as one sheet of convex faces cut to the pane.
 shadow_part_3d <- function(packet, plane, towards, partition, spec, camera, basis, viewport) {
   k <- plane$axis; scale <- basis$scale
-  xyz <- do.call(cbind, packet$vertices[c("x", "y", "z")])
+  packet <- scene_finite_packet_3d(packet)
+  xyz <- scene_vertices_xyz_3d(packet$vertices)
   onto <- function(p) {
     p <- p - outer((p[, k] - plane$value) / towards[k], towards)
     p[, k] <- plane$value
