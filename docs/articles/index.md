@@ -6,8 +6,15 @@
 
 - [Layers](https://gillescolling.com/ggplot3d/articles/layers.md):
 
-  Worked examples of distributions, intervals, fitted surfaces, solid
-  glyphs, curves and reference geometry.
+  Worked examples of points, paths, gridded surfaces, columns,
+  distributions, intervals and reference geometry.
+
+- [Surfaces, solids and
+  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
+
+  Worked examples of indexed meshes, function and fitted surfaces,
+  density surfaces, level surfaces, hulls, solid glyphs and sweeps along
+  curves.
 
 ### Workflows
 

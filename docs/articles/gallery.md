@@ -41,8 +41,8 @@ ggplot(knot, aes(x, y, z = z)) +
 times.](gallery_files/figure-html/knot-1.svg)
 
 At each of the three crossings, the strand nearer the camera is drawn
-over the other.
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.html#tubes-ribbons-and-sweeps)
+over the other. [Surfaces, solids and
+fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#tubes-ribbons-and-sweeps)
 shows ribbons and custom cross-sections along curves.
 
 ## Solid violins
@@ -88,8 +88,8 @@ visible.](gallery_files/figure-html/covariance-1.svg)
 
 The data ellipsoids describe variation among flowers. Confidence
 ellipsoids for the species means use the standard-error kind, as shown
-in
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.html#spheres-ellipsoids-and-glyphs).
+in [Surfaces, solids and
+fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#spheres-ellipsoids-and-glyphs).
 
 ## Streamtubes
 
@@ -499,8 +499,10 @@ surface.
 
 ## Where next
 
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md): a
-  minimal example of every geom and stat.
+- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md) and
+  [Surfaces, solids and
+  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
+  a minimal example of every geom and stat.
 
 - [Camera and
   framing](https://gillescolling.com/ggplot3d/articles/camera.md):

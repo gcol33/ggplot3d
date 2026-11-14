@@ -92,6 +92,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
@@ -164,7 +165,7 @@ nonlinear Schrödinger equations are four well-known nonlinear PDEs; for
 them no general solution formula exists, but particular solutions can be
 written in closed form. Each solution is evaluated on a grid of
 positions and times, drawn as a surface, and rendered one frame per time
-with <code><a href="../reference/animate_3d.html">animate_3d()</a></code>. Installation is covered in <a href="ggplot3d.html">Get started</a>; the GIF files need <a href="https://r-rust.r-universe.dev/gifski" class="external-link">gifski</a>.</p>
+with <code><a href="../reference/animate_3d.html">animate_3d()</a></code>. Installation is covered in <a href="ggplot3d.html">Get started</a>; the videos need <a href="https://docs.ropensci.org/av/" class="external-link">av</a>.</p>
 <ol style="list-style-type: decimal">
 <li><p><strong>Tabulate</strong> the solution
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mi>t</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">u(x, y, t)</annotation></semantics></math>
@@ -204,15 +205,23 @@ one row per position and time with columns <code>x</code>,
 all frames, so the z axis and the fill colours keep the same range
 throughout, and a decaying solution is seen to decay.
 <code>animate()</code> below renders a plot at 480 by 480 pixels, writes
-the GIF next to the article’s figures and returns its path for
-<code><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">knitr::include_graphics()</a></code>.</p>
+an MP4 video into the article’s figure folder and returns a looping,
+muted <code>&lt;video&gt;</code> element that plays without controls,
+labelled with the chunk’s figure description. The page links the video
+by its last three path components, the figure folder next to the
+page.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">animate</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">plot</span>, <span class="va">fps</span> <span class="op">=</span> <span class="fl">12</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/fig_path.html" class="external-link">fig_path</a></span><span class="op">(</span><span class="st">".gif"</span><span class="op">)</span></span>
+<span>  <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/fig_path.html" class="external-link">fig_path</a></span><span class="op">(</span><span class="st">".mp4"</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">dirname</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">plot</span>, time <span class="op">=</span> <span class="st">"t"</span>, fps <span class="op">=</span> <span class="va">fps</span>, file <span class="op">=</span> <span class="va">path</span>, width <span class="op">=</span> <span class="fl">480</span>,</span>
 <span>             height <span class="op">=</span> <span class="fl">480</span>, progress <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span>
-<span>  <span class="va">path</span></span>
+<span>  <span class="va">alt</span> <span class="op">&lt;-</span> <span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_current</a></span><span class="op">$</span><span class="fu">get</span><span class="op">(</span><span class="st">"fig.alt"</span><span class="op">)</span></span>
+<span>  <span class="va">parts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/strsplit.html" class="external-link">strsplit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html" class="external-link">normalizePath</a></span><span class="op">(</span><span class="va">path</span>, winslash <span class="op">=</span> <span class="st">"/"</span><span class="op">)</span>, <span class="st">"/"</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span>  <span class="va">src</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">parts</span>, <span class="fl">3</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"/"</span><span class="op">)</span></span>
+<span>  <span class="fu">htmltools</span><span class="fu">::</span><span class="va"><a href="https://rstudio.github.io/htmltools/reference/builder.html" class="external-link">tags</a></span><span class="op">$</span><span class="fu">video</span><span class="op">(</span>src <span class="op">=</span> <span class="va">src</span>, autoplay <span class="op">=</span> <span class="cn">NA</span>, loop <span class="op">=</span> <span class="cn">NA</span>, muted <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>    playsinline <span class="op">=</span> <span class="cn">NA</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">480</span>, `aria-label` <span class="op">=</span> <span class="va">alt</span>,</span>
+<span>    style <span class="op">=</span> <span class="st">"width: 100%; max-width: 480px; height: auto;"</span>, <span class="va">alt</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -250,8 +259,8 @@ loop without a jump.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">include_graphics</a></span><span class="op">(</span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="pde_files/figure-html/transport-1.gif" class="r-plt" alt="Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner." width="100%"></p>
+<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<video src="pde_files/figure-html/transport-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner." style="width: 100%; max-width: 480px; height: auto;">Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner.</video>
 </div>
 <div class="section level3">
 <h3 id="heat-equation">Heat equation<a class="anchor" aria-label="anchor" href="#heat-equation"></a>
@@ -282,8 +291,8 @@ over the plane stays at
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"red"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">25</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">include_graphics</a></span><span class="op">(</span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="pde_files/figure-html/heat-1.gif" class="r-plt" alt="Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one." width="100%"></p>
+<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<video src="pde_files/figure-html/heat-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one." style="width: 100%; max-width: 480px; height: auto;">Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one.</video>
 </div>
 <div class="section level3">
 <h3 id="wave-equation">Wave equation<a class="anchor" aria-label="anchor" href="#wave-equation"></a>
@@ -322,8 +331,8 @@ loop.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>low <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span>, mid <span class="op">=</span> <span class="st">"grey90"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"red"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">30</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">include_graphics</a></span><span class="op">(</span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="pde_files/figure-html/wave-1.gif" class="r-plt" alt="Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero." width="100%"></p>
+<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<video src="pde_files/figure-html/wave-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero." style="width: 100%; max-width: 480px; height: auto;">Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero.</video>
 </div>
 <div class="section level3">
 <h3 id="laplace-equation">Laplace equation<a class="anchor" aria-label="anchor" href="#laplace-equation"></a>
@@ -360,8 +369,8 @@ loop.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>low <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span>, mid <span class="op">=</span> <span class="st">"grey90"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"red"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">include_graphics</a></span><span class="op">(</span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="pde_files/figure-html/laplace-1.gif" class="r-plt" alt="Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis." width="100%"></p>
+<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<video src="pde_files/figure-html/laplace-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis." style="width: 100%; max-width: 480px; height: auto;">Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis.</video>
 </div>
 </div>
 <div class="section level2">
@@ -421,8 +430,8 @@ than either crest alone.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">include_graphics</a></span><span class="op">(</span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="pde_files/figure-html/kp-1.gif" class="r-plt" alt="Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet." width="100%"></p>
+<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<video src="pde_files/figure-html/kp-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet." style="width: 100%; max-width: 480px; height: auto;">Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet.</video>
 </div>
 <div class="section level3">
 <h3 id="sine-gordon-equation">Sine-Gordon equation<a class="anchor" aria-label="anchor" href="#sine-gordon-equation"></a>
@@ -479,8 +488,8 @@ fronts cross moves along the diagonal.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"purple"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">35</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">include_graphics</a></span><span class="op">(</span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="pde_files/figure-html/sg-1.gif" class="r-plt" alt="Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square." width="100%"></p>
+<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<video src="pde_files/figure-html/sg-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square." style="width: 100%; max-width: 480px; height: auto;">Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square.</video>
 </div>
 <div class="section level3">
 <h3 id="fisherkpp-equation">Fisher–KPP equation<a class="anchor" aria-label="anchor" href="#fisherkpp-equation"></a>
@@ -519,8 +528,8 @@ without changing the shape of the front.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"grey85"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[[</span><span class="st">"green"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">50</span>, elevation <span class="op">=</span> <span class="fl">30</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>z <span class="op">=</span> <span class="st">"u"</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/include_graphics.html" class="external-link">include_graphics</a></span><span class="op">(</span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="pde_files/figure-html/fisher-1.gif" class="r-plt" alt="Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square." width="100%"></p>
+<span><span class="fu">animate</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<video src="pde_files/figure-html/fisher-1.mp4" autoplay loop muted playsinline width="480" height="480" aria-label="Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square." style="width: 100%; max-width: 480px; height: auto;">Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square.</video>
 </div>
 <div class="section level3">
 <h3 id="nonlinear-schrödinger-equation">Nonlinear Schrödinger equation<a class="anchor" aria-label="anchor" href="#nonlinear-schr%C3%B6dinger-equation"></a>

@@ -71,7 +71,7 @@ ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
   coord_3d(zlim = c(0, 100))
 ```
 
-The shorthand `zlim()` supplies scale limits in original data units. Coordinate limits also use original units. [Layers](layers.html) explains the transformed units used by statistical surfaces.
+The shorthand `zlim()` supplies scale limits in original data units. Coordinate limits also use original units. [Surfaces, solids and fields](surfaces-solids.html) explains the transformed units used by statistical surfaces.
 
 ## Facets
 

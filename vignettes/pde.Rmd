@@ -15,10 +15,10 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
 PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
          orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
          grey = "#5C6166")
-has_gifski <- requireNamespace("gifski", quietly = TRUE)
+has_av <- requireNamespace("av", quietly = TRUE)
 ```
 
-This article draws exact solutions of eight partial differential equations (PDEs). The transport, heat, wave and Laplace equations are the four linear PDEs with explicit solution formulas that Evans (2010) treats first. The Kadomtsev–Petviashvili, sine-Gordon, Fisher–KPP and nonlinear Schrödinger equations are four well-known nonlinear PDEs; for them no general solution formula exists, but particular solutions can be written in closed form. Each solution is evaluated on a grid of positions and times, drawn as a surface, and rendered one frame per time with `animate_3d()`. Installation is covered in [Get started](ggplot3d.html); the GIF files need [gifski](https://r-rust.r-universe.dev/gifski).
+This article draws exact solutions of eight partial differential equations (PDEs). The transport, heat, wave and Laplace equations are the four linear PDEs with explicit solution formulas that Evans (2010) treats first. The Kadomtsev–Petviashvili, sine-Gordon, Fisher–KPP and nonlinear Schrödinger equations are four well-known nonlinear PDEs; for them no general solution formula exists, but particular solutions can be written in closed form. Each solution is evaluated on a grid of positions and times, drawn as a surface, and rendered one frame per time with `animate_3d()`. Installation is covered in [Get started](ggplot3d.html); the videos need [av](https://docs.ropensci.org/av/).
 
 1. **Tabulate** the solution $u(x, y, t)$ in a data frame with one row per position and time.
 
@@ -49,15 +49,20 @@ solution_frames <- function(u, times, range = c(-2, 2), n = 31) {
 }
 ```
 
-`animate_3d(time = "t")` draws the rows of one value of `t` per frame, in increasing order. The scales are trained on all frames, so the z axis and the fill colours keep the same range throughout, and a decaying solution is seen to decay. `animate()` below renders a plot at 480 by 480 pixels, writes the GIF next to the article's figures and returns its path for `knitr::include_graphics()`.
+`animate_3d(time = "t")` draws the rows of one value of `t` per frame, in increasing order. The scales are trained on all frames, so the z axis and the fill colours keep the same range throughout, and a decaying solution is seen to decay. `animate()` below renders a plot at 480 by 480 pixels, writes an MP4 video into the article's figure folder and returns a looping, muted `<video>` element that plays without controls, labelled with the chunk's figure description. The page links the video by its last three path components, the figure folder next to the page.
 
 ```{r animate}
 animate <- function(plot, fps = 12, ...) {
-  path <- knitr::fig_path(".gif")
+  path <- knitr::fig_path(".mp4")
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   animate_3d(plot, time = "t", fps = fps, file = path, width = 480,
              height = 480, progress = FALSE, ...)
-  path
+  alt <- knitr::opts_current$get("fig.alt")
+  parts <- strsplit(normalizePath(path, winslash = "/"), "/")[[1]]
+  src <- paste(tail(parts, 3), collapse = "/")
+  htmltools::tags$video(src = src, autoplay = NA, loop = NA, muted = NA,
+    playsinline = NA, width = 480, height = 480, `aria-label` = alt,
+    style = "width: 100%; max-width: 480px; height: auto;", alt)
 }
 ```
 
@@ -78,13 +83,13 @@ transport <- function(x, y, t) {
 moving <- solution_frames(transport, times = seq(0, 4, length.out = 33)[-33])
 ```
 
-```{r transport, eval = has_gifski, fig.alt = "Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner."}
+```{r transport, eval = has_av, fig.alt = "Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner."}
 p <- ggplot(moving, aes(x, y, z = u, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
   scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
 ### Heat equation
@@ -100,13 +105,13 @@ heat <- function(x, y, t) exp(-(x^2 + y^2) / (1 + 4 * t)) / (1 + 4 * t)
 cooling <- solution_frames(heat, times = seq(0, 1, length.out = 25))
 ```
 
-```{r heat, eval = has_gifski, fig.alt = "Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one."}
+```{r heat, eval = has_av, fig.alt = "Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one."}
 p <- ggplot(cooling, aes(x, y, z = u, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
   scale_fill_gradient(low = PAL[["blue"]], high = PAL[["red"]]) +
   coord_3d(azimuth = -50, elevation = 25) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
 ### Wave equation
@@ -128,13 +133,13 @@ membrane <- solution_frames(wave, times = seq(0, period, length.out = 31)[-31],
                             range = c(0, 1))
 ```
 
-```{r wave, eval = has_gifski, fig.alt = "Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero."}
+```{r wave, eval = has_av, fig.alt = "Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero."}
 p <- ggplot(membrane, aes(x, y, z = u, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
   scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
 ### Laplace equation
@@ -149,13 +154,13 @@ saddle <- solution_frames(laplace, times = seq(0, 2 * pi, length.out = 37)[-37],
                           range = c(-1, 1))
 ```
 
-```{r laplace, eval = has_gifski, fig.alt = "Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis."}
+```{r laplace, eval = has_av, fig.alt = "Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis."}
 p <- ggplot(saddle, aes(x, y, z = u, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
   scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
 ## Nonlinear equations
@@ -188,13 +193,13 @@ crossing <- solution_frames(kp, times = seq(-2.2, 2.2, length.out = 40),
                             range = c(-10, 10), n = 61)
 ```
 
-```{r kp, eval = has_gifski, fig.alt = "Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet."}
+```{r kp, eval = has_av, fig.alt = "Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet."}
 p <- ggplot(crossing, aes(x, y, z = u, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
   scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
 ### Sine-Gordon equation
@@ -222,13 +227,13 @@ kinks <- solution_frames(sine_gordon, times = seq(-8, 8, length.out = 33),
                          range = c(-8, 8), n = 51)
 ```
 
-```{r sg, eval = has_gifski, fig.alt = "Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square."}
+```{r sg, eval = has_av, fig.alt = "Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square."}
 p <- ggplot(kinks, aes(x, y, z = u, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
   scale_fill_gradient(low = "grey85", high = PAL[["purple"]]) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
 ### Fisher–KPP equation
@@ -251,13 +256,13 @@ invasion <- solution_frames(fisher, times = seq(-6, 6, length.out = 33),
                             range = c(-20, 20), n = 41)
 ```
 
-```{r fisher, eval = has_gifski, fig.alt = "Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square."}
+```{r fisher, eval = has_av, fig.alt = "Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square."}
 p <- ggplot(invasion, aes(x, y, z = u, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
   scale_fill_gradient(low = "grey85", high = PAL[["green"]]) +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
 ### Nonlinear Schrödinger equation

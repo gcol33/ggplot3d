@@ -1,0 +1,270 @@
+---
+title: "Surfaces, solids and fields"
+description: "Worked examples of indexed meshes, function and fitted surfaces, density surfaces, level surfaces, hulls, solid glyphs and sweeps along curves."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Surfaces, solids and fields}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 3e4, dev = "svglite", fig.ext = "svg",
+  dev.args = list(pointsize = 14))
+PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
+         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
+         grey = "#5C6166")
+library(ggplot2)
+library(ggplot3d)
+theme_set(theme_minimal(base_size = 17) + theme(
+  plot.background = element_rect(fill = "transparent", colour = NA),
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  legend.background = element_rect(fill = "transparent", colour = NA),
+  legend.key = element_rect(fill = "transparent", colour = NA),
+  legend.box.background = element_rect(fill = "transparent", colour = NA),
+  legend.position = "none"))
+```
+
+
+These layers build geometry from a model, a function, a field or a shape rather than drawing each row as a mark. This article gives a small example of each. Installation is covered in [Get started](ggplot3d.html). [Layers](layers.html) covers points, paths, surfaces from gridded data, columns, distributions and intervals, [Vector fields](vector-fields.html) covers arrows and streamlines, and [Implicit surfaces](implicit-surfaces.html) covers reconstruction from point clouds.
+
+## Indexed meshes
+
+A mesh describes vertices and faces using integer indices. Indices start at one. Each row in the face matrix identifies the corners of a triangle or quadrilateral. The mesh constructor returns a corner table keyed by vertex, face and corner.
+
+```{r mesh, fig.alt="A sloping quadrilateral supplied as an indexed mesh."}
+vertices <- data.frame(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1),
+                       z = c(0, 0, 1, 1))
+mesh <- mesh_3d(vertices, matrix(1:4, nrow = 1))
+ggplot() + geom_mesh_3d(data = mesh, fill = PAL["blue"]) + coord_3d()
+```
+
+## Function and fitted surfaces
+
+Function surfaces sample a vectorized function of x and y. The grid is evenly spaced in transformed x and y coordinates. Function inputs and returned z values use original data units. The z scale transforms the returned heights.
+
+```{r function, fig.alt="A sampled sine-cosine surface."}
+ggplot() + geom_function_3d(fun = function(x, y) sin(x) * cos(y), n = 10) +
+  xlim(-2, 2) + ylim(-2, 2) + coord_3d()
+```
+
+```{r stat-function, fig.alt="The function stat sampling a quadratic surface."}
+ggplot() + stat_function_3d(fun = function(x, y) x^2 + y^2, n = 10) +
+  xlim(-1, 1) + ylim(-1, 1) + coord_3d()
+```
+
+Fitted surfaces model z using x and y. Fitting and prediction use transformed positions. The linear model's default formula is z as a function of x plus y. Confidence surfaces, when requested, describe pointwise uncertainty in the conditional mean.
+
+```{r smooth, fig.alt="A fitted linear surface for a grid with a deterministic curved deviation."}
+fit_data <- expand.grid(x = seq(-2, 2, length.out = 10),
+                        y = seq(-2, 2, length.out = 10))
+fit_data$z <- with(fit_data, x + y + sin(3 * x * y) / 5)
+f <- ggplot(fit_data, aes(x, y, z = z))
+f + geom_smooth_3d(method = "lm", se = FALSE, n = 8) + coord_3d()
+```
+
+```{r stat-smooth, fig.alt="The smooth stat drawing a fitted linear response surface."}
+f + stat_smooth_3d(method = "lm", se = FALSE, n = 8) + coord_3d()
+```
+
+An existing model can supply predictions directly. Fit fuel consumption against weight and horsepower, then pass that model to both the surface and residual layers. The hull domain ends the surface at the convex hull of the observed x/y positions; residual segments join observations to predictions.
+
+```{r fitted-model, fig.alt="A fitted fuel-consumption surface restricted to the predictor hull, with residual segments connecting the cars to the surface."}
+model <- lm(mpg ~ wt + hp, data = mtcars)
+cars_fit <- ggplot(mtcars, aes(wt, hp, z = mpg))
+cars_fit + geom_smooth_3d(method = model, domain = "hull", se = FALSE,
+                         n = 10, fill = PAL["blue"], alpha = 0.45) +
+  geom_residual_3d(method = model, colour = PAL["red"], linewidth = 0.7) +
+  geom_point_3d(size = 1.5) + coord_3d()
+```
+
+Models supplied as objects predict in original data units. Fitting functions, including custom functions passed as the method, fit transformed positions and use a formula in x, y and z. A model with additional predictors can fix them through the condition list; see [geom_smooth_3d()](../reference/stat_smooth_3d.html).
+
+Colour can show prediction standard errors on the fitted surface. Confidence bounds can also be drawn as separate surfaces or a closed band. They describe pointwise uncertainty in the fitted mean.
+
+```{r smooth-se-fill, fig.alt="The fitted fuel-consumption surface coloured by the standard error of its predicted mean."}
+cars_fit + geom_smooth_3d(method = model, domain = "hull", se = "fill", n = 10) +
+  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"], name = "SE") +
+  coord_3d() + theme(legend.position = "right")
+```
+
+Combining the hull domain with a closed confidence band can currently fail
+with `faces must be planar`. The separate confidence surfaces and
+standard-error fill provide the available uncertainty displays for this example.
+
+## Density surfaces and ridges
+
+A bivariate density surface estimates how observations are distributed over x and y. Its height is density, computed with a Gaussian product kernel. The bandwidth controls smoothing along each input axis.
+
+```{r density2d, fig.alt="A density surface for eruption duration and waiting time in the faithful data."}
+ggplot(faithful, aes(eruptions, waiting)) +
+  stat_density_2d_3d(n = 12) + coord_3d()
+```
+
+Ridgelines estimate a one-dimensional density for each group and place the groups along the perpendicular axis. Here each species occupies a single y position. Height multiplies the density in transformed z units.
+
+```{r ridge, fig.alt="Three density ridges for sepal length, one per iris species."}
+r <- ggplot(iris, aes(Sepal.Length, as.numeric(Species),
+                     group = Species, fill = Species))
+r + geom_ridgeline_3d(n = 24) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) + coord_3d()
+```
+
+```{r stat-ridge, fig.alt="The ridgeline stat drawing the same species-specific sepal length densities."}
+r + stat_ridgeline_3d(n = 24) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) + coord_3d()
+```
+
+## Scalar-field level surfaces
+
+A scalar field assigns a numeric value to each x/y/z position. An isosurface joins positions with the same field value. Supply a complete rectilinear grid and map the field to `value`; missing field values mask their incident cells.
+
+```{r isosurface, fig.alt="A level surface of squared distance from the origin."}
+field <- expand.grid(x = seq(-1, 1, length.out = 8),
+  y = seq(-1, 1, length.out = 8), z = seq(-1, 1, length.out = 8))
+field$value <- with(field, x^2 + y^2 + z^2)
+v <- ggplot(field, aes(x, y, z = z, value = value))
+v + geom_isosurface_3d(levels = 0.6, fill = PAL["blue"]) + coord_3d()
+```
+
+```{r stat-isosurface, fig.alt="The isosurface stat extracting the same squared-distance threshold."}
+v + stat_isosurface_3d(levels = 0.6, fill = PAL["blue"]) + coord_3d()
+```
+
+A function can supply field values directly. It receives transformed coordinates in all three axes. Grid resolution sets how finely the function is sampled.
+
+```{r isofunction, fig.alt="A spherical level surface sampled from a three-variable function."}
+ball <- function(x, y, z) x^2 + y^2 + z^2
+ggplot() + geom_isofunction_3d(fun = ball, n = 8, levels = 0.5) +
+  xlim(-1, 1) + ylim(-1, 1) + zlim(-1, 1) + coord_3d()
+```
+
+```{r stat-isofunction, fig.alt="The isofunction stat sampling the squared-distance function."}
+ggplot() + stat_isofunction_3d(fun = ball, n = 8, levels = 0.5) +
+  xlim(-1, 1) + ylim(-1, 1) + zlim(-1, 1) + coord_3d()
+```
+
+## Trivariate density
+
+A trivariate density estimates the distribution of observations in three dimensions. Numeric levels select density thresholds. Probability contents, specified with `probs()`, select enclosed mass estimated from the sampled grid. The grid ranges need to include the density tails for probability-content requests.
+
+```{r isodensity, fig.alt="A density level surface around a deterministic three-dimensional point sample."}
+set.seed(4)
+cloud <- data.frame(x = rnorm(40), y = rnorm(40), z = rnorm(40))
+c <- ggplot(cloud, aes(x, y, z = z))
+c + geom_isodensity_3d(h = 0.7, levels = 0.02, n = 8) + coord_3d()
+```
+
+```{r stat-density, fig.alt="The density stat extracting a level surface from the same sample."}
+c + stat_density_3d(h = 0.7, levels = 0.02, n = 8) + coord_3d()
+```
+
+```{r}
+probs(0.5, 0.9)
+```
+
+## Convex hulls
+
+A convex hull is the smallest convex shape containing the input positions. This example uses the eight corners of a cube. Coplanar input produces a planar polygon, and collinear input produces no faces.
+
+```{r hull, fig.alt="The convex hull of the eight corners of a cube."}
+corners <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
+h <- ggplot(corners, aes(x, y, z = z))
+h + geom_hull_3d(fill = PAL["blue"]) + coord_3d()
+```
+
+```{r stat-hull, fig.alt="The hull stat drawing the cube defined by the same eight corners."}
+h + stat_hull_3d(fill = PAL["blue"]) + coord_3d()
+```
+
+## Spheres, ellipsoids and glyphs
+
+A sphere gives each observation a solid radius. The next table contains three centres and radii in data units. A data aspect ratio makes equal distances on the axes equally long in the scene.
+
+```{r spheres, fig.alt="Three solid spheres with different radii at three supplied centres."}
+solids <- data.frame(x = c(0, 2, 4), y = c(0, 1, 0), z = c(0, 1, 2),
+                     radius = c(0.5, 0.8, 0.6))
+ggplot(solids, aes(x, y, z = z, radius = radius)) +
+  geom_sphere_3d(detail = 1, fill = PAL["blue"]) + coord_3d(aspect = "data")
+```
+
+An ellipsoid takes three semi-axis lengths or a list-column of shape matrices. These lengths use transformed position units. Principal axes are visible through a translucent ellipsoid.
+
+```{r ellipsoids, fig.alt="Three translucent ellipsoids with different semi-axis lengths and their principal axes."}
+ggplot(solids, aes(x, y, z = z)) +
+  geom_ellipsoid_3d(rx = 0.7, ry = 0.3, rz = 0.5, detail = 1,
+                    axes = TRUE, alpha = 0.4, fill = PAL["teal"]) +
+  coord_3d(aspect = "data")
+```
+
+The ellipsoid stat estimates a shape from each group. In the iris data, a data ellipsoid describes the spread of flower measurements. A confidence ellipsoid describes uncertainty in the species mean; choose it with the standard-error kind and a normal covariance estimate.
+
+```{r data-ellipsoids, fig.alt="Three translucent ellipsoids describing the spread of iris measurements, with the flowers shown as points."}
+iris_space <- ggplot(iris, aes(Sepal.Length, Sepal.Width, z = Petal.Length,
+                               fill = Species, colour = Species))
+iris_space + stat_ellipsoid_3d(type = "norm", kind = "data",
+                              detail = 1, alpha = 0.2, axes = TRUE) +
+  geom_point_3d(size = 1) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  coord_3d()
+```
+
+```{r mean-ellipsoids, fig.alt="Smaller confidence ellipsoids for the three iris species means, with the observations around them."}
+iris_space + stat_ellipsoid_3d(type = "norm", kind = "se", level = 0.95,
+                              detail = 1, alpha = 0.4, axes = TRUE) +
+  geom_point_3d(size = 0.7) +
+  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  coord_3d()
+```
+
+[stat_ellipsoid_3d()](../reference/stat_ellipsoid_3d.html) also offers a t estimate that downweights outliers, Euclidean spheres and enclosing ellipsoids. Each group needs four or more points spanning three dimensions.
+
+A glyph places a mesh at every observation. Built-in shapes include cubes, cones, cylinders, spheres and octahedra; a custom mesh can supply another shape. Here the cube width represents horsepower in the car data, with width measured in millimetres at the centre of the view.
+
+```{r glyphs, fig.alt="Solid cubes at the car observations, with larger cubes representing higher horsepower."}
+ggplot(mtcars, aes(wt, mpg, z = qsec, size = hp)) +
+  geom_glyph_3d(glyph = "cube", fill = PAL["orange"]) + coord_3d()
+```
+
+## Tubes, ribbons and sweeps
+
+A tube gives a path thickness in transformed data units. Sample a helix in row order and map radius to widen it gradually. Its circular cross-section follows the curve with a rotation-minimising frame, which controls its orientation along the path.
+
+```{r tube, fig.alt="A helical tube whose radius grows with height."}
+angle <- seq(0, 3 * pi, length.out = 40)
+helix <- data.frame(x = cos(angle), y = sin(angle), z = angle / 4,
+                    radius = seq(0.05, 0.14, length.out = length(angle)))
+curve <- ggplot(helix, aes(x, y, z = z))
+curve + geom_tube_3d(aes(radius = radius), sides = 8, cap = "flat",
+                     fill = PAL["blue"]) + coord_3d(aspect = "data")
+```
+
+A ribbon sweeps a line segment along the same path. Its width and twist can vary at each position; twist is measured in degrees. The normal argument sets the initial orientation.
+
+```{r ribbon, fig.alt="A wide ribbon twisting along the helical path."}
+curve + geom_ribbon_3d(aes(twist = z * 60), width = 0.35,
+                       normal = c(0, 0, 1), fill = PAL["orange"]) +
+  coord_3d(aspect = "data")
+```
+
+Supply a two-column polygon to sweep another cross-section. Its radius parameter scales the profile. Closed paths can close the seam, and a spline can interpolate a sparse set of path points before the sweep.
+
+```{r sweep, fig.alt="A square cross-section swept along a smoothed path through five supplied points."}
+route <- data.frame(x = 0:4, y = c(0, 1, 0, -1, 0), z = c(0, 0.3, 1, 1.2, 2))
+square <- rbind(c(-1, -1), c(1, -1), c(1, 1), c(-1, 1))
+ggplot(route, aes(x, y, z = z)) +
+  geom_sweep_3d(profile = square, radius = 0.15, spline = "natural", n = 32,
+                fill = PAL["teal"]) + coord_3d(aspect = "data")
+```
+
+To draw the smooth path itself, use [stat_spline_3d()](../reference/stat_spline_3d.html). A surface of revolution rotates a radius-height profile about an axis.
+
+```{r revolution, fig.alt="A rounded vessel formed by rotating a radius-height profile about z."}
+vessel <- data.frame(z = seq(0, 2, length.out = 16))
+vessel$r <- 0.5 + 0.2 * sin(3 * vessel$z)
+ggplot(vessel, aes(r = r, z = z)) +
+  geom_revolve_3d(n = 16, fill = PAL["purple"]) + coord_3d(aspect = "data")
+```

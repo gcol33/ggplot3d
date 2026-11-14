@@ -285,7 +285,7 @@ across / side + plot_annotation(title = "Profile at y = 0")
 
 ## Where next
 
-* [Layers](layers.html): every three-dimensional geom and stat.
+* [Layers](layers.html) and [Surfaces, solids and fields](surfaces-solids.html): every three-dimensional geom and stat.
 
 * [Visibility](visibility.html): how overlapping layers are sorted by depth.
 

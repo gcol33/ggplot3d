@@ -77,9 +77,9 @@ hundred.](z-scale_files/figure-html/limits-1.svg)
 The shorthand
 [`zlim()`](https://gillescolling.com/ggplot3d/reference/zlim.md)
 supplies scale limits in original data units. Coordinate limits also use
-original units.
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.md) explains
-the transformed units used by statistical surfaces.
+original units. [Surfaces, solids and
+fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
+explains the transformed units used by statistical surfaces.
 
 ## Facets
 

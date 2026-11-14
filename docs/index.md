@@ -162,7 +162,10 @@ create and save a plot.
   scale](https://gillescolling.com/ggplot3d/vignettes/z-scale.Rmd):
   transformations, categories, limits and facets.
 - [Layers](https://gillescolling.com/ggplot3d/vignettes/layers.Rmd):
-  examples of every three-dimensional geom and stat.
+  points, paths, gridded surfaces, columns, distributions and intervals.
+- [Surfaces, solids and
+  fields](https://gillescolling.com/ggplot3d/vignettes/surfaces-solids.Rmd):
+  meshes, fitted and level surfaces, hulls, solid glyphs and sweeps.
 - [Camera and
   framing](https://gillescolling.com/ggplot3d/vignettes/camera.Rmd):
   view angles, projections and plot bounds.

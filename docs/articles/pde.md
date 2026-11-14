@@ -12,7 +12,7 @@ with
 [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md).
 Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md); the
-GIF files need [gifski](https://r-rust.r-universe.dev/gifski).
+videos need [av](https://docs.ropensci.org/av/).
 
 1.  **Tabulate** the solution $`u(x, y, t)`$ in a data frame with one
     row per position and time.
@@ -55,18 +55,24 @@ solution_frames <- function(u, times, range = c(-2, 2), n = 31) {
 in increasing order. The scales are trained on all frames, so the z axis
 and the fill colours keep the same range throughout, and a decaying
 solution is seen to decay. `animate()` below renders a plot at 480 by
-480 pixels, writes the GIF next to the article’s figures and returns its
-path for
-[`knitr::include_graphics()`](https://rdrr.io/pkg/knitr/man/include_graphics.html).
+480 pixels, writes an MP4 video into the article’s figure folder and
+returns a looping, muted `<video>` element that plays without controls,
+labelled with the chunk’s figure description. The page links the video
+by its last three path components, the figure folder next to the page.
 
 ``` r
 
 animate <- function(plot, fps = 12, ...) {
-  path <- knitr::fig_path(".gif")
+  path <- knitr::fig_path(".mp4")
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   animate_3d(plot, time = "t", fps = fps, file = path, width = 480,
              height = 480, progress = FALSE, ...)
-  path
+  alt <- knitr::opts_current$get("fig.alt")
+  parts <- strsplit(normalizePath(path, winslash = "/"), "/")[[1]]
+  src <- paste(tail(parts, 3), collapse = "/")
+  htmltools::tags$video(src = src, autoplay = NA, loop = NA, muted = NA,
+    playsinline = NA, width = 480, height = 480, `aria-label` = alt,
+    style = "width: 100%; max-width: 480px; height: auto;", alt)
 }
 ```
 
@@ -103,12 +109,11 @@ p <- ggplot(moving, aes(x, y, z = u, fill = after_stat(z_mean))) +
   scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
-![Animation of a blue bump on a flat surface that travels diagonally
-across the square and re-enters at the opposite
-corner.](pde_files/figure-html/transport-1.gif)
+Animation of a blue bump on a flat surface that travels diagonally
+across the square and re-enters at the opposite corner.
 
 ### Heat equation
 
@@ -137,12 +142,11 @@ p <- ggplot(cooling, aes(x, y, z = u, fill = after_stat(z_mean))) +
   scale_fill_gradient(low = PAL[["blue"]], high = PAL[["red"]]) +
   coord_3d(azimuth = -50, elevation = 25) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
-![Animation of a tall red peak that flattens and widens into a low broad
-mound while the z axis stays fixed from zero to
-one.](pde_files/figure-html/heat-1.gif)
+Animation of a tall red peak that flattens and widens into a low broad
+mound while the z axis stays fixed from zero to one.
 
 ### Wave equation
 
@@ -180,12 +184,11 @@ p <- ggplot(membrane, aes(x, y, z = u, fill = after_stat(z_mean))) +
   scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
-![Animation of a square membrane with a raised red lobe and a lowered
-blue lobe that circle round its centre while the edges stay at
-zero.](pde_files/figure-html/wave-1.gif)
+Animation of a square membrane with a raised red lobe and a lowered blue
+lobe that circle round its centre while the edges stay at zero.
 
 ### Laplace equation
 
@@ -218,12 +221,11 @@ p <- ggplot(saddle, aes(x, y, z = u, fill = after_stat(z_mean))) +
   scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
-![Animation of a monkey saddle with three raised red ridges and three
-lowered blue valleys that rotate slowly about the vertical
-axis.](pde_files/figure-html/laplace-1.gif)
+Animation of a monkey saddle with three raised red ridges and three
+lowered blue valleys that rotate slowly about the vertical axis.
 
 ## Nonlinear equations
 
@@ -279,12 +281,11 @@ p <- ggplot(crossing, aes(x, y, z = u, fill = after_stat(z_mean))) +
   scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
-![Animation of two straight blue crests forming an X that travels across
-the square, with a raised segment where the crests
-meet.](pde_files/figure-html/kp-1.gif)
+Animation of two straight blue crests forming an X that travels across
+the square, with a raised segment where the crests meet.
 
 ### Sine-Gordon equation
 
@@ -333,12 +334,12 @@ p <- ggplot(kinks, aes(x, y, z = u, fill = after_stat(z_mean))) +
   scale_fill_gradient(low = "grey85", high = PAL[["purple"]]) +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
-![Animation of a surface with two raised purple quadrants and two low
+Animation of a surface with two raised purple quadrants and two low
 quadrants; the corner where the fronts meet slides diagonally across the
-square.](pde_files/figure-html/sg-1.gif)
+square.
 
 ### Fisher–KPP equation
 
@@ -379,12 +380,11 @@ p <- ggplot(invasion, aes(x, y, z = u, fill = after_stat(z_mean))) +
   scale_fill_gradient(low = "grey85", high = PAL[["green"]]) +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
-knitr::include_graphics(animate(p))
+animate(p)
 ```
 
-![Animation of a green plateau whose sloping edge advances diagonally
-across a flat grey plain until it covers most of the
-square.](pde_files/figure-html/fisher-1.gif)
+Animation of a green plateau whose sloping edge advances diagonally
+across a flat grey plain until it covers most of the square.
 
 ### Nonlinear Schrödinger equation
 

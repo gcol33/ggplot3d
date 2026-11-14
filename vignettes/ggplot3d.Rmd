@@ -71,7 +71,7 @@ p <- ggplot(surface, aes(east, north, z = height)) +
 p
 ```
 
-Grid neighbours form triangles. Surface pieces cover observations wherever they lie in front of them. [Layers](layers.html) also shows columns, contours, meshes and statistical surfaces.
+Grid neighbours form triangles. Surface pieces cover observations wherever they lie in front of them. [Layers](layers.html) also shows columns and contours, and [Surfaces, solids and fields](surfaces-solids.html) shows meshes and statistical surfaces.
 
 ## Reading another table
 

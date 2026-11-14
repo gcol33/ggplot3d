@@ -19,13 +19,14 @@ articles:
   pde: pde.html
   ray-marching: ray-marching.html
   spatial: spatial.html
+  surfaces-solids: surfaces-solids.html
   tensors: tensors.html
   thurston-geometries: thurston-geometries.html
   vector-fields: vector-fields.html
   viewer: viewer.html
   visibility: visibility.html
   z-scale: z-scale.html
-last_built: 2026-11-14T18:07Z
+last_built: 2026-11-14T18:42Z
 urls:
   reference: https://gillescolling.com/ggplot3d/reference
   article: https://gillescolling.com/ggplot3d/articles

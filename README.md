@@ -153,8 +153,10 @@ plot.
 
 - [The z scale](vignettes/z-scale.Rmd): transformations, categories,
   limits and facets.
-- [Layers](vignettes/layers.Rmd): examples of every three-dimensional
-  geom and stat.
+- [Layers](vignettes/layers.Rmd): points, paths, gridded surfaces,
+  columns, distributions and intervals.
+- [Surfaces, solids and fields](vignettes/surfaces-solids.Rmd): meshes,
+  fitted and level surfaces, hulls, solid glyphs and sweeps.
 - [Camera and framing](vignettes/camera.Rmd): view angles, projections
   and plot bounds.
 - [Output backends](vignettes/backends.Rmd): choose vector or raster

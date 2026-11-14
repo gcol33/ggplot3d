@@ -462,8 +462,10 @@ overall title Profile at y =
 
 ## Where next
 
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md): every
-  three-dimensional geom and stat.
+- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md) and
+  [Surfaces, solids and
+  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
+  every three-dimensional geom and stat.
 
 - [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
   how overlapping layers are sorted by depth.

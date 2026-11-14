@@ -49,7 +49,7 @@ ggplot(knot, aes(x, y, z = z)) +
   coord_3d(aspect = "data")
 ```
 
-At each of the three crossings, the strand nearer the camera is drawn over the other. [Layers](layers.html#tubes-ribbons-and-sweeps) shows ribbons and custom cross-sections along curves.
+At each of the three crossings, the strand nearer the camera is drawn over the other. [Surfaces, solids and fields](surfaces-solids.html#tubes-ribbons-and-sweeps) shows ribbons and custom cross-sections along curves.
 
 ## Solid violins
 
@@ -85,7 +85,7 @@ ggplot(iris, aes(Sepal.Length, Sepal.Width, z = Petal.Length,
 
 The data ellipsoids describe variation among flowers. Confidence ellipsoids
 for the species means use the standard-error kind, as shown in
-[Layers](layers.html#spheres-ellipsoids-and-glyphs).
+[Surfaces, solids and fields](surfaces-solids.html#spheres-ellipsoids-and-glyphs).
 
 ## Streamtubes
 
@@ -330,7 +330,7 @@ and contour maps placed on the floor below a surface.
 
 ## Where next
 
-* [Layers](layers.html): a minimal example of every geom and stat.
+* [Layers](layers.html) and [Surfaces, solids and fields](surfaces-solids.html): a minimal example of every geom and stat.
 
 * [Camera and framing](camera.html): change the viewing angles used above.
 

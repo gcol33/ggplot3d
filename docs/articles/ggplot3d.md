@@ -71,7 +71,9 @@ heights.](ggplot3d_files/figure-html/surface-1.svg)
 Grid neighbours form triangles. Surface pieces cover observations
 wherever they lie in front of them.
 [Layers](https://gillescolling.com/ggplot3d/articles/layers.md) also
-shows columns, contours, meshes and statistical surfaces.
+shows columns and contours, and [Surfaces, solids and
+fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
+shows meshes and statistical surfaces.
 
 ## Reading another table
 

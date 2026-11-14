@@ -188,7 +188,8 @@ flow + stat_streamline_3d(aes(fill = after_stat(norm)), geom = "tube",
 magnitude.](vector-fields_files/figure-html/streamtubes-1.svg)
 
 Tube faces retain the mean computed values of their corners. The
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.html#tubes-ribbons-and-sweeps)
+[Surfaces, solids and
+fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#tubes-ribbons-and-sweeps)
 article shows tube radii, ribbons and custom cross-sections on supplied
 paths.
 
@@ -221,8 +222,9 @@ points to trace that field away from its stationary centre.
 
 ## Where next
 
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md): solid
-  glyphs and sweeps along supplied curves.
+- [Surfaces, solids and
+  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
+  solid glyphs and sweeps along supplied curves.
 
 - [Camera animation and
   interaction](https://gillescolling.com/ggplot3d/articles/motion.md):
