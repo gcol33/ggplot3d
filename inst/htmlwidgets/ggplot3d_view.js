@@ -1081,7 +1081,8 @@
           p.dimmed = !p.furniture && selected.size > 0 && !selected.has(p.key);
           if (p.dimmed && !p.skip) S.kinds[p.kind].states.fill(dim, p.vertexStart, p.vertexStart+p.vertexCount);
           const outline = (p.kind === MARKER || p.kind === DISC) && p.material.colour[3]*p.opacity < 1;
-          p.translucent = p.colour[3] < 1 || outline || p.dimmed;
+          const coverageOpaque = p.kind !== FACE || !p.table.coverage_opaque || Boolean(p.table.coverage_opaque[p.row]);
+          p.translucent = p.colour[3] < 1 || !coverageOpaque || outline || p.dimmed;
         });
         KINDS.forEach(k => {
           const g = S.kinds[k], s = g.streams[0];

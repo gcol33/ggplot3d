@@ -66,3 +66,26 @@ interior_pixels <- function(reference) {
   }
   same
 }
+
+crossing_texture_packet <- function() {
+  texture <- texture_3d(matrix("#40608080"), interpolate = FALSE)
+  new_scene_packet(
+    vertices = list(x = c(.1, .9, .9, .1, .1, .9, .9, .1, .3),
+      y = c(.1, .1, .9, .9, .1, .1, .9, .9, .2), z = c(.2, .8, .8, .2, rep(.5, 4), .4)),
+    corners = list(vertex = 1:9, u = c(rep(c(0, 1, 1, 0), 2), NA_real_),
+      v = c(rep(c(0, 0, 1, 1), 2), NA_real_)),
+    faces = list(offset = c(1L, 5L), count = c(4L, 4L), layer_id = c(1L, 2L), coverage_opaque = c(FALSE, FALSE)),
+    markers = list(offset = 9L, style_id = 2L, footprint_id = 1L),
+    footprints = list(kind = 1L, offset = 1L, count = 0L, radius_x_mm = 1, radius_y_mm = 1, angle = 0),
+    styles = data.frame(style_id = 1:2, fill = NA_character_, colour = c(NA, "red"),
+      shade = c(TRUE, FALSE), shape = 19, size = 2, linewidth = 0,
+      texture_id = c(1L, NA_integer_), texture = I(list(texture, NULL))))
+}
+
+texture_viewer_plot <- function(reverse = FALSE) {
+  layers <- list(annotation_raster_3d(matrix("#FF000080"), .1, .9, .1, .9, at = .75),
+    annotation_raster_3d(matrix("#0000FF80"), .1, .9, .1, .9, at = .25))
+  if (reverse) layers <- rev(layers)
+  ggplot2::ggplot(data.frame(x = 0:1, y = 0:1, z = 0:1), ggplot2::aes(x, y, z = z)) +
+    ggplot2::geom_blank() + layers + coord_3d(elevation = 90, azimuth = -90, light = NULL) + ggplot2::theme_void()
+}

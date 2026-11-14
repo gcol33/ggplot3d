@@ -10,8 +10,15 @@ texture_run_packet_3d <- function(scene, rows) {
   packet <- scene$source
   packet$styles <- scene$styles
   packet$materials <- scene$materials
-  selected <- unique(scene$fragments$source_index[rows])
+  fragments <- scene$fragments
+  selected <- unique(fragments$source_index[rows])
   packet$faces <- lapply(packet$faces, `[`, selected)
+  attr(packet, "face_clip") <- lapply(selected, function(source) {
+    lapply(rows[fragments$source_index[rows] == source], function(row) {
+      index <- seq.int(fragments$offset[row], length.out = fragments$count[row])
+      cbind(scene$vertices$x_npc[index], scene$vertices$y_npc[index])
+    })
+  })
   for (kind in c("polylines", "markers", "text", "quadrics"))
     packet[[kind]] <- lapply(packet[[kind]], `[`, integer())
   packet$styles$colour <- NA_character_
@@ -60,13 +67,11 @@ texture_lighting_grob_3d <- function(scene, rows, viewport, light, name) {
   index <- rep(f$offset[rows], counts) + sequence(counts) - 1L
   x <- scene$vertices$x_npc[index]; y <- scene$vertices$y_npc[index]
   bounds <- c(min(x), min(y), max(x), max(y))
-  render <- function(packet, light) texture_crop_result_3d(raster_scene_3d(packet, camera, viewport, 1L, light), bounds)
+  render <- function(packet, light) texture_crop_result_3d(
+    raster_scene_3d(packet, camera, viewport, 1L, light, blend = "srgb"), bounds)
   target <- render(packet, light)
-  outline <- seam_underlay_3d(scene$vertices$x_npc[index], scene$vertices$y_npc[index],
-    rep(seq_along(rows), counts), rep("black", length(rows)))
-  region <- outline[[1L]]
   if (!texture_lighting_device_ok_3d()) {
-    return(grid::gTree(children = grid::gList(raster_image_grob_3d(target)), vp = grid::viewport(clip = region),
+    return(grid::gTree(children = grid::gList(raster_image_grob_3d(target)),
       name = name, texture_lighting = "hybrid"))
   }
   base <- render(packet, NULL)
@@ -81,7 +86,7 @@ texture_lighting_grob_3d <- function(scene, rows, viewport, light, name) {
   multiply <- getExportedValue("grid", "groupGrob")(image(factors$multiply), op = "multiply", dst = painted)
   screen <- getExportedValue("grid", "groupGrob")(image(factors$screen), op = "screen", dst = multiply)
   mask <- grid::as.mask(raster_image_grob_3d(base), type = "alpha")
-  grid::gTree(children = grid::gList(screen), vp = grid::viewport(clip = region, mask = mask),
+  grid::gTree(children = grid::gList(screen), vp = grid::viewport(mask = mask),
     name = name, texture_lighting = "multiply-screen")
 }
 

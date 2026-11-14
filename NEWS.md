@@ -6,6 +6,12 @@
   varies within a face under flat shading is now an error at draw time, so
   the mesh no longer disappears behind a stat warning.
 
+* Texture samples use their sampled alpha for raster occlusion. Lighting runs
+  clip each source face to its compiled fragments, preserving translucent
+  overlaps across intervening marks. `view_3d()` uses the coverage guarantee
+  to select its transparency pass. Texture corner attributes retain contract
+  order during ambient-occlusion setup (#64).
+
 * Inside-view animations retain sphere framing and rotate the camera about
   the observer's fixed eye, including angle tracks and orbit paths (#15).
 

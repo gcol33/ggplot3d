@@ -100,3 +100,11 @@ test_that("lit textures darken alike in raster and vector output", {
     expect_lte(max(abs(vector[at[1L], at[2L], ] - raster[at[1L], at[2L], ])), 6)
   }
 })
+
+test_that("translucent texels retain deeper textured faces", {
+  packet <- crossing_texture_packet()
+  viewport <- new_scene_viewport(40, 40, dpi = 100 * 25.4 / 40)
+  result <- raster_scene_3d(packet, texture_top_camera(), viewport, 1L, light = light_3d())
+  alpha <- matrix(texture_alpha_3d(result$image), nrow(result$image), byrow = TRUE)
+  expect_equal(alpha[35, 35], round(255 * (1 - (1 - 128 / 255)^2)))
+})

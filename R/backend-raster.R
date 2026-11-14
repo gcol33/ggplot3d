@@ -50,6 +50,7 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
           view = kernel_view_3d(prepared$camera))
         smooth$normal[!is.finite(smooth$normal)] <- 0
         smooth$base[!is.finite(smooth$base)] <- 0
+        if (!is.null(attr(packet, "face_clip"))) smooth$clip <- attr(packet, "face_clip")
         if (any(textured)) {
           smooth$textures <- lapply(textures$textures, `[[`, "image")
           smooth$interpolate <- vapply(textures$textures, `[[`, logical(1), "interpolate")
@@ -159,8 +160,12 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
   blend <- match.arg(blend, c("linear", "srgb"))
   validate_camera_3d(camera)
   light <- ambient_light_3d(packet, camera, viewport, light)
-  if (!is.null(light$occlusion)) for (name in c("normal_x", "normal_y", "normal_z"))
-    if (is.null(packet$corners[[name]])) packet$corners[[name]] <- rep(NA_real_, length(packet$corners$vertex))
+  if (!is.null(light$occlusion)) {
+    for (name in c("normal_x", "normal_y", "normal_z"))
+      if (is.null(packet$corners[[name]])) packet$corners[[name]] <- rep(NA_real_, length(packet$corners$vertex))
+    columns <- scene_table_columns(packet$corners, scene_schemas()$corners, scene_optional_schemas()$corners, "corners")
+    packet$corners <- packet$corners[names(columns)]
+  }
   prepared <- raster_prepare_cpp(scene_engine_packet_3d(packet), camera, viewport)
   if (!is.null(light$occlusion)) raster_ambient_cpp(prepared$pointer, light$occlusion)
   colours <- raster_colours_3d(packet, prepared, light, edl)

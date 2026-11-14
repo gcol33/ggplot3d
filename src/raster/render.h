@@ -28,6 +28,14 @@ struct Paint {
   Index once=-1;
 };
 
+// A convex compiled fragment in viewport millimetres, with half-open edges.
+struct FaceClipRing {
+  std::vector<Screen> vertices;
+  std::array<double,4> bounds{R_PosInf,R_PosInf,R_NegInf,R_NegInf};
+  double orientation=0;
+  bool contains(double x,double y) const;
+};
+
 // Smooth faces (Phong 1975 normals, Gouraud 1971 colours): per face row the
 // unlit linear base colour, whether it is lit and its face normal; the light,
 // the direction toward the viewer, and per item whether its vertices carry
@@ -39,6 +47,7 @@ struct Smooth {
   std::vector<int> material,texture;
   std::vector<double> fill_alpha;
   std::vector<Texture> textures;
+  std::vector<std::vector<FaceClipRing>> clip;
   std::vector<shade::Material> materials;
   shade::Lights lights;
   shade::View view;
@@ -72,6 +81,14 @@ static inline bool edge_inside(double value,const Screen& a,const Screen& b,doub
   if(value!=0) return value>0;
   double dx=(b.x-a.x)*orientation,dy=(b.y-a.y)*orientation;
   return dy>0 || (dy==0 && dx<0);
+}
+inline bool FaceClipRing::contains(double x,double y) const {
+  if(orientation==0 || x<bounds[0] || y<bounds[1] || x>bounds[2] || y>bounds[3]) return false;
+  for(std::size_t i=0;i<vertices.size();++i) {
+    const Screen& a=vertices[i];const Screen& b=vertices[(i+1)%vertices.size()];
+    if(!edge_inside(edge(a,b,x,y)*orientation,a,b,orientation)) return false;
+  }
+  return true;
 }
 static inline double depth_at(double a,double b,double t,bool perspective) {
   return perspective ? 1/((1-t)/a+t/b) : (1-t)*a+t*b;
@@ -676,6 +693,11 @@ static inline std::array<double,2> fan_uv(const Shapes& shapes,const Item& item,
 static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const Paint& paint,const Hit& hit,
                                    double x,double y,double dx,double dy) {
   const Scene& scene=shapes.scene; const Smooth& sm=*shapes.smooth;
+  if(!sm.clip.empty()) {
+    bool inside=false;
+    for(const auto& ring:sm.clip[item.row]) if(ring.contains(x,y)) {inside=true;break;}
+    if(!inside) return Colour{};
+  }
   const Index k[3]={item.offset,item.offset+hit.i,item.offset+hit.i+1};
   const auto w=fan_weights(shapes,item,hit.i,x,y);
   auto blend=[&](bool normal) {
@@ -821,7 +843,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       }
       if(lit_quadric) {fragment.own=true;fragment.colour=quadric_colour(shapes,item,p,xx,yy);}
       s.fragments.push_back(fragment);
-      if(span.occluder && c.a==1) occluder.add(span.partition,z);
+      if(span.occluder && (fragment.own ? fragment.colour.a:c.a)==1) occluder.add(span.partition,z);
     }
   }
   s.start.assign(n+1,0);
@@ -1039,7 +1061,8 @@ static inline Traced traced_of(Rcpp::List input,const Canvas& canvas) {
 // The smooth-face input of a draw, from the "smooth" attribute of the face
 // colours: list(base = n x 3 unlit linear colours, lit, normal = n x 3 unit
 // model-space face normals, material (index, 0 for the default), materials,
-// lights (or NULL) and view, as read by src/shade/read.h).
+// lights (or NULL) and view, as read by src/shade/read.h). Optional clip holds
+// per face row a list of convex n x 2 polygons in normalised screen coordinates.
 static inline Smooth smooth_of(const Scene& scene,Rcpp::NumericMatrix face_colours,bool linear) {
   Smooth sm; sm.linear=linear;
   if(!scene.corner.any() || !face_colours.hasAttribute("smooth")) return sm;
@@ -1075,11 +1098,39 @@ static inline Smooth smooth_of(const Scene& scene,Rcpp::NumericMatrix face_colou
     for(std::size_t i=0;i<n;++i) require(sm.texture[i]>=0 && sm.texture[i]<=static_cast<int>(sm.textures.size()),
                                          "invalid raster texture index");
   }
+  if(x.containsElementNamed("clip")) {
+    Rcpp::List clip=x["clip"];
+    require(static_cast<std::size_t>(clip.size())==n,"invalid raster face clip count");
+    sm.clip.resize(n);
+    for(std::size_t row=0;row<n;++row) {
+      Rcpp::List rings=clip[row];
+      for(SEXP polygon:rings) {
+        Rcpp::NumericMatrix xy(polygon);
+        require(xy.ncol()==2 && xy.nrow()>=3,"invalid raster face clip polygon");
+        FaceClipRing ring;
+        for(int k=0;k<xy.nrow();++k) {
+          require(std::isfinite(xy(k,0)) && std::isfinite(xy(k,1)),"non-finite raster face clip");
+          const double point[2]={xy(k,0)*scene.projection.viewport.width_mm,xy(k,1)*scene.projection.viewport.height_mm};
+          require(std::isfinite(point[0]) && std::isfinite(point[1]),"unrepresentable raster face clip");
+          ring.vertices.push_back({point[0],point[1],0});
+          for(int axis=0;axis<2;++axis) {
+            ring.bounds[axis]=std::min(ring.bounds[axis],point[axis]);
+            ring.bounds[axis+2]=std::max(ring.bounds[axis+2],point[axis]);
+          }
+        }
+        double area=0;
+        for(std::size_t k=1;k+1<ring.vertices.size();++k)
+          area+=edge(ring.vertices[0],ring.vertices[k],ring.vertices[k+1].x,ring.vertices[k+1].y);
+        ring.orientation=area>0 ? 1:(area<0 ? -1:0);
+        sm.clip[row].push_back(std::move(ring));
+      }
+    }
+  }
   sm.item.assign(scene.items.size(),false);
   for(std::size_t i=0;i<scene.items.size();++i) {
     const Item& item=scene.items[i];
     if(item.kind!=1 || static_cast<std::size_t>(item.offset+item.count)>scene.shading.size()) continue;
-    bool varies=false;
+    bool varies=!sm.clip.empty();
     for(Index j=0;j<item.count && !varies;++j) {
       const Shading& v=scene.shading[item.offset+j];
       varies=std::isfinite(v.colour[0]+v.colour[1]+v.colour[2]) ||
@@ -1157,7 +1208,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
     span.partition=scene.table(item.kind).partition[item.row];
     span.lift=retained && item.kind==2 && line.hidden[item.row]!=0 && span.partition==1;
     span.occluder=item.kind==1 || item.kind==3 || item.kind==5;
-    span.retained_occluder=retained && item.kind==1 && p.colour.a==1 && span.partition==1;
+    span.retained_occluder=retained && item.kind==1 && p.colour.a==1 &&
+      scene.packet.faces.opaque(item.row) && span.partition==1;
     span.halo=item.kind==2 && item.geometry==0 && span.partition==1 &&
       line.mask_width_mm[item.row]>line.width_mm[item.row];
     span.nearest=R_PosInf;

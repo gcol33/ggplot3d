@@ -71,6 +71,14 @@ test_that("one lighting group spans a triangulated face run without hairlines", 
   expect_identical(run$texture_lighting, "multiply-screen")
 })
 
+test_that("textured lighting retains canonical attributes with ambient occlusion", {
+  skip_if_not_installed("ragg")
+  skip_if_not_installed("png")
+  case <- texture_lighting_case(material_3d("shiny"), light_3d())
+  case$light$ao <- list(samples = 8L, radius = 1, amount = 1)
+  texture_lighting_compare(case)
+})
+
 test_that("texture lighting preserves transparent holes and layer alpha", {
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
@@ -88,6 +96,32 @@ test_that("texture lighting preserves transparent holes and layer alpha", {
   alpha <- round(255 * png::readPNG(path)[, , 4L])
   expect_equal(alpha[50, 35], 128, tolerance = 1)
   expect_equal(alpha[50, 65], 0)
+})
+
+test_that("split texture runs paint only their own source fragments", {
+  skip_if_not_installed("ragg")
+  skip_if_not_installed("png")
+  packet <- crossing_texture_packet()
+  camera <- new_camera_3d(elevation = 90, azimuth = -90)
+  light <- light_3d(direction = c(0, 0, 1), space = "data")
+  for (pixels in c(100L, 101L)) {
+    viewport <- new_scene_viewport(25.4, 25.4, dpi = pixels)
+    scene <- scene_compile(packet, camera, viewport)
+    kinds <- scene$fragments$kind[scene$draw_order]
+    expect_gte(sum(diff(c(FALSE, kinds == 1L, FALSE)) == 1L), 2L)
+    # R graphics composites separate runs in encoded sRGB.
+    reference <- raster_scene_3d(packet, camera, viewport, 1L, light, blend = "srgb")$image
+    expect_equal(ncol(reference), pixels)
+    path <- tempfile(fileext = ".png")
+    on.exit(unlink(path), add = TRUE)
+    ragg::agg_png(path, pixels, pixels, res = viewport$dpi, background = "transparent")
+    grid::grid.draw(render_scene_grid(scene, viewport, light = light))
+    grDevices::dev.off()
+    vector <- png::readPNG(path)
+    alpha <- matrix(texture_alpha_3d(reference), nrow(reference), byrow = TRUE)
+    expect_lte(max(abs(round(vector[32:43, 32:68, 4L] * 255) - alpha[32:43, 32:68])), 1)
+    expect_lte(max(abs(image_channels(path)[32:43, 32:68, ] - image_channels(reference)[32:43, 32:68, ])), 3)
+  }
 })
 
 test_that("missing texture blend operators use the hybrid panel and keep labels last", {

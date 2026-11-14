@@ -199,3 +199,28 @@ test_that("glTF export writes texture coordinates and the embedded image", {
   writeBin(glb$bin[view$byteOffset + seq_len(view$byteLength)], png_file)
   expect_identical(unclass(png::readPNG(png_file, native = TRUE)), unclass(tex$image))
 })
+
+test_that("the viewer blends texture coverage independently of face opacity", {
+  skip_if_not_installed("htmlwidgets")
+  packet <- stats_scene(texture_viewer_plot())$packet
+  expect_true(all(packet$faces$opacity == 1))
+  expect_true(all(!packet$faces$coverage_opaque))
+  b <- viewer_browser(list(view_3d(texture_viewer_plot(), width = 240, height = 240, elementId = "texture-forward"),
+    view_3d(texture_viewer_plot(TRUE), width = 240, height = 240, elementId = "texture-reverse")))
+  on.exit(b$close(), add = TRUE)
+  start <- Sys.time()
+  repeat {
+    result <- b$eval(paste0("(() => {const pixels=id=>{const el=document.getElementById(id);el.ggplot3d.redraw();",
+      "const c=el.querySelector('canvas'),g=c.getContext('webgl2'),p=new Uint8Array(c.width*c.height*4);",
+      "g.readPixels(0,0,c.width,c.height,g.RGBA,g.UNSIGNED_BYTE,p);return p;};",
+      "const a=pixels('texture-forward'),b=pixels('texture-reverse');let max=0,first=0,second=0;",
+      "for(let i=0;i<a.length;i++)max=Math.max(max,Math.abs(a[i]-b[i]));",
+      "for(let i=0;i<a.length;i+=4){if(a[i+1]+2<Math.min(a[i],a[i+2]))first++;",
+      "if(b[i+1]+2<Math.min(b[i],b[i+2]))second++;}return {max,first,second};})()"))
+    if ((result$first > 100 && result$second > 100) || Sys.time() - start > 10) break
+    Sys.sleep(.2)
+  }
+  expect_gt(result$first, 100)
+  expect_gt(result$second, 100)
+  expect_lte(result$max, 2)
+})
