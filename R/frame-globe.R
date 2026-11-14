@@ -75,9 +75,18 @@ FrameGlobe <- ggplot2::ggproto("FrameGlobe", Frame3D,
       xyz <- lonlat_xyz_3d(uv$x, uv$y)
       area <- sqrt(rowSums(cross_rows_3d(xyz[tri[,2L],] - xyz[tri[,1L],], xyz[tri[,3L],] - xyz[tri[,1L],])^2))
       tri <- tri[area > 1e-10,,drop=FALSE]
-      d <- uv[as.vector(t(tri)), ]; d$z <- 0
+      d <- as.data.frame(self$radius * xyz[as.vector(t(tri)), ])
+      names(d) <- c("x", "y", "z")
+      d[c("nx", "ny", "nz")] <- as.data.frame(xyz[as.vector(t(tri)), ])
       d$.face <- rep(seq_len(nrow(tri)), each = 3L); d$.corner <- rep(1:3, nrow(tri)); d$.vertex <- as.vector(t(tri)); d$.mesh <- 1L; d$group <- 1L
-      packets[[length(packets) + 1L]] <- emit(paint(d, NA_character_, "#E0E7EB"), "GeomMesh3D")
+      params <- panel_params
+      params$ranges <- self$model_ranges
+      params$space_context$space <- SpaceEuclidean
+      params$space_context$input <- params$space_context$model <- "cartesian"
+      params$space_context$input_ranges <- self$model_ranges
+      params$space_context$isometry <- NULL
+      packets[[length(packets) + 1L]] <- emit_scene_3d(paint(d, NA_character_, "#E0E7EB"),
+        list(.emitter = "GeomMesh3D", shade = TRUE), params, scene_furniture_layer_3d)
     }
     if (all(self$graticule > 0)) {
       lines <- c(lapply(seq(-180, 180 - 1e-8, by = self$graticule[1L]), function(lon) data.frame(x = lon, y = seq(-90, 90, by = 5))),
