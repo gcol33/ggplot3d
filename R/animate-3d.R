@@ -18,7 +18,7 @@
 #'   every frame. Scales are trained on all frames, so limits, breaks and colour
 #'   mappings are the same in each frame.
 #' @param fps Frames per second, default 20.
-#' @param file Output path, or NULL to return PNG frame paths. The extension
+#' @param file Output path, or NULL to use `format`. The extension
 #'   selects the output: `.gif` (needs gifski), `.mp4` or `.webm` (need av),
 #'   `.apng` (an animated PNG), `.png` or `.svg` (one file per frame; svg needs
 #'   svglite) and `.pdf` (one page per frame). A file per frame takes its
@@ -30,6 +30,12 @@
 #'   tracks, with per-frame visibility tracks for changing geometry.
 #'   Each glTF animation uses one projection type; export perspective and
 #'   orthographic paths separately.
+#' @param format Output format as an extension name supported by `file`, such
+#'   as `"gif"`, `"mp4"`, `"webm"` or `"apng"`, or NULL (default). With
+#'   `file = NULL`, a format writes to a session temporary path. `"png"` and
+#'   `"svg"` write numbered frame sequences; `"apng"` writes one animated PNG.
+#'   When both `file` and `format` are supplied, the extension must agree with
+#'   the format. With both NULL, returns temporary PNG frame paths.
 #' @param renderer Scene backend, "raster" (default) or "vector". Use "vector"
 #'   for vector pages in SVG and PDF output.
 #' @param width,height Frame dimensions in pixels, default 640 each.
@@ -91,8 +97,8 @@
 #'   `transition` (source state, destination state and eased fraction when
 #'   tweening),
 #'   `build_seconds`, `frame`, `panel_extents` in millimetres, and `frames`
-#'   (the PNG paths when file is NULL, the written files of a per-frame
-#'   output). PNG frames returned with file = NULL belong to the caller.
+#'   (the PNG paths when `file` and `format` are NULL, the written files of a
+#'   per-frame output). Returned files and frame paths belong to the caller.
 #'   `width` and `height` give the frame dimensions in pixels.
 #' @details Framing is "azimuth" when only the azimuth and zoom change, and
 #'   "sphere" otherwise. Axis reserves and physical panel extents are fixed.
@@ -105,10 +111,19 @@
 #'   specification: browsers play it and viewers without APNG support show its
 #'   first frame.
 #'
+#'   `renderer` selects the scene backend; `format` selects the encoded file
+#'   type or frame layout, and `file` sets its location. gganimate selects
+#'   encoding through `animate(renderer = ...)`; its `gifski_renderer()` and
+#'   `av_renderer()` create temporary files when their `file` is NULL.
+#'   Here, `format` selects an entry in the output registry and supplies a
+#'   temporary path to the encoder. gifski writes a GIF to that path; av
+#'   infers the video container from its extension.
+#'
 #'   In knitr HTML documents, a returned GIF or APNG embeds as an image and
 #'   MP4 or WebM embeds as a looping, muted, autoplaying inline video. The file
 #'   is copied under the chunk's figure path, with a URL relative to the output
-#'   document. `fig.alt` supplies the image description or the video's
+#'   document. Use `format = "mp4"` or `format = "gif"` to embed an animation
+#'   without naming a file. `fig.alt` supplies the image description or the video's
 #'   accessible label and fallback text. `out.width` sets the displayed width,
 #'   capped at the frame width and the available page width.
 #'
@@ -156,7 +171,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
                        path = NULL, workers = 1L, tween = NULL, trail = NULL, isometry = NULL, tour = NULL,
-                       stable_partition = FALSE, ...) {
+                       stable_partition = FALSE, format = NULL, ...) {
   renderer <- match.arg(renderer)
   scene_assert(is.logical(stable_partition) && length(stable_partition) == 1L && !is.na(stable_partition),
     "stable_partition must be TRUE or FALSE")
@@ -200,7 +215,8 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     "progress must be TRUE or FALSE")
   workers <- motion_workers_3d(workers)
   backend <- backend_3d(renderer, dpi, antialias)
-  output <- motion_output_3d(file)
+  output <- motion_output_3d(file, format)
+  file <- output$file
   scene_assert(!...length() || output$kind == "scene", "Further arguments apply to .glb and .gltf output only")
   options <- if (output$kind == "scene") motion_export_options_3d(...)
   if (is.null(path)) {

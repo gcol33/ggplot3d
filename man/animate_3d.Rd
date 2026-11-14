@@ -27,6 +27,7 @@ animate_3d(
   isometry = NULL,
   tour = NULL,
   stable_partition = FALSE,
+  format = NULL,
   ...
 )
 }
@@ -46,7 +47,7 @@ is spread evenly over the path.}
 
 \item{fps}{Frames per second, default 20.}
 
-\item{file}{Output path, or NULL to return PNG frame paths. The extension
+\item{file}{Output path, or NULL to use \code{format}. The extension
 selects the output: \code{.gif} (needs gifski), \code{.mp4} or \code{.webm} (need av),
 \code{.apng} (an animated PNG), \code{.png} or \code{.svg} (one file per frame; svg needs
 svglite) and \code{.pdf} (one page per frame). A file per frame takes its
@@ -129,6 +130,13 @@ only the position of the cut edges differs. Quadric stand-ins are then
 refined for every viewing direction at the camera's distance and zoom.
 Applies to scenes the vector and hybrid renderers draw.}
 
+\item{format}{Output format as an extension name supported by \code{file}, such
+as \code{"gif"}, \code{"mp4"}, \code{"webm"} or \code{"apng"}, or NULL (default). With
+\code{file = NULL}, a format writes to a session temporary path. \code{"png"} and
+\code{"svg"} write numbered frame sequences; \code{"apng"} writes one animated PNG.
+When both \code{file} and \code{format} are supplied, the extension must agree with
+the format. With both NULL, returns temporary PNG frame paths.}
+
 \item{...}{Arguments to \code{\link[=export_3d]{export_3d()}} for glTF output: \code{furniture}, \code{lines},
 \code{points} and \code{size}.}
 }
@@ -140,8 +148,8 @@ field of view, distance (NA when automatic) and target, and the frame's
 \code{transition} (source state, destination state and eased fraction when
 tweening),
 \code{build_seconds}, \code{frame}, \code{panel_extents} in millimetres, and \code{frames}
-(the PNG paths when file is NULL, the written files of a per-frame
-output). PNG frames returned with file = NULL belong to the caller.
+(the PNG paths when \code{file} and \code{format} are NULL, the written files of a
+per-frame output). Returned files and frame paths belong to the caller.
 \code{width} and \code{height} give the frame dimensions in pixels.
 }
 \description{
@@ -160,10 +168,19 @@ plotly's \code{frame} aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show its
 first frame.
 
+\code{renderer} selects the scene backend; \code{format} selects the encoded file
+type or frame layout, and \code{file} sets its location. gganimate selects
+encoding through \code{animate(renderer = ...)}; its \code{gifski_renderer()} and
+\code{av_renderer()} create temporary files when their \code{file} is NULL.
+Here, \code{format} selects an entry in the output registry and supplies a
+temporary path to the encoder. gifski writes a GIF to that path; av
+infers the video container from its extension.
+
 In knitr HTML documents, a returned GIF or APNG embeds as an image and
 MP4 or WebM embeds as a looping, muted, autoplaying inline video. The file
 is copied under the chunk's figure path, with a URL relative to the output
-document. \code{fig.alt} supplies the image description or the video's
+document. Use \code{format = "mp4"} or \code{format = "gif"} to embed an animation
+without naming a file. \code{fig.alt} supplies the image description or the video's
 accessible label and fallback text. \code{out.width} sets the displayed width,
 capped at the frame width and the available page width.
 

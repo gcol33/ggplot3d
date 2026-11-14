@@ -63,13 +63,12 @@ The default path makes a full azimuth turn. Each frame retains the panel dimensi
 
 ```{r movie}
 if (requireNamespace("gifski", quietly = TRUE)) {
-  path <- tempfile(fileext = ".gif")
-  movie <- animate_3d(p, frames = 12, fps = 6, file = path,
+  movie <- animate_3d(p, frames = 12, fps = 6, format = "gif",
                      width = 480, height = 480, progress = FALSE)
   data.frame(frames = movie$frame_count, fps = movie$fps,
              file_written = file.exists(movie$file))
   range(movie$timings)
-  unlink(path)
+  unlink(movie$file)
 }
 ```
 
@@ -85,15 +84,14 @@ frames$panel_extents[[1]]
 unlink(dirname(frames$frames[1]), recursive = TRUE)
 ```
 
-Raster rendering is the default. Selecting vector rendering uses the exact vector scene backend to produce each PNG frame, and an output filename ending in `.mp4` selects the video encoder.
+Raster rendering is the default. Selecting vector rendering uses the exact vector scene backend to produce each PNG frame, and `format = "mp4"` selects the video encoder.
 
 ```{r mp4}
 if (requireNamespace("av", quietly = TRUE)) {
-  path <- tempfile(fileext = ".mp4")
-  movie <- animate_3d(p, frames = 3, fps = 6, file = path,
+  movie <- animate_3d(p, frames = 3, fps = 6, format = "mp4",
                      width = 320, height = 320, progress = FALSE)
   file.exists(movie$file)
-  unlink(path)
+  unlink(movie$file)
 }
 ```
 

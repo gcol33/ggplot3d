@@ -3,7 +3,7 @@
 # files and encoded into `file`), "sequence" (one file per frame, named from
 # `file`), "pages" (every frame a page of `file`, drawn in one process), or
 # "scene" (captured geometry and camera tracks written to one model file).
-# Without a file, frames stay as temporary PNG files ("frames").
+# Without a file or format, frames stay as temporary PNG files ("frames").
 motion_outputs_3d <- list2env(list(
   gif = list(device = "png", kind = "encode", packages = "gifski",
     encode = function(paths, file, width, height, fps, progress) {
@@ -34,20 +34,30 @@ motion_devices_3d <- list(
   }
 )
 
-motion_output_3d <- function(file) {
+motion_output_3d <- function(file, format = NULL) {
+  known <- ls(motion_outputs_3d)
+  if (!is.null(format)) {
+    scene_assert(is.character(format) && length(format) == 1L && !is.na(format) && nzchar(format),
+      "format must be a single output format or NULL")
+    format <- tolower(format)
+    scene_assert(format %in% known,
+      paste0("format must be one of ", paste(known, collapse = ", ")))
+  }
+  if (is.null(file) && !is.null(format)) file <- tempfile("ggplot3d-animation-", fileext = paste0(".", format))
   if (is.null(file)) {
     motion_require_3d("ragg")
-    return(list(extension = NULL, device = "png", kind = "frames", packages = character()))
+    return(list(file = NULL, extension = NULL, device = "png", kind = "frames", packages = character()))
   }
   scene_assert(is.character(file) && length(file) == 1L && !is.na(file) && nzchar(file),
     "file must be a single output path")
   extension <- tolower(tools::file_ext(file))
-  scene_assert(extension %in% ls(motion_outputs_3d),
-    paste0("file must end in ", paste0(".", ls(motion_outputs_3d), collapse = ", ")))
+  scene_assert(extension %in% known,
+    paste0("file must end in ", paste0(".", known, collapse = ", ")))
+  scene_assert(is.null(format) || identical(extension, format), "file extension must agree with format")
   output <- motion_outputs_3d[[extension]]
   for (package in c(output$packages, if (output$device == "png") "ragg")) motion_require_3d(package)
   scene_assert(dir.exists(dirname(file)), "The output directory does not exist")
-  c(list(extension = extension), output)
+  c(list(file = file, extension = extension), output)
 }
 
 motion_open_device_3d <- function(device, file, width, height, dpi) {

@@ -1,5 +1,11 @@
 # ggplot3d 0.0.0.9000
 
+* `animate_3d(format = "mp4")` selects an output format and writes to a
+  session temporary path. Formats follow the output registry; an explicit
+  `file` must have a matching extension. With both arguments NULL, PNG frame
+  paths are returned. Animation chunks in the PDE and motion articles use
+  `format` to select GIF or MP4 output.
+
 * Raster, hybrid, path-traced and ray-marched panel images and composited
   anaglyphs are drawn with `interpolate = TRUE`, so viewers scale them smoothly instead of by nearest
   neighbour. Figures whose image is denser than the display, such as HTML

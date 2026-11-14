@@ -76,3 +76,29 @@ test_that("rmarkdown animation URLs resolve from the final output directory", {
     expect_match(html, "width: 120px", fixed = TRUE)
   }
 })
+
+test_that("format-only animations embed from knitted calls", {
+  skip_if_not_installed("knitr")
+  skip_if_not_installed("ragg")
+  root <- tempfile("animation-format-knit-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  old <- setwd(root)
+  on.exit(setwd(old), add = TRUE)
+  env <- new.env(parent = globalenv())
+  env$p <- ggplot2::ggplot(mtcars[1:3, ], ggplot2::aes(wt, mpg, z = hp)) + geom_point_3d() + coord_3d()
+  for (format in c("apng", "gif", "mp4", "webm")) {
+    if (any(!vapply(motion_outputs_3d[[format]]$packages, requireNamespace, logical(1), quietly = TRUE))) next
+    text <- c('```{r motion, echo=FALSE, fig.alt="Moving points"}',
+      sprintf('movie <- animate_3d(p, frames = 2, format = "%s", width = 160, height = 160, progress = FALSE)', format),
+      'movie', '```')
+    result <- knitr::knit(text = text, envir = env, quiet = TRUE)
+    tag <- if (format %in% c("apng", "gif")) "img" else "video"
+    expect_match(result, paste0('<', tag, ' src="figure/motion-1.', format, '"'), fixed = TRUE)
+    destination <- paste0("figure/motion-1.", format)
+    expect_true(file.exists(destination))
+    expect_identical(unname(tools::md5sum(destination)), unname(tools::md5sum(env$movie$file)))
+    expect_match(result, "Moving points", fixed = TRUE)
+    unlink(env$movie$file)
+  }
+})
