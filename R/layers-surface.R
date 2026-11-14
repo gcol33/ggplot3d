@@ -22,17 +22,20 @@
 #' @param shading `"flat"` lights and fills each face uniformly; `"smooth"`
 #'   interpolates vertex normals and vertex fills across faces. The raster
 #'   backend and the [view_3d()] viewer interpolate per sample, perspective
-#'   correctly. The vector backend draws a face whose colour varies as one
-#'   linear gradient when its colour varies along one direction and the device
-#'   supports gradients, and otherwise as flat sub-triangles whose colours
-#'   differ from the interpolated colour by at most the option
-#'   `ggplot3d.shading_tolerance` (default 2 / 255 in encoded sRGB), splitting
-#'   each triangle at most eight times (256 pieces along an edge), which can
-#'   leave larger steps where a channel approaches black and the sRGB curve is
-#'   steepest. Gradients
-#'   follow the sRGB curve through their stops within the same tolerance. The
-#'   layers that draw surfaces ([stat_isosurface_3d()], [geom_mesh_3d()] and
-#'   others) accept it too.
+#'   correctly. The vector backend draws a triangle whose colour varies along
+#'   one direction as one linear gradient, with stops that follow the sRGB
+#'   curve within the option `ggplot3d.shading_tolerance` (default 2 / 255 in
+#'   encoded sRGB), and a triangle whose colour stays within that tolerance as
+#'   one flat polygon. A run of faces that holds a triangle whose colour
+#'   varies in two directions by more than the tolerance, which no gradient
+#'   of R graphics can paint, is drawn as one image clipped to the faces'
+#'   outline, in its place in the drawing order, at the device resolution
+#'   and at least `options(ggplot3d.smooth_dpi)` (default 150) dots per inch.
+#'   `options(ggplot3d.smooth_vector = "subdivide")` splits such triangles
+#'   into flat overlapping pieces instead, at most four times (256 pieces per
+#'   triangle) and not into pieces narrower than a device pixel, so large
+#'   faces with distant colours show steps. The layers that draw surfaces
+#'   ([stat_isosurface_3d()], [geom_mesh_3d()] and others) accept it too.
 #' @param alpha_mode How a translucent surface composites.
 #'   `"face"` blends every face over what lies behind it, so a surface seen
 #'   through itself darkens where it folds over. `"surface"` paints each sheet

@@ -5,6 +5,20 @@
   draws both requested families, and screen cross-hatching repeats each
   family independently at arbitrary angles (#62).
 
+* The vector backend paints smooth faces whose corner colours vary in two
+  directions as one image per run of faces, clipped to their outline and kept
+  in its drawing-order slot, instead of splitting them into flat pieces
+  within the colour tolerance. A 9 x 9 x 9 Lab colour-gamut hull drawn to a
+  7-inch SVG went from 540 MB and 43 s to 0.3 MB and 1.8 s, and its colours
+  now match the raster backend within 1/255 inside the hull, where sub-pixel
+  pieces had let the background show through their antialiased edges.
+  Rasterising Gouraud shading follows matplotlib's Agg path; R graphics has
+  no mesh shading (PDF shading types 4 to 7, as Asymptote and pgfplots emit).
+  `options(ggplot3d.smooth_vector = "subdivide")` keeps flat pieces (as gl2ps
+  does in SVG), now overlapping inside each face, capped at 256 per triangle
+  and at one device pixel; `options(ggplot3d.smooth_dpi)` sets the image
+  resolution.
+
 * Axis label thinning leaves room for text that renders wider than its
   measured size (a web font in an SVG): each label rectangle counts 20% larger
   in the overlap test, and labels are visited in ggplot2's `check.overlap`

@@ -117,7 +117,7 @@ test_that("vector smooth paint stays within the colour tolerance", {
   x <- c(0, 40, 10); y <- c(0, 0, 30)
   linear <- decode(rbind(c(0.9, 0.3, 0.2), c(0.2, 0.8, 0.3), c(0.3, 0.3, 0.9)))
   tolerance <- 4 / 255
-  painted <- smooth_face_paint_3d(x, y, rep(1L, 3L), linear, gradients = FALSE, tolerance = tolerance)
+  painted <- smooth_face_paint_3d(x, y, rep(1L, 3L), linear, gradients = FALSE, tolerance = tolerance, max_level = 8L)
   expect_gt(max(painted$id), 16L)
   expect_true(all(!painted$gradient))
   shape <- split(seq_along(painted$id), painted$id)

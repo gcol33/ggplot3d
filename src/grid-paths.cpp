@@ -1,6 +1,10 @@
 #include <Rcpp.h>
 #include "clipper2/clipper.h"
 #include <unordered_map>
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <vector>
 
 namespace {
 struct GridPaint {
@@ -172,4 +176,100 @@ Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcp
   return Rcpp::List::create(Rcpp::Named("x") = xx, Rcpp::Named("y") = yy, Rcpp::Named("id") = rings,
                             Rcpp::Named("path_id") = path_id, Rcpp::Named("outline") = paint,
                             Rcpp::Named("supported") = paint->supported);
+}
+
+namespace {
+inline double srgb_encode_unit(double v) {
+  v = std::min(1.0, std::max(0.0, v));
+  return v <= 0.0031308 ? 12.92 * v : 1.055 * std::pow(v, 1 / 2.4) - 0.055;
+}
+}
+
+// Image of faces with per-vertex linear-light colours, painted in order:
+// each face is fan-triangulated and every pixel centre inside a triangle takes
+// the linear-light interpolation of its corner colours, sRGB-encoded and
+// composited over the earlier faces with the face's alpha. Pixel centres
+// outside every face but within `reach` pixels of one take that face's
+// colour at the nearest point of its triangle, so an image clipped to the
+// faces' outline keeps their colours under its antialiased edge. x and y
+// are in pixels from the image's bottom-left corner; id numbers faces 1..n
+// over consecutive vertices. Returns a nativeRaster (straight alpha).
+// [[Rcpp::export(rng = false)]]
+Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id,
+                                            Rcpp::NumericMatrix linear, Rcpp::NumericVector alpha,
+                                            int width, int height, double reach) {
+  const R_xlen_t n = x.size();
+  if (y.size() != n || id.size() != n || linear.nrow() != n || linear.ncol() != 3 || width <= 0 || height <= 0 ||
+      !R_finite(reach) || reach < 0)
+    Rcpp::stop("Invalid smooth face raster arrays.");
+  const std::size_t pixels = static_cast<std::size_t>(width) * height;
+  std::vector<double> colour(3 * pixels, 0.0), cover(pixels, 0.0);
+  std::vector<int> state(pixels, 0), owner(pixels, 0);
+  struct Triangle { R_xlen_t v[3]; int face; };
+  std::vector<Triangle> triangles;
+  for (R_xlen_t start = 0; start < n;) {
+    R_xlen_t end = start;
+    while (end < n && id[end] == id[start]) ++end;
+    if (id[start] < 1 || id[start] > alpha.size()) Rcpp::stop("Invalid smooth face raster ids.");
+    for (R_xlen_t k = start + 1; k + 1 < end; ++k) triangles.push_back({{start, k, k + 1}, id[start]});
+    start = end;
+  }
+  auto paint = [&](bool exact) {
+    for (const Triangle& t : triangles) {
+      const double x0 = x[t.v[0]], y0 = y[t.v[0]], x1 = x[t.v[1]], y1 = y[t.v[1]], x2 = x[t.v[2]], y2 = y[t.v[2]];
+      const double area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+      if (!(std::fabs(area) > 1e-12)) continue;
+      const double pad = exact ? 0 : reach;
+      const int c0 = std::max(0, static_cast<int>(std::floor(std::min({x0, x1, x2}) - pad - 0.5)));
+      const int c1 = std::min(width - 1, static_cast<int>(std::ceil(std::max({x0, x1, x2}) + pad - 0.5)));
+      const int r0 = std::max(0, static_cast<int>(std::floor(std::min({y0, y1, y2}) - pad - 0.5)));
+      const int r1 = std::min(height - 1, static_cast<int>(std::ceil(std::max({y0, y1, y2}) + pad - 0.5)));
+      const double e[3] = {std::hypot(x2 - x1, y2 - y1), std::hypot(x0 - x2, y0 - y2), std::hypot(x1 - x0, y1 - y0)};
+      const double a = alpha[t.face - 1];
+      for (int r = r0; r <= r1; ++r) for (int c = c0; c <= c1; ++c) {
+        const double px = c + 0.5, py = r + 0.5;
+        double b[3] = {((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py)) / area,
+                       ((x2 - px) * (y0 - py) - (x0 - px) * (y2 - py)) / area,
+                       ((x0 - px) * (y1 - py) - (x1 - px) * (y0 - py)) / area};
+        const bool inside = b[0] >= -1e-12 && b[1] >= -1e-12 && b[2] >= -1e-12;
+        const std::size_t pixel = static_cast<std::size_t>(height - 1 - r) * width + c;
+        if (exact != inside) {
+          if (exact || state[pixel] == 2) continue;
+          double outside = 0;
+          for (int k = 0; k < 3; ++k) outside = std::max(outside, -b[k] * std::fabs(area) / e[k]);
+          if (outside > reach) continue;
+        }
+        double sum = 0;
+        for (int k = 0; k < 3; ++k) { b[k] = std::max(0.0, b[k]); sum += b[k]; }
+        double src[3];
+        for (int ch = 0; ch < 3; ++ch) {
+          double v = 0;
+          for (int k = 0; k < 3; ++k) v += b[k] * linear(t.v[k], ch);
+          src[ch] = srgb_encode_unit(v / sum);
+        }
+        double* dst = &colour[3 * pixel];
+        if (exact && state[pixel] == 2 && owner[pixel] == t.face) continue;
+        if (!exact || state[pixel] != 2) {
+          for (int ch = 0; ch < 3; ++ch) dst[ch] = src[ch];
+          cover[pixel] = a;
+        } else {
+          const double out = a + cover[pixel] * (1 - a);
+          for (int ch = 0; ch < 3; ++ch) dst[ch] = (a * src[ch] + cover[pixel] * (1 - a) * dst[ch]) / out;
+          cover[pixel] = out;
+        }
+        state[pixel] = exact ? 2 : 1; owner[pixel] = t.face;
+      }
+    }
+  };
+  paint(false);
+  paint(true);
+  Rcpp::IntegerMatrix raster(height, width);
+  std::uint32_t* packed = reinterpret_cast<std::uint32_t*>(INTEGER(raster));
+  auto byte = [](double v) { return static_cast<std::uint32_t>(std::lround(std::min(1.0, std::max(0.0, v)) * 255)); };
+  for (std::size_t pixel = 0; pixel < pixels; ++pixel) {
+    const double* c = &colour[3 * pixel];
+    packed[pixel] = state[pixel] ? byte(c[0]) | byte(c[1]) << 8 | byte(c[2]) << 16 | byte(cover[pixel]) << 24 : 0u;
+  }
+  raster.attr("class") = "nativeRaster";
+  return raster;
 }

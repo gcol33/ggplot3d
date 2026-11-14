@@ -170,6 +170,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// smooth_faces_raster_cpp
+Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id, Rcpp::NumericMatrix linear, Rcpp::NumericVector alpha, int width, int height, double reach);
+RcppExport SEXP _ggplot3d_smooth_faces_raster_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP, SEXP linearSEXP, SEXP alphaSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP reachSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type id(idSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type linear(linearSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< int >::type width(widthSEXP);
+    Rcpp::traits::input_parameter< int >::type height(heightSEXP);
+    Rcpp::traits::input_parameter< double >::type reach(reachSEXP);
+    rcpp_result_gen = Rcpp::wrap(smooth_faces_raster_cpp(x, y, id, linear, alpha, width, height, reach));
+    return rcpp_result_gen;
+END_RCPP
+}
 // geometry_intersections_cpp
 Rcpp::DataFrame geometry_intersections_cpp(Rcpp::NumericMatrix xyz, Rcpp::IntegerMatrix faces, Rcpp::IntegerVector parent, double tolerance);
 RcppExport SEXP _ggplot3d_geometry_intersections_cpp(SEXP xyzSEXP, SEXP facesSEXP, SEXP parentSEXP, SEXP toleranceSEXP) {
@@ -808,6 +825,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_geometry_triangulate_rings_cpp", (DL_FUNC) &_ggplot3d_geometry_triangulate_rings_cpp, 4},
     {"_ggplot3d_grid_clip_paths_cpp", (DL_FUNC) &_ggplot3d_grid_clip_paths_cpp, 13},
+    {"_ggplot3d_smooth_faces_raster_cpp", (DL_FUNC) &_ggplot3d_smooth_faces_raster_cpp, 8},
     {"_ggplot3d_geometry_intersections_cpp", (DL_FUNC) &_ggplot3d_geometry_intersections_cpp, 4},
     {"_ggplot3d_mesh_process_cpp", (DL_FUNC) &_ggplot3d_mesh_process_cpp, 6},
     {"_ggplot3d_mesh_geodesic_path_cpp", (DL_FUNC) &_ggplot3d_mesh_geodesic_path_cpp, 5},

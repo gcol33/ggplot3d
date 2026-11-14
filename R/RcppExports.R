@@ -45,6 +45,10 @@ grid_clip_paths_cpp <- function(x, y, id, mask_x, mask_y, mask_id, width, cap, j
     .Call(`_ggplot3d_grid_clip_paths_cpp`, x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii)
 }
 
+smooth_faces_raster_cpp <- function(x, y, id, linear, alpha, width, height, reach) {
+    .Call(`_ggplot3d_smooth_faces_raster_cpp`, x, y, id, linear, alpha, width, height, reach)
+}
+
 geometry_intersections_cpp <- function(xyz, faces, parent, tolerance) {
     .Call(`_ggplot3d_geometry_intersections_cpp`, xyz, faces, parent, tolerance)
 }
