@@ -9,7 +9,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.asp = NULL,
   fig.height = 4.5, dpi = 144, out.width = "100%", dev = "svglite", fig.ext = "svg",
   dev.args = list(pointsize = 14))
 PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
