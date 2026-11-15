@@ -26,3 +26,5 @@ A controlled debugger run validates the allocation diagnosis: the base-grid repr
 Example bisection uses the generated 114-topic examples file. Topics 1-57 and 58-114 each exit with -1073741819. Topics 1-29 and 30-57 each exit 0. The failure accumulates across individually completing subsets; it does not identify one invalid example. The package-independent grid reproducer and the controlled offset-table reservation identify the native cause.
 
 The CRAN raster diagnostic failure was bisected to ad44c8b, which introduced both the explicit two-thread check cap and a test expecting four threads unconditionally. Its commit message, function comment, public help and separate cap test all specify the cap. The corrected diagnostic expects the documented active limit and retains the exact comparisons of image, ID, passes, text and buffers. The native raster implementation is unchanged.
+
+Reported upstream on 2026-11-15: group truncation in catDefn() as R Bugzilla 19323 (https://bugs.r-project.org/show_bug.cgi?id=19323), the definition-offset overflow as 19324 (https://bugs.r-project.org/show_bug.cgi?id=19324).

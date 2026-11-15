@@ -1,0 +1,12 @@
+--- a/src/library/grDevices/src/devPS.c
++++ b/src/library/grDevices/src/devPS.c
+@@ -5158,7 +5158,8 @@
+     /* Grow definition string if necessary) */
+     if (len + buflen + 1 >= pd->definitions[i].nchar) {
+ 	void *tmp;
+-        pd->definitions[i].nchar = pd->definitions[i].nchar + DEFBUFSIZE;
++        while (len + buflen + 1 >= pd->definitions[i].nchar)
++            pd->definitions[i].nchar = pd->definitions[i].nchar + DEFBUFSIZE;
+ 	tmp = realloc(pd->definitions[i].str, 
+                       (pd->definitions[i].nchar)*sizeof(char));
+ 	if (!tmp) error(_("failed to increase definition string (shut down PDF device)"));
