@@ -34,10 +34,16 @@ printed, extended and saved.
 
 ``` r
 
+library(ggplot2)
+library(ggplot3d)
+```
+
+``` r
+
 observations <- data.frame(id = c("a", "b", "c"),
   east = c(-1, 0, 1), north = c(0, 1, -1), height = c(0.4, 1.2, 0.8))
 p <- ggplot(observations, aes(east, north, z = height)) +
-  geom_point_3d(size = 3, colour = PAL["red"]) + coord_3d()
+  geom_point_3d(size = 3, colour = "#B5342B") + coord_3d()
 p
 ```
 
@@ -61,8 +67,8 @@ surface <- expand.grid(east = seq(-1.5, 1.5, length.out = 12),
                        north = seq(-1.5, 1.5, length.out = 12))
 surface$height <- with(surface, exp(-(east^2 + north^2)))
 p <- ggplot(surface, aes(east, north, z = height)) +
-  geom_surface_3d(fill = PAL["blue"]) +
-  geom_point_3d(data = observations, size = 3, colour = PAL["red"]) +
+  geom_surface_3d(fill = "#2E6F9E") +
+  geom_point_3d(data = observations, size = 3, colour = "#B5342B") +
   coord_3d()
 p
 ```
@@ -96,11 +102,6 @@ ggplot(measured, aes(east, north, z = height)) +
 east, north and height
 axes.](ggplot3d_files/figure-html/read-table-1.svg)
 
-``` r
-
-unlink(path)
-```
-
 ## Supplying a surface height
 
 A surface needs a z mapping. The following call shows the message
@@ -108,10 +109,9 @@ produced by a missing mapping.
 
 ``` r
 
-tryCatch(
-  print(ggplot(surface, aes(east, north)) + geom_surface_3d() + coord_3d()),
-  error = function(e) message(conditionMessage(e)))
-#> Problem while computing stat.
+ggplot(surface, aes(east, north)) + geom_surface_3d() + coord_3d()
+#> Error in `make_layer_3d()`:
+#> ! Problem while computing stat.
 #> ℹ Error occurred in the 1st layer.
 #> Caused by error:
 #> ! A surface requires a z aesthetic.
@@ -122,7 +122,7 @@ Map the height column to z to connect the grid points.
 ``` r
 
 ggplot(surface, aes(east, north, z = height)) +
-  geom_surface_3d(fill = PAL["blue"]) + coord_3d()
+  geom_surface_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![A blue curved surface after supplying its height
@@ -140,9 +140,6 @@ explains resolution and device requirements.
 
 path <- tempfile(fileext = ".pdf")
 ggsave(path, p, width = 5, height = 4.5)
-file.info(path)$size > 0
-#> [1] TRUE
-unlink(path)
 ```
 
 ## Where next

@@ -8,6 +8,12 @@ Matsumoto, Segerman and Trettel
 [2022](https://arxiv.org/abs/2010.15801). Installation is covered in
 [Get started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Positioning objects from the observer
 
 A geodesic is the path followed by a freely travelling ray in a
@@ -22,7 +28,7 @@ appearance come from the geometry.
 directions <- rbind(c(-0.4, -0.15, 1), c(0.3, 0.2, 1), c(0.1, -0.25, 1))
 distances <- c(1.5, 1.9, 2.2)
 radii <- c(0.22, 0.28, 0.28)
-colours <- unname(PAL[c("blue", "orange", "green")])
+colours <- c("#2E6F9E", "#9E5E0F", "#3F7A3D")
 inside <- function(geometry) {
   balls <- lapply(1:3, function(i) {
     centre <- geodesic_3d(geometry, direction = directions[i, ],
@@ -187,7 +193,6 @@ facing <- matrix(c(cos(angle), 0, -sin(angle), 0, 1, 0,
 inside("nil") + coord_3d(backend = backend_3d("raymarch", geometry = "nil",
   observer = c(0.05, 0, 0), facing = facing, fov = 90,
   dpi = 52, antialias = 1, max_distance = 3.5, max_steps = 256))
-#> Coordinate system already present. Adding coord_3d() replaces it.
 ```
 
 ![Nil scene viewed from an observer moved sideways and turned five
@@ -252,7 +257,7 @@ and every paired face of the intended domain.
 ``` r
 
 ggplot() + annotation_thurston_3d(centre = c(-0.5, 0, 1.5), radius = 0.3,
-  fill = PAL["orange"]) + theme_void() +
+  fill = "#9E5E0F") + theme_void() +
   coord_3d(backend = backend_3d("raymarch", quotient = faces,
     fov = 110, max_distance = 5, dpi = 52, antialias = 1))
 ```

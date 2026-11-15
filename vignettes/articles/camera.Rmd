@@ -9,30 +9,22 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
-         grey = "#5C6166")
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
+source("../setup.R")
+docs_setup()
 ```
 
 Camera controls choose the direction from which a scene is viewed. Framing controls the bounds used to fit that view on the page. Installation is covered in [Get started](ggplot3d.html).
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
 
 ```{r}
 d <- expand.grid(x = 1:3, y = 1:3)
 d$z <- c(1, 2, 4, 3, 5, 2, 4, 2, 3)
 p <- ggplot(d, aes(x, y, z = z)) +
-  geom_col_3d(fill = PAL["blue"], width = 0.65, depth = 0.65)
+  geom_col_3d(fill = "#2E6F9E", width = 0.65, depth = 0.65)
 ```
 
 ## Angles
@@ -74,6 +66,25 @@ Lighting changes the colours used to draw surface faces. Its direction can be ex
 
 ```{r light, fig.alt="Blue columns lit from the upper right of the view."}
 p + coord_3d(light = light_3d(light_directional(c(1, 1, 2), space = "camera")))
+```
+
+## Several views of one scene
+
+`facet_views_3d()` repeats the scene in one panel per view, like the views of a technical drawing. The default gives front, top and right views next to an isometric one; `layout = "third_angle"` or `"first_angle"` arranges them by the drawing conventions, and a named list gives views of your own.
+
+```{r views, fig.width = 6.5, fig.height = 5.5, fig.alt="An L-shaped block of grey cubes shown from the front, from the top, from the right and in an isometric view."}
+block <- expand.grid(x = 1:4, y = 1:3, z = 1:3)
+block <- block[block$z == 1 | (block$x == 1 & block$y < 3), ]
+ggplot(block, aes(x, y, z = z)) +
+  geom_voxel_3d(fill = "grey80", colour = "grey20") +
+  coord_3d() + facet_views_3d()
+```
+
+When the axes are left out, `guides(orientation = guide_triad_3d())` draws a small set of x, y and z arrows that turn with the camera, and `annotation_north_3d()` draws a north arrow along a given direction.
+
+```{r triad, fig.alt="Three points without axes, with a small x, y and z orientation triad in the corner."}
+ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
+  coord_3d(axes = character()) + guides(orientation = guide_triad_3d())
 ```
 
 ## Stereo pairs

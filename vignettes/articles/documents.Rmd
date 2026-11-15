@@ -9,21 +9,8 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
-         grey = "#5C6166")
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
+source("../setup.R")
+docs_setup()
 ```
 
 A document can display a 3D plot as a static figure or an interactive viewer.
@@ -32,6 +19,11 @@ and arranges plots on a page. Quarto's R engine uses the same chunk options.
 Installation is covered in [Get started](ggplot3d.html); HTML viewers also
 need [htmlwidgets](https://www.htmlwidgets.org/) and
 [svglite](https://svglite.r-lib.org/), described in [Interactive viewing](viewer.html).
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
 
 ## A static figure
 
@@ -42,7 +34,7 @@ vector geometry; this article's SVG device keeps those paths scalable.
 
 ```{r static, fig.alt="Motor cars positioned by weight, fuel economy and horsepower, with higher-power cars toward the upper part of the box."}
 p <- ggplot(mtcars, aes(wt, mpg, z = hp)) +
-  geom_point_3d(size = 3, colour = PAL["blue"]) + coord_3d() +
+  geom_point_3d(size = 3, colour = "#2E6F9E") + coord_3d() +
   labs(x = "weight", y = "mpg", z = "horsepower")
 p
 ```
@@ -124,7 +116,7 @@ get_alt_text(described)
 When a chunk prints several plots, supply a vector of descriptions in their
 printed order. Each static figure gets its own alternative text.
 
-```{r several-plots, fig.alt=c("Motor cars seen from azimuth minus sixty degrees.", "The same motor cars seen from azimuth thirty degrees.")}
+```{r several-plots, fig.alt=c("Motor cars seen from azimuth minus sixty degrees.", "The same motor cars seen from azimuth thirty degrees."), message = FALSE}
 p
 p + coord_3d(azimuth = 30)
 ```
@@ -136,7 +128,7 @@ Each 3D scene compiles at the physical size of its panel, so camera projection
 and mark sizes follow the final layout. Stack the plot above a second view
 to give each one the document column's width.
 
-```{r patchwork, fig.height=8, fig.alt="Two motor-car plots stacked vertically with different camera angles."}
+```{r patchwork, fig.height=8, fig.alt="Two motor-car plots stacked vertically with different camera angles.", message = FALSE}
 other <- p + coord_3d(azimuth = 30)
 patchwork::wrap_plots(p, other, ncol = 1)
 ```
@@ -148,7 +140,7 @@ viewer for a live multi-panel document.
 
 ```{r cowplot, fig.height=8, fig.alt="A 3D motor-car plot above a 2D scatterplot of weight and fuel economy."}
 flat <- ggplot(mtcars, aes(wt, mpg)) +
-  geom_point(colour = PAL["blue"], size = 3) + labs(x = "weight", y = "mpg")
+  geom_point(colour = "#2E6F9E", size = 3) + labs(x = "weight", y = "mpg")
 cowplot::plot_grid(p, flat, ncol = 1)
 ```
 
@@ -162,12 +154,10 @@ image's pixel dimensions through the device resolution. Both settings use
 the intended physical size. The temporary file below is
 six inches wide and four inches high at 144 dots per inch.
 
-```{r save}
+```{r save, message = FALSE}
 raster <- p + coord_3d(backend = backend_3d("raster", dpi = 144))
 path <- tempfile(fileext = ".png")
 ggsave(path, raster, width = 6, height = 4, dpi = 144)
-file.info(path)$size > 0
-unlink(path)
 ```
 
 [Output backends](backends.html) explains the rendering choices.

@@ -6,6 +6,12 @@ controls their transformations, categories, limits and facets. Set
 ggplot2 facets have no z scale. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Transforming heights
 
 A position scale trains its range from layer data and supplies breaks
@@ -18,16 +24,30 @@ endpoints of segments.
 d <- data.frame(x = 1:3, y = c(1, 2, 1), z = c(1, 10, 100),
                 top = c(10, 100, 1000))
 ggplot(d, aes(x, y, z = z, xend = x, yend = y, zend = top)) +
-  geom_segment_3d(linewidth = 0.8, colour = PAL["blue"]) +
+  geom_segment_3d(linewidth = 0.8, colour = "#2E6F9E") +
   scale_z_log10(breaks = c(1, 10, 100, 1000)) + coord_3d()
 ```
 
 ![Three vertical segments with endpoints on a logarithmic height
 scale.](z-scale_files/figure-html/log-1.svg)
 
-Use positive values with a logarithmic scale. Square-root and reverse
-transformations are available through their named constructors. Other
-continuous transformations go through the `transform` argument of
+Use positive values with a logarithmic scale.
+[`scale_z_sqrt()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+compresses large values less strongly, and
+[`scale_z_reverse()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
+turns the axis upside down, which suits depths below a surface.
+
+``` r
+
+ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3, colour = "#2E6F9E") +
+  scale_z_reverse(name = "depth (m)") + coord_3d()
+```
+
+![Three points at depths of one, ten and one hundred metres, with the
+deepest point at the bottom of a reversed
+axis.](z-scale_files/figure-html/reverse-1.svg)
+
+Other continuous transformations go through the `transform` argument of
 [`scale_z_continuous()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md).
 
 ## Categories and dates
@@ -57,6 +77,20 @@ ggplot(dated, aes(x, y, z = day)) + geom_point_3d(size = 3) +
 
 ![Three points at dates spaced one day
 apart.](z-scale_files/figure-html/dates-1.svg)
+
+Durations such as elapsed hours use
+[`scale_z_time()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md),
+which labels the axis as hours, minutes and seconds.
+
+``` r
+
+dated$elapsed <- as.difftime(1:3, units = "hours")
+ggplot(dated, aes(x, y, z = elapsed)) + geom_point_3d(size = 3) +
+  scale_z_time() + coord_3d()
+```
+
+![Three points at one, two and three hours of elapsed
+time.](z-scale_files/figure-html/times-1.svg)
 
 ## Scale limits and coordinate limits
 
@@ -113,7 +147,7 @@ corresponding general axis settings.
 
 ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
   scale_z_continuous(name = "Height", guide = guide_axis_3d(n.dodge = 1)) +
-  coord_3d() + theme(axis.title.z = element_text(colour = PAL["blue"]))
+  coord_3d() + theme(axis.title.z = element_text(colour = "#2E6F9E"))
 ```
 
 ![Three points with a Height axis title and a blue z

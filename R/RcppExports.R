@@ -41,6 +41,14 @@ geometry_triangulate_rings_cpp <- function(xy, ring, tolerance = 0, strict = FAL
     .Call(`_ggplot3d_geometry_triangulate_rings_cpp`, xy, ring, tolerance, strict)
 }
 
+png_unfilter_cpp <- function(data, width, height, channels) {
+    .Call(`_ggplot3d_png_unfilter_cpp`, data, width, height, channels)
+}
+
+gif_encode_cpp <- function(frames, width, height, delays, colours) {
+    .Call(`_ggplot3d_gif_encode_cpp`, frames, width, height, delays, colours)
+}
+
 grid_clip_paths_cpp <- function(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline = NULL, radii = NULL, simplify = 0, mask_rule = 0L) {
     .Call(`_ggplot3d_grid_clip_paths_cpp`, x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii, simplify, mask_rule)
 }

@@ -62,6 +62,11 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
+.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation-dark { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -94,6 +99,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/ray-marching.html">Ray marching and volumes</a></li>
@@ -103,12 +109,17 @@
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/documents.html">Documents</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/networks.html">Networks and trees</a></li>
+    <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/meshes.html">Meshes and intrinsic geometry</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/pde.html">Linear and nonlinear PDEs</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
+    <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/curved-spaces.html">Curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/tensors.html">Tensor glyphs</a></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/ordination.html">Ordination biplots</a></li>
@@ -117,6 +128,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/visibility.html">Visibility</a></li>
+    <li><a class="dropdown-item" href="https://gillescolling.com/ggplot3d/articles/extending.html">Extending ggplot3d</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="https://gillescolling.com/ggplot3d/news/index.html">Changelog</a></li>

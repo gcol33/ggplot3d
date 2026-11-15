@@ -2,6 +2,29 @@
 
 ## ggplot3d 0.0.0.9000
 
+- [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+  writes GIF files with its own encoder instead of gifski, which is no
+  longer a suggested package. All frames share one palette from a median
+  cut of their joint colours, without dithering, and pixels that keep
+  their colour from the previous frame are coded as transparent inside a
+  rectangle cropped to the change. On a 32-frame 480 by 480 surface
+  animation the file is 217 KB, against 315 KB from gifski.
+
+- [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+  paints each frame on the fill of the plot’s `plot.background`, as
+  [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html)
+  does, so a plot drawn at a fixed aspect ratio has no white margins
+  around a coloured background. A transparent background stays
+  transparent in PNG, SVG and APNG frames and becomes white in GIF and
+  video output.
+
+- [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
+  defaults to `mode = "lightness"`: shading lightens faces turned toward
+  the light as well as darkening faces turned away, so the faces that
+  face the camera no longer blend together under the default light,
+  which comes from near the viewer. `mode = "multiply"` gives the
+  previous shading.
+
 - The exported API follows one name per concept
   (`dev_notes/11-api-naming.md`):
 
@@ -61,6 +84,20 @@
     signature;
     [`stat_immersed_3d()`](https://gillescolling.com/ggplot3d/reference/stat_immersed_3d.md)
     starts with `mapping` and `data`.
+
+- Plots drawn on R’s own [`pdf()`](https://rdrr.io/r/grDevices/pdf.html)
+  device are complete. That device writes at most about 16 kB of the
+  content of a group or mask (R bug 19323) and crashes when closing a
+  file with a few thousand clipping paths (R bug 19324). Quadrics
+  (spheres, tubes, vector heads) now paint their visible part as exact
+  geometry instead of through one clipping path per run, which took the
+  closed-knot
+  [`geom_tube_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md)
+  example from 4,446 clipping paths to none. On
+  [`pdf()`](https://rdrr.io/r/grDevices/pdf.html), strokes whose offset
+  joins cross, clipped textures and smooth shading use clipping paths in
+  place of masks, fragment clips meet hybrid regions in one intersected
+  clipping path, and anaglyphs take the per-channel composite.
 
 - `animate_3d(format = "mp4")` selects an output format and writes to a
   session temporary path. Formats follow the output registry; an

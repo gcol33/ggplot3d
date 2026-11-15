@@ -9,6 +9,12 @@ regions.
 
 ``` r
 
+library(ggplot2)
+library(ggplot3d)
+```
+
+``` r
+
 fit <- prcomp(iris[1:4], scale. = TRUE)
 groups <- setNames(iris$Species, rownames(iris))
 ggplot() + biplot_3d(fit, groups = groups, region = "ellipsoid",

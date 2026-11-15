@@ -43,6 +43,11 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
+.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation-dark { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 </style></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -71,6 +76,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
@@ -80,12 +86,17 @@
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
     <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
     <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
     <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
     <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
     <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
     <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
     <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
@@ -94,6 +105,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -132,6 +144,8 @@
 
       <dl><dt><a href="camera.html">Camera and framing</a></dt>
         <dd><p>Set camera angles, projection, framing and stereo output for static scenes.</p>
+        </dd><dt><a href="frames.html">Curvilinear and compositional frames</a></dt>
+        <dd><p>Place data in cylindrical, spherical, globe, ternary prism and quaternary simplex coordinates instead of a box.</p>
         </dd><dt><a href="backends.html">Output backends</a></dt>
         <dd><p>Choose vector, raster, hybrid or traced rendering and save figures at the intended resolution.</p>
         </dd><dt><a href="lighting.html">Lighting and surface styles</a></dt>
@@ -143,13 +157,17 @@
         </dd><dt><a href="export.html">Exporting plots and scenes</a></dt>
         <dd><p>Write model files, animated glTF, semantic SVG, TikZ and Asymptote, or pass scenes to rgl and rayrender.</p>
         </dd><dt><a href="motion.html">Camera animation and interaction</a></dt>
-        <dd><p>Render camera moves, tween points and surfaces between data states, and explore linked interactive panels.</p>
+        <dd><p>Render camera moves and camera paths, tween points and surfaces between data states, and hand the scene to the interactive viewer.</p>
         </dd><dt><a href="combining-2d-3d.html">Combining 2D and 3D graphics</a></dt>
         <dd><p>Place ggplot2 panels on walls, stack slices in depth, draw terraced contours and arrange 2D and 3D plots.</p>
         </dd><dt><a href="documents.html">Documents</a></dt>
         <dd><p>Use knitr and Quarto to choose HTML viewers or static figures, supply alt text and compose panels.</p>
         </dd><dt><a href="spatial.html">Maps and spatial data</a></dt>
         <dd><p>Draw raster terrain, simple features and XYZ geometry, prism maps, profiles, flow arcs and space-time paths.</p>
+        </dd><dt><a href="networks.html">Networks and trees</a></dt>
+        <dd><p>Draw igraph networks in three dimensions, multilayer networks on stacked planes, and dendrograms standing beside a heat map.</p>
+        </dd><dt><a href="meshes.html">Meshes and intrinsic geometry</a></dt>
+        <dd><p>Read mesh files, smooth, subdivide and simplify triangle meshes, measure curvature, and draw geodesic distances, paths and log maps.</p>
         </dd><dt><a href="vector-fields.html">Vector fields</a></dt>
         <dd><p>Draw vector arrows, magnitude-scaled cones, integrated streamlines and solid streamtubes from a gridded field.</p>
       </dd></dl></div>
@@ -163,6 +181,12 @@
         <dd><p>Exact solutions of eight partial differential equations and a numerical magnetohydrodynamic solution drawn as surfaces that change over time with animate_3d().</p>
         </dd><dt><a href="implicit-surfaces.html">Implicit surfaces</a></dt>
         <dd><p>Draw level sets from functions, reconstruct surfaces from point clouds and triangulate scattered height measurements.</p>
+        </dd><dt><a href="higher-dimensions.html">Four dimensions, tilings and honeycombs</a></dt>
+        <dd><p>Project and rotate four-dimensional data, cut 4D meshes with a hyperplane, run a grand tour, and draw regular tilings and honeycombs.</p>
+        </dd><dt><a href="curved-spaces.html">Curved spaces and spacetime</a></dt>
+        <dd><p>Draw data in spherical and hyperbolic geometry, the Hopf fibration, hyperbolic tree layouts, light cones, Lorentz boosts and Schwarzschild geodesics.</p>
+        </dd><dt><a href="complex-knots.html">Complex functions, knots and immersed surfaces</a></dt>
+        <dd><p>Domain colouring on the Riemann sphere, Riemann surfaces of inverse functions, Möbius maps, torus knots and immersed surfaces with their self-intersections.</p>
         </dd><dt><a href="thurston-geometries.html">Inside the Thurston geometries</a></dt>
         <dd><p>Render an observer view in each of the eight Thurston geometries using intrinsic balls and geodesics.</p>
         </dd><dt><a href="tensors.html">Tensor glyphs</a></dt>
@@ -180,6 +204,8 @@
 
       <dl><dt><a href="visibility.html">Visibility</a></dt>
         <dd>
+        </dd><dt><a href="extending.html">Extending ggplot3d</a></dt>
+        <dd><p>Write a new geom for coord_3d(): the scene packet it emits, how positions are normalised, and how register_geom_3d() connects it to the scene.</p>
       </dd></dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

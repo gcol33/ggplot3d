@@ -2,20 +2,26 @@
 
 Camera motion shows a fixed scene from several directions. Data
 animation changes the observations or geometry between states. This
-article renders both kinds of animation and opens a panel with orbit
-controls. Installation is covered in [Get
-started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md). Movie
-output uses [gifski](https://r-rust.r-universe.dev/gifski) for GIF files
-or [av](https://docs.ropensci.org/av/) for MP4 files; the viewer uses
-[htmlwidgets](https://www.htmlwidgets.org/).
+article renders both kinds of animation with
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+and ends by opening the same plot in the interactive viewer.
+Installation is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+Frames are drawn with [ragg](https://ragg.r-lib.org/), and MP4 output
+needs [av](https://docs.ropensci.org/av/).
 
 1.  **Build** the scene with
     [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
 
-2.  **Render** a camera path with
-    [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md).
+2.  **Move** the camera with
+    [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+    and a camera path such as
+    [`orbit_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md).
 
-3.  **Explore** the plot with
+3.  **Tween** data states with `animate_3d(time = )` and
+    [`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md).
+
+4.  **Explore** the plot with
     [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md).
 
 ## Example
@@ -24,99 +30,145 @@ or [av](https://docs.ropensci.org/av/) for MP4 files; the viewer uses
 
 library(ggplot2)
 library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
+```
+
+The data describe a curved surface sampled on a regular grid.
+`frame = "azimuth"` reserves room for a full turn about the vertical
+axis, so the plot box keeps its size in every frame.
+
+``` r
+
 d <- expand.grid(x = seq(-2, 2, length.out = 12),
                  y = seq(-2, 2, length.out = 12))
 d$z <- with(d, exp(-(x^2 + y^2) / 2))
 p <- ggplot(d, aes(x, y, z = z)) +
   geom_surface_3d(fill = "#2E6F9E") +
   coord_3d(azimuth = -60, elevation = 30, frame = "azimuth")
-```
-
-The data describe a curved surface sampled on a regular grid. The camera
-looks toward the centre of its expanded box.
-
-``` r
-
 p
 ```
 
 ![A blue curved surface viewed at azimuth minus sixty degrees and
 elevation thirty degrees.](motion_files/figure-html/static-1.svg)
 
-### Save a camera path
+### Turning the camera
 
-The default path makes a full azimuth turn. Each frame retains the panel
-dimensions and framing bounds; the final angle precedes the starting
-angle so a loop repeats each view once. The result records the rendering
-time of each frame in seconds.
-
-``` r
-
-if (requireNamespace("gifski", quietly = TRUE)) {
-  movie <- animate_3d(p, frames = 12, fps = 6, format = "gif",
-                     width = 480, height = 480, progress = FALSE)
-  data.frame(frames = movie$frame_count, fps = movie$fps,
-             file_written = file.exists(movie$file))
-  range(movie$timings)
-  unlink(movie$file)
-}
-```
-
-Camera arguments accept a scalar, a vector with one value per frame, or
-a function of time in seconds. This path raises the camera while it
-rotates. Varying elevation or roll uses sphere framing, which reserves
-bounds for arbitrary rotation.
+Without camera arguments,
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+makes one full azimuth turn. The last frame stops one step short of the
+first, so the loop repeats no view. `format = "gif"` writes the movie to
+a temporary file; `file = "orbit.gif"` writes it to a path of your
+choice instead. Width and height are in pixels.
 
 ``` r
 
-frames <- animate_3d(p, frames = 3, fps = 2,
-  azimuth = function(t) -60 + 90 * t,
-  elevation = c(20, 35, 50), backend = "vector",
-  width = 320, height = 320, progress = FALSE)
-frames$camera
-#>   time azimuth elevation zoom roll   projection fov distance target_x target_y
-#> 1  0.0     -60        20    1    0 orthographic  35       NA      0.5      0.5
-#> 2  0.5     -15        35    1    0 orthographic  35       NA      0.5      0.5
-#> 3  1.0      30        50    1    0 orthographic  35       NA      0.5      0.5
-#>   target_z
-#> 1      0.5
-#> 2      0.5
-#> 3      0.5
-frames$panel_extents[[1]]
-#> $`panel.9-7-9-7.scene-panel-3d`
-#>  width_mm height_mm 
-#>  37.08663  37.08663
-unlink(dirname(frames$frames[1]), recursive = TRUE)
+orbit <- animate_3d(p, frames = 24, fps = 8, format = "gif",
+                    width = 600, height = 480, dpi = 100)
+orbit
 ```
 
-Raster rendering is the default. Selecting vector rendering uses the
-exact vector scene backend to produce each PNG frame, and
-`format = "mp4"` selects the video encoder.
+![The blue surface turning a full circle about its vertical
+axis.](motion_files/figure-html/orbit-show-1.gif)
+
+![The blue surface turning a full circle about its vertical
+axis.](motion_files/figure-html/orbit-show-2.gif)
+
+Printing the result in a document embeds the movie. `orbit$file` holds
+its path, and `orbit$camera` holds one row per frame with the time and
+the camera angles used for it.
+
+### Camera arguments over time
+
+Each camera argument accepts one value, one value per frame, or a
+function of time in seconds. Here the azimuth turns 90 degrees in three
+seconds while the elevation rises from 15 to 50 degrees, one value per
+frame. A changing elevation needs room for every viewing direction,
+which
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+reserves by framing the box as a sphere. `format = "mp4"` writes a
+video.
 
 ``` r
 
-if (requireNamespace("av", quietly = TRUE)) {
-  movie <- animate_3d(p, frames = 3, fps = 6, format = "mp4",
-                     width = 320, height = 320, progress = FALSE)
-  file.exists(movie$file)
-  unlink(movie$file)
-}
+rising <- animate_3d(p, frames = 36, fps = 12, format = "mp4",
+  azimuth = function(t) -60 + 30 * t,
+  elevation = seq(15, 50, length.out = 36),
+  width = 600, height = 480, dpi = 100)
+rising
 ```
 
-### Tween observations between states
+The blue surface turning a quarter circle while the camera rises from a
+low view to a view from above.
 
-The time argument selects a column naming the states. Layers without
-that column appear in every frame. The following example uses three cars
-from the built-in data, then constructs a hypothetical second state with
-lower weight and two more miles per gallon. Each car keeps its model
-name as its group, including when the second state’s rows are reversed.
+The blue surface turning a quarter circle while the camera rises from a
+low view to a view from above.
+
+Frames use the raster backend by default. `backend = "vector"` draws
+each frame with the exact vector scene backend described in
+[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md),
+at a higher cost per frame.
+
+### Camera paths
+
+A camera path describes a move as a timed sequence of views.
+[`orbit_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
+turns about the vertical axis,
+[`dolly_zoom_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
+changes the field of view while the camera moves along its line of
+sight, so the plane through the target keeps its size, and
+[`c()`](https://rdrr.io/r/base/c.html) joins moves end to end. A field
+of view of 0 is the parallel projection, so the dolly zoom below
+flattens a perspective view into a parallel one.
+
+``` r
+
+tour <- c(orbit_3d(degrees = 90, duration = 2, ease = "sine-in-out"),
+          dolly_zoom_3d(fov = 0, duration = 2))
+lens <- p + coord_3d(azimuth = -60, elevation = 30, frame = "azimuth",
+                     projection = "perspective")
+travel <- animate_3d(lens, path = tour, fps = 12, format = "gif",
+                     width = 600, height = 480, dpi = 100)
+travel
+```
+
+![The surface in perspective turning a quarter circle, then flattening
+into a parallel view at constant
+size.](motion_files/figure-html/tour-show-1.gif)
+
+![The surface in perspective turning a quarter circle, then flattening
+into a parallel view at constant
+size.](motion_files/figure-html/tour-show-2.gif)
+
+[`camera_path_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
+interpolates a list of keyframes, each a
+[`camera_3d()`](https://gillescolling.com/ggplot3d/reference/camera_3d.md)
+view, at the times given in `at`. Orientations are interpolated as
+rotations, so a path can pass straight over the top of the box without
+the spin that interpolating azimuth and elevation separately produces
+there.
+[`fly_through_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
+moves the eye along a spline through points in data coordinates.
+
+``` r
+
+over_the_top <- camera_path_3d(
+  list(camera_3d(azimuth = -60, elevation = 30),
+       camera_3d(azimuth = -60, elevation = 90),
+       camera_3d(azimuth = 120, elevation = 30, roll = 180)),
+  at = c(0, 1.5, 3), ease = "sine-in-out")
+```
+
+Passing `path = over_the_top` to
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+renders it like the tour above.
+
+### Tweening observations between states
+
+The time argument names a column that holds the states. Layers without
+that column appear in every frame. The following example takes three
+cars from the built-in data and constructs a hypothetical second state
+with 10% lower weight and two more miles per gallon. Each car keeps its
+model name as its group, which pairs it with itself even though the
+second state’s rows are in reverse order.
 
 ``` r
 
@@ -127,209 +179,157 @@ changed <- transform(observed[3:1, ], wt = wt * 0.9, mpg = mpg + 2, state = 1)
 states <- rbind(observed, changed)
 moving <- ggplot(states, aes(wt, hp, z = mpg, group = id, colour = id)) +
   geom_point_3d(size = 4) +
-  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_colour_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d()
 ```
 
-The tween specification inserts three frames between the two supplied
-states, producing five frames in total. Statistics run on the supplied
-states before interpolation, and all states train one set of scales.
+`tween_3d(n = 10)` inserts ten frames between the two supplied states.
+Statistics run on the supplied states before interpolation, and all
+states train one set of scales, so the axes stay fixed while the cars
+move.
 
 ``` r
 
-movement <- animate_3d(moving, time = "state", tween = tween_3d(n = 3),
-  backend = "vector", width = 480, height = 360, fps = 5, progress = FALSE)
-movement$frame_count
-#> [1] 5
-movement$transition
-#>   from to fraction
-#> 1    0  1     0.00
-#> 2    0  1     0.25
-#> 3    0  1     0.50
-#> 4    0  1     0.75
-#> 5    1  1     0.00
+movement <- animate_3d(moving, time = "state", tween = tween_3d(n = 10),
+  fps = 8, format = "gif", width = 600, height = 480, dpi = 100)
+movement
 ```
 
-The first, middle and final frames show the three cars moving to their
-new positions. The camera and axis ranges remain fixed.
+![Three cars moving from their observed weights and fuel consumption to
+lower weights and higher fuel consumption, against fixed
+axes.](motion_files/figure-html/tween-points-show-1.gif)
 
-![Three cars at their observed weights and fuel
-consumption.](motion_files/figure-html/point-state-1.png)![The same
-three cars halfway to their hypothetical second
-positions.](motion_files/figure-html/point-state-3.png)![The three cars
-at the hypothetical lower weights and higher fuel
-consumption.](motion_files/figure-html/point-state-5.png)
+![Three cars moving from their observed weights and fuel consumption to
+lower weights and higher fuel consumption, against fixed
+axes.](motion_files/figure-html/tween-points-show-2.gif)
 
-Group matching pairs occurrences within each persistent group. Map one
+`movement$transition` lists, for every frame, the two states it lies
+between and the fraction of the way from one to the other. Group
+matching pairs occurrences within each persistent group, so map one
 identifier per moving mark when rows can change order. Source-row
-matching is also available, with row numbers interpreted within each
-state. Unmatched groups fade in or out by default; the enter and exit
-arguments can retain them or define starting and ending attributes.
+matching is also available, with row numbers counted within each state.
+Unmatched groups fade in or out by default; the `enter` and `exit`
+arguments of
+[`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md)
+can keep them or set their starting and ending attributes.
 
 ### Motion trails
 
-The trail window counts preceding rendered frames, including the frames
-inserted by
+A trail counts preceding rendered frames, including the frames inserted
+by
 [`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md).
-Each moving mark leaves a tube whose alpha fades with age. A group
-identifier keeps each object’s history together when rows change order.
-Layers with fixed data appear in every frame, and gaps in an object’s
-observations break its trail.
+Each moving mark leaves a tube whose alpha fades with age, and
+`taper = TRUE` also narrows the tube with age. Layers with fixed data
+appear in every frame, and a gap in an object’s observations breaks its
+trail.
 
 ``` r
 
-wake <- animate_3d(moving, time = "state", tween = tween_3d(n = 3),
-  trail = list(length = 4, radius = 0.05, taper = TRUE),
-  backend = "vector", width = 480, height = 360, progress = FALSE)
+wake <- animate_3d(moving, time = "state", tween = tween_3d(n = 10),
+  trail = list(length = 6, radius = 0.05, taper = TRUE),
+  fps = 8, format = "gif", width = 600, height = 480, dpi = 100)
+wake
 ```
 
-![Three cars halfway along their motion, with fading tapered
-trails.](motion_files/figure-html/motion-trail-3.png)![The cars at their
-final positions, with trails showing their recent
-paths.](motion_files/figure-html/motion-trail-5.png)
+![The three cars moving to their new positions, each followed by a
+tapered trail that fades behind
+it.](motion_files/figure-html/motion-trails-show-1.gif)
 
-`trail = 4` uses a default tube radius of 0.5% of the panel range
-diagonal. Setting `width` in the list selects a ribbon; `normal` sets
-its initial orientation. Radius and width use transformed position
-units. Mapped `radius`, `width` and `twist` aesthetics also reach the
-sweep. `taper = TRUE` multiplies the cross-section size by the age
-fraction used for fading. `layers` selects the indices of the moving
-layers that leave trails. Trails follow the frame-history approach of
-gganimate’s
+![The three cars moving to their new positions, each followed by a
+tapered trail that fades behind
+it.](motion_files/figure-html/motion-trails-show-2.gif)
+
+`trail = 4` uses a default tube radius of 0.5% of the diagonal of the
+panel ranges. Setting `width` in the list draws a ribbon instead, and
+`normal` sets its initial orientation. Radius and width are in
+transformed position units, and mapped `radius`, `width` and `twist`
+aesthetics also reach the sweep. `layers` selects the moving layers that
+leave trails. Trails follow the frame history of gganimate’s
 [shadow_trail()](https://gganimate.com/reference/shadow_trail.html) and
-[shadow_wake()](https://gganimate.com/reference/shadow_wake.html), with
-connected surfaces built by the rotation-minimising tube and ribbon
-sweep.
+[shadow_wake()](https://gganimate.com/reference/shadow_wake.html), drawn
+as connected tubes and ribbons.
 
-### Morph a surface
+### Morphing a surface
 
-A surface with the same grid and mesh connectivity in every state can
-interpolate its heights and fill. Here the two states contain the same
-sampled wave with opposite signs. The middle frame is flat because every
-pair of heights averages to zero.
+A surface with the same grid in every state interpolates its heights and
+fill. The three states below hold the same sampled wave with signs
+$`+1`$, $`-1`$ and $`+1`$, so the movie returns to its first frame and
+loops without a jump. Halfway between two states every height averages
+to zero and the surface is flat.
 
 ``` r
 
-waves <- expand.grid(x = seq(-1, 1, length.out = 8),
-                     y = seq(-1, 1, length.out = 8), state = 0:1)
-waves$z <- with(waves, sin(pi * x) * cos(pi * y) * (1 - 2 * state))
+waves <- expand.grid(x = seq(-1, 1, length.out = 10),
+                     y = seq(-1, 1, length.out = 10), state = 0:2)
+waves$z <- with(waves, sin(pi * x) * cos(pi * y) * cos(pi * state))
 wave <- ggplot(waves, aes(x, y, z = z, fill = z)) + geom_surface_3d() +
-  scale_fill_gradient2(low = PAL["blue"], mid = "white", high = PAL["red"]) +
+  scale_fill_gradient2(low = "#2E6F9E", mid = "#E8E2C8", high = "#B5342B") +
   coord_3d()
-morph <- animate_3d(wave, time = "state", tween = tween_3d(n = 1),
-  backend = "vector", width = 480, height = 360, progress = FALSE)
 ```
 
-![A wave surface in its first state, coloured by
-height.](motion_files/figure-html/surface-state-1.png)![The flat middle
-frame interpolated between opposite wave
-heights.](motion_files/figure-html/surface-state-2.png)![The final wave
-with all heights
-reversed.](motion_files/figure-html/surface-state-3.png)
+``` r
 
-Positions interpolate in transformed scale units, and colours
-interpolate in linear light. Paths with different vertex counts are
-resampled along their lengths. Polygon rings are aligned before
-interpolation. Meshes with changed connectivity cross-fade as complete
-shapes. See
+morph <- animate_3d(wave, time = "state", tween = tween_3d(n = 11),
+  fps = 12, format = "gif", width = 600, height = 480, dpi = 100)
+morph
+```
+
+![A wave surface coloured by height that flattens, inverts and returns
+to its first shape.](motion_files/figure-html/morph-show-1.gif)
+
+![A wave surface coloured by height that flattens, inverts and returns
+to its first shape.](motion_files/figure-html/morph-show-2.gif)
+
+Positions interpolate in transformed scale units and colours in linear
+light. Paths with different vertex counts are resampled along their
+length, polygon rings are aligned before interpolation, and meshes whose
+connectivity changes cross-fade as whole shapes.
 [tween_3d()](https://gillescolling.com/ggplot3d/reference/tween_3d.md)
-for matching and transition options.
+lists the matching and transition options.
 
-### Using gganimate
+### Plots built for gganimate
 
-The state and time transitions of
-[gganimate](https://gganimate.com/reference/transition_time.html) use a
-separate plot-building pipeline. Calling its animation renderer with
-those transitions and a 3D coordinate system produces guidance to use
-the native animation call. Build the ordinary 3D plot, supply its state
-column as the time argument, and add a tween specification, as in the
-examples above.
+The transitions of
+[gganimate](https://gganimate.com/reference/transition_time.html) run
+their own plot-building pipeline, and calling them on a plot with
+[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+stops with a message pointing to
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md).
+The same animation comes from the ordinary 3D plot: name its state
+column in `time` and add a
+[`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md)
+specification, as above. Visibility is resolved again for every frame.
 
-The native renderer evaluates visibility for each frame. Reuse of one
-geometry partition across successive camera frames is currently
-unavailable.
+### Exploring the scene
 
-### Explore the scene
-
-The viewer opens one panel at its static camera position. Drag to orbit
-and use the wheel or a two-finger pinch to zoom. Arrow keys rotate the
-view; plus and minus change magnification.
-
-``` r
-
-if (requireNamespace("htmlwidgets", quietly = TRUE) &&
-    requireNamespace("svglite", quietly = TRUE)) {
-  view_3d(p, width = 560, height = 560)
-}
-```
-
-Select **Camera code** to display the current coordinate call, then copy
-it into the plot code. **Reset** restores the initial camera. In a Shiny
-application, camera changes also update the input whose name is the
-widget identifier followed by `_camera`.
-
-The viewer shows the whole plot: every facet panel is live, and the
-parts outside the panels (strips, legends, titles) are the static plot’s
-own, embedded as SVG around them. Orbiting one panel turns every panel
-by the same amount; `view_3d(link = FALSE)` moves each panel alone, and
-`panel =` shows one panel by itself.
-
-Hovering a point, line, face or label shows its tooltip, and clicking
-selects it. Two aesthetics drive this, following
-[ggiraph](https://davidgohel.github.io/ggiraph/): `tooltip` sets the
-text, and `data_id` sets the selection key, so rows that share a key
-highlight together across layers. Without a `tooltip`, the tooltip lists
-the mapped values of the row. Shift-click adds a key to the selection, a
-click on empty space clears it, and unselected primitives dim while a
-selection exists. In Shiny, the input named by the widget identifier
-followed by `_selected` holds the selected keys.
+[`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
+opens the same plot in the browser at its static camera. Drag to orbit,
+use the wheel or a two-finger pinch to zoom, and select **Camera code**
+to copy the
+[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+call for the current view back into the plot code.
 
 ``` r
 
-cars <- data.frame(mtcars, model = rownames(mtcars))
-picked <- ggplot(cars, aes(wt, mpg, z = hp, colour = factor(cyl),
-    tooltip = model, data_id = model)) +
-  geom_point_3d(size = 3) +
-  coord_3d() +
-  facet_wrap(~am)
-if (requireNamespace("htmlwidgets", quietly = TRUE) &&
-    requireNamespace("svglite", quietly = TRUE)) {
-  view_3d(picked, width = 620, height = 360)
-}
+view_3d(p, width = 560, height = 420)
 ```
 
-Linked brushing across widgets uses
-[crosstalk](https://rstudio.github.io/crosstalk/): pass the `SharedData`
-whose `origData()` the plot draws as `view_3d(plot, data = shared)`.
-Selections then travel between the viewer and the other widgets of the
-group, and a crosstalk filter hides the rows it removes.
-
-The browser draws opaque geometry with a depth buffer, which records the
-nearest painted surface at each pixel. Transparent primitives are
-ordered by centre depth, so intersecting transparent surfaces can differ
-from static vector output. Browser labels use plain text. The pointer
-finds its primitive in an offscreen image of primitive identifiers, the
-same `primitive_id` the raster backend returns in its id buffer.
+[Interactive
+viewing](https://gillescolling.com/ggplot3d/articles/viewer.md) covers
+tooltips, selection, Shiny inputs, linked panels and crosstalk.
 
 ## Camera conventions
 
 The camera path keeps the plot data fixed.
 [gganimate](https://gganimate.com/reference/transition_time.html)
 separates changes in data over time from its [fixed
-view](https://gganimate.com/reference/view_static.html); the fixed-view
-principle informs the locked animation bounds here. [rayshader’s movie
-renderer](https://www.rayshader.com/reference/render_movie.html)
-supplies the precedent for scalar and per-frame camera vectors and
-extension-selected encoders. [rgl’s movie
+view](https://gganimate.com/reference/view_static.html); the fixed view
+informs the locked animation bounds here. [rayshader’s movie
+renderer](https://www.rayshader.com/reference/render_movie.html) is the
+precedent for scalar and per-frame camera vectors and for encoders
+chosen by the file extension. [rgl’s movie
 recorder](https://dmurdoch.github.io/rgl/reference/play3d.html) and
 [spin function](https://dmurdoch.github.io/rgl/reference/spin3d.html)
-supply the time-function pattern.
-
-The viewer orbits around the coordinate system’s target and retains its
-projection and roll. [Plotly’s scene
-camera](https://plotly.com/javascript/reference/layout/scene/#scene-camera)
-exposes target, eye and up vectors with a projection choice. Dragging
-and wheel zoom follow [three.js orbit
-controls](https://threejs.org/docs/pages/OrbitControls.html). Geometry,
-colours and lighting travel to the browser once; camera changes are
-evaluated there.
+supply the camera as a function of time. Rotation keyframes are
+interpolated as quaternions (Shoemake
+[1985](https://doi.org/10.1145/325165.325242)).

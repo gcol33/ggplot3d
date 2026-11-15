@@ -9,6 +9,12 @@ Optional bridges use [rgl](https://dmurdoch.github.io/rgl/), an R
 package for interactive 3D scenes, and
 [rayrender](https://www.rayrender.net), an R path tracer.
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Example
 
 The built-in motor-car data record weight in thousands of pounds, fuel
@@ -20,7 +26,7 @@ variables.
 
 cars <- data.frame(mtcars, model = rownames(mtcars))
 p <- ggplot(cars, aes(wt, mpg, z = hp, tooltip = model, data_id = model)) +
-  geom_point_3d(size = 3, colour = PAL["blue"]) +
+  geom_point_3d(size = 3, colour = "#2E6F9E") +
   coord_3d() + labs(x = "weight", y = "mpg", z = "horsepower")
 p
 ```
@@ -133,7 +139,7 @@ animation.
 states <- rbind(transform(cars, step = 1),
   transform(cars, step = 2, hp = hp + 20))
 changing <- ggplot(states, aes(wt, mpg, z = hp)) +
-  geom_point_3d(size = 3, colour = PAL["blue"]) + coord_3d()
+  geom_point_3d(size = 3, colour = "#2E6F9E") + coord_3d()
 motion <- animate_3d(changing, time = "step", azimuth = -60,
   file = file.path(out, "states.gltf"), fps = 2,
   width = 320, height = 320, workers = 1, progress = FALSE)

@@ -5,6 +5,12 @@ seen from a camera. This article explains overlapping surfaces, drawing
 order and finite-width strokes. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Overlapping geometry
 
 Occlusion occurs when nearer geometry covers farther geometry in the
@@ -21,8 +27,8 @@ a$z <- a$x
 b <- a
 b$z <- -b$x
 ggplot(a, aes(x, y, z = z)) +
-  geom_surface_3d(fill = PAL["blue"]) +
-  geom_surface_3d(data = b, fill = PAL["orange"]) + coord_3d(elevation = 60)
+  geom_surface_3d(fill = "#2E6F9E") +
+  geom_surface_3d(data = b, fill = "#9E5E0F") + coord_3d(elevation = 60)
 ```
 
 ![Two intersecting planes, each covering part of the other in the
@@ -85,10 +91,10 @@ intended size.
 
 points <- data.frame(x = c(-0.5, 0, 0.5), y = c(0, 0.5, 0),
                      z = c(0.6, -0.4, 0.7))
-ggplot(a, aes(x, y, z = z)) + geom_surface_3d(fill = PAL["blue"]) +
+ggplot(a, aes(x, y, z = z)) + geom_surface_3d(fill = "#2E6F9E") +
   geom_segment_3d(data = points, aes(xend = x, yend = y, zend = -1),
                   linewidth = 0.8) +
-  geom_point_3d(data = points, size = 4, colour = PAL["red"]) +
+  geom_point_3d(data = points, size = 4, colour = "#B5342B") +
   coord_3d(elevation = 60)
 ```
 
@@ -161,7 +167,7 @@ annotations whose role requires them to remain visible.
 
 - Appel, A., Rohlf, F. J. and Stein, A. J. (1979). The Haloed Line
   Effect for Hidden Line Elimination. SIGGRAPH ’79.
-  [history.siggraph.org](https://history.siggraph.org/?p=104577).
+  [history.siggraph.org](https://history.siggraph.org/learning/the-haloed-line-effect-for-hidden-line-elimination-by-appel-rohlf-and-stein/).
 
 - Nehab, D. (2020). Converting Stroked Primitives to Filled Primitives.
   ACM Transactions on Graphics 39(4).

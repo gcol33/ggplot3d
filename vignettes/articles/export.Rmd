@@ -9,21 +9,8 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
-         grey = "#5C6166")
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
+source("../setup.R")
+docs_setup()
 ```
 
 Export a panel as a 3D model for another application, or save a projected
@@ -32,6 +19,11 @@ both kinds of output from small plots. Installation is covered in
 [Get started](ggplot3d.html). Optional bridges use
 [rgl](https://dmurdoch.github.io/rgl/), an R package for interactive 3D scenes,
 and [rayrender](https://www.rayrender.net), an R path tracer.
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
 
 ## Example
 
@@ -42,7 +34,7 @@ hover text and selection keys. Start with a view of these three variables.
 ```{r cars, fig.alt="Motor cars positioned by weight, fuel economy and horsepower."}
 cars <- data.frame(mtcars, model = rownames(mtcars))
 p <- ggplot(cars, aes(wt, mpg, z = hp, tooltip = model, data_id = model)) +
-  geom_point_3d(size = 3, colour = PAL["blue"]) +
+  geom_point_3d(size = 3, colour = "#2E6F9E") +
   coord_3d() + labs(x = "weight", y = "mpg", z = "horsepower")
 p
 ```
@@ -138,7 +130,7 @@ second frame. These changed coordinates are an illustration of animation.
 states <- rbind(transform(cars, step = 1),
   transform(cars, step = 2, hp = hp + 20))
 changing <- ggplot(states, aes(wt, mpg, z = hp)) +
-  geom_point_3d(size = 3, colour = PAL["blue"]) + coord_3d()
+  geom_point_3d(size = 3, colour = "#2E6F9E") + coord_3d()
 motion <- animate_3d(changing, time = "step", azimuth = -60,
   file = file.path(out, "states.gltf"), fps = 2,
   width = 320, height = 320, workers = 1, progress = FALSE)

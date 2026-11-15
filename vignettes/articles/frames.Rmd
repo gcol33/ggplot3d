@@ -1,0 +1,89 @@
+---
+title: "Curvilinear and compositional frames"
+description: "Place data in cylindrical, spherical, globe, ternary prism and quaternary simplex coordinates instead of a box."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Curvilinear and compositional frames}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+source("../setup.R")
+docs_setup()
+```
+
+`coord_3d()` places x, y and z along the three edges of a box. Some data have another natural frame: a month is an angle on a circle, a direction is a point on a sphere, a location is a longitude and latitude on a globe, and a mixture of three or four parts sums to a whole. This article draws data in each of those frames. Installation is covered in [Get started](ggplot3d.html), and [Camera and framing](camera.html) covers the camera arguments that every frame shares.
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
+
+## Cylindrical coordinates
+
+`coord_cylindrical_3d()` reads x as an angle around a vertical axis, y as the distance from that axis and z as height. Twelve months then close into a ring, and December sits next to January. The y limits start at 0 so that site 1 lies on a ring of its own instead of on the axis.
+
+```{r cylindrical, fig.alt = "Monthly values for two sites on two concentric rings, rising toward the middle of the year."}
+months <- data.frame(month = rep(1:12, 2), site = rep(c(1, 2), each = 12),
+                     value = c(3:8, 8:3, 2:7, 7:2))
+ggplot(months, aes(month, site, z = value, colour = factor(site))) +
+  geom_path_3d(linewidth = 0.8) + geom_point_3d(size = 2) +
+  scale_y_continuous(limits = c(0, 2)) +
+  scale_colour_manual(values = c("#2E6F9E", "#9E5E0F")) +
+  coord_cylindrical_3d(elevation = 35)
+```
+
+## Spherical coordinates
+
+`coord_spherical_3d()` reads x as longitude, y as latitude and z as the distance from the centre. A radius that depends on latitude flattens or stretches the sphere; here it bulges at the equator.
+
+```{r spherical, fig.alt = "Points on a sphere that bulges at the equator, sampled every thirty degrees of longitude and latitude."}
+g <- expand.grid(lon = seq(0, 330, by = 30), lat = seq(-60, 60, by = 30))
+g$r <- 1 + 0.2 * cos(g$lat * pi / 90)
+ggplot(g, aes(lon, lat, z = r)) +
+  geom_point_3d(colour = "#2E6F9E", size = 2) +
+  coord_spherical_3d(elevation = 20)
+```
+
+## A globe
+
+`coord_globe_3d()` draws longitude, latitude and height on a globe seen from the point given by `centre`. A path between two cities follows the great circle in the projection. The height column lifts the route slightly above the surface.
+
+```{r globe, fig.alt = "A globe centred on the North Pacific with a red route from New York to Tokyo."}
+route <- data.frame(lon = c(-74, 140), lat = c(41, 36), height = 0.02)
+ggplot(route, aes(lon, lat, z = height)) +
+  geom_path_3d(colour = "#B5342B", linewidth = 1) +
+  coord_globe_3d(centre = c(-150, 35))
+```
+
+[Spatial data](spatial.html) draws rasters and simple features on a flat map with a third dimension.
+
+## Ternary prisms
+
+A composition of three parts that sum to a whole has two degrees of freedom, which a ternary diagram draws as a triangle. `coord_ternary_3d()` erects a prism on that triangle and uses z for a response. The parts are mapped to `a`, `b` and `c`; they are rescaled to sum to one, so percentages and proportions give the same plot.
+
+```{r ternary, fig.alt = "Four soil samples in a ternary prism of sand, silt and clay, raised by crop yield."}
+soil <- data.frame(sand = c(60, 20, 30, 10), silt = c(30, 50, 20, 30),
+                   clay = c(10, 30, 50, 60), yield = c(2, 5, 4, 3))
+ggplot(soil, aes(a = sand, b = silt, c = clay, z = yield)) +
+  geom_point_3d(size = 3, colour = "#3F7A3D") + coord_ternary_3d()
+```
+
+## Quaternary simplices
+
+Four parts have three degrees of freedom and fill a tetrahedron. `coord_simplex_3d()` maps `a`, `b`, `c` and `d` to the four corners, again after rescaling each row to sum to one. Exponential draws normalised this way are uniform on the simplex.
+
+```{r simplex, fig.alt = "Twenty compositions of four parts scattered inside a tetrahedron."}
+set.seed(1)
+w <- matrix(stats::rexp(80), ncol = 4)
+mix <- data.frame(a = w[, 1], b = w[, 2], c = w[, 3], d = w[, 4])
+ggplot(mix, aes(a = a, b = b, c = c, d = d)) +
+  geom_point_3d(colour = "#7A4F9E", size = 2) + coord_simplex_3d()
+```
+
+## Where next
+
+* [Camera and framing](camera.html): view angles, projections and stable bounds.
+
+* [Curved spaces and spacetime](curved-spaces.html): spherical, hyperbolic and Minkowski geometry rather than curvilinear coordinates on flat space.

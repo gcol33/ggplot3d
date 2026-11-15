@@ -12,12 +12,6 @@ compared across panels.
 
 library(ggplot3d)
 library(ggplot2)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA)))
 d <- expand.grid(x = seq(-2, 2, length.out = 36), y = seq(-2, 2, length.out = 36))
 d$z <- with(d, exp(-(x^2 + y^2)) + 0.5 * exp(-((x - 1)^2 + (y + 1)^2) * 2))
 hill <- ggplot(d, aes(x, y, z = z, fill = z)) +
@@ -26,18 +20,16 @@ hill <- ggplot(d, aes(x, y, z = z, fill = z)) +
 
 ## Colour that survives shading
 
-By default the light multiplies the fill: a face at a grazing angle is a
-darker version of its colour, and a dark yellow no longer looks like the
-yellow in the legend. `light_3d(mode = "lightness")` moves only the
-OKLab lightness of the fill and keeps its hue, so the colour stays
-recognisable against its key. A face at the `neutral` angle to the light
-keeps its colour exactly.
+By default the light moves only the OKLab lightness of the fill and
+keeps its hue: faces turned toward the light get lighter, faces turned
+away get darker, and a face at the `neutral` angle to the light keeps
+its colour exactly, so the colour stays recognisable against its key.
 
 ``` r
 
 hill + scale_fill_distiller(palette = "Spectral",
     guide = guide_colourbar_3d(along = NULL, shading_range = TRUE)) +
-  coord_3d(light = light_3d(light_directional(), mode = "lightness"))
+  coord_3d()
 ```
 
 ![3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera:
@@ -49,6 +41,13 @@ The colourbar now shows each value from shadow (left) to full light
 that changes lightness with value, such as viridis, loses the most under
 shading, since shading changes lightness too; a diverging or isoluminant
 palette leaves lightness free for the shape.
+
+`light_3d(mode = "multiply")` scales the fill by the light instead, as
+matplotlib and rgl do. It can only darken, so a face at a grazing angle
+is a darker version of its colour and a dark yellow no longer looks like
+the yellow in the legend; and since the default light comes from near
+the viewer, the faces that face the camera all get nearly the same light
+and blend together.
 
 `"tone"` moves the colour toward a shadow and a highlight colour
 instead, and `"overlay"` and `"soft"` are the blend modes of
@@ -116,3 +115,83 @@ ggplot(d, aes(x, y, z = z)) +
 ![3D plot. Layers: Surface (x = x, y = y, z = z). Camera: azimuth -60
 degrees, elevation 30 degrees, roll 0 degrees; orthographic
 projection.](lighting_files/figure-html/hatch-1.svg)
+
+## Light sources, shadows and depth
+
+[`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
+combines one or more lights.
+[`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+shines from a direction,
+[`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+from a position in the data with intensity falling off with distance,
+[`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+from the camera, and
+[`light_hemisphere()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+blends a sky colour from above with a ground colour from below. A point
+light just above one corner brightens the faces near it.
+
+``` r
+
+plain <- ggplot(d, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey80", colour = NA, shading = "smooth")
+plain + coord_3d(light = light_3d(light_point(c(-2, -2, 1.5), falloff = 1),
+                                  light_hemisphere(sky = "white", ground = "grey40")))
+```
+
+![A grey surface lit by a point light above one corner, brightest on the
+nearby slope.](lighting_files/figure-html/point-light-1.svg)
+
+[`shadow_3d()`](https://gillescolling.com/ggplot3d/reference/shadow_3d.md)
+casts the shadow of the scene onto the floor of the box from a
+directional light. Raising the lower z limit leaves room for the shadow
+below the surface.
+
+``` r
+
+plain + coord_3d(zlim = c(-0.5, 1.2),
+  shadow = shadow_3d(light = light_3d(light_directional(c(1, 1, 3), space = "data"))))
+```
+
+![A surface with two peaks casting a dark shadow onto the floor of the
+box.](lighting_files/figure-html/shadow-1.svg)
+
+[`depth_cue_3d()`](https://gillescolling.com/ggplot3d/reference/depth_cue_3d.md)
+makes depth readable without lighting: fog fades distant marks toward
+the background, `linewidth = TRUE` thins distant lines, and eye-dome
+lighting (`edl`) darkens the edges where depth jumps, which helps point
+clouds.
+
+``` r
+
+lattice <- expand.grid(x = 1:6, y = 1:6, z = 1:6)
+ggplot(lattice, aes(x, y, z = z)) + geom_point_3d(size = 2, colour = "#2E6F9E") +
+  coord_3d(depth_cue = depth_cue_3d(fog = "grey90", amount = 0.8))
+```
+
+![A cube of points that fade toward grey with distance from the
+camera.](lighting_files/figure-html/depth-cue-1.svg)
+
+## Legends that show the shading
+
+A colour key shows the fill before lighting, while the plot shows it
+after.
+[`guide_colourbar_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md),
+[`guide_coloursteps_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md),
+[`guide_legend_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
+and
+[`guide_bins_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
+add the range of shades that the light produces for each colour, so the
+darkest face in the plot can be matched to its key.
+
+``` r
+
+columns <- expand.grid(x = 1:4, y = 1:2)
+columns$z <- columns$x + columns$y
+ggplot(columns, aes(x, y, z = z, fill = factor(x))) + geom_col_3d() +
+  scale_fill_manual(values = c("#2E6F9E", "#B5342B", "#3F7A3D", "#9E5E0F"),
+                    name = "x") +
+  guides(fill = guide_legend_3d(shading_range = TRUE)) + coord_3d()
+```
+
+![Columns in four colours with a legend whose keys each show a band from
+shadowed to lit.](lighting_files/figure-html/guide-legend-1.svg)

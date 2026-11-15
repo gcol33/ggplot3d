@@ -8,19 +8,16 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA)))
+source("../setup.R")
+docs_setup(legend = "right", fig.width = 7, fig.height = 5)
 ```
 
 An ordination places observations on a small set of axes computed from their measured variables. A biplot draws the observations and variable directions in the same view. `biplot_3d()` composes site points, solid-headed quiver arrows and optional group regions.
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
 
 ```{r iris}
 fit <- prcomp(iris[1:4], scale. = TRUE)

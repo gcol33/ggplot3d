@@ -48,7 +48,7 @@ is spread evenly over the path.}
 \item{fps}{Frames per second, default 20.}
 
 \item{file}{Output path, or NULL to use \code{format}. The extension
-selects the output: \code{.gif} (needs gifski), \code{.mp4} or \code{.webm} (need av),
+selects the output: \code{.gif}, \code{.mp4} or \code{.webm} (need av),
 \code{.apng} (an animated PNG), \code{.png} or \code{.svg} (one file per frame; svg needs
 svglite) and \code{.pdf} (one page per frame). A file per frame takes its
 number from a \code{\link[=sprintf]{sprintf()}} pattern in the name, such as
@@ -173,8 +173,9 @@ type or frame layout, and \code{file} sets its location. gganimate selects
 encoding through \code{animate(renderer = ...)}; its \code{gifski_renderer()} and
 \code{av_renderer()} create temporary files when their \code{file} is NULL.
 Here, \code{format} selects an entry in the output registry and supplies a
-temporary path to the encoder. gifski writes a GIF to that path; av
-infers the video container from its extension.
+temporary path to the encoder. GIF frames share one palette and pixels
+unchanged since the previous frame are coded as transparent, which keeps
+files small; av infers the video container from its extension.
 
 In knitr HTML documents, a returned GIF or APNG embeds as an image and
 MP4 or WebM embeds as a looping, muted, autoplaying inline video. The file
@@ -191,7 +192,7 @@ build pipeline. These transitions produce guidance to use
 \examples{
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
   geom_point_3d() + coord_3d()
-if (requireNamespace("gifski", quietly = TRUE)) {
+if (requireNamespace("ragg", quietly = TRUE)) {
   movie <- animate_3d(p, frames = 3, width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$timings
@@ -206,7 +207,7 @@ waves <- expand.grid(x = seq(0, 1, length.out = 20), y = seq(0, 1, length.out = 
 waves$z <- sin(pi * waves$x) * sin(pi * waves$y) * cos(2 * pi * waves$t)
 wave <- ggplot2::ggplot(waves, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d() + coord_3d()
-if (requireNamespace("gifski", quietly = TRUE)) {
+if (requireNamespace("ragg", quietly = TRUE)) {
   movie <- animate_3d(wave, time = "t", width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$camera$value

@@ -1,0 +1,93 @@
+---
+title: "Extending ggplot3d"
+description: "Write a new geom for coord_3d(): the scene packet it emits, how positions are normalised, and how register_geom_3d() connects it to the scene."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Extending ggplot3d}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+source("../setup.R")
+docs_setup()
+```
+
+Every layer drawn in `coord_3d()` hands its geometry to the panel's scene as a scene packet: typed tables of vertices, faces, polylines, markers and text. The scene merges the packets of all layers and resolves visibility across them, so a new geom only describes its geometry and never draws anything itself. This article writes a geom that draws one triangle per group of three rows. It assumes familiarity with [ggproto](https://ggplot2-book.org/ext-springs.html) extensions; [Visibility](visibility.html) explains what the scene does with the packets.
+
+1. **Define** the geom with `ggplot2::ggproto()`.
+
+2. **Emit** its geometry as a packet with `new_scene_packet()`.
+
+3. **Register** the emitter with `register_geom_3d()`.
+
+4. **Add** the layer to a plot with `layer_3d()`.
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
+
+## The scene packet
+
+A packet holds columnar tables. `vertices` gives positions, `corners` lists the vertex of each face corner in order, `faces` says where each face starts in the corner table (`offset`) and how many corners it has (`count`), and `styles` holds the fill and outline colours that faces refer to by `style_id`. Indices start at 1. An empty packet shows every table with its columns.
+
+```{r empty}
+new_scene_packet()
+```
+
+Positions in a packet are normalised to the panel box, which runs from 0 to 1 along each axis. `normalise_homogeneous_3d()` does that conversion from data units given the panel ranges. A fourth homogeneous coordinate `w = 0` marks a point at infinity in a direction, which the engine clips to the box; the second point below is the direction of the positive x axis.
+
+```{r normalise}
+normalise_homogeneous_3d(c(5, 1), c(0, 0), c(1, 0), w = c(1, 0),
+  ranges = list(x = c(0, 10), y = c(-1, 1), z = c(0, 2)))
+```
+
+## An emitter
+
+The geom itself declares its aesthetics like any ggplot2 geom. It needs no `draw_panel()` method, because `coord_3d()` never calls one for registered geoms.
+
+```{r geom}
+GeomTriangle3D <- ggproto("GeomTriangle3D", Geom,
+  required_aes = c("x", "y", "z"),
+  default_aes = aes(fill = "#2E6F9E", alpha = 1),
+  draw_key = draw_key_polygon)
+```
+
+The emitter receives the layer's data after scales and statistics, with x, y and z already normalised to the panel box, plus two internal columns: `.source`, the input row of each record, and `.layer`, the layer index. It returns one packet. Writing `source_row` and `layer_id` into the packet lets the viewer and the alt text trace each face back to its data.
+
+```{r emitter}
+emit_triangle <- function(data, params, panel_params) {
+  stopifnot(nrow(data) == 3L)
+  new_scene_packet(
+    vertices = list(x = as.double(data$x), y = as.double(data$y),
+                    z = as.double(data$z)),
+    corners = list(vertex = 1:3, source_row = as.integer(data$.source)),
+    faces = list(offset = 1L, count = 3L, style_id = 1L,
+                 source_row = as.integer(data$.source[1]),
+                 layer_id = as.integer(data$.layer[1]), opacity = data$alpha[1]),
+    styles = data.frame(style_id = 1L, fill = data$fill[1],
+                        colour = NA_character_, shade = FALSE),
+    panel_id = panel_params$panel_id)
+}
+```
+
+## Registering and using the geom
+
+`register_geom_3d()` maps the geom class to its emitter. From then on any layer with that geom works in `coord_3d()`; `layer_3d()` adds a ggplot2 layer object to the plot.
+
+```{r register, fig.alt = "A single blue triangle drawn by the new geom inside the panel box."}
+register_geom_3d(GeomTriangle3D, emit_triangle, replace = TRUE)
+triangle <- layer(geom = GeomTriangle3D, stat = "identity",
+                  position = "identity", params = list())
+corners <- data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = c(0, 1, 1))
+ggplot(corners, aes(x, y, z = z)) + layer_3d(triangle) + coord_3d()
+```
+
+The triangle depth-sorts with the panel's grid lines and back walls like any built-in layer, and a second layer that crosses it would be split where the two intersect.
+
+## Where next
+
+* [Visibility](visibility.html): how packets from all layers are ordered and split.
+
+* [Meshes and intrinsic geometry](meshes.html): build mesh data that `geom_mesh_3d()` draws without a new geom.

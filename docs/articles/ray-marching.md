@@ -6,6 +6,12 @@ of field, combines them with other layers and adds diffuse light
 transport with the native path tracer. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Tracing a distance surface
 
 A signed distance function (SDF) gives negative values inside a shape,
@@ -31,7 +37,7 @@ advances by a conservative distance bound, following Hart
 ``` r
 
 surface <- ggplot() +
-  geom_isofunction_3d(fun = shape, render = "trace", fill = PAL["blue"]) +
+  geom_isofunction_3d(fun = shape, render = "trace", fill = "#2E6F9E") +
   xlim(-1, 1) + ylim(-1, 1) + scale_z_continuous(limits = c(-1, 1))
 surface + coord_3d(azimuth = -65, elevation = 25,
   backend = backend_3d("raster", dpi = 60, antialias = 1))
@@ -79,7 +85,7 @@ of one transmits `exp(-4)` of the incoming light.
 
 volume <- ggplot(field, aes(x, y, z = z, value = value))
 volume + geom_volume_3d(opacity = c(0, 4),
-  colours = c("#DCEAF3", PAL[["blue"]]), samples = 48) +
+  colours = c("#DCEAF3", "#2E6F9E"), samples = 48) +
   coord_3d(backend = backend_3d("raster", dpi = 60, antialias = 1))
 ```
 
@@ -103,7 +109,7 @@ that maximum.
 ``` r
 
 volume + geom_volume_3d(mode = "mip", opacity = 1,
-  colours = c("#DCEAF3", PAL[["blue"]])) +
+  colours = c("#DCEAF3", "#2E6F9E")) +
   coord_3d(backend = backend_3d("raster", dpi = 60, antialias = 1))
 ```
 
@@ -123,7 +129,7 @@ intersection along each ray supplies the visible surface and its normal.
 ``` r
 
 volume + geom_volume_3d(mode = "iso", levels = 0.3,
-  colours = c(PAL[["blue"]], PAL[["blue"]])) +
+  colours = c("#2E6F9E", "#2E6F9E")) +
   coord_3d(backend = backend_3d("raster", dpi = 60, antialias = 1))
 ```
 
@@ -153,9 +159,9 @@ fragment is composited with the field at its depth.
 line <- data.frame(x = c(-1, 1), y = 0, z = 0)
 mixed <- volume + geom_volume_3d(opacity = c(0, 2), samples = 48) +
   geom_isofunction_3d(fun = sdf_sphere(radius = 0.25), data = data.frame(id = 1),
-    render = "trace", fill = PAL["orange"], inherit.aes = FALSE) +
+    render = "trace", fill = "#9E5E0F", inherit.aes = FALSE) +
   geom_path_3d(aes(x, y, z = z), data = line, inherit.aes = FALSE,
-    colour = PAL["red"], linewidth = 1, raster = TRUE)
+    colour = "#B5342B", linewidth = 1, raster = TRUE)
 mixed + coord_3d(backend = backend_3d("raster", dpi = 60, antialias = 1))
 ```
 
@@ -173,9 +179,9 @@ inside a volume.
 
 vector_line <- volume + geom_volume_3d(opacity = c(0, 2), samples = 48) +
   geom_isofunction_3d(fun = sdf_sphere(radius = 0.25), data = data.frame(id = 1),
-    render = "trace", fill = PAL["orange"], inherit.aes = FALSE) +
+    render = "trace", fill = "#9E5E0F", inherit.aes = FALSE) +
   geom_path_3d(aes(x, y, z = z), data = line, inherit.aes = FALSE,
-    colour = PAL["red"], linewidth = 1)
+    colour = "#B5342B", linewidth = 1)
 vector_line + coord_3d(backend = backend_3d("vector", dpi = 60,
   antialias = 1))
 ```
@@ -217,7 +223,7 @@ floor <- expand.grid(x = c(-1, 1), y = c(-1, 1))
 floor$z <- -0.65
 lit <- ggplot() +
   geom_isofunction_3d(fun = sdf_sphere(radius = 0.55), render = "trace",
-    fill = PAL["blue"]) +
+    fill = "#2E6F9E") +
   geom_surface_3d(aes(x, y, z = z), data = floor, fill = "grey85") +
   xlim(-1, 1) + ylim(-1, 1) + scale_z_continuous(limits = c(-0.7, 0.7))
 tracer <- backend_3d("pathtrace", samples = 8, bounces = 3, seed = 42,

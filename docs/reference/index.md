@@ -1,67 +1,5 @@
 # Package index
 
-## Spherical geometry and observers
-
-- [`coord_spherical_geometry_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spherical_geometry_3d.md)
-  : Spherical geometry in stereographic and gnomonic charts
-- [`stat_hopf_fibre_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hopf_fibre_3d.md)
-  : Hopf fibres, latitude tori and their spherical base
-
-## Tilings and honeycombs
-
-- [`stat_tiling_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.md)
-  [`stat_honeycomb_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.md)
-  : Regular tilings and honeycombs from Coxeter reflections
-- [`stat_project_3d()`](https://gillescolling.com/ggplot3d/reference/stat_project_3d.md)
-  : Project four-dimensional and higher-dimensional data into three
-  dimensions
-- [`rotate_4d()`](https://gillescolling.com/ggplot3d/reference/rotate_4d.md)
-  : Rotations in four dimensions
-- [`grand_tour_3d()`](https://gillescolling.com/ggplot3d/reference/grand_tour_3d.md)
-  : Grand tours of three-dimensional projections
-- [`stat_section_4d()`](https://gillescolling.com/ggplot3d/reference/stat_section_4d.md)
-  : Hyperplane sections of four-dimensional tetrahedral meshes
-
-## Hyperbolic geometry and data
-
-- [`coord_hyperbolic_3d()`](https://gillescolling.com/ggplot3d/reference/coord_hyperbolic_3d.md)
-  : Finite hyperbolic ball and sheet coordinates
-- [`stat_tree_hyperbolic_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tree_hyperbolic_3d.md)
-  : Deterministic tree layouts in hyperbolic space
-- [`hyperbolic_focus_3d()`](https://gillescolling.com/ggplot3d/reference/hyperbolic_focus_3d.md)
-  : Focus paths for a hyperbolic embedding
-
-## Relativity
-
-- [`stat_light_cone_3d()`](https://gillescolling.com/ggplot3d/reference/stat_light_cone_3d.md)
-  : Light cones and surfaces of constant spacetime interval
-- [`stat_embedding_3d()`](https://gillescolling.com/ggplot3d/reference/stat_embedding_3d.md)
-  : Schwarzschild spatial embedding diagram
-- [`stat_geodesic_ode_3d()`](https://gillescolling.com/ggplot3d/reference/stat_geodesic_ode_3d.md)
-  : Equatorial Schwarzschild spacetime geodesics
-- [`lorentz_boost_3d()`](https://gillescolling.com/ggplot3d/reference/lorentz_boost_3d.md)
-  : Lorentz boosts in canonical coordinates
-- [`coord_spacetime_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spacetime_3d.md)
-  : Finite Minkowski spacetime coordinates
-
-## Complex analysis
-
-- [`mobius_3d()`](https://gillescolling.com/ggplot3d/reference/mobius_3d.md)
-  : Mobius transformations of complex numbers, spheres and half-space
-- [`stat_riemann_sphere_3d()`](https://gillescolling.com/ggplot3d/reference/stat_riemann_sphere_3d.md)
-  : Domain colouring on the Riemann sphere
-- [`stat_riemann_surface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_riemann_surface_3d.md)
-  : Riemann surfaces parametrised by an inverse function
-
-## Immersed surfaces and knots
-
-- [`stat_self_intersection_3d()`](https://gillescolling.com/ggplot3d/reference/stat_self_intersection_3d.md)
-  : Transverse intersection curves of a triangle mesh
-- [`stat_immersed_3d()`](https://gillescolling.com/ggplot3d/reference/stat_immersed_3d.md)
-  : Immersed surface examples
-- [`stat_knot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_knot_3d.md)
-  : Torus knots and knot tubes
-
 ## Coordinates and lighting
 
 - [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
@@ -503,6 +441,68 @@
   : Construct a 3D geometry packet
 - [`normalise_homogeneous_3d()`](https://gillescolling.com/ggplot3d/reference/normalise_homogeneous_3d.md)
   : Normalise homogeneous positions to the panel box
+
+## Spherical geometry and observers
+
+- [`coord_spherical_geometry_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spherical_geometry_3d.md)
+  : Spherical geometry in stereographic and gnomonic charts
+- [`stat_hopf_fibre_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hopf_fibre_3d.md)
+  : Hopf fibres, latitude tori and their spherical base
+
+## Tilings and honeycombs
+
+- [`stat_tiling_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.md)
+  [`stat_honeycomb_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.md)
+  : Regular tilings and honeycombs from Coxeter reflections
+- [`stat_project_3d()`](https://gillescolling.com/ggplot3d/reference/stat_project_3d.md)
+  : Project four-dimensional and higher-dimensional data into three
+  dimensions
+- [`rotate_4d()`](https://gillescolling.com/ggplot3d/reference/rotate_4d.md)
+  : Rotations in four dimensions
+- [`grand_tour_3d()`](https://gillescolling.com/ggplot3d/reference/grand_tour_3d.md)
+  : Grand tours of three-dimensional projections
+- [`stat_section_4d()`](https://gillescolling.com/ggplot3d/reference/stat_section_4d.md)
+  : Hyperplane sections of four-dimensional tetrahedral meshes
+
+## Hyperbolic geometry and data
+
+- [`coord_hyperbolic_3d()`](https://gillescolling.com/ggplot3d/reference/coord_hyperbolic_3d.md)
+  : Finite hyperbolic ball and sheet coordinates
+- [`stat_tree_hyperbolic_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tree_hyperbolic_3d.md)
+  : Deterministic tree layouts in hyperbolic space
+- [`hyperbolic_focus_3d()`](https://gillescolling.com/ggplot3d/reference/hyperbolic_focus_3d.md)
+  : Focus paths for a hyperbolic embedding
+
+## Relativity
+
+- [`stat_light_cone_3d()`](https://gillescolling.com/ggplot3d/reference/stat_light_cone_3d.md)
+  : Light cones and surfaces of constant spacetime interval
+- [`stat_embedding_3d()`](https://gillescolling.com/ggplot3d/reference/stat_embedding_3d.md)
+  : Schwarzschild spatial embedding diagram
+- [`stat_geodesic_ode_3d()`](https://gillescolling.com/ggplot3d/reference/stat_geodesic_ode_3d.md)
+  : Equatorial Schwarzschild spacetime geodesics
+- [`lorentz_boost_3d()`](https://gillescolling.com/ggplot3d/reference/lorentz_boost_3d.md)
+  : Lorentz boosts in canonical coordinates
+- [`coord_spacetime_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spacetime_3d.md)
+  : Finite Minkowski spacetime coordinates
+
+## Complex analysis
+
+- [`mobius_3d()`](https://gillescolling.com/ggplot3d/reference/mobius_3d.md)
+  : Mobius transformations of complex numbers, spheres and half-space
+- [`stat_riemann_sphere_3d()`](https://gillescolling.com/ggplot3d/reference/stat_riemann_sphere_3d.md)
+  : Domain colouring on the Riemann sphere
+- [`stat_riemann_surface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_riemann_surface_3d.md)
+  : Riemann surfaces parametrised by an inverse function
+
+## Immersed surfaces and knots
+
+- [`stat_self_intersection_3d()`](https://gillescolling.com/ggplot3d/reference/stat_self_intersection_3d.md)
+  : Transverse intersection curves of a triangle mesh
+- [`stat_immersed_3d()`](https://gillescolling.com/ggplot3d/reference/stat_immersed_3d.md)
+  : Immersed surface examples
+- [`stat_knot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_knot_3d.md)
+  : Torus knots and knot tubes
 
 ## Package
 

@@ -17,7 +17,7 @@ devtools::install_deps(dependencies = TRUE)
 devtools::load_all()
 ```
 
-Source installation needs a C++17 compiler. The [README](README.md#installation) lists build tools by operating system. Use `devtools::install()` to install a local build.
+Source installation needs a C++17 compiler. The [README](https://github.com/gcol33/ggplot3d#installation) lists build tools by operating system. Use `devtools::install()` to install a local build.
 
 ## Testing
 
@@ -30,7 +30,7 @@ Use small deterministic examples that exercise the changed behaviour. Visibility
 
 ## Documentation
 
-Edit function help in the roxygen comments in `R/`. Edit the README in `README.Rmd` and articles in `vignettes/`.
+Edit function help in the roxygen comments in `R/`. Edit the README in `README.Rmd`, Get started in `vignettes/ggplot3d.Rmd` and the other articles in `vignettes/articles/`. Shared figure settings for all of them live in `vignettes/setup.R`.
 
 ```r
 devtools::document()

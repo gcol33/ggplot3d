@@ -61,6 +61,11 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
+.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation-dark { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -93,6 +98,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
@@ -102,12 +108,17 @@
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
     <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
     <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
     <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
     <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
     <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
     <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
     <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
@@ -116,6 +127,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -148,7 +160,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>The z scale</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/z-scale.Rmd" class="external-link"><code>vignettes/z-scale.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/articles/z-scale.Rmd" class="external-link"><code>vignettes/articles/z-scale.Rmd</code></a></small>
       <div class="d-none name"><code>z-scale.Rmd</code></div>
     </div>
 
@@ -158,6 +170,9 @@
 controls their transformations, categories, limits and facets. Set
 <code>coord_3d(z_scales = "free")</code> for separate z ranges across
 facets. ggplot2 facets have no z scale. Installation is covered in <a href="ggplot3d.html">Get started</a>.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/gcol33/ggplot3d" class="external-link">ggplot3d</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="transforming-heights">Transforming heights<a class="anchor" aria-label="anchor" href="#transforming-heights"></a>
 </h2>
@@ -165,11 +180,11 @@ facets. ggplot2 facets have no z scale. Installation is covered in <a href="ggpl
 and labels. The z position family includes z, zmin, zmax, zend and
 zintercept. A logarithmic transformation therefore also applies to the
 endpoints of segments.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span>, z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">10</span>, <span class="fl">100</span><span class="op">)</span>,</span>
 <span>                top <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">100</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span>, xend <span class="op">=</span> <span class="va">x</span>, yend <span class="op">=</span> <span class="va">y</span>, zend <span class="op">=</span> <span class="va">top</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_segment_3d</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">0.8</span>, colour <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_segment_3d</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">0.8</span>, colour <span class="op">=</span> <span class="st">"#2E6F9E"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/scale_z_continuous.html">scale_z_log10</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">10</span>, <span class="fl">100</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three vertical segments with endpoints on a logarithmic height scale."><title>Three vertical segments with endpoints on a logarithmic height scale.</title>
@@ -332,24 +347,15 @@ endpoints of segments.</p>
   </g>
 </svg>
 </div></p>
-<p>Use positive values with a logarithmic scale. Square-root and reverse
-transformations are available through their named constructors. Other
-continuous transformations go through the <code>transform</code>
-argument of <code><a href="../reference/scale_z_continuous.html">scale_z_continuous()</a></code>.</p>
-</div>
-<div class="section level2">
-<h2 id="categories-and-dates">Categories and dates<a class="anchor" aria-label="anchor" href="#categories-and-dates"></a>
-</h2>
-<p>A discrete scale places categories at separate z positions in
-factor-level order. Dates and date-times use their corresponding scale
-constructors and accept date breaks and labels.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">categories</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  stage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"low"</span>, <span class="st">"middle"</span>, <span class="st">"high"</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"low"</span>, <span class="st">"middle"</span>, <span class="st">"high"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">categories</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">stage</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/scale_z_continuous.html">scale_z_discrete</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Stage"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Use positive values with a logarithmic scale.
+<code><a href="../reference/scale_z_continuous.html">scale_z_sqrt()</a></code> compresses large values less strongly, and
+<code><a href="../reference/scale_z_continuous.html">scale_z_reverse()</a></code> turns the axis upside down, which suits
+depths below a surface.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span>, colour <span class="op">=</span> <span class="st">"#2E6F9E"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/scale_z_continuous.html">scale_z_reverse</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"depth (m)"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three points at the low, middle and high category levels."><title>Three points at the low, middle and high category levels.</title>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three points at depths of one, ten and one hundred metres, with the deepest point at the bottom of a reversed axis."><title>Three points at depths of one, ten and one hundred metres, with the deepest point at the bottom of a reversed axis.</title>
   <g class="svglite">
     <defs>
       <style type="text/css"><![CDATA[
@@ -398,11 +404,194 @@ constructors and accept date breaks and labels.</p>
       <rect x="80.47" y="8.47" width="307.06" height="307.06" style="stroke-width: 1.65; stroke: none;"/>
     </g>
     <defs>
-      <clipPath id="f3-cpMTUwLjc2fDM1OC40OHwxNi40NHwzMDcuNTU=">
+      <clipPath id="f3-cpMTMzLjQwfDM1OC43OHwxNi40NHwzMDQuOTM=">
+        <rect x="133.40" y="16.44" width="225.38" height="288.49"/>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#f3-cpMTMzLjQwfDM1OC43OHwxNi40NHwzMDQuOTM=)">
+      <polyline points="137.63,243.61 137.63,101.36 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="146.97,235.53 146.97,93.27 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="156.30,227.44 156.30,85.19 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="165.63,219.36 165.63,77.11 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="174.96,211.28 174.96,69.03 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="184.30,203.20 184.30,60.94 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="193.63,195.11 193.63,52.86 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="202.96,187.03 202.96,44.78 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="212.30,178.95 212.30,36.70 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="137.63,243.61 137.63,101.36 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="156.30,227.44 156.30,85.19 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="174.96,211.28 174.96,69.03 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="193.63,195.11 193.63,52.86 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="212.30,178.95 212.30,36.70 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,109.75 216.03,38.62 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,126.08 216.03,54.95 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,142.41 216.03,71.28 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,158.73 216.03,87.61 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,175.06 216.03,103.94 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,191.39 216.03,120.27 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,207.72 216.03,136.59 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,224.05 216.03,152.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,240.38 216.03,169.25 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,109.75 216.03,38.62 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,142.41 216.03,71.28 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,175.06 216.03,103.94 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,207.72 216.03,136.59 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="133.90,240.38 216.03,169.25 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.49,177.58 222.49,35.33 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="238.66,182.25 238.66,40.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="254.82,186.92 254.82,44.66 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="270.99,191.58 270.99,49.33 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="287.15,196.25 287.15,54.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="303.32,200.92 303.32,58.66 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="319.49,205.58 319.49,63.33 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="335.65,210.25 335.65,68.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="351.82,214.91 351.82,72.66 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.49,177.58 222.49,35.33 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="254.82,186.92 254.82,44.66 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="287.15,196.25 287.15,54.00 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="319.49,205.58 319.49,63.33 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="351.82,214.91 351.82,72.66 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,38.62 358.28,79.69 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,54.95 358.28,96.02 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,71.28 358.28,112.35 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,87.61 358.28,128.67 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,103.94 358.28,145.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,120.27 358.28,161.33 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,136.59 358.28,177.66 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,152.92 358.28,193.99 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,169.25 358.28,210.32 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,38.62 358.28,79.69 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,71.28 358.28,112.35 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,103.94 358.28,145.00 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,136.59 358.28,177.66 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,169.25 358.28,210.32 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="140.37,248.71 222.49,177.58 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="156.53,253.38 238.66,182.25 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="172.70,258.04 254.82,186.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="188.86,262.71 270.99,191.58 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="205.03,267.37 287.15,196.25 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="221.19,272.04 303.32,200.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="237.36,276.71 319.49,205.58 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="253.52,281.37 335.65,210.25 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="269.69,286.04 351.82,214.91 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="140.37,248.71 222.49,177.58 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="172.70,258.04 254.82,186.92 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="205.03,267.37 287.15,196.25 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="237.36,276.71 319.49,205.58 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="269.69,286.04 351.82,214.91 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="137.63,243.61 279.88,284.67 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="146.97,235.53 289.22,276.59 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="156.30,227.44 298.55,268.51 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="165.63,219.36 307.88,260.43 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="174.96,211.28 317.22,252.34 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="184.30,203.20 326.55,244.26 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="193.63,195.11 335.88,236.18 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="202.96,187.03 345.22,228.10 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="212.30,178.95 354.55,220.01 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="137.63,243.61 279.88,284.67 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="156.30,227.44 298.55,268.51 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="174.96,211.28 317.22,252.34 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="193.63,195.11 335.88,236.18 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="212.30,178.95 354.55,220.01 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="216.03,175.72 358.28,216.78 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <polyline points="133.90,246.84 216.03,175.72 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <polyline points="216.03,175.72 216.03,33.46 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <circle cx="283.42" cy="75.45" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="273.42" cy="276.34" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="144.10" cy="109.69" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+    </g>
+    <g clip-path="url(#f3-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+      <text x="136.77" y="266.02" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
+      <text x="169.10" y="275.35" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.5</text>
+      <text x="201.43" y="284.69" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.0</text>
+      <text x="233.76" y="294.02" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.5</text>
+      <text x="266.09" y="303.35" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">3.0</text>
+      <text transform="translate(193.91,305.87) rotate(16)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">x</text>
+      <text x="310.33" y="286.98" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.25</text>
+      <text x="329.00" y="270.82" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.50</text>
+      <text x="347.66" y="254.65" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.75</text>
+      <text x="366.33" y="238.49" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.00</text>
+      <text transform="translate(350.05,290.26) rotate(-41)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">y</text>
+      <text x="125.66" y="114.62" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0</text>
+      <text x="121.88" y="147.27" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">25</text>
+      <text x="121.88" y="179.93" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">50</text>
+      <text x="121.88" y="212.59" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">75</text>
+      <text x="118.10" y="245.24" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">100</text>
+      <text transform="translate(100.61,175.72) rotate(-90)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">depth (m)</text>
+    </g>
+  </g>
+</svg>
+</div></p>
+<p>Other continuous transformations go through the
+<code>transform</code> argument of
+<code><a href="../reference/scale_z_continuous.html">scale_z_continuous()</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="categories-and-dates">Categories and dates<a class="anchor" aria-label="anchor" href="#categories-and-dates"></a>
+</h2>
+<p>A discrete scale places categories at separate z positions in
+factor-level order. Dates and date-times use their corresponding scale
+constructors and accept date breaks and labels.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">categories</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  stage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"low"</span>, <span class="st">"middle"</span>, <span class="st">"high"</span><span class="op">)</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"low"</span>, <span class="st">"middle"</span>, <span class="st">"high"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">categories</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">stage</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/scale_z_continuous.html">scale_z_discrete</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Stage"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three points at the low, middle and high category levels."><title>Three points at the low, middle and high category levels.</title>
+  <g class="svglite">
+    <defs>
+      <style type="text/css"><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+    </defs>
+    <rect class="svg-bg" width="100%" height="100%" style="stroke: none; fill: #F5F6F8;"/>
+    <defs>
+      <clipPath id="f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=">
+        <rect x="0.00" y="0.00" width="468.00" height="324.00"/>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+</g>
+    <defs>
+      <clipPath id="f4-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw">
+        <rect x="72.00" y="0.00" width="324.00" height="324.00"/>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#f4-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)">
+      <rect x="72.00" y="0.00" width="324.00" height="324.00" style="stroke-width: 1.65; stroke: none;"/>
+    </g>
+    <g clip-path="url(#f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+      <rect x="80.47" y="8.47" width="307.06" height="307.06" style="stroke-width: 1.65; stroke: none;"/>
+    </g>
+    <defs>
+      <clipPath id="f4-cpMTUwLjc2fDM1OC40OHwxNi40NHwzMDcuNTU=">
         <rect x="150.76" y="16.44" width="207.72" height="291.11"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f3-cpMTUwLjc2fDM1OC40OHwxNi40NHwzMDcuNTU=)">
+    <g clip-path="url(#f4-cpMTUwLjc2fDM1OC40OHwxNi40NHwzMDcuNTU=)">
       <polyline points="154.70,238.39 154.70,107.33 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="163.30,230.94 163.30,99.89 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="171.90,223.50 171.90,92.44 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
@@ -472,7 +661,7 @@ constructors and accept date breaks and labels.</p>
       <circle class="theme-fill-fg" cx="160.66" cy="215.54" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
       <circle class="theme-fill-fg" cx="279.80" cy="168.02" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
     </g>
-    <g clip-path="url(#f3-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <text x="153.63" y="260.40" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
       <text x="183.41" y="269.00" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.5</text>
       <text x="213.20" y="277.60" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.0</text>
@@ -492,7 +681,7 @@ constructors and accept date breaks and labels.</p>
   </g>
 </svg>
 </div></p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dated</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>                    day <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2026-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">dated</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">day</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
@@ -529,29 +718,29 @@ constructors and accept date breaks and labels.</p>
     </defs>
     <rect class="svg-bg" width="100%" height="100%" style="stroke: none; fill: #F5F6F8;"/>
     <defs>
-      <clipPath id="f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=">
+      <clipPath id="f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=">
         <rect x="0.00" y="0.00" width="468.00" height="324.00"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
 </g>
     <defs>
-      <clipPath id="f4-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw">
+      <clipPath id="f5-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw">
         <rect x="72.00" y="0.00" width="324.00" height="324.00"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f4-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)">
+    <g clip-path="url(#f5-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)">
       <rect x="72.00" y="0.00" width="324.00" height="324.00" style="stroke-width: 1.65; stroke: none;"/>
     </g>
-    <g clip-path="url(#f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <rect x="80.47" y="8.47" width="307.06" height="307.06" style="stroke-width: 1.65; stroke: none;"/>
     </g>
     <defs>
-      <clipPath id="f4-cpMTUxLjU0fDM1OC40N3wxNi40NHwzMDcuNTM=">
+      <clipPath id="f5-cpMTUxLjU0fDM1OC40N3wxNi40NHwzMDcuNTM=">
         <rect x="151.54" y="16.44" width="206.93" height="291.10"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f4-cpMTUxLjU0fDM1OC40N3wxNi40NHwzMDcuNTM=)">
+    <g clip-path="url(#f5-cpMTUxLjU0fDM1OC40N3wxNi40NHwzMDcuNTM=)">
       <polyline points="155.47,238.09 155.47,107.54 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="164.03,230.67 164.03,100.12 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="172.60,223.26 172.60,92.70 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
@@ -631,7 +820,7 @@ constructors and accept date breaks and labels.</p>
       <circle class="theme-fill-fg" cx="161.40" cy="233.87" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
       <circle class="theme-fill-fg" cx="280.09" cy="149.45" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
     </g>
-    <g clip-path="url(#f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <text x="154.38" y="260.08" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
       <text x="184.06" y="268.65" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.5</text>
       <text x="213.73" y="277.21" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.0</text>
@@ -651,6 +840,166 @@ constructors and accept date breaks and labels.</p>
   </g>
 </svg>
 </div></p>
+<p>Durations such as elapsed hours use <code><a href="../reference/scale_z_continuous.html">scale_z_time()</a></code>,
+which labels the axis as hours, minutes and seconds.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dated</span><span class="op">$</span><span class="va">elapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/difftime.html" class="external-link">as.difftime</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, units <span class="op">=</span> <span class="st">"hours"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">dated</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">elapsed</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/scale_z_continuous.html">scale_z_time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three points at one, two and three hours of elapsed time."><title>Three points at one, two and three hours of elapsed time.</title>
+  <g class="svglite">
+    <defs>
+      <style type="text/css"><![CDATA[
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+      fill: #3E3F3A;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+    </defs>
+    <rect class="svg-bg" width="100%" height="100%" style="stroke: none; fill: #F5F6F8;"/>
+    <defs>
+      <clipPath id="f6-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=">
+        <rect x="0.00" y="0.00" width="468.00" height="324.00"/>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+</g>
+    <defs>
+      <clipPath id="f6-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw">
+        <rect x="72.00" y="0.00" width="324.00" height="324.00"/>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#f6-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)">
+      <rect x="72.00" y="0.00" width="324.00" height="324.00" style="stroke-width: 1.65; stroke: none;"/>
+    </g>
+    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+      <rect x="80.47" y="8.47" width="307.06" height="307.06" style="stroke-width: 1.65; stroke: none;"/>
+    </g>
+    <defs>
+      <clipPath id="f6-cpMTYzLjY1fDM1OC4yN3wxNi40NHwzMDcuNTQ=">
+        <rect x="163.65" y="16.44" width="194.61" height="291.10"/>
+      </clipPath>
+    </defs>
+    <g clip-path="url(#f6-cpMTYzLjY1fDM1OC4yN3wxNi40NHwzMDcuNTQ=)">
+      <polyline points="167.37,233.54 167.37,110.79 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="175.43,226.57 175.43,103.82 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="183.48,219.59 183.48,96.85 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="191.53,212.62 191.53,89.87 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="199.59,205.64 199.59,82.90 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="207.64,198.67 207.64,75.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="215.69,191.70 215.69,68.95 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="223.75,184.72 223.75,61.97 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="231.80,177.75 231.80,55.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="167.37,233.54 167.37,110.79 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="183.48,219.59 183.48,96.85 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="199.59,205.64 199.59,82.90 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="215.69,191.70 215.69,68.95 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="231.80,177.75 231.80,55.00 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="164.15,230.75 235.02,169.38 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="164.15,202.85 235.02,141.48 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="164.15,174.96 235.02,113.58 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="164.15,147.06 235.02,85.69 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="164.15,119.16 235.02,57.79 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="164.15,230.75 235.02,169.38 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="164.15,174.96 235.02,113.58 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="164.15,119.16 235.02,57.79 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="240.60,176.57 240.60,53.82 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="254.55,180.59 254.55,57.85 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="268.50,184.62 268.50,61.87 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="282.44,188.65 282.44,65.90 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="296.39,192.67 296.39,69.93 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="310.34,196.70 310.34,73.95 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="324.29,200.73 324.29,77.98 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="338.24,204.75 338.24,82.01 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="352.19,208.78 352.19,86.03 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="240.60,176.57 240.60,53.82 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="268.50,184.62 268.50,61.87 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="296.39,192.67 296.39,69.93 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="324.29,200.73 324.29,77.98 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="352.19,208.78 352.19,86.03 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,169.38 357.77,204.81 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,141.48 357.77,176.91 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,113.58 357.77,149.02 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,85.69 357.77,121.12 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,57.79 357.77,93.22 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,169.38 357.77,204.81 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,113.58 357.77,149.02 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,57.79 357.77,93.22 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="169.73,237.94 240.60,176.57 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="183.68,241.97 254.55,180.59 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="197.63,245.99 268.50,184.62 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="211.58,250.02 282.44,188.65 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="225.53,254.05 296.39,192.67 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="239.47,258.07 310.34,196.70 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="253.42,262.10 324.29,200.73 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="267.37,266.13 338.24,204.75 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="281.32,270.15 352.19,208.78 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="169.73,237.94 240.60,176.57 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="197.63,245.99 268.50,184.62 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="225.53,254.05 296.39,192.67 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="253.42,262.10 324.29,200.73 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="281.32,270.15 352.19,208.78 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="167.37,233.54 290.12,268.98 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="175.43,226.57 298.17,262.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="183.48,219.59 306.23,255.03 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="191.53,212.62 314.28,248.05 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="199.59,205.64 322.33,241.08 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="207.64,198.67 330.39,234.10 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="215.69,191.70 338.44,227.13 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="223.75,184.72 346.49,220.16 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="231.80,177.75 354.55,213.18 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="167.37,233.54 290.12,268.98 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="183.48,219.59 306.23,255.03 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="199.59,205.64 322.33,241.08 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="215.69,191.70 338.44,227.13 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="231.80,177.75 354.55,213.18 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="235.02,174.96 357.77,210.39 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <polyline points="164.15,236.33 235.02,174.96 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <polyline points="235.02,174.96 235.02,52.21 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <circle class="theme-fill-fg" cx="293.17" cy="134.09" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
+      <circle class="theme-fill-fg" cx="172.95" cy="229.57" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
+      <circle class="theme-fill-fg" cx="284.54" cy="150.20" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
+    </g>
+    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+      <text x="166.14" y="255.25" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
+      <text x="194.04" y="263.31" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.5</text>
+      <text x="221.93" y="271.36" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.0</text>
+      <text x="249.83" y="279.41" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.5</text>
+      <text x="277.73" y="287.47" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">3.0</text>
+      <text transform="translate(214.41,292.54) rotate(16)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">x</text>
+      <text x="318.01" y="273.50" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.25</text>
+      <text x="334.12" y="259.55" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.50</text>
+      <text x="350.22" y="245.60" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.75</text>
+      <text x="366.33" y="231.65" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.00</text>
+      <text transform="translate(355.17,278.99) rotate(-41)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">y</text>
+      <text x="133.22" y="235.62" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">00:00:01</text>
+      <text x="133.22" y="179.82" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">00:00:02</text>
+      <text x="133.22" y="124.03" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">00:00:03</text>
+      <text transform="translate(100.61,174.96) rotate(-90)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">elapsed</text>
+    </g>
+  </g>
+</svg>
+</div></p>
 </div>
 <div class="section level2">
 <h2 id="scale-limits-and-coordinate-limits">Scale limits and coordinate limits<a class="anchor" aria-label="anchor" href="#scale-limits-and-coordinate-limits"></a>
@@ -659,7 +1008,7 @@ constructors and accept date breaks and labels.</p>
 computations. Coordinate limits set the displayed box. Set coordinate
 limits to inspect part of a surface while retaining the data used to
 construct it.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>zlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
@@ -694,29 +1043,29 @@ construct it.</p>
     </defs>
     <rect class="svg-bg" width="100%" height="100%" style="stroke: none; fill: #F5F6F8;"/>
     <defs>
-      <clipPath id="f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=">
+      <clipPath id="f7-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=">
         <rect x="0.00" y="0.00" width="468.00" height="324.00"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f7-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
 </g>
     <defs>
-      <clipPath id="f5-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw">
+      <clipPath id="f7-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw">
         <rect x="72.00" y="0.00" width="324.00" height="324.00"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f5-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)">
+    <g clip-path="url(#f7-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)">
       <rect x="72.00" y="0.00" width="324.00" height="324.00" style="stroke-width: 1.65; stroke: none;"/>
     </g>
-    <g clip-path="url(#f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f7-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <rect x="80.47" y="8.47" width="307.06" height="307.06" style="stroke-width: 1.65; stroke: none;"/>
     </g>
     <defs>
-      <clipPath id="f5-cpMTMzLjQwfDM1OC43OHwxNi40NHwzMDQuOTM=">
+      <clipPath id="f7-cpMTMzLjQwfDM1OC43OHwxNi40NHwzMDQuOTM=">
         <rect x="133.40" y="16.44" width="225.38" height="288.49"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f5-cpMTMzLjQwfDM1OC43OHwxNi40NHwzMDQuOTM=)">
+    <g clip-path="url(#f7-cpMTMzLjQwfDM1OC43OHwxNi40NHwzMDQuOTM=)">
       <polyline points="137.63,243.61 137.63,101.36 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="146.97,235.53 146.97,93.27 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="156.30,227.44 156.30,85.19 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
@@ -808,7 +1157,7 @@ construct it.</p>
       <circle class="theme-fill-fg" cx="144.10" cy="237.72" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
       <circle class="theme-fill-fg" cx="273.42" cy="147.02" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
     </g>
-    <g clip-path="url(#f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f7-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <text x="136.77" y="266.02" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
       <text x="169.10" y="275.35" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.5</text>
       <text x="201.43" y="284.69" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.0</text>
@@ -841,7 +1190,7 @@ transformed units used by statistical surfaces.</p>
 a z range. Set <code>coord_3d(z_scales = "free")</code> to train a
 separate z range per panel. ggplot2 facets have no z scale; their
 <code>scales</code> argument controls x and y.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">faceted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">2</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">20</span>, <span class="fl">40</span>, <span class="fl">60</span><span class="op">)</span>, site <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">faceted</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
@@ -878,29 +1227,29 @@ separate z range per panel. ggplot2 facets have no z scale; their
     </defs>
     <rect class="svg-bg" width="100%" height="100%" style="stroke: none; fill: #F5F6F8;"/>
     <defs>
-      <clipPath id="f6-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=">
+      <clipPath id="f8-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=">
         <rect x="0.00" y="0.00" width="468.00" height="504.00"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
+    <g clip-path="url(#f8-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
 </g>
     <defs>
-      <clipPath id="f6-cpMTE4Ljk1fDM0OS4wNXwwLjAwfDUwNC4wMA==">
+      <clipPath id="f8-cpMTE4Ljk1fDM0OS4wNXwwLjAwfDUwNC4wMA==">
         <rect x="118.95" y="0.00" width="230.09" height="504.00"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f6-cpMTE4Ljk1fDM0OS4wNXwwLjAwfDUwNC4wMA==)">
+    <g clip-path="url(#f8-cpMTE4Ljk1fDM0OS4wNXwwLjAwfDUwNC4wMA==)">
       <rect x="118.95" y="0.00" width="230.09" height="504.00" style="stroke-width: 1.65; stroke: none;"/>
     </g>
-    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
+    <g clip-path="url(#f8-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
       <rect x="127.42" y="34.61" width="213.16" height="213.16" style="stroke-width: 1.65; stroke: none;"/>
     </g>
     <defs>
-      <clipPath id="f6-cpMTc2LjU3fDMxMC4zMHw0Mi41OHwyMzAuNzU=">
+      <clipPath id="f8-cpMTc2LjU3fDMxMC4zMHw0Mi41OHwyMzAuNzU=">
         <rect x="176.57" y="42.58" width="133.73" height="188.17"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f6-cpMTc2LjU3fDMxMC4zMHw0Mi41OHwyMzAuNzU=)">
+    <g clip-path="url(#f8-cpMTc2LjU3fDMxMC4zMHw0Mi41OHwyMzAuNzU=)">
       <polyline points="179.28,185.72 179.28,101.57 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="184.80,180.94 184.80,96.79 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="190.32,176.16 190.32,92.01 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
@@ -992,7 +1341,7 @@ separate z range per panel. ggplot2 facets have no z scale; their
       <circle class="theme-fill-fg" cx="183.11" cy="183.00" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
       <circle class="theme-fill-fg" cx="259.60" cy="128.58" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
     </g>
-    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
+    <g clip-path="url(#f8-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
       <text x="177.31" y="206.05" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
       <text x="215.55" y="217.09" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.0</text>
       <text x="253.80" y="228.13" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">3.0</text>
@@ -1009,11 +1358,11 @@ separate z range per panel. ggplot2 facets have no z scale; their
       <rect x="127.42" y="282.38" width="213.16" height="213.16" style="stroke-width: 1.65; stroke: none;"/>
     </g>
     <defs>
-      <clipPath id="f6-cpMTc2LjU3fDMxMC4zMHwyOTAuMzV8NDc4LjUy">
+      <clipPath id="f8-cpMTc2LjU3fDMxMC4zMHwyOTAuMzV8NDc4LjUy">
         <rect x="176.57" y="290.35" width="133.73" height="188.17"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f6-cpMTc2LjU3fDMxMC4zMHwyOTAuMzV8NDc4LjUy)">
+    <g clip-path="url(#f8-cpMTc2LjU3fDMxMC4zMHwyOTAuMzV8NDc4LjUy)">
       <polyline points="179.28,433.48 179.28,349.34 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="184.80,428.70 184.80,344.56 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="190.32,423.92 190.32,339.78 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
@@ -1105,7 +1454,7 @@ separate z range per panel. ggplot2 facets have no z scale; their
       <circle class="theme-fill-fg" cx="183.11" cy="430.76" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
       <circle class="theme-fill-fg" cx="259.60" cy="376.35" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
     </g>
-    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
+    <g clip-path="url(#f8-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
       <text x="177.31" y="453.81" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
       <text x="215.55" y="464.85" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.0</text>
       <text x="253.80" y="475.90" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">3.0</text>
@@ -1121,24 +1470,24 @@ separate z range per panel. ggplot2 facets have no z scale; their
       <text transform="translate(151.35,393.32) rotate(-90)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">z</text>
     </g>
     <defs>
-      <clipPath id="f6-cpMTI3LjQyfDM0MC41OHwyNTYuMjN8MjgyLjM4">
+      <clipPath id="f8-cpMTI3LjQyfDM0MC41OHwyNTYuMjN8MjgyLjM4">
         <rect x="127.42" y="256.23" width="213.16" height="26.14"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f6-cpMTI3LjQyfDM0MC41OHwyNTYuMjN8MjgyLjM4)">
+    <g clip-path="url(#f8-cpMTI3LjQyfDM0MC41OHwyNTYuMjN8MjgyLjM4)">
       <text x="234.00" y="274.17" text-anchor="middle" style="font-size: 1.36em;fill: #1A1A1A; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">b</text>
     </g>
-    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
+    <g clip-path="url(#f8-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
 </g>
     <defs>
-      <clipPath id="f6-cpMTI3LjQyfDM0MC41OHw4LjQ3fDM0LjYx">
+      <clipPath id="f8-cpMTI3LjQyfDM0MC41OHw4LjQ3fDM0LjYx">
         <rect x="127.42" y="8.47" width="213.16" height="26.14"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f6-cpMTI3LjQyfDM0MC41OHw4LjQ3fDM0LjYx)">
+    <g clip-path="url(#f8-cpMTI3LjQyfDM0MC41OHw4LjQ3fDM0LjYx)">
       <text x="234.00" y="26.41" text-anchor="middle" style="font-size: 1.36em;fill: #1A1A1A; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">a</text>
     </g>
-    <g clip-path="url(#f6-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
+    <g clip-path="url(#f8-cpMC4wMHw0NjguMDB8MC4wMHw1MDQuMDA=)">
 </g>
   </g>
 </svg>
@@ -1153,10 +1502,10 @@ across panels.</p>
 <p>A guide draws breaks, tick labels and an axis title. The z guide uses
 an exterior edge of the projected box. Theme elements for z inherit the
 corresponding general axis settings.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/scale_z_continuous.html">scale_z_continuous</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"Height"</span>, guide <span class="op">=</span> <span class="fu"><a href="../reference/guide_axis_3d.html">guide_axis_3d</a></span><span class="op">(</span>n.dodge <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.title.z <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.title.z <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"#2E6F9E"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three points with a Height axis title and a blue z axis."><title>Three points with a Height axis title and a blue z axis.</title>
   <g class="svglite">
@@ -1189,29 +1538,29 @@ corresponding general axis settings.</p>
     </defs>
     <rect class="svg-bg" width="100%" height="100%" style="stroke: none; fill: #F5F6F8;"/>
     <defs>
-      <clipPath id="f7-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=">
+      <clipPath id="f9-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=">
         <rect x="0.00" y="0.00" width="468.00" height="324.00"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f7-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f9-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
 </g>
     <defs>
-      <clipPath id="f7-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw">
+      <clipPath id="f9-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw">
         <rect x="72.00" y="0.00" width="324.00" height="324.00"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f7-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)">
+    <g clip-path="url(#f9-cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)">
       <rect x="72.00" y="0.00" width="324.00" height="324.00" style="stroke-width: 1.65; stroke: none;"/>
     </g>
-    <g clip-path="url(#f7-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f9-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <rect x="80.47" y="8.47" width="307.06" height="307.06" style="stroke-width: 1.65; stroke: none;"/>
     </g>
     <defs>
-      <clipPath id="f7-cpMTMwLjY2fDM1OC44M3wxNi40NHwzMDIuMjM=">
+      <clipPath id="f9-cpMTMwLjY2fDM1OC44M3wxNi40NHwzMDIuMjM=">
         <rect x="130.66" y="16.44" width="228.17" height="285.79"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f7-cpMTMwLjY2fDM1OC44M3wxNi40NHwzMDIuMjM=)">
+    <g clip-path="url(#f9-cpMTMwLjY2fDM1OC44M3wxNi40NHwzMDIuMjM=)">
       <polyline points="134.94,243.29 134.94,99.27 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="144.39,235.10 144.39,91.08 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
       <polyline points="153.84,226.92 153.84,82.90 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
@@ -1303,7 +1652,7 @@ corresponding general axis settings.</p>
       <circle class="theme-fill-fg" cx="141.48" cy="238.63" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
       <circle class="theme-fill-fg" cx="272.41" cy="145.50" r="3.75" style="stroke-width: 1.10; fill: #3E3F3A;"/>
     </g>
-    <g clip-path="url(#f7-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
+    <g clip-path="url(#f9-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <text x="134.11" y="265.76" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
       <text x="166.84" y="275.21" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.5</text>
       <text x="199.58" y="284.66" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2.0</text>

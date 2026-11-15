@@ -9,21 +9,8 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
-         grey = "#5C6166")
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
+source("../setup.R")
+docs_setup()
 ```
 
 `view_3d()` opens a plot in an interactive browser widget with orbit controls,
@@ -32,6 +19,11 @@ R packages [htmlwidgets](https://www.htmlwidgets.org/) and
 [svglite](https://svglite.r-lib.org/) to display the scene and its surrounding
 plot elements. This article builds a viewer and links its selections to a
 filter. Installation is covered in [Get started](ggplot3d.html).
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
 
 ## Example
 
@@ -43,7 +35,7 @@ creating the widget.
 ```{r viewer-data}
 cars <- data.frame(mtcars, model = rownames(mtcars))
 p <- ggplot(cars, aes(wt, mpg, z = hp, tooltip = model, data_id = model)) +
-  geom_point_3d(size = 4, colour = PAL["blue"]) +
+  geom_point_3d(size = 4, colour = "#2E6F9E") +
   coord_3d() + labs(x = "weight", y = "mpg", z = "horsepower")
 ```
 
@@ -145,7 +137,7 @@ view_3d(panels, panel = 1, link = "cars-cameras", width = 624, height = 432)
 The second viewer uses the same link name. Orbit, zoom and reset changes
 travel between the two, with angle changes added and zoom factors multiplied.
 
-```{r linked-panel, fig.alt="Manual cars in a selected facet sharing camera changes with the automatic-car viewer above."}
+```{r linked-panel, fig.alt="Manual cars in a selected facet sharing camera changes with the automatic-car viewer above.", message = FALSE}
 other <- panels + coord_3d(azimuth = 30)
 view_3d(other, panel = 2, link = "cars-cameras", width = 624, height = 432)
 ```
@@ -160,7 +152,7 @@ The cylinder filter below hides cars excluded by the chosen cylinder counts.
 ```{r shared-data}
 shared <- crosstalk::SharedData$new(cars, key = ~model, group = "cars")
 linked <- ggplot(shared$origData(), aes(wt, mpg, z = hp, tooltip = model)) +
-  geom_point_3d(size = 4, colour = PAL["blue"]) + coord_3d()
+  geom_point_3d(size = 4, colour = "#2E6F9E") + coord_3d()
 ```
 
 The original rows let the viewer take its keys from the shared object.

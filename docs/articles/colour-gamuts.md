@@ -11,6 +11,12 @@ sample.
 
 ``` r
 
+library(ggplot2)
+library(ggplot3d)
+```
+
+``` r
+
 rgb <- expand.grid(r = seq(0, 1, length.out = 9),
                    g = seq(0, 1, length.out = 9),
                    b = seq(0, 1, length.out = 9))

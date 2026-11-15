@@ -64,6 +64,11 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
+.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation-dark { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -96,6 +101,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
@@ -105,12 +111,17 @@
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
     <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
     <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
     <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
     <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
     <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
     <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
     <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
@@ -119,6 +130,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -151,7 +163,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Exporting plots and scenes</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/export.Rmd" class="external-link"><code>vignettes/export.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/articles/export.Rmd" class="external-link"><code>vignettes/articles/export.Rmd</code></a></small>
       <div class="d-none name"><code>export.Rmd</code></div>
     </div>
 
@@ -163,6 +175,9 @@ article writes both kinds of output from small plots. Installation is
 covered in <a href="ggplot3d.html">Get started</a>. Optional bridges use
 <a href="https://dmurdoch.github.io/rgl/" class="external-link">rgl</a>, an R package for
 interactive 3D scenes, and <a href="https://www.rayrender.net" class="external-link">rayrender</a>, an R path tracer.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/gcol33/ggplot3d" class="external-link">ggplot3d</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
@@ -170,10 +185,10 @@ interactive 3D scenes, and <a href="https://www.rayrender.net" class="external-l
 fuel economy in miles per US gallon and gross horsepower. Model names
 provide hover text and selection keys. Start with a view of these three
 variables.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="va">mtcars</span>, model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">cars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">wt</span>, <span class="va">mpg</span>, z <span class="op">=</span> <span class="va">hp</span>, tooltip <span class="op">=</span> <span class="va">model</span>, data_id <span class="op">=</span> <span class="va">model</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span>, colour <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span>, colour <span class="op">=</span> <span class="st">"#2E6F9E"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"weight"</span>, y <span class="op">=</span> <span class="st">"mpg"</span>, z <span class="op">=</span> <span class="st">"horsepower"</span><span class="op">)</span></span>
 <span><span class="va">p</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
@@ -374,7 +389,7 @@ variables.</p>
 layout order. The extension chooses the format. The following example
 writes a binary glTF model, called a GLB file, to a temporary directory
 and checks the file.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"ggplot3d-export-"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span>
 <span><span class="va">glb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="st">"cars.glb"</span><span class="op">)</span></span>
@@ -433,7 +448,7 @@ lines and box edges are included with <code>furniture = TRUE</code>.</p>
 <p>Write the other formats with the same call. The temporary directory
 makes every example runnable without choosing an output folder
 first.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">formats</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gltf"</span>, <span class="st">"ply"</span>, <span class="st">"obj"</span>, <span class="st">"stl"</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">extension</span> <span class="kw">in</span> <span class="va">formats</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"cars."</span>, <span class="va">extension</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -455,7 +470,7 @@ markers become small solids. Width and height set the layout used to
 convert physical line and point sizes relative to the box. Use line and
 point primitives when the receiving format and software support
 them.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="st">"points.ply"</span><span class="op">)</span>, points <span class="op">=</span> <span class="st">"point"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="st">"large.stl"</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>  lines <span class="op">=</span> <span class="st">"tube"</span>, points <span class="op">=</span> <span class="st">"mesh"</span><span class="op">)</span></span>
@@ -474,7 +489,7 @@ surface counterparts when exporting model geometry, as shown in <a href="ray-mar
 zoom tracks to glTF. The first panel is exported. Start with a
 three-frame turn of the same motor cars; the result records the file and
 frame count.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">turn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, azimuth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">60</span>, <span class="op">-</span><span class="fl">20</span>, <span class="fl">20</span><span class="op">)</span>, frames <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="st">"turn.glb"</span><span class="op">)</span>, fps <span class="op">=</span> <span class="fl">2</span>, width <span class="op">=</span> <span class="fl">320</span>, height <span class="op">=</span> <span class="fl">320</span>,</span>
 <span>  workers <span class="op">=</span> <span class="fl">1</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -485,11 +500,11 @@ frame. Scales train on all frames, and visibility tracks select the
 frame’s geometry in the file. Here the horsepower coordinate increases
 by twenty in the second frame. These changed coordinates are an
 illustration of animation.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">states</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">cars</span>, step <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/transform.html" class="external-link">transform</a></span><span class="op">(</span><span class="va">cars</span>, step <span class="op">=</span> <span class="fl">2</span>, hp <span class="op">=</span> <span class="va">hp</span> <span class="op">+</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">changing</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">states</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">wt</span>, <span class="va">mpg</span>, z <span class="op">=</span> <span class="va">hp</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span>, colour <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span>, colour <span class="op">=</span> <span class="st">"#2E6F9E"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">motion</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">changing</span>, time <span class="op">=</span> <span class="st">"step"</span>, azimuth <span class="op">=</span> <span class="op">-</span><span class="fl">60</span>,</span>
 <span>  file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="st">"states.gltf"</span><span class="op">)</span>, fps <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  width <span class="op">=</span> <span class="fl">320</span>, height <span class="op">=</span> <span class="fl">320</span>, workers <span class="op">=</span> <span class="fl">1</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -506,7 +521,7 @@ interaction</a>.</p>
 the plot to a mesh with vertex colours, then inspect the vertex and
 triangle counts. Point primitives can instead populate the mesh’s point
 indices.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mesh</span> <span class="op">&lt;-</span> <span class="fu">rgl</span><span class="fu">::</span><span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/as.mesh3d.default.html" class="external-link">as.mesh3d</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>vertices <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">mesh</span><span class="op">$</span><span class="va">vb</span><span class="op">)</span>, triangles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">mesh</span><span class="op">$</span><span class="va">it</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  vertices triangles </span></span>
@@ -516,7 +531,7 @@ indices.</p>
 also runs during document builds. rgl centres the drawn geometry itself,
 so its framing may differ from the original plot. The scene includes
 text through rgl’s native text primitives.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rgl.useNULL <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">ids</span> <span class="op">&lt;-</span> <span class="fu">rgl</span><span class="fu">::</span><span class="fu"><a href="https://dmurdoch.github.io/rgl/dev/reference/plot3d.html" class="external-link">plot3d</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ids</span><span class="op">)</span></span>
@@ -531,7 +546,7 @@ text through rgl’s native text primitives.</p>
 lights and renderer. The bridge creates one diffuse mesh object per
 nonempty geometry layer, with the mapped vertex colours. Paths become
 tubes and points become solids; translucency is omitted.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scene</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_rayrender_3d.html">as_rayrender_3d</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">scene</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
@@ -549,7 +564,7 @@ connection between a visible fragment and its source layer and row.
 Hovering or focusing a fragment highlights fragments from the same
 source row, and its title provides tooltip text. The projected view
 stays fixed.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">svg</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="st">"cars.svg"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="va">svg</span>, interactive <span class="op">=</span> <span class="cn">TRUE</span>, width <span class="op">=</span> <span class="fl">624</span>, height <span class="op">=</span> <span class="fl">432</span><span class="op">)</span></span>
 <span><span class="va">doc</span> <span class="op">&lt;-</span> <span class="fu">xml2</span><span class="fu">::</span><span class="fu"><a href="http://xml2.r-lib.org/reference/read_xml.html" class="external-link">read_xml</a></span><span class="op">(</span><span class="va">svg</span><span class="op">)</span></span>
@@ -1431,7 +1446,7 @@ provides a camera you can rotate.</p>
 editable fill, draw, text and clipping commands. The standalone setting
 includes a document preamble; disable it for code to insert into an
 existing document.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tikz</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="st">"cars.tex"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">tikz</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; \documentclass[tikz,border=0pt]{standalone}</span></span>
@@ -1452,7 +1467,7 @@ legends.</p>
 writes model-space geometry, materials, text and a camera, which you can
 edit to render another view. The panel index selects the scene to
 export.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">asy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">out</span>, <span class="st">"cars.asy"</span><span class="op">)</span>, panel <span class="op">=</span> <span class="fl">1</span>, prc <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">asy</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; settings.prc=true;</span></span>
@@ -1472,7 +1487,7 @@ thicknesses and the base plate are applied in millimetres after scaling.
 Open surfaces can become normal-offset shells or close vertically onto
 the base. Layer overrides use the exported layer names, such as
 <code>c(layer1_surface = "base")</code>.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">settings</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/print_3d.html">print_3d</a></span><span class="op">(</span>size_mm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">60</span><span class="op">)</span>, min_mm <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  shell_mm <span class="op">=</span> <span class="fl">1.2</span>, base_mm <span class="op">=</span> <span class="fl">2</span>, text <span class="op">=</span> <span class="st">"raised"</span>, furniture <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"base"</span>, <span class="st">"axes"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cars.stl"</span>, print <span class="op">=</span> <span class="va">settings</span><span class="op">)</span></span>

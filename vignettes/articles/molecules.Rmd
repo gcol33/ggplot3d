@@ -8,26 +8,23 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA)))
+source("../setup.R")
+docs_setup(legend = "right", fig.width = 6, fig.height = 5)
 ```
 
 [bio3d](https://www.thegrantlab.org/bio3d/) reads Protein Data Bank coordinate files into `pdb` objects. `fortify()` turns their atom records into a table and attaches bond endpoints for `geom_edge_3d()`. Each atom retains its serial number, element and coordinate in angstroms.
 
 This water molecule has explicitly specified connectivity. Bond endpoints refer to atom serial numbers, and can be supplied independently of the order of the atom records.
 
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
+
 ```{r water, eval=requireNamespace("bio3d", quietly=TRUE)}
 water <- bio3d::as.pdb(xyz = c(0, 0, 0, 0.96, 0, 0, -0.24, 0.93, 0),
                      eleno = c(10, 40, 90), elety = c("O", "H1", "H2"),
-                     elesy = c("O", "H", "H"), resid = "HOH")
+                     elesy = c("O", "H", "H"), resid = "HOH", verbose = FALSE)
 bonds <- data.frame(from = c(10, 10), to = c(40, 90))
 atoms <- fortify(water, bonds = bonds)
 ggplot(atoms) +

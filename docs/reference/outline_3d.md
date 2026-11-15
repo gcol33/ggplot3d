@@ -90,7 +90,8 @@ such as the edges at a corner of a cube, still meet there.
 ## References
 
 Appel, Rohlf and Stein (1979). The haloed line effect for hidden line
-elimination. SIGGRAPH '79. <https://history.siggraph.org/?p=104577>
+elimination. SIGGRAPH '79.
+[doi:10.1145/800249.807437](https://doi.org/10.1145/800249.807437)
 
 Bénard and Hertzmann (2019). Line drawings from 3D models: a tutorial.
 Foundations and Trends in Computer Graphics and Vision 11, 1-159.

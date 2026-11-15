@@ -64,6 +64,11 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
+.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation-dark { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -96,6 +101,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="articles/ray-marching.html">Ray marching and volumes</a></li>
@@ -105,12 +111,17 @@
     <li><a class="dropdown-item" href="articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
     <li><a class="dropdown-item" href="articles/documents.html">Documents</a></li>
     <li><a class="dropdown-item" href="articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="articles/networks.html">Networks and trees</a></li>
+    <li><a class="dropdown-item" href="articles/meshes.html">Meshes and intrinsic geometry</a></li>
     <li><a class="dropdown-item" href="articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="articles/pde.html">Linear and nonlinear PDEs</a></li>
     <li><a class="dropdown-item" href="articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
+    <li><a class="dropdown-item" href="articles/curved-spaces.html">Curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
     <li><a class="dropdown-item" href="articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
     <li><a class="dropdown-item" href="articles/tensors.html">Tensor glyphs</a></li>
     <li><a class="dropdown-item" href="articles/ordination.html">Ordination biplots</a></li>
@@ -119,6 +130,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="articles/visibility.html">Visibility</a></li>
+    <li><a class="dropdown-item" href="articles/extending.html">Extending ggplot3d</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -162,7 +174,7 @@
 <li>Continuous, discrete and date/time z scales, including transformations and facets.</li>
 <li>Vector drawing and raster rendering from the same scene geometry.</li>
 </ul>
-<p><a href="vignettes/visibility.Rmd">Visibility</a> explains how overlapping geometry is ordered and split. The examples below generate their figures from the package.</p>
+<p><a href="https://gillescolling.com/ggplot3d/articles/visibility.html">Visibility</a> explains how overlapping geometry is ordered and split. The examples below generate their figures from the package.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -2443,20 +2455,20 @@
 <div class="section level2">
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
-<p>Start with <a href="vignettes/ggplot3d.Rmd">Get started</a> to create and save a plot.</p>
+<p>Start with <a href="https://gillescolling.com/ggplot3d/articles/ggplot3d.html">Get started</a> to create and save a plot.</p>
 <ul>
 <li>
-<a href="vignettes/z-scale.Rmd">The z scale</a>: transformations, categories, limits and facets.</li>
+<a href="https://gillescolling.com/ggplot3d/articles/z-scale.html">The z scale</a>: transformations, categories, limits and facets.</li>
 <li>
-<a href="vignettes/layers.Rmd">Layers</a>: points, paths, gridded surfaces, columns, distributions and intervals.</li>
+<a href="https://gillescolling.com/ggplot3d/articles/layers.html">Layers</a>: points, paths, gridded surfaces, columns, distributions and intervals.</li>
 <li>
-<a href="vignettes/surfaces-solids.Rmd">Surfaces, solids and fields</a>: meshes, fitted and level surfaces, hulls, solid glyphs and sweeps.</li>
+<a href="https://gillescolling.com/ggplot3d/articles/surfaces-solids.html">Surfaces, solids and fields</a>: meshes, fitted and level surfaces, hulls, solid glyphs and sweeps.</li>
 <li>
-<a href="vignettes/camera.Rmd">Camera and framing</a>: view angles, projections and plot bounds.</li>
+<a href="https://gillescolling.com/ggplot3d/articles/camera.html">Camera and framing</a>: view angles, projections and plot bounds.</li>
 <li>
-<a href="vignettes/backends.Rmd">Output backends</a>: choose vector or raster rendering.</li>
+<a href="https://gillescolling.com/ggplot3d/articles/backends.html">Output backends</a>: choose vector or raster rendering.</li>
 <li>
-<a href="vignettes/visibility.Rmd">Visibility</a>: how the scene resolves overlapping geometry.</li>
+<a href="https://gillescolling.com/ggplot3d/articles/visibility.html">Visibility</a>: how the scene resolves overlapping geometry.</li>
 </ul>
 <p>Function help is available in R, for example <code><a href="reference/coord_3d.html">?coord_3d</a></code> and <code><a href="reference/geom_surface_3d.html">?geom_surface_3d</a></code>.</p>
 </div>

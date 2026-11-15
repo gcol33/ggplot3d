@@ -19,7 +19,7 @@
 #'   mappings are the same in each frame.
 #' @param fps Frames per second, default 20.
 #' @param file Output path, or NULL to use `format`. The extension
-#'   selects the output: `.gif` (needs gifski), `.mp4` or `.webm` (need av),
+#'   selects the output: `.gif`, `.mp4` or `.webm` (need av),
 #'   `.apng` (an animated PNG), `.png` or `.svg` (one file per frame; svg needs
 #'   svglite) and `.pdf` (one page per frame). A file per frame takes its
 #'   number from a [sprintf()] pattern in the name, such as
@@ -116,8 +116,9 @@
 #'   encoding through `animate(renderer = ...)`; its `gifski_renderer()` and
 #'   `av_renderer()` create temporary files when their `file` is NULL.
 #'   Here, `format` selects an entry in the output registry and supplies a
-#'   temporary path to the encoder. gifski writes a GIF to that path; av
-#'   infers the video container from its extension.
+#'   temporary path to the encoder. GIF frames share one palette and pixels
+#'   unchanged since the previous frame are coded as transparent, which keeps
+#'   files small; av infers the video container from its extension.
 #'
 #'   In knitr HTML documents, a returned GIF or APNG embeds as an image and
 #'   MP4 or WebM embeds as a looping, muted, autoplaying inline video. The file
@@ -135,7 +136,7 @@
 #' @examples
 #' p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
 #'   geom_point_3d() + coord_3d()
-#' if (requireNamespace("gifski", quietly = TRUE)) {
+#' if (requireNamespace("ragg", quietly = TRUE)) {
 #'   movie <- animate_3d(p, frames = 3, width = 320, height = 320,
 #'                       file = tempfile(fileext = ".gif"))
 #'   movie$timings
@@ -150,7 +151,7 @@
 #' waves$z <- sin(pi * waves$x) * sin(pi * waves$y) * cos(2 * pi * waves$t)
 #' wave <- ggplot2::ggplot(waves, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d() + coord_3d()
-#' if (requireNamespace("gifski", quietly = TRUE)) {
+#' if (requireNamespace("ragg", quietly = TRUE)) {
 #'   movie <- animate_3d(wave, time = "t", width = 320, height = 320,
 #'                       file = tempfile(fileext = ".gif"))
 #'   movie$camera$value
@@ -231,8 +232,9 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   complete <- FALSE
   on.exit(if (!complete || !is.null(file)) unlink(directory, recursive = TRUE), add = TRUE)
   # The device fixes text measurements before the grammar is built.
+  background <- motion_background_3d(plot, output$extension)
   device <- motion_open_device_3d(output$device, file.path(directory, paste0("measure.", output$device)),
-    width, height, dpi)
+    width, height, dpi, background)
   on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE, after = FALSE)
   limits <- if (is.null(time)) NULL else motion_frame_limits_3d(plot, time, states)
   keyframes <- if (is.null(tween) && is.null(trail)) NULL else lapply(states, function(value) {
@@ -273,7 +275,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
     trail_history = new.env(parent = emptyenv()),
     cameras = cameras, base = coord$camera, backend = backend, frame = motion_frame_mode_3d(steps, coord$config$frame),
     device = output$device, per_file = output$kind != "pages", paths = paths, frames = frames,
-    width = width, height = height, dpi = dpi, label_state = new.env(parent = emptyenv()),
+    width = width, height = height, dpi = dpi, background = background, label_state = new.env(parent = emptyenv()),
     stable_partition = stable_partition,
     export = if (output$kind == "scene") list(options = options, layer_names = export_layer_names_3d(plot)),
     progress = progress && is.null(workers$cluster) && workers$count == 1L)
@@ -424,7 +426,7 @@ motion_render_frames_3d <- function(indices, job) {
   lapply(indices, function(i) {
     start <- proc.time()[["elapsed"]]
     if (job$per_file) {
-      device <- motion_open_device_3d(job$device, job$paths[i], job$width, job$height, job$dpi)
+      device <- motion_open_device_3d(job$device, job$paths[i], job$width, job$height, job$dpi, job$background)
       on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device))
     } else if (i > indices[1L]) grid::grid.newpage()
     drawn <- motion_draw_frame_3d(job, i)
@@ -439,7 +441,7 @@ motion_render_frames_3d <- function(indices, job) {
 motion_render_3d <- function(job, workers, indices = seq_len(job$frames)) {
   if (!length(indices)) return(list())
   if (!job$per_file) {
-    device <- motion_open_device_3d(job$device, job$paths, job$width, job$height, job$dpi)
+    device <- motion_open_device_3d(job$device, job$paths, job$width, job$height, job$dpi, job$background)
     on.exit(if (device %in% grDevices::dev.list()) grDevices::dev.off(device), add = TRUE)
     return(motion_render_frames_3d(indices, job))
   }

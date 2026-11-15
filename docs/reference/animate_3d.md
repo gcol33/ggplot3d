@@ -63,16 +63,16 @@ animate_3d(
 - file:
 
   Output path, or NULL to use `format`. The extension selects the
-  output: `.gif` (needs gifski), `.mp4` or `.webm` (need av), `.apng`
-  (an animated PNG), `.png` or `.svg` (one file per frame; svg needs
-  svglite) and `.pdf` (one page per frame). A file per frame takes its
-  number from a [`sprintf()`](https://rdrr.io/r/base/sprintf.html)
-  pattern in the name, such as `"frames/turn-%03d.png"`, or else gets it
-  appended, as in `turn-0001.png`. `.glb` and `.gltf` hold the first
-  panel as an animated 3D scene for Blender and other glTF software:
-  camera translation, rotation and zoom tracks, with per-frame
-  visibility tracks for changing geometry. Each glTF animation uses one
-  projection type; export perspective and orthographic paths separately.
+  output: `.gif`, `.mp4` or `.webm` (need av), `.apng` (an animated
+  PNG), `.png` or `.svg` (one file per frame; svg needs svglite) and
+  `.pdf` (one page per frame). A file per frame takes its number from a
+  [`sprintf()`](https://rdrr.io/r/base/sprintf.html) pattern in the
+  name, such as `"frames/turn-%03d.png"`, or else gets it appended, as
+  in `turn-0001.png`. `.glb` and `.gltf` hold the first panel as an
+  animated 3D scene for Blender and other glTF software: camera
+  translation, rotation and zoom tracks, with per-frame visibility
+  tracks for changing geometry. Each glTF animation uses one projection
+  type; export perspective and orthographic paths separately.
 
 - backend:
 
@@ -228,8 +228,9 @@ type or frame layout, and `file` sets its location. gganimate selects
 encoding through `animate(renderer = ...)`; its `gifski_renderer()` and
 `av_renderer()` create temporary files when their `file` is NULL. Here,
 `format` selects an entry in the output registry and supplies a
-temporary path to the encoder. gifski writes a GIF to that path; av
-infers the video container from its extension.
+temporary path to the encoder. GIF frames share one palette and pixels
+unchanged since the previous frame are coded as transparent, which keeps
+files small; av infers the video container from its extension.
 
 In knitr HTML documents, a returned GIF or APNG embeds as an image and
 MP4 or WebM embeds as a looping, muted, autoplaying inline video. The
@@ -256,7 +257,7 @@ to play a path in the browser.
 ``` r
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
   geom_point_3d() + coord_3d()
-if (requireNamespace("gifski", quietly = TRUE)) {
+if (requireNamespace("ragg", quietly = TRUE)) {
   movie <- animate_3d(p, frames = 3, width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$timings
@@ -271,7 +272,7 @@ waves <- expand.grid(x = seq(0, 1, length.out = 20), y = seq(0, 1, length.out = 
 waves$z <- sin(pi * waves$x) * sin(pi * waves$y) * cos(2 * pi * waves$t)
 wave <- ggplot2::ggplot(waves, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d() + coord_3d()
-if (requireNamespace("gifski", quietly = TRUE)) {
+if (requireNamespace("ragg", quietly = TRUE)) {
   movie <- animate_3d(wave, time = "t", width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$camera$value

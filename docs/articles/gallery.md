@@ -8,6 +8,12 @@ fields](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
 develops the streamtube example. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Domain recipes
 
 [Tensor glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md)
@@ -33,7 +39,7 @@ knot <- data.frame(x = sin(t) + 2 * sin(2 * t),
                    y = cos(t) - 2 * cos(2 * t),
                    z = -sin(3 * t))
 ggplot(knot, aes(x, y, z = z)) +
-  geom_tube_3d(radius = 0.16, sides = 10, closed = TRUE, fill = PAL["blue"]) +
+  geom_tube_3d(radius = 0.16, sides = 10, closed = TRUE, fill = "#2E6F9E") +
   coord_3d(aspect = "data")
 ```
 
@@ -57,7 +63,7 @@ giving each species a solid violin.
 ggplot(iris, aes(Species, y = 0, z = Petal.Length, fill = Species)) +
   geom_violin_3d(shape = "revolve", n = 40, sides = 16) +
   scale_y_continuous(limits = c(-1, 1), breaks = NULL, name = NULL) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d(elevation = 20)
 ```
 
@@ -77,8 +83,8 @@ ggplot(iris, aes(Sepal.Length, Sepal.Width, z = Petal.Length,
   stat_ellipsoid_3d(type = "norm", kind = "data", alpha = 0.2,
                      axes = TRUE, detail = 2) +
   geom_point_3d(size = 1) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
-  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
+  scale_colour_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d(azimuth = -45, elevation = 25)
 ```
 
@@ -108,7 +114,7 @@ ggplot(field, aes(x, y, z = z, u = u, v = v, w = w)) +
   stat_streamline_3d(aes(fill = after_stat(norm)), seeds = seeds,
     geom = "tube", direction = "forward", step = 0.1, max_steps = 80,
     radius = 0.035, sides = 8, cap = "flat", colour = NA) +
-  scale_fill_gradient(low = PAL["blue"], high = PAL["orange"]) +
+  scale_fill_gradient(low = "#2E6F9E", high = "#9E5E0F") +
   coord_3d(aspect = "data")
 ```
 
@@ -124,7 +130,7 @@ with an annulus and preserves the inner cavity.
 ``` r
 
 shell <- sdf_sphere(radius = 1) - sdf_sphere(radius = 0.65)
-ggplot() + geom_isofunction_3d(fun = shell, n = 24, fill = PAL["teal"]) +
+ggplot() + geom_isofunction_3d(fun = shell, n = 24, fill = "#2A7A7A") +
   xlim(-1.1, 1.1) + ylim(-1.1, 1.1) + zlim(-1.1, 1.1) +
   coord_3d(aspect = "data", azimuth = -30,
     clip_planes = list(clip_plane_3d(c(-1, 0, 0), c(x = 0), cap = TRUE)))
@@ -157,7 +163,7 @@ sinc <- function(x, y) {
 ggplot() +
   geom_function_3d(aes(fill = after_stat(z_mean)), fun = sinc, n = 40) +
   xlim(-10, 10) + ylim(-10, 10) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"]) +
+  scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E") +
   coord_3d()
 ```
 
@@ -201,9 +207,9 @@ points.
 ``` r
 
 ggplot(bezier, aes(x, y, z = z)) +
-  geom_path_3d(data = ctrl, linetype = "dashed", colour = PAL["grey"]) +
-  geom_point_3d(data = ctrl, size = 3, colour = PAL["grey"]) +
-  geom_path_3d(linewidth = 1.2, colour = PAL["blue"]) +
+  geom_path_3d(data = ctrl, linetype = "dashed", colour = "#5C6166") +
+  geom_point_3d(data = ctrl, size = 3, colour = "#5C6166") +
+  geom_path_3d(linewidth = 1.2, colour = "#2E6F9E") +
   coord_3d()
 ```
 
@@ -232,7 +238,7 @@ histogram bars do.
 ``` r
 
 ggplot(faithful, aes(eruptions, waiting)) +
-  geom_histogram_3d(binwidth = c(0.5, 5), fill = PAL["blue"]) +
+  geom_histogram_3d(binwidth = c(0.5, 5), fill = "#2E6F9E") +
   labs(x = "duration", z = "count") +
   coord_3d()
 ```
@@ -273,7 +279,7 @@ repeats the cut grade with a legend.
 
 ggplot(prices, aes(cut, color, z = price, fill = cut)) +
   geom_col_3d() +
-  scale_fill_manual(values = unname(PAL[1:5])) +
+  scale_fill_manual(values = c("#2E6F9E", "#B5342B", "#3F7A3D", "#9E5E0F", "#7A4F9E")) +
   coord_3d() +
   theme(legend.position = "right")
 ```
@@ -319,7 +325,7 @@ and the aspect flattens the disc.
 wedges$cut <- factor(wedges$cut, levels = names(share))
 ggplot(wedges, aes(x, y, z = 0.2, group = cut, fill = cut)) +
   geom_extrude_3d() +
-  scale_fill_manual(values = unname(PAL[1:5])) +
+  scale_fill_manual(values = c("#2E6F9E", "#B5342B", "#3F7A3D", "#9E5E0F", "#7A4F9E")) +
   coord_3d(aspect = c(1, 1, 0.2), elevation = 35, axes = character(),
            panes = character(), box = "none") +
   theme(legend.position = "right")
@@ -364,7 +370,7 @@ ggplot(econ, aes(date, series, zmin = 0, zmax = value01,
   geom_band_3d() +
   scale_y_continuous(breaks = 1:3,
                      labels = c("psavert", "uempmed", "unemploy")) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d(azimuth = -50, aspect = c(1.6, 1, 0.8)) +
   theme(legend.position = "right")
 ```
@@ -393,8 +399,8 @@ in weight.
 
 ggplot(mtcars, aes(wt, hp, z = mpg)) +
   geom_smooth_3d(method = "lm", formula = z ~ x + I(x^2) + y,
-                 n = 20, fill = PAL["blue"]) +
-  geom_point_3d(size = 2.5, colour = PAL["red"]) +
+                 n = 20, fill = "#2E6F9E") +
+  geom_point_3d(size = 2.5, colour = "#B5342B") +
   coord_3d()
 ```
 
@@ -425,7 +431,7 @@ small <- subset(diamonds, carat < 2.5)
 small <- small[sample(nrow(small), 2000), ]
 ggplot(small, aes(carat, log10(price))) +
   stat_density_2d_3d(aes(fill = after_stat(density)), n = 40) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"]) +
+  scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E") +
   coord_3d()
 ```
 
@@ -464,7 +470,7 @@ ggplot(heights, aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", colour = NA) +
   geom_contour_3d(aes(colour = after_stat(level)), binwidth = 10,
                   linewidth = 0.6) +
-  scale_colour_gradient(low = PAL["blue"], high = PAL["red"]) +
+  scale_colour_gradient(low = "#2E6F9E", high = "#B5342B") +
   coord_3d(azimuth = -40, elevation = 40, aspect = c(1.4, 1, 0.6))
 ```
 
@@ -489,7 +495,8 @@ producing horizontal terraces with the original band colours.
 
 ggplot(heights, aes(x, y, z = z)) +
   geom_contour_filled(bins = 6, colour = "white", linewidth = 0.15) +
-  scale_fill_manual(values = unname(PAL[1:6])) +
+  scale_fill_manual(values = c("#2E6F9E", "#B5342B", "#3F7A3D", "#9E5E0F", "#7A4F9E",
+                               "#2A7A7A")) +
   coord_3d(azimuth = -40, elevation = 40, aspect = c(1.4, 1, 0.6))
 ```
 

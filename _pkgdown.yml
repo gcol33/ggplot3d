@@ -50,6 +50,11 @@ template:
         html body main pre.sourceCode,
         html body main .sourceCode pre { overflow-x: auto !important; }
       }
+      .docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+      .docs-animation-dark { display: none !important; }
+      [data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+      [data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+      math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
       </style>
 figures:
   dev: svglite::svglite
@@ -82,41 +87,6 @@ navbar:
       href: https://github.com/gcol33/ggplot3d
       aria-label: GitHub
 reference:
-- title: Spherical geometry and observers
-  contents:
-  - coord_spherical_geometry_3d
-  - stat_hopf_fibre_3d
-- title: Tilings and honeycombs
-  contents:
-  - stat_tiling_3d
-  - stat_project_3d
-  - rotate_4d
-  - grand_tour_3d
-  - stat_section_4d
-  - stat_honeycomb_3d
-- title: Hyperbolic geometry and data
-  contents:
-  - coord_hyperbolic_3d
-  - stat_tree_hyperbolic_3d
-  - hyperbolic_focus_3d
-- title: Relativity
-  contents:
-  - stat_light_cone_3d
-  - stat_embedding_3d
-  - stat_geodesic_ode_3d
-  - lorentz_boost_3d
-  - coord_spacetime_3d
-- title: Complex analysis
-  contents:
-  - mobius_3d
-  - stat_riemann_sphere_3d
-  - stat_riemann_surface_3d
-- title: Immersed surfaces and knots
-  contents:
-  - stat_self_intersection_3d
-  - stat_immersed_3d
-  - stat_knot_3d
-
 - title: Coordinates and lighting
   contents:
   - coord_3d
@@ -325,6 +295,40 @@ reference:
   - register_geom_3d
   - new_scene_packet
   - normalise_homogeneous_3d
+- title: Spherical geometry and observers
+  contents:
+  - coord_spherical_geometry_3d
+  - stat_hopf_fibre_3d
+- title: Tilings and honeycombs
+  contents:
+  - stat_tiling_3d
+  - stat_project_3d
+  - rotate_4d
+  - grand_tour_3d
+  - stat_section_4d
+  - stat_honeycomb_3d
+- title: Hyperbolic geometry and data
+  contents:
+  - coord_hyperbolic_3d
+  - stat_tree_hyperbolic_3d
+  - hyperbolic_focus_3d
+- title: Relativity
+  contents:
+  - stat_light_cone_3d
+  - stat_embedding_3d
+  - stat_geodesic_ode_3d
+  - lorentz_boost_3d
+  - coord_spacetime_3d
+- title: Complex analysis
+  contents:
+  - mobius_3d
+  - stat_riemann_sphere_3d
+  - stat_riemann_surface_3d
+- title: Immersed surfaces and knots
+  contents:
+  - stat_self_intersection_3d
+  - stat_immersed_3d
+  - stat_knot_3d
 - title: Package
   contents: ggplot3d-package
 articles:
@@ -338,6 +342,7 @@ articles:
   navbar: Workflows
   contents:
   - articles/camera
+  - articles/frames
   - articles/backends
   - articles/lighting
   - articles/ray-marching
@@ -347,6 +352,8 @@ articles:
   - articles/combining-2d-3d
   - articles/documents
   - articles/spatial
+  - articles/networks
+  - articles/meshes
   - articles/vector-fields
 - title: Examples
   navbar: Examples
@@ -354,6 +361,9 @@ articles:
   - articles/gallery
   - articles/pde
   - articles/implicit-surfaces
+  - articles/higher-dimensions
+  - articles/curved-spaces
+  - articles/complex-knots
   - articles/thurston-geometries
   - articles/tensors
   - articles/ordination
@@ -361,4 +371,6 @@ articles:
   - articles/colour-gamuts
 - title: Background
   navbar: Background
-  contents: articles/visibility
+  contents:
+  - articles/visibility
+  - articles/extending

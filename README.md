@@ -33,7 +33,7 @@ ggplot3d supports:
   and facets.
 - Vector drawing and raster rendering from the same scene geometry.
 
-[Visibility](vignettes/visibility.Rmd) explains how overlapping geometry
+[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html) explains how overlapping geometry
 is ordered and split. The examples below generate their figures from the
 package.
 
@@ -148,20 +148,20 @@ ggsave("surface.png", raster_plot, width = 5, height = 4.5, dpi = 144)
 
 ## Documentation
 
-Start with [Get started](vignettes/ggplot3d.Rmd) to create and save a
+Start with [Get started](https://gillescolling.com/ggplot3d/articles/ggplot3d.html) to create and save a
 plot.
 
-- [The z scale](vignettes/z-scale.Rmd): transformations, categories,
+- [The z scale](https://gillescolling.com/ggplot3d/articles/z-scale.html): transformations, categories,
   limits and facets.
-- [Layers](vignettes/layers.Rmd): points, paths, gridded surfaces,
+- [Layers](https://gillescolling.com/ggplot3d/articles/layers.html): points, paths, gridded surfaces,
   columns, distributions and intervals.
-- [Surfaces, solids and fields](vignettes/surfaces-solids.Rmd): meshes,
+- [Surfaces, solids and fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html): meshes,
   fitted and level surfaces, hulls, solid glyphs and sweeps.
-- [Camera and framing](vignettes/camera.Rmd): view angles, projections
+- [Camera and framing](https://gillescolling.com/ggplot3d/articles/camera.html): view angles, projections
   and plot bounds.
-- [Output backends](vignettes/backends.Rmd): choose vector or raster
+- [Output backends](https://gillescolling.com/ggplot3d/articles/backends.html): choose vector or raster
   rendering.
-- [Visibility](vignettes/visibility.Rmd): how the scene resolves
+- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html): how the scene resolves
   overlapping geometry.
 
 Function help is available in R, for example `?coord_3d` and

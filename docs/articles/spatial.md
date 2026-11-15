@@ -17,6 +17,12 @@ are reprojected to the coordinate reference system (CRS) given by
 `coord_3d(crs = )`, which must be a projected one; data that are already
 projected are drawn in their own units.
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Terrain from a raster
 
 [`geom_spatraster_3d()`](https://gillescolling.com/ggplot3d/reference/geom_spatraster_3d.md)
@@ -31,7 +37,7 @@ reprojected to the Luxembourg grid (EPSG:2169).
 elevation <- terra::rast(system.file("ex/elev.tif", package = "terra"))
 ggplot() +
   geom_spatraster_3d(data = elevation, maxcell = 4000) +
-  scale_fill_gradient(low = PAL[["green"]], high = "#E8E2C8", na.value = NA) +
+  scale_fill_gradient(low = "#3F7A3D", high = "#E8E2C8", na.value = NA) +
   scale_z_continuous(name = "elevation (m)") + labs(x = NULL, y = NULL) +
   coord_3d(crs = 2169, aspect = c(1, 1.4, 0.35), axes = "z")
 ```
@@ -55,7 +61,7 @@ faceting.
 
 terrain_stars <- stars::st_as_stars(volcano[seq(1, 87, by = 3), seq(1, 61, by = 3)])
 ggplot() + geom_spatraster_3d(data = terrain_stars, maxcell = 700) +
-  scale_fill_gradient(low = PAL["green"], high = "#E8E2C8") +
+  scale_fill_gradient(low = "#3F7A3D", high = "#E8E2C8") +
   labs(z = "height (m)") + coord_3d(aspect = c(1.4, 1, 0.7))
 ```
 
@@ -80,7 +86,7 @@ in 1974 as height:
 nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 ggplot(nc) +
   geom_sf_3d(aes(height = BIR74 / 1000, fill = BIR74), colour = "white", linewidth = 0.1) +
-  scale_fill_gradient(low = "#C9D9E6", high = PAL[["blue"]]) +
+  scale_fill_gradient(low = "#C9D9E6", high = "#2E6F9E") +
   scale_z_continuous(name = "births (1000s)") + labs(x = NULL, y = NULL) +
   coord_3d(crs = 32119, aspect = c(4, 1.6, 1), elevation = 40, axes = "z",
            backend = backend_3d("raster", dpi = 144))
@@ -118,7 +124,7 @@ sections <- data.frame(x = c(100, 800, 450, 450), y = c(300, 300, 50, 600),
                        group = c(1, 1, 2, 2))
 ggplot(volcano_grid, aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", alpha = 0.35) +
-  stat_profile_3d(line = sections, base = 90, fill = PAL[["orange"]], colour = "grey20") +
+  stat_profile_3d(line = sections, base = 90, fill = "#9E5E0F", colour = "grey20") +
   labs(z = "height (m)") +
   coord_3d(aspect = c(870, 610, 300))
 ```
@@ -145,7 +151,7 @@ xyz <- sf::st_sf(geometry = sf::st_sfc(
 ggplot(volcano_grid, aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85") +
   geom_sf_3d(data = xyz, inherit.aes = FALSE,
-             colour = PAL["red"], linewidth = 1) +
+             colour = "#B5342B", linewidth = 1) +
   coord_3d(aspect = c(870, 610, 300))
 ```
 
@@ -178,7 +184,7 @@ flows <- data.frame(x = centres[hub, 1], y = centres[hub, 2],
 ggplot() +
   geom_sf_3d(data = nc_m, fill = "grey92", colour = "grey60", linewidth = 0.1) +
   geom_arc_3d(aes(x, y, xend = xend, yend = yend, linewidth = volume),
-              data = flows, colour = PAL[["red"]], height = 0.25) +
+              data = flows, colour = "#B5342B", height = 0.25) +
   scale_linewidth(range = c(0.4, 1.6)) +
   labs(x = NULL, y = NULL) +
   coord_3d(aspect = c(4, 1.6, 0.8), elevation = 35, axes = character(), panes = "floor")
@@ -208,7 +214,7 @@ las <- lidR::readLAS(system.file("extdata", "MixedConifer.laz", package = "lidR"
 points <- fortify(las)
 ggplot(points, aes(x, y, z = z, colour = z)) +
   geom_point_3d(size = 0.3) +
-  scale_colour_gradient(low = PAL[["green"]], high = "#E8E2C8") +
+  scale_colour_gradient(low = "#3F7A3D", high = "#E8E2C8") +
   labs(x = NULL, y = NULL, z = "height (m)") +
   coord_3d(aspect = c(1, 1, 0.45), axes = "z")
 ```
@@ -246,7 +252,7 @@ track$time <- start + track$hours * 3600
 ggplot(track, aes(x, y, z = time)) +
   geom_sf_3d(data = nc_m, inherit.aes = FALSE, fill = "grey92", colour = "grey60", linewidth = 0.1) +
   geom_dropline_3d(data = track[c(TRUE, FALSE), ], colour = "grey70", linewidth = 0.2) +
-  geom_path_3d(colour = PAL[["purple"]], linewidth = 1) +
+  geom_path_3d(colour = "#7A4F9E", linewidth = 1) +
   scale_z_datetime(date_labels = "%a %H:%M") +
   labs(x = NULL, y = NULL, z = NULL) +
   coord_3d(aspect = c(4, 1.6, 2), elevation = 20, axes = "z", panes = c("back", "floor"))
@@ -260,3 +266,24 @@ The track uses the same projected coordinates as the map, `nc_m`. A
 track recorded in longitude and latitude is projected first with
 [`sf::st_transform()`](https://r-spatial.github.io/sf/reference/st_transform.html),
 so both share one coordinate system.
+
+## Scale bars and north arrows
+
+[`annotation_scale_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_scale_3d.md)
+lays a scale bar in a coordinate plane, so it shortens with perspective
+like the data around it, and
+[`annotation_north_3d()`](https://gillescolling.com/ggplot3d/reference/guide_triad_3d.md)
+points along the direction given as north. Both belong with projected
+coordinates in metres.
+
+``` r
+
+ggplot(volcano_grid, aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey80", colour = NA) +
+  annotation_scale_3d(length = 200, unit = "m") +
+  annotation_north_3d(north = c(0, 1, 0)) +
+  coord_3d(aspect = c(870, 610, 300), projection = "perspective")
+```
+
+![The volcano surface in perspective with a 200 metre scale bar on the
+floor and a north arrow.](spatial_files/figure-html/scale-bar-1.svg)

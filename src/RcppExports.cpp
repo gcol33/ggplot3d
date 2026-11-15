@@ -148,6 +148,33 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// png_unfilter_cpp
+Rcpp::RawVector png_unfilter_cpp(Rcpp::RawVector data, int width, int height, int channels);
+RcppExport SEXP _ggplot3d_png_unfilter_cpp(SEXP dataSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP channelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::RawVector >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< int >::type width(widthSEXP);
+    Rcpp::traits::input_parameter< int >::type height(heightSEXP);
+    Rcpp::traits::input_parameter< int >::type channels(channelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(png_unfilter_cpp(data, width, height, channels));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gif_encode_cpp
+Rcpp::RawVector gif_encode_cpp(Rcpp::List frames, int width, int height, Rcpp::IntegerVector delays, int colours);
+RcppExport SEXP _ggplot3d_gif_encode_cpp(SEXP framesSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP delaysSEXP, SEXP coloursSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type frames(framesSEXP);
+    Rcpp::traits::input_parameter< int >::type width(widthSEXP);
+    Rcpp::traits::input_parameter< int >::type height(heightSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type delays(delaysSEXP);
+    Rcpp::traits::input_parameter< int >::type colours(coloursSEXP);
+    rcpp_result_gen = Rcpp::wrap(gif_encode_cpp(frames, width, height, delays, colours));
+    return rcpp_result_gen;
+END_RCPP
+}
 // grid_clip_paths_cpp
 Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id, Rcpp::NumericVector mask_x, Rcpp::NumericVector mask_y, Rcpp::IntegerVector mask_id, double width, int cap, int join, double mitre, double tolerance, SEXP outline, Rcpp::Nullable<Rcpp::NumericVector> radii, double simplify, int mask_rule);
 RcppExport SEXP _ggplot3d_grid_clip_paths_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP, SEXP mask_xSEXP, SEXP mask_ySEXP, SEXP mask_idSEXP, SEXP widthSEXP, SEXP capSEXP, SEXP joinSEXP, SEXP mitreSEXP, SEXP toleranceSEXP, SEXP outlineSEXP, SEXP radiiSEXP, SEXP simplifySEXP, SEXP mask_ruleSEXP) {
@@ -897,6 +924,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_geometry_triangulate_rings_cpp", (DL_FUNC) &_ggplot3d_geometry_triangulate_rings_cpp, 4},
+    {"_ggplot3d_png_unfilter_cpp", (DL_FUNC) &_ggplot3d_png_unfilter_cpp, 4},
+    {"_ggplot3d_gif_encode_cpp", (DL_FUNC) &_ggplot3d_gif_encode_cpp, 5},
     {"_ggplot3d_grid_clip_paths_cpp", (DL_FUNC) &_ggplot3d_grid_clip_paths_cpp, 15},
     {"_ggplot3d_grid_union_paths_cpp", (DL_FUNC) &_ggplot3d_grid_union_paths_cpp, 3},
     {"_ggplot3d_smooth_faces_raster_cpp", (DL_FUNC) &_ggplot3d_smooth_faces_raster_cpp, 9},

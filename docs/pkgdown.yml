@@ -2,31 +2,38 @@ pandoc: 3.9.0.2
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
-  backends: backends.html
-  camera: camera.html
-  colour-gamuts: colour-gamuts.html
-  combining-2d-3d: combining-2d-3d.html
-  documents: documents.html
-  export: export.html
-  gallery: gallery.html
+  articles/backends: backends.html
+  articles/camera: camera.html
+  articles/colour-gamuts: colour-gamuts.html
+  articles/combining-2d-3d: combining-2d-3d.html
+  articles/complex-knots: complex-knots.html
+  articles/curved-spaces: curved-spaces.html
+  articles/documents: documents.html
+  articles/export: export.html
+  articles/extending: extending.html
+  articles/frames: frames.html
+  articles/gallery: gallery.html
   ggplot3d: ggplot3d.html
-  implicit-surfaces: implicit-surfaces.html
-  layers: layers.html
-  lighting: lighting.html
-  molecules: molecules.html
-  motion: motion.html
-  ordination: ordination.html
-  pde: pde.html
-  ray-marching: ray-marching.html
-  spatial: spatial.html
-  surfaces-solids: surfaces-solids.html
-  tensors: tensors.html
-  thurston-geometries: thurston-geometries.html
-  vector-fields: vector-fields.html
-  viewer: viewer.html
-  visibility: visibility.html
-  z-scale: z-scale.html
-last_built: 2026-11-15T08:56Z
+  articles/higher-dimensions: higher-dimensions.html
+  articles/implicit-surfaces: implicit-surfaces.html
+  articles/layers: layers.html
+  articles/lighting: lighting.html
+  articles/meshes: meshes.html
+  articles/molecules: molecules.html
+  articles/motion: motion.html
+  articles/networks: networks.html
+  articles/ordination: ordination.html
+  articles/pde: pde.html
+  articles/ray-marching: ray-marching.html
+  articles/spatial: spatial.html
+  articles/surfaces-solids: surfaces-solids.html
+  articles/tensors: tensors.html
+  articles/thurston-geometries: thurston-geometries.html
+  articles/vector-fields: vector-fields.html
+  articles/viewer: viewer.html
+  articles/visibility: visibility.html
+  articles/z-scale: z-scale.html
+last_built: 2026-11-15T17:21Z
 urls:
   reference: https://gillescolling.com/ggplot3d/reference
   article: https://gillescolling.com/ggplot3d/articles

@@ -104,7 +104,7 @@ test_that("geom_blank and expand_limits train scales inside coord_3d", {
 
 test_that("GIF output is encoded from the requested frames", {
   skip_on_cran()
-  skip_if_not_installed("gifski")
+  skip_if_not_installed("ragg")
   path <- tempfile(fileext = ".gif")
   on.exit(unlink(path), add = TRUE)
   a <- animate_3d(motion_test_plot(), frames = 3, file = path,
@@ -143,6 +143,90 @@ test_that("GIF output is encoded from the requested frames", {
     }
   }
   expect_identical(count, 3L)
+})
+
+# Decodes a GIF89a written by gif_encode_cpp into one RGB raw vector per
+# frame, compositing each cropped frame over the previous screen.
+decode_gif_frames <- function(bytes) {
+  u16 <- function(i) as.integer(bytes[i]) + 256L * as.integer(bytes[i + 1L])
+  width <- u16(7L); height <- u16(9L)
+  flag <- as.integer(bytes[11L])
+  size <- 2L^(bitwAnd(flag, 7L) + 1L)
+  palette <- matrix(as.integer(bytes[14L:(13L + 3L * size)]), nrow = 3L)
+  position <- 14L + 3L * size
+  screen <- integer(width * height)
+  transparent <- NA_integer_
+  frames <- list()
+  sub_blocks <- function() {
+    out <- raw()
+    repeat {
+      n <- as.integer(bytes[position]); position <<- position + 1L
+      if (n == 0L) break
+      out <- c(out, bytes[position:(position + n - 1L)]); position <<- position + n
+    }
+    out
+  }
+  repeat {
+    tag <- as.integer(bytes[position])
+    if (tag == 59L) break
+    if (tag == 33L) {
+      label <- as.integer(bytes[position + 1L]); position <- position + 2L
+      data <- sub_blocks()
+      if (label == 249L && bitwAnd(as.integer(data[1L]), 1L)) transparent <- as.integer(data[4L]) else
+        if (label == 249L) transparent <- NA_integer_
+      next
+    }
+    x0 <- u16(position + 1L); y0 <- u16(position + 3L)
+    w <- u16(position + 5L); h <- u16(position + 7L)
+    min_code <- as.integer(bytes[position + 10L]); position <- position + 11L
+    data <- as.integer(sub_blocks())
+    bits <- as.integer(rawToBits(as.raw(data)))
+    clear <- 2L^min_code; table <- NULL; code_size <- min_code + 1L; cursor <- 1L
+    indices <- integer(); previous <- NULL
+    repeat {
+      code <- sum(bits[cursor:(cursor + code_size - 1L)] * 2L^(0:(code_size - 1L))); cursor <- cursor + code_size
+      if (code == clear) {
+        table <- c(as.list(0:(clear - 1L)), list(NULL, NULL)); code_size <- min_code + 1L; previous <- NULL
+        next
+      }
+      if (code == clear + 1L) break
+      entry <- if (code < length(table)) table[[code + 1L]] else c(previous, previous[1L])
+      indices <- c(indices, entry)
+      if (!is.null(previous) && length(table) < 4096L) table[[length(table) + 1L]] <- c(previous, entry[1L])
+      if (length(table) == 2L^code_size && code_size < 12L) code_size <- code_size + 1L
+      previous <- entry
+    }
+    expect_length(indices, w * h)
+    cells <- outer(x0 + seq_len(w) - 1L, (y0 + seq_len(h) - 1L) * width, `+`) + 1L
+    keep <- is.na(transparent) | indices != transparent
+    screen[as.vector(cells)[keep]] <- indices[keep]
+    frames[[length(frames) + 1L]] <- as.raw(as.vector(palette[, screen + 1L]))
+  }
+  frames
+}
+
+test_that("GIF frames decode to the colours that were encoded", {
+  width <- 24L; height <- 16L
+  colours <- matrix(c(255, 255, 255, 46, 111, 158, 181, 52, 43, 63, 122, 61, 0, 0, 0), nrow = 3L)
+  frame <- function(shift) {
+    k <- outer(seq_len(width), seq_len(height), function(x, y) ((x + shift) %/% 6 + y %/% 8) %% 5 + 1)
+    as.raw(as.vector(colours[, as.vector(k)]))
+  }
+  frames <- lapply(c(0, 0, 3, 7), frame)
+  bytes <- gif_encode_cpp(frames, width, height, c(8L, 8L, 9L, 8L), 255L)
+  expect_identical(rawToChar(bytes[1:6]), "GIF89a")
+  expect_identical(decode_gif_frames(bytes), frames)
+})
+
+test_that("GIF palettes are capped at the requested number of colours", {
+  width <- 64L; height <- 64L
+  ramp <- as.raw(rep(round(seq(0, 255, length.out = width * height)), each = 3L))
+  bytes <- gif_encode_cpp(list(ramp), width, height, 10L, 16L)
+  flag <- as.integer(bytes[11L])
+  expect_equal(2^(bitwAnd(flag, 7L) + 1L), 32)
+  decoded <- decode_gif_frames(bytes)[[1L]]
+  expect_lte(length(unique(matrix(as.integer(decoded), nrow = 3L)[1L, ])), 16L)
+  expect_lt(max(abs(as.integer(decoded) - as.integer(ramp))), 16L)
 })
 
 test_that("MP4 output is written", {

@@ -15,6 +15,12 @@ covers arrows and streamlines, and [Implicit
 surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md)
 covers reconstruction from point clouds.
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Points, paths, segments and text
 
 Each row below contains a position and a label. Points draw one mark per
@@ -25,7 +31,7 @@ row. Paths connect rows in their input order within each group.
 d <- data.frame(x = c(0, 1, 2), y = c(0, 2, 1), z = c(1, 3, 2),
                 label = c("a", "b", "c"))
 p <- ggplot(d, aes(x, y, z = z))
-p + geom_point_3d(size = 3, colour = PAL["blue"]) + coord_3d()
+p + geom_point_3d(size = 3, colour = "#2E6F9E") + coord_3d()
 ```
 
 ![Three blue points in three
@@ -33,7 +39,7 @@ dimensions.](layers_files/figure-html/points-1.svg)
 
 ``` r
 
-p + geom_path_3d(linewidth = 0.8, colour = PAL["blue"]) + coord_3d()
+p + geom_path_3d(linewidth = 0.8, colour = "#2E6F9E") + coord_3d()
 ```
 
 ![A blue path connecting the same three positions in input
@@ -46,7 +52,7 @@ face of the data box.
 ``` r
 
 p + geom_segment_3d(aes(xend = x, yend = y, zend = 0),
-                     linewidth = 0.8, colour = PAL["blue"]) + coord_3d()
+                     linewidth = 0.8, colour = "#2E6F9E") + coord_3d()
 ```
 
 ![Three blue segments dropping to z equal to
@@ -99,6 +105,35 @@ p + geom_dropline_3d(onto = "zmin", linewidth = 0.8) +
 ![Three points with lines connecting them to the floor of the
 box.](layers_files/figure-html/droplines-1.svg)
 
+### Labels with boxes and repelled labels
+
+[`geom_label_3d()`](https://gillescolling.com/ggplot3d/reference/geom_label_3d.md)
+draws text on a box, which keeps it readable over geometry. When labels
+crowd each other,
+[`geom_text_repel_3d()`](https://gillescolling.com/ggplot3d/reference/geom_label_3d.md)
+and
+[`geom_label_repel_3d()`](https://gillescolling.com/ggplot3d/reference/geom_label_3d.md)
+push them apart on the page and join each label to its point with a
+segment, following ggrepel. Two of the five points below nearly
+coincide.
+
+``` r
+
+named <- data.frame(x = c(1, 1.1, 1.2, 2, 3), y = c(1, 1.1, 1, 2, 1),
+                    z = c(1, 1.2, 1.1, 2, 3),
+                    name = c("alpha", "beta", "gamma", "delta", "epsilon"))
+ggplot(named, aes(x, y, z = z, label = name)) + geom_point_3d(size = 2) +
+  geom_label_repel_3d(seed = 1, segment.colour = "grey40") + coord_3d()
+```
+
+![Five points with repelled labels joined to them by grey segments, two
+labels pushed apart where their points nearly
+coincide.](layers_files/figure-html/labels-1.svg)
+
+Labels are always drawn on top of the scene, so geometry never hides
+them. `seed` fixes the repulsion so the layout is the same on every
+render.
+
 ## Polygons and bands
 
 A polygon is an ordered ring of vertices in a plane after position
@@ -109,7 +144,7 @@ for each feature and a subgroup for each ring when a feature has holes.
 
 triangle <- data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = c(0, 1, 1))
 ggplot(triangle, aes(x, y, z = z)) +
-  geom_polygon_3d(fill = PAL["blue"]) + coord_3d()
+  geom_polygon_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![A blue triangular polygon in a sloping
@@ -125,7 +160,7 @@ band <- data.frame(x = seq(0, 4, length.out = 16), y = 0)
 band$low <- sin(band$x)
 band$high <- band$low + 0.5
 ggplot(band, aes(x, y, zmin = low, zmax = high)) +
-  geom_band_3d(fill = PAL["blue"]) + coord_3d()
+  geom_band_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![A blue vertical band following a sine
@@ -144,7 +179,7 @@ surface <- expand.grid(x = seq(-2, 2, length.out = 10),
                        y = seq(-2, 2, length.out = 10))
 surface$z <- with(surface, exp(-(x^2 + y^2) / 2))
 s <- ggplot(surface, aes(x, y, z = z))
-s + geom_surface_3d(fill = PAL["blue"]) + coord_3d()
+s + geom_surface_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![A curved blue surface sampled on a regular
@@ -157,7 +192,7 @@ after the stat has run.
 ``` r
 
 s + stat_surface_3d(aes(fill = after_stat(z_mean))) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"]) + coord_3d()
+  scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E") + coord_3d()
 ```
 
 ![A curved surface coloured by each triangle's mean
@@ -178,7 +213,7 @@ surface.](layers_files/figure-html/contours-1.svg)
 ``` r
 
 s + geom_contour_filled_3d(bins = 4, plane = "floor") +
-  scale_fill_gradientn(colours = unname(PAL[c("blue", "teal", "green", "orange", "purple")])) +
+  scale_fill_gradientn(colours = c("#2E6F9E", "#2A7A7A", "#3F7A3D", "#9E5E0F", "#7A4F9E")) +
   coord_3d()
 ```
 
@@ -244,7 +279,7 @@ gives direct access to that calculation.
 columns <- expand.grid(x = 1:3, y = 1:3)
 columns$z <- seq_len(nrow(columns))
 ggplot(columns, aes(x, y, z = z)) +
-  geom_col_3d(fill = PAL["blue"]) + coord_3d()
+  geom_col_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![Nine blue columns with heights from one to
@@ -253,7 +288,7 @@ nine.](layers_files/figure-html/columns-1.svg)
 ``` r
 
 counts <- ggplot(mtcars, aes(factor(cyl), factor(gear)))
-counts + geom_bar_3d(fill = PAL["blue"]) + coord_3d()
+counts + geom_bar_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![Columns showing counts of cars by cylinder and gear
@@ -261,7 +296,7 @@ categories.](layers_files/figure-html/bars-1.svg)
 
 ``` r
 
-counts + stat_count_3d(fill = PAL["blue"]) + coord_3d()
+counts + stat_count_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![The count stat drawing counts of cars by cylinder and gear
@@ -294,7 +329,7 @@ height; a mapped zmin overrides it. Caps close the top and bottom.
 ``` r
 
 ring <- data.frame(x = c(0, 2, 2, 0), y = c(0, 0, 1, 1), z = 2)
-ggplot(ring, aes(x, y, z = z)) + geom_extrude_3d(fill = PAL["blue"]) +
+ggplot(ring, aes(x, y, z = z)) + geom_extrude_3d(fill = "#2E6F9E") +
   coord_3d()
 ```
 
@@ -310,11 +345,36 @@ shifts positions in transformed units.
 stack <- data.frame(x = 1, y = 1, z = c(2, 3), part = c("a", "b"))
 ggplot(stack, aes(x, y, z = z, fill = part)) +
   geom_col_3d(position = position_stack_3d()) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange")])) + coord_3d()
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F")) + coord_3d()
 ```
 
 ![Two coloured column sections stacked at a single x/y
 position.](layers_files/figure-html/positions-1.svg)
+
+### Binned counts in space
+
+[`stat_bin_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_2d_3d.md)
+counts points in square x/y cells as
+[`geom_hex_3d()`](https://gillescolling.com/ggplot3d/reference/geom_hex_3d.md)
+does in hexagons.
+[`stat_bin_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_3d.md)
+counts points in boxes of three-dimensional space and draws each
+occupied box;
+[`geom_voxel_3d()`](https://gillescolling.com/ggplot3d/reference/geom_voxel_3d.md)
+draws given cells of a regular grid as cubes, merging the faces shared
+by neighbours.
+
+``` r
+
+cells <- expand.grid(x = 1:4, y = 1:4, z = 1:4)
+cells <- cells[(cells$x - 2.5)^2 + (cells$y - 2.5)^2 + (cells$z - 2.5)^2 < 4, ]
+cells$half <- ifelse(cells$z > 2, "top", "bottom")
+ggplot(cells, aes(x, y, z = z, fill = half)) + geom_voxel_3d() +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F")) + coord_3d()
+```
+
+![A ball of cubes cut into a blue lower half and an orange upper
+half.](layers_files/figure-html/voxels-1.svg)
 
 ## Distributions at x/y positions
 
@@ -328,7 +388,7 @@ a median face, whiskers and individual outliers.
 flowers <- ggplot(iris, aes(Species, y = 0, z = Petal.Length, fill = Species)) +
   scale_y_continuous(limits = c(-1, 1), breaks = NULL, name = NULL)
 flowers + geom_boxplot_3d(width = 0.6, depth = 0.4) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d()
 ```
 
@@ -342,7 +402,7 @@ discrete positions, or an explicit group for each numeric x/y cell.
 ``` r
 
 flowers + geom_violin_3d(shape = "wall", n = 32) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d()
 ```
 
@@ -352,7 +412,7 @@ iris species.](layers_files/figure-html/violin-wall-1.svg)
 ``` r
 
 flowers + geom_violin_3d(shape = "revolve", n = 32, sides = 12) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d()
 ```
 
@@ -372,7 +432,7 @@ profiles <- expand.grid(x = seq(1, nrow(volcano), by = 4), y = c(15, 30, 45))
 profiles$z <- volcano[cbind(profiles$x, profiles$y)]
 ggplot(profiles, aes(x, y, z = z, group = y, fill = factor(y))) +
   geom_waterfall_3d(base = 90) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d()
 ```
 
@@ -393,7 +453,7 @@ names(spending) <- c("category", "year", "expenditure")
 spending$year <- as.numeric(as.character(spending$year))
 ggplot(spending, aes(year, y = 0, z = expenditure,
                      group = category, fill = category)) +
-  geom_area_3d() + scale_fill_manual(values = unname(PAL[1:5]),
+  geom_area_3d() + scale_fill_manual(values = c("#2E6F9E", "#B5342B", "#3F7A3D", "#9E5E0F", "#7A4F9E"),
     labels = c("Food & tobacco", "Household", "Medical", "Personal care", "Education")) +
   guides(fill = guide_legend(nrow = 3)) +
   coord_3d() + theme(legend.position = "bottom")
@@ -419,7 +479,7 @@ mean and an interval extending one standard error on either side.
 ``` r
 
 ggplot(iris, aes(Species, y = 0, z = Petal.Length)) +
-  stat_summary_3d(fun.data = mean_se, colour = PAL["blue"], linewidth = 0.8) +
+  stat_summary_3d(fun.data = mean_se, colour = "#2E6F9E", linewidth = 0.8) +
   coord_3d()
 ```
 
@@ -444,7 +504,7 @@ intervals <- ggplot(measurements, aes(x, y, z = z,
   zmin = z - 0.5, zmax = z + 0.5))
 intervals + geom_errorbar_3d(width = 0.12, cap_plane = "cross",
                             linewidth = 0.8) +
-  geom_point_3d(size = 2.5, colour = PAL["blue"]) + coord_3d()
+  geom_point_3d(size = 2.5, colour = "#2E6F9E") + coord_3d()
 ```
 
 ![Three measured positions with capped uncertainty intervals along all
@@ -459,7 +519,7 @@ line. Restrict this example to z bounds to see that box clearly.
 ``` r
 
 ggplot(measurements, aes(x, y, z = z, zmin = z - 0.5, zmax = z + 0.5)) +
-  geom_crossbar_3d(width = 0.25, cap_plane = "cross", fill = PAL["blue"]) +
+  geom_crossbar_3d(width = 0.25, cap_plane = "cross", fill = "#2E6F9E") +
   coord_3d()
 ```
 
@@ -473,7 +533,7 @@ endpoint to give individual stems different starting values.
 ``` r
 
 ggplot(mtcars, aes(wt, hp, z = mpg)) +
-  geom_stem_3d(base = 0, colour = PAL["blue"], linewidth = 0.7) + coord_3d()
+  geom_stem_3d(base = 0, colour = "#2E6F9E", linewidth = 0.7) + coord_3d()
 ```
 
 ![Fuel consumption for the cars as vertical stems from zero, with a
@@ -488,9 +548,9 @@ units; the line is cut to the box.
 ``` r
 
 p + geom_point_3d(size = 3) +
-  geom_refline_3d(xintercept = 1, yintercept = 1, colour = PAL["red"]) +
+  geom_refline_3d(xintercept = 1, yintercept = 1, colour = "#B5342B") +
   geom_abline_3d(point = c(0, 0, 1), direction = c(1, 1, 1),
-                 colour = PAL["blue"], linetype = 2) +
+                 colour = "#2E6F9E", linetype = 2) +
   annotate_3d("text", x = 1, y = 1, z = 3, label = "reference", size = 5) +
   coord_3d()
 ```
@@ -507,7 +567,7 @@ last positions in the point table.
 
 p + geom_point_3d(size = 3) +
   annotate_3d("segment", x = 0, y = 0, z = 1,
-    xend = 2, yend = 1, zend = 2, colour = PAL["blue"], linewidth = 0.8,
+    xend = 2, yend = 1, zend = 2, colour = "#2E6F9E", linewidth = 0.8,
     arrow = grid::arrow(length = grid::unit(3, "mm"))) + coord_3d()
 ```
 
@@ -552,8 +612,8 @@ x + c y, use the normal (-b, -c, 1) and point (0, 0, a).
 
 ``` r
 
-s + geom_surface_3d(fill = PAL["blue"]) +
-  geom_plane_3d(zintercept = 0.5, fill = PAL["orange"], alpha = 0.4) + coord_3d()
+s + geom_surface_3d(fill = "#2E6F9E") +
+  geom_plane_3d(zintercept = 0.5, fill = "#9E5E0F", alpha = 0.4) + coord_3d()
 ```
 
 ![The curved surface intersected by a translucent horizontal plane at
@@ -566,7 +626,7 @@ y, leaving the part of a sphere at y greater than or equal to zero.
 ``` r
 
 ggplot(data.frame(x = 0, y = 0, z = 0), aes(x, y, z = z)) +
-  geom_sphere_3d(radius = 1, detail = 2, fill = PAL["teal"]) +
+  geom_sphere_3d(radius = 1, detail = 2, fill = "#2A7A7A") +
   coord_3d(aspect = "data", clip_planes = list(
     clip_plane_3d(normal = c(0, 1, 0), point = c(y = 0), cap = TRUE)))
 ```
@@ -579,6 +639,49 @@ plane list replaces that list; an empty list keeps the layer whole. Open
 surfaces receive caps only where the cut forms a closed outline. See
 [clip_plane_3d()](https://gillescolling.com/ggplot3d/reference/clip_plane_3d.md)
 for the plane conventions.
+
+## Positions
+
+Position adjustments move data before drawing, as in ggplot2.
+[`position_nudge_3d()`](https://gillescolling.com/ggplot3d/reference/position_nudge_3d.md)
+shifts by a fixed amount along x, y or z,
+[`position_jitter_3d()`](https://gillescolling.com/ggplot3d/reference/position_jitter_3d.md)
+adds random noise along all three axes, and
+[`position_dodge_3d()`](https://gillescolling.com/ggplot3d/reference/position_dodge_3d.md)
+places groups side by side within a cell. Ten repeated observations at
+each of nine positions overlap exactly until they are jittered.
+
+``` r
+
+repeats <- expand.grid(x = 1:3, y = 1:3, rep = 1:10)
+repeats$z <- repeats$x + repeats$y
+ggplot(repeats, aes(x, y, z = z)) +
+  geom_point_3d(position = position_jitter_3d(seed = 1), colour = "#2E6F9E") +
+  coord_3d()
+```
+
+![Repeated observations at nine positions spread into small clouds by
+three-dimensional jitter.](layers_files/figure-html/jitter-1.svg)
+
+[`position_project_3d()`](https://gillescolling.com/ggplot3d/reference/position_project_3d.md)
+flattens a layer onto the walls of the panel box, which shows the
+two-dimensional margins of a cloud next to the cloud itself.
+[`geom_rug_3d()`](https://gillescolling.com/ggplot3d/reference/geom_rug_3d.md)
+draws the one-dimensional margins as ticks on the walls.
+
+``` r
+
+set.seed(1)
+cloud <- data.frame(x = rnorm(60), y = rnorm(60), z = rnorm(60))
+ggplot(cloud, aes(x, y, z = z)) +
+  geom_point_3d(colour = "grey60", position = position_project_3d(c("floor", "back"))) +
+  geom_rug_3d(sides = c("floor:x", "floor:y"), alpha = 0.5) +
+  geom_point_3d(colour = "#2E6F9E") + coord_3d()
+```
+
+![A cloud of blue points with grey shadows of the same points projected
+onto the floor and the back wall, and rug ticks along the
+floor.](layers_files/figure-html/project-1.svg)
 
 ## Adapting a layer
 

@@ -8,19 +8,16 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA)))
+source("../setup.R")
+docs_setup(legend = "right", fig.width = 7, fig.height = 4)
 ```
 
 A symmetric tensor is a matrix whose eigenvectors give three perpendicular directions and whose eigenvalues give their magnitudes. `geom_tensor_3d()` draws one tensor at each position. It accepts symmetric positive semidefinite matrices in a list-column.
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
 
 ```{r tensors}
 d <- data.frame(x = c(0, 3, 6), y = 0, z = 0,

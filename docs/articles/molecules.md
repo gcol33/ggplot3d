@@ -14,19 +14,15 @@ independently of the order of the atom records.
 
 ``` r
 
+library(ggplot2)
+library(ggplot3d)
+```
+
+``` r
+
 water <- bio3d::as.pdb(xyz = c(0, 0, 0, 0.96, 0, 0, -0.24, 0.93, 0),
                      eleno = c(10, 40, 90), elety = c("O", "H1", "H2"),
-                     elesy = c("O", "H", "H"), resid = "HOH")
-#> 
-#>  Summary of PDB generation:
-#>  .. number of atoms in PDB determined by 'xyz'
-#> 
-#>  ..        0 atom(s) from 'string' selection 
-#>  ..        0 atom(s) in final combined selection 
-#> 
-#>  .. number of atoms in PDB:  3 
-#>  .. number of calphas in PDB: 0 
-#>  .. number of residues in PDB: 3
+                     elesy = c("O", "H", "H"), resid = "HOH", verbose = FALSE)
 bonds <- data.frame(from = c(10, 10), to = c(40, 90))
 atoms <- fortify(water, bonds = bonds)
 ggplot(atoms) +

@@ -61,6 +61,11 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
+.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation-dark { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -93,6 +98,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
@@ -102,12 +108,17 @@
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
     <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
     <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
     <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
     <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
     <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
     <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
     <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
@@ -116,6 +127,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -148,7 +160,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Colour gamuts in Lab coordinates</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/colour-gamuts.Rmd" class="external-link"><code>vignettes/colour-gamuts.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/articles/colour-gamuts.Rmd" class="external-link"><code>vignettes/articles/colour-gamuts.Rmd</code></a></small>
       <div class="d-none name"><code>colour-gamuts.Rmd</code></div>
     </div>
 
@@ -161,6 +173,9 @@ b. <code><a href="https://rdrr.io/r/grDevices/convertColor.html" class="external
 into Lab; <code><a href="../reference/stat_hull_3d.html">stat_hull_3d()</a></code> draws their convex hull, and every
 hull vertex keeps the colour of its sample.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/gcol33/ggplot3d" class="external-link">ggplot3d</a></span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rgb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>r <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">9</span><span class="op">)</span>,</span>
 <span>                   g <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">9</span><span class="op">)</span>,</span>
 <span>                   b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span>

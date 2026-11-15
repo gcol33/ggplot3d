@@ -66,10 +66,13 @@ level. Colour and fill scales then carry only luminance;
 warns when the plot has one. With the vector and hybrid backends the two
 images are drawn as monochrome passes composited with a multiply blend
 (grid group compositing, R 4.2 or later) when the graphics device
-supports it, such as the ragg, Cairo, svg and pdf devices. Otherwise,
-and always with the raster backend, both images are rendered offscreen
-at the backend's `dpi` with ragg and composited per colour channel into
-one image; on a white background this matches the blended result.
+supports it, such as the ragg, Cairo and svg devices. R's own
+[pdf()](https://rdrr.io/r/grDevices/pdf.html) device writes only about
+16 kB of a group's content, too little for a scene, so it is treated as
+one without blending. Otherwise, and always with the raster backend,
+both images are rendered offscreen at the backend's `dpi` with ragg and
+composited per colour channel into one image; on a white background this
+matches the blended result.
 
 [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
 shows the plot from the central camera, without stereo.
@@ -83,7 +86,7 @@ whose views each become a stereo pair.
 ## Examples
 
 ``` r
-d <- expand.grid(x = seq(-1, 1, length.out = 25), y = seq(-1, 1, length.out = 25))
+d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))
 d$z <- exp(-3 * (d$x^2 + d$y^2))
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", colour = "grey30", linewidth = 0.2)

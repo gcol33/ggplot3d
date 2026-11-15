@@ -8,6 +8,12 @@ semidefinite matrices in a list-column.
 
 ``` r
 
+library(ggplot2)
+library(ggplot3d)
+```
+
+``` r
+
 d <- data.frame(x = c(0, 3, 6), y = 0, z = 0,
                 shape = c("Linear", "Planar", "Isotropic"))
 d$tensor <- list(diag(c(1, 0.25, 0.25)), diag(c(1, 1, 0.25)), diag(3))

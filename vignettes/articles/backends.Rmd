@@ -9,21 +9,8 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
-         grey = "#5C6166")
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
+source("../setup.R")
+docs_setup()
 ```
 
 A backend turns scene geometry into drawing commands or pixels. This article shows how to select one and save its output. Installation is covered in [Get started](ggplot3d.html).
@@ -31,6 +18,11 @@ A backend turns scene geometry into drawing commands or pixels. This article sho
 1. **Choose** rendering with `backend_3d()`.
 
 2. **Save** the resulting plot with `ggsave()`.
+
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
 
 ## Example
 
@@ -40,7 +32,7 @@ The data describe a curved surface on a regular grid. The same layers and camera
 d <- expand.grid(x = seq(-2, 2, length.out = 16),
                  y = seq(-2, 2, length.out = 16))
 d$z <- with(d, exp(-(x^2 + y^2) / 2))
-p <- ggplot(d, aes(x, y, z = z)) + geom_surface_3d(fill = PAL["blue"])
+p <- ggplot(d, aes(x, y, z = z)) + geom_surface_3d(fill = "#2E6F9E")
 ```
 
 ### Vector rendering
@@ -57,8 +49,6 @@ The backend describes scene rendering; the file extension selects the output dev
 ```{r vector-save}
 path <- tempfile(fileext = ".pdf")
 ggsave(path, vector_plot, width = 5, height = 4.5)
-file.info(path)$size > 0
-unlink(path)
 ```
 
 ### Raster rendering
@@ -76,8 +66,6 @@ The scene raster resolution and the saved PNG resolution are separate settings. 
 ```{r raster-save}
 path <- tempfile(fileext = ".png")
 ggsave(path, raster_plot, width = 5, height = 4.5, dpi = 144)
-file.info(path)$size > 0
-unlink(path)
 ```
 
 Axes and labels are composed through grid around the raster scene. A PDF containing this plot includes the raster image at its chosen resolution.
@@ -91,7 +79,7 @@ geometry wherever opaque raster coverage lies in front of it.
 
 ```{r hybrid, fig.alt="A rasterized blue surface crossed by vector contour paths."}
 ggplot(d, aes(x, y, z = z)) +
-  geom_surface_3d(fill = PAL["blue"], raster = TRUE) +
+  geom_surface_3d(fill = "#2E6F9E", raster = TRUE) +
   geom_contour_3d(colour = "black", linewidth = 0.5, bins = 4) +
   coord_3d(backend = backend_3d("hybrid", dpi = 100, antialias = 1))
 ```

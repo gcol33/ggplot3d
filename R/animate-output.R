@@ -5,11 +5,8 @@
 # "scene" (captured geometry and camera tracks written to one model file).
 # Without a file or format, frames stay as temporary PNG files ("frames").
 motion_outputs_3d <- list2env(list(
-  gif = list(device = "png", kind = "encode", packages = "gifski",
-    encode = function(paths, file, width, height, fps, progress) {
-      gifski::gifski(paths, gif_file = file, width = width, height = height,
-        delay = 1 / fps, progress = progress)
-    }),
+  gif = list(device = "png", kind = "encode", packages = character(),
+    encode = function(paths, file, width, height, fps, progress) write_gif_3d(paths, file, fps)),
   mp4 = list(device = "png", kind = "encode", packages = "av",
     encode = function(paths, file, width, height, fps, progress) {
       av::av_encode_video(paths, output = file, framerate = fps, verbose = progress)
@@ -23,14 +20,14 @@ motion_outputs_3d <- list2env(list(
 motion_outputs_3d$webm <- motion_outputs_3d$mp4
 
 motion_devices_3d <- list(
-  png = function(file, width, height, dpi) {
-    ragg::agg_png(file, width = width, height = height, res = dpi, units = "px")
+  png = function(file, width, height, dpi, bg) {
+    ragg::agg_png(file, width = width, height = height, res = dpi, units = "px", background = bg)
   },
-  svg = function(file, width, height, dpi) {
-    svglite::svglite(file, width = width / dpi, height = height / dpi)
+  svg = function(file, width, height, dpi, bg) {
+    svglite::svglite(file, width = width / dpi, height = height / dpi, bg = bg)
   },
-  pdf = function(file, width, height, dpi) {
-    grDevices::pdf(file, width = width / dpi, height = height / dpi, onefile = TRUE)
+  pdf = function(file, width, height, dpi, bg) {
+    grDevices::pdf(file, width = width / dpi, height = height / dpi, onefile = TRUE, bg = bg)
   }
 )
 
@@ -58,8 +55,19 @@ motion_output_3d <- function(file, format = NULL) {
   c(list(file = file, extension = extension), output)
 }
 
-motion_open_device_3d <- function(device, file, width, height, dpi) {
-  motion_devices_3d[[device]](file, width, height, dpi)
+# The page behind each frame takes the fill of the plot's background element,
+# as ggplot2::ggsave() does, so a plot drawn at a fixed aspect ratio has no
+# margins of another colour around it. GIF and video frames carry no partial
+# transparency, so a transparent background becomes white there.
+motion_background_3d <- function(plot, extension = NULL) {
+  fill <- ggplot2::calc_element("plot.background", ggplot2::complete_theme(plot$theme))$fill
+  transparent <- is.null(fill) || is.na(fill) || identical(fill, "transparent") ||
+    grDevices::col2rgb(fill, alpha = TRUE)[4L] == 0L
+  if (!transparent) fill else if (isTRUE(extension %in% c("gif", "mp4", "webm"))) "white" else "transparent"
+}
+
+motion_open_device_3d <- function(device, file, width, height, dpi, bg = "white") {
+  motion_devices_3d[[device]](file, width, height, dpi, bg)
   current <- grDevices::dev.cur()
   scene_assert(current > 1L, "could not open a graphics device for animation frames")
   current
@@ -106,6 +114,35 @@ png_chunks_3d <- function(path) {
     if (type == "IEND") break
   }
   chunks
+}
+
+# Pixels of a PNG frame as RGB bytes: the IDAT streams are concatenated,
+# inflated and unfiltered (8-bit, non-interlaced images, as ragg writes them).
+png_rgb_3d <- function(path) {
+  chunks <- png_chunks_3d(path)
+  header <- chunks[[1L]]$data
+  scene_assert(identical(chunks[[1L]]$type, "IHDR"), "animation frame lacks a PNG header")
+  number <- function(bytes) sum(as.double(as.integer(bytes)) * 256^(3:0))
+  depth <- as.integer(header[9L]); type <- as.integer(header[10L]); interlace <- as.integer(header[13L])
+  channels <- c(`0` = 1L, `2` = 3L, `4` = 2L, `6` = 4L)[as.character(type)]
+  scene_assert(depth == 8L && !is.na(channels) && interlace == 0L,
+    "animation frames must be 8-bit, non-interlaced grey or RGB PNG files")
+  data <- unlist(lapply(Filter(function(chunk) chunk$type == "IDAT", chunks), `[[`, "data"), use.names = FALSE)
+  width <- number(header[1:4]); height <- number(header[5:8])
+  list(width = width, height = height,
+    rgb = png_unfilter_cpp(memDecompress(data, type = "gzip"), width, height, channels))
+}
+
+# GIF89a with one palette for all frames and frame differences coded as
+# transparent pixels (gif_encode_cpp). Delays are whole hundredths of a
+# second, rounded on the running clock so the average rate stays `fps`.
+write_gif_3d <- function(paths, file, fps, colours = 255L) {
+  frames <- lapply(paths, png_rgb_3d)
+  width <- frames[[1L]]$width; height <- frames[[1L]]$height
+  clock <- round(100 * seq(0, length(frames)) / fps)
+  bytes <- gif_encode_cpp(lapply(frames, `[[`, "rgb"), width, height, as.integer(diff(clock)), as.integer(colours))
+  writeBin(bytes, file)
+  invisible(file)
 }
 
 # Animated PNG (APNG 1.0): the first frame's IDAT data is the default image,

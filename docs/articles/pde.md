@@ -13,8 +13,7 @@ with
 A final example solves incompressible magnetohydrodynamics numerically
 and draws the computed current density through the same plotting
 pipeline. Installation is covered in [Get
-started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md); the
-videos need [av](https://docs.ropensci.org/av/).
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
 1.  **Define** the solution $`u(x, y, t)`$ and a data frame with one row
     per time.
@@ -30,10 +29,6 @@ videos need [av](https://docs.ropensci.org/av/).
 
 library(ggplot2)
 library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
 ```
 
 Each exact animated solution below is a function `u(x, y, t)` of two
@@ -47,9 +42,9 @@ each surface.
 `animate_3d(time = "t")` draws one value of `t` per frame, in increasing
 order. The scales are trained on all frames, so the z axis and the fill
 colours keep the same range throughout, and a decaying solution is seen
-to decay. The calls below render MP4 videos at 480 by 480 pixels. In the
-article, the returned animation embeds as a looping, muted video
-labelled with the chunk’s figure description.
+to decay. The calls below render looping GIF animations at 480 by 480
+pixels. In the article, the returned animation embeds as an image
+described by the chunk’s figure description.
 
 ## Linear equations
 
@@ -82,15 +77,20 @@ moving <- data.frame(t = seq(0, 4, length.out = 33)[-33])
 p <- ggplot(moving, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = transport, n = 31, colour = NA) +
   xlim(-2, 2) + ylim(-2, 2) +
-  scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
+  scale_fill_gradient(low = "grey85", high = "#2E6F9E") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
 ```
 
-Animation of a blue bump on a flat surface that travels diagonally
-across the square and re-enters at the opposite corner.
+![Animation of a blue bump on a flat surface that travels diagonally
+across the square and re-enters at the opposite
+corner.](pde_files/figure-html/transport-show-1.gif)
+
+![Animation of a blue bump on a flat surface that travels diagonally
+across the square and re-enters at the opposite
+corner.](pde_files/figure-html/transport-show-2.gif)
 
 ### Heat equation
 
@@ -117,15 +117,20 @@ cooling <- data.frame(t = seq(0, 1, length.out = 25))
 p <- ggplot(cooling, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = heat, n = 31, colour = NA) +
   xlim(-2, 2) + ylim(-2, 2) +
-  scale_fill_gradient(low = PAL[["blue"]], high = PAL[["red"]]) +
+  scale_fill_gradient(low = "#2E6F9E", high = "#B5342B") +
   coord_3d(azimuth = -50, elevation = 25) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
 ```
 
-Animation of a tall red peak that flattens and widens into a low broad
-mound while the z axis stays fixed from zero to one.
+![Animation of a tall red peak that flattens and widens into a low broad
+mound while the z axis stays fixed from zero to
+one.](pde_files/figure-html/heat-show-1.gif)
+
+![Animation of a tall red peak that flattens and widens into a low broad
+mound while the z axis stays fixed from zero to
+one.](pde_files/figure-html/heat-show-2.gif)
 
 ### Wave equation
 
@@ -160,15 +165,20 @@ membrane <- data.frame(t = seq(0, period, length.out = 31)[-31])
 p <- ggplot(membrane, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = wave, n = 31, colour = NA) +
   xlim(0, 1) + ylim(0, 1) +
-  scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
+  scale_fill_gradient2(low = "#2E6F9E", mid = "grey90", high = "#B5342B") +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
 ```
 
-Animation of a square membrane with a raised red lobe and a lowered blue
-lobe that circle round its centre while the edges stay at zero.
+![Animation of a square membrane with a raised red lobe and a lowered
+blue lobe that circle round its centre while the edges stay at
+zero.](pde_files/figure-html/wave-show-1.gif)
+
+![Animation of a square membrane with a raised red lobe and a lowered
+blue lobe that circle round its centre while the edges stay at
+zero.](pde_files/figure-html/wave-show-2.gif)
 
 ### Laplace equation
 
@@ -198,15 +208,20 @@ saddle <- data.frame(t = seq(0, 2 * pi, length.out = 37)[-37])
 p <- ggplot(saddle, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = laplace, n = 31, colour = NA) +
   xlim(-1, 1) + ylim(-1, 1) +
-  scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
+  scale_fill_gradient2(low = "#2E6F9E", mid = "grey90", high = "#B5342B") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
 ```
 
-Animation of a monkey saddle with three raised red ridges and three
-lowered blue valleys that rotate slowly about the vertical axis.
+![Animation of a monkey saddle with three raised red ridges and three
+lowered blue valleys that rotate slowly about the vertical
+axis.](pde_files/figure-html/laplace-show-1.gif)
+
+![Animation of a monkey saddle with three raised red ridges and three
+lowered blue valleys that rotate slowly about the vertical
+axis.](pde_files/figure-html/laplace-show-2.gif)
 
 ## Nonlinear equations
 
@@ -259,15 +274,20 @@ crossing <- data.frame(t = seq(-2.2, 2.2, length.out = 40))
 p <- ggplot(crossing, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = kp, n = 61, colour = NA) +
   xlim(-10, 10) + ylim(-10, 10) +
-  scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
+  scale_fill_gradient(low = "grey85", high = "#2E6F9E") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
 ```
 
-Animation of two straight blue crests forming an X that travels across
-the square, with a raised segment where the crests meet.
+![Animation of two straight blue crests forming an X that travels across
+the square, with a raised segment where the crests
+meet.](pde_files/figure-html/kp-show-1.gif)
+
+![Animation of two straight blue crests forming an X that travels across
+the square, with a raised segment where the crests
+meet.](pde_files/figure-html/kp-show-2.gif)
 
 ### Sine-Gordon equation
 
@@ -313,16 +333,20 @@ kinks <- data.frame(t = seq(-8, 8, length.out = 33))
 p <- ggplot(kinks, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = sine_gordon, n = 51, colour = NA) +
   xlim(-8, 8) + ylim(-8, 8) +
-  scale_fill_gradient(low = "grey85", high = PAL[["purple"]]) +
+  scale_fill_gradient(low = "grey85", high = "#7A4F9E") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
 ```
 
-Animation of a surface with two raised purple quadrants and two low
+![Animation of a surface with two raised purple quadrants and two low
 quadrants; the corner where the fronts meet slides diagonally across the
-square.
+square.](pde_files/figure-html/sg-show-1.gif)
+
+![Animation of a surface with two raised purple quadrants and two low
+quadrants; the corner where the fronts meet slides diagonally across the
+square.](pde_files/figure-html/sg-show-2.gif)
 
 ### Fisher–KPP equation
 
@@ -360,15 +384,20 @@ invasion <- data.frame(t = seq(-6, 6, length.out = 33))
 p <- ggplot(invasion, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = fisher, n = 41, colour = NA) +
   xlim(-20, 20) + ylim(-20, 20) +
-  scale_fill_gradient(low = "grey85", high = PAL[["green"]]) +
+  scale_fill_gradient(low = "grey85", high = "#3F7A3D") +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
 ```
 
-Animation of a green plateau whose sloping edge advances diagonally
-across a flat grey plain until it covers most of the square.
+![Animation of a green plateau whose sloping edge advances diagonally
+across a flat grey plain until it covers most of the
+square.](pde_files/figure-html/fisher-show-1.gif)
+
+![Animation of a green plateau whose sloping edge advances diagonally
+across a flat grey plain until it covers most of the
+square.](pde_files/figure-html/fisher-show-2.gif)
 
 ### Nonlinear Schrödinger equation
 
@@ -405,7 +434,7 @@ peregrine$amplitude <- with(peregrine,
 
 ggplot(peregrine, aes(x, t, z = amplitude, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
-  scale_fill_gradient(low = "grey85", high = PAL[["teal"]]) +
+  scale_fill_gradient(low = "grey85", high = "#2A7A7A") +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "|ψ|")
 ```
@@ -568,16 +597,20 @@ and `animate_3d(time = "t")`.
 
 p <- ggplot(current, aes(x, y, z = value, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
-  scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
+  scale_fill_gradient2(low = "#2E6F9E", mid = "grey90", high = "#B5342B") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "j")
 animate_3d(p, time = "t", fps = 8, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
 ```
 
-Animation of current density in the incompressible Orszag-Tang vortex,
+![Animation of current density in the incompressible Orszag-Tang vortex,
 with blue and red current sheets sharpening into narrow ridges and
-valleys.
+valleys.](pde_files/figure-html/mhd-show-1.gif)
+
+![Animation of current density in the incompressible Orszag-Tang vortex,
+with blue and red current sheets sharpening into narrow ridges and
+valleys.](pde_files/figure-html/mhd-show-2.gif)
 
 ## Where next
 

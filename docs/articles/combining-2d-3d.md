@@ -12,6 +12,8 @@ arranges several ggplot2 plots on one page.
 
 ``` r
 
+library(ggplot2)
+library(ggplot3d)
 library(patchwork)
 ```
 
@@ -46,8 +48,8 @@ and
 ``` r
 
 h <- ggplot(track, aes(x, y, z = z))
-h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
-  geom_point(data = ends, colour = PAL["red"], size = 3) +
+h + geom_path(colour = "#2E6F9E", linewidth = 0.8) +
+  geom_point(data = ends, colour = "#B5342B", size = 3) +
   geom_text(aes(label = label), data = ends, nudge_x = 0.35, size = 5) +
   coord_3d()
 ```
@@ -67,8 +69,8 @@ height 0 below the helix.
 
 ``` r
 
-h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
-  geom_path(aes(x, y), inherit.aes = FALSE, colour = PAL["grey"],
+h + geom_path(colour = "#2E6F9E", linewidth = 0.8) +
+  geom_path(aes(x, y), inherit.aes = FALSE, colour = "#5C6166",
             linewidth = 0.8) +
   coord_3d()
 ```
@@ -96,9 +98,9 @@ onto the back wall at the largest y, where the points show z against x.
 ``` r
 
 k <- ggplot(cloud, aes(x, y, z = z))
-k + geom_point_3d(aes(z = -Inf), colour = PAL["grey"], size = 1.5) +
-  geom_point_3d(aes(y = Inf), colour = PAL["orange"], size = 1.5) +
-  geom_dropline_3d(onto = "zmin", colour = PAL["grey"]) +
+k + geom_point_3d(aes(z = -Inf), colour = "#5C6166", size = 1.5) +
+  geom_point_3d(aes(y = Inf), colour = "#9E5E0F", size = 1.5) +
+  geom_dropline_3d(onto = "zmin", colour = "#5C6166") +
   geom_point_3d(size = 2.5) +
   coord_3d()
 ```
@@ -126,8 +128,8 @@ axes of the box.
 ``` r
 
 side <- ggplot(cloud, aes(x, z)) +
-  geom_point(colour = PAL["orange"], size = 1) +
-  geom_smooth(method = "lm", formula = y ~ x, colour = PAL["blue"])
+  geom_point(colour = "#9E5E0F", size = 1) +
+  geom_smooth(method = "lm", formula = y ~ x, colour = "#2E6F9E")
 k + annotation_plot_3d(side, plane = "xz", at = Inf) +
   geom_point_3d(size = 2.5) +
   coord_3d()
@@ -150,7 +152,7 @@ original ranges.
 
 ``` r
 
-bars <- ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = PAL["blue"])
+bars <- ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = "#2E6F9E")
 k + annotation_plot_3d(bars, plane = "xy", at = -Inf,
                        extent = c(-2, 2, -2, 2), alpha = 0.7) +
   geom_point_3d(size = 2) + coord_3d()
@@ -193,7 +195,7 @@ its slice.
 
 cloud$side <- ifelse(cloud$x < 0, "negative", "positive")
 ggplot(cloud, aes(z)) +
-  geom_density(fill = PAL["blue"], alpha = 0.6) +
+  geom_density(fill = "#2E6F9E", alpha = 0.6) +
   facet_slices_3d(vars(side), labels = FALSE) +
   coord_3d(up = "y", azimuth = 30, elevation = 20)
 ```
@@ -225,8 +227,8 @@ shows arbitrary reference lines, brackets and dimension lines.
 ``` r
 
 top <- cloud[which.max(cloud$z), ]
-k + geom_hline(yintercept = 0, colour = PAL["grey"]) +
-  geom_vline(xintercept = 0, colour = PAL["grey"]) +
+k + geom_hline(yintercept = 0, colour = "#5C6166") +
+  geom_vline(xintercept = 0, colour = "#5C6166") +
   geom_point_3d(size = 2.5) +
   annotate_3d("label", x = top$x, y = top$y, z = top$z, label = "highest",
               hjust = -0.15) +
@@ -264,7 +266,7 @@ inside a band remain open.
 
 ggplot(surface, aes(x, y, z = z)) +
   geom_contour_filled(bins = 5, colour = "white", linewidth = 0.15) +
-  scale_fill_manual(values = unname(PAL[c("purple", "blue", "teal", "green", "orange")])) +
+  scale_fill_manual(values = c("#7A4F9E", "#2E6F9E", "#2A7A7A", "#3F7A3D", "#9E5E0F")) +
   coord_3d(elevation = 40)
 ```
 
@@ -281,7 +283,7 @@ higher camera elevation shows more of the floor.
 
 ``` r
 
-ramp <- c("#DCEAF3", PAL[["blue"]])
+ramp <- c("#DCEAF3", "#2E6F9E")
 s <- ggplot(surface, aes(x, y, z = z))
 s + geom_contour_filled_3d(plane = "floor", bins = 6) +
   geom_surface_3d(fill = "grey85") +
@@ -347,8 +349,8 @@ of the same grid. Both plots use the same fill scale, so
 
 ``` r
 
-heights <- scale_fill_gradient2(low = PAL["red"], mid = "#F2F2F2",
-  high = PAL["blue"], limits = c(-0.6, 1), name = "z")
+heights <- scale_fill_gradient2(low = "#B5342B", mid = "#F2F2F2",
+  high = "#2E6F9E", limits = c(-0.6, 1), name = "z")
 top <- s + stat_surface_3d(aes(fill = after_stat(z_mean))) +
   heights + coord_3d()
 map <- ggplot(surface, aes(x, y, fill = z)) + geom_raster() +
@@ -374,10 +376,10 @@ on the 3D surface and as a 2D line against x.
 
 profile <- surface[abs(surface$y) < 1e-9, ]
 across <- s + geom_surface_3d(fill = "grey85") +
-  geom_path_3d(data = profile, colour = PAL["red"], linewidth = 1) +
+  geom_path_3d(data = profile, colour = "#B5342B", linewidth = 1) +
   coord_3d()
 side <- ggplot(profile, aes(x, z)) +
-  geom_line(colour = PAL["red"], linewidth = 1)
+  geom_line(colour = "#B5342B", linewidth = 1)
 across / side
 ```
 

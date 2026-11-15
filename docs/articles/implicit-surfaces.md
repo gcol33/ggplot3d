@@ -4,11 +4,6 @@
 
 library(ggplot2)
 library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
 ```
 
 An implicit surface is the set of points where a function of x, y and z
@@ -46,7 +41,7 @@ barth <- function(x, y, z) {
   ifelse(x2 + y2 + z2 > 3.1, NA, v)
 }
 ggplot() +
-  geom_isofunction_3d(fun = barth, levels = 0, n = 48, fill = PAL[["blue"]]) +
+  geom_isofunction_3d(fun = barth, levels = 0, n = 48, fill = "#2E6F9E") +
   cube(1.8) + coord_3d()
 ```
 
@@ -65,7 +60,7 @@ clebsch <- function(x, y, z) {
     9 * (x + y + z) + 1
 }
 ggplot() +
-  geom_isofunction_3d(fun = clebsch, levels = 0, n = 40, fill = PAL[["orange"]]) +
+  geom_isofunction_3d(fun = clebsch, levels = 0, n = 40, fill = "#9E5E0F") +
   cube(1) + coord_3d()
 ```
 
@@ -83,7 +78,7 @@ schwarz <- function(x, y, z) cos(x) + cos(y) + cos(z)
 ggplot() +
   geom_isofunction_3d(aes(fill = after_stat(factor(level))),
     fun = schwarz, levels = c(-0.4, 0.4), n = 36) +
-  scale_fill_manual(values = unname(PAL[c("teal", "purple")]), name = "level") +
+  scale_fill_manual(values = c("#2A7A7A", "#7A4F9E"), name = "level") +
   cube(pi) + coord_3d()
 ```
 
@@ -132,7 +127,7 @@ part - drill
 #>       capsule(a = (0, -2, 0), b = (0, 2, 0), radius = 0.5)
 #>     capsule(a = (0, 0, -2), b = (0, 0, 2), radius = 0.5)
 ggplot() +
-  geom_isofunction_3d(fun = part - drill, n = 40, fill = PAL[["green"]]) +
+  geom_isofunction_3d(fun = part - drill, n = 40, fill = "#3F7A3D") +
   cube(1.2) + coord_3d()
 ```
 
@@ -152,7 +147,7 @@ blob <- sdf_blend(sdf_sphere(c(-0.6, 0, 0), 0.6),
   sdf_torus(c(0.5, 0, 0), major = 0.6, minor = 0.2), k = 0.15)
 sheet <- sdf_shell(sdf_gyroid(period = 1.2), 0.08) & sdf_sphere(radius = 1.2)
 ggplot() +
-  geom_isofunction_3d(fun = sheet, n = 56, fill = PAL[["red"]]) +
+  geom_isofunction_3d(fun = sheet, n = 56, fill = "#B5342B") +
   cube(1.25) + coord_3d()
 ```
 
@@ -167,7 +162,7 @@ octree only near the surface and near its sharp edges.
 
 ggplot() +
   geom_isofunction_3d(fun = blob, adaptive = TRUE, depth = c(3, 6),
-    fill = PAL[["purple"]]) +
+    fill = "#7A4F9E") +
   xlim(-1.3, 1.4) + ylim(-0.9, 0.9) + scale_z_continuous(limits = c(-0.7, 0.7)) +
   coord_3d()
 ```
@@ -190,7 +185,7 @@ terrain$z <- as.vector(volcano)
 set.seed(12)
 samples <- terrain[sample(seq_len(nrow(terrain)), 200), ]
 ggplot(samples, aes(x, y, z = z)) +
-  geom_surface_3d(method = "delaunay", fill = PAL["green"],
+  geom_surface_3d(method = "delaunay", fill = "#3F7A3D",
                    colour = "grey40", linewidth = 0.15) +
   coord_3d(aspect = c(1.4, 1, 0.7))
 ```
@@ -227,7 +222,7 @@ independently of the reconstruction radius.
 
 ``` r
 
-shape + geom_alpha_shape_3d(radius = 0.4, fill = PAL["teal"], alpha = 0.7) +
+shape + geom_alpha_shape_3d(radius = 0.4, fill = "#2A7A7A", alpha = 0.7) +
   geom_point_3d(size = 0.4) + coord_3d(aspect = "data", elevation = 50)
 ```
 
@@ -237,7 +232,7 @@ centre.](implicit-surfaces_files/figure-html/alpha-shape-1.svg)
 
 ``` r
 
-shape + geom_alpha_shape_3d(radius = Inf, fill = PAL["orange"]) +
+shape + geom_alpha_shape_3d(radius = Inf, fill = "#9E5E0F") +
   coord_3d(aspect = "data", elevation = 50)
 ```
 
@@ -276,7 +271,7 @@ this method to 2,000 input points; use a small representative sample.
 
 ggplot(shell, aes(x, y, z = z, nx = nx, ny = ny, nz = nz)) +
   stat_implicit_fit_3d(method = "rbf", n = 18,
-                        fill = PAL["blue"], alpha = 0.65) +
+                        fill = "#2E6F9E", alpha = 0.65) +
   geom_point_3d(size = 0.7) + coord_3d(aspect = "data")
 ```
 

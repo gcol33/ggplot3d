@@ -140,9 +140,9 @@
 <polyline points='206.56,170.31 359.90,214.58 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='118.03,246.98 206.56,170.31 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='206.56,170.31 206.56,16.98 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<path d='M 348.91 69.68 L 209.51 29.44 L 129.03 238.54 ZM 129.03 238.54 L 268.43 278.78 L 348.91 69.68 Z' style='fill-rule: nonzero; fill: #2E6F9E; stroke-width: 0.75; stroke: none;' />
-<polygon points='348.91,69.68 209.51,29.44 129.03,238.54 ' style='stroke-width: 0.64; stroke: none; fill: #2E6F9E;' />
-<polygon points='129.03,238.54 268.43,278.78 348.91,69.68 ' style='stroke-width: 0.64; stroke: none; fill: #2E6F9E;' />
+<path d='M 348.91 69.68 L 209.51 29.44 L 129.03 238.54 ZM 129.03 238.54 L 268.43 278.78 L 348.91 69.68 Z' style='fill-rule: nonzero; fill: #5999CB; stroke-width: 0.75; stroke: none;' />
+<polygon class='preserve-color' points='348.91,69.68 209.51,29.44 129.03,238.54 ' style='stroke-width: 0.64; stroke: none; fill: #5999CB;' />
+<polygon class='preserve-color' points='129.03,238.54 268.43,278.78 348.91,69.68 ' style='stroke-width: 0.64; stroke: none; fill: #5999CB;' />
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 <text x='121.12' y='267.32' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.00</text>

@@ -43,6 +43,11 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
+.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation-dark { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 </style></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -71,6 +76,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
@@ -80,12 +86,17 @@
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
     <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
     <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
     <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
     <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
     <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
     <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
     <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
@@ -94,6 +105,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -116,207 +128,6 @@
     </div>
 
     <div class="section level2">
-      <h2 id="spherical-geometry-and-observers">Spherical geometry and observers<a class="anchor" aria-label="anchor" href="#spherical-geometry-and-observers"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="coord_spherical_geometry_3d.html">coord_spherical_geometry_3d()</a></code>
-
-        </dt>
-        <dd>Spherical geometry in stereographic and gnomonic charts</dd>
-
-        <dt>
-
-          <code><a href="stat_hopf_fibre_3d.html">stat_hopf_fibre_3d()</a></code>
-
-        </dt>
-        <dd>Hopf fibres, latitude tori and their spherical base</dd>
-      </dl></div><div class="section level2">
-      <h2 id="tilings-and-honeycombs">Tilings and honeycombs<a class="anchor" aria-label="anchor" href="#tilings-and-honeycombs"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="stat_tiling_3d.html">stat_tiling_3d()</a></code> <code><a href="stat_tiling_3d.html">stat_honeycomb_3d()</a></code>
-
-        </dt>
-        <dd>Regular tilings and honeycombs from Coxeter reflections</dd>
-
-        <dt>
-
-          <code><a href="stat_project_3d.html">stat_project_3d()</a></code>
-
-        </dt>
-        <dd>Project four-dimensional and higher-dimensional data into three dimensions</dd>
-
-        <dt>
-
-          <code><a href="rotate_4d.html">rotate_4d()</a></code>
-
-        </dt>
-        <dd>Rotations in four dimensions</dd>
-
-        <dt>
-
-          <code><a href="grand_tour_3d.html">grand_tour_3d()</a></code>
-
-        </dt>
-        <dd>Grand tours of three-dimensional projections</dd>
-
-        <dt>
-
-          <code><a href="stat_section_4d.html">stat_section_4d()</a></code>
-
-        </dt>
-        <dd>Hyperplane sections of four-dimensional tetrahedral meshes</dd>
-      </dl></div><div class="section level2">
-      <h2 id="hyperbolic-geometry-and-data">Hyperbolic geometry and data<a class="anchor" aria-label="anchor" href="#hyperbolic-geometry-and-data"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="coord_hyperbolic_3d.html">coord_hyperbolic_3d()</a></code>
-
-        </dt>
-        <dd>Finite hyperbolic ball and sheet coordinates</dd>
-
-        <dt>
-
-          <code><a href="stat_tree_hyperbolic_3d.html">stat_tree_hyperbolic_3d()</a></code>
-
-        </dt>
-        <dd>Deterministic tree layouts in hyperbolic space</dd>
-
-        <dt>
-
-          <code><a href="hyperbolic_focus_3d.html">hyperbolic_focus_3d()</a></code>
-
-        </dt>
-        <dd>Focus paths for a hyperbolic embedding</dd>
-      </dl></div><div class="section level2">
-      <h2 id="relativity">Relativity<a class="anchor" aria-label="anchor" href="#relativity"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="stat_light_cone_3d.html">stat_light_cone_3d()</a></code>
-
-        </dt>
-        <dd>Light cones and surfaces of constant spacetime interval</dd>
-
-        <dt>
-
-          <code><a href="stat_embedding_3d.html">stat_embedding_3d()</a></code>
-
-        </dt>
-        <dd>Schwarzschild spatial embedding diagram</dd>
-
-        <dt>
-
-          <code><a href="stat_geodesic_ode_3d.html">stat_geodesic_ode_3d()</a></code>
-
-        </dt>
-        <dd>Equatorial Schwarzschild spacetime geodesics</dd>
-
-        <dt>
-
-          <code><a href="lorentz_boost_3d.html">lorentz_boost_3d()</a></code>
-
-        </dt>
-        <dd>Lorentz boosts in canonical coordinates</dd>
-
-        <dt>
-
-          <code><a href="coord_spacetime_3d.html">coord_spacetime_3d()</a></code>
-
-        </dt>
-        <dd>Finite Minkowski spacetime coordinates</dd>
-      </dl></div><div class="section level2">
-      <h2 id="complex-analysis">Complex analysis<a class="anchor" aria-label="anchor" href="#complex-analysis"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="mobius_3d.html">mobius_3d()</a></code>
-
-        </dt>
-        <dd>Mobius transformations of complex numbers, spheres and half-space</dd>
-
-        <dt>
-
-          <code><a href="stat_riemann_sphere_3d.html">stat_riemann_sphere_3d()</a></code>
-
-        </dt>
-        <dd>Domain colouring on the Riemann sphere</dd>
-
-        <dt>
-
-          <code><a href="stat_riemann_surface_3d.html">stat_riemann_surface_3d()</a></code>
-
-        </dt>
-        <dd>Riemann surfaces parametrised by an inverse function</dd>
-      </dl></div><div class="section level2">
-      <h2 id="immersed-surfaces-and-knots">Immersed surfaces and knots<a class="anchor" aria-label="anchor" href="#immersed-surfaces-and-knots"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="stat_self_intersection_3d.html">stat_self_intersection_3d()</a></code>
-
-        </dt>
-        <dd>Transverse intersection curves of a triangle mesh</dd>
-
-        <dt>
-
-          <code><a href="stat_immersed_3d.html">stat_immersed_3d()</a></code>
-
-        </dt>
-        <dd>Immersed surface examples</dd>
-
-        <dt>
-
-          <code><a href="stat_knot_3d.html">stat_knot_3d()</a></code>
-
-        </dt>
-        <dd>Torus knots and knot tubes</dd>
-      </dl></div><div class="section level2">
       <h2 id="coordinates-and-lighting">Coordinates and lighting<a class="anchor" aria-label="anchor" href="#coordinates-and-lighting"></a></h2>
 
 
@@ -1467,6 +1278,207 @@
 
         </dt>
         <dd>Normalise homogeneous positions to the panel box</dd>
+      </dl></div><div class="section level2">
+      <h2 id="spherical-geometry-and-observers">Spherical geometry and observers<a class="anchor" aria-label="anchor" href="#spherical-geometry-and-observers"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="coord_spherical_geometry_3d.html">coord_spherical_geometry_3d()</a></code>
+
+        </dt>
+        <dd>Spherical geometry in stereographic and gnomonic charts</dd>
+
+        <dt>
+
+          <code><a href="stat_hopf_fibre_3d.html">stat_hopf_fibre_3d()</a></code>
+
+        </dt>
+        <dd>Hopf fibres, latitude tori and their spherical base</dd>
+      </dl></div><div class="section level2">
+      <h2 id="tilings-and-honeycombs">Tilings and honeycombs<a class="anchor" aria-label="anchor" href="#tilings-and-honeycombs"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="stat_tiling_3d.html">stat_tiling_3d()</a></code> <code><a href="stat_tiling_3d.html">stat_honeycomb_3d()</a></code>
+
+        </dt>
+        <dd>Regular tilings and honeycombs from Coxeter reflections</dd>
+
+        <dt>
+
+          <code><a href="stat_project_3d.html">stat_project_3d()</a></code>
+
+        </dt>
+        <dd>Project four-dimensional and higher-dimensional data into three dimensions</dd>
+
+        <dt>
+
+          <code><a href="rotate_4d.html">rotate_4d()</a></code>
+
+        </dt>
+        <dd>Rotations in four dimensions</dd>
+
+        <dt>
+
+          <code><a href="grand_tour_3d.html">grand_tour_3d()</a></code>
+
+        </dt>
+        <dd>Grand tours of three-dimensional projections</dd>
+
+        <dt>
+
+          <code><a href="stat_section_4d.html">stat_section_4d()</a></code>
+
+        </dt>
+        <dd>Hyperplane sections of four-dimensional tetrahedral meshes</dd>
+      </dl></div><div class="section level2">
+      <h2 id="hyperbolic-geometry-and-data">Hyperbolic geometry and data<a class="anchor" aria-label="anchor" href="#hyperbolic-geometry-and-data"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="coord_hyperbolic_3d.html">coord_hyperbolic_3d()</a></code>
+
+        </dt>
+        <dd>Finite hyperbolic ball and sheet coordinates</dd>
+
+        <dt>
+
+          <code><a href="stat_tree_hyperbolic_3d.html">stat_tree_hyperbolic_3d()</a></code>
+
+        </dt>
+        <dd>Deterministic tree layouts in hyperbolic space</dd>
+
+        <dt>
+
+          <code><a href="hyperbolic_focus_3d.html">hyperbolic_focus_3d()</a></code>
+
+        </dt>
+        <dd>Focus paths for a hyperbolic embedding</dd>
+      </dl></div><div class="section level2">
+      <h2 id="relativity">Relativity<a class="anchor" aria-label="anchor" href="#relativity"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="stat_light_cone_3d.html">stat_light_cone_3d()</a></code>
+
+        </dt>
+        <dd>Light cones and surfaces of constant spacetime interval</dd>
+
+        <dt>
+
+          <code><a href="stat_embedding_3d.html">stat_embedding_3d()</a></code>
+
+        </dt>
+        <dd>Schwarzschild spatial embedding diagram</dd>
+
+        <dt>
+
+          <code><a href="stat_geodesic_ode_3d.html">stat_geodesic_ode_3d()</a></code>
+
+        </dt>
+        <dd>Equatorial Schwarzschild spacetime geodesics</dd>
+
+        <dt>
+
+          <code><a href="lorentz_boost_3d.html">lorentz_boost_3d()</a></code>
+
+        </dt>
+        <dd>Lorentz boosts in canonical coordinates</dd>
+
+        <dt>
+
+          <code><a href="coord_spacetime_3d.html">coord_spacetime_3d()</a></code>
+
+        </dt>
+        <dd>Finite Minkowski spacetime coordinates</dd>
+      </dl></div><div class="section level2">
+      <h2 id="complex-analysis">Complex analysis<a class="anchor" aria-label="anchor" href="#complex-analysis"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="mobius_3d.html">mobius_3d()</a></code>
+
+        </dt>
+        <dd>Mobius transformations of complex numbers, spheres and half-space</dd>
+
+        <dt>
+
+          <code><a href="stat_riemann_sphere_3d.html">stat_riemann_sphere_3d()</a></code>
+
+        </dt>
+        <dd>Domain colouring on the Riemann sphere</dd>
+
+        <dt>
+
+          <code><a href="stat_riemann_surface_3d.html">stat_riemann_surface_3d()</a></code>
+
+        </dt>
+        <dd>Riemann surfaces parametrised by an inverse function</dd>
+      </dl></div><div class="section level2">
+      <h2 id="immersed-surfaces-and-knots">Immersed surfaces and knots<a class="anchor" aria-label="anchor" href="#immersed-surfaces-and-knots"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="stat_self_intersection_3d.html">stat_self_intersection_3d()</a></code>
+
+        </dt>
+        <dd>Transverse intersection curves of a triangle mesh</dd>
+
+        <dt>
+
+          <code><a href="stat_immersed_3d.html">stat_immersed_3d()</a></code>
+
+        </dt>
+        <dd>Immersed surface examples</dd>
+
+        <dt>
+
+          <code><a href="stat_knot_3d.html">stat_knot_3d()</a></code>
+
+        </dt>
+        <dd>Torus knots and knot tubes</dd>
       </dl></div><div class="section level2">
       <h2 id="package">Package<a class="anchor" aria-label="anchor" href="#package"></a></h2>
 

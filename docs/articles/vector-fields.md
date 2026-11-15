@@ -20,10 +20,6 @@ started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
 library(ggplot2)
 library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA)))
 ```
 
 The example field rotates around the z axis and rises at a constant
@@ -59,7 +55,7 @@ arrows <- subset(field, x %in% c(-1, 0, 1) & y %in% c(-1, 0, 1) & z != 0)
 vectors <- ggplot(arrows, aes(x, y, z = z, u = u, v = v, w = w))
 vectors + geom_quiver_3d(aes(fill = after_stat(norm)), scale = 0.4,
                          shaft = "tube", detail = 0) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"], name = "magnitude") +
+  scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E", name = "magnitude") +
   coord_3d(aspect = "data")
 ```
 
@@ -76,7 +72,7 @@ tail and tip pivots attach the corresponding end.
 
 vectors + geom_quiver_3d(aes(fill = after_stat(norm)), scale = 0.5,
   normalise = TRUE, pivot = "middle", detail = 0) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"], name = "magnitude") +
+  scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E", name = "magnitude") +
   coord_3d(aspect = "data")
 ```
 
@@ -91,7 +87,7 @@ aspect ratio. Zero-length vectors produce no geometry.
 ``` r
 
 vectors + geom_cone_3d(aes(fill = after_stat(norm)), scale = 0.5, detail = 0) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["orange"], name = "magnitude") +
+  scale_fill_gradient(low = "#DCEAF3", high = "#9E5E0F", name = "magnitude") +
   coord_3d(aspect = "data")
 ```
 
@@ -114,7 +110,7 @@ seeds <- rbind(c(0.3, 0, -0.8), c(0.55, 0, -0.8), c(0.8, 0, -0.8))
 lines <- flow + stat_streamline_3d(aes(colour = after_stat(arclength)),
   seeds = seeds, method = "rk45", direction = "forward",
   step = 0.08, max_steps = 90, linewidth = 0.9) +
-  scale_colour_gradient(low = PAL["blue"], high = PAL["orange"],
+  scale_colour_gradient(low = "#2E6F9E", high = "#9E5E0F",
                          name = "distance") + coord_3d(aspect = "data")
 lines
 ```
@@ -157,7 +153,7 @@ plane.
 flow + stat_streamline_3d(
   seeds = list(from = c(0.25, 0, -0.8), to = c(0.85, 0, -0.8), n = 4),
   direction = "forward", step = 0.08, max_steps = 70,
-  colour = PAL["blue"], linewidth = 0.8) + coord_3d(aspect = "data")
+  colour = "#2E6F9E", linewidth = 0.8) + coord_3d(aspect = "data")
 ```
 
 ![Four rising streamlines traced from evenly spaced seeds along a radial
@@ -180,7 +176,7 @@ example.
 flow + stat_streamline_3d(aes(fill = after_stat(norm)), geom = "tube",
   seeds = seeds, direction = "forward", step = 0.1, max_steps = 60,
   radius = 0.025, sides = 6, cap = "flat", colour = NA) +
-  scale_fill_gradient(low = PAL["blue"], high = PAL["orange"],
+  scale_fill_gradient(low = "#2E6F9E", high = "#9E5E0F",
                        name = "magnitude") + coord_3d(aspect = "data")
 ```
 
@@ -209,7 +205,7 @@ shear <- transform(field, u = 1, v = 0.4 * x)
 ggplot(shear, aes(x, y, z = z, u = u, v = v, w = w)) + stat_streamline_3d(
   seeds = list(type = "even", plane = "xy", at = c(-0.5, 0.5),
                spacing = 0.35, dtest = 0.15),
-  max_steps = 100, max_lines = 12, colour = PAL["teal"], linewidth = 0.7) +
+  max_steps = 100, max_lines = 12, colour = "#2A7A7A", linewidth = 0.7) +
   coord_3d(aspect = "data")
 ```
 

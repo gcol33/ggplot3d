@@ -9,11 +9,8 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite",
-  fig.ext = "svg", dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A")
+source("../setup.R")
+docs_setup(legend = "right")
 ```
 
 A vector field assigns a direction and magnitude to each position in space.
@@ -32,10 +29,6 @@ the field and gives those curves thickness. Installation is covered in
 ```{r packages, message=FALSE}
 library(ggplot2)
 library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA)))
 ```
 
 The example field rotates around the z axis and rises at a constant rate.
@@ -65,7 +58,7 @@ arrows <- subset(field, x %in% c(-1, 0, 1) & y %in% c(-1, 0, 1) & z != 0)
 vectors <- ggplot(arrows, aes(x, y, z = z, u = u, v = v, w = w))
 vectors + geom_quiver_3d(aes(fill = after_stat(norm)), scale = 0.4,
                          shaft = "tube", detail = 0) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"], name = "magnitude") +
+  scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E", name = "magnitude") +
   coord_3d(aspect = "data")
 ```
 
@@ -77,7 +70,7 @@ tail and tip pivots attach the corresponding end.
 ```{r normalized, fig.alt="Equal-length arrows centred on their anchors, with colour retaining the original vector magnitude."}
 vectors + geom_quiver_3d(aes(fill = after_stat(norm)), scale = 0.5,
   normalise = TRUE, pivot = "middle", detail = 0) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"], name = "magnitude") +
+  scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E", name = "magnitude") +
   coord_3d(aspect = "data")
 ```
 
@@ -87,7 +80,7 @@ aspect ratio. Zero-length vectors produce no geometry.
 
 ```{r cones, fig.alt="Cones representing the rotating field, with their size and fill following vector magnitude."}
 vectors + geom_cone_3d(aes(fill = after_stat(norm)), scale = 0.5, detail = 0) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["orange"], name = "magnitude") +
+  scale_fill_gradient(low = "#DCEAF3", high = "#9E5E0F", name = "magnitude") +
   coord_3d(aspect = "data")
 ```
 
@@ -104,7 +97,7 @@ seeds <- rbind(c(0.3, 0, -0.8), c(0.55, 0, -0.8), c(0.8, 0, -0.8))
 lines <- flow + stat_streamline_3d(aes(colour = after_stat(arclength)),
   seeds = seeds, method = "rk45", direction = "forward",
   step = 0.08, max_steps = 90, linewidth = 0.9) +
-  scale_colour_gradient(low = PAL["blue"], high = PAL["orange"],
+  scale_colour_gradient(low = "#2E6F9E", high = "#9E5E0F",
                          name = "distance") + coord_3d(aspect = "data")
 lines
 ```
@@ -135,7 +128,7 @@ specification instead distributes seeds over the chosen coordinate plane.
 flow + stat_streamline_3d(
   seeds = list(from = c(0.25, 0, -0.8), to = c(0.85, 0, -0.8), n = 4),
   direction = "forward", step = 0.08, max_steps = 70,
-  colour = PAL["blue"], linewidth = 0.8) + coord_3d(aspect = "data")
+  colour = "#2E6F9E", linewidth = 0.8) + coord_3d(aspect = "data")
 ```
 
 For example, `list(plane = "xz", at = 0, n = c(3, 2))` seeds an x/z
@@ -153,7 +146,7 @@ resolution. Here three tubes follow the same seeds as the line example.
 flow + stat_streamline_3d(aes(fill = after_stat(norm)), geom = "tube",
   seeds = seeds, direction = "forward", step = 0.1, max_steps = 60,
   radius = 0.025, sides = 6, cap = "flat", colour = NA) +
-  scale_fill_gradient(low = PAL["blue"], high = PAL["orange"],
+  scale_fill_gradient(low = "#2E6F9E", high = "#9E5E0F",
                        name = "magnitude") + coord_3d(aspect = "data")
 ```
 
@@ -176,7 +169,7 @@ shear <- transform(field, u = 1, v = 0.4 * x)
 ggplot(shear, aes(x, y, z = z, u = u, v = v, w = w)) + stat_streamline_3d(
   seeds = list(type = "even", plane = "xy", at = c(-0.5, 0.5),
                spacing = 0.35, dtest = 0.15),
-  max_steps = 100, max_lines = 12, colour = PAL["teal"], linewidth = 0.7) +
+  max_steps = 100, max_lines = 12, colour = "#2A7A7A", linewidth = 0.7) +
   coord_3d(aspect = "data")
 ```
 

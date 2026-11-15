@@ -9,6 +9,12 @@ surrounding plot elements. This article builds a viewer and links its
 selections to a filter. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Example
 
 The motor-car data contain weight in thousands of pounds, fuel economy
@@ -20,7 +26,7 @@ before creating the widget.
 
 cars <- data.frame(mtcars, model = rownames(mtcars))
 p <- ggplot(cars, aes(wt, mpg, z = hp, tooltip = model, data_id = model)) +
-  geom_point_3d(size = 4, colour = PAL["blue"]) +
+  geom_point_3d(size = 4, colour = "#2E6F9E") +
   coord_3d() + labs(x = "weight", y = "mpg", z = "horsepower")
 ```
 
@@ -137,7 +143,6 @@ multiplied.
 ``` r
 
 other <- panels + coord_3d(azimuth = 30)
-#> Coordinate system already present. Adding coord_3d() replaces it.
 view_3d(other, panel = 2, link = "cars-cameras", width = 624, height = 432)
 ```
 
@@ -153,7 +158,7 @@ cylinder counts.
 
 shared <- crosstalk::SharedData$new(cars, key = ~model, group = "cars")
 linked <- ggplot(shared$origData(), aes(wt, mpg, z = hp, tooltip = model)) +
-  geom_point_3d(size = 4, colour = PAL["blue"]) + coord_3d()
+  geom_point_3d(size = 4, colour = "#2E6F9E") + coord_3d()
 ```
 
 The original rows let the viewer take its keys from the shared object.

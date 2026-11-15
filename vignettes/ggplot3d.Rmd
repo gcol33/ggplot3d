@@ -8,21 +8,8 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
-         grey = "#5C6166")
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
+source("setup.R")
+docs_setup()
 ```
 
 ggplot3d adds three-dimensional layers and a z position scale to [ggplot2](https://ggplot2.tidyverse.org/), the R package for building plots from data and aesthetic mappings. This tutorial assumes basic R and data frames. It ends with a surface, observations and a saved plot.
@@ -46,11 +33,16 @@ Source installation needs a C++17 compiler. The [README installation section](ht
 
 Each row records three positions in arbitrary units. Map the column names to x, y and z. The call returns a ggplot object that can be printed, extended and saved.
 
+```{r packages, message = FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
+
 ```{r points, fig.alt="Three observations positioned along x, y and z axes."}
 observations <- data.frame(id = c("a", "b", "c"),
   east = c(-1, 0, 1), north = c(0, 1, -1), height = c(0.4, 1.2, 0.8))
 p <- ggplot(observations, aes(east, north, z = height)) +
-  geom_point_3d(size = 3, colour = PAL["red"]) + coord_3d()
+  geom_point_3d(size = 3, colour = "#B5342B") + coord_3d()
 p
 ```
 
@@ -65,8 +57,8 @@ surface <- expand.grid(east = seq(-1.5, 1.5, length.out = 12),
                        north = seq(-1.5, 1.5, length.out = 12))
 surface$height <- with(surface, exp(-(east^2 + north^2)))
 p <- ggplot(surface, aes(east, north, z = height)) +
-  geom_surface_3d(fill = PAL["blue"]) +
-  geom_point_3d(data = observations, size = 3, colour = PAL["red"]) +
+  geom_surface_3d(fill = "#2E6F9E") +
+  geom_point_3d(data = observations, size = 3, colour = "#B5342B") +
   coord_3d()
 p
 ```
@@ -83,24 +75,21 @@ write.csv(observations, path, row.names = FALSE)
 measured <- read.csv(path)
 ggplot(measured, aes(east, north, z = height)) +
   geom_point_3d(size = 3) + coord_3d()
-unlink(path)
 ```
 
 ## Supplying a surface height
 
 A surface needs a z mapping. The following call shows the message produced by a missing mapping.
 
-```{r missing-z}
-tryCatch(
-  print(ggplot(surface, aes(east, north)) + geom_surface_3d() + coord_3d()),
-  error = function(e) message(conditionMessage(e)))
+```{r missing-z, error = TRUE}
+ggplot(surface, aes(east, north)) + geom_surface_3d() + coord_3d()
 ```
 
 Map the height column to z to connect the grid points.
 
 ```{r corrected, fig.alt="A blue curved surface after supplying its height mapping."}
 ggplot(surface, aes(east, north, z = height)) +
-  geom_surface_3d(fill = PAL["blue"]) + coord_3d()
+  geom_surface_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ## Saving the plot
@@ -110,8 +99,6 @@ The default backend draws vector geometry. The file extension selects the graphi
 ```{r save}
 path <- tempfile(fileext = ".pdf")
 ggsave(path, p, width = 5, height = 4.5)
-file.info(path)$size > 0
-unlink(path)
 ```
 
 ## Where next

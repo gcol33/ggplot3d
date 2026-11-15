@@ -64,6 +64,11 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
+.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation-dark { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-light { display: none !important; }
+[data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
+math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -96,6 +101,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
@@ -105,12 +111,17 @@
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
     <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
     <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
     <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
     <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
     <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
     <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
     <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
     <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
     <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
@@ -119,6 +130,7 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
     <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -151,7 +163,7 @@
       <img src="../logo.svg" class="logo" alt=""><h1>Inside the Thurston geometries</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/thurston-geometries.Rmd" class="external-link"><code>vignettes/thurston-geometries.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/articles/thurston-geometries.Rmd" class="external-link"><code>vignettes/articles/thurston-geometries.Rmd</code></a></small>
       <div class="d-none name"><code>thurston-geometries.Rmd</code></div>
     </div>
 
@@ -163,6 +175,9 @@ three-dimensional geometries studied by Thurston. This article renders
 an intrinsic scene in each space, following the construction of Coulon,
 Matsumoto, Segerman and Trettel <a href="https://arxiv.org/abs/2010.15801" class="external-link">2022</a>. Installation is
 covered in <a href="ggplot3d.html">Get started</a>.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/gcol33/ggplot3d" class="external-link">ggplot3d</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="positioning-objects-from-the-observer">Positioning objects from the observer<a class="anchor" aria-label="anchor" href="#positioning-objects-from-the-observer"></a>
 </h2>
@@ -172,11 +187,11 @@ from the origin. Their centres are at intrinsic distances of 1.5, 1.9
 and 2.2 units, and their radii are 0.22, 0.28 and 0.28. The same
 directions, distances and radii are used in each scene, so changes in
 appearance come from the geometry.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">directions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.4</span>, <span class="op">-</span><span class="fl">0.15</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.2</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="op">-</span><span class="fl">0.25</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">distances</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="fl">1.9</span>, <span class="fl">2.2</span><span class="op">)</span></span>
 <span><span class="va">radii</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.22</span>, <span class="fl">0.28</span>, <span class="fl">0.28</span><span class="op">)</span></span>
-<span><span class="va">colours</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">PAL</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"blue"</span>, <span class="st">"orange"</span>, <span class="st">"green"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">colours</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2E6F9E"</span>, <span class="st">"#9E5E0F"</span>, <span class="st">"#3F7A3D"</span><span class="op">)</span></span>
 <span><span class="va">inside</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">geometry</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">balls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">centre</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/geodesic_3d.html">geodesic_3d</a></span><span class="op">(</span><span class="va">geometry</span>, direction <span class="op">=</span> <span class="va">directions</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span>,</span>
@@ -200,7 +215,7 @@ chart-defined traced SDFs.</p>
 <p>Euclidean space has the familiar flat metric. Rays are straight and
 the angular size of a small ball decreases with its distance. The three
 balls provide a reference for the curved spaces below.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">inside</span><span class="op">(</span><span class="st">"e3"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Observer view of three separated coloured balls in Euclidean space."><title>Observer view of three separated coloured balls in Euclidean space.</title>
@@ -263,7 +278,7 @@ reconverge, and geodesics return after a full circuit. Its stereographic
 chart represents the space in three coordinates; the renderer follows
 the intrinsic rays across the chart’s pole. The more distant balls
 occupy larger angular regions in this scene.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">inside</span><span class="op">(</span><span class="st">"s3"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three balls in spherical space, with enlarged angular extent for the distant balls."><title>Three balls in spherical space, with enlarged angular extent for the distant balls.</title>
@@ -326,7 +341,7 @@ diverge, which makes distant balls occupy smaller angles. Coordinates
 use the open Poincare ball: every centre and observer must have
 Euclidean norm below one. The geodesic positioning above supplies valid
 chart coordinates.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">inside</span><span class="op">(</span><span class="st">"h3"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three balls in hyperbolic space, with small angular extent for the distant balls."><title>Three balls in hyperbolic space, with small angular extent for the distant balls.</title>
@@ -389,7 +404,7 @@ directions and leaves the third direction flat. Rays can reconverge in
 the spherical factor while separating along the line. This directional
 dependence changes the apparent outlines of balls viewed obliquely to
 the line.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">inside</span><span class="op">(</span><span class="st">"s2xe"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three intrinsic balls in the product of a spherical plane and a line."><title>Three intrinsic balls in the product of a spherical plane and a line.</title>
@@ -451,7 +466,7 @@ the line.</p>
 separations in its curved factor. Its line direction remains flat. The
 first two chart coordinates lie in the open Poincare disk, and the third
 records distance along the line.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">inside</span><span class="op">(</span><span class="st">"h2xe"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three intrinsic balls in the product of a hyperbolic plane and a line."><title>Three intrinsic balls in the product of a hyperbolic plane and a line.</title>
@@ -515,7 +530,7 @@ vertical component curve in the horizontal directions. The chart uses
 ordinary three-component coordinates with this coupled distance rule.
 Intrinsic balls can have asymmetric apparent outlines away from the
 viewing axis.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">inside</span><span class="op">(</span><span class="st">"nil"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three intrinsic balls viewed from the origin in Nil geometry."><title>Three intrinsic balls viewed from the origin in Nil geometry.</title>
@@ -580,7 +595,7 @@ approximate level set described in section 11.5 of Coulon and
 colleagues, with horizontal weights that vary exponentially with height.
 These shapes illustrate that approximation; their level-set definition
 is approximate.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">inside</span><span class="op">(</span><span class="st">"sol"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three approximate ball primitives in Sol, with direction-dependent outlines."><title>Three approximate ball primitives in Sol, with direction-dependent outlines.</title>
@@ -644,7 +659,7 @@ travelling around the base changes that rotation. The chart uses two
 hyperboloid coordinates and the unwrapped fibre coordinate. The
 renderer’s geodesics and distance calculation account for the
 coupling.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">inside</span><span class="op">(</span><span class="st">"sl2r"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Three intrinsic balls in the universal cover of SL(2, R)."><title>Three intrinsic balls in the universal cover of SL(2, R).</title>
@@ -709,14 +724,13 @@ frame. The example below moves sideways in Nil and turns by five
 degrees. The backend’s field of view controls the full-panel perspective
 image; the exterior camera’s azimuth and elevation do not set this
 view.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">angle</span> <span class="op">&lt;-</span> <span class="fl">5</span> <span class="op">*</span> <span class="va">pi</span> <span class="op">/</span> <span class="fl">180</span></span>
 <span><span class="va">facing</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">angle</span><span class="op">)</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">angle</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">angle</span><span class="op">)</span>, <span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">angle</span><span class="op">)</span><span class="op">)</span>, <span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="fu">inside</span><span class="op">(</span><span class="st">"nil"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>backend <span class="op">=</span> <span class="fu"><a href="../reference/backend_3d.html">backend_3d</a></span><span class="op">(</span><span class="st">"raymarch"</span>, geometry <span class="op">=</span> <span class="st">"nil"</span>,</span>
 <span>  observer <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, facing <span class="op">=</span> <span class="va">facing</span>, fov <span class="op">=</span> <span class="fl">90</span>,</span>
-<span>  dpi <span class="op">=</span> <span class="fl">52</span>, antialias <span class="op">=</span> <span class="fl">1</span>, max_distance <span class="op">=</span> <span class="fl">3.5</span>, max_steps <span class="op">=</span> <span class="fl">256</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Coordinate system already present. Adding coord_3d() replaces it.</span></span></code></pre></div>
+<span>  dpi <span class="op">=</span> <span class="fl">52</span>, antialias <span class="op">=</span> <span class="fl">1</span>, max_distance <span class="op">=</span> <span class="fl">3.5</span>, max_steps <span class="op">=</span> <span class="fl">256</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Nil scene viewed from an observer moved sideways and turned five degrees."><title>Nil scene viewed from an observer moved sideways and turned five degrees.</title>
   <g class="svglite">
@@ -783,7 +797,7 @@ result contains positions, orthonormal-frame velocities, coordinate
 velocities, parallel-transport matrices and area densities. For a
 Euclidean ray the area density grows as squared distance; the following
 output compares it with the spherical and hyperbolic cases.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">distances</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">1.5</span><span class="op">)</span></span>
 <span><span class="va">areas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>distance <span class="op">=</span> <span class="va">distances</span>,</span>
 <span>  Euclidean <span class="op">=</span> <span class="fu"><a href="../reference/geodesic_3d.html">geodesic_3d</a></span><span class="op">(</span><span class="st">"e3"</span>, distance <span class="op">=</span> <span class="va">distances</span><span class="op">)</span><span class="op">$</span><span class="va">area</span>,</span>
@@ -827,7 +841,7 @@ region used to represent the space. A ray crossing one face continues
 through its paired face with its tangent transported by the pairing
 isometry. This Euclidean example identifies the two x faces by
 translations of two units.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">to_left</span> <span class="op">&lt;-</span> <span class="va">to_right</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fl">4</span><span class="op">)</span></span>
 <span><span class="va">to_left</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">4</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">-</span><span class="fl">2</span></span>
 <span><span class="va">to_right</span><span class="op">[</span><span class="fl">1</span>, <span class="fl">4</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">2</span></span>
@@ -839,9 +853,9 @@ space. Repeated copies become visible along rays that cross the domain
 faces. For other geometries, supply isometries in the embeddings
 documented by <code><a href="../reference/thurston_portal_3d.html">thurston_portal_3d()</a></code> and every paired face of
 the intended domain.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/annotation_thurston_3d.html">annotation_thurston_3d</a></span><span class="op">(</span>centre <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.5</span>, <span class="fl">0</span>, <span class="fl">1.5</span><span class="op">)</span>, radius <span class="op">=</span> <span class="fl">0.3</span>,</span>
-<span>  fill <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"orange"</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_void</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  fill <span class="op">=</span> <span class="st">"#9E5E0F"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_void</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>backend <span class="op">=</span> <span class="fu"><a href="../reference/backend_3d.html">backend_3d</a></span><span class="op">(</span><span class="st">"raymarch"</span>, quotient <span class="op">=</span> <span class="va">faces</span>,</span>
 <span>    fov <span class="op">=</span> <span class="fl">110</span>, max_distance <span class="op">=</span> <span class="fl">5</span>, dpi <span class="op">=</span> <span class="fl">52</span>, antialias <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>

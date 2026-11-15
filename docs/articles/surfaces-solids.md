@@ -12,6 +12,12 @@ covers arrows and streamlines, and [Implicit
 surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md)
 covers reconstruction from point clouds.
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Indexed meshes
 
 A mesh describes vertices and faces using integer indices. Indices start
@@ -24,7 +30,7 @@ vertex, face and corner.
 vertices <- data.frame(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1),
                        z = c(0, 0, 1, 1))
 mesh <- mesh_3d(vertices, matrix(1:4, nrow = 1))
-ggplot() + geom_mesh_3d(data = mesh, fill = PAL["blue"]) + coord_3d()
+ggplot() + geom_mesh_3d(data = mesh, fill = "#2E6F9E") + coord_3d()
 ```
 
 ![A sloping quadrilateral supplied as an indexed
@@ -91,8 +97,8 @@ predictions.
 model <- lm(mpg ~ wt + hp, data = mtcars)
 cars_fit <- ggplot(mtcars, aes(wt, hp, z = mpg))
 cars_fit + geom_smooth_3d(method = model, domain = "hull", se = FALSE,
-                         n = 10, fill = PAL["blue"], alpha = 0.45) +
-  geom_residual_3d(method = model, colour = PAL["red"], linewidth = 0.7) +
+                         n = 10, fill = "#2E6F9E", alpha = 0.45) +
+  geom_residual_3d(method = model, colour = "#B5342B", linewidth = 0.7) +
   geom_point_3d(size = 1.5) + coord_3d()
 ```
 
@@ -113,7 +119,7 @@ band. They describe pointwise uncertainty in the fitted mean.
 ``` r
 
 cars_fit + geom_smooth_3d(method = model, domain = "hull", se = "fill", n = 10) +
-  scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"], name = "SE") +
+  scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E", name = "SE") +
   coord_3d() + theme(legend.position = "right")
 ```
 
@@ -125,6 +131,35 @@ Combining the hull domain with a closed confidence band can currently
 fail with `faces must be planar`. The separate confidence surfaces and
 standard-error fill provide the available uncertainty displays for this
 example.
+
+## Parametric surfaces
+
+A parametric surface gives x, y and z as functions of two parameters
+$`u`$ and $`v`$, which reaches shapes that are not graphs of a function
+of x and y.
+[`geom_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md)
+takes a function returning a list of the three coordinates and samples
+it on an `n` grid; `closed` joins the edges of a parameter that wraps
+around, as both do for a torus.
+
+``` r
+
+torus <- function(u, v) list(x = (1 + 0.4 * cos(v)) * cos(u),
+                             y = (1 + 0.4 * cos(v)) * sin(u), z = 0.4 * sin(v))
+ggplot() +
+  geom_parametric_3d(fun = torus, n = c(36, 18), closed = TRUE, fill = "#2E6F9E") +
+  coord_3d(aspect = "data")
+```
+
+![A blue torus sampled from its parametric
+formula.](surfaces-solids_files/figure-html/parametric-1.svg)
+
+[Meshes and intrinsic
+geometry](https://gillescolling.com/ggplot3d/articles/meshes.html#geodesics-on-a-parametric-surface)
+draws geodesics on this torus, and [Complex functions, knots and
+immersed
+surfaces](https://gillescolling.com/ggplot3d/articles/complex-knots.md)
+uses parametric surfaces that pass through themselves.
 
 ## Density surfaces and ridges
 
@@ -150,7 +185,7 @@ single y position. Height multiplies the density in transformed z units.
 r <- ggplot(iris, aes(Sepal.Length, as.numeric(Species),
                      group = Species, fill = Species))
 r + geom_ridgeline_3d(n = 24) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) + coord_3d()
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) + coord_3d()
 ```
 
 ![Three density ridges for sepal length, one per iris
@@ -159,7 +194,7 @@ species.](surfaces-solids_files/figure-html/ridge-1.svg)
 ``` r
 
 r + stat_ridgeline_3d(n = 24) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) + coord_3d()
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) + coord_3d()
 ```
 
 ![The ridgeline stat drawing the same species-specific sepal length
@@ -178,7 +213,7 @@ field <- expand.grid(x = seq(-1, 1, length.out = 8),
   y = seq(-1, 1, length.out = 8), z = seq(-1, 1, length.out = 8))
 field$value <- with(field, x^2 + y^2 + z^2)
 v <- ggplot(field, aes(x, y, z = z, value = value))
-v + geom_isosurface_3d(levels = 0.6, fill = PAL["blue"]) + coord_3d()
+v + geom_isosurface_3d(levels = 0.6, fill = "#2E6F9E") + coord_3d()
 ```
 
 ![A level surface of squared distance from the
@@ -186,7 +221,7 @@ origin.](surfaces-solids_files/figure-html/isosurface-1.svg)
 
 ``` r
 
-v + stat_isosurface_3d(levels = 0.6, fill = PAL["blue"]) + coord_3d()
+v + stat_isosurface_3d(levels = 0.6, fill = "#2E6F9E") + coord_3d()
 ```
 
 ![The isosurface stat extracting the same squared-distance
@@ -214,6 +249,56 @@ ggplot() + stat_isofunction_3d(fun = ball, n = 8, levels = 0.5) +
 
 ![The isofunction stat sampling the squared-distance
 function.](surfaces-solids_files/figure-html/stat-isofunction-1.svg)
+
+## Slices through a scalar field
+
+A level surface shows where a field takes one value. A slice shows every
+value on a plane through it.
+[`geom_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
+reads a gridded field with a `value` aesthetic and colours planes
+through it, by default the three planes through the middle of the grid;
+`xslice`, `yslice` and `zslice` choose others.
+[`geom_slice_contour_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_contour_3d.md)
+adds contour lines on the same planes.
+
+``` r
+
+field <- expand.grid(x = seq(-1, 1, length.out = 16),
+                     y = seq(-1, 1, length.out = 16),
+                     z = seq(-1, 1, length.out = 16))
+field$value <- with(field, exp(-(x^2 + 2 * y^2 + z^2)))
+ggplot(field, aes(x, y, z = z, value = value)) +
+  geom_slice_3d(zslice = 0) +
+  geom_slice_contour_3d(zslice = 0, bins = 6, colour = "white") +
+  scale_fill_gradient(low = "#C9D9E6", high = "#2E6F9E") + coord_3d()
+```
+
+![A horizontal slice through a three-dimensional Gaussian field,
+coloured by value with white contour lines on
+it.](surfaces-solids_files/figure-html/slice-1.svg)
+
+`stat_slice_3d(slice = sdf_plane(...))` cuts along an oblique plane, and
+[`geom_density_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
+slices the density of a point cloud estimated on the fly.
+
+## Where two surfaces meet
+
+[`geom_isocurve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isocurve_3d.md)
+draws the curve where two implicit surfaces intersect, the points at
+which both functions are zero. Here a unit sphere meets a saddle.
+
+``` r
+
+ggplot() +
+  geom_isocurve_3d(fun1 = sdf_sphere(radius = 1),
+                   fun2 = function(x, y, z) x^2 - y^2 - z * 0.5,
+                   n = 24, colour = "#B5342B", linewidth = 1) +
+  xlim(-1.2, 1.2) + ylim(-1.2, 1.2) + zlim(-1.2, 1.2) + coord_3d()
+```
+
+![A closed curve where a unit sphere and a saddle surface intersect,
+rising and falling twice around the
+sphere.](surfaces-solids_files/figure-html/isocurve-1.svg)
 
 ## Trivariate density
 
@@ -263,7 +348,7 @@ produces a planar polygon, and collinear input produces no faces.
 
 corners <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
 h <- ggplot(corners, aes(x, y, z = z))
-h + geom_hull_3d(fill = PAL["blue"]) + coord_3d()
+h + geom_hull_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![The convex hull of the eight corners of a
@@ -271,7 +356,7 @@ cube.](surfaces-solids_files/figure-html/hull-1.svg)
 
 ``` r
 
-h + stat_hull_3d(fill = PAL["blue"]) + coord_3d()
+h + stat_hull_3d(fill = "#2E6F9E") + coord_3d()
 ```
 
 ![The hull stat drawing the cube defined by the same eight
@@ -288,7 +373,7 @@ distances on the axes equally long in the scene.
 solids <- data.frame(x = c(0, 2, 4), y = c(0, 1, 0), z = c(0, 1, 2),
                      radius = c(0.5, 0.8, 0.6))
 ggplot(solids, aes(x, y, z = z, radius = radius)) +
-  geom_sphere_3d(detail = 1, fill = PAL["blue"]) + coord_3d(aspect = "data")
+  geom_sphere_3d(detail = 1, fill = "#2E6F9E") + coord_3d(aspect = "data")
 ```
 
 ![Three solid spheres with different radii at three supplied
@@ -302,7 +387,7 @@ are visible through a translucent ellipsoid.
 
 ggplot(solids, aes(x, y, z = z)) +
   geom_ellipsoid_3d(rx = 0.7, ry = 0.3, rz = 0.5, detail = 1,
-                    axes = TRUE, alpha = 0.4, fill = PAL["teal"]) +
+                    axes = TRUE, alpha = 0.4, fill = "#2A7A7A") +
   coord_3d(aspect = "data")
 ```
 
@@ -322,8 +407,8 @@ iris_space <- ggplot(iris, aes(Sepal.Length, Sepal.Width, z = Petal.Length,
 iris_space + stat_ellipsoid_3d(type = "norm", kind = "data",
                               detail = 1, alpha = 0.2, axes = TRUE) +
   geom_point_3d(size = 1) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
-  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
+  scale_colour_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d()
 ```
 
@@ -336,8 +421,8 @@ points.](surfaces-solids_files/figure-html/data-ellipsoids-1.svg)
 iris_space + stat_ellipsoid_3d(type = "norm", kind = "se", level = 0.95,
                               detail = 1, alpha = 0.4, axes = TRUE) +
   geom_point_3d(size = 0.7) +
-  scale_fill_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
-  scale_colour_manual(values = unname(PAL[c("blue", "orange", "teal")])) +
+  scale_fill_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
+  scale_colour_manual(values = c("#2E6F9E", "#9E5E0F", "#2A7A7A")) +
   coord_3d()
 ```
 
@@ -358,7 +443,7 @@ data, with width measured in millimetres at the centre of the view.
 ``` r
 
 ggplot(mtcars, aes(wt, mpg, z = qsec, size = hp)) +
-  geom_glyph_3d(glyph = "cube", fill = PAL["orange"]) + coord_3d()
+  geom_glyph_3d(glyph = "cube", fill = "#9E5E0F") + coord_3d()
 ```
 
 ![Solid cubes at the car observations, with larger cubes representing
@@ -378,7 +463,7 @@ helix <- data.frame(x = cos(angle), y = sin(angle), z = angle / 4,
                     radius = seq(0.05, 0.14, length.out = length(angle)))
 curve <- ggplot(helix, aes(x, y, z = z))
 curve + geom_tube_3d(aes(radius = radius), sides = 8, cap = "flat",
-                     fill = PAL["blue"]) + coord_3d(aspect = "data")
+                     fill = "#2E6F9E") + coord_3d(aspect = "data")
 ```
 
 ![A helical tube whose radius grows with
@@ -391,7 +476,7 @@ argument sets the initial orientation.
 ``` r
 
 curve + geom_ribbon_3d(aes(twist = z * 60), width = 0.35,
-                       normal = c(0, 0, 1), fill = PAL["orange"]) +
+                       normal = c(0, 0, 1), fill = "#9E5E0F") +
   coord_3d(aspect = "data")
 ```
 
@@ -408,7 +493,7 @@ route <- data.frame(x = 0:4, y = c(0, 1, 0, -1, 0), z = c(0, 0.3, 1, 1.2, 2))
 square <- rbind(c(-1, -1), c(1, -1), c(1, 1), c(-1, 1))
 ggplot(route, aes(x, y, z = z)) +
   geom_sweep_3d(profile = square, radius = 0.15, spline = "natural", n = 32,
-                fill = PAL["teal"]) + coord_3d(aspect = "data")
+                fill = "#2A7A7A") + coord_3d(aspect = "data")
 ```
 
 ![A square cross-section swept along a smoothed path through five
@@ -423,7 +508,7 @@ A surface of revolution rotates a radius-height profile about an axis.
 vessel <- data.frame(z = seq(0, 2, length.out = 16))
 vessel$r <- 0.5 + 0.2 * sin(3 * vessel$z)
 ggplot(vessel, aes(r = r, z = z)) +
-  geom_revolve_3d(n = 16, fill = PAL["purple"]) + coord_3d(aspect = "data")
+  geom_revolve_3d(n = 16, fill = "#7A4F9E") + coord_3d(aspect = "data")
 ```
 
 ![A rounded vessel formed by rotating a radius-height profile about

@@ -11,6 +11,12 @@ started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 2.  **Save** the resulting plot with
     [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
 
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
+
 ## Example
 
 The data describe a curved surface on a regular grid. The same layers
@@ -21,7 +27,7 @@ and camera can be rendered with the vector, raster or hybrid backend.
 d <- expand.grid(x = seq(-2, 2, length.out = 16),
                  y = seq(-2, 2, length.out = 16))
 d$z <- with(d, exp(-(x^2 + y^2) / 2))
-p <- ggplot(d, aes(x, y, z = z)) + geom_surface_3d(fill = PAL["blue"])
+p <- ggplot(d, aes(x, y, z = z)) + geom_surface_3d(fill = "#2E6F9E")
 ```
 
 ### Vector rendering
@@ -48,9 +54,6 @@ Save to PDF or SVG to retain vector geometry.
 
 path <- tempfile(fileext = ".pdf")
 ggsave(path, vector_plot, width = 5, height = 4.5)
-file.info(path)$size > 0
-#> [1] TRUE
-unlink(path)
 ```
 
 ### Raster rendering
@@ -79,9 +82,6 @@ raster dpi or the antialias factor increases memory use.
 
 path <- tempfile(fileext = ".png")
 ggsave(path, raster_plot, width = 5, height = 4.5, dpi = 144)
-file.info(path)$size > 0
-#> [1] TRUE
-unlink(path)
 ```
 
 Axes and labels are composed through grid around the raster scene. A PDF
@@ -97,7 +97,7 @@ vector geometry wherever opaque raster coverage lies in front of it.
 ``` r
 
 ggplot(d, aes(x, y, z = z)) +
-  geom_surface_3d(fill = PAL["blue"], raster = TRUE) +
+  geom_surface_3d(fill = "#2E6F9E", raster = TRUE) +
   geom_contour_3d(colour = "black", linewidth = 0.5, bins = 4) +
   coord_3d(backend = backend_3d("hybrid", dpi = 100, antialias = 1))
 ```

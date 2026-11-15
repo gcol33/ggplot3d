@@ -9,16 +9,12 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite",
-  fig.ext = "svg", dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
-         grey = "#5C6166")
-has_av <- requireNamespace("av", quietly = TRUE)
+source("../setup.R")
+docs_setup()
+has_ragg <- requireNamespace("ragg", quietly = TRUE)
 ```
 
-This article draws exact solutions of eight partial differential equations (PDEs). The transport, heat, wave and Laplace equations are the four linear PDEs with explicit solution formulas that Evans (2010) treats first. The Kadomtsev–Petviashvili, sine-Gordon, Fisher–KPP and nonlinear Schrödinger equations are four well-known nonlinear PDEs; for them no general solution formula exists, but particular solutions can be written in closed form. Each solution is evaluated on a grid of positions and times, drawn as a surface, and rendered one frame per time with `animate_3d()`. A final example solves incompressible magnetohydrodynamics numerically and draws the computed current density through the same plotting pipeline. Installation is covered in [Get started](ggplot3d.html); the videos need [av](https://docs.ropensci.org/av/).
+This article draws exact solutions of eight partial differential equations (PDEs). The transport, heat, wave and Laplace equations are the four linear PDEs with explicit solution formulas that Evans (2010) treats first. The Kadomtsev–Petviashvili, sine-Gordon, Fisher–KPP and nonlinear Schrödinger equations are four well-known nonlinear PDEs; for them no general solution formula exists, but particular solutions can be written in closed form. Each solution is evaluated on a grid of positions and times, drawn as a surface, and rendered one frame per time with `animate_3d()`. A final example solves incompressible magnetohydrodynamics numerically and draws the computed current density through the same plotting pipeline. Installation is covered in [Get started](ggplot3d.html).
 
 1. **Define** the solution $u(x, y, t)$ and a data frame with one row per time.
 
@@ -31,15 +27,11 @@ This article draws exact solutions of eight partial differential equations (PDEs
 ```{r packages, message = FALSE, warning = FALSE}
 library(ggplot2)
 library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
 ```
 
 Each exact animated solution below is a function `u(x, y, t)` of two space coordinates and time. `geom_function_3d()` evaluates the function on an `n` by `n` grid for each row of `data.frame(t = times)`, passing that row's `t` as a named argument. The x and y scale limits set the spatial range. The layer retains `t` with each surface.
 
-`animate_3d(time = "t")` draws one value of `t` per frame, in increasing order. The scales are trained on all frames, so the z axis and the fill colours keep the same range throughout, and a decaying solution is seen to decay. The calls below render MP4 videos at 480 by 480 pixels. In the article, the returned animation embeds as a looping, muted video labelled with the chunk's figure description.
+`animate_3d(time = "t")` draws one value of `t` per frame, in increasing order. The scales are trained on all frames, so the z axis and the fill colours keep the same range throughout, and a decaying solution is seen to decay. The calls below render looping GIF animations at 480 by 480 pixels. In the article, the returned animation embeds as an image described by the chunk's figure description.
 
 ## Linear equations
 
@@ -58,15 +50,19 @@ transport <- function(x, y, t) {
 moving <- data.frame(t = seq(0, 4, length.out = 33)[-33])
 ```
 
-```{r transport, eval = has_av, fig.alt = "Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner."}
+```{r transport, eval = FALSE}
 p <- ggplot(moving, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = transport, n = 31, colour = NA) +
   xlim(-2, 2) + ylim(-2, 2) +
-  scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
+  scale_fill_gradient(low = "grey85", high = "#2E6F9E") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
+```
+
+```{r transport-show, echo = FALSE, eval = has_ragg, fig.alt = "Animation of a blue bump on a flat surface that travels diagonally across the square and re-enters at the opposite corner."}
+docs_animation("transport")
 ```
 
 ### Heat equation
@@ -82,15 +78,19 @@ heat <- function(x, y, t) exp(-(x^2 + y^2) / (1 + 4 * t)) / (1 + 4 * t)
 cooling <- data.frame(t = seq(0, 1, length.out = 25))
 ```
 
-```{r heat, eval = has_av, fig.alt = "Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one."}
+```{r heat, eval = FALSE}
 p <- ggplot(cooling, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = heat, n = 31, colour = NA) +
   xlim(-2, 2) + ylim(-2, 2) +
-  scale_fill_gradient(low = PAL[["blue"]], high = PAL[["red"]]) +
+  scale_fill_gradient(low = "#2E6F9E", high = "#B5342B") +
   coord_3d(azimuth = -50, elevation = 25) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
+```
+
+```{r heat-show, echo = FALSE, eval = has_ragg, fig.alt = "Animation of a tall red peak that flattens and widens into a low broad mound while the z axis stays fixed from zero to one."}
+docs_animation("heat")
 ```
 
 ### Wave equation
@@ -111,15 +111,19 @@ period <- 2 * pi / omega
 membrane <- data.frame(t = seq(0, period, length.out = 31)[-31])
 ```
 
-```{r wave, eval = has_av, fig.alt = "Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero."}
+```{r wave, eval = FALSE}
 p <- ggplot(membrane, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = wave, n = 31, colour = NA) +
   xlim(0, 1) + ylim(0, 1) +
-  scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
+  scale_fill_gradient2(low = "#2E6F9E", mid = "grey90", high = "#B5342B") +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
+```
+
+```{r wave-show, echo = FALSE, eval = has_ragg, fig.alt = "Animation of a square membrane with a raised red lobe and a lowered blue lobe that circle round its centre while the edges stay at zero."}
+docs_animation("wave")
 ```
 
 ### Laplace equation
@@ -133,15 +137,19 @@ laplace <- function(x, y, t) Re(exp(-1i * t) * complex(real = x, imaginary = y)^
 saddle <- data.frame(t = seq(0, 2 * pi, length.out = 37)[-37])
 ```
 
-```{r laplace, eval = has_av, fig.alt = "Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis."}
+```{r laplace, eval = FALSE}
 p <- ggplot(saddle, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = laplace, n = 31, colour = NA) +
   xlim(-1, 1) + ylim(-1, 1) +
-  scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
+  scale_fill_gradient2(low = "#2E6F9E", mid = "grey90", high = "#B5342B") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
+```
+
+```{r laplace-show, echo = FALSE, eval = has_ragg, fig.alt = "Animation of a monkey saddle with three raised red ridges and three lowered blue valleys that rotate slowly about the vertical axis."}
+docs_animation("laplace")
 ```
 
 ## Nonlinear equations
@@ -173,15 +181,19 @@ kp <- function(x, y, t) {
 crossing <- data.frame(t = seq(-2.2, 2.2, length.out = 40))
 ```
 
-```{r kp, eval = has_av, fig.alt = "Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet."}
+```{r kp, eval = FALSE}
 p <- ggplot(crossing, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = kp, n = 61, colour = NA) +
   xlim(-10, 10) + ylim(-10, 10) +
-  scale_fill_gradient(low = "grey85", high = PAL[["blue"]]) +
+  scale_fill_gradient(low = "grey85", high = "#2E6F9E") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
+```
+
+```{r kp-show, echo = FALSE, eval = has_ragg, fig.alt = "Animation of two straight blue crests forming an X that travels across the square, with a raised segment where the crests meet."}
+docs_animation("kp")
 ```
 
 ### Sine-Gordon equation
@@ -208,15 +220,19 @@ sine_gordon <- function(x, y, t) {
 kinks <- data.frame(t = seq(-8, 8, length.out = 33))
 ```
 
-```{r sg, eval = has_av, fig.alt = "Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square."}
+```{r sg, eval = FALSE}
 p <- ggplot(kinks, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = sine_gordon, n = 51, colour = NA) +
   xlim(-8, 8) + ylim(-8, 8) +
-  scale_fill_gradient(low = "grey85", high = PAL[["purple"]]) +
+  scale_fill_gradient(low = "grey85", high = "#7A4F9E") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
+```
+
+```{r sg-show, echo = FALSE, eval = has_ragg, fig.alt = "Animation of a surface with two raised purple quadrants and two low quadrants; the corner where the fronts meet slides diagonally across the square."}
+docs_animation("sg")
 ```
 
 ### Fisher–KPP equation
@@ -238,15 +254,19 @@ fisher <- function(x, y, t) {
 invasion <- data.frame(t = seq(-6, 6, length.out = 33))
 ```
 
-```{r fisher, eval = has_av, fig.alt = "Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square."}
+```{r fisher, eval = FALSE}
 p <- ggplot(invasion, aes(fill = after_stat(z_mean))) +
   geom_function_3d(fun = fisher, n = 41, colour = NA) +
   xlim(-20, 20) + ylim(-20, 20) +
-  scale_fill_gradient(low = "grey85", high = PAL[["green"]]) +
+  scale_fill_gradient(low = "grey85", high = "#3F7A3D") +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "u")
 animate_3d(p, time = "t", fps = 12, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
+```
+
+```{r fisher-show, echo = FALSE, eval = has_ragg, fig.alt = "Animation of a green plateau whose sloping edge advances diagonally across a flat grey plain until it covers most of the square."}
+docs_animation("fisher")
 ```
 
 ### Nonlinear Schrödinger equation
@@ -271,7 +291,7 @@ peregrine$amplitude <- with(peregrine,
 ```{r nls, fig.alt = "Surface over space and time that is flat at height one except for a single sharp peak of height three at the centre, flanked by two shallow dips."}
 ggplot(peregrine, aes(x, t, z = amplitude, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
-  scale_fill_gradient(low = "grey85", high = PAL[["teal"]]) +
+  scale_fill_gradient(low = "grey85", high = "#2A7A7A") +
   coord_3d(azimuth = -50, elevation = 30) +
   labs(z = "|ψ|")
 ```
@@ -374,14 +394,18 @@ Using $\ell_d=(\nu^3/\varepsilon)^{1/4}$ as a dissipation-length estimate gives 
 
 The current sheets sharpen as magnetic-field gradients grow. Peak $\max|j|$ is about 32.2 at $t=1.05$; dissipation peaks near $t=1.0$, consistent with the growth and decay in Orszag and Tang's published curves. The computed values now pass directly to `geom_surface_3d()` and `animate_3d(time = "t")`.
 
-```{r mhd, eval = has_av, fig.alt = "Animation of current density in the incompressible Orszag-Tang vortex, with blue and red current sheets sharpening into narrow ridges and valleys."}
+```{r mhd, eval = FALSE}
 p <- ggplot(current, aes(x, y, z = value, fill = after_stat(z_mean))) +
   geom_surface_3d(colour = NA) +
-  scale_fill_gradient2(low = PAL[["blue"]], mid = "grey90", high = PAL[["red"]]) +
+  scale_fill_gradient2(low = "#2E6F9E", mid = "grey90", high = "#B5342B") +
   coord_3d(azimuth = -50, elevation = 35) +
   labs(z = "j")
 animate_3d(p, time = "t", fps = 8, width = 480, height = 480,
-  format = "mp4", progress = FALSE)
+  format = "gif", progress = FALSE)
+```
+
+```{r mhd-show, echo = FALSE, eval = has_ragg, fig.alt = "Animation of current density in the incompressible Orszag-Tang vortex, with blue and red current sheets sharpening into narrow ridges and valleys."}
+docs_animation("mhd")
 ```
 
 ## Where next

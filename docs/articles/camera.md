@@ -7,10 +7,16 @@ started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
 ``` r
 
+library(ggplot2)
+library(ggplot3d)
+```
+
+``` r
+
 d <- expand.grid(x = 1:3, y = 1:3)
 d$z <- c(1, 2, 4, 3, 5, 2, 4, 2, 3)
 p <- ggplot(d, aes(x, y, z = z)) +
-  geom_col_3d(fill = PAL["blue"], width = 0.65, depth = 0.65)
+  geom_col_3d(fill = "#2E6F9E", width = 0.65, depth = 0.65)
 ```
 
 ## Angles
@@ -88,6 +94,41 @@ p + coord_3d(light = light_3d(light_directional(c(1, 1, 2), space = "camera")))
 
 ![Blue columns lit from the upper right of the
 view.](camera_files/figure-html/light-1.svg)
+
+## Several views of one scene
+
+[`facet_views_3d()`](https://gillescolling.com/ggplot3d/reference/facet_views_3d.md)
+repeats the scene in one panel per view, like the views of a technical
+drawing. The default gives front, top and right views next to an
+isometric one; `layout = "third_angle"` or `"first_angle"` arranges them
+by the drawing conventions, and a named list gives views of your own.
+
+``` r
+
+block <- expand.grid(x = 1:4, y = 1:3, z = 1:3)
+block <- block[block$z == 1 | (block$x == 1 & block$y < 3), ]
+ggplot(block, aes(x, y, z = z)) +
+  geom_voxel_3d(fill = "grey80", colour = "grey20") +
+  coord_3d() + facet_views_3d()
+```
+
+![An L-shaped block of grey cubes shown from the front, from the top,
+from the right and in an isometric
+view.](camera_files/figure-html/views-1.svg)
+
+When the axes are left out, `guides(orientation = guide_triad_3d())`
+draws a small set of x, y and z arrows that turn with the camera, and
+[`annotation_north_3d()`](https://gillescolling.com/ggplot3d/reference/guide_triad_3d.md)
+draws a north arrow along a given direction.
+
+``` r
+
+ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
+  coord_3d(axes = character()) + guides(orientation = guide_triad_3d())
+```
+
+![Three points without axes, with a small x, y and z orientation triad
+in the corner.](camera_files/figure-html/triad-1.svg)
 
 ## Stereo pairs
 

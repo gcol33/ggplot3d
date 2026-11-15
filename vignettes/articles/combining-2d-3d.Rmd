@@ -9,26 +9,15 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6.5, fig.asp = NULL,
-  fig.height = 4.5, dpi = 120, out.width = "100%", raster3d = 1e5, dev = "svglite", fig.ext = "svg",
-  dev.args = list(pointsize = 14))
-PAL <- c(blue = "#2E6F9E", red = "#B5342B", green = "#3F7A3D",
-         orange = "#9E5E0F", purple = "#7A4F9E", teal = "#2A7A7A",
-         grey = "#5C6166")
-library(ggplot2)
-library(ggplot3d)
-theme_set(theme_minimal(base_size = 17) + theme(
-  plot.background = element_rect(fill = "transparent", colour = NA),
-  panel.background = element_rect(fill = "transparent", colour = NA),
-  legend.background = element_rect(fill = "transparent", colour = NA),
-  legend.key = element_rect(fill = "transparent", colour = NA),
-  legend.box.background = element_rect(fill = "transparent", colour = NA),
-  legend.position = "none"))
+source("../setup.R")
+docs_setup(fig.asp = NULL)
 ```
 
 A three-dimensional panel often needs two-dimensional companions: ordinary ggplot2 layers drawn inside it, flat projections of the data on the floor and walls of the box, or a contour map and a profile next to it. This article shows each of these, then arranges 3D panels with 2D panels using a second package. Installation is covered in [Get started](ggplot3d.html). The composition sections also use [patchwork](https://patchwork.data-imaginist.com), the package that arranges several ggplot2 plots on one page.
 
 ```{r packages, message=FALSE}
+library(ggplot2)
+library(ggplot3d)
 library(patchwork)
 ```
 
@@ -49,8 +38,8 @@ ends$label <- c("start", "end")
 
 ```{r plain-layers, fig.alt="A blue helix rising through two turns, with red points and the labels start and end at its two ends."}
 h <- ggplot(track, aes(x, y, z = z))
-h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
-  geom_point(data = ends, colour = PAL["red"], size = 3) +
+h + geom_path(colour = "#2E6F9E", linewidth = 0.8) +
+  geom_point(data = ends, colour = "#B5342B", size = 3) +
   geom_text(aes(label = label), data = ends, nudge_x = 0.35, size = 5) +
   coord_3d()
 ```
@@ -58,8 +47,8 @@ h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
 Registered ggplot2 layers include points, paths, lines, segments, text, labels, polygons, rectangles, tiles and intervals. Contour and density contours draw each line at the height of its level. Filled contours draw horizontal bands at their level midpoints, as shown in [Terraced filled contours](#terraced-filled-contours). A layer without a z mapping is drawn at z = 0, and the z scale extends to include 0. Here the path is drawn a second time with `inherit.aes = FALSE`, so it lies flat at height 0 below the helix.
 
 ```{r z-zero, fig.alt="The blue helix above a grey circle drawn at height zero; the z axis now starts at zero."}
-h + geom_path(colour = PAL["blue"], linewidth = 0.8) +
-  geom_path(aes(x, y), inherit.aes = FALSE, colour = PAL["grey"],
+h + geom_path(colour = "#2E6F9E", linewidth = 0.8) +
+  geom_path(aes(x, y), inherit.aes = FALSE, colour = "#5C6166",
             linewidth = 0.8) +
   coord_3d()
 ```
@@ -78,9 +67,9 @@ Mapping `z = -Inf` draws each point's shadow on the floor, and a dropline joins 
 
 ```{r projections, fig.alt="Forty dark points in a box, grey shadows on the floor joined to them by vertical lines, and orange projections on the back wall."}
 k <- ggplot(cloud, aes(x, y, z = z))
-k + geom_point_3d(aes(z = -Inf), colour = PAL["grey"], size = 1.5) +
-  geom_point_3d(aes(y = Inf), colour = PAL["orange"], size = 1.5) +
-  geom_dropline_3d(onto = "zmin", colour = PAL["grey"]) +
+k + geom_point_3d(aes(z = -Inf), colour = "#5C6166", size = 1.5) +
+  geom_point_3d(aes(y = Inf), colour = "#9E5E0F", size = 1.5) +
+  geom_dropline_3d(onto = "zmin", colour = "#5C6166") +
   geom_point_3d(size = 2.5) +
   coord_3d()
 ```
@@ -93,8 +82,8 @@ A projection shows the points; a 2D plot on the wall can show a summary of them 
 
 ```{r plot-on-wall, fig.alt="Forty dark points in a box; on the back wall a grey 2D panel with the same points in orange and a blue fitted line with its grey confidence band."}
 side <- ggplot(cloud, aes(x, z)) +
-  geom_point(colour = PAL["orange"], size = 1) +
-  geom_smooth(method = "lm", formula = y ~ x, colour = PAL["blue"])
+  geom_point(colour = "#9E5E0F", size = 1) +
+  geom_smooth(method = "lm", formula = y ~ x, colour = "#2E6F9E")
 k + annotation_plot_3d(side, plane = "xz", at = Inf) +
   geom_point_3d(size = 2.5) +
   coord_3d()
@@ -105,7 +94,7 @@ The vector route places the panel's marks in the wall plane, where they are fore
 The two letters of the plane name select the directions of the 2D plot's x and y axes. The remaining coordinate is fixed by the placement argument. A four-value extent can position the plot independently of its original ranges.
 
 ```{r plot-on-floor, fig.alt="A blue 2D bar chart placed inside a rectangular extent on the floor beneath the point cloud."}
-bars <- ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = PAL["blue"])
+bars <- ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = "#2E6F9E")
 k + annotation_plot_3d(bars, plane = "xy", at = -Inf,
                        extent = c(-2, 2, -2, 2), alpha = 0.7) +
   geom_point_3d(size = 2) + coord_3d()
@@ -130,7 +119,7 @@ See [annotation_plot_3d()](../reference/annotation_plot_3d.html) for all plane o
 ```{r slices, fig.alt="Two translucent planes one behind the other, labelled negative and positive, each with a filled density curve; the curve on the front plane lies further left."}
 cloud$side <- ifelse(cloud$x < 0, "negative", "positive")
 ggplot(cloud, aes(z)) +
-  geom_density(fill = PAL["blue"], alpha = 0.6) +
+  geom_density(fill = "#2E6F9E", alpha = 0.6) +
   facet_slices_3d(vars(side), labels = FALSE) +
   coord_3d(up = "y", azimuth = 30, elevation = 20)
 ```
@@ -143,8 +132,8 @@ The slices lie on z, so the 2D layers keep x and y; `coord_3d(up = "y")` stands 
 
 ```{r annotations, fig.alt="Forty dark points in a box, two grey lines crossing at x = 0 and y = 0 at height zero, and a white label reading highest next to the top point."}
 top <- cloud[which.max(cloud$z), ]
-k + geom_hline(yintercept = 0, colour = PAL["grey"]) +
-  geom_vline(xintercept = 0, colour = PAL["grey"]) +
+k + geom_hline(yintercept = 0, colour = "#5C6166") +
+  geom_vline(xintercept = 0, colour = "#5C6166") +
   geom_point_3d(size = 2.5) +
   annotate_3d("label", x = top$x, y = top$y, z = top$z, label = "highest",
               hjust = -0.15) +
@@ -174,7 +163,7 @@ band remain open.
 ```{r terraced-contours, fig.alt="Filled contours of a peak and a hollow, lifted into horizontal terraces at their band midpoints."}
 ggplot(surface, aes(x, y, z = z)) +
   geom_contour_filled(bins = 5, colour = "white", linewidth = 0.15) +
-  scale_fill_manual(values = unname(PAL[c("purple", "blue", "teal", "green", "orange")])) +
+  scale_fill_manual(values = c("#7A4F9E", "#2E6F9E", "#2A7A7A", "#3F7A3D", "#9E5E0F")) +
   coord_3d(elevation = 40)
 ```
 
@@ -183,7 +172,7 @@ ggplot(surface, aes(x, y, z = z)) +
 `geom_contour_filled_3d()` with `plane = "floor"` computes height bands from the same grid and draws them flat on the floor, giving a contour map under the surface. A higher camera elevation shows more of the floor.
 
 ```{r floor-contours, fig.alt="A grey surface with a peak and a hollow above a floor coloured in six height bands, light for low and dark blue for high."}
-ramp <- c("#DCEAF3", PAL[["blue"]])
+ramp <- c("#DCEAF3", "#2E6F9E")
 s <- ggplot(surface, aes(x, y, z = z))
 s + geom_contour_filled_3d(plane = "floor", bins = 6) +
   geom_surface_3d(fill = "grey85") +
@@ -218,8 +207,8 @@ ggplot(faithful, aes(eruptions, waiting)) +
 A ggplot3d plot is a ggplot object, so patchwork arranges it with 2D plots. The surface is coloured by height and stacked above a 2D raster of the same grid. Both plots use the same fill scale, so `guides = "collect"` draws one legend for both.
 
 ```{r shared-scale, fig.height=8, fig.alt="Top, the surface coloured from red in the hollow to blue at the peak; bottom, the same grid as a flat raster map in the same colours; one shared colour bar for height."}
-heights <- scale_fill_gradient2(low = PAL["red"], mid = "#F2F2F2",
-  high = PAL["blue"], limits = c(-0.6, 1), name = "z")
+heights <- scale_fill_gradient2(low = "#B5342B", mid = "#F2F2F2",
+  high = "#2E6F9E", limits = c(-0.6, 1), name = "z")
 top <- s + stat_surface_3d(aes(fill = after_stat(z_mean))) +
   heights + coord_3d()
 map <- ggplot(surface, aes(x, y, fill = z)) + geom_raster() +
@@ -235,10 +224,10 @@ A profile shows one line of the surface at full resolution. `profile` contains t
 ```{r profile, fig.height=8, fig.alt="Top, the grey surface with a red line running across it at y equal to zero; bottom, the same red line as a 2D profile of z against x."}
 profile <- surface[abs(surface$y) < 1e-9, ]
 across <- s + geom_surface_3d(fill = "grey85") +
-  geom_path_3d(data = profile, colour = PAL["red"], linewidth = 1) +
+  geom_path_3d(data = profile, colour = "#B5342B", linewidth = 1) +
   coord_3d()
 side <- ggplot(profile, aes(x, z)) +
-  geom_line(colour = PAL["red"], linewidth = 1)
+  geom_line(colour = "#B5342B", linewidth = 1)
 across / side
 ```
 

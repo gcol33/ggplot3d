@@ -21,8 +21,8 @@ devtools::load_all()
 ```
 
 Source installation needs a C++17 compiler. The
-[README](https://gillescolling.com/ggplot3d/README.html#installation)
-lists build tools by operating system. Use
+[README](https://github.com/gcol33/ggplot3d#installation) lists build
+tools by operating system. Use
 [`devtools::install()`](https://devtools.r-lib.org/reference/install.html)
 to install a local build.
 
@@ -41,7 +41,9 @@ both output backends.
 ## Documentation
 
 Edit function help in the roxygen comments in `R/`. Edit the README in
-`README.Rmd` and articles in `vignettes/`.
+`README.Rmd`, Get started in `vignettes/ggplot3d.Rmd` and the other
+articles in `vignettes/articles/`. Shared figure settings for all of
+them live in `vignettes/setup.R`.
 
 ``` r
 
