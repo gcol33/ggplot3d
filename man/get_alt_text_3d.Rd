@@ -41,6 +41,6 @@ panel size; the device dpi controls the saved image's pixel dimensions.
 \examples{
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
   geom_point_3d() + coord_3d(azimuth = 40, elevation = 25)
-get_alt_text(p)
-get_alt_text(p + ggplot2::labs(alt = "Fuel economy, weight and horsepower."))
+ggplot2::get_alt_text(p)
+ggplot2::get_alt_text(p + ggplot2::labs(alt = "Fuel economy, weight and horsepower."))
 }
