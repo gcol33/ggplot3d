@@ -332,12 +332,6 @@ ggplot(faithful, aes(eruptions, waiting)) +
   stat_density_2d_3d(n = 48, plane = "floor") +
   labs(z = "density") +
   coord_3d(elevation = 50)
-#> Ignoring unknown labels:
-#> • z : "density"
-#> Ignoring unknown labels:
-#> • z : "density"
-#> Ignoring unknown labels:
-#> • z : "density"
 ```
 
 ![The half-transparent grey density surface over a floor coloured from

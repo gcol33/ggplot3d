@@ -57,12 +57,6 @@ terrain_stars <- stars::st_as_stars(volcano[seq(1, 87, by = 3), seq(1, 61, by = 
 ggplot() + geom_spatraster_3d(data = terrain_stars, maxcell = 700) +
   scale_fill_gradient(low = PAL["green"], high = "#E8E2C8") +
   labs(z = "height (m)") + coord_3d(aspect = c(1.4, 1, 0.7))
-#> Ignoring unknown labels:
-#> • z : "height (m)"
-#> Ignoring unknown labels:
-#> • z : "height (m)"
-#> Ignoring unknown labels:
-#> • z : "height (m)"
 ```
 
 ![A height surface from a stars array containing sampled volcano

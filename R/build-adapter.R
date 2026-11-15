@@ -21,6 +21,10 @@ ggplot_build.ggplot3d <- function(plot, ...) {
   context$theme <- ggplot2::complete_theme(plot@theme)
   working <- plot
   working@coordinates <- ggplot2::ggproto(NULL, plot@coordinates)
+  # ggplot2 only accepts labels of mapped or stat-default aesthetics, so the
+  # labels of z and of frame parts bypass its check and return after the build.
+  axis_labels <- plot@labels[intersect(names(plot@labels), c(z_aesthetics, frame$parts))]
+  for (axis in names(axis_labels)) working@labels[[axis]] <- NULL
   context$key_context <- new.env(parent = emptyenv())
   context$key_context$camera <- plot@coordinates$camera
   context$key_context$light <- plot@coordinates$config$light
@@ -29,6 +33,7 @@ ggplot_build.ggplot3d <- function(plot, ...) {
   working@scales <- scales_3d(plot@scales, context)
   working@layout <- ggplot2::ggproto(NULL, Layout3D, context = context)
   built <- parent_build(working, ...)
+  for (axis in names(axis_labels)) if (!is.null(axis_labels[[axis]])) built@plot@labels[[axis]] <- axis_labels[[axis]]
   stereo_colour_warning_3d(plot@coordinates, context$scales)
   built
 }

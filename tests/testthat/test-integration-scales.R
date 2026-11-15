@@ -167,3 +167,11 @@ test_that("inference waits for generated discrete positions and empty axes stay 
   expect_equal(b$layout$panel_params[[1]]$z.range, c(0, 1))
   expect_true(all(is.finite(normalise_positions_3d(b$data[[1]], b$layout$panel_params[[1]])$z)))
 })
+
+test_that("a z title for a stat-computed z builds without an unknown-label message", {
+  surface <- function(x, y) sin(x) * cos(y)
+  p <- ggplot2::ggplot() + geom_function_3d(fun = surface, n = 5) +
+    ggplot2::xlim(-1, 1) + ggplot2::ylim(-1, 1) + coord_3d() + ggplot2::labs(z = "u")
+  expect_no_message(b <- ggplot2::ggplot_build(p))
+  expect_identical(b$layout$panel_params[[1]]$axis_titles$z, "u")
+})
