@@ -11,10 +11,13 @@ check_light_number_3d <- function(x, name) {
   as.double(x)
 }
 
-check_light_vector_3d <- function(x, name, nonzero = TRUE) {
-  if (!is.numeric(x) || length(x) != 3L || any(!is.finite(x)) || (nonzero && sum(x^2) == 0))
-    stop(name, " must be three finite numbers", if (nonzero) ", not all zero", ".", call. = FALSE)
-  as.double(x)
+# Three finite numbers; a direction must be nonzero and is returned as a unit
+# vector.
+check_light_vector_3d <- function(x, name, direction = TRUE) {
+  if (!is.numeric(x) || length(x) != 3L || any(!is.finite(x)) || (direction && sum(x^2) == 0))
+    stop(name, " must be three finite numbers", if (direction) ", not all zero", ".", call. = FALSE)
+  x <- as.double(x)
+  if (direction) x / sqrt(sum(x^2)) else x
 }
 
 new_light_3d <- function(kind, vector = c(0, 0, 1), space = "camera", colour = "white", intensity = 1,
@@ -67,15 +70,14 @@ new_light_3d <- function(kind, vector = c(0, 0, 1), space = "camera", colour = "
 #' light_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
 #' @export
 light_directional <- function(direction = c(-1, 1, 2), space = "camera", colour = "white", intensity = 0.65) {
-  direction <- check_light_vector_3d(direction, "direction")
-  new_light_3d(light_kinds_3d[["directional"]], direction / sqrt(sum(direction^2)),
+  new_light_3d(light_kinds_3d[["directional"]], check_light_vector_3d(direction, "direction"),
     match.arg(space, c("camera", "data")), colour, intensity)
 }
 
 #' @rdname light_directional
 #' @export
 light_point <- function(position, space = "data", colour = "white", intensity = 1, falloff = 2) {
-  new_light_3d(light_kinds_3d[["point"]], check_light_vector_3d(position, "position", nonzero = FALSE),
+  new_light_3d(light_kinds_3d[["point"]], check_light_vector_3d(position, "position", direction = FALSE),
     match.arg(space, c("camera", "data")), colour, intensity, check_light_number_3d(falloff, "falloff"))
 }
 
@@ -88,8 +90,7 @@ light_head <- function(colour = "white", intensity = 0.65) {
 #' @rdname light_directional
 #' @export
 light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 0, 1), space = "data", intensity = 0.35) {
-  direction <- check_light_vector_3d(direction, "direction")
-  new_light_3d(light_kinds_3d[["hemisphere"]], direction / sqrt(sum(direction^2)),
+  new_light_3d(light_kinds_3d[["hemisphere"]], check_light_vector_3d(direction, "direction"),
     match.arg(space, c("camera", "data")), sky, intensity, ground = ground)
 }
 

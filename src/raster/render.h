@@ -1401,8 +1401,10 @@ static inline Rcpp::List occlusion(SEXP pointer,Rcpp::List colours,Rcpp::List da
       double a=raster_depth(x+k*dx,y+k*dy),b=raster_depth(x+(k+1)*dx,y+(k+1)*dy);
       if(std::isfinite(a) && std::isfinite(b)) d[n++]=std::abs(b-a);
     }
-    std::sort(d,d+n);
-    return n==0 ? 0.0:n==2 ? d[0]:d[n/2];
+    if(n==0) return 0.0;
+    if(n==1) return d[0];
+    if(n==2) return std::min(d[0],d[1]);
+    return std::max(std::min(d[0],d[1]),std::min(std::max(d[0],d[1]),d[2]));
   };
   // Raster depth that hides a canvas point: the farthest of the four buffer
   // samples around it (each pixel's centre sample, (aa / 2 + 0.5) / aa of a
