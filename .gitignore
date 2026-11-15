@@ -12,3 +12,4 @@ Rplots.pdf
 *.log
 
 src/vendor/**/*.o
+.claude/worktrees/
