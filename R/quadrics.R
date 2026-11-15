@@ -353,7 +353,7 @@ quadric_run_grob_3d <- function(scene, rows, info, styles, light, clip_rows = ro
   if (is.null(ring)) {
     fill <- rep(style$fill, length(rows))
     if (isTRUE(style_value_3d(style, "shade", FALSE)))
-      fill <- shade_fill_3d(fill, f, rows, scene$camera, light, styles[rows, , drop = FALSE], fragment_centres_3d(scene, rows), scene$materials)
+      fill <- shade_fill_3d(fill, f, rows, scene$camera, light, slice_rows_3d(styles, rows), fragment_centres_3d(scene, rows), scene$materials)
     return(list(grob = grid::polygonGrob(x, y, id = id, gp = grid::gpar(fill = fill, col = NA, alpha = opacity)), clip = NULL))
   }
   key <- paste(q, info$part[rows[1L]], info$back[rows[1L]])

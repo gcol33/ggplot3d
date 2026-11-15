@@ -322,3 +322,17 @@ test_that("spheres, tubes and vector heads emit quadrics", {
   expect_setequal(v$packet$quadrics$kind, 2:3)
   expect_identical(v$packet$quadrics$radius_ratio[v$packet$quadrics$kind == 3L], 0)
 })
+
+test_that("an opaque quadric marks the part of a line behind it hidden in a scene without faces", {
+  sphere <- quadric_rows(1L, diag(0.2, 3L), c(0.5, 0.5, 0.5))
+  packet <- new_scene_packet(vertices = list(x = c(0.1, 0.9), y = c(0.5, 0.5), z = c(0.2, 0.2)),
+    corners = list(vertex = 1:2), polylines = list(offset = 1L, width_mm = 1, hidden = 1L, style_id = 1L),
+    quadrics = c(sphere, list(style_id = 1L)),
+    styles = data.frame(style_id = 1L, colour = "black", fill = "red", shade = FALSE))
+  scene <- scene_compile(packet, new_camera_3d(azimuth = 0, elevation = 90), new_scene_viewport(100, 100))
+  line <- scene$fragments$kind == 2L
+  # The sphere covers the middle of the line, so the line splits into hidden
+  # pieces under it and visible pieces beyond it.
+  expect_true(any(scene$fragments$hidden[line]))
+  expect_true(any(!scene$fragments$hidden[line]))
+})

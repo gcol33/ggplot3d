@@ -76,6 +76,7 @@ Suggests:
     terra,
     testthat (>= 3.0.0),
     vegan,
+    withr,
     xml2
 SystemRequirements: C++17
 VignetteBuilder: knitr

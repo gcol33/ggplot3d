@@ -12,6 +12,17 @@ unit_rows_3d <- function(m, zero = 0) {
   out
 }
 
+# Rows of a data frame, sliced column by column without the checks of
+# `[.data.frame`: the backends take a few style rows per draw run, thousands of
+# times per panel.
+slice_rows_3d <- function(df, rows) {
+  out <- lapply(unclass(df), `[`, rows)
+  n <- length(out[[1L]] %or3d% rows)
+  attr(out, "row.names") <- if (n) c(NA_integer_, -n) else integer()
+  class(out) <- "data.frame"
+  out
+}
+
 # A single string from `choices`. `shown` lists the accepted values in the
 # error message, which may name forms (TRUE, a mesh) handled by the caller.
 check_choice_3d <- function(value, choices, name, shown = paste0('"', choices, '"')) {

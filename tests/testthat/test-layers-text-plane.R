@@ -28,7 +28,9 @@ test_that("winding trapezoids cover the nonzero region of nested and overlapping
 
 test_that("text outlines take grid's text box and glyph meshes cover the outlines", {
   skip_if_not_installed("systemfonts")
-  pdf(NULL); on.exit(dev.off(), add = TRUE)
+  skip_if_not_installed("ragg")
+  # ragg resolves fonts through systemfonts, so grid measures the same font.
+  ragg::agg_png(tempfile(fileext = ".png")); on.exit(dev.off(), add = TRUE)
   outline <- text_outline_3d("Height 42", 12)
   width <- grid::convertWidth(grid::stringWidth("Height 42"), "mm", TRUE)
   expect_equal(outline$size[1L], width, tolerance = 0.05)

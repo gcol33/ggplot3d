@@ -126,8 +126,8 @@ vector_marker_limit_3d <- function(packet) {
 }
 
 style_value_3d <- function(styles, name, default) {
-  value <- styles[[name]]
-  if (is.null(value)) return(rep_len(default, nrow(styles)))
+  value <- .subset2(styles, name)
+  if (is.null(value)) return(rep_len(default, .row_names_info(styles, 2L)))
   if (is.list(value)) return(lapply(value, function(x) {
     if (length(x) == 1L && is.atomic(x) && is.na(x)) return(default[[1L]])
     x
@@ -466,7 +466,7 @@ arrow_heads_3d <- function(scene, rows, styles, viewport, strokes_only = FALSE) 
   bx <- x - dx * length * cos(angle); by <- y - dy * length * cos(angle)
   xx <- as.vector(t(cbind(bx - dy * length * sin(angle), x, bx + dy * length * sin(angle))))
   yy <- as.vector(t(cbind(by + dx * length * sin(angle), y, by - dx * length * sin(angle))))
-  gp <- material_gp_3d(styles[materials, , drop = FALSE], f$opacity[rows[materials]], 2L)
+  gp <- material_gp_3d(slice_rows_3d(styles, materials), f$opacity[rows[materials]], 2L)
   gp$lty <- 1
   id <- rep(seq_along(materials), each = 3L)
   if (arrow$type == 2L) {
@@ -474,7 +474,7 @@ arrow_heads_3d <- function(scene, rows, styles, viewport, strokes_only = FALSE) 
       indices <- unlist(lapply(split(seq_along(xx), id), function(i) c(i, i[1L])))
       return(grid::polylineGrob(xx[indices], yy[indices], default.units = "mm", id = id[indices], gp = gp))
     }
-    gp$fill <- style_value_3d(styles[materials, , drop = FALSE], "arrow_fill", "black")
+    gp$fill <- style_value_3d(slice_rows_3d(styles, materials), "arrow_fill", "black")
     grid::polygonGrob(xx, yy, default.units = "mm", id = id, gp = gp)
   } else grid::polylineGrob(xx, yy, default.units = "mm", id = id, gp = gp)
 }
@@ -482,7 +482,7 @@ arrow_heads_3d <- function(scene, rows, styles, viewport, strokes_only = FALSE) 
 # Fill of face fragments `rows`, shaded by the panel light where their style
 # asks for it.
 face_fill_3d <- function(scene, rows, styles, light) {
-  s <- styles[rows, , drop = FALSE]
+  s <- slice_rows_3d(styles, rows)
   fill <- s$fill
   shade <- style_value_3d(s, "shade", FALSE)
   if (any(shade)) fill[shade] <- shade_fill_3d(fill[shade], scene$fragments, rows[shade], scene$camera, light, s[shade, , drop = FALSE],
@@ -543,7 +543,7 @@ stroke_run_grob_3d <- function(scene, rows, s, x, y, counts, starts, viewport) {
     path_x <- x[!repeated]; path_y <- y[!repeated]
     path_counts <- as.vector(rowsum(counts - join, path))
     npaths <- rep.int(1L, length(lead)); widths <- source[lead]
-    gp <- material_gp_3d(s[lead, , drop = FALSE], f$opacity[rows[lead]], 2L)
+    gp <- material_gp_3d(slice_rows_3d(s, lead), f$opacity[rows[lead]], 2L)
   } else {
     paths <- lapply(seq_along(rows), function(j) {
       i <- seq.int(starts[j], length.out = counts[j])
@@ -553,7 +553,7 @@ stroke_run_grob_3d <- function(scene, rows, s, x, y, counts, starts, viewport) {
     npaths <- vapply(paths, function(p) length(p$count), integer(1))
     path_x <- unlist(lapply(paths, `[[`, "x")); path_y <- unlist(lapply(paths, `[[`, "y"))
     path_counts <- unlist(lapply(paths, `[[`, "count"))
-    gp <- material_gp_3d(s[rep(seq_along(rows), npaths), , drop = FALSE], rep(f$opacity[rows], npaths), 2L)
+    gp <- material_gp_3d(slice_rows_3d(s, rep(seq_along(rows), npaths)), rep(f$opacity[rows], npaths), 2L)
   }
   gp$lty <- 1; gp$lwd <- rep(tab$width_mm[widths] * 96 / 25.4, npaths)
   gp$lineend <- c("butt", "round", "square")[tab$cap[source[1L]] + 1L]
@@ -582,7 +582,7 @@ masked_stroke_runs_3d <- function(scene, runs, styles, viewport, geometry,
                                   tolerance_mm = min(0.1, 12.7 / viewport$dpi), centreline = FALSE) {
   f <- scene$fragments; tab <- scene$source$polylines
   n <- length(runs)
-  out <- list(polylines = vector("list", n), intervals = vector("list", n), segments = logical(n))
+  out <- list(polylines = vector("list", n), intervals = vector("list", n), segments = logical(n), clips = vector("list", n))
   first <- vapply(runs, `[`, integer(1), 1L)
   masked <- which(f$kind[first] == 2L & f$mask_count[first] > 0L)
   masked <- masked[tab$width_mm[f$source_index[first[masked]]] > 0]
@@ -597,12 +597,13 @@ masked_stroke_runs_3d <- function(scene, runs, styles, viewport, geometry,
   for (run in masked) {
     g <- geometry(runs[[run]])
     rows <- g$rows
-    polyline <- stroke_run_grob_3d(scene, rows, styles[rows, , drop = FALSE], g$x, g$y, g$counts, g$starts, viewport)
+    polyline <- stroke_run_grob_3d(scene, rows, slice_rows_3d(styles, rows), g$x, g$y, g$counts, g$starts, viewport)
     out$polylines[[run]] <- polyline
     if (inherits(polyline, "null")) next
     clips[[run]] <- mask_path_3d(scene, runs[[run]])
     out$intervals[[run]] <- intervals_of(polyline, clips[[run]], f$source_index[rows[1L]], TRUE)
   }
+  out$clips <- clips
   drawn <- masked[!vapply(out$polylines[masked], inherits, logical(1), "null")]
   if (!length(drawn)) return(out)
   # Runs that draw the same geometry of one polyline, in different places of
@@ -700,6 +701,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   order <- order[!anchors[order]]
   caps <- grid_capabilities_3d()
   lines <- which(f$kind == 2L)
+  arrowed <- logical(length(f$kind))
   if (!length(order)) return(grid::gTree(children = grid::gList(), fragment_runs = list(), capabilities = caps))
   # Properties that grid cannot vectorise terminate a compatible run.
   key <- as.character(f$kind)
@@ -713,6 +715,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       f$arrow_start[lines], f$arrow_end[lines], arrow_key[match(f$style_id[lines], scene$styles$style_id)], sep = ":")
     lty <- style_value_3d(styles, "linetype", 1)
     key[lines] <- paste(key[lines], lty[lines] %in% c("solid", "1") & !f$hidden[lines], sep = ":")
+    arrowed <- !vapply(arrows, is.null, logical(1))[match(f$style_id, scene$styles$style_id)]
     if (strokes_only) key[lines] <- paste(key[lines], source, sep = ":source:")
   }
   text <- which(f$kind == 4L)
@@ -784,10 +787,10 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
     run_geometry <- geometry(masks)
     rows <- run_geometry$rows; counts <- run_geometry$counts; starts <- run_geometry$starts
     x <- run_geometry$x; y <- run_geometry$y
-    kind <- f$kind[rows[1L]]; s <- styles[rows, , drop = FALSE]
+    kind <- f$kind[rows[1L]]; s <- slice_rows_3d(styles, rows)
     gp <- material_gp_3d(s, f$opacity[rows], kind)
     clip <- NULL
-    if (f$mask_count[rows[1L]] > 0L) clip <- mask_path_3d(scene, masks)
+    if (f$mask_count[rows[1L]] > 0L) clip <- strokes$clips[[run]] %or3d% mask_path_3d(scene, masks)
     if (strokes_only && kind %in% c(1L, 3L, 5L)) {
       g <- grid::nullGrob()
       clip <- NULL
@@ -820,7 +823,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
           if (!bordered && length(later)) {
             paint_rows <- c(later, rows)
             paint_geometry <- geometry(paint_rows)
-            paint_vertex <- fragment_vertex_linear_3d(scene, paint_rows, styles[paint_rows, , drop = FALSE], attributes, light)
+            paint_vertex <- fragment_vertex_linear_3d(scene, paint_rows, slice_rows_3d(styles, paint_rows), attributes, light)
             g <- smooth_image_faces_3d(paint_geometry$x, paint_geometry$y,
               rep(seq_along(paint_rows), paint_geometry$counts), paint_vertex, f$opacity[paint_rows], viewport, outer, caps)
             later <- integer()
@@ -867,7 +870,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
           }
         }
       }
-      heads <- arrow_heads_3d(scene, masks, styles[masks, , drop = FALSE], viewport, strokes_only)
+      heads <- if (any(arrowed[masks])) arrow_heads_3d(scene, masks, slice_rows_3d(styles, masks), viewport, strokes_only) else grid::nullGrob()
       if (!inherits(heads, "null")) {
         if (!is.null(clip)) { g <- clip_grob_3d(g, clip, caps = caps); clip <- NULL }
         g <- grid::grobTree(g, heads)
