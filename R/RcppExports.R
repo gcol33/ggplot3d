@@ -41,8 +41,8 @@ geometry_triangulate_rings_cpp <- function(xy, ring, tolerance = 0, strict = FAL
     .Call(`_ggplot3d_geometry_triangulate_rings_cpp`, xy, ring, tolerance, strict)
 }
 
-grid_clip_paths_cpp <- function(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline = NULL, radii = NULL, simplify = 0) {
-    .Call(`_ggplot3d_grid_clip_paths_cpp`, x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii, simplify)
+grid_clip_paths_cpp <- function(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline = NULL, radii = NULL, simplify = 0, mask_rule = 0L) {
+    .Call(`_ggplot3d_grid_clip_paths_cpp`, x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii, simplify, mask_rule)
 }
 
 grid_union_paths_cpp <- function(x, y, id) {

@@ -265,7 +265,9 @@ smooth_face_paint_3d <- function(x_mm, y_mm, id, linear, gradients, tolerance = 
 # that R graphics cannot emit. x, y are vertex positions in npc of the
 # viewport, id numbers faces 1..n with consecutive vertices, opacity is per
 # face. `outer` is a clip region that the image's own clipping path would
-# replace; it is applied as an alpha mask instead.
+# replace; it is applied as an alpha mask instead, or, where masks cannot hold
+# scene-sized content, intersected with the image outline into one clipping
+# path.
 smooth_image_grob_3d <- function(x, y, id, linear, opacity, viewport, outer = NULL, caps = grid_capabilities_3d(), shading = NULL) {
   if (!caps$clipping_paths) stop("The vector device does not support clipping paths required by smooth shading.", call. = FALSE)
   pixel <- 25.4 / smooth_image_dpi_3d(viewport)
@@ -277,7 +279,11 @@ smooth_image_grob_3d <- function(x, y, id, linear, opacity, viewport, outer = NU
     as.numeric(opacity), size[1L], size[2L], reach, shading)
   ring <- grid_union_paths_cpp(x, y, as.integer(id))
   outline <- grid::pathGrob(ring$x, ring$y, id = ring$id, rule = "winding")
-  vp <- if (is.null(outer)) grid::viewport(clip = outline) else {
+  vp <- if (is.null(outer)) grid::viewport(clip = outline) else if (isFALSE(caps$large_definitions)) {
+    outline <- intersect_clips_3d(outline, outer)
+    if (is.null(outline)) return(grid::nullGrob())
+    grid::viewport(clip = outline)
+  } else {
     if (is.null(caps$mask_type)) stop("The vector device does not support the masks required by clipped smooth shading.", call. = FALSE)
     outer$gp <- grid::gpar(fill = "white", col = NA, alpha = 1)
     grid::viewport(clip = outline, mask = grid::as.mask(outer, type = caps$mask_type))

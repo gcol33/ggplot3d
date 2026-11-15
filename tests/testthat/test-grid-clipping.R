@@ -17,6 +17,43 @@ test_that("native painted paths preserve even-odd footprint holes", {
   expect_equal(grid_path_area(interleaved), 12, tolerance = 1e-7)
 })
 
+test_that("native painted paths clip to the union of overlapping footprint rings", {
+  x <- c(0, 4, 4, 0)
+  y <- c(0, 0, 4, 4)
+  mask_x <- c(0, 2, 2, 0, 1, 1, 3, 3)
+  mask_y <- c(0, 0, 4, 4, 0, 4, 4, 0)
+  clip <- function(rule) ggplot3d:::grid_clip_paths_cpp(x, y, rep(1L, 4L), mask_x, mask_y, rep(1:2, each = 4L),
+    0, 0L, 0L, 10, 1e-5, mask_rule = clip_rule_3d(rule))
+  expect_equal(grid_path_area(clip("evenodd")), 8, tolerance = 1e-7)
+  # The rings wind in opposite directions, so their overlap has winding 0.
+  expect_equal(grid_path_area(clip("winding")), 8, tolerance = 1e-7)
+  expect_equal(grid_path_area(clip("union")), 12, tolerance = 1e-7)
+})
+
+test_that("intersecting quadrics paint their visible parts without device clips", {
+  sphere <- function(centre) quadric_rows(1L, diag(0.2, 3L), centre)
+  draw <- function(quadrics) {
+    quadrics$kind <- as.integer(quadrics$kind)
+    quadrics$style_id <- rep(1L, length(quadrics$kind))
+    packet <- new_scene_packet(quadrics = quadrics, styles = data.frame(style_id = 1L, fill = "red", shade = TRUE))
+    scene <- scene_compile(packet, new_camera_3d(azimuth = -90, elevation = 90), new_scene_viewport(100, 100))
+    grob <- render_scene_grid(scene, scene$viewport, light = light_3d())
+    Filter(function(g) inherits(g$gp$fill, "GridRadialGradient"), grob$children)
+  }
+  # Gradient centre in millimetres from the panel origin: grid places the
+  # gradient against the bounding box of the path it fills.
+  centre <- function(g) c(as.numeric(g$gp$fill$cx2) + min(as.numeric(g$x)) * 100,
+                          as.numeric(g$gp$fill$cy2) + min(as.numeric(g$y)) * 100)
+  width <- function(g) diff(range(as.numeric(g$x)))
+  alone <- lapply(list(c(0.4, 0.5, 0.5), c(0.6, 0.5, 0.5)), function(at) draw(sphere(at))[[1L]])
+  runs <- draw(Map(c, sphere(c(0.4, 0.5, 0.5)), sphere(c(0.6, 0.5, 0.5))))
+  expect_gt(length(runs), 2L)
+  for (g in runs) expect_null(g$vp)
+  expect_true(any(vapply(runs, width, numeric(1)) < width(alone[[1L]]) - 0.05))
+  expected <- do.call(rbind, lapply(alone, centre))
+  for (g in runs) expect_lt(min(sqrt(colSums((t(expected) - centre(g))^2))), 1e-6)
+})
+
 test_that("native stroke outlines honour butt, square and round caps", {
   outline <- function(cap) ggplot3d:::grid_clip_paths_cpp(c(0, 2), c(0, 0), c(1L, 1L),
     c(-1, 3, 3, -1), c(-1, -1, 1, 1), rep(1L, 4L), 1, cap, 0L, 10, 1e-6)
@@ -208,4 +245,25 @@ test_that("crossing offset joins preserve the native masked pixels", {
   cut <- capture(scene)
   expect_s3_class(cut$grob, "gTree")
   expect_false(is.null(cut$grob$vp$mask))
+  # R's pdf() device truncates long mask content, so there the native stroke is
+  # cut by a clipping path, which it writes in full.
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  clipped <- render_scene_grid(scene, scene$viewport)$children[[1L]]
+  expect_s3_class(clipped$vp$clip, "GridClipPath")
+  expect_true(isTRUE(clipped$vp$mask))
+})
+
+test_that("a fragment clip and a region meet in one clipping path where masks are short", {
+  square <- function(x0, x1, rule) grid::pathGrob(c(x0, x1, x1, x0), c(0, 0, 1, 1), id = rep(1L, 4L), rule = rule)
+  clip <- intersect_clips_3d(square(0, 0.6, "evenodd"), square(0.4, 1, "winding"))
+  expect_equal(grid_path_area(list(x = as.numeric(clip$x), y = as.numeric(clip$y), id = clip$id)), 0.2, tolerance = 1e-7)
+  expect_null(intersect_clips_3d(square(0, 0.3, "evenodd"), square(0.4, 1, "winding")))
+  short <- list(clipping_paths = TRUE, large_definitions = FALSE)
+  g <- clip_grob_3d(grid::rectGrob(), square(0, 0.6, "evenodd"), square(0.4, 1, "winding"), short)
+  expect_s3_class(g$vp$clip, "GridClipPath")
+  expect_true(isTRUE(g$vp$mask))
+  expect_s3_class(clip_grob_3d(grid::rectGrob(), square(0, 0.3, "evenodd"), square(0.4, 1, "winding"), short), "null")
+  masked <- clip_grob_3d(grid::rectGrob(), square(0, 0.6, "evenodd"), square(0.4, 1, "winding"), list(clipping_paths = TRUE))
+  expect_s3_class(masked$vp$mask, "GridMask")
 })

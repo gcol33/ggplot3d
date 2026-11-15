@@ -1,14 +1,18 @@
 utils::globalVariables(c("grid_clip_paths_cpp", "grid_stroke_intervals_cpp"))
 
-# Group compositing is used only where a group can hold a whole scene: R's
-# own pdf() device writes at most about 16 kB of a group's content and drops
-# the rest, while the stream keeps the length of the full content.
+# `large_definitions`: whether a group or mask can hold scene-sized content.
+# R's own pdf() device writes at most about 16 kB of the content of a group or
+# mask and drops the rest, while the stream keeps the length of the full
+# content; there, clipping paths, which it writes in full, take the place of
+# masks, and group compositing is not used.
 grid_capabilities_3d <- function() {
   caps <- grDevices::dev.capabilities()
-  groups <- getRversion() >= "4.2.0" && !identical(names(grDevices::dev.cur()), "pdf")
+  large <- !identical(names(grDevices::dev.cur()), "pdf")
+  groups <- large && getRversion() >= "4.2.0"
   list(vector = TRUE, clipping_paths = isTRUE(caps$clippingPaths),
        masks = length(caps$masks) > 0L && !all(is.na(caps$masks)),
        mask_type = if ("alpha" %in% caps$masks) "alpha" else if ("luminance" %in% caps$masks) "luminance" else NULL,
+       large_definitions = large,
        group_atop = groups && "alpha" %in% caps$masks && "atop" %in% caps$compositing,
        group_over = groups && "alpha" %in% caps$masks && "over" %in% caps$compositing,
        group_multiply = groups && "multiply" %in% caps$compositing,
@@ -364,14 +368,18 @@ mask_path_3d <- function(scene, rows) {
     id = match(ring, unique(ring)), rule = "evenodd")
 }
 
+# Fill rules of a footprint for grid_clip_paths_cpp(): even-odd, nonzero
+# winding, or the union of its rings whatever their orientation.
+clip_rule_3d <- function(rule) match(rule, c("evenodd", "winding", "union")) - 1L
+
 # Closed painted paths clipped to a visible footprint, in physical units.
 clipped_path_grob_3d <- function(x, y, id, clip, viewport, gp, width = 0, cap = 0L, join = 0L, mitre = 10,
-                                 cache = NULL, key = NULL, radii = NULL) {
+                                 cache = NULL, key = NULL, radii = NULL, fill = gp$col[1L], clip_rule = "evenodd") {
   outline <- if (!is.null(cache)) cache[[key]] else NULL
   paths <- grid_clip_paths_cpp(x * viewport$width_mm, y * viewport$height_mm, as.integer(id),
     as.numeric(clip$x) * viewport$width_mm, as.numeric(clip$y) * viewport$height_mm, as.integer(clip$id),
     width, as.integer(cap), as.integer(join), mitre, 25.4 / (viewport$dpi * 4096), outline, radii,
-    if (width > 0) min(0.01, 2.54 / viewport$dpi) else 0)
+    if (width > 0) min(0.01, 2.54 / viewport$dpi) else 0, clip_rule_3d(clip_rule))
   if (!is.null(cache)) cache[[key]] <- paths$outline
   if (!paths$supported) return(NULL)
   if (!length(paths$x)) return(grid::nullGrob())
@@ -381,7 +389,7 @@ clipped_path_grob_3d <- function(x, y, id, clip, viewport, gp, width = 0, cap = 
   if (!length(paths$x)) return(grid::nullGrob())
   grid::pathGrob(paths$x / viewport$width_mm, paths$y / viewport$height_mm, id = paths$id,
     pathId = if (width > 0 && isTRUE(gp$alpha[1L] == 1)) rep(1L, length(paths$id)) else paths$path_id,
-    rule = "winding", gp = grid::gpar(fill = gp$col[1L], col = NA, alpha = gp$alpha[1L]))
+    rule = "winding", gp = grid::gpar(fill = fill, col = NA, alpha = gp$alpha[1L]))
 }
 
 # Filled point footprints use the same physical outlines as scene visibility.
@@ -519,13 +527,30 @@ split_underlays_3d <- function(f, runs, eligible, key = paste(f$kind, f$parent_p
 
 # Clips a run's grob to its fragment mask, to a region, or to both: the mask
 # as clipping path and the region as alpha mask, since a nested clipping path
-# replaces the outer one instead of intersecting it.
+# replaces the outer one instead of intersecting it. Where masks cannot hold
+# scene-sized content, the two are intersected into one clipping path.
 clip_grob_3d <- function(g, clip = NULL, region = NULL, caps = grid_capabilities_3d()) {
   if (is.null(clip) && is.null(region)) return(g)
   if (!caps$clipping_paths) stop("The vector device does not support clipping paths required by scene fragment masks.", call. = FALSE)
+  if (!is.null(clip) && !is.null(region) && isFALSE(caps$large_definitions)) {
+    clip <- intersect_clips_3d(clip, region)
+    region <- NULL
+    if (is.null(clip)) return(grid::nullGrob())
+  }
   vp <- if (is.null(region)) grid::viewport(clip = clip) else if (is.null(clip)) grid::viewport(clip = region) else
     grid::viewport(clip = clip, mask = region)
   if (is.null(g$vp)) { g$vp <- vp; g } else grid::grobTree(g, vp = vp)
+}
+
+# One clipping path covering the intersection of two clip paths in npc, each
+# read with its own fill rule; NULL when they do not meet. Rings of `a` must
+# not overlap one another, as for mask rings and union boundaries.
+intersect_clips_3d <- function(a, b) {
+  ids <- function(p) as.integer(p$id %or3d% rep(1L, length(p$x)))
+  p <- grid_clip_paths_cpp(as.numeric(a$x), as.numeric(a$y), ids(a), as.numeric(b$x), as.numeric(b$y), ids(b),
+    0, 0L, 0L, 10, 1, NULL, NULL, 0, clip_rule_3d(b$rule %or3d% "winding"))
+  if (!length(p$x)) return(NULL)
+  grid::pathGrob(p$x, p$y, id = p$id, rule = "winding")
 }
 
 # Polylines of a run of stroke fragments `rows`, with the stroke's paint:
@@ -800,8 +825,8 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       g <- grid::nullGrob()
       clip <- NULL
     } else if (kind == 5L) {
-      drawn <- quadric_run_grob_3d(scene, rows, quadric_info, styles, light, c(rows, underlay[[run]]))
-      g <- drawn$grob; clip <- drawn$clip
+      g <- quadric_run_grob_3d(scene, rows, quadric_info, styles, light, viewport, c(rows, underlay[[run]]))
+      clip <- NULL
     } else if (kind == 1L && textured[rows[1L]]) {
       g <- texture_lighting_grob_3d(scene, rows, viewport, light, paste0("scene-run-", run))
       if (any(!is.na(s$colour))) {
@@ -809,7 +834,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
         id <- rep(seq_along(counts), counts)
         g <- grid::grobTree(g, grid::polygonGrob(x, y, id = id, gp = outline))
       }
-      if (!is.null(clip)) {
+      if (!is.null(clip) && !isFALSE(caps$large_definitions)) {
         clip$gp <- grid::gpar(fill = "white", col = NA, alpha = 1)
         g <- grid::grobTree(g, vp = grid::viewport(mask = grid::as.mask(clip, type = caps$mask_type %or3d% "alpha")))
         clip <- NULL
@@ -868,7 +893,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
           painted <- clipped_path_grob_3d(as.numeric(g$x), as.numeric(g$y), g$id,
             clip, viewport, gp, tab$width_mm[source[1L]], tab$cap[source[1L]],
             tab$join[source[1L]], tab$mitre_limit[source[1L]], path_cache, key[rows[1L]])
-          if (!is.null(painted)) { g <- painted; clip <- NULL } else if (!is.null(caps$mask_type)) {
+          if (!is.null(painted)) { g <- painted; clip <- NULL } else if (!is.null(caps$mask_type) && !isFALSE(caps$large_definitions)) {
             clip$gp <- grid::gpar(fill = "white", col = NA, alpha = 1)
             g <- grid::grobTree(g, vp = grid::viewport(mask = grid::as.mask(clip, type = caps$mask_type)))
             clip <- NULL

@@ -149,8 +149,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // grid_clip_paths_cpp
-Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id, Rcpp::NumericVector mask_x, Rcpp::NumericVector mask_y, Rcpp::IntegerVector mask_id, double width, int cap, int join, double mitre, double tolerance, SEXP outline, Rcpp::Nullable<Rcpp::NumericVector> radii, double simplify);
-RcppExport SEXP _ggplot3d_grid_clip_paths_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP, SEXP mask_xSEXP, SEXP mask_ySEXP, SEXP mask_idSEXP, SEXP widthSEXP, SEXP capSEXP, SEXP joinSEXP, SEXP mitreSEXP, SEXP toleranceSEXP, SEXP outlineSEXP, SEXP radiiSEXP, SEXP simplifySEXP) {
+Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id, Rcpp::NumericVector mask_x, Rcpp::NumericVector mask_y, Rcpp::IntegerVector mask_id, double width, int cap, int join, double mitre, double tolerance, SEXP outline, Rcpp::Nullable<Rcpp::NumericVector> radii, double simplify, int mask_rule);
+RcppExport SEXP _ggplot3d_grid_clip_paths_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP, SEXP mask_xSEXP, SEXP mask_ySEXP, SEXP mask_idSEXP, SEXP widthSEXP, SEXP capSEXP, SEXP joinSEXP, SEXP mitreSEXP, SEXP toleranceSEXP, SEXP outlineSEXP, SEXP radiiSEXP, SEXP simplifySEXP, SEXP mask_ruleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
@@ -167,7 +167,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type outline(outlineSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type radii(radiiSEXP);
     Rcpp::traits::input_parameter< double >::type simplify(simplifySEXP);
-    rcpp_result_gen = Rcpp::wrap(grid_clip_paths_cpp(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii, simplify));
+    Rcpp::traits::input_parameter< int >::type mask_rule(mask_ruleSEXP);
+    rcpp_result_gen = Rcpp::wrap(grid_clip_paths_cpp(x, y, id, mask_x, mask_y, mask_id, width, cap, join, mitre, tolerance, outline, radii, simplify, mask_rule));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -896,7 +897,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_geometry_hull_cpp", (DL_FUNC) &_ggplot3d_geometry_hull_cpp, 1},
     {"_ggplot3d_geometry_kde_cpp", (DL_FUNC) &_ggplot3d_geometry_kde_cpp, 3},
     {"_ggplot3d_geometry_triangulate_rings_cpp", (DL_FUNC) &_ggplot3d_geometry_triangulate_rings_cpp, 4},
-    {"_ggplot3d_grid_clip_paths_cpp", (DL_FUNC) &_ggplot3d_grid_clip_paths_cpp, 14},
+    {"_ggplot3d_grid_clip_paths_cpp", (DL_FUNC) &_ggplot3d_grid_clip_paths_cpp, 15},
     {"_ggplot3d_grid_union_paths_cpp", (DL_FUNC) &_ggplot3d_grid_union_paths_cpp, 3},
     {"_ggplot3d_smooth_faces_raster_cpp", (DL_FUNC) &_ggplot3d_smooth_faces_raster_cpp, 9},
     {"_ggplot3d_grid_stroke_intervals_cpp", (DL_FUNC) &_ggplot3d_grid_stroke_intervals_cpp, 12},

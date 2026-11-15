@@ -132,17 +132,22 @@ Clipper2Lib::PathsD stroke_paths(const Clipper2Lib::PathsD& input, double radius
 }
 }
 
-// Painted outlines intersected with a visible even-odd footprint, in millimetres.
+// Painted outlines intersected with a visible footprint, in the units of the
+// coordinates. `mask_rule` reads the footprint rings even-odd (0), by nonzero
+// winding (1), or as the union of the rings whatever their orientation (2).
 // [[Rcpp::export(rng = false)]]
 Rcpp::List grid_clip_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id,
                               Rcpp::NumericVector mask_x, Rcpp::NumericVector mask_y, Rcpp::IntegerVector mask_id,
                               double width, int cap, int join, double mitre, double tolerance,
                               SEXP outline = R_NilValue, Rcpp::Nullable<Rcpp::NumericVector> radii = R_NilValue,
-                              double simplify = 0) {
+                              double simplify = 0, int mask_rule = 0) {
   using namespace Clipper2Lib;
   if (!R_finite(simplify) || simplify < 0) Rcpp::stop("Invalid path simplification tolerance.");
+  if (mask_rule < 0 || mask_rule > 2) Rcpp::stop("Invalid footprint fill rule.");
   Rcpp::XPtr<GridPaint> paint(outline == R_NilValue ? Rcpp::XPtr<GridPaint>(new GridPaint(), true) : Rcpp::XPtr<GridPaint>(outline));
-  PathsD mask = Union(grid_paths(mask_x, mask_y, mask_id), FillRule::EvenOdd, 8);
+  PathsD mask = grid_paths(mask_x, mask_y, mask_id);
+  if (mask_rule == 2) for (auto& ring : mask) if (!IsPositive(ring)) std::reverse(ring.begin(), ring.end());
+  mask = Union(mask, mask_rule == 0 ? FillRule::EvenOdd : FillRule::NonZero, 8);
   if (outline == R_NilValue) {
     PathsD input = grid_paths(x, y, id);
     if (radii.isNotNull()) {

@@ -28,6 +28,17 @@
   - `geom_*_3d()` functions paired with a stat show the stat's full signature;
     `stat_immersed_3d()` starts with `mapping` and `data`.
 
+* Plots drawn on R's own `pdf()` device are complete. That device writes at
+  most about 16 kB of the content of a group or mask (R bug 19323) and
+  crashes when closing a file with a few thousand clipping paths (R bug
+  19324). Quadrics (spheres, tubes, vector heads) now paint their visible part
+  as exact geometry instead of through one clipping path per run, which took
+  the closed-knot `geom_tube_3d()` example from 4,446 clipping paths to none.
+  On `pdf()`, strokes whose offset joins cross, clipped textures and smooth
+  shading use clipping paths in place of masks, fragment clips meet hybrid
+  regions in one intersected clipping path, and anaglyphs take the per-channel
+  composite.
+
 * `animate_3d(format = "mp4")` selects an output format and writes to a
   session temporary path. Formats follow the output registry; an explicit
   `file` must have a matching extension. With both arguments NULL, PNG frame

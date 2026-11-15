@@ -263,9 +263,9 @@ test_that("an unbounded image draws the stand-in facets", {
   rows <- which(scene$fragments$kind == 5L)
   info <- ggplot3d:::quadric_fragment_info_3d(scene, rows)
   expect_null(info$ring[[1L]])
-  drawn <- ggplot3d:::quadric_run_grob_3d(scene, rows, info, scene$styles[scene$fragments$style_id, , drop = FALSE], NULL)
-  expect_null(drawn$clip)
-  expect_s3_class(drawn$grob, "polygon")
+  drawn <- ggplot3d:::quadric_run_grob_3d(scene, rows, info, scene$styles[scene$fragments$style_id, , drop = FALSE], NULL, viewport)
+  expect_s3_class(drawn, "polygon")
+  expect_null(drawn$vp)
 })
 
 test_that("export packets carry inscribed meshes of the quadrics", {

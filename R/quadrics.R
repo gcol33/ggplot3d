@@ -338,10 +338,11 @@ quadric_paint_3d <- function(scene, q, part, back, ring, axis, style, light, opa
 }
 
 # One run of quadric fragments (one quadric, part and side, consecutive in
-# draw order): the exact outline, painted, and the union of the fragments
-# `clip_rows` to clip it to. A quadric whose image is unbounded draws its
-# stand-in facets.
-quadric_run_grob_3d <- function(scene, rows, info, styles, light, clip_rows = rows) {
+# draw order): the exact outline intersected with the union of the fragments
+# `clip_rows`, filled with the outline's paint. The intersection is computed as
+# geometry, so the run needs no device clipping path. A quadric whose image is
+# unbounded draws its stand-in facets.
+quadric_run_grob_3d <- function(scene, rows, info, styles, light, viewport, clip_rows = rows) {
   f <- scene$fragments
   counts <- f$count[rows]
   indices <- rep(f$offset[rows], counts) + sequence(counts) - 1L
@@ -354,7 +355,7 @@ quadric_run_grob_3d <- function(scene, rows, info, styles, light, clip_rows = ro
     fill <- rep(style$fill, length(rows))
     if (isTRUE(style_value_3d(style, "shade", FALSE)))
       fill <- shade_fill_3d(fill, f, rows, scene$camera, light, slice_rows_3d(styles, rows), fragment_centres_3d(scene, rows), scene$materials)
-    return(list(grob = grid::polygonGrob(x, y, id = id, gp = grid::gpar(fill = fill, col = NA, alpha = opacity)), clip = NULL))
+    return(grid::polygonGrob(x, y, id = id, gp = grid::gpar(fill = fill, col = NA, alpha = opacity)))
   }
   key <- paste(q, info$part[rows[1L]], info$back[rows[1L]])
   paint <- info$paint[[key]]
@@ -364,7 +365,21 @@ quadric_run_grob_3d <- function(scene, rows, info, styles, light, clip_rows = ro
   }
   counts <- f$count[clip_rows]
   indices <- rep(f$offset[clip_rows], counts) + sequence(counts) - 1L
-  list(grob = grid::polygonGrob(ring$x, ring$y, gp = grid::gpar(fill = paint, col = NA)),
-    clip = grid::pathGrob(scene$vertices$x_npc[indices], scene$vertices$y_npc[indices],
-      id = rep(seq_along(clip_rows), counts), rule = "winding"))
+  clip <- list(x = scene$vertices$x_npc[indices], y = scene$vertices$y_npc[indices], id = rep(seq_along(clip_rows), counts))
+  g <- clipped_path_grob_3d(ring$x, ring$y, rep(1L, length(ring$x)), clip, viewport, grid::gpar(),
+    fill = paint, clip_rule = "union")
+  rebase_paint_3d(g, ring, viewport)
+}
+
+# A pattern positioned in millimetres from the outline's bounding box, moved to
+# the bounding box of the clipped path it fills, against which grid resolves it.
+rebase_paint_3d <- function(g, ring, viewport) {
+  fill <- g$gp$fill
+  if (!inherits(fill, "GridPattern")) return(g)
+  w <- viewport$width_mm; h <- viewport$height_mm
+  shift <- c(min(ring$x) - min(as.numeric(g$x)), min(ring$y) - min(as.numeric(g$y))) * c(w, h)
+  for (axis in 1:2) for (field in intersect(list(c("x1", "x2", "cx1", "cx2"), c("y1", "y2", "cy1", "cy2"))[[axis]], names(fill)))
+    fill[[field]] <- grid::unit(as.numeric(fill[[field]]) + shift[axis], "mm")
+  g$gp$fill <- fill
+  g
 }
