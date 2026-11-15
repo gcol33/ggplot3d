@@ -331,34 +331,34 @@ articles:
 - title: Concepts
   navbar: Concepts
   contents:
-  - z-scale
-  - layers
-  - surfaces-solids
+  - articles/z-scale
+  - articles/layers
+  - articles/surfaces-solids
 - title: Workflows
   navbar: Workflows
   contents:
-  - camera
-  - backends
-  - lighting
-  - ray-marching
-  - viewer
-  - export
-  - motion
-  - combining-2d-3d
-  - documents
-  - spatial
-  - vector-fields
+  - articles/camera
+  - articles/backends
+  - articles/lighting
+  - articles/ray-marching
+  - articles/viewer
+  - articles/export
+  - articles/motion
+  - articles/combining-2d-3d
+  - articles/documents
+  - articles/spatial
+  - articles/vector-fields
 - title: Examples
   navbar: Examples
   contents:
-  - gallery
-  - pde
-  - implicit-surfaces
-  - thurston-geometries
-  - tensors
-  - ordination
-  - molecules
-  - colour-gamuts
+  - articles/gallery
+  - articles/pde
+  - articles/implicit-surfaces
+  - articles/thurston-geometries
+  - articles/tensors
+  - articles/ordination
+  - articles/molecules
+  - articles/colour-gamuts
 - title: Background
   navbar: Background
-  contents: visibility
+  contents: articles/visibility
