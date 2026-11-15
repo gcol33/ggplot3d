@@ -27,7 +27,7 @@ inside <- function(geometry) {
   balls <- lapply(1:3, function(i) {
     centre <- geodesic_3d(geometry, direction = directions[i, ],
       distance = distances[i])$position
-    geom_thurston_3d(center = as.numeric(centre), radius = radii[i],
+    annotation_thurston_3d(centre = as.numeric(centre), radius = radii[i],
       fill = colours[i])
   })
   ggplot() + balls + theme_void() +
@@ -251,7 +251,7 @@ and every paired face of the intended domain.
 
 ``` r
 
-ggplot() + geom_thurston_3d(center = c(-0.5, 0, 1.5), radius = 0.3,
+ggplot() + annotation_thurston_3d(centre = c(-0.5, 0, 1.5), radius = 0.3,
   fill = PAL["orange"]) + theme_void() +
   coord_3d(backend = backend_3d("raymarch", quotient = faces,
     fov = 110, max_distance = 5, dpi = 52, antialias = 1))

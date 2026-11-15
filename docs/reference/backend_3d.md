@@ -178,7 +178,7 @@ vector graphics.
 
 The raymarch backend traces geodesics from an observer inside the
 geometry. Use
-[`geom_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/geom_thurston_3d.md)
+[`annotation_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_thurston_3d.md)
 for balls, cylinders and half-spaces, or traced SDF layers for
 chart-defined CSG. It draws a full-panel perspective image; Euclidean
 plot axes and exterior-camera settings have no intrinsic meaning.

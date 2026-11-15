@@ -22,7 +22,6 @@ up to the panel box.
 
 ``` r
 coord_spherical_geometry_3d(
-  dim = 3,
   model = c("stereographic", "gnomonic"),
   input = model,
   extent = 3,
@@ -34,10 +33,6 @@ coord_spherical_geometry_3d(
 ```
 
 ## Arguments
-
-- dim:
-
-  Spherical dimension, currently three.
 
 - model, input:
 

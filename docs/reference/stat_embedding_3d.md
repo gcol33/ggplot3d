@@ -15,7 +15,6 @@ stat_embedding_3d(
   mapping = NULL,
   data = NULL,
   ...,
-  metric = "schwarzschild",
   rs = 1,
   r = c(rs, 4 * rs),
   both = FALSE,
@@ -88,10 +87,6 @@ stat_embedding_3d(
     described as [key
     glyphs](https://ggplot2.tidyverse.org/reference/draw_key.html), to
     change the display of the layer in the legend.
-
-- metric:
-
-  Spatial metric, currently "schwarzschild".
 
 - rs:
 

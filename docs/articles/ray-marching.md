@@ -122,7 +122,7 @@ intersection along each ray supplies the visible surface and its normal.
 
 ``` r
 
-volume + geom_volume_3d(mode = "iso", level = 0.3,
+volume + geom_volume_3d(mode = "iso", levels = 0.3,
   colours = c(PAL[["blue"]], PAL[["blue"]])) +
   coord_3d(backend = backend_3d("raster", dpi = 60, antialias = 1))
 ```
@@ -232,7 +232,7 @@ the random sequence independently of batch size and thread count.
 ``` r
 
 traced <- lit + coord_3d(backend = tracer, aspect = "data",
-  light = light_3d(direction = c(-1, -1, 2), ambient = 0.2, diffuse = 0.8))
+  light = light_3d(light_directional(c(-1, -1, 2), intensity = 0.8), ambient = 0.2))
 traced
 ```
 

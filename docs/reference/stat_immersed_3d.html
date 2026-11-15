@@ -18,6 +18,10 @@ twisted parameter seams of stat_parametric_3d(). Lighting is two-sided."><meta p
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -67,10 +71,12 @@ twisted parameter seams of stat_parametric_3d(). Lighting is two-sided."><meta p
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -124,9 +130,11 @@ twisted parameter seams of <code><a href="stat_parametric_3d.html">stat_parametr
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">stat_immersed_3d</span><span class="op">(</span></span>
+<span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"klein_figure8"</span>, <span class="st">"klein_bottle"</span>, <span class="st">"boy"</span>, <span class="st">"cross_cap"</span>, <span class="st">"moebius"</span><span class="op">)</span>,</span>
-<span>  n <span class="op">=</span> <span class="fl">40L</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  n <span class="op">=</span> <span class="fl">40L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -134,16 +142,20 @@ twisted parameter seams of <code><a href="stat_parametric_3d.html">stat_parametr
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
+<dl><dt id="arg-mapping-data">mapping, data<a class="anchor" aria-label="anchor" href="#arg-mapping-data"></a></dt>
+<dd><p>Standard layer arguments.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Arguments to <code><a href="stat_parametric_3d.html">stat_parametric_3d()</a></code>.</p></dd>
+
+
+<dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>Surface name.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
 <dd><p>Samples per parameter, a scalar or pair of integers.</p></dd>
-
-
-<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Arguments to <code><a href="stat_parametric_3d.html">stat_parametric_3d()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

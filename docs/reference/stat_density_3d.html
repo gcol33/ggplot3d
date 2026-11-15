@@ -3,14 +3,20 @@
 ranges. h contains Gaussian standard deviations in transformed units.
 Automatic bandwidths use normal-reference marginal bandwidths with sample
 size exponent -1/7. adjust multiplies automatic bandwidths.
-Numeric levels are density thresholds; probs() specifies absolute enclosed
-probability contents estimated by tensor trapezoidal quadrature.
+levels are density thresholds; probs are absolute enclosed probability
+contents, estimated by tensor trapezoidal quadrature. Grid quadrature
+accumulates density from the highest values downwards until each content is
+reached, so the scale limits should include the density tails; inadequate
+captured mass warns.
 Computed level and density contain the resolved density threshold."><meta property="og:description" content="Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z scale
 ranges. h contains Gaussian standard deviations in transformed units.
 Automatic bandwidths use normal-reference marginal bandwidths with sample
 size exponent -1/7. adjust multiplies automatic bandwidths.
-Numeric levels are density thresholds; probs() specifies absolute enclosed
-probability contents estimated by tensor trapezoidal quadrature.
+levels are density thresholds; probs are absolute enclosed probability
+contents, estimated by tensor trapezoidal quadrature. Grid quadrature
+accumulates density from the highest values downwards until each content is
+reached, so the scale limits should include the density tails; inadequate
+captured mass warns.
 Computed level and density contain the resolved density threshold."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
 (function () {
   var D = String.fromCharCode(36);
@@ -26,6 +32,10 @@ Computed level and density contain the resolved density threshold."><meta proper
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -75,10 +85,12 @@ Computed level and density contain the resolved density threshold."><meta proper
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -128,8 +140,11 @@ Computed level and density contain the resolved density threshold."><meta proper
 ranges. h contains Gaussian standard deviations in transformed units.
 Automatic bandwidths use normal-reference marginal bandwidths with sample
 size exponent -1/7. adjust multiplies automatic bandwidths.
-Numeric levels are density thresholds; probs() specifies absolute enclosed
-probability contents estimated by tensor trapezoidal quadrature.
+<code>levels</code> are density thresholds; <code>probs</code> are absolute enclosed probability
+contents, estimated by tensor trapezoidal quadrature. Grid quadrature
+accumulates density from the highest values downwards until each content is
+reached, so the scale limits should include the density tails; inadequate
+captured mass warns.
 Computed level and density contain the resolved density threshold.</p>
     </div>
 
@@ -145,6 +160,7 @@ Computed level and density contain the resolved density threshold.</p>
 <span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  n <span class="op">=</span> <span class="fl">32L</span>,</span>
 <span>  levels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  probs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  caps <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  space <span class="op">=</span> <span class="st">"data"</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"cubes"</span>,</span>
@@ -155,7 +171,25 @@ Computed level and density contain the resolved density threshold.</p>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">geom_isodensity_3d</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">geom_isodensity_3d</span><span class="op">(</span></span>
+<span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  h <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  adjust <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">32L</span>,</span>
+<span>  levels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  probs <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  caps <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  space <span class="op">=</span> <span class="st">"data"</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"cubes"</span>,</span>
+<span>  simplify <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -184,6 +218,11 @@ Computed level and density contain the resolved density threshold.</p>
 
 <dt id="arg-levels">levels<a class="anchor" aria-label="anchor" href="#arg-levels"></a></dt>
 <dd><p>Numeric scalar-field thresholds; NULL uses pretty levels.</p></dd>
+
+
+<dt id="arg-probs">probs<a class="anchor" aria-label="anchor" href="#arg-probs"></a></dt>
+<dd><p>Probabilities strictly between zero and one: the enclosed
+probability content of each surface. Use instead of <code>levels</code>.</p></dd>
 
 
 <dt id="arg-caps">caps<a class="anchor" aria-label="anchor" href="#arg-caps"></a></dt>
@@ -227,7 +266,11 @@ plane normal. The plane is in transformed position coordinates.</p></dd>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">geom_isodensity_3d</span><span class="op">(</span>h <span class="op">=</span> <span class="fl">0.6</span>, levels <span class="op">=</span> <span class="fl">0.02</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">stat_density_3d</span><span class="op">(</span>h <span class="op">=</span> <span class="fl">0.6</span>, levels <span class="op">=</span> <span class="fl">0.02</span>, n <span class="op">=</span> <span class="fl">8</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">stat_density_3d</span><span class="op">(</span>h <span class="op">=</span> <span class="fl">0.6</span>, levels <span class="op">=</span> <span class="fl">0.02</span>, n <span class="op">=</span> <span class="fl">8</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">stat_density_3d</span><span class="op">(</span>h <span class="op">=</span> <span class="fl">0.6</span>, probs <span class="op">=</span> <span class="fl">0.5</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">4</span>, <span class="fl">4</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="op">-</span><span class="fl">4</span>, <span class="fl">4</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="scale_z_continuous.html">scale_z_continuous</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">4</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

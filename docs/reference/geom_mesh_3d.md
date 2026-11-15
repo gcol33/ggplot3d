@@ -195,6 +195,6 @@ quads <- rbind(c(1, 3, 4, 2), c(5, 6, 8, 7), c(1, 2, 6, 5), c(3, 7, 8, 4),
   c(1, 5, 7, 3), c(2, 4, 8, 6))
 ggplot2::ggplot() +
   geom_mesh_3d(ggplot2::aes(fill = ggplot2::after_stat(mean_curvature)),
-    vertices = cube, faces = quads, subdivide = 3, curvature = TRUE) +
+    vertices = cube, faces = quads, subdivide = 3, curvature = TRUE, shading = "smooth") +
   coord_3d()
 ```

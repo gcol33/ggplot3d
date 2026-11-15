@@ -22,7 +22,7 @@ geom_volume_3d(
   opacity = c(0, 1),
   colours = c("#132B43", "#56B1F7"),
   samples = 256L,
-  level = NULL,
+  levels = NULL,
   show.legend = NA,
   inherit.aes = TRUE
 )
@@ -55,7 +55,7 @@ geom_volume_3d(
   Number of integration steps across the volume diagonal. Grid-cell
   boundaries also split integration intervals.
 
-- level:
+- levels:
 
   Isovalue for `mode = "iso"`; defaults to the scalar-range midpoint.
 

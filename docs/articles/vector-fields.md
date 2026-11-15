@@ -75,7 +75,7 @@ tail and tip pivots attach the corresponding end.
 ``` r
 
 vectors + geom_quiver_3d(aes(fill = after_stat(norm)), scale = 0.5,
-  normalize = TRUE, pivot = "middle", detail = 0) +
+  normalise = TRUE, pivot = "middle", detail = 0) +
   scale_fill_gradient(low = "#DCEAF3", high = PAL["blue"], name = "magnitude") +
   coord_3d(aspect = "data")
 ```

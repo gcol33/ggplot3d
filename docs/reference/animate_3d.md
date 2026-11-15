@@ -15,7 +15,7 @@ animate_3d(
   frames = 60L,
   fps = 20,
   file = NULL,
-  renderer = c("raster", "vector"),
+  backend = c("raster", "vector"),
   roll = NULL,
   width = 640L,
   height = 640L,
@@ -74,7 +74,7 @@ animate_3d(
   visibility tracks for changing geometry. Each glTF animation uses one
   projection type; export perspective and orthographic paths separately.
 
-- renderer:
+- backend:
 
   Scene backend, "raster" (default) or "vector". Use "vector" for vector
   pages in SVG and PDF output.
@@ -162,7 +162,7 @@ animate_3d(
 - tour:
 
   A
-  [`tour_grand()`](https://gillescolling.com/ggplot3d/reference/tour_grand.md)
+  [`grand_tour_3d()`](https://gillescolling.com/ggplot3d/reference/grand_tour_3d.md)
   specification or tourr history array. Applies Grassmann-interpolated
   bases to stat_project_3d() layers with orthographic or finite
   perspective projection. Uses fixed limits across frames. Requires
@@ -223,7 +223,7 @@ plotly's `frame` aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show
 its first frame.
 
-`renderer` selects the scene backend; `format` selects the encoded file
+`backend` selects the scene backend; `format` selects the encoded file
 type or frame layout, and `file` sets its location. gganimate selects
 encoding through `animate(renderer = ...)`; its `gifski_renderer()` and
 `av_renderer()` create temporary files when their `file` is NULL. Here,

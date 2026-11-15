@@ -83,7 +83,7 @@ space to keep lighting tied to the view.
 
 ``` r
 
-p + coord_3d(light = light_3d(direction = c(1, 1, 2), space = "camera"))
+p + coord_3d(light = light_3d(light_directional(c(1, 1, 2), space = "camera")))
 ```
 
 ![Blue columns lit from the upper right of the

@@ -17,7 +17,7 @@
   dimensions
 - [`rotate_4d()`](https://gillescolling.com/ggplot3d/reference/rotate_4d.md)
   : Rotations in four dimensions
-- [`tour_grand()`](https://gillescolling.com/ggplot3d/reference/tour_grand.md)
+- [`grand_tour_3d()`](https://gillescolling.com/ggplot3d/reference/grand_tour_3d.md)
   : Grand tours of three-dimensional projections
 - [`stat_section_4d()`](https://gillescolling.com/ggplot3d/reference/stat_section_4d.md)
   : Hyperplane sections of four-dimensional tetrahedral meshes
@@ -46,8 +46,8 @@
 
 ## Complex analysis
 
-- [`mobius()`](https://gillescolling.com/ggplot3d/reference/mobius.md) :
-  Mobius transformations of complex numbers, spheres and half-space
+- [`mobius_3d()`](https://gillescolling.com/ggplot3d/reference/mobius_3d.md)
+  : Mobius transformations of complex numbers, spheres and half-space
 - [`stat_riemann_sphere_3d()`](https://gillescolling.com/ggplot3d/reference/stat_riemann_sphere_3d.md)
   : Domain colouring on the Riemann sphere
 - [`stat_riemann_surface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_riemann_surface_3d.md)
@@ -68,14 +68,12 @@
   : Exact three-dimensional panel coordinates
 - [`camera_3d()`](https://gillescolling.com/ggplot3d/reference/camera_3d.md)
   : Named camera views
-- [`facet_views()`](https://gillescolling.com/ggplot3d/reference/facet_views.md)
+- [`facet_views_3d()`](https://gillescolling.com/ggplot3d/reference/facet_views_3d.md)
   : Show one 3D scene from several views
 - [`stereo_3d()`](https://gillescolling.com/ggplot3d/reference/stereo_3d.md)
   : Stereo output for 3D panels
 - [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
   : Lighting for a 3D scene
-- [`lights_3d()`](https://gillescolling.com/ggplot3d/reference/lights_3d.md)
-  : Combine lights for a 3D scene
 - [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
   [`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
   [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
@@ -210,7 +208,7 @@
   : Symmetric tensor glyphs
 - [`stat_ellipsoid_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ellipsoid_3d.md)
   : Covariance and confidence ellipsoids
-- [`stat_biplot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_biplot_3d.md)
+- [`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
   : Compose a three-axis ordination biplot
 - [`geom_glyph_3d()`](https://gillescolling.com/ggplot3d/reference/geom_glyph_3d.md)
   : One solid glyph per observation
@@ -386,8 +384,6 @@
   : Surfaces of revolution
 - [`stat_spline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_spline_3d.md)
   : Smooth curves through points
-- [`probs()`](https://gillescolling.com/ggplot3d/reference/probs.md) :
-  Request probability-content density levels
 
 ## Signed distance functions
 
@@ -439,7 +435,7 @@
 
 - [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md)
   : Select a 3D rendering backend
-- [`geom_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/geom_thurston_3d.md)
+- [`annotation_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_thurston_3d.md)
   : Draw an intrinsic ball, tube, or half-space
 - [`geodesic_3d()`](https://gillescolling.com/ggplot3d/reference/geodesic_3d.md)
   : Follow a geodesic in a Thurston geometry
@@ -454,12 +450,8 @@
 - [`view3dOutput()`](https://gillescolling.com/ggplot3d/reference/view_3d-shiny.md)
   [`renderView3d()`](https://gillescolling.com/ggplot3d/reference/view_3d-shiny.md)
   : Shiny bindings for the interactive 3D viewer
-- [`alt_text_3d()`](https://gillescolling.com/ggplot3d/reference/alt_text_3d.md)
+- [`get_alt_text_3d`](https://gillescolling.com/ggplot3d/reference/get_alt_text_3d.md)
   : Describe a three-dimensional plot for a document
-- [`save_svg_3d()`](https://gillescolling.com/ggplot3d/reference/save_svg_3d.md)
-  : Save an SVG with source rows and hover text
-- [`export_code_3d()`](https://gillescolling.com/ggplot3d/reference/export_code_3d.md)
-  : Export TikZ paths or an Asymptote scene
 
 ## Camera paths
 
@@ -472,7 +464,7 @@
 ## Export to 3D software
 
 - [`export_3d()`](https://gillescolling.com/ggplot3d/reference/export_3d.md)
-  : Export a panel as a 3D model file
+  : Export a plot to a 3D model, vector or source-code file
 - [`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md)
   : Physical solids for 3D printing
 - [`as.mesh3d(`*`<ggplot3d>`*`)`](https://gillescolling.com/ggplot3d/reference/rgl-bridge-3d.md)

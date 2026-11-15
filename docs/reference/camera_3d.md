@@ -33,7 +33,7 @@ camera_3d(
   length of y and z), `"trimetric"`, the six principal views `"top"`,
   `"bottom"`, `"front"`, `"rear"`, `"left"` and `"right"` (each looking
   along one axis, as placed by
-  [`facet_views()`](https://gillescolling.com/ggplot3d/reference/facet_views.md)),
+  [`facet_views_3d()`](https://gillescolling.com/ggplot3d/reference/facet_views_3d.md)),
   and the oblique views `"cabinet"` (depth at 45 degrees, half length),
   `"cavalier"` (depth at 45 degrees, full length) and `"military"` (the
   floor plan turned 45 degrees, heights drawn straight up at full

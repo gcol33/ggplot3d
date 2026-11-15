@@ -31,7 +31,23 @@ stat_slice_contour_3d(
   inherit.aes = TRUE
 )
 
-geom_slice_contour_3d(...)
+geom_slice_contour_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  xslice = NULL,
+  yslice = NULL,
+  zslice = NULL,
+  slice = NULL,
+  n = NULL,
+  bins = NULL,
+  binwidth = NULL,
+  breaks = NULL,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments

@@ -140,7 +140,8 @@ point samples.
 
 ## Functions of two variables
 
-`geom_function()` draws a function of x as a line.
+[`geom_function()`](https://ggplot2.tidyverse.org/reference/geom_function.html)
+draws a function of x as a line.
 [`geom_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
 samples a function of x and y on a grid and draws the result as a
 surface. The x and y limits set the sampling range, and `n` sets the
@@ -190,8 +191,9 @@ head(bezier, 3)
 #> 3 0.06181394 0.17336306 0.17814509
 ```
 
-In two dimensions the sampled points would go to `geom_path()`. Here the
-curve is a
+In two dimensions the sampled points would go to
+[`geom_path()`](https://ggplot2.tidyverse.org/reference/geom_path.html).
+Here the curve is a
 [`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
 layer, and the control polygon is a dashed path through the control
 points.
@@ -215,11 +217,12 @@ each end along the polygon’s first and last edge.
 
 ## Bivariate histograms
 
-`geom_bin_2d()` counts observations in rectangular cells of two
-continuous variables and shows each count as a fill colour. In three
-dimensions the count becomes the height of a column. The `faithful` data
-record the duration of 272 eruptions of the Old Faithful geyser and the
-waiting time before each, both in minutes.
+[`geom_bin_2d()`](https://ggplot2.tidyverse.org/reference/geom_bin_2d.html)
+counts observations in rectangular cells of two continuous variables and
+shows each count as a fill colour. In three dimensions the count becomes
+the height of a column. The `faithful` data record the duration of 272
+eruptions of the Old Faithful geyser and the waiting time before each,
+both in minutes.
 [`geom_histogram_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_2d_3d.md)
 assigns each eruption to a cell 0.5 minutes wide in duration and 5
 minutes wide in waiting time, counts the eruptions in each cell and
@@ -377,8 +380,8 @@ value in 2005.
 
 ## Scatter plots with a fitted surface
 
-`geom_smooth()` fits y as a function of x and draws the fitted line over
-the points.
+[`geom_smooth()`](https://ggplot2.tidyverse.org/reference/geom_smooth.html)
+fits y as a function of x and draws the fitted line over the points.
 [`geom_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
 fits z as a function of x and y and draws the fitted surface. Here the
 `mtcars` fuel consumption (`mpg`, miles per gallon) is modelled by
@@ -402,13 +405,14 @@ cars.](gallery_files/figure-html/smooth-1.svg)
 
 The pale surfaces above and below the fit are the pointwise 95%
 confidence bounds for the mean, the counterpart of the grey ribbon
-around `geom_smooth()`. Points below the fitted surface are hidden by
-it.
+around
+[`geom_smooth()`](https://ggplot2.tidyverse.org/reference/geom_smooth.html).
+Points below the fitted surface are hidden by it.
 
 ## Two-dimensional densities
 
-`geom_density_2d()` draws contour lines of a bivariate kernel density
-estimate.
+[`geom_density_2d()`](https://ggplot2.tidyverse.org/reference/geom_density_2d.html)
+draws contour lines of a bivariate kernel density estimate.
 [`stat_density_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_2d_3d.md)
 computes the same kind of estimate and draws the density as height. The
 sample below holds 2,000 diamonds under 2.5 carats, with price on a
@@ -435,8 +439,8 @@ than at neighbouring weights.
 
 ## Contour lines
 
-`geom_contour()` draws the lines where a gridded height crosses a set of
-levels.
+[`geom_contour()`](https://ggplot2.tidyverse.org/reference/geom_contour.html)
+draws the lines where a gridded height crosses a set of levels.
 [`geom_contour_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
 draws the same lines on the surface, each at the height of its level.
 `volcano` holds heights in metres of Maunga Whau on a 10 m grid, 87 rows
@@ -470,7 +474,8 @@ the crater.](gallery_files/figure-html/contour-1.svg)
 
 The lines close round the summit and the crater rim. Lines on the far
 slope are hidden where the near slope covers them. ggplot2’s own
-`geom_contour()` also works inside
+[`geom_contour()`](https://ggplot2.tidyverse.org/reference/geom_contour.html)
+also works inside
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
 drawing each line at its level without the surface.
 

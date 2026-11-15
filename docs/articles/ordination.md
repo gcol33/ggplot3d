@@ -3,7 +3,7 @@
 An ordination places observations on a small set of axes computed from
 their measured variables. A biplot draws the observations and variable
 directions in the same view.
-[`stat_biplot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_biplot_3d.md)
+[`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
 composes site points, solid-headed quiver arrows and optional group
 regions.
 
@@ -11,7 +11,7 @@ regions.
 
 fit <- prcomp(iris[1:4], scale. = TRUE)
 groups <- setNames(iris$Species, rownames(iris))
-ggplot() + stat_biplot_3d(fit, groups = groups, region = "ellipsoid",
+ggplot() + biplot_3d(fit, groups = groups, region = "ellipsoid",
                         loading_scale = 2, label_size = 5) + coord_3d()
 ```
 
@@ -37,7 +37,7 @@ joined by these identifiers. A named vector or a table with `id` and
 
 membership <- data.frame(id = names(groups), group = unname(groups))
 membership <- membership[rev(seq_len(nrow(membership))), ]
-ggplot() + stat_biplot_3d(fit, groups = membership, region = "hull",
+ggplot() + biplot_3d(fit, groups = membership, region = "hull",
                         loading_scale = 2, label_size = 5) + coord_3d()
 ```
 
@@ -54,7 +54,7 @@ orthographic projection.](ordination_files/figure-html/hull-1.svg)
 [vegan](https://vegandevs.github.io/vegan/) supplies ecological
 ordination methods and a `scores()` generic that applies their scaling
 conventions.
-[`stat_biplot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_biplot_3d.md)
+[`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
 calls that generic for vegan fits. Pass method-specific arguments in
 `scores_args`, or supply a list containing `sites` and `species` score
 matrices directly.
@@ -62,7 +62,7 @@ matrices directly.
 ``` r
 
 model <- vegan::rda(iris[1:4], scale = TRUE)
-ggplot() + stat_biplot_3d(model, groups = groups,
+ggplot() + biplot_3d(model, groups = groups,
                         scores_args = list(scaling = 2), label_size = 5) + coord_3d(clip = "off")
 ```
 

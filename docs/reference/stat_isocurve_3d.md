@@ -35,7 +35,21 @@ stat_isocurve_3d(
   inherit.aes = TRUE
 )
 
-geom_isocurve_3d(...)
+geom_isocurve_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  fun1,
+  fun2,
+  n = 32L,
+  args = list(),
+  levels = c(0, 0),
+  refine = 2L,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments

@@ -2,6 +2,66 @@
 
 ## ggplot3d 0.0.0.9000
 
+- The exported API follows one name per concept
+  (`dev_notes/11-api-naming.md`):
+
+  - [`export_3d()`](https://gillescolling.com/ggplot3d/reference/export_3d.md)
+    writes SVG, TikZ (`.tex`) and Asymptote (`.asy`) through its format
+    registry and accepts `format` without `file`; `save_svg_3d()` and
+    `export_code_3d()` are removed.
+  - `light_3d(...)` takes light sources and replaces `lights_3d()`; with
+    none it uses one
+    [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md).
+    Its tone colours are `shadow_colour` and `highlight_colour`.
+  - Plots with
+    [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+    have a
+    [`ggplot2::get_alt_text()`](https://ggplot2.tidyverse.org/reference/get_alt_text.html)
+    method, which replaces `alt_text_3d()`.
+  - `stat_density_3d(probs = )` replaces `levels = probs(...)`.
+  - Renamed functions:
+    [`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
+    (was `stat_biplot_3d()`),
+    [`annotation_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_thurston_3d.md)
+    (`geom_thurston_3d()`),
+    [`facet_views_3d()`](https://gillescolling.com/ggplot3d/reference/facet_views_3d.md)
+    (`facet_views()`),
+    [`grand_tour_3d()`](https://gillescolling.com/ggplot3d/reference/grand_tour_3d.md)
+    (`tour_grand()`),
+    [`mobius_3d()`](https://gillescolling.com/ggplot3d/reference/mobius_3d.md)
+    (`mobius()`).
+  - Renamed arguments: `backend` in
+    [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+    and
+    [`annotation_plot_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_plot_3d.md)
+    (was `renderer`, `route`); `onto` in
+    [`shadow_3d()`](https://gillescolling.com/ggplot3d/reference/shadow_3d.md)
+    and
+    [`geom_dropline_3d()`](https://gillescolling.com/ggplot3d/reference/geom_dropline_3d.md)
+    (`on`, `face`); `geometry` in
+    [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+    (`space`); `levels` in
+    [`geom_volume_3d()`](https://gillescolling.com/ggplot3d/reference/geom_volume_3d.md)
+    (`level`); `tolerance` in
+    [`stat_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
+    (`tol`); `normalise`, `centre`, `fibre` (`normalize`, `center`,
+    `fiber`); `cap_plane`, `shading_range`, `depth_scale`, `se_alpha`,
+    `label_orientation`, `title_position` (dotted spellings).
+  - Removed single-valued arguments: `dim` of
+    [`coord_spherical_geometry_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spherical_geometry_3d.md),
+    `d` of
+    [`grand_tour_3d()`](https://gillescolling.com/ggplot3d/reference/grand_tour_3d.md),
+    `type` of
+    [`stat_knot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_knot_3d.md),
+    `metric` of
+    [`stat_embedding_3d()`](https://gillescolling.com/ggplot3d/reference/stat_embedding_3d.md),
+    and `nudge_z` of
+    [`position_nudge_3d()`](https://gillescolling.com/ggplot3d/reference/position_nudge_3d.md).
+  - `geom_*_3d()` functions paired with a stat show the stat’s full
+    signature;
+    [`stat_immersed_3d()`](https://gillescolling.com/ggplot3d/reference/stat_immersed_3d.md)
+    starts with `mapping` and `data`.
+
 - `animate_3d(format = "mp4")` selects an output format and writes to a
   session temporary path. Formats follow the output registry; an
   explicit `file` must have a matching extension. With both arguments
@@ -130,7 +190,7 @@
   export writes `TEXCOORD_0` and embedded PNG textures
   ([\#64](https://github.com/gcol33/ggplot3d/issues/64)).
 
-- `facet_views(lights = , combine = "cross" | "pair")` compares panel
+- `facet_views_3d(lights = , combine = "cross" | "pair")` compares panel
   lighting through the existing light collections. Camera and light keys
   retain each condition through layout changes; NULL entries select
   unlit panels. `views = NULL` inherits the coordinate camera. Shared
@@ -202,7 +262,7 @@
   styles and line drawings.
 
 - Shading can keep data colours readable against their legend.
-  `lights_3d(mode = "lightness" | "tone" | "overlay" | "soft", range, neutral)`
+  `light_3d(mode = "lightness" | "tone" | "overlay" | "soft", range, neutral)`
   moves a colour by a signed level per light, 0 at the `neutral` angle
   (ggcube’s `ramp_smooth()`): OKLab lightness toward black or white with
   hue kept and chroma reduced only to fit the gamut (Ottosson 2020;
@@ -215,7 +275,7 @@
   [`guide_bins_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
   and
   [`guide_legend_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
-  take `shading.range` (`TRUE` or two angles) and show value by light,
+  take `shading_range` (`TRUE` or two angles) and show value by light,
   sampled from the same kernel without the specular term; the axis
   colourbar shades across its width
   ([\#59](https://github.com/gcol33/ggplot3d/issues/59); Szafir et
@@ -294,7 +354,7 @@
   themselves. Text in a plane (`geom_text_3d(orientation = "plane")`) is
   font outline geometry and still hides and is hidden by the data.
 
-- [`stat_biplot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_biplot_3d.md)
+- [`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
   arrows are drawn with unshaded heads in `arrow_colour` (a mid grey by
   default) and slightly larger heads, and each arrow-tip label touches
   its tip on the side the arrow points to on the page, as vegan’s
@@ -373,7 +433,7 @@
   finer meshes ([\#61](https://github.com/gcol33/ggplot3d/issues/61)).
 
 - Lighting has materials and several lights.
-  [`lights_3d()`](https://gillescolling.com/ggplot3d/reference/lights_3d.md)
+  [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
   combines
   [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
   `light_point(position, falloff)` (inverse-square at `falloff = 2`,
@@ -517,7 +577,7 @@
   [`stat_project_3d()`](https://gillescolling.com/ggplot3d/reference/stat_project_3d.md),
   all six SO(4) plane rotations and quaternion double rotations, finite
   perspective and adaptive stereographic surfaces.
-  [`tour_grand()`](https://gillescolling.com/ggplot3d/reference/tour_grand.md)
+  [`grand_tour_3d()`](https://gillescolling.com/ggplot3d/reference/grand_tour_3d.md)
   drives Grassmann-interpolated projection animations.
   [`stat_section_4d()`](https://gillescolling.com/ggplot3d/reference/stat_section_4d.md)
   shares marching-tetrahedra topology with isosurfaces and welds
@@ -551,7 +611,7 @@
 
 - Complex-analysis layers draw Riemann-sphere phase portraits and
   inverse-parametrised Riemann surfaces.
-  [`mobius()`](https://gillescolling.com/ggplot3d/reference/mobius.md)
+  [`mobius_3d()`](https://gillescolling.com/ggplot3d/reference/mobius_3d.md)
   maps extended complex values, the finite Riemann sphere and hyperbolic
   half-space.
 
@@ -622,18 +682,17 @@
   molecular ball-and-stick views and sampled Lab colour gamuts.
   [`geom_tensor_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tensor_3d.md)
   adds Kindlmann superquadrics through shared glyph instancing,
-  [`stat_biplot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_biplot_3d.md)
+  [`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
   composes score points, quivers, arrow-tip labels sized by `label_size`
   and group regions, and
   [`fortify.pdb()`](https://gillescolling.com/ggplot3d/reference/fortify.pdb.md)
   joins atoms and bonds by serial number.
 
-- [`save_svg_3d()`](https://gillescolling.com/ggplot3d/reference/save_svg_3d.md)
+- [`export_3d()`](https://gillescolling.com/ggplot3d/reference/export_3d.md)
   writes native depth-ordered SVG with layer and row identities,
-  tooltips and linked hover highlighting.
-  [`export_code_3d()`](https://gillescolling.com/ggplot3d/reference/export_code_3d.md)
-  writes editable TikZ paths or model-space Asymptote scenes with camera
-  and optional PRC output.
+  tooltips and linked hover highlighting, editable TikZ paths (`.tex`)
+  and model-space Asymptote scenes (`.asy`) with camera and optional PRC
+  output, alongside its 3D model formats.
 
 - ggplot2’s
   [`geom_contour_filled()`](https://ggplot2.tidyverse.org/reference/geom_contour.html)
@@ -653,7 +712,7 @@
 - `backend_3d("raymarch")` renders in-space views of all eight Thurston
   geometries with geodesic sphere tracing, paired quotient faces,
   parallel transport, and geodesic-sphere area lighting.
-  [`geom_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/geom_thurston_3d.md)
+  [`annotation_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_thurston_3d.md)
   supplies intrinsic primitives, and
   [`geodesic_3d()`](https://gillescolling.com/ggplot3d/reference/geodesic_3d.md)
   exposes the shared flow and transport calculations.
@@ -675,7 +734,7 @@
 
 - knitr and Quarto chunks accept `view3d = TRUE` for the HTML viewer and
   static vector scenes in PDF and Word.
-  [`alt_text_3d()`](https://gillescolling.com/ggplot3d/reference/alt_text_3d.md)
+  [`ggplot2::get_alt_text()`](https://ggplot2.tidyverse.org/reference/get_alt_text.html)
   supplies figure descriptions, with `fig.alt` and `labs(alt = )`
   overrides. Patchwork and cowplot compositions retain their separate
   panel scenes.
@@ -1016,7 +1075,7 @@
   [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
   keeps each panel’s offset.
 
-- [`facet_views()`](https://gillescolling.com/ggplot3d/reference/facet_views.md)
+- [`facet_views_3d()`](https://gillescolling.com/ggplot3d/reference/facet_views_3d.md)
   draws one scene from several cameras, one panel per view, with the
   layers computed once and one magnification across panels.
   `layout = "third_angle"` and `"first_angle"` place front, top, bottom,

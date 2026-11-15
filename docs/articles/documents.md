@@ -90,15 +90,16 @@ knitr::opts_chunk$set(dev = "svglite", fig.ext = "svg", fig.width = 6.5,
 
 ## Accessible descriptions
 
-[`alt_text_3d()`](https://gillescolling.com/ggplot3d/reference/alt_text_3d.md)
-describes the layer types, mapped variables and initial camera angles.
-The generated description supplies the default alternative text for
-static figures and an accessible group name around HTML viewers. Inspect
-it before adding words about what the figure communicates.
+[`get_alt_text()`](https://ggplot2.tidyverse.org/reference/get_alt_text.html)
+from ggplot2 describes the layer types, mapped variables and initial
+camera angles. The generated description supplies the default
+alternative text for static figures and an accessible group name around
+HTML viewers. Inspect it before adding words about what the figure
+communicates.
 
 ``` r
 
-alt_text_3d(p)
+get_alt_text(p)
 #> [1] "3D plot. Layers: Point (x = wt, y = mpg, z = hp). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic projection."
 ```
 
@@ -112,7 +113,7 @@ the motor-car plot.
 described <- p + labs(alt = paste(
   "Motor cars plotted by weight, fuel economy and horsepower.",
   "Heavier cars generally have lower fuel economy."))
-alt_text_3d(described)
+get_alt_text(described)
 #> [1] "Motor cars plotted by weight, fuel economy and horsepower. Heavier cars generally have lower fuel economy."
 ```
 

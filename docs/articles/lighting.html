@@ -82,7 +82,7 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/ggplot3d.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
@@ -179,15 +179,14 @@ compared across panels.</p>
 </h2>
 <p>By default the light multiplies the fill: a face at a grazing angle
 is a darker version of its colour, and a dark yellow no longer looks
-like the yellow in the legend.
-<code>lights_3d(mode = "lightness")</code> moves only the OKLab
-lightness of the fill and keeps its hue, so the colour stays
-recognisable against its key. A face at the <code>neutral</code> angle
-to the light keeps its colour exactly.</p>
+like the yellow in the legend. <code>light_3d(mode = "lightness")</code>
+moves only the OKLab lightness of the fill and keeps its hue, so the
+colour stays recognisable against its key. A face at the
+<code>neutral</code> angle to the light keeps its colour exactly.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hill</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"Spectral"</span>,</span>
-<span>    guide <span class="op">=</span> <span class="fu"><a href="../reference/guide_colourbar_3d.html">guide_colourbar_3d</a></span><span class="op">(</span>along <span class="op">=</span> <span class="cn">NULL</span>, shading.range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>light <span class="op">=</span> <span class="fu"><a href="../reference/lights_3d.html">lights_3d</a></span><span class="op">(</span><span class="fu"><a href="../reference/light_directional.html">light_directional</a></span><span class="op">(</span><span class="op">)</span>, mode <span class="op">=</span> <span class="st">"lightness"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>    guide <span class="op">=</span> <span class="fu"><a href="../reference/guide_colourbar_3d.html">guide_colourbar_3d</a></span><span class="op">(</span>along <span class="op">=</span> <span class="cn">NULL</span>, shading_range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>light <span class="op">=</span> <span class="fu"><a href="../reference/light_3d.html">light_3d</a></span><span class="op">(</span><span class="fu"><a href="../reference/light_directional.html">light_directional</a></span><span class="op">(</span><span class="op">)</span>, mode <span class="op">=</span> <span class="st">"lightness"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic projection."><title>3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic projection.</title>
   <g class="svglite">
@@ -390,8 +389,8 @@ colour instead, and <code>"overlay"</code> and <code>"soft"</code> are
 the blend modes of matplotlib’s <code>LightSource</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">hill</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_b</a></span><span class="op">(</span>guide <span class="op">=</span> <span class="fu"><a href="../reference/guide_colourbar_3d.html">guide_coloursteps_3d</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>light <span class="op">=</span> <span class="fu"><a href="../reference/lights_3d.html">lights_3d</a></span><span class="op">(</span><span class="fu"><a href="../reference/light_directional.html">light_directional</a></span><span class="op">(</span><span class="op">)</span>, mode <span class="op">=</span> <span class="st">"tone"</span>,</span>
-<span>    shadow <span class="op">=</span> <span class="st">"#22305a"</span>, highlight <span class="op">=</span> <span class="st">"#fff3d0"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>light <span class="op">=</span> <span class="fu"><a href="../reference/light_3d.html">light_3d</a></span><span class="op">(</span><span class="fu"><a href="../reference/light_directional.html">light_directional</a></span><span class="op">(</span><span class="op">)</span>, mode <span class="op">=</span> <span class="st">"tone"</span>,</span>
+<span>    shadow_colour <span class="op">=</span> <span class="st">"#22305a"</span>, highlight_colour <span class="op">=</span> <span class="st">"#fff3d0"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic projection."><title>3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic projection.</title>
   <g class="svglite">

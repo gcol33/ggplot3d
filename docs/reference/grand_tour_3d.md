@@ -11,14 +11,10 @@ random state. Pass the result to animate_3d(tour=...) on a plot using
 ## Usage
 
 ``` r
-tour_grand(d = 3L, history = NULL, steps = 30L, seed = 1L)
+grand_tour_3d(history = NULL, steps = 30L, seed = 1L)
 ```
 
 ## Arguments
-
-- d:
-
-  Projection dimension, currently three.
 
 - history:
 
@@ -44,5 +40,5 @@ Wickham, Cook, Hofmann and Buja (2011). tourr.
 ## Examples
 
 ``` r
-tour_grand(d=3,steps=20,seed=1)
+grand_tour_3d(steps=20,seed=1)
 ```

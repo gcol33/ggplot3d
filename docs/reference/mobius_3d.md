@@ -10,7 +10,7 @@ isometrically on H^3.
 ## Usage
 
 ``` r
-mobius(a = 1, b = 0, c = 0, d = 1)
+mobius_3d(a = 1, b = 0, c = 0, d = 1)
 ```
 
 ## Arguments
@@ -33,7 +33,7 @@ Wegert (2010). Phase plots of complex functions.
 ## Examples
 
 ``` r
-f <- mobius(a=0,b=1,c=1,d=0)
+f <- mobius_3d(a=0,b=1,c=1,d=0)
 f(c(0,1,Inf))
 f(rbind(c(0,0,1),c(0,0,-1)),model="sphere")
 ```

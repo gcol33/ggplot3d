@@ -77,7 +77,7 @@ shows the plot from the central camera, without stereo.
 ## See also
 
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
-[`facet_views()`](https://gillescolling.com/ggplot3d/reference/facet_views.md),
+[`facet_views_3d()`](https://gillescolling.com/ggplot3d/reference/facet_views_3d.md),
 whose views each become a stereo pair.
 
 ## Examples

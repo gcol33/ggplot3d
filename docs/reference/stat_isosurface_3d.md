@@ -23,7 +23,20 @@ stat_isosurface_3d(
   inherit.aes = TRUE
 )
 
-geom_isosurface_3d(...)
+geom_isosurface_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  levels = NULL,
+  caps = FALSE,
+  method = "cubes",
+  simplify = NULL,
+  clip = NULL,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments

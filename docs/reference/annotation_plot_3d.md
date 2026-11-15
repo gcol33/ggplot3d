@@ -18,7 +18,7 @@ annotation_plot_3d(
   plane = "xz",
   at = Inf,
   extent = NULL,
-  route = c("vector", "raster"),
+  backend = c("vector", "raster"),
   resolution = 150,
   alpha = 1
 )
@@ -45,7 +45,7 @@ annotation_plot_3d(
   plot's panel along the two plane axes. A reversed pair mirrors the
   plot.
 
-- route:
+- backend:
 
   `"vector"` or `"raster"` (which requires ragg).
 
@@ -63,13 +63,13 @@ A ggplot2 layer.
 
 ## Details
 
-The vector route decomposes the drawn panel into points, lines,
+The vector backend decomposes the drawn panel into points, lines,
 polygons, rectangles and text that join the 3D scene and its exact
 visibility, as matplotlib places 2D artists on a plane of 3D axes and
 ggcube projects layers onto the faces of its cube. Marks lie in the
 plane, foreshortened with it, at the size they have on a 2D panel 4
 inches wide; text faces the viewer and is drawn over the scene. The
-raster route renders the panel to an image of `resolution` pixels a
+raster backend renders the panel to an image of `resolution` pixels a
 side, as rayshader does for a whole ggplot, and lays its pixels on the
 plane as rectangles, joining runs of equal colour; it suits dense plots
 whose vector form would be large.

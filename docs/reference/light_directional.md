@@ -1,7 +1,7 @@
 # Lights for a 3D scene
 
 Lights combine in
-[`lights_3d()`](https://gillescolling.com/ggplot3d/reference/lights_3d.md),
+[`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md),
 which
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
 takes as `light`, with an ambient term. Each face colour is lit by one
@@ -73,7 +73,7 @@ light_hemisphere(
 ## Value
 
 A light for
-[`lights_3d()`](https://gillescolling.com/ggplot3d/reference/lights_3d.md).
+[`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md).
 
 ## Details
 
@@ -106,5 +106,5 @@ pictures. SIGGRAPH '77, 192-198.
 ## Examples
 
 ``` r
-lights_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
+light_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
 ```

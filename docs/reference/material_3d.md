@@ -2,7 +2,7 @@
 
 A material sets how strongly a face reflects the ambient, diffuse and
 specular light of
-[`lights_3d()`](https://gillescolling.com/ggplot3d/reference/lights_3d.md).
+[`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md).
 The presets follow MATLAB's `material`: `"matte"` (MATLAB `dull`),
 `"shiny"` and `"metal"`, with the ambient and diffuse strengths taken
 relative to `dull` so that `"matte"` reproduces plain Lambert shading.
@@ -100,7 +100,7 @@ kernel in the vector and raster backends and the viewer:
   light, increasing, at most seven; a normal exactly at a break, within
   1e-6 in cosine, falls in the darker band), as ggcube's `ramp_steps()`.
   With the signed modes of
-  [`lights_3d()`](https://gillescolling.com/ggplot3d/reference/lights_3d.md)
+  [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
   the steps divide the signed level instead. `specular_steps = TRUE`
   (the default for toon) turns the highlight into a flat spot where
   Blinn's term reaches one half.

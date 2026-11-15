@@ -1,6 +1,6 @@
 # Show one 3D scene from several views
 
-`facet_views()` draws all data of a
+`facet_views_3d()` draws all data of a
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
 plot once per view, one panel per camera, like the multi-view drawings
 of engineering graphics and the shared views of matplotlib's 3D axes.
@@ -11,7 +11,7 @@ orthographic view.
 ## Usage
 
 ``` r
-facet_views(
+facet_views_3d(
   views = c("front", "top", "right", "isometric"),
   layout = c("wrap", "third_angle", "first_angle"),
   nrow = NULL,
@@ -56,7 +56,6 @@ facet_views(
 - lights:
 
   NULL inherits coordinate lighting. A named list of lights from
-  [`lights_3d()`](https://gillescolling.com/ggplot3d/reference/lights_3d.md),
   [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
   or the individual light constructors supplies lighting conditions; a
   NULL list entry selects an unlit panel.
@@ -104,11 +103,11 @@ block <- block[block$z == 1 | (block$x == 1 & block$y < 3), ]
 p <- ggplot2::ggplot(block, ggplot2::aes(x, y, z = z)) +
   geom_voxel_3d(fill = "grey80", colour = "grey20") +
   coord_3d()
-p + facet_views()
-p + facet_views(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
-p + facet_views(c("front", "top", "right", iso = "isometric"), layout = "first_angle")
-p + facet_views(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
-p + facet_views(views = NULL, lights = list(
-  left = lights_3d(light_directional(c(-1, 1, 2))),
-  right = lights_3d(light_directional(c(1, 1, 2)))))
+p + facet_views_3d()
+p + facet_views_3d(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
+p + facet_views_3d(c("front", "top", "right", iso = "isometric"), layout = "first_angle")
+p + facet_views_3d(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
+p + facet_views_3d(views = NULL, lights = list(
+  left = light_3d(light_directional(c(-1, 1, 2))),
+  right = light_3d(light_directional(c(1, 1, 2)))))
 ```

@@ -12,7 +12,6 @@ stat_knot_3d(
   data = NULL,
   position = "identity",
   ...,
-  type = "torus",
   p = 2L,
   q = 3L,
   n = 200L,
@@ -31,10 +30,6 @@ stat_knot_3d(
 - mapping, data, position, ..., na.rm, show.legend, inherit.aes:
 
   Standard layer arguments.
-
-- type:
-
-  Knot family, currently "torus".
 
 - p, q:
 

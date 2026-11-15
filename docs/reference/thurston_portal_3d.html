@@ -14,6 +14,10 @@
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -63,10 +67,12 @@
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -117,7 +123,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">thurston_portal_3d</span><span class="op">(</span><span class="va">normal</span>, <span class="va">offset</span>, <span class="va">matrix</span>, lift <span class="op">=</span> <span class="fl">0</span>, fiber <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">thurston_portal_3d</span><span class="op">(</span><span class="va">normal</span>, <span class="va">offset</span>, <span class="va">matrix</span>, lift <span class="op">=</span> <span class="fl">0</span>, fibre <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -143,7 +149,7 @@ paired face. The differential transports the ray's tangent on crossing.</p></dd>
 multiple of <code>4*pi</code> selecting a lift of an SL2R isometry.</p></dd>
 
 
-<dt id="arg-fiber">fiber<a class="anchor" aria-label="anchor" href="#arg-fiber"></a></dt>
+<dt id="arg-fibre">fibre<a class="anchor" aria-label="anchor" href="#arg-fibre"></a></dt>
 <dd><p>Use <code>normal[4] * w &lt; offset</code> in the unwrapped fibre coordinate
 of SL2R or a product space. The first three normal entries must be zero.</p></dd>
 

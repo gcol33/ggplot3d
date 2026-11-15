@@ -26,7 +26,16 @@ stat_alpha_shape_3d(
   inherit.aes = TRUE
 )
 
-geom_alpha_shape_3d(...)
+geom_alpha_shape_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  radius = NULL,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments

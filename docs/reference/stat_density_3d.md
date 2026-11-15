@@ -4,10 +4,12 @@ Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z
 scale ranges. h contains Gaussian standard deviations in transformed
 units. Automatic bandwidths use normal-reference marginal bandwidths
 with sample size exponent -1/7. adjust multiplies automatic bandwidths.
-Numeric levels are density thresholds; probs() specifies absolute
-enclosed probability contents estimated by tensor trapezoidal
-quadrature. Computed level and density contain the resolved density
-threshold.
+`levels` are density thresholds; `probs` are absolute enclosed
+probability contents, estimated by tensor trapezoidal quadrature. Grid
+quadrature accumulates density from the highest values downwards until
+each content is reached, so the scale limits should include the density
+tails; inadequate captured mass warns. Computed level and density
+contain the resolved density threshold.
 
 ## Usage
 
@@ -22,6 +24,7 @@ stat_density_3d(
   adjust = 1,
   n = 32L,
   levels = NULL,
+  probs = NULL,
   caps = FALSE,
   space = "data",
   method = "cubes",
@@ -32,7 +35,25 @@ stat_density_3d(
   inherit.aes = TRUE
 )
 
-geom_isodensity_3d(...)
+geom_isodensity_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  h = NULL,
+  adjust = 1,
+  n = 32L,
+  levels = NULL,
+  probs = NULL,
+  caps = FALSE,
+  space = "data",
+  method = "cubes",
+  simplify = NULL,
+  clip = NULL,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments
@@ -60,6 +81,11 @@ geom_isodensity_3d(...)
 - levels:
 
   Numeric scalar-field thresholds; NULL uses pretty levels.
+
+- probs:
+
+  Probabilities strictly between zero and one: the enclosed probability
+  content of each surface. Use instead of `levels`.
 
 - caps:
 
@@ -107,4 +133,8 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_isodensity_3d(h = 0.6, levels = 0.02, n = 12) + coord_3d()
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   stat_density_3d(h = 0.6, levels = 0.02, n = 8) + coord_3d()
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  stat_density_3d(h = 0.6, probs = 0.5, n = 12) +
+  ggplot2::xlim(-4, 4) + ggplot2::ylim(-4, 4) +
+  scale_z_continuous(limits = c(-4, 4)) + coord_3d()
 ```

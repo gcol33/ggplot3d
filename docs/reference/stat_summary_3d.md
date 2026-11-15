@@ -81,5 +81,5 @@ p + stat_summary_3d(geom = "errorbar", fun = median,
   fun.min = function(z) quantile(z, 0.25), fun.max = function(z) quantile(z, 0.75),
   width = 0.2) + coord_3d()
 p + stat_summary_3d(geom = "crossbar", fun.data = ggplot2::mean_se,
-  fun.args = list(mult = 2), width = 0.3, cap.plane = "cross", fill = "grey90") + coord_3d()
+  fun.args = list(mult = 2), width = 0.3, cap_plane = "cross", fill = "grey90") + coord_3d()
 ```

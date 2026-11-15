@@ -28,6 +28,10 @@ takes span.'><meta property="og:image" content="https://gillescolling.com/ggplot
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -77,10 +81,12 @@ takes span.'><meta property="og:image" content="https://gillescolling.com/ggplot
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -151,7 +157,7 @@ takes <code>span</code>.</p>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  span <span class="op">=</span> <span class="fl">0.75</span>,</span>
 <span>  method.args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  se.alpha <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  se_alpha <span class="op">=</span> <span class="fl">0.2</span>,</span>
 <span>  domain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"box"</span>, <span class="st">"hull"</span><span class="op">)</span>,</span>
 <span>  view <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cond <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -160,7 +166,26 @@ takes <code>span</code>.</p>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">geom_smooth_3d</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">geom_smooth_3d</span><span class="op">(</span></span>
+<span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"loess"</span>,</span>
+<span>  formula <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">30L</span>,</span>
+<span>  se <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  span <span class="op">=</span> <span class="fl">0.75</span>,</span>
+<span>  method.args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  se_alpha <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  domain <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"box"</span>, <span class="st">"hull"</span><span class="op">)</span>,</span>
+<span>  view <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cond <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -209,7 +234,7 @@ the fit alone, filled by the standard error unless fill is mapped or set;
 <dd><p>Named arguments passed to the fitting function.</p></dd>
 
 
-<dt id="arg-se-alpha">se.alpha<a class="anchor" aria-label="anchor" href="#arg-se-alpha"></a></dt>
+<dt id="arg-se-alpha">se_alpha<a class="anchor" aria-label="anchor" href="#arg-se-alpha"></a></dt>
 <dd><p>Opacity multiplier for confidence surfaces and walls.</p></dd>
 
 

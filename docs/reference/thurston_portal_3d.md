@@ -5,7 +5,7 @@ Pair a face of a Thurston fundamental domain
 ## Usage
 
 ``` r
-thurston_portal_3d(normal, offset, matrix, lift = 0, fiber = FALSE)
+thurston_portal_3d(normal, offset, matrix, lift = 0, fibre = FALSE)
 ```
 
 ## Arguments
@@ -29,7 +29,7 @@ thurston_portal_3d(normal, offset, matrix, lift = 0, fiber = FALSE)
   Fibre displacement for product geometries, or an additional multiple
   of `4*pi` selecting a lift of an SL2R isometry.
 
-- fiber:
+- fibre:
 
   Use `normal[4] * w < offset` in the unwrapped fibre coordinate of SL2R
   or a product space. The first three normal entries must be zero.

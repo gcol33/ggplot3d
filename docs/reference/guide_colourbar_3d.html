@@ -26,6 +26,10 @@ With along = NULL it is an ordinary legend-box colourbar
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -75,10 +79,12 @@ With along = NULL it is an ordinary legend-box colourbar
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -140,15 +146,15 @@ With <code>along = NULL</code> it is an ordinary legend-box colourbar
 <span>  width <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">2</span>, <span class="st">"mm"</span><span class="op">)</span>,</span>
 <span>  gap <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="st">"mm"</span><span class="op">)</span>,</span>
 <span>  nbin <span class="op">=</span> <span class="fl">128L</span>,</span>
-<span>  shading.range <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  shading_range <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">guide_coloursteps_3d</span><span class="op">(</span><span class="va">...</span>, shading.range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu">guide_coloursteps_3d</span><span class="op">(</span><span class="va">...</span>, shading_range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">guide_legend_3d</span><span class="op">(</span><span class="va">...</span>, lit <span class="op">=</span> <span class="cn">TRUE</span>, normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, shading.range <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu">guide_legend_3d</span><span class="op">(</span><span class="va">...</span>, lit <span class="op">=</span> <span class="cn">TRUE</span>, normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, shading_range <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">guide_bins_3d</span><span class="op">(</span><span class="va">...</span>, lit <span class="op">=</span> <span class="cn">TRUE</span>, normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, shading.range <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">guide_bins_3d</span><span class="op">(</span><span class="va">...</span>, lit <span class="op">=</span> <span class="cn">TRUE</span>, normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, shading_range <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -169,7 +175,7 @@ gap from the edge. Tick lengths include this space.</p></dd>
 <dd><p>Number of colour intervals along the bar.</p></dd>
 
 
-<dt id="arg-shading-range">shading.range<a class="anchor" aria-label="anchor" href="#arg-shading-range"></a></dt>
+<dt id="arg-shading-range">shading_range<a class="anchor" aria-label="anchor" href="#arg-shading-range"></a></dt>
 <dd><p><code>FALSE</code>, <code>TRUE</code>, or two angles in degrees in [0,
 180], the span of light shown.</p></dd>
 
@@ -199,14 +205,14 @@ gap from the edge. Tick lengths include this space.</p></dd>
 <code>guide_legend_3d()</code> and <code>guide_bins_3d()</code> draw keys of shaded layers as a
 small facet lit by the plot's light and first camera. <code>normal</code> specifies the
 facet's model-space normal. Unshaded layers retain their own key geometry.</p>
-<p><code>shading.range</code> shows what the light does to each colour. The colourbars
+<p><code>shading_range</code> shows what the light does to each colour. The colourbars
 and colour steps become a two-dimensional swatch, value along the bar and
 light across it; legend and bin keys get a strip below the facet. The
 colours come from the same shading kernel as the faces, for a surface whose
 normal makes each angle along the range with every light, without the
 specular term, using the material of the first layer with one. <code>TRUE</code>
 spans 90 to 0 degrees for the <code>"multiply"</code> and <code>"tint"</code> modes of
-<code><a href="lights_3d.html">lights_3d()</a></code> (from ambient to full light) and 180 to 0 degrees for the
+<code><a href="light_3d.html">light_3d()</a></code> (from ambient to full light) and 180 to 0 degrees for the
 signed modes; two angles in degrees, <code>c(from, to)</code>, set the span, and
 reversing them reverses the strip. With several facet panels, guides use
 the plot's light.</p>
@@ -225,12 +231,12 @@ the plot's light.</p>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>guide <span class="op">=</span> <span class="fu">guide_colourbar_3d</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="st">"Spectral"</span>,</span>
-<span>    guide <span class="op">=</span> <span class="fu">guide_colourbar_3d</span><span class="op">(</span>along <span class="op">=</span> <span class="cn">NULL</span>, shading.range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    guide <span class="op">=</span> <span class="fu">guide_colourbar_3d</span><span class="op">(</span>along <span class="op">=</span> <span class="cn">NULL</span>, shading_range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>light <span class="op">=</span> <span class="fu"><a href="light_3d.html">light_3d</a></span><span class="op">(</span>mode <span class="op">=</span> <span class="st">"lightness"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_b</a></span><span class="op">(</span>guide <span class="op">=</span> <span class="fu">guide_coloursteps_3d</span><span class="op">(</span>shading.range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_b</a></span><span class="op">(</span>guide <span class="op">=</span> <span class="fu">guide_coloursteps_3d</span><span class="op">(</span>shading_range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="geom_col_3d.html">geom_col_3d</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu">guide_legend_3d</span><span class="op">(</span>shading.range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="fu">guide_legend_3d</span><span class="op">(</span>shading_range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

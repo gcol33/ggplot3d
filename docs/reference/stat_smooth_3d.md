@@ -28,7 +28,7 @@ stat_smooth_3d(
   level = 0.95,
   span = 0.75,
   method.args = list(),
-  se.alpha = 0.2,
+  se_alpha = 0.2,
   domain = c("box", "hull"),
   view = NULL,
   cond = list(),
@@ -37,7 +37,26 @@ stat_smooth_3d(
   inherit.aes = TRUE
 )
 
-geom_smooth_3d(...)
+geom_smooth_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  method = "loess",
+  formula = NULL,
+  n = 30L,
+  se = TRUE,
+  level = 0.95,
+  span = 0.75,
+  method.args = list(),
+  se_alpha = 0.2,
+  domain = c("box", "hull"),
+  view = NULL,
+  cond = list(),
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments
@@ -85,7 +104,7 @@ geom_smooth_3d(...)
 
   Named arguments passed to the fitting function.
 
-- se.alpha:
+- se_alpha:
 
   Opacity multiplier for confidence surfaces and walls.
 

@@ -15,7 +15,7 @@ places biplot labels, and like all text it is drawn over the scene.
 ## Usage
 
 ``` r
-stat_biplot_3d(
+biplot_3d(
   model,
   choices = 1:3,
   groups = NULL,
@@ -87,6 +87,6 @@ A list of layers to add to a ggplot with coord_3d().
 ``` r
 fit <- stats::prcomp(iris[1:4], scale. = TRUE)
 groups <- stats::setNames(iris$Species, rownames(iris))
-ggplot2::ggplot() + stat_biplot_3d(fit, groups = groups,
+ggplot2::ggplot() + biplot_3d(fit, groups = groups,
   region = "ellipsoid", loading_scale = 2) + coord_3d()
 ```

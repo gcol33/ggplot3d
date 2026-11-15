@@ -159,7 +159,7 @@ lie on no grid edge (merged <code>"tetra"</code> clusters, centre vertices of
 <span>  refine <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  adaptive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  depth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4L</span>, <span class="fl">8L</span><span class="op">)</span>,</span>
-<span>  tol <span class="op">=</span> <span class="fl">0.002</span>,</span>
+<span>  tolerance <span class="op">=</span> <span class="fl">0.002</span>,</span>
 <span>  simplify <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -170,7 +170,30 @@ lie on no grid edge (merged <code>"tetra"</code> clusters, centre vertices of
 <span>  trace_steps <span class="op">=</span> <span class="fl">512L</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">geom_isofunction_3d</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">geom_isofunction_3d</span><span class="op">(</span></span>
+<span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  <span class="va">fun</span>,</span>
+<span>  n <span class="op">=</span> <span class="fl">24L</span>,</span>
+<span>  args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  levels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  caps <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  method <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  refine <span class="op">=</span> <span class="fl">2L</span>,</span>
+<span>  adaptive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  depth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4L</span>, <span class="fl">8L</span><span class="op">)</span>,</span>
+<span>  tolerance <span class="op">=</span> <span class="fl">0.002</span>,</span>
+<span>  simplify <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  clip <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
+<span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  render <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mesh"</span>, <span class="st">"trace"</span><span class="op">)</span>,</span>
+<span>  trace_tolerance <span class="op">=</span> <span class="fl">1e-05</span>,</span>
+<span>  trace_steps <span class="op">=</span> <span class="fl">512L</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -228,7 +251,7 @@ arithmetic instead of a grid.</p></dd>
 into 2^d intervals.</p></dd>
 
 
-<dt id="arg-tol">tol<a class="anchor" aria-label="anchor" href="#arg-tol"></a></dt>
+<dt id="arg-tolerance">tolerance<a class="anchor" aria-label="anchor" href="#arg-tolerance"></a></dt>
 <dd><p>Geometric tolerance of the octree, relative to the diagonal of
 the scale box.</p></dd>
 
@@ -278,9 +301,9 @@ whose range contains no level is dropped. Every other box is split down to
 <code>depth[1]</code>, and further, up to <code>depth[2]</code>, while the inner product of its
 gradient enclosure with itself may reach zero (the small normal variation
 test: without it the level set inside the box can fold) or while the box
-diagonal times r / |c| exceeds <code>tol</code> times the diagonal of the scale box,
+diagonal times r / |c| exceeds <code>tolerance</code> times the diagonal of the scale box,
 where c and r are the centre and half diagonal of the gradient enclosure.
-Every gradient in the box then lies within asin(r / |c|) of c, so <code>tol</code>
+Every gradient in the box then lies within asin(r / |c|) of c, so <code>tolerance</code>
 bounds how far the level set bends away from a plane inside a box.
 Gradients are measured with each axis scaled to the unit interval. The
 surface is then extracted by dual contouring on the octree (Ju et al.

@@ -207,7 +207,7 @@ stays fixed.
 ``` r
 
 svg <- file.path(out, "cars.svg")
-save_svg_3d(p, svg, interactive = TRUE, width = 624, height = 432)
+export_3d(p, svg, interactive = TRUE, width = 624, height = 432)
 doc <- xml2::read_xml(svg)
 fragments <- xml2::xml_find_all(doc, ".//*[@data-primitive]")
 head(unique(xml2::xml_attr(fragments, "data-layer")))
@@ -240,8 +240,8 @@ existing document.
 
 ``` r
 
-tikz <- export_code_3d(p, "tikz", file = file.path(out, "cars.tex"))
-cat(paste(head(strsplit(tikz, "\n")[[1]], 5), collapse = "\n"))
+tikz <- export_3d(p, file.path(out, "cars.tex"))
+cat(head(readLines(tikz), 5), sep = "\n")
 #> \documentclass[tikz,border=0pt]{standalone}
 #> \usepackage{graphicx}
 #> \usetikzlibrary{svg.path}
@@ -262,9 +262,8 @@ to render another view. The panel index selects the scene to export.
 
 ``` r
 
-asy <- export_code_3d(p, "asy", panel = 1,
-  file = file.path(out, "cars.asy"), prc = TRUE)
-cat(paste(head(strsplit(asy, "\n")[[1]], 5), collapse = "\n"))
+asy <- export_3d(p, file.path(out, "cars.asy"), panel = 1, prc = TRUE)
+cat(head(readLines(asy), 5), sep = "\n")
 #> settings.prc=true;
 #> import three;
 #> size(169.333333333mm,169.333333333mm);

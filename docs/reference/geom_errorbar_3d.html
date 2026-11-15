@@ -26,6 +26,10 @@ lies on the floor of the box."><meta property="og:image" content="https://gilles
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -75,10 +79,12 @@ lies on the floor of the box."><meta property="og:image" content="https://gilles
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -142,7 +148,7 @@ lies on the floor of the box.</p>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cap.plane <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  cap_plane <span class="op">=</span> <span class="st">"auto"</span>,</span>
 <span>  na.rm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  inherit.aes <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -177,7 +183,7 @@ lies on the floor of the box.</p>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cap.plane <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  cap_plane <span class="op">=</span> <span class="st">"auto"</span>,</span>
 <span>  fatten <span class="op">=</span> <span class="fl">2.5</span>,</span>
 <span>  middle.colour <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  middle.color <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -209,7 +215,7 @@ extends along. Defaults to 0.9 times the spacing of the positions along
 that axis.</p></dd>
 
 
-<dt id="arg-cap-plane">cap.plane<a class="anchor" aria-label="anchor" href="#arg-cap-plane"></a></dt>
+<dt id="arg-cap-plane">cap_plane<a class="anchor" aria-label="anchor" href="#arg-cap-plane"></a></dt>
 <dd><p>Plane of the caps: <code>"auto"</code>, <code>"xy"</code>, <code>"xz"</code>, <code>"yz"</code> or
 <code>"cross"</code>.</p></dd>
 
@@ -230,7 +236,7 @@ aesthetics.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Caps and crossbar boxes are perpendicular to their bar and lie in the plane
-named by <code>cap.plane</code>. A bar lying in that plane is capped along the plane's
+named by <code>cap_plane</code>. A bar lying in that plane is capped along the plane's
 other axis. A bar normal to the plane, or any bar with <code>"cross"</code>, is capped
 along both perpendicular axes: a cross for error bars and a cuboid for
 crossbars, which read the same from every view. With <code>"auto"</code>, bars along z
@@ -255,14 +261,14 @@ draws stems to a base value.</p></div>
 <span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span>, zmin <span class="op">=</span> <span class="va">z</span> <span class="op">-</span> <span class="va">se</span>, zmax <span class="op">=</span> <span class="va">z</span> <span class="op">+</span> <span class="va">se</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_errorbar_3d</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_pointrange_3d</span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"steelblue"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_crossbar_3d</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.3</span>, fill <span class="op">=</span> <span class="st">"grey85"</span>, cap.plane <span class="op">=</span> <span class="st">"cross"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu">geom_crossbar_3d</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.3</span>, fill <span class="op">=</span> <span class="st">"grey85"</span>, cap_plane <span class="op">=</span> <span class="st">"cross"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Intervals on all three axes at once</span></span>
 <span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span>, z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">e</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span>,</span>
 <span>    xmin <span class="op">=</span> <span class="va">x</span> <span class="op">-</span> <span class="fl">0.3</span>, xmax <span class="op">=</span> <span class="va">x</span> <span class="op">+</span> <span class="fl">0.3</span>, ymin <span class="op">=</span> <span class="va">y</span> <span class="op">-</span> <span class="fl">0.5</span>, ymax <span class="op">=</span> <span class="va">y</span> <span class="op">+</span> <span class="fl">0.5</span>,</span>
 <span>    zmin <span class="op">=</span> <span class="va">z</span> <span class="op">-</span> <span class="fl">0.4</span>, zmax <span class="op">=</span> <span class="va">z</span> <span class="op">+</span> <span class="fl">0.4</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_errorbar_3d</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.15</span>, cap.plane <span class="op">=</span> <span class="st">"cross"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="fu">geom_errorbar_3d</span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.15</span>, cap_plane <span class="op">=</span> <span class="st">"cross"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Ranges on the floor, from x/y alone</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">e</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, ymin <span class="op">=</span> <span class="va">y</span> <span class="op">-</span> <span class="fl">1</span>, ymax <span class="op">=</span> <span class="va">y</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>

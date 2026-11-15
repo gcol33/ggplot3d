@@ -52,7 +52,7 @@ stat_riemann_sphere_3d(
 - transform:
 
   Optional
-  [`mobius()`](https://gillescolling.com/ggplot3d/reference/mobius.md)
+  [`mobius_3d()`](https://gillescolling.com/ggplot3d/reference/mobius_3d.md)
   map applied to the sphere mesh.
 
 ## Value

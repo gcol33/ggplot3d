@@ -11,7 +11,7 @@ geom_dropline_3d(
   stat = "identity",
   position = "identity",
   ...,
-  face = "zmin",
+  onto = "zmin",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -24,7 +24,7 @@ geom_dropline_3d(
 
   Standard layer arguments.
 
-- face:
+- onto:
 
   Box face: zmin (floor), zmax, xmin, xmax, ymin or ymax.
 

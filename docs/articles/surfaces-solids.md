@@ -219,10 +219,9 @@ function.](surfaces-solids_files/figure-html/stat-isofunction-1.svg)
 
 A trivariate density estimates the distribution of observations in three
 dimensions. Numeric levels select density thresholds. Probability
-contents, specified with
-[`probs()`](https://gillescolling.com/ggplot3d/reference/probs.md),
-select enclosed mass estimated from the sampled grid. The grid ranges
-need to include the density tails for probability-content requests.
+contents, given as `probs`, select enclosed mass estimated from the
+sampled grid. The grid ranges need to include the density tails for
+probability-content requests.
 
 ``` r
 
@@ -245,11 +244,14 @@ sample.](surfaces-solids_files/figure-html/stat-density-1.svg)
 
 ``` r
 
-probs(0.5, 0.9)
-#> [1] 0.5 0.9
-#> attr(,"class")
-#> [1] "ggplot3d_probs"
+ggplot(cloud, aes(x, y, z = z)) +
+  stat_density_3d(h = 0.7, probs = c(0.5, 0.9), n = 12, alpha = 0.4) +
+  xlim(-4, 4) + ylim(-4, 4) + scale_z_continuous(limits = c(-4, 4)) + coord_3d()
 ```
+
+![Two nested density surfaces enclosing half and nine tenths of the
+probability
+mass.](surfaces-solids_files/figure-html/density-probs-1.svg)
 
 ## Convex hulls
 

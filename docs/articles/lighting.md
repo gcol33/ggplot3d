@@ -28,7 +28,7 @@ hill <- ggplot(d, aes(x, y, z = z, fill = z)) +
 
 By default the light multiplies the fill: a face at a grazing angle is a
 darker version of its colour, and a dark yellow no longer looks like the
-yellow in the legend. `lights_3d(mode = "lightness")` moves only the
+yellow in the legend. `light_3d(mode = "lightness")` moves only the
 OKLab lightness of the fill and keeps its hue, so the colour stays
 recognisable against its key. A face at the `neutral` angle to the light
 keeps its colour exactly.
@@ -36,8 +36,8 @@ keeps its colour exactly.
 ``` r
 
 hill + scale_fill_distiller(palette = "Spectral",
-    guide = guide_colourbar_3d(along = NULL, shading.range = TRUE)) +
-  coord_3d(light = lights_3d(light_directional(), mode = "lightness"))
+    guide = guide_colourbar_3d(along = NULL, shading_range = TRUE)) +
+  coord_3d(light = light_3d(light_directional(), mode = "lightness"))
 ```
 
 ![3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera:
@@ -57,8 +57,8 @@ matplotlib’s `LightSource`.
 ``` r
 
 hill + scale_fill_viridis_b(guide = guide_coloursteps_3d()) +
-  coord_3d(light = lights_3d(light_directional(), mode = "tone",
-    shadow = "#22305a", highlight = "#fff3d0"))
+  coord_3d(light = light_3d(light_directional(), mode = "tone",
+    shadow_colour = "#22305a", highlight_colour = "#fff3d0"))
 ```
 
 ![3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera:

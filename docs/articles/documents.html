@@ -85,7 +85,7 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/ggplot3d.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
@@ -170,9 +170,9 @@ chosen scene backend and the document’s graphics device. The default
 backend draws vector geometry; this article’s SVG device keeps those
 paths scalable.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">ggplot</span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">wt</span>, <span class="va">mpg</span>, z <span class="op">=</span> <span class="va">hp</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">wt</span>, <span class="va">mpg</span>, z <span class="op">=</span> <span class="va">hp</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_point_3d</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">3</span>, colour <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"blue"</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"weight"</span>, y <span class="op">=</span> <span class="st">"mpg"</span>, z <span class="op">=</span> <span class="st">"horsepower"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"weight"</span>, y <span class="op">=</span> <span class="st">"mpg"</span>, z <span class="op">=</span> <span class="st">"horsepower"</span><span class="op">)</span></span>
 <span><span class="va">p</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Motor cars positioned by weight, fuel economy and horsepower, with higher-power cars toward the upper part of the box."><title>Motor cars positioned by weight, fuel economy and horsepower, with higher-power cars toward the upper part of the box.</title>
@@ -423,23 +423,23 @@ doubles that for high-density screens.</p>
 <div class="section level2">
 <h2 id="accessible-descriptions">Accessible descriptions<a class="anchor" aria-label="anchor" href="#accessible-descriptions"></a>
 </h2>
-<p><code><a href="../reference/alt_text_3d.html">alt_text_3d()</a></code> describes the layer types, mapped
-variables and initial camera angles. The generated description supplies
-the default alternative text for static figures and an accessible group
-name around HTML viewers. Inspect it before adding words about what the
-figure communicates.</p>
+<p><code><a href="https://ggplot2.tidyverse.org/reference/get_alt_text.html" class="external-link">get_alt_text()</a></code> from ggplot2 describes the layer types,
+mapped variables and initial camera angles. The generated description
+supplies the default alternative text for static figures and an
+accessible group name around HTML viewers. Inspect it before adding
+words about what the figure communicates.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/alt_text_3d.html">alt_text_3d</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/get_alt_text.html" class="external-link">get_alt_text</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "3D plot. Layers: Point (x = wt, y = mpg, z = hp). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic projection."</span></span></code></pre></div>
 <p>An explicit chunk <code>fig.alt</code> takes precedence. A
 description supplied by <code>labs(alt = ...)</code> takes precedence
 over the generated layer description. The example below describes the
 relationship the reader can inspect in the motor-car plot.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">described</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>alt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">described</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>alt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Motor cars plotted by weight, fuel economy and horsepower."</span>,</span>
 <span>  <span class="st">"Heavier cars generally have lower fuel economy."</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/alt_text_3d.html">alt_text_3d</a></span><span class="op">(</span><span class="va">described</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/get_alt_text.html" class="external-link">get_alt_text</a></span><span class="op">(</span><span class="va">described</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Motor cars plotted by weight, fuel economy and horsepower. Heavier cars generally have lower fuel economy."</span></span></code></pre></div>
 <p>When a chunk prints several plots, supply a vector of descriptions in
 their printed order. Each static figure gets its own alternative
@@ -1202,8 +1202,8 @@ the independent scenes. Its composition below contains a 3D view and a
 2D view of the same cars. These arrangements are static figures; use a
 faceted ggplot with the viewer for a live multi-panel document.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">flat</span> <span class="op">&lt;-</span> <span class="fu">ggplot</span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">wt</span>, <span class="va">mpg</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_point</span><span class="op">(</span>colour <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"blue"</span><span class="op">]</span>, size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu">labs</span><span class="op">(</span>x <span class="op">=</span> <span class="st">"weight"</span>, y <span class="op">=</span> <span class="st">"mpg"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">flat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">wt</span>, <span class="va">mpg</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"blue"</span><span class="op">]</span>, size <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"weight"</span>, y <span class="op">=</span> <span class="st">"mpg"</span><span class="op">)</span></span>
 <span><span class="fu">cowplot</span><span class="fu">::</span><span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span><span class="va">p</span>, <span class="va">flat</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="576.00pt" viewBox="0 0 468.00 576.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="A 3D motor-car plot above a 2D scatterplot of weight and fuel economy."><title>A 3D motor-car plot above a 2D scatterplot of weight and fuel economy.</title>
@@ -1490,7 +1490,7 @@ inches wide and four inches high at 144 dots per inch.</p>
 <code class="sourceCode R"><span><span class="va">raster</span> <span class="op">&lt;-</span> <span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>backend <span class="op">=</span> <span class="fu"><a href="../reference/backend_3d.html">backend_3d</a></span><span class="op">(</span><span class="st">"raster"</span>, dpi <span class="op">=</span> <span class="fl">144</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Coordinate system already present. Adding coord_3d() replaces it.</span></span>
 <span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".png"</span><span class="op">)</span></span>
-<span><span class="fu">ggsave</span><span class="op">(</span><span class="va">path</span>, <span class="va">raster</span>, width <span class="op">=</span> <span class="fl">6</span>, height <span class="op">=</span> <span class="fl">4</span>, dpi <span class="op">=</span> <span class="fl">144</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span><span class="va">path</span>, <span class="va">raster</span>, width <span class="op">=</span> <span class="fl">6</span>, height <span class="op">=</span> <span class="fl">4</span>, dpi <span class="op">=</span> <span class="fl">144</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.info</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span><span class="op">$</span><span class="va">size</span> <span class="op">&gt;</span> <span class="fl">0</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></code></pre></div>

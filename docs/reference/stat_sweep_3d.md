@@ -34,7 +34,24 @@ stat_sweep_3d(
   inherit.aes = TRUE
 )
 
-geom_sweep_3d(...)
+geom_sweep_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  profile,
+  radius = 1,
+  radius.unit = "data",
+  cap = c("round", "flat", "none"),
+  normal = NULL,
+  closed = FALSE,
+  profile_closed = NULL,
+  spline = NULL,
+  n = 100L,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments

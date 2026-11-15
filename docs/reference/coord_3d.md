@@ -40,7 +40,7 @@ coord_3d(
   origin = c(x = 0, y = 0, z = 0),
   clip_planes = list(),
   stereo = NULL,
-  space = "euclidean",
+  geometry = "euclidean",
   model = NULL,
   input = NULL,
   isometry = NULL,
@@ -135,9 +135,7 @@ coord_3d(
 - light:
 
   Lighting from
-  [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
-  or
-  [`lights_3d()`](https://gillescolling.com/ggplot3d/reference/lights_3d.md),
+  [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md),
   one light such as
   [`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
   or NULL for none.
@@ -193,7 +191,7 @@ coord_3d(
   [`stereo_3d()`](https://gillescolling.com/ggplot3d/reference/stereo_3d.md),
   or NULL for one view.
 
-- space:
+- geometry:
 
   Geometry of paths and faces: `"euclidean"` or an internal `Space3D`
   extension. Spaces define canonical points, chart conversions,

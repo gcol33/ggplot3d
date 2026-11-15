@@ -5,7 +5,7 @@ is calculated from the resulting endpoints after frame and aspect mapping.
 Filled cone heads and tube shafts are analytic quadrics (Sigg et al.
 2006) with exact outlines and per-sample depth; heads without a fill are
 drawn by the edges of a cone mesh of detail subdivisions.
-normalize = TRUE makes the input vectors unit length before applying
+normalise = TRUE makes the input vectors unit length before applying
 scale. Computed variables norm, xend, yend, zend are available
 through after_stat(). Zero-length vectors draw no geometry."><meta property="og:description" content="Maps x/y/z as anchors and u/v/w as vector components in original data
 units. Endpoints are transformed by the position scales. Cone orientation
@@ -13,7 +13,7 @@ is calculated from the resulting endpoints after frame and aspect mapping.
 Filled cone heads and tube shafts are analytic quadrics (Sigg et al.
 2006) with exact outlines and per-sample depth; heads without a fill are
 drawn by the edges of a cone mesh of detail subdivisions.
-normalize = TRUE makes the input vectors unit length before applying
+normalise = TRUE makes the input vectors unit length before applying
 scale. Computed variables norm, xend, yend, zend are available
 through after_stat(). Zero-length vectors draw no geometry."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
 (function () {
@@ -30,6 +30,10 @@ through after_stat(). Zero-length vectors draw no geometry."><meta property="og:
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -79,10 +83,12 @@ through after_stat(). Zero-length vectors draw no geometry."><meta property="og:
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -134,7 +140,7 @@ is calculated from the resulting endpoints after frame and aspect mapping.
 Filled cone heads and tube shafts are analytic quadrics (Sigg et al.
 2006) with exact outlines and per-sample depth; heads without a fill are
 drawn by the edges of a cone mesh of <code>detail</code> subdivisions.
-<code>normalize = TRUE</code> makes the input vectors unit length before applying
+<code>normalise = TRUE</code> makes the input vectors unit length before applying
 <code>scale</code>. Computed variables <code>norm</code>, <code>xend</code>, <code>yend</code>, <code>zend</code> are available
 through <code><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" class="external-link">after_stat()</a></code>. Zero-length vectors draw no geometry.</p>
     </div>
@@ -148,7 +154,7 @@ through <code><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" cl
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  normalize <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  normalise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  pivot <span class="op">=</span> <span class="st">"tail"</span>,</span>
 <span>  head <span class="op">=</span> <span class="st">"cone"</span>,</span>
 <span>  shaft <span class="op">=</span> <span class="st">"line"</span>,</span>
@@ -169,7 +175,7 @@ through <code><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" cl
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  normalize <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  normalise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  pivot <span class="op">=</span> <span class="st">"tail"</span>,</span>
 <span>  head_width <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  detail <span class="op">=</span> <span class="fl">1L</span>,</span>
@@ -192,8 +198,8 @@ through <code><a href="https://ggplot2.tidyverse.org/reference/aes_eval.html" cl
 <dd><p>Nonnegative vector length multiplier.</p></dd>
 
 
-<dt id="arg-normalize">normalize<a class="anchor" aria-label="anchor" href="#arg-normalize"></a></dt>
-<dd><p>Whether to normalize the input vectors.</p></dd>
+<dt id="arg-normalise">normalise<a class="anchor" aria-label="anchor" href="#arg-normalise"></a></dt>
+<dd><p>Whether to normalise the input vectors.</p></dd>
 
 
 <dt id="arg-pivot">pivot<a class="anchor" aria-label="anchor" href="#arg-pivot"></a></dt>

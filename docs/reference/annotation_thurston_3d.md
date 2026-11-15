@@ -5,9 +5,9 @@ Draw an intrinsic ball, tube, or half-space
 ## Usage
 
 ``` r
-geom_thurston_3d(
+annotation_thurston_3d(
   shape = "ball",
-  center = c(0, 0, 2),
+  centre = c(0, 0, 2),
   radius = 0.5,
   direction = c(0, 0, 1),
   ...
@@ -20,7 +20,7 @@ geom_thurston_3d(
 
   `"ball"`, `"cylinder"`, or `"halfspace"`.
 
-- center:
+- centre:
 
   Three coordinates of the centre or a point on the boundary.
 
@@ -59,6 +59,6 @@ registry.
 ## Examples
 
 ``` r
-ggplot2::ggplot() + geom_thurston_3d(center = c(0, 0, 2), fill = "steelblue") +
+ggplot2::ggplot() + annotation_thurston_3d(centre = c(0, 0, 2), fill = "steelblue") +
   coord_3d(backend = backend_3d("raymarch", geometry = "nil", dpi = 40))
 ```

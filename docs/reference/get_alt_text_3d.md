@@ -1,21 +1,11 @@
 # Describe a three-dimensional plot for a document
 
-Describes the layers, mapped variables and initial camera. An explicit
+[`ggplot2::get_alt_text()`](https://ggplot2.tidyverse.org/reference/get_alt_text.html)
+of a plot with
+[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+describes the layers, mapped variables and initial camera. An explicit
 `labs(alt = ...)` takes precedence. Review the description when the plot
 communicates a finding that needs words beyond its mapped variables.
-
-## Usage
-
-``` r
-alt_text_3d(plot)
-```
-
-## Arguments
-
-- plot:
-
-  A ggplot with
-  [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
 
 ## Value
 
@@ -56,6 +46,6 @@ dimensions.
 ``` r
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
   geom_point_3d() + coord_3d(azimuth = 40, elevation = 25)
-alt_text_3d(p)
-alt_text_3d(p + ggplot2::labs(alt = "Fuel economy, weight and horsepower."))
+ggplot2::get_alt_text(p)
+ggplot2::get_alt_text(p + ggplot2::labs(alt = "Fuel economy, weight and horsepower."))
 ```

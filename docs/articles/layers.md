@@ -92,7 +92,7 @@ anchors.](layers_files/figure-html/camera-text-1.svg)
 
 ``` r
 
-p + geom_dropline_3d(face = "zmin", linewidth = 0.8) +
+p + geom_dropline_3d(onto = "zmin", linewidth = 0.8) +
   geom_point_3d(size = 3) + coord_3d()
 ```
 
@@ -442,7 +442,7 @@ measurements <- data.frame(x = c(1, 2, 3), y = c(2, 1, 3), z = c(3, 4, 2))
 intervals <- ggplot(measurements, aes(x, y, z = z,
   xmin = x - 0.2, xmax = x + 0.2, ymin = y - 0.3, ymax = y + 0.3,
   zmin = z - 0.5, zmax = z + 0.5))
-intervals + geom_errorbar_3d(width = 0.12, cap.plane = "cross",
+intervals + geom_errorbar_3d(width = 0.12, cap_plane = "cross",
                             linewidth = 0.8) +
   geom_point_3d(size = 2.5, colour = PAL["blue"]) + coord_3d()
 ```
@@ -459,7 +459,7 @@ line. Restrict this example to z bounds to see that box clearly.
 ``` r
 
 ggplot(measurements, aes(x, y, z = z, zmin = z - 0.5, zmax = z + 0.5)) +
-  geom_crossbar_3d(width = 0.25, cap.plane = "cross", fill = PAL["blue"]) +
+  geom_crossbar_3d(width = 0.25, cap_plane = "cross", fill = PAL["blue"]) +
   coord_3d()
 ```
 

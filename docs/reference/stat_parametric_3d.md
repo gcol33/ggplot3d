@@ -34,7 +34,26 @@ stat_parametric_3d(
   inherit.aes = TRUE
 )
 
-geom_parametric_3d(...)
+geom_parametric_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  fun,
+  u = c(0, 2 * pi),
+  v = c(0, 2 * pi),
+  n = 40L,
+  closed = FALSE,
+  twist = FALSE,
+  args = list(),
+  adaptive = FALSE,
+  tolerance = 0.002,
+  angle = 10,
+  max_depth = 4L,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments

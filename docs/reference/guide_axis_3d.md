@@ -23,10 +23,10 @@ guide_axis_3d(
   minor.ticks = FALSE,
   cap = "none",
   order = 0L,
-  label.orientation = "screen",
+  label_orientation = "screen",
   plane = "auto",
-  title.position = "centre",
-  depth.scale = FALSE,
+  title_position = "centre",
+  depth_scale = FALSE,
   ticks = "outward"
 )
 ```
@@ -51,7 +51,7 @@ guide_axis_3d(
 
 - angle:
 
-  Label rotation in degrees for `label.orientation = "screen"`. Waiver
+  Label rotation in degrees for `label_orientation = "screen"`. Waiver
   keeps labels horizontal.
 
 - n.dodge:
@@ -70,7 +70,7 @@ guide_axis_3d(
 
   Guide ordering value.
 
-- label.orientation:
+- label_orientation:
 
   `"screen"`, `"edge"` or `"plane"`: tick labels upright on the page,
   turned along the projected edge and kept upright, or lying in a pane.
@@ -82,14 +82,14 @@ guide_axis_3d(
   Pane for plane labels and in-plane ticks: `"auto"`, `"floor"`, `"xy"`,
   `"xz"` or `"yz"`. The pane must contain the axis.
 
-- title.position:
+- title_position:
 
   `"centre"` places the title beside the middle of the axis, beyond the
   tick labels; `"near"` places it at the end nearer the camera. Screen
   titles sit past that endpoint; plane titles sit inside the pane
   boundary.
 
-- depth.scale:
+- depth_scale:
 
   Under perspective projection, scale tick labels and tick lengths by
   their distance from the camera: `FALSE` (none), `TRUE` (full), or a
@@ -111,7 +111,7 @@ A ggplot2 guide for a three-dimensional position axis.
 ## Details
 
 Tick labels can stand upright on the page
-(`label.orientation = "screen"`), turn with the projected edge they
+(`label_orientation = "screen"`), turn with the projected edge they
 label (`"edge"`, as `rotate_labels` in ggcube and the automatic label
 rotation of Makie's `Axis3`), or lie flat in one of the two box panes
 that meet at the edge (`"plane"`), drawn from the glyph outlines of the
@@ -144,14 +144,14 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d()
 p + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
 p + scale_z_continuous(guide = guide_axis_3d(position = "origin")) +
   coord_3d(origin = c(x = 2, y = 1.5))
-p + ggplot2::guides(x = guide_axis_3d(label.orientation = "edge"),
-                    y = guide_axis_3d(label.orientation = "edge")) +
+p + ggplot2::guides(x = guide_axis_3d(label_orientation = "edge"),
+                    y = guide_axis_3d(label_orientation = "edge")) +
   coord_3d()
 if (requireNamespace("systemfonts", quietly = TRUE)) {
-  p + ggplot2::guides(x = guide_axis_3d(label.orientation = "plane", ticks = "in_plane"),
-                      y = guide_axis_3d(label.orientation = "plane", ticks = "in_plane")) +
+  p + ggplot2::guides(x = guide_axis_3d(label_orientation = "plane", ticks = "in_plane"),
+                      y = guide_axis_3d(label_orientation = "plane", ticks = "in_plane")) +
     coord_3d(projection = "perspective")
 }
-p + ggplot2::guides(z = guide_axis_3d(title.position = "near", depth.scale = TRUE)) +
+p + ggplot2::guides(z = guide_axis_3d(title_position = "near", depth_scale = TRUE)) +
   coord_3d(projection = "perspective")
 ```

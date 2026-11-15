@@ -78,7 +78,7 @@ bounds for arbitrary rotation.
 
 frames <- animate_3d(p, frames = 3, fps = 2,
   azimuth = function(t) -60 + 90 * t,
-  elevation = c(20, 35, 50), renderer = "vector",
+  elevation = c(20, 35, 50), backend = "vector",
   width = 320, height = 320, progress = FALSE)
 frames$camera
 #>   time azimuth elevation zoom roll   projection fov distance target_x target_y
@@ -138,7 +138,7 @@ states before interpolation, and all states train one set of scales.
 ``` r
 
 movement <- animate_3d(moving, time = "state", tween = tween_3d(n = 3),
-  renderer = "vector", width = 480, height = 360, fps = 5, progress = FALSE)
+  backend = "vector", width = 480, height = 360, fps = 5, progress = FALSE)
 movement$frame_count
 #> [1] 5
 movement$transition
@@ -180,7 +180,7 @@ observations break its trail.
 
 wake <- animate_3d(moving, time = "state", tween = tween_3d(n = 3),
   trail = list(length = 4, radius = 0.05, taper = TRUE),
-  renderer = "vector", width = 480, height = 360, progress = FALSE)
+  backend = "vector", width = 480, height = 360, progress = FALSE)
 ```
 
 ![Three cars halfway along their motion, with fading tapered
@@ -217,7 +217,7 @@ wave <- ggplot(waves, aes(x, y, z = z, fill = z)) + geom_surface_3d() +
   scale_fill_gradient2(low = PAL["blue"], mid = "white", high = PAL["red"]) +
   coord_3d()
 morph <- animate_3d(wave, time = "state", tween = tween_3d(n = 1),
-  renderer = "vector", width = 480, height = 360, progress = FALSE)
+  backend = "vector", width = 480, height = 360, progress = FALSE)
 ```
 
 ![A wave surface in its first state, coloured by

@@ -85,7 +85,7 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/ggplot3d.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
@@ -746,7 +746,7 @@ bounds for arbitrary rotation.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">frames</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, frames <span class="op">=</span> <span class="fl">3</span>, fps <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  azimuth <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="op">-</span><span class="fl">60</span> <span class="op">+</span> <span class="fl">90</span> <span class="op">*</span> <span class="va">t</span>,</span>
-<span>  elevation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">35</span>, <span class="fl">50</span><span class="op">)</span>, renderer <span class="op">=</span> <span class="st">"vector"</span>,</span>
+<span>  elevation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">35</span>, <span class="fl">50</span><span class="op">)</span>, backend <span class="op">=</span> <span class="st">"vector"</span>,</span>
 <span>  width <span class="op">=</span> <span class="fl">320</span>, height <span class="op">=</span> <span class="fl">320</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">frames</span><span class="op">$</span><span class="va">camera</span></span>
 <span><span class="co">#&gt;   time azimuth elevation zoom roll   projection fov distance target_x target_y</span></span>
@@ -797,7 +797,7 @@ states, producing five frames in total. Statistics run on the supplied
 states before interpolation, and all states train one set of scales.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">movement</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">moving</span>, time <span class="op">=</span> <span class="st">"state"</span>, tween <span class="op">=</span> <span class="fu"><a href="../reference/tween_3d.html">tween_3d</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  renderer <span class="op">=</span> <span class="st">"vector"</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">360</span>, fps <span class="op">=</span> <span class="fl">5</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  backend <span class="op">=</span> <span class="st">"vector"</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">360</span>, fps <span class="op">=</span> <span class="fl">5</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">movement</span><span class="op">$</span><span class="va">frame_count</span></span>
 <span><span class="co">#&gt; [1] 5</span></span>
 <span><span class="va">movement</span><span class="op">$</span><span class="va">transition</span></span>
@@ -828,7 +828,7 @@ trail.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">wake</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">moving</span>, time <span class="op">=</span> <span class="st">"state"</span>, tween <span class="op">=</span> <span class="fu"><a href="../reference/tween_3d.html">tween_3d</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
 <span>  trail <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>length <span class="op">=</span> <span class="fl">4</span>, radius <span class="op">=</span> <span class="fl">0.05</span>, taper <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>  renderer <span class="op">=</span> <span class="st">"vector"</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">360</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span>  backend <span class="op">=</span> <span class="st">"vector"</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">360</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="motion_files/figure-html/motion-trail-3.png" class="r-plt" alt="Three cars halfway along their motion, with fading tapered trails." width="100%"><img src="motion_files/figure-html/motion-trail-5.png" class="r-plt" alt="The cars at their final positions, with trails showing their recent paths." width="100%"></p>
 <p><code>trail = 4</code> uses a default tube radius of 0.5% of the
 panel range diagonal. Setting <code>width</code> in the list selects a
@@ -858,7 +858,7 @@ pair of heights averages to zero.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient2</a></span><span class="op">(</span>low <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"blue"</span><span class="op">]</span>, mid <span class="op">=</span> <span class="st">"white"</span>, high <span class="op">=</span> <span class="va">PAL</span><span class="op">[</span><span class="st">"red"</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">morph</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">wave</span>, time <span class="op">=</span> <span class="st">"state"</span>, tween <span class="op">=</span> <span class="fu"><a href="../reference/tween_3d.html">tween_3d</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  renderer <span class="op">=</span> <span class="st">"vector"</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">360</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<span>  backend <span class="op">=</span> <span class="st">"vector"</span>, width <span class="op">=</span> <span class="fl">480</span>, height <span class="op">=</span> <span class="fl">360</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="motion_files/figure-html/surface-state-1.png" class="r-plt" alt="A wave surface in its first state, coloured by height." width="100%"><img src="motion_files/figure-html/surface-state-2.png" class="r-plt" alt="The flat middle frame interpolated between opposite wave heights." width="100%"><img src="motion_files/figure-html/surface-state-3.png" class="r-plt" alt="The final wave with all heights reversed." width="100%"></p>
 <p>Positions interpolate in transformed scale units, and colours
 interpolate in linear light. Paths with different vertex counts are

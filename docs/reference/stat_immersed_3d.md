@@ -10,13 +10,24 @@ Lighting is two-sided.
 
 ``` r
 stat_immersed_3d(
+  mapping = NULL,
+  data = NULL,
+  ...,
   type = c("klein_figure8", "klein_bottle", "boy", "cross_cap", "moebius"),
-  n = 40L,
-  ...
+  n = 40L
 )
 ```
 
 ## Arguments
+
+- mapping, data:
+
+  Standard layer arguments.
+
+- ...:
+
+  Arguments to
+  [`stat_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md).
 
 - type:
 
@@ -25,11 +36,6 @@ stat_immersed_3d(
 - n:
 
   Samples per parameter, a scalar or pair of integers.
-
-- ...:
-
-  Arguments to
-  [`stat_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md).
 
 ## Value
 

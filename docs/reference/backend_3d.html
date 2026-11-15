@@ -67,6 +67,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
@@ -284,7 +285,7 @@ is a uniform environment; the diffuse light is a sampled distant disk.
 Points and paths use the solid conversion of <code><a href="export_3d.html">export_3d()</a></code>, and SDF layers
 use the shared sphere tracer. Furniture and text remain vector graphics.</p>
 <p>The raymarch backend traces geodesics from an observer inside the geometry.
-Use <code><a href="geom_thurston_3d.html">geom_thurston_3d()</a></code> for balls, cylinders and half-spaces, or traced SDF
+Use <code><a href="annotation_thurston_3d.html">annotation_thurston_3d()</a></code> for balls, cylinders and half-spaces, or traced SDF
 layers for chart-defined CSG. It draws a full-panel perspective image;
 Euclidean plot axes and exterior-camera settings have no intrinsic meaning.
 Lighting is an isotropic point light at the observer, with the ambient and

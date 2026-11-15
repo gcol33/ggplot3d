@@ -23,7 +23,16 @@ stat_hull_3d(
   inherit.aes = TRUE
 )
 
-geom_hull_3d(...)
+geom_hull_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  space = "data",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 ```
 
 ## Arguments

@@ -28,6 +28,10 @@ Labels are thinned automatically using their measured extents along the edge.'><
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -77,10 +81,12 @@ Labels are thinned automatically using their measured extents along the edge.'><
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -148,10 +154,10 @@ Labels are thinned automatically using their measured extents along the edge.</p
 <span>  minor.ticks <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  cap <span class="op">=</span> <span class="st">"none"</span>,</span>
 <span>  order <span class="op">=</span> <span class="fl">0L</span>,</span>
-<span>  label.orientation <span class="op">=</span> <span class="st">"screen"</span>,</span>
+<span>  label_orientation <span class="op">=</span> <span class="st">"screen"</span>,</span>
 <span>  plane <span class="op">=</span> <span class="st">"auto"</span>,</span>
-<span>  title.position <span class="op">=</span> <span class="st">"centre"</span>,</span>
-<span>  depth.scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  title_position <span class="op">=</span> <span class="st">"centre"</span>,</span>
+<span>  depth_scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  ticks <span class="op">=</span> <span class="st">"outward"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -178,7 +184,7 @@ Labels are thinned automatically using their measured extents along the edge.</p
 
 
 <dt id="arg-angle">angle<a class="anchor" aria-label="anchor" href="#arg-angle"></a></dt>
-<dd><p>Label rotation in degrees for <code>label.orientation = "screen"</code>.
+<dd><p>Label rotation in degrees for <code>label_orientation = "screen"</code>.
 Waiver keeps labels horizontal.</p></dd>
 
 
@@ -198,7 +204,7 @@ Waiver keeps labels horizontal.</p></dd>
 <dd><p>Guide ordering value.</p></dd>
 
 
-<dt id="arg-label-orientation">label.orientation<a class="anchor" aria-label="anchor" href="#arg-label-orientation"></a></dt>
+<dt id="arg-label-orientation">label_orientation<a class="anchor" aria-label="anchor" href="#arg-label-orientation"></a></dt>
 <dd><p><code>"screen"</code>, <code>"edge"</code> or <code>"plane"</code>: tick labels
 upright on the page, turned along the projected edge and kept upright, or
 lying in a pane. Titles follow the edge in every orientation and lie in
@@ -210,14 +216,14 @@ the pane with <code>"plane"</code>.</p></dd>
 <code>"floor"</code>, <code>"xy"</code>, <code>"xz"</code> or <code>"yz"</code>. The pane must contain the axis.</p></dd>
 
 
-<dt id="arg-title-position">title.position<a class="anchor" aria-label="anchor" href="#arg-title-position"></a></dt>
+<dt id="arg-title-position">title_position<a class="anchor" aria-label="anchor" href="#arg-title-position"></a></dt>
 <dd><p><code>"centre"</code> places the title beside the middle of the
 axis, beyond the tick labels; <code>"near"</code> places it at the end nearer the
 camera. Screen titles sit past that endpoint; plane titles sit inside
 the pane boundary.</p></dd>
 
 
-<dt id="arg-depth-scale">depth.scale<a class="anchor" aria-label="anchor" href="#arg-depth-scale"></a></dt>
+<dt id="arg-depth-scale">depth_scale<a class="anchor" aria-label="anchor" href="#arg-depth-scale"></a></dt>
 <dd><p>Under perspective projection, scale tick labels and
 tick lengths by their distance from the camera: <code>FALSE</code> (none), <code>TRUE</code>
 (full), or a nonnegative strength <code>s</code>, which maps the ratio <code>d</code> of the
@@ -238,7 +244,7 @@ edge in three dimensions. Plane labels and ticks depth-sort with data.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Tick labels can stand upright on the page (<code>label.orientation = "screen"</code>),
+    <p>Tick labels can stand upright on the page (<code>label_orientation = "screen"</code>),
 turn with the projected edge they label (<code>"edge"</code>, as <code>rotate_labels</code> in
 ggcube and the automatic label rotation of Makie's <code>Axis3</code>), or lie flat in
 one of the two box panes that meet at the edge (<code>"plane"</code>), drawn from the
@@ -267,15 +273,15 @@ visualization for Julia. Journal of Open Source Software 6(65), 3349.</p>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="scale_z_continuous.html">scale_z_continuous</a></span><span class="op">(</span>guide <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="scale_z_continuous.html">scale_z_continuous</a></span><span class="op">(</span>guide <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>position <span class="op">=</span> <span class="st">"origin"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>origin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">2</span>, y <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">p</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>label.orientation <span class="op">=</span> <span class="st">"edge"</span><span class="op">)</span>,</span>
-<span>                    y <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>label.orientation <span class="op">=</span> <span class="st">"edge"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>label_orientation <span class="op">=</span> <span class="st">"edge"</span><span class="op">)</span>,</span>
+<span>                    y <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>label_orientation <span class="op">=</span> <span class="st">"edge"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"systemfonts"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">p</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>label.orientation <span class="op">=</span> <span class="st">"plane"</span>, ticks <span class="op">=</span> <span class="st">"in_plane"</span><span class="op">)</span>,</span>
-<span>                      y <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>label.orientation <span class="op">=</span> <span class="st">"plane"</span>, ticks <span class="op">=</span> <span class="st">"in_plane"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="va">p</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>label_orientation <span class="op">=</span> <span class="st">"plane"</span>, ticks <span class="op">=</span> <span class="st">"in_plane"</span><span class="op">)</span>,</span>
+<span>                      y <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>label_orientation <span class="op">=</span> <span class="st">"plane"</span>, ticks <span class="op">=</span> <span class="st">"in_plane"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>projection <span class="op">=</span> <span class="st">"perspective"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="va">p</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>z <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>title.position <span class="op">=</span> <span class="st">"near"</span>, depth.scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">p</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/guides.html" class="external-link">guides</a></span><span class="op">(</span>z <span class="op">=</span> <span class="fu">guide_axis_3d</span><span class="op">(</span>title_position <span class="op">=</span> <span class="st">"near"</span>, depth_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>projection <span class="op">=</span> <span class="st">"perspective"</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

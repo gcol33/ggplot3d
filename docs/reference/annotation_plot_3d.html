@@ -30,6 +30,10 @@ extent places it elsewhere."><meta property="og:image" content="https://gillesco
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+@media (max-width: 991.98px) {
+  .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .navbar .dropdown-menu { max-height: none; overflow: visible; }
+}
 :root, [data-bs-theme="light"] {
   --bs-link-color: #2E6F9E;
   --bs-link-color-rgb: 46, 111, 158;
@@ -79,10 +83,12 @@ extent places it elsewhere."><meta property="og:image" content="https://gillesco
     <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
     <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
     <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
     <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
     <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
     <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
@@ -146,7 +152,7 @@ plane axes, so its data line up with the 3D layers that share those axes.
 <span>  plane <span class="op">=</span> <span class="st">"xz"</span>,</span>
 <span>  at <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  extent <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  route <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"vector"</span>, <span class="st">"raster"</span><span class="op">)</span>,</span>
+<span>  backend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"vector"</span>, <span class="st">"raster"</span><span class="op">)</span>,</span>
 <span>  resolution <span class="op">=</span> <span class="fl">150</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -175,7 +181,7 @@ positions of the plot's panel along the two plane axes. A reversed pair
 mirrors the plot.</p></dd>
 
 
-<dt id="arg-route">route<a class="anchor" aria-label="anchor" href="#arg-route"></a></dt>
+<dt id="arg-backend">backend<a class="anchor" aria-label="anchor" href="#arg-backend"></a></dt>
 <dd><p><code>"vector"</code> or <code>"raster"</code> (which requires ragg).</p></dd>
 
 
@@ -193,12 +199,12 @@ mirrors the plot.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The vector route decomposes the drawn panel into points, lines, polygons,
+    <p>The vector backend decomposes the drawn panel into points, lines, polygons,
 rectangles and text that join the 3D scene and its exact visibility, as
 matplotlib places 2D artists on a plane of 3D axes and ggcube projects
 layers onto the faces of its cube. Marks lie in the plane, foreshortened
 with it, at the size they have on a 2D panel 4 inches wide; text faces the
-viewer and is drawn over the scene. The raster route renders the panel
+viewer and is drawn over the scene. The raster backend renders the panel
 to an image of <code>resolution</code> pixels a side, as rayshader does for a whole
 ggplot, and lays its pixels on the plane as rectangles, joining runs of
 equal colour; it suits dense plots whose vector form would be large.</p>

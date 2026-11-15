@@ -31,8 +31,11 @@ ends <- track[c(1, nrow(track)), ]
 ends$label <- c("start", "end")
 ```
 
-`geom_path()`, `geom_point()` and `geom_text()` are the ggplot2 layers,
-used unchanged. Inside
+[`geom_path()`](https://ggplot2.tidyverse.org/reference/geom_path.html),
+[`geom_point()`](https://ggplot2.tidyverse.org/reference/geom_point.html)
+and
+[`geom_text()`](https://ggplot2.tidyverse.org/reference/geom_text.html)
+are the ggplot2 layers, used unchanged. Inside
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
 they read the z mapping and are placed and depth sorted like
 [`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md),
@@ -95,7 +98,7 @@ onto the back wall at the largest y, where the points show z against x.
 k <- ggplot(cloud, aes(x, y, z = z))
 k + geom_point_3d(aes(z = -Inf), colour = PAL["grey"], size = 1.5) +
   geom_point_3d(aes(y = Inf), colour = PAL["orange"], size = 1.5) +
-  geom_dropline_3d(face = "zmin", colour = PAL["grey"]) +
+  geom_dropline_3d(onto = "zmin", colour = PAL["grey"]) +
   geom_point_3d(size = 2.5) +
   coord_3d()
 ```
@@ -165,7 +168,7 @@ calls.
 ``` r
 
 k + annotation_plot_3d(side, plane = "xz", at = Inf,
-                       route = "raster", resolution = 64) +
+                       backend = "raster", resolution = 64) +
   geom_point_3d(size = 2.5) + coord_3d()
 ```
 
@@ -180,9 +183,11 @@ for all plane orientations and placement arguments.
 ## Small multiples in depth
 
 [`facet_slices_3d()`](https://gillescolling.com/ggplot3d/reference/facet_slices_3d.md)
-splits the data like `facet_wrap()` and stacks the subsets on parallel
-planes of one panel. The cloud is split by the sign of x; each half gets
-its own density, computed within its slice.
+splits the data like
+[`facet_wrap()`](https://ggplot2.tidyverse.org/reference/facet_wrap.html)
+and stacks the subsets on parallel planes of one panel. The cloud is
+split by the sign of x; each half gets its own density, computed within
+its slice.
 
 ``` r
 
@@ -206,11 +211,14 @@ every slice. Plane visibility, labels and opacity are set in
 
 ## Reference lines and annotations
 
-`geom_hline()` and `geom_vline()` draw lines on the floor, here at x = 0
-and y = 0.
+[`geom_hline()`](https://ggplot2.tidyverse.org/reference/geom_abline.html)
+and
+[`geom_vline()`](https://ggplot2.tidyverse.org/reference/geom_abline.html)
+draw lines on the floor, here at x = 0 and y = 0.
 [`annotate_3d()`](https://gillescolling.com/ggplot3d/reference/annotate_3d.md)
-adds z positions to the arguments of `annotate()`. Here it labels the
-highest point of the cloud.
+adds z positions to the arguments of
+[`annotate()`](https://ggplot2.tidyverse.org/reference/annotate.html).
+Here it labels the highest point of the cloud.
 [Layers](https://gillescolling.com/ggplot3d/articles/layers.html#reference-lines-and-dimensions)
 shows arbitrary reference lines, brackets and dimension lines.
 
@@ -296,8 +304,8 @@ the Old Faithful geyser.
 draws the estimated density, and the eruptions are drawn on the floor
 with `z = -Inf`. The surface is half transparent and the camera is
 raised, so the points under the two peaks show through. The z title is
-set with `labs()` because the density layer computes z and has no z
-mapping to name it.
+set with [`labs()`](https://ggplot2.tidyverse.org/reference/labs.html)
+because the density layer computes z and has no z mapping to name it.
 
 ``` r
 
@@ -447,7 +455,9 @@ base + coord_3d() +
 giving the positions of the peak and the hollow, and a caption below the
 panel.](combining-2d-3d_files/figure-html/titles-1.svg)
 
-In a patchwork layout the same `labs()` call names one panel, and
+In a patchwork layout the same
+[`labs()`](https://ggplot2.tidyverse.org/reference/labs.html) call names
+one panel, and
 [`plot_annotation()`](https://patchwork.data-imaginist.com/reference/plot_annotation.html)
 adds a title over the whole arrangement.
 

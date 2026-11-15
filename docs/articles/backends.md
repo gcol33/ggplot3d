@@ -8,7 +8,8 @@ started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 1.  **Choose** rendering with
     [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md).
 
-2.  **Save** the resulting plot with `ggsave()`.
+2.  **Save** the resulting plot with
+    [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
 
 ## Example
 
