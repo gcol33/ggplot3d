@@ -143,9 +143,9 @@ test_that("animate_3d() passes stable_partition to the vector renderer", {
     geom_polygon_3d(fill = "steelblue", alpha = 0.6) + coord_3d()
   calls <- list()
   compile <- ggplot3d:::scene_compile
-  testthat::local_mocked_bindings(scene_compile = function(packet, camera, viewport, stable_partition = FALSE) {
+  testthat::local_mocked_bindings(scene_compile = function(packet, camera, viewport, stable_partition = FALSE, ...) {
     calls[[length(calls) + 1L]] <<- stable_partition
-    compile(packet, camera, viewport, stable_partition)
+    compile(packet, camera, viewport, stable_partition, ...)
   }, .package = "ggplot3d")
   movie <- animate_3d(p, frames = 2, backend = "vector", width = 320, height = 320,
                       progress = FALSE, stable_partition = TRUE)

@@ -29,6 +29,10 @@ struct Piece {
   // backend paints in one operation.
   int patch = 0;
   bool behind_halo = false;
+  // Faces (source table and row) that hide part of this stroke's centreline
+  // within the stroke's reach of this piece. A backend that draws strokes
+  // after the faces they lie on keeps the stroke before these.
+  std::vector<std::pair<const PrimitiveTable*,Index>> occluders;
   // Hash of the source primitive's geometry, the order of stable cuts.
   std::uint64_t key = 0;
   std::vector<Piece> members;

@@ -77,9 +77,10 @@ makeContent.scene_panel_grob <- function(x) {
   } else {
     packet <- device_text_metrics_3d(merge_scene_packets(c(list(furniture$packet), x$packets), x$panel_params$panel_id))
     vector_marker_limit_3d(packet)
-    compile <- if (identical(backend$type, "plotter")) compile_plotter_scene_3d else scene_compile
-    scene <- compile(packet, furniture$camera, furniture$viewport,
-                           stable_partition = isTRUE(x$panel_params$coord_params$stable_partition))
+    stable <- isTRUE(x$panel_params$coord_params$stable_partition)
+    scene <- if (identical(backend$type, "plotter"))
+      compile_plotter_scene_3d(packet, furniture$camera, furniture$viewport, stable_partition = stable) else
+      scene_compile(packet, furniture$camera, furniture$viewport, stable_partition = stable, centreline_strokes = TRUE)
     rendered <- render_scene_grid(scene, furniture$viewport, light = x$panel_params$coord_params$light,
       strokes_only = identical(backend$type, "plotter"))
   }
@@ -715,6 +716,79 @@ compact_painted_grobs_3d <- function(grobs) {
   out
 }
 
+# Draw order with strokes moved past the opaque faces that follow them.
+# Coverage removes the parts of a stroke's centreline that opaque faces hide,
+# so a stroke drawn after the faces it lies on or in front of paints its full
+# width along its visible centreline (object-space hidden-line removal, Appel
+# 1967), and its weight no longer depends on which neighbouring face the depth
+# order draws last. A stroke stays before every face that hides part of it
+# within its reach (the engine's `occluders`), so where it passes behind a
+# face its width ends under that face. It moves past opaque faces only, never
+# past translucent faces, quadrics, markers, text or strokes that stay in
+# place, and moved strokes keep their order among themselves. The footprint
+# pieces of one visible centreline move together to one place no earlier than
+# the last of them, or stay, and the centreline is drawn once. Moved strokes
+# that meet at one place are ordered along their paths within each paint, so
+# that the pieces of a polyline join. Returns the new order and the fragments
+# that moved, which are drawn without masks.
+postpone_strokes_3d <- function(scene, order, arrowed, region_id) {
+  f <- scene$fragments; lines <- scene$source$polylines; faces <- scene$source$faces
+  src <- f$source_index
+  stroke <- f$kind == 2L & !arrowed
+  stroke[stroke] <- lines$partition[src[stroke]] == 1L & lines$width_mm[src[stroke]] > 0 &
+    lines$mask_width_mm[src[stroke]] <= lines$width_mm[src[stroke]]
+  wall <- f$kind == 1L
+  opaque_face <- faces$partition == 1L & faces$opacity == 1
+  if (!is.null(faces$coverage_opaque)) opaque_face <- opaque_face & faces$coverage_opaque
+  wall[wall] <- opaque_face[src[wall]]
+  if (!any(stroke[order]) || !any(wall[order])) return(list(order = order, moved = integer()))
+  centreline <- paste(src, f$parent_primitive_id, f$style_id, f$path_start_mm, f$path_end_mm, f$count, f$hidden)
+  centreline[f$mask_count == 0L] <- paste0("piece", which(f$mask_count == 0L))
+  n <- length(order)
+  position <- integer(length(f$kind)); position[order] <- seq_len(n)
+  # The first position after each stroke fragment of a face that hides part of it.
+  limit <- rep(n + 1L, length(f$kind))
+  occ <- scene$occluders
+  if (length(occ$fragment)) {
+    pairs <- data.frame(fragment = occ$fragment, key = paste(occ$kind, occ$source_index),
+      from = position[occ$fragment])
+    pairs <- pairs[pairs$from > 0L, , drop = FALSE]
+    at <- merge(pairs, data.frame(key = paste(f$kind[order], src[order]), at = seq_len(n)), by = "key")
+    at <- at[at$at > at$from, , drop = FALSE]
+    if (nrow(at)) {
+      first <- tapply(at$at, at$fragment, min)
+      limit[as.integer(names(first))] <- as.integer(first)
+    }
+  }
+  cls <- ifelse(stroke[order], 2L, ifelse(wall[order], 1L, 0L))
+  repeat {
+    moving <- which(cls == 2L)
+    if (!length(moving)) return(list(order = order, moved = integer()))
+    other <- which(cls == 0L)
+    stop <- pmin(c(other, n + 1L)[findInterval(moving, other) + 1L], limit[order[moving]])
+    stop <- rev(cummin(rev(stop)))
+    line <- centreline[order[moving]]
+    place <- stats::ave(stop, line, FUN = min)
+    stay <- moving[place <= stats::ave(moving, line, FUN = max)]
+    if (!length(stay)) break
+    cls[stay] <- 0L
+  }
+  rows <- order[moving]
+  at <- seq_len(n) + 0; at[moving] <- place - 0.5
+  ranked <- order(place, moving)
+  paint <- paste(place, f$style_id[rows], f$opacity[rows], f$hidden[rows], region_id[rows])[ranked]
+  run <- integer(length(moving))
+  run[ranked] <- cumsum(c(TRUE, paint[-1L] != paint[-length(paint)]))
+  run_at <- path_source <- path_parent <- integer(n); path_start <- numeric(n)
+  run_at[moving] <- run; path_source[moving] <- src[rows]
+  path_parent[moving] <- f$parent_primitive_id[rows]; path_start[moving] <- f$path_start_mm[rows]
+  keep <- rep(TRUE, n)
+  keep[moving] <- !duplicated(centreline[rows])
+  new <- order(at, run_at, path_source, path_parent, path_start, seq_len(n))
+  new <- new[keep[new]]
+  list(order = order[new], moved = rows[keep[moving]])
+}
+
 # `regions`: optional list(id, grobs). Fragment i is clipped to grobs[[id[i]]]
 # when id[i] > 0.
 render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, strokes_only = FALSE) {
@@ -747,6 +821,13 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
     key[lines] <- paste(key[lines], lty[lines] %in% c("solid", "1") & !f$hidden[lines], sep = ":")
     arrowed <- !vapply(arrows, is.null, logical(1))[match(f$style_id, scene$styles$style_id)]
     if (strokes_only) key[lines] <- paste(key[lines], source, sep = ":source:")
+  }
+  region_id <- if (is.null(regions)) integer(length(key)) else regions$id
+  if (!strokes_only && isTRUE(scene$capabilities$centreline_strokes)) {
+    late <- postpone_strokes_3d(scene, order, arrowed, region_id)
+    order <- late$order
+    f$mask_count[late$moved] <- 0L
+    scene$fragments$mask_count <- f$mask_count
   }
   text <- which(f$kind == 4L)
   key[text] <- paste(key[text], scene$source$text$angle[f$source_index[text]], sep = ":")
@@ -788,7 +869,6 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       ifelse(surface[face], "surface", ifelse(smooth_run[face], "smooth", f$seam_group[face])),
       f$opacity[face]), 0L), sep = ":")
   key[textured] <- paste(key[textured], "texture", textures$index[textured], sep = ":")
-  region_id <- if (is.null(regions)) integer(length(key)) else regions$id
   key <- paste(key, region_id, sep = ":region:")
   # Adjacent footprint pieces of the same stroke carry disjoint paint, so
   # visible and hidden pieces can each share a compound footprint.

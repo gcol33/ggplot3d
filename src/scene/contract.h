@@ -137,11 +137,18 @@ struct ClipVertices {
   std::vector<double> x_npc, y_npc;
   std::vector<Index> ring;
 };
+// Pairs (stroke fragment, face) where the face hides part of the stroke's
+// centreline within the stroke's reach of the fragment.
+struct Occluders {
+  std::vector<Index> fragment, kind, source_index;
+};
 struct CompiledScene {
   ProjectedVertices vertices;
   VertexWeights weights;
   Fragments fragments;
   ClipVertices masks;
+  Occluders occluders;
+  bool centreline_strokes = false;
   std::vector<Index> draw_order;
   ResolvedCamera camera;
 };

@@ -385,11 +385,14 @@ Rcpp::List write_result(const CompiledScene& scene, const ScenePacket& packet,
       Rcpp::Named("corner")=indices(scene.weights.corner,true), Rcpp::Named("weight")=scene.weights.weight),
     Rcpp::Named("masks")=Rcpp::List::create(Rcpp::Named("x_npc")=scene.masks.x_npc,
       Rcpp::Named("y_npc")=scene.masks.y_npc, Rcpp::Named("ring")=indices(scene.masks.ring)),
+    Rcpp::Named("occluders")=Rcpp::List::create(Rcpp::Named("fragment")=indices(scene.occluders.fragment,true),
+      Rcpp::Named("kind")=indices(scene.occluders.kind), Rcpp::Named("source_index")=indices(scene.occluders.source_index,true)),
     Rcpp::Named("draw_order")=indices(scene.draw_order,true), Rcpp::Named("camera")=camera,
     Rcpp::Named("viewport")=Rcpp::List::create(Rcpp::Named("width_mm")=viewport.width_mm,
       Rcpp::Named("height_mm")=viewport.height_mm, Rcpp::Named("dpi")=viewport.dpi),
     Rcpp::Named("capabilities")=Rcpp::List::create(Rcpp::Named("visibility")="bsp",
-      Rcpp::Named("exact_visibility")=true, Rcpp::Named("footprint_clipping")=true));
+      Rcpp::Named("exact_visibility")=true, Rcpp::Named("footprint_clipping")=true,
+      Rcpp::Named("centreline_strokes")=scene.centreline_strokes));
 }
 } }  // namespace ggplot3d::engine
 
@@ -436,13 +439,16 @@ Rcpp::List scene_compile_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp::List vi
   require(device.width_mm > 0 && device.height_mm > 0 && device.dpi > 0,
           "viewport dimensions and dpi must be positive");
   const Projection projection(view, device);
-  bool stable=false;
-  SEXP stable_attribute=Rf_getAttrib(viewport,Rf_install("engine_stable_partition"));
-  if(!Rf_isNull(stable_attribute)) {
-    require(TYPEOF(stable_attribute)==LGLSXP && Rf_xlength(stable_attribute)==1 &&
-            LOGICAL(stable_attribute)[0]!=NA_LOGICAL, "engine_stable_partition must be TRUE or FALSE");
-    stable=LOGICAL(stable_attribute)[0];
-  }
-  return write_result(compile(scene, projection,budget,stable), scene, device);
+  auto flag=[&](const char* name) {
+    SEXP attribute=Rf_getAttrib(viewport,Rf_install(name));
+    if(Rf_isNull(attribute)) return false;
+    require(TYPEOF(attribute)==LGLSXP && Rf_xlength(attribute)==1 && LOGICAL(attribute)[0]!=NA_LOGICAL,
+            std::string(name)+" must be TRUE or FALSE");
+    return static_cast<bool>(LOGICAL(attribute)[0]);
+  };
+  CompileOptions options;
+  options.stable=flag("engine_stable_partition");
+  options.centreline_strokes=flag("engine_centreline_strokes");
+  return write_result(compile(scene, projection,budget,options), scene, device);
 }
 

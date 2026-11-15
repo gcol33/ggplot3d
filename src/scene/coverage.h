@@ -216,8 +216,10 @@ public:
     return result;
   }
 
+  // With centrelines, opaque faces cut lines of every hidden policy; otherwise
+  // lines drawn with hidden = hide are left whole and occluded by draw order.
   std::vector<Piece> resolve_lines(std::vector<Piece> pieces,const ScenePacket& packet,
-                                 ResourceBudget& budget) const {
+                                 ResourceBudget& budget,bool centrelines=false) const {
     std::vector<Piece> result;
     for(Piece& piece:pieces) {
       if(piece.kind!=Kind::polyline || piece.source->partition[piece.row]!=1) {
@@ -230,14 +232,19 @@ public:
       }
       auto candidates=query(bounds);
       const PrimitiveTable* source=piece.source;const Index row=piece.row;
+      std::vector<const CoverageFace*> hiders;
+      // Hidden parts of a line drawn with hidden = hide are dropped as soon as
+      // they are found; no nearer face can show them again.
+      const bool drop_hidden=centrelines && packet.polylines.hidden[row]==static_cast<Index>(Hidden::hide);
       std::vector<Piece> cells; cells.push_back(std::move(piece));
       for(const CoverageFace* face:candidates) {
+        if(cells.empty()) break;
         if(face->halo && face->source==source && joins.joined(face->row,row)) continue;
-        const Polygon& path=cells.empty() ? piece.polygon : (cells[0].anchor.empty() ? cells[0].polygon:cells[0].anchor);
+        const Polygon& path=cells[0].anchor.empty() ? cells[0].polygon:cells[0].anchor;
         bool coplanar=!path.empty();
         for(const auto& v:path) coplanar=coplanar && std::abs(plane_distance(face->plane,v,projection))<=projection.resolved.tolerance;
         if(!coplanar && !face->halo &&
-           (!face->opaque || packet.polylines.hidden[piece.row]==static_cast<Index>(Hidden::hide))) continue;
+           (!face->opaque || (!centrelines && packet.polylines.hidden[row]==static_cast<Index>(Hidden::hide)))) continue;
         std::vector<SplitPlane> boundaries;
         for(std::size_t i=0;i<face->polygon.size();++i) {
           Vec3 a=projection.model(face->polygon[i].xyz);
@@ -263,6 +270,11 @@ public:
           Vec3 ray=projection.camera.perspective ? sub(projection.model(centre.xyz),projection.resolved.eye) : projection.resolved.ray;
           return t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray));
         };
+        // Cuts by a face that covers no part of a centre line are undone, so
+        // the line is split only where its visibility changes.
+        std::vector<Piece> saved;
+        if(centrelines) saved=cells;
+        bool covered=false;
         std::vector<Piece> settled;
         auto cut=[&](const SplitPlane& plane,auto keep) {
           std::vector<Piece> next;
@@ -290,15 +302,36 @@ public:
           Vertex centre=centre_of(cell);
           if(!screen_contains(face->polygon,centre,projection)) continue;
           if(face->halo) {
-            if(!coplanar && behind(centre)) cell.behind_halo=true;
+            if(!coplanar && behind(centre)) {cell.behind_halo=true; covered=true;}
           } else if(coplanar || behind(centre)) {
             bool hidden=cell.hidden;
             lift_coverage(cell,*face,projection);
+            covered=true;
             if(coplanar) cell.hidden=hidden;
+            else if(hiders.empty() || hiders.back()!=face) hiders.push_back(face);
           }
         }
+        if(centrelines && !covered) {cells=std::move(saved); continue;}
         for(Piece& cell:settled) cells.push_back(std::move(cell));
+        if(drop_hidden)
+          cells.erase(std::remove_if(cells.begin(),cells.end(),[](const Piece& cell) {return cell.hidden;}),cells.end());
         std::stable_sort(cells.begin(),cells.end(),[](const Piece& a,const Piece& b) {return a.path_start<b.path_start;});
+      }
+      // A visible cell keeps, as occluders, the faces that hide part of its
+      // line within the line's occlusion width of the cell's screen bounds.
+      const double reach=packet.polylines.mask_width_mm[row];
+      const double margin_x=reach/projection.viewport.width_mm, margin_y=reach/projection.viewport.height_mm;
+      for(Piece& cell:cells) {
+        if(cell.hidden || hiders.empty()) continue;
+        std::array<double,4> b{R_PosInf,R_PosInf,R_NegInf,R_NegInf};
+        for(const Vertex& v:cell.polygon) {
+          auto s=projection.npc(projection.camera_point(v.xyz));
+          for(int k=0;k<2;++k) {b[k]=std::min(b[k],s[k]);b[k+2]=std::max(b[k+2],s[k]);}
+        }
+        for(const CoverageFace* face:hiders)
+          if(face->bounds[0]<=b[2]+margin_x && face->bounds[2]>=b[0]-margin_x &&
+             face->bounds[1]<=b[3]+margin_y && face->bounds[3]>=b[1]-margin_y)
+            cell.occluders.emplace_back(face->source,face->row);
       }
       for(Piece& cell:cells) {
         if(cell.behind_halo) continue;

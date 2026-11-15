@@ -11,10 +11,21 @@ namespace ggplot3d { namespace engine {
 // A stable partition cuts cyclic overlaps on planes chosen from the geometry
 // alone and refines quadric stand-ins for every viewing direction, so that
 // cut edges stay in place while the camera moves over fixed geometry.
+// Centreline strokes order depth-scene lines as their centre lines, without
+// stroke areas, after coverage has removed the parts that opaque faces hide
+// whatever their hidden policy: a backend then strokes each visible centre
+// line at full width (object-space hidden-line removal, Appel 1967). Haloed
+// lines keep their areas, which hide the lines behind them.
+struct CompileOptions {
+  bool stable = false;
+  bool centreline_strokes = false;
+};
 static inline CompiledScene compile(const ScenePacket& packet, const Projection& projection,
-                                   ResourceBudget& budget, bool stable = false) {
+                                   ResourceBudget& budget, const CompileOptions& options = {}) {
+  const bool stable = options.stable;
   CompiledScene out;
   out.camera = projection.resolved;
+  out.centreline_strokes = options.centreline_strokes;
   std::vector<Piece> pieces;
   auto emit = [&](const PrimitiveTable& source, Index row, Kind kind,
                   Polygon polygon, bool clipped,
@@ -130,7 +141,9 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       Polygon polygon = corner_polygon(table, row);
       if (kind == 2) {
         // Occlusion geometry uses the mask width; backends stroke at width_mm.
-        const double mask_mm=packet.polylines.mask_width_mm[row];
+        const bool haloed=packet.polylines.mask_width_mm[row]>packet.polylines.width_mm[row];
+        const double mask_mm=options.centreline_strokes && table.partition[row]==1 && !haloed ? 0 :
+          packet.polylines.mask_width_mm[row];
         bool area_path=polygon.size()>2 && mask_mm>0 && table.partition[row]==1;
         // A chain through infinity is cut by the box planes as well before any
         // division; a finite chain leaves them to the stroke clipper.
@@ -310,7 +323,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
     needs_coverage=needs_coverage || piece.kind==Kind::polyline;
   if(needs_coverage) {
     CoverageIndex coverage(pieces,packet,projection);
-    pieces=coverage.resolve_lines(std::move(pieces),packet,budget);
+    pieces=coverage.resolve_lines(std::move(pieces),packet,budget,options.centreline_strokes);
   }
   for(Piece& piece:pieces) if(piece.kind==Kind::text &&
       packet.text.width_mm[piece.row]>0 && packet.text.height_mm[piece.row]>0) {
@@ -408,6 +421,11 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
                     start,end);
     out.fragments.hidden.back()=piece.hidden;
     out.fragments.seam_group.push_back(piece.seam_group);
+    for(const auto& occluder:piece.occluders) {
+      out.occluders.fragment.push_back(static_cast<Index>(out.fragments.count.size()-1));
+      out.occluders.kind.push_back(static_cast<Index>(occluder.first==&quadric_table ? Kind::quadric : Kind::face));
+      out.occluders.source_index.push_back(occluder.second);
+    }
     if (!piece.anchor.empty() && piece.polygon.size()>=3 && piece.clipped && piece.mask_required)
       append_mask(out,piece.polygon,projection);
     if(!piece.mask.empty()) append_mask(out,piece.mask,projection);

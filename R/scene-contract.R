@@ -574,21 +574,27 @@ engine_threads <- function() {
 }
 
 # With stable_partition = TRUE, cyclic overlaps are cut on planes chosen from
-# the geometry alone, the same for every camera.
-scene_compile <- function(packet, camera = new_camera_3d(), viewport, stable_partition = FALSE) {
+# the geometry alone, the same for every camera. With centreline_strokes =
+# TRUE, depth-scene lines lose the parts that opaque faces hide and are
+# ordered as their centre lines, for a backend that strokes them at full width
+# along the visible centre line (see postpone_strokes_3d()).
+scene_compile <- function(packet, camera = new_camera_3d(), viewport, stable_partition = FALSE,
+                          centreline_strokes = FALSE) {
   scene_assert(identical(names(viewport), c("width_mm", "height_mm", "dpi")),
                "invalid viewport schema")
   viewport <- do.call(new_scene_viewport, viewport)
   threads <- engine_threads()
   limit <- scene_cache_limit()
   if (limit == 0) scene_cache$entries <- list()
-  cached <- scene_cache_find(packet, camera, viewport, stable_partition)
+  options <- c(stable_partition = isTRUE(stable_partition), centreline_strokes = isTRUE(centreline_strokes))
+  cached <- scene_cache_find(packet, camera, viewport, options)
   if (!is.null(cached)) return(cached)
   validate_scene_packet(packet)
   validate_camera_3d(camera)
   engine_viewport <- viewport
   attr(engine_viewport, "engine_threads") <- threads
-  if (stable_partition) attr(engine_viewport, "engine_stable_partition") <- TRUE
+  if (options[["stable_partition"]]) attr(engine_viewport, "engine_stable_partition") <- TRUE
+  if (options[["centreline_strokes"]]) attr(engine_viewport, "engine_centreline_strokes") <- TRUE
   result <- scene_compile_cpp(scene_engine_packet_3d(packet), camera, engine_viewport)
   bytes <- as.numeric(utils::object.size(result)) + as.numeric(utils::object.size(packet))
   result$styles <- packet$styles
@@ -597,6 +603,6 @@ scene_compile <- function(packet, camera = new_camera_3d(), viewport, stable_par
   result$pre <- camera$pre
   result$camera_input <- camera
   class(result) <- "ggplot3d_compiled_scene"
-  scene_cache_store(packet, camera, viewport, stable_partition, result, bytes, limit)
+  scene_cache_store(packet, camera, viewport, options, result, bytes, limit)
   result
 }

@@ -12,11 +12,12 @@ scene_cache_limit <- function() {
   bytes
 }
 
-scene_cache_find <- function(packet, camera, viewport, stable = FALSE) {
+# `options`: the named logical compile options of scene_compile().
+scene_cache_find <- function(packet, camera, viewport, options) {
   entries <- scene_cache$entries
   for (k in rev(seq_along(entries))) {
     entry <- entries[[k]]
-    if (identical(entry$stable, stable) && identical(entry$viewport, viewport) &&
+    if (identical(entry$options, options) && identical(entry$viewport, viewport) &&
         identical(entry$camera, camera) && identical(entry$packet, packet)) {
       scene_cache$entries <- c(entries[-k], entries[k])
       return(entry$scene)
@@ -25,11 +26,11 @@ scene_cache_find <- function(packet, camera, viewport, stable = FALSE) {
   NULL
 }
 
-scene_cache_store <- function(packet, camera, viewport, stable, scene, bytes, limit) {
+scene_cache_store <- function(packet, camera, viewport, options, scene, bytes, limit) {
   entries <- scene_cache$entries
   if (bytes > limit) return(invisible())
   entries[[length(entries) + 1L]] <- list(packet = packet, camera = camera, viewport = viewport,
-                                          stable = stable, scene = scene, bytes = bytes)
+                                          options = options, scene = scene, bytes = bytes)
   total <- sum(vapply(entries, function(entry) entry$bytes, numeric(1)))
   while (total > limit) {
     total <- total - entries[[1L]]$bytes
