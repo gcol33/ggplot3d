@@ -31,6 +31,7 @@ test_that("native painted paths clip to the union of overlapping footprint rings
 })
 
 test_that("intersecting quadrics paint their visible parts without device clips", {
+  skip_on_cran()
   sphere <- function(centre) quadric_rows(1L, diag(0.2, 3L), centre)
   draw <- function(quadrics) {
     quadrics$kind <- as.integer(quadrics$kind)

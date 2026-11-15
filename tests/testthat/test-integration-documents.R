@@ -30,6 +30,7 @@ knit_document_3d <- function(p, format, chunks) {
 }
 
 test_that("knitting chooses HTML viewers and static PDF and Word plots", {
+  skip_on_cran()
   skip_if_not_installed("knitr")
   p <- document_plot()
   html <- knit_document_3d(p, "html", c("```{r, view3d=TRUE, echo=FALSE}", "p", "```"))
@@ -46,6 +47,7 @@ test_that("knitting chooses HTML viewers and static PDF and Word plots", {
 })
 
 test_that("HTML chunk dimensions round fractional pixels at the knitr boundary", {
+  skip_on_cran()
   skip_if_not_installed("knitr")
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("svglite")
@@ -70,6 +72,7 @@ test_that("HTML chunk dimensions round fractional pixels at the knitr boundary",
 })
 
 test_that("figure alt defaults and overrides are independent within a chunk", {
+  skip_on_cran()
   skip_if_not_installed("knitr")
   out <- knit_document_3d(document_plot(), "html", c(
     "```{r, echo=FALSE, fig.alt=c('first custom', 'second custom')}", "p", "p", "```"))
@@ -81,6 +84,7 @@ test_that("figure alt defaults and overrides are independent within a chunk", {
 })
 
 test_that("patchwork and cowplot preserve separate scenes through drawing", {
+  skip_on_cran()
   p <- document_plot()
   q <- p + ggplot2::facet_wrap(~am)
   grDevices::pdf(tempfile(fileext = ".pdf"), width = 8, height = 4)
@@ -102,6 +106,7 @@ test_that("patchwork and cowplot preserve separate scenes through drawing", {
 })
 
 test_that("raster3d draws dense geometry as one image and keeps the smaller file", {
+  skip_on_cran()
   skip_if_not_installed("knitr")
   skip_if_not_installed("svglite")
   d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
@@ -133,6 +138,7 @@ test_that("raster3d draws dense geometry as one image and keeps the smaller file
 })
 
 test_that("raster3d redraws the ggplot3d plots of a patchwork composition", {
+  skip_on_cran()
   skip_if_not_installed("knitr")
   skip_if_not_installed("svglite")
   skip_if_not_installed("patchwork")

@@ -49,6 +49,7 @@ test_that("the path tracer intersects compiled SDFs and the thin lens", {
 })
 
 test_that("pathtrace composes a panel with vector furniture and text", {
+  skip_on_cran()
   d <- data.frame(x=c(0,1),y=c(0,1),z=c(0,1))
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_point_3d(size=3,colour="steelblue")+
     coord_3d(backend=backend_3d("pathtrace",dpi=15,samples=2,bounces=2))

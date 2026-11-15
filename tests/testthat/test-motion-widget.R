@@ -1,4 +1,5 @@
 test_that("viewer serializes one mapped model scene with furniture and camera", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   d <- data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = c(0, .4, 1))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
@@ -55,6 +56,7 @@ test_that("viewer serializes one mapped model scene with furniture and camera", 
 })
 
 test_that("binary columns round-trip the merged scene packet", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   set.seed(3)
   d <- data.frame(x = runif(7), y = runif(7), z = c(-1e6, 0.1, 1 / 3, 2, 3, 4, 1e6))
@@ -77,6 +79,7 @@ test_that("binary columns round-trip the merged scene packet", {
 })
 
 test_that("viewer selects a facet and validates its arguments", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
     geom_point_3d() + coord_3d() + ggplot2::facet_wrap(~am)
@@ -92,6 +95,7 @@ test_that("viewer selects a facet and validates its arguments", {
 })
 
 test_that("selected panels reflow their aspect and furniture at the widget size", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("svglite")
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
@@ -127,6 +131,7 @@ test_that("selected panels reflow their aspect and furniture at the widget size"
 })
 
 test_that("the whole plot keeps every panel at its place and embeds the rest as SVG", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("svglite")
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp, colour = factor(cyl))) +
@@ -148,6 +153,7 @@ test_that("the whole plot keeps every panel at its place and embeds the rest as 
 })
 
 test_that("viewers in one link group carry the group name", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
     geom_point_3d() + coord_3d() + facet_views_3d(c("front", "isometric"))

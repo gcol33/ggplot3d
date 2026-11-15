@@ -46,6 +46,7 @@ test_that("observer-dependent normals and depth cues use the moved observer", {
 })
 
 test_that("isometry animation in the Klein model changes only the camera pre-transform", {
+  skip_on_cran()
   d <- data.frame(x = c(-0.5, 0.4, 0), y = c(0, 0.2, -0.4), z = c(0.1, 0, 0.3))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_polygon_3d(fill = "tomato") +
     coord_hyperbolic_3d(fog = 0.02)

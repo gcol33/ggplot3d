@@ -43,6 +43,7 @@ test_that("marker solids are closed, outward and fit their radius", {
 })
 
 test_that("PLY files carry colours, faces and edges and read back", {
+  skip_on_cran()
   p <- export_surface_plot(fill = "#336699", colour = NA, coord = coord_3d(light = NULL))
   file <- tempfile(fileext = ".ply")
   export_3d(p, file)
@@ -56,6 +57,7 @@ test_that("PLY files carry colours, faces and edges and read back", {
 })
 
 test_that("STL files hold whole triangles with the vertical axis as z", {
+  skip_on_cran()
   p <- ggplot2::ggplot(data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1)), ggplot2::aes(x, y, z = z)) +
     geom_point_3d(shape = 15) + coord_3d(expand = FALSE, aspect = c(2, 1, 1), up = "x")
   file <- tempfile(fileext = ".stl")
@@ -68,6 +70,7 @@ test_that("STL files hold whole triangles with the vertical axis as z", {
 })
 
 test_that("OBJ files write one object per node and an sRGB material library", {
+  skip_on_cran()
   dir <- tempfile()
   dir.create(dir)
   file <- file.path(dir, "scene.obj")

@@ -45,6 +45,7 @@ test_that("ideal points of H^3 are boundary points of the ball models", {
 })
 
 test_that("ideal corners from a space reach the panel box through homogeneous clipping", {
+  skip_on_cran()
   d <- data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = c(1, 0, 0))
   p <- projective_test_plot(d)
   scene <- integration_packets(p)

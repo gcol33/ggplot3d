@@ -57,6 +57,7 @@ test_that("volume integration is deterministic across worker counts", {
 })
 
 test_that("volume layers draw all three modes on small images", {
+  skip_on_cran()
   d <- expand.grid(x=seq(-1,1,length.out=4),y=seq(-1,1,length.out=4),z=seq(-1,1,length.out=4))
   d$v <- with(d,x^2+y^2+z^2)
   for (mode in c("absorption","mip","iso")) {

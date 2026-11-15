@@ -77,6 +77,7 @@ test_that("FlipOut paths are straight on the plane and great circles on the sphe
 })
 
 test_that("paths and heat distance agree with the outer equator of a torus", {
+  skip_on_cran()
   torus <- torus_mesh_test(120, 48)
   angle <- 2 * pi * 12 / 120
   to <- c(1.4 * cos(angle), 1.4 * sin(angle), 0)
@@ -130,6 +131,7 @@ test_that("geodesic stats add per-face values and path polylines", {
 })
 
 test_that("parametric geodesics follow great circles and keep Clairaut's invariant", {
+  skip_on_cran()
   sphere <- function(u, v) list(x = cos(u) * sin(v), y = sin(u) * sin(v), z = cos(v))
   g <- parametric_geodesics_3d(sphere, c(0, pi / 2), pi / 4, length = 3, n = 60, list())
   tangent <- c(0, cos(pi / 4), -sin(pi / 4))

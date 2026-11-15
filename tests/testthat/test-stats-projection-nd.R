@@ -98,6 +98,7 @@ test_that("four-dimensional sections recover a closed tetrahedron including boun
 })
 
 test_that("grand tours render changing orthographic projections with fixed limits", {
+  skip_on_cran()
   d <- as.data.frame(matrix(sin(1:40),10,4)); names(d) <- c("x","y","z","w")
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z,w=w))+stat_project_3d(size=3)+coord_3d(axes=character(),panes=character(),box="none")
   a <- animate_3d(p,tour=grand_tour_3d(steps=2,seed=1),frames=3,width=120,height=120,workers=1,progress=FALSE)
@@ -115,6 +116,7 @@ test_that("grand tours render changing orthographic projections with fixed limit
 })
 
 test_that("collapsed projective faces and curved stereographic polygons are handled", {
+  skip_on_cran()
   source(testthat::test_path("..","fixtures","scenes","polytopes4d.R"),local=TRUE)
   m <- tesseract_mesh_4d()
   p <- ggplot2::ggplot(m,ggplot2::aes(w=w))+stat_project_3d(geom="mesh")+coord_3d()
@@ -128,6 +130,7 @@ test_that("collapsed projective faces and curved stereographic polygons are hand
 })
 
 test_that("the projected 120-cell has exact combinatorics and honours the vector budget", {
+  skip_on_cran()
   source(testthat::test_path("..","fixtures","scenes","polytopes4d.R"),local=TRUE)
   m <- polytope_120_cell_mesh_4d()
   expect_equal(length(unique(m$.vertex)),600L)

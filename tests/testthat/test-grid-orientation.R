@@ -11,6 +11,7 @@ orientation_panels <- function(plot) {
 }
 
 test_that("orientation guides follow each panel camera with physical size and corner", {
+  skip_on_cran()
   for (projection in c("orthographic", "perspective", "oblique")) {
     p <- orientation_plot(axes = character(), projection = projection, roll = 15, up = "y") +
       ggplot2::guides(orientation = guide_triad_3d(position = "topright", size = grid::unit(20, "mm")))
@@ -78,6 +79,7 @@ test_that("scale bars measure data units and leave scale training unchanged", {
 })
 
 test_that("orientation guides and plane scale bars draw in each backend", {
+  skip_on_cran()
   for (type in c("vector", "raster", "hybrid")) {
     expect_no_error(orientation_panels(orientation_plot(backend = backend_3d(type), axes = character()) +
       ggplot2::guides(orientation = guide_triad_3d()) + annotation_scale_3d(length = 100) + annotation_north_3d()))

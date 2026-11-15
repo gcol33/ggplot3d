@@ -15,6 +15,7 @@ path_outward <- function(step) {
 }
 
 test_that("quaternions round-trip camera angles and unwrap next to the previous frame", {
+  skip_on_cran()
   set.seed(71)
   for (i in 1:100) {
     angles <- c(azimuth = runif(1, -500, 500), elevation = runif(1, -89.9, 89.9), roll = runif(1, -300, 300))
@@ -158,6 +159,7 @@ test_that("a fly-through looks from data positions at a data point", {
 })
 
 test_that("animate_3d renders paths, closes loops and passes the eye through the box", {
+  skip_on_cran()
   p <- path_test_plot(projection = "perspective")
   a <- animate_3d(p, path = orbit_3d(360, 1), fps = 4, width = 200, height = 200, progress = FALSE)
   on.exit(unlink(dirname(a$frames[1L]), recursive = TRUE), add = TRUE)
@@ -209,6 +211,7 @@ png_test_chunks <- function(file) {
 }
 
 test_that("animated PNG output carries one control chunk per frame with valid checksums", {
+  skip_on_cran()
   expect_identical(ggplot3d:::png_crc32_cpp(charToRaw("123456789")), 3421780262)
   file <- tempfile(fileext = ".apng")
   on.exit(unlink(file), add = TRUE)
@@ -235,6 +238,7 @@ test_that("animated PNG output carries one control chunk per frame with valid ch
 })
 
 test_that("frame sequences, SVG and PDF pages are written per frame", {
+  skip_on_cran()
   directory <- tempfile("ggplot3d-out-")
   dir.create(directory)
   on.exit(unlink(directory, recursive = TRUE), add = TRUE)
@@ -263,6 +267,7 @@ test_that("frame sequences, SVG and PDF pages are written per frame", {
 })
 
 test_that("WebM output is encoded", {
+  skip_on_cran()
   skip_if_not_installed("av")
   file <- tempfile(fileext = ".webm")
   on.exit(unlink(file), add = TRUE)
@@ -310,6 +315,7 @@ test_that("frames drawn by several workers equal the serial frames", {
 })
 
 test_that("the viewer carries the sampled path for playback", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   p <- path_test_plot(projection = "perspective")
   w <- view_3d(p, panel = 1, path = orbit_3d(360, 2), fps = 10, width = 300, height = 300)

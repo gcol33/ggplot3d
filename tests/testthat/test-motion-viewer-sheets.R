@@ -40,6 +40,7 @@ viewer_fold_plot <- function(mode) {
 }
 
 test_that("widget scenes label isosurface sheets as the static backends do", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   scene <- view_3d(viewer_spheres_plot("surface"), panel = 1)$x$panels[[1L]]$scene
   sheet <- decode_column(scene$face_sheet)

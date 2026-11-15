@@ -138,6 +138,7 @@ test_that("ellipsoids follow semi-axes, rotations and shape matrices", {
 })
 
 test_that("glyphs stay rigid in curvilinear frames and render in every backend", {
+  skip_on_cran()
   d <- data.frame(x = c(1, 2, 3), y = c(1, 2, 3), z = c(1, 2, 3))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_sphere_3d(radius = 2, radius.unit = "mm", detail = 1)
   s <- stats_scene(p + coord_cylindrical_3d())

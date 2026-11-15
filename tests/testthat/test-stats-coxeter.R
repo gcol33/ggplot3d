@@ -48,9 +48,9 @@ test_that("spherical orbits close and radius budgets never silently truncate", {
   expect_false(anyDuplicated(apply(out$centers,1,coxeter_key_3d))>0)
 })
 
-test_that("finite tilings and honeycombs emit through the geodesic adapter", {
-  for(what in c("edges","faces","cells")) {
-    for(symbol in list(c(7,3),c(3,3),c(4,4),c(5,3,4),c(3,3,3))) {
+expect_tilings_emit_3d <- function(symbols, whats) {
+  for(what in whats) {
+    for(symbol in symbols) {
       layer <- if(length(symbol)==2L) stat_tiling_3d(schlafli=symbol,radius=0,what=what) else stat_honeycomb_3d(schlafli=symbol,radius=0,what=what)
       p <- ggplot2::ggplot()+layer+coord_3d(axes=character(),panes=character(),box="none")
       packet <- suppressMessages(stats_scene(p)$packet)
@@ -58,6 +58,16 @@ test_that("finite tilings and honeycombs emit through the geodesic adapter", {
       if(what=="edges") expect_gt(length(packet$polylines$offset),0) else expect_gt(length(packet$faces$offset),0)
     }
   }
+}
+
+test_that("spherical tiling and honeycomb faces and cells emit through the geodesic adapter", {
+  skip_on_cran()
+  expect_tilings_emit_3d(list(c(3,3),c(3,3,3)), c("faces","cells"))
+})
+
+test_that("finite tilings and honeycombs emit through the geodesic adapter", {
+  expect_tilings_emit_3d(list(c(7,3),c(4,4),c(5,3,4)), c("edges","faces","cells"))
+  expect_tilings_emit_3d(list(c(3,3),c(3,3,3)), "edges")
   p <- ggplot2::ggplot()+stat_tiling_3d(schlafli=c(7,3),radius=0,model="poincare")+coord_3d()
   packet <- suppressMessages(stats_scene(p)$packet)
   expect_true(any(packet$polylines$count>2L))

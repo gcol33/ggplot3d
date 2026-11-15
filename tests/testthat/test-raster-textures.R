@@ -18,6 +18,7 @@ test_that("texture coordinates keep the image upright in raster and vector outpu
 })
 
 test_that("a textured checkerboard matches the geometric one under perspective", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
   colours <- checker_colours(8L)

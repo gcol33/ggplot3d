@@ -2,6 +2,7 @@ source(testthat::test_path("..", "fixtures", "oracle", "reference.R"), local = T
 source(testthat::test_path("..", "fixtures", "scenes", "builders.R"), local = TRUE)
 
 test_that("raster ids agree with independent rays at every interior fixture pixel", {
+  skip_on_cran()
   for (name in names(ref_fixture_builders())) for (view in names(ref_cameras())) {
     f <- ref_fixture(name, view)
     n <- 80L
@@ -46,6 +47,7 @@ test_that("depth peeling matches the vector translucent stack", {
 })
 
 test_that("shared triangle edges paint translucent interiors exactly once", {
+  skip_on_cran()
   quad <- ref_quad(.7)
   triangulations <- list(list(1:4), list(c(1L, 2L, 3L), c(1L, 3L, 4L)),
     list(c(1L, 2L, 4L), c(2L, 3L, 4L)))

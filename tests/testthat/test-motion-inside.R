@@ -1,4 +1,5 @@
 test_that("inside animations rotate the observer with a fixed eye", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   original <- motion_panel_grob_3d
   captured <- list()

@@ -56,6 +56,7 @@ test_that("each panel takes its view's camera over the coord's", {
 })
 
 test_that("the scene is computed once and shared by every view", {
+  skip_on_cran()
   p <- views_block() + coord_3d(z_scales = "free") + facet_views_3d()
   built <- ggplot2::ggplot_build(p)
   expect_true(all(built$data[[1L]]$PANEL == 1L))
@@ -67,6 +68,7 @@ test_that("the scene is computed once and shared by every view", {
 })
 
 test_that("views of a projection layout share one magnification and line up", {
+  skip_on_cran()
   p <- views_block() + coord_3d() + facet_views_3d(c("front", "top", "right"), layout = "third_angle")
   panels <- views_panels(p)
   zoom <- vapply(panels, function(q) q$panel_params$camera$zoom, numeric(1))
@@ -80,6 +82,7 @@ test_that("views of a projection layout share one magnification and line up", {
 })
 
 test_that("principal presets look along the axes", {
+  skip_on_cran()
   expect_equal(unlist(camera_3d("bottom")[c("azimuth", "elevation")]), c(azimuth = -90, elevation = -90))
   expect_equal(unlist(camera_3d("rear")[c("azimuth", "elevation")]), c(azimuth = 90, elevation = 0))
   expect_equal(unlist(camera_3d("left")[c("azimuth", "elevation")]), c(azimuth = 180, elevation = 0))

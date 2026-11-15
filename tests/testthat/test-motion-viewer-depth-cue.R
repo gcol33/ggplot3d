@@ -7,6 +7,7 @@ fog_square_plot <- function(cue) {
 }
 
 test_that("the viewer receives the depth cue settings", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   cue <- view_3d(fog_square_plot(depth_cue_3d(fog = "white", amount = 0.7, linewidth = TRUE, edl = 2)), panel = 1)$x$panels[[1L]]$depth_cue
   expect_identical(cue$fog, c(1, 1, 1, 1))

@@ -158,6 +158,7 @@ test_that("hatch ranks nest: darker faces keep a superset of lines", {
 })
 
 test_that("the plotter backend draws strokes only, with hatching hidden by the surface", {
+  skip_on_cran()
   p <- npr_surface(hatch = hatch_3d(spacing = 0.04), backend = backend_3d("plotter"))
   g <- npr_render(p)
   panel <- motion_panels_3d(g)[[1L]]
@@ -202,6 +203,7 @@ test_that("uniform screen cross-hatching uses independently repeating families",
 })
 
 test_that("styles render in raster and vector output and colour samples agree", {
+  skip_on_cran()
   for (material in list(material_3d(style = "toon"), material_3d(style = "gooch"), material_3d(style = "normals"))) {
     for (type in c("vector", "raster")) expect_no_error(npr_render(npr_surface(material, backend = backend_3d(type), fill = "steelblue")))
   }
@@ -232,6 +234,7 @@ test_that("the viewer applies the styles like the kernel", {
 })
 
 test_that("illustrative path-trace hits return kernel colours", {
+  skip_on_cran()
   light <- light_3d(light_head(), ambient = 0.2)
   for (style in c("toon", "gooch", "normals")) for (elevation in c(90, -90)) {
     material <- material_3d(style = style, back = "#F08040")

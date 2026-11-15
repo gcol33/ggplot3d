@@ -34,6 +34,7 @@ test_that("reference lines span the box at their intercepts", {
 })
 
 test_that("labels measure their padded box and draw it in both backends", {
+  skip_on_cran()
   d <- data.frame(x = 1:2, y = 1:2, z = 1:2, label = c("a", "bb"))
   base <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, label = label))
   text <- integration_packets(base + ggplot2::geom_text() + coord_3d())$packet
@@ -143,6 +144,7 @@ test_that("dodge rows stack directly outside one another and the title follows t
 })
 
 test_that("discrete axes keep every tick label unless check.overlap is set", {
+  skip_on_cran()
   d <- data.frame(x = factor(paste("a long category name", 1:9)), y = 1:9, z = 1:9)
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() + coord_3d()
   layout <- rendered_panels_3d(p)[[1L]]$furniture$label_layout

@@ -152,6 +152,7 @@ test_that("geom_raster_3d() draws a grid as one image per level", {
 })
 
 test_that("the viewer receives textures, texture coordinates and texture layers", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   d <- expand.grid(x = 0:3, y = 0:3); d$z <- 0
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
@@ -179,6 +180,7 @@ test_that("the viewer receives textures, texture coordinates and texture layers"
 })
 
 test_that("glTF export writes texture coordinates and the embedded image", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   skip_if_not_installed("png")
   d <- expand.grid(x = 0:2, y = 0:2); d$z <- d$x * d$y

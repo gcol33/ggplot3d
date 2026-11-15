@@ -6,6 +6,7 @@ bridge_plot <- function() {
 }
 
 test_that("as.mesh3d() returns one rgl mesh with vertex colours", {
+  skip_on_cran()
   skip_if_not_installed("rgl")
   p <- bridge_plot()
   mesh <- rgl::as.mesh3d(p)
@@ -23,6 +24,7 @@ test_that("as.mesh3d() returns one rgl mesh with vertex colours", {
 })
 
 test_that("plot3d() draws triangles, segments, points and text with the plot's view", {
+  skip_on_cran()
   skip_if_not_installed("rgl")
   old <- options(rgl.useNULL = TRUE)
   on.exit(options(old), add = TRUE)
@@ -41,6 +43,7 @@ test_that("plot3d() draws triangles, segments, points and text with the plot's v
 })
 
 test_that("as_rayrender_3d() builds one object per layer with triangles", {
+  skip_on_cran()
   skip_if_not_installed("rayrender")
   scene <- as_rayrender_3d(bridge_plot())
   expect_s3_class(scene, "ray_scene")

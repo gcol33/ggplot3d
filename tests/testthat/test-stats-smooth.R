@@ -168,6 +168,7 @@ test_that("se fill maps the standard error and residuals reach the surface", {
 })
 
 test_that("extended smooth and residual layers render", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   d <- smooth_data(n = 30)
   plots <- list(

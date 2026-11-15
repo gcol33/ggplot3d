@@ -15,6 +15,7 @@ test_that("the shared base64 codec preserves binary geometry and embedded images
 })
 
 test_that("native SVG preserves source identities tooltips and whole plot furniture", {
+  skip_on_cran()
   skip_if_not_installed("xml2");skip_if_not_installed("svglite")
   file <- tempfile(fileext = ".svg");on.exit(unlink(file))
   p <- native_plot() + ggplot2::labs(title = "Plot <title>") + ggplot2::facet_wrap(~label)
@@ -35,6 +36,7 @@ test_that("native SVG preserves source identities tooltips and whole plot furnit
 })
 
 test_that("native SVG writes glyph masks and compound surface seam paths", {
+  skip_on_cran()
   skip_if_not_installed("xml2");skip_if_not_installed("svglite")
   p <- ggplot2::ggplot(data.frame(x = .5, y = .5, z = 0), ggplot2::aes(x, y, z = z)) +
     geom_point_3d(size = 12) + annotate_3d("rect", xmin = .5, xmax = 1, ymin = 0, ymax = 1, z = .5, fill = "grey60") +
@@ -55,6 +57,7 @@ test_that("native SVG writes glyph masks and compound surface seam paths", {
 })
 
 test_that("native SVG composites disconnected translucent sheets separately", {
+  skip_on_cran()
   skip_if_not_installed("xml2");skip_if_not_installed("svglite")
   vertices <- expand.grid(x = 0:1, y = 0:1, z = c(.25, .75))
   faces <- rbind(c(1, 2, 4), c(1, 4, 3), c(5, 6, 8), c(5, 8, 7))
@@ -88,6 +91,7 @@ test_that("native SVG hover links actual browser primitives", {
 })
 
 test_that("export_3d() rejects settings of other formats and resolves format paths", {
+  skip_on_cran()
   p <- native_plot()
   expect_error(export_3d(p, format = "asy", standalone = FALSE), "standalone does not apply to ASY")
   expect_error(export_3d(p, format = "glb", interactive = FALSE), "interactive does not apply to GLB")
@@ -99,6 +103,7 @@ test_that("export_3d() rejects settings of other formats and resolves format pat
 })
 
 test_that("code exports write editable 2D paths and a camera-bearing 3D scene", {
+  skip_on_cran()
   skip_if_not_installed("xml2");skip_if_not_installed("svglite")
   p <- native_plot()
   tikz <- read_code_3d(export_3d(p, format = "tex", standalone = FALSE, width = 400, height = 300))

@@ -42,6 +42,7 @@ test_that("traced rings cover exactly the hidden pixels under the winding rule",
 })
 
 test_that("hybrid panels draw rasterised layers as one image between two vector passes", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   d <- expand.grid(x = seq(-1, 1, length.out = 20), y = seq(-1, 1, length.out = 20))
   d$z <- d$x * d$y
@@ -100,6 +101,7 @@ test_that("raster panels keep the furniture underlay, overlay and labels as dist
 })
 
 test_that("hybrid panels with rasterise = \"surfaces\" draw unmarked surface layers into the image", {
+  skip_on_cran()
   d <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
   d$z <- d$x * d$y
   path <- data.frame(x = c(-1, 1), y = c(0, 0), z = c(-1.5, 1.5))
@@ -128,6 +130,7 @@ test_that("hybrid panels with rasterise = \"surfaces\" draw unmarked surface lay
 })
 
 test_that("vector contours on a rasterised surface are seen, and paths under it hidden", {
+  skip_on_cran()
   d <- expand.grid(x = seq(-1, 1, length.out = 20), y = seq(-1, 1, length.out = 20))
   d$z <- sin(pi * d$x) * cos(pi * d$y)
   under <- data.frame(x = seq(-0.9, 0.9, length.out = 40), y = 0.5, z = -0.3)
@@ -151,6 +154,7 @@ test_that("vector contours on a rasterised surface are seen, and paths under it 
 })
 
 test_that("hybrid images take rear-pane layers under their depth-tested paint", {
+  skip_on_cran()
   d <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
   d$z <- exp(-2 * (d$x^2 + d$y^2))
   above <- data.frame(x = c(0, 0.5), y = c(0, -0.5), z = c(1.2, 0.6))

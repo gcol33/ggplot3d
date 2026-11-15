@@ -47,6 +47,7 @@ test_that("nonunit Lipschitz constants protect steps", {
 })
 
 test_that("ray layers render and retain raster depth buffer layout", {
+  skip_on_cran()
   p <- ggplot2::ggplot() + geom_isofunction_3d(fun=sdf_sphere(radius=.7),render="trace",fill="steelblue") +
     ggplot2::xlim(-1,1) + ggplot2::ylim(-1,1) + scale_z_continuous(limits=c(-1,1)) +
     coord_3d(backend=backend_3d("raster",dpi=25,antialias=1))

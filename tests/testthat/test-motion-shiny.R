@@ -13,6 +13,7 @@ test_that("Shiny output has the htmlwidget binding, dimensions and dependencies"
 })
 
 test_that("Shiny renders quoted and unquoted expressions in their environments", {
+  skip_on_cran()
   skip_if_not_installed("shiny")
   skip_if_not_installed("htmlwidgets")
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) + geom_point_3d() + coord_3d()
@@ -36,6 +37,7 @@ test_that("Shiny renders quoted and unquoted expressions in their environments",
 })
 
 test_that("Shiny modules update reactive scenes and keep event inputs independent", {
+  skip_on_cran()
   skip_if_not_installed("shiny")
   skip_if_not_installed("htmlwidgets")
   module <- function(id) shiny::moduleServer(id, function(input, output, session) {
@@ -79,6 +81,7 @@ test_that("Shiny helpers check optional dependencies before delegating", {
 })
 
 test_that("viewer replacement releases buffers and keeps one event subscription", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("crosstalk")
   shared <- crosstalk::SharedData$new(mtcars, key = rownames(mtcars), group = "shiny-lifecycle")

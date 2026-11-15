@@ -54,6 +54,7 @@ test_that("a face casts its shadow along the light onto the floor and is cut to 
 })
 
 test_that("points cast discs of their drawn radius and strokes ribbons of their width", {
+  skip_on_cran()
   d <- data.frame(x = .5, y = .5, z = .7)
   overhead <- light_3d(light_directional(c(0, 0, 1), space = "data"))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 6) + unit_limits_3d() +
@@ -103,6 +104,7 @@ test_that("a shadow film lies between the pane fill and the grid lines and is on
 })
 
 test_that("raster and hybrid panels draw the shadow film with the furniture", {
+  skip_on_cran()
   d <- data.frame(x = c(.3, .6), y = c(.3, .6), z = c(.6, .8))
   for (type in c("raster", "hybrid")) {
     p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 5, raster = TRUE) + unit_limits_3d() +

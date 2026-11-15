@@ -71,6 +71,7 @@ test_that("near geometry has crossed disparity and orthographic disparity is hor
 })
 
 test_that("pair and cross modes place the eye images side by side in a 2:1 panel", {
+  skip_on_cran()
   coord <- coord_3d(stereo = stereo_3d("pair"))
   expect_equal(coord$aspect(list()), 0.5)
   expect_equal(coord_3d(stereo = stereo_3d("anaglyph"))$aspect(list()), 1)
@@ -90,6 +91,7 @@ test_that("pair and cross modes place the eye images side by side in a 2:1 panel
 })
 
 test_that("both eyes share one magnification", {
+  skip_on_cran()
   panel <- stereo_drawn(stereo_plot(stereo_3d("pair", separation = 20)))[[1L]]
   eyes <- as.list(panel$children)
   sizes <- lapply(eyes, function(e) unlist(e$inner_viewport[c("width_mm", "height_mm")]))
@@ -98,6 +100,7 @@ test_that("both eyes share one magnification", {
 })
 
 test_that("stereo pairs work per facet and per view", {
+  skip_on_cran()
   d <- data.frame(x = c(0, 1, 0.5, 0.2), y = c(0, 0, 1, 1), z = c(0, 1, 0.5, 0.2), g = c("a", "a", "b", "b"))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
     ggplot2::facet_wrap(~g) + coord_3d(stereo = stereo_3d("cross"))
@@ -146,6 +149,7 @@ test_that("ink_grob_3d() recolours strokes, fills, text and children", {
 })
 
 test_that("anaglyphs blend two monochrome passes where the device can multiply", {
+  skip_on_cran()
   skip_if(getRversion() < "4.2.0")
   skip_if_not_installed("ragg")
   panel <- stereo_drawn(stereo_plot(stereo_3d("anaglyph", separation = 6)),
@@ -160,6 +164,7 @@ test_that("anaglyphs blend two monochrome passes where the device can multiply",
 })
 
 test_that("anaglyphs composite per channel without usable device blending and with the raster backend", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   for (case in list(list(device = function(path) grDevices::pdf(path, 6, 6), backend = backend_3d("raster", dpi = 40)),
                     list(device = function(path) grDevices::pdf(path, 6, 6), backend = backend_3d("vector", dpi = 40)),
@@ -195,6 +200,7 @@ test_that("anaglyph mode warns that colour scales show luminance", {
 })
 
 test_that("view_3d() and mono_plot_3d() use the central camera", {
+  skip_on_cran()
   p <- stereo_plot(stereo_3d("pair"))
   mono <- mono_plot_3d(p)
   expect_null(mono$coordinates$config$stereo)
@@ -206,6 +212,7 @@ test_that("view_3d() and mono_plot_3d() use the central camera", {
 })
 
 test_that("animate_3d() draws stereo frames", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   result <- animate_3d(stereo_plot(stereo_3d("pair")), azimuth = c(-60, -30), frames = 2L,
     width = 640L, height = 320L, backend = "vector")

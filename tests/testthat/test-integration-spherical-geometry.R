@@ -54,6 +54,7 @@ test_that("pole-crossing fibres split into finite panel-box paths", {
 })
 
 test_that("Hopf paths tubes tori and matching bases emit valid packets", {
+  skip_on_cran()
   d <- data.frame(lon=c(0,120),lat=c(0,0),id=factor(1:2))
   for(what in c("fibres","torus","base")) {
     p <- ggplot2::ggplot(d,ggplot2::aes(lon=lon,lat=lat,fill=id,colour=id))+
@@ -78,6 +79,7 @@ test_that("Hopf paths tubes tori and matching bases emit valid packets", {
 })
 
 test_that("SO4 schedules animate spherical fibres", {
+  skip_on_cran()
   p <- ggplot2::ggplot(data.frame(lon=0,lat=0),ggplot2::aes(lon=lon,lat=lat))+
     stat_hopf_fibre_3d(n=8,radius=0)+coord_spherical_geometry_3d()
   a <- animate_3d(p,isometry=list(diag(4),rotate_4d("xw",.3)),frames=2,width=80,height=80,workers=1,progress=FALSE)

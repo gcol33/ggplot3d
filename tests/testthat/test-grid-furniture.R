@@ -49,6 +49,7 @@ test_that("per-plane grid elements inherit from the axis grid and remove lines f
 })
 
 test_that("front panes cover the facing panes left undrawn, over the data", {
+  skip_on_cran()
   furniture_test_device({
     fill <- "#4682B4"
     plot <- furniture_test_plot(panes = c("back", "floor", "front"))
@@ -177,6 +178,7 @@ test_that("guide position origin moves one axis and axis_lines none drops box ax
 })
 
 test_that("origin axes and zero planes draw in every backend and need a cube frame", {
+  skip_on_cran()
   furniture_test_device({
     for (type in c("vector", "raster", "hybrid")) {
       plot <- furniture_test_plot(axis_lines = "origin", backend = backend_3d(type)) +

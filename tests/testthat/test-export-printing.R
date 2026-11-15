@@ -52,6 +52,7 @@ test_that("open sheets gain true millimetre shells and base closures", {
 })
 
 test_that("mesh keys preserve touching closed objects before union", {
+  skip_on_cran()
   cube <- expand.grid(x = 0:1, y = 0:1, z = 0:1)
   v <- rbind(cube, transform(cube, x = x + 1))
   f <- rbind(c(1, 3, 4, 2), c(5, 6, 8, 7), c(1, 2, 6, 5), c(3, 7, 8, 4), c(1, 5, 7, 3), c(2, 4, 8, 6))
@@ -81,6 +82,7 @@ test_that("Manifold unions overlaps and preserves nested cavities", {
 })
 
 test_that("print preparation clamps markers and writes closed STL and coloured 3MF", {
+  skip_on_cran()
   spec <- print_3d(size_mm = c(20, 40, 60), min_mm = 1, text = "none", furniture = character())
   p <- ggplot2::ggplot(data.frame(x = 0, y = 0, z = 0), ggplot2::aes(x, y, z = z)) +
     geom_point_3d(size = .001, shape = 18, colour = "#336699") + coord_3d(aspect = c(1, 2, 3))
@@ -104,6 +106,7 @@ test_that("print preparation clamps markers and writes closed STL and coloured 3
 })
 
 test_that("raised and engraved font outlines produce closed physical plaques", {
+  skip_on_cran()
   skip_if_not_installed("systemfonts")
   for (mode in c("raised", "engraved")) {
     spec <- print_3d(text = mode, furniture = character())

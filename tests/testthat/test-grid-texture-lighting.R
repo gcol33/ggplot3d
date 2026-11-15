@@ -48,6 +48,7 @@ texture_lighting_compare <- function(case, camera = new_camera_3d(elevation = 90
 }
 
 test_that("textured lighting matches raster colour and highlights", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
   coloured <- light_3d(light_directional(c(0, 0, 1), space = "data", colour = "#FF5030", intensity = .7), ambient = .05)
@@ -152,6 +153,7 @@ test_that("sampled textures keep labels last without graphics groups", {
 })
 
 test_that("sampled texture runs set their own image filtering", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   runs <- function(alpha) {
     p <- ggplot2::ggplot(expand.grid(x = 0:1, y = 0:1), ggplot2::aes(x, y, z = 0)) +

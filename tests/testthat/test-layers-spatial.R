@@ -102,6 +102,7 @@ test_that("arcs rise above their chord by height times its normalised length", {
 })
 
 test_that("lidR point clouds fortify to snake-case point attributes", {
+  skip_on_cran()
   skip_if_not_installed("lidR")
   las <- lidR::readLAS(system.file("extdata", "MixedConifer.laz", package = "lidR"), filter = "-keep_random_fraction 0.01")
   points <- ggplot2::fortify(las)

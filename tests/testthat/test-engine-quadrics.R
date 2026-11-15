@@ -93,6 +93,7 @@ test_that("a cylinder's outline is the convex hull of its end ellipses", {
 })
 
 test_that("a plane cuts a sphere on the exact circle in vector and raster output", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   r <- 0.25; plane <- 0.5 + 0.6 * r
   packet <- quadric_packet(quadric_rows(1L, diag(r, 3L), c(0.5, 0.5, 0.5)), horizontal_quad(plane))
@@ -121,6 +122,7 @@ test_that("a plane cuts a sphere on the exact circle in vector and raster output
 })
 
 test_that("raster and vector agree on intersecting quadrics, meshes and a projective pre", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   quadrics <- quadric_rows(c(1L, 2L), c(diag(0.2, 3L), cbind(c(0.08, 0, 0), c(0, 0.08, 0), c(0, 0.3, 0.5))),
     c(0.5, 0.5, 0.45, 0.5, 0.2, 0.15))
@@ -226,6 +228,7 @@ test_that("each visible side of a translucent quadric is painted in one run", {
 })
 
 test_that("translucent quadrics show no seams inside their vector images", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   px <- 300L; viewport <- quadric_view(px)
   scene <- scene_compile(translucent_spheres(), new_camera_3d(azimuth = -30, elevation = 25), viewport)
@@ -329,7 +332,7 @@ test_that("an opaque quadric marks the part of a line behind it hidden in a scen
     corners = list(vertex = 1:2), polylines = list(offset = 1L, width_mm = 1, hidden = 1L, style_id = 1L),
     quadrics = c(sphere, list(style_id = 1L)),
     styles = data.frame(style_id = 1L, colour = "black", fill = "red", shade = FALSE))
-  scene <- scene_compile(packet, new_camera_3d(azimuth = 0, elevation = 90), new_scene_viewport(100, 100))
+  scene <- scene_compile(packet, new_camera_3d(azimuth = 0, elevation = 90), new_scene_viewport(40, 40, 72))
   line <- scene$fragments$kind == 2L
   # The sphere covers the middle of the line, so the line splits into hidden
   # pieces under it and visible pieces beyond it.

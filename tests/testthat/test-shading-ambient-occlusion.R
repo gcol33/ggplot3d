@@ -83,6 +83,7 @@ test_that("vector vertices and raster samples consume the same geometric visibil
 })
 
 test_that("AO and fog preserve text and label colours above geometry", {
+  skip_on_cran()
   p <- ao_corner_plot() + geom_label_3d(data = data.frame(x = 0.5, y = 0.5, z = 0, label = "label"),
     ggplot2::aes(label = label), colour = "red", fill = "yellow", inherit.aes = TRUE)
   for (backend in c("vector", "raster", "hybrid")) {

@@ -44,6 +44,7 @@ test_that("knitr embeds animation files with chunk size and alt text", {
 })
 
 test_that("rmarkdown animation URLs resolve from the final output directory", {
+  skip_on_cran()
   skip_if_not_installed("rmarkdown")
   skip_if_not_installed("xml2")
   skip_if_not(rmarkdown::pandoc_available())
@@ -78,6 +79,7 @@ test_that("rmarkdown animation URLs resolve from the final output directory", {
 })
 
 test_that("format-only animations embed from knitted calls", {
+  skip_on_cran()
   skip_if_not_installed("knitr")
   skip_if_not_installed("ragg")
   root <- tempfile("animation-format-knit-")

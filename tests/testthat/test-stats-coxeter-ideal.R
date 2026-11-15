@@ -28,8 +28,6 @@ test_that("ideal vertices are light-cone points on the boundary of the Klein bal
   xyz <- scene_vertices_xyz_3d(packet$vertices) * 2 - 1
   expect_equal(max(sqrt(rowSums(xyz^2))), 1, tolerance = 1e-9)
   expect_silent(validate_scene_packet(packet))
-  ball <- suppressMessages(stats_scene(p + stat_honeycomb_3d(schlafli = c(3, 3, 6), radius = 0, what = "faces", model = "poincare"))$packet)
-  expect_silent(validate_scene_packet(ball))
   X <- s$vertices[1, , drop = FALSE]; Y <- out$vertices[1:2, , drop = FALSE]
   Z <- hyperbolic_geodesic_3d(matrix(c(0, 0, 0, 1), 2, 4, byrow = TRUE), Y, c(0.25, 0.75))
   expect_equal(-lorentz_dot_3d(Z, Z), c(1, 1), tolerance = 1e-12)
@@ -37,6 +35,14 @@ test_that("ideal vertices are light-cone points on the boundary of the Klein bal
   expect_equal(P[3, ] - P[2, ], P[2, ] - P[1, ], tolerance = 1e-3)
   tiling <- suppressMessages(coxeter_cells_3d(c(5, Inf), 0, 1L))
   expect_equal(coxeter_lorentz_3d(tiling$vertices, tiling$simplex), rep(0, 5), tolerance = 1e-9)
+})
+
+test_that("ideal honeycomb faces in the Poincare ball give a valid packet", {
+  skip_on_cran()
+  p <- ggplot2::ggplot() + stat_honeycomb_3d(schlafli = c(3, 3, 6), radius = 0, what = "faces") +
+    coord_3d(axes = character(), panes = character(), box = "none")
+  ball <- suppressMessages(stats_scene(p + stat_honeycomb_3d(schlafli = c(3, 3, 6), radius = 0, what = "faces", model = "poincare"))$packet)
+  expect_silent(validate_scene_packet(ball))
 })
 
 test_that("hyperideal vertices are truncated by their polar planes", {
@@ -60,6 +66,7 @@ test_that("hyperideal vertices are truncated by their polar planes", {
 })
 
 test_that("non-compact cells are generated face by face within radius", {
+  skip_on_cran()
   for (symbol in list(c(6, 3, 3), c(7, 3, 3), c(4, 4, 4))) {
     tiling <- suppressMessages(coxeter_cells_3d(symbol, 2, 2000L))
     expect_identical(tiling$mode, "faces")

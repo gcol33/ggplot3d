@@ -135,6 +135,7 @@ test_that("statistics finish before intermediate data are generated", {
 })
 
 test_that("animate_3d renders in-between frames with fixed limits and transition metadata", {
+  skip_on_cran()
   d <- data.frame(x = c(0, 1, 1, 2), y = c(0, 1, 1, 0), z = c(0, 1, 2, 0),
     id = c("a", "b", "a", "b"), t = c(0, 0, 1, 1))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, group = id)) + geom_point_3d() +

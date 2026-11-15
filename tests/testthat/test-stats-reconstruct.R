@@ -102,6 +102,7 @@ test_that("alpha shapes recover a sampled torus and approach the hull", {
 })
 
 test_that("radial basis function fits reconstruct closed surfaces from points", {
+  skip_on_cran()
   set.seed(2)
   s <- matrix(rnorm(900), ncol = 3); s <- s / sqrt(rowSums(s^2))
   ell <- data.frame(x = s[, 1], y = s[, 2], z = 0.6 * s[, 3])
@@ -152,6 +153,7 @@ torus_error <- function(b) abs(sqrt((sqrt(b$x^2 + b$y^2) - 1)^2 + b$z^2) - 0.4)
 fit_points <- function(d, ...) ggplot2::ggplot_build(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + stat_implicit_fit_3d(...) + coord_3d())$data[[1L]]
 
 test_that("screened Poisson fits reconstruct closed, outward surfaces of noisy spheres and tori", {
+  skip_on_cran()
   ball <- poisson_shape(4000, 0.003, 3)
   fit <- fit_points(ball, method = "poisson", depth = 6)
   m <- reconstruct_topology(fit)
@@ -180,6 +182,7 @@ test_that("screened Poisson fits reconstruct closed, outward surfaces of noisy s
 })
 
 test_that("screened Poisson and radial basis function fits agree at equal point counts", {
+  skip_on_cran()
   for (torus in c(FALSE, TRUE)) {
     d <- poisson_shape(1000, 0.005, 11, torus)
     error <- if (torus) torus_error else sphere_error
@@ -192,6 +195,7 @@ test_that("screened Poisson and radial basis function fits agree at equal point 
 })
 
 test_that("screened Poisson fits take normals from aesthetics and validate their parameters", {
+  skip_on_cran()
   d <- poisson_shape(3000, 0, 13)
   d[c("nx", "ny", "nz")] <- d[c("x", "y", "z")]
   given <- ggplot2::ggplot_build(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, nx = nx, ny = ny, nz = nz)) +

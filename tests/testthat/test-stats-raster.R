@@ -4,6 +4,7 @@ small_raster <- function(crs = "EPSG:3857") {
 }
 
 test_that("SpatRaster and stars objects fortify to cell centres, values and lattice indices", {
+  skip_on_cran()
   skip_if_not_installed("terra")
   r <- small_raster()
   d <- ggplot2::fortify(r)
@@ -66,6 +67,7 @@ test_that("lattice normals point up and match finite differences on rectilinear 
 })
 
 test_that("profiles sample the drawn surface along each line and wall it to the base", {
+  skip_on_cran()
   d <- expand.grid(x = 0:10, y = 0:10)
   d$z <- with(d, 0.5 * x + 0.25 * y + 1)
   lines <- data.frame(x = c(1, 9, 2, 2, 8), y = c(1, 1, 1, 5, 9), group = c(1, 1, 2, 2, 2))

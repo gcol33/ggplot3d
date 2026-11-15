@@ -19,6 +19,7 @@ box_overlaps_3d <- function(centre, half) {
 }
 
 test_that("geom_label_3d draws padded boxes like geom_label inside coord_3d", {
+  skip_on_cran()
   d <- data.frame(x = 1:2, y = 1:2, z = 1:2, label = c("a", "bb"))
   base <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, label = label))
   ours <- integration_packets(base + geom_label_3d(label.padding = grid::unit(1, "mm")) + coord_3d())$packet
@@ -61,6 +62,7 @@ test_that("the solver keeps direction, bounds and the overlap limit", {
 })
 
 test_that("repelled labels are placed on the page with leaders in both backends", {
+  skip_on_cran()
   d <- data.frame(x = c(1, 1.02, 1.04, 2, 3), y = c(1, 1.02, 1, 2, 1), z = c(1, 1.02, 1.01, 2, 3),
                   name = c("first label", "second label", "third label", "", "far"))
   base <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, label = name)) + geom_point_3d()
@@ -115,6 +117,7 @@ test_that("repel arguments are checked", {
 })
 
 test_that("animate_3d carries label offsets from frame to frame", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   d <- data.frame(x = c(1, 1.01, 1.02, 2), y = c(1, 1.01, 1, 2), z = c(1, 1, 1, 2),
                   name = c("one", "two", "three", "four"))

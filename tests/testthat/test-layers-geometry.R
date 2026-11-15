@@ -249,6 +249,7 @@ test_that("fixed interval and height aesthetics are prepared before scale transf
 })
 
 test_that("droplines end on each normalized box face", {
+  skip_on_cran()
   d <- data.frame(x = 1:2, y = 1:2, z = 1:2)
   for (face in c("xmin", "xmax", "ymin", "ymax", "zmin", "zmax")) {
     s <- geometry_scene(geometry_plot(d, geom_dropline_3d(onto = face)))
@@ -260,6 +261,7 @@ test_that("droplines end on each normalized box face", {
 })
 
 test_that("new geometry layers render through the common scene backend", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   d <- data.frame(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1), z = c(0, 1, 2, 1))
   plots <- list(

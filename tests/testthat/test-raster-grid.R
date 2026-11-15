@@ -1,4 +1,5 @@
 test_that("raster panels preserve vector furniture and bypass data ordering", {
+  skip_on_cran()
   path <- tempfile(fileext = ".png")
   ragg::agg_png(path, width = 500, height = 500, res = 100)
   on.exit({ grDevices::dev.off(); unlink(path) }, add = TRUE)

@@ -62,6 +62,7 @@ test_that("torus knots close and tube topology is a torus", {
 })
 
 test_that("immersed showpieces compile within the resource budget and pass the visibility referee", {
+  skip_on_cran()
   source(testthat::test_path("..","fixtures","oracle","reference.R"),local=TRUE)
   source(testthat::test_path("..","fixtures","scenes","immersed.R"),local=TRUE)
   for (name in c(names(immersed_recipes_3d),"trefoil")) {

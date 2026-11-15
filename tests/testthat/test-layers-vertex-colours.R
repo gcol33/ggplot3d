@@ -14,6 +14,7 @@ vertex_colour_grid <- function() {
 }
 
 test_that("mesh and surface keep literal vertex colours under smooth shading", {
+  skip_on_cran()
   m <- vertex_colour_cube()
   mesh <- ggplot2::ggplot(m, ggplot2::aes(x, y, z = z, fill = I(hex), group = 1)) +
     geom_mesh_3d(shading = "smooth", shade = FALSE) + coord_3d()

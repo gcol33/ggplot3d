@@ -21,6 +21,7 @@ band_image <- function(grob, size = 400L) {
 }
 
 test_that("surface bands split on scalar iso-lines under both shading modes", {
+  skip_on_cran()
   for (shading in c("flat", "smooth")) {
     out <- stats_scene(band_hill(shading))
     packet <- out$packet
@@ -44,6 +45,7 @@ test_that("surface bands split on scalar iso-lines under both shading modes", {
 })
 
 test_that("the vector hill bands agree with the analytic field away from iso-lines", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
   out <- stats_scene(band_hill())
@@ -133,6 +135,7 @@ test_that("band cuts preserve linear normals, texture coordinates and triangle a
 })
 
 test_that("vector, raster and viewer share the same band faces and smooth paint", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
   skip_if_not_installed("jsonlite")

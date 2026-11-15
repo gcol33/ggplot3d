@@ -72,6 +72,7 @@ test_that("geom_text_3d(orientation = 'plane') lays labels in the plane as scene
 })
 
 test_that("plane text renders in the vector and raster backends", {
+  skip_on_cran()
   skip_if_not_installed("systemfonts")
   d <- data.frame(x = 1:3, y = 1:3, z = 1:3, label = c("a", "b", "c"))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, label = label)) +

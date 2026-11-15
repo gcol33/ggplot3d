@@ -44,6 +44,7 @@ test_that("a vector stroke through a traced sphere is hidden behind it only", {
 })
 
 test_that("vector and hybrid panels place traced layers as images and declare them", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   path <- data.frame(x = c(-1, 1), y = c(0, 0), z = c(-1, 1))
   plot <- function(type) ggplot2::ggplot() +

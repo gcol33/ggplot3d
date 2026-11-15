@@ -114,6 +114,7 @@ test_that("lit smooth faces vary across a face in raster and vector output", {
 })
 
 test_that("vector smooth paint stays within the colour tolerance", {
+  skip_on_cran()
   x <- c(0, 40, 10); y <- c(0, 0, 30)
   linear <- decode(rbind(c(0.9, 0.3, 0.2), c(0.2, 0.8, 0.3), c(0.3, 0.3, 0.9)))
   tolerance <- 4 / 255

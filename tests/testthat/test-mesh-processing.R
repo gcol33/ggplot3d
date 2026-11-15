@@ -114,6 +114,7 @@ test_that("Taubin smoothing removes noise without shrinking; boundaries stay", {
 })
 
 test_that("QEM decimation reaches its target, keeps the surface and its attributes", {
+  skip_on_cran()
   for (method in c("cubes", "tetra", "dual", "nets")) {
     s <- sphere_mesh(method = method)
     d <- mesh_decimate(s, 0.1)

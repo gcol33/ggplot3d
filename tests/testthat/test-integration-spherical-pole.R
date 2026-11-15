@@ -18,6 +18,7 @@ test_that("stereographic coordinates are homogeneous with the pole at infinity",
 })
 
 test_that("faces through the stereographic pole are drawn up to the panel box", {
+  skip_on_cran()
   d <- data.frame(x = c(2.5, 0, -2.5), y = c(0, 0.5, 0), z = 0)
   X <- SpaceSpherical3D$to_canonical(d, "stereographic")
   expect_equal(unname(sphere_slerp_3d(X[1, , drop = FALSE], X[3, , drop = FALSE], 0.5)), matrix(c(0, 0, 0, 1), 1), tolerance = 1e-12)
@@ -32,6 +33,7 @@ test_that("faces through the stereographic pole are drawn up to the panel box", 
 })
 
 test_that("Hopf tori near the pole and the pole fibre render in both backends", {
+  skip_on_cran()
   d <- data.frame(lon = c(0, 0), lat = c(-75, -90))
   torus <- ggplot2::ggplot(d[1, ], ggplot2::aes(lon = lon, lat = lat)) +
     stat_hopf_fibre_3d(what = "torus", n = 24, fill = "steelblue", colour = NA) + coord_spherical_geometry_3d(extent = 2)

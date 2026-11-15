@@ -15,6 +15,7 @@ test_that("tooltip and data_id map without warnings, groups or scales", {
 })
 
 test_that("each panel carries the source rows, keys and tooltips of its primitives", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   cars <- cars_3d()
   p <- ggplot2::ggplot(cars, ggplot2::aes(wt, mpg, z = hp, tooltip = model, data_id = model)) +
@@ -33,6 +34,7 @@ test_that("each panel carries the source rows, keys and tooltips of its primitiv
 })
 
 test_that("default tooltips list mapped values by their labels", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   cars <- cars_3d()
   p <- ggplot2::ggplot(cars, ggplot2::aes(wt, mpg, z = hp, colour = factor(cyl))) +
@@ -46,6 +48,7 @@ test_that("default tooltips list mapped values by their labels", {
 })
 
 test_that("tooltips of computed layers read computed values and positions", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   set.seed(1)
   d <- data.frame(x = rnorm(60), y = rnorm(60))
@@ -65,6 +68,7 @@ test_that("tooltips of computed layers read computed values and positions", {
 })
 
 test_that("SharedData keys link the layers that draw its rows", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("crosstalk")
   cars <- cars_3d()

@@ -4,6 +4,7 @@ source(testthat::test_path("..","fixtures","scenes","builders.R"),local=TRUE)
 for(fixture_name in names(ref_fixture_builders())) for(camera_name in names(ref_cameras())) local({
   name <- fixture_name; view <- camera_name
   test_that(paste("referee",name,view,"has zero mismatched interior pixels"), {
+    skip_on_cran()
     f <- ref_fixture(name,view)
     compiled <- ggplot3d:::scene_compile(f$packet,f$camera,f$viewport)
     required <- "exact_visibility"

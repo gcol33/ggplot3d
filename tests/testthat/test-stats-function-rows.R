@@ -79,6 +79,7 @@ test_that("isofunction rows share parameter evaluation through refinement", {
 })
 
 test_that("function data supply one animation frame per time row", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   movie <- animate_3d(function_rows_plot(data.frame(t = 1:3)), time = "t",
     width = 240, height = 240, progress = FALSE)

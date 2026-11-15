@@ -11,6 +11,7 @@ tile_scene <- function() {
 }
 
 test_that("tiled raster output does not depend on the thread count", {
+  skip_on_cran()
   f <- tile_scene()
   render <- function(threads) {
     old <- options(ggplot3d.threads = threads)
@@ -28,6 +29,7 @@ test_that("tiled raster output does not depend on the thread count", {
 })
 
 test_that("raster buffers describe the nearest fragment of each pixel", {
+  skip_on_cran()
   f <- tile_scene()
   result <- ggplot3d:::raster_scene_3d(f$packet, f$camera, f$viewport, 1L, buffers = TRUE)
   b <- result$buffers

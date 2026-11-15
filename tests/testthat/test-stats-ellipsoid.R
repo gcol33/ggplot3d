@@ -52,6 +52,7 @@ test_that("euclid draws a sphere of radius level", {
 })
 
 test_that("enclosing ellipsoids contain every point and touch the hull", {
+  skip_on_cran()
   cube <- as.matrix(expand.grid(c(-1, 1), c(-1, 1), c(-1, 1)))
   hull <- ggplot3d:::ellipsoid_hull_3d(cube)
   expect_equal(unname(hull$center), c(0, 0, 0), tolerance = 1e-6)

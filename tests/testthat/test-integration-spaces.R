@@ -66,6 +66,7 @@ test_that("paths, segments, missing rows and attributes use the same munch", {
 })
 
 test_that("spherical polygon faces and boundaries reach both renderers", {
+  skip_on_cran()
   reference <- integration_packets(space_test_plot())$packet
   expect_gt(length(reference$faces$offset), 1)
   expect_true(all(reference$faces$count == 3L))
@@ -131,6 +132,7 @@ test_that("screen tolerance responds to zoom and perspective at drawing time", {
 })
 
 test_that("geodesic face boundaries agree with their stroked edges", {
+  skip_on_cran()
   result <- integration_packets(space_test_plot())
   packet <- result$packet
   xyz <- scene_vertices_xyz_3d(packet$vertices)

@@ -89,6 +89,7 @@ test_that("the z axis text and title get the same default margins as x and y", {
 })
 
 test_that("axis colourbars match expressions and support distinct scale transformations", {
+  skip_on_cran()
   p <- legend_surface() + ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d()) + scale_z_reverse()
   panel <- motion_panels_3d(legend_render(p))[[1L]]
   values <- panel$furniture$children[["panel-guide-3d-fill"]]$values
@@ -109,6 +110,7 @@ test_that("axis colourbars match expressions and support distinct scale transfor
 })
 
 test_that("lit legend keys use the scene light response and retain unshaded keys", {
+  skip_on_cran()
   d <- data.frame(x = 1:2, y = 1:2, z = c(1, 2), group = c("a", "b"))
   light <- light_3d(light_directional(intensity = 0.6), ambient = 0.2)
   make <- function(lit = TRUE, shade = TRUE, range = TRUE) {
@@ -136,6 +138,7 @@ test_that("lit legend keys use the scene light response and retain unshaded keys
 })
 
 test_that("3D colour guides render with free facets and each backend", {
+  skip_on_cran()
   for (type in c("vector", "raster", "hybrid")) {
     expect_no_error(legend_render(legend_surface(backend = backend_3d(type)) +
       ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d())))

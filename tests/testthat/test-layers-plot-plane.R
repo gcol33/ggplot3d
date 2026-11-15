@@ -93,6 +93,7 @@ test_that("polygon triangulation keeps its strict checks and relaxes them on req
 })
 
 test_that("annotation_plot_3d lays a whole 2D plot on a wall of the box", {
+  skip_on_cran()
   set.seed(1)
   d <- data.frame(x = rnorm(40), y = rnorm(40), z = rnorm(40))
   side <- ggplot2::ggplot(d, ggplot2::aes(x, z)) + ggplot2::geom_point() +
@@ -114,6 +115,7 @@ test_that("annotation_plot_3d lays a whole 2D plot on a wall of the box", {
 })
 
 test_that("annotation_plot_3d takes an extent, a floor plane, opacity and a raster route", {
+  skip_on_cran()
   bars <- ggplot2::ggplot(mtcars, ggplot2::aes(factor(gear))) + ggplot2::geom_bar()
   base <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, hp, z = mpg)) + geom_point_3d() + coord_3d()
   scene <- stats_scene(base + annotation_plot_3d(bars, plane = "xy", at = -Inf, extent = c(2, 4, 100, 300), alpha = 0.5))
@@ -141,6 +143,7 @@ test_that("annotation_plot_3d checks its plot and arguments", {
 })
 
 test_that("two-dimensional ggplot2 geoms draw on the plane of their height", {
+  skip_on_cran()
   mt <- transform(mtcars, cyl = factor(cyl))
   for (name in c("GeomBoxplot", "GeomViolin", "GeomRibbon", "GeomSmooth", "GeomErrorbar", "GeomRaster")) {
     expect_false(is.null(find_emitter_3d(getExportedValue("ggplot2", name))))

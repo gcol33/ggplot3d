@@ -11,6 +11,7 @@ panel_light_conditions <- function() list(
   unlit = NULL)
 
 test_that("crossed camera and lighting conditions retain stable keys and shared data", {
+  skip_on_cran()
   p <- panel_light_surface() + coord_3d() +
     facet_views_3d(c("front", "isometric"), lights = panel_light_conditions(), ncol = 3)
   built <- ggplot2::ggplot_build(p)
@@ -53,6 +54,7 @@ test_that("paired lights broadcast singletons and explicit NULL differs from inh
 })
 
 test_that("each panel matches its standalone vector and raster shading", {
+  skip_on_cran()
   conditions <- panel_light_conditions()
   p <- panel_light_surface() + coord_3d() + facet_views_3d(c("front", "isometric"), lights = conditions)
   input <- integration_packets(p)
@@ -90,6 +92,7 @@ test_that("the guide reference binds data-space point lights to its panel ranges
 })
 
 test_that("viewer payloads keep panel lights and progressive caches include their condition", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   p <- panel_light_surface() + coord_3d() + facet_views_3d(NULL, lights = panel_light_conditions())
   widget <- view_3d(p)

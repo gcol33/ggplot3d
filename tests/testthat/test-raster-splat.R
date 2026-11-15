@@ -75,6 +75,7 @@ test_that("splat and edl arguments are validated", {
 })
 
 test_that("the vector backend refuses panels above the marker limit", {
+  skip_on_cran()
   old <- options(ggplot3d.vector_markers = 10)
   on.exit(options(old))
   d <- data.frame(x = 1:20, y = 1:20, z = 1:20)

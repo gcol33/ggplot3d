@@ -10,6 +10,7 @@ outline_cube_scene <- function() {
 }
 
 test_that("raster cube edges share vector visibility and stroke widths", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   s <- outline_cube_scene()
   scene <- scene_compile(s$packet, s$camera, s$viewport)
@@ -46,6 +47,7 @@ test_that("raster cube edges share vector visibility and stroke widths", {
 })
 
 test_that("the halo cube vector SVG has compact compound stroke outlines", {
+  skip_on_cran()
   skip_if_not_installed("svglite")
   skip_if_not_installed("xml2")
   path <- tempfile(fileext = ".svg")

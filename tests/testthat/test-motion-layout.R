@@ -1,4 +1,5 @@
 test_that("viewer layout bypasses static marker limits across facets", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("svglite")
   previous <- options(ggplot3d.vector_markers = 1)

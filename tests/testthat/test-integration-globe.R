@@ -10,6 +10,7 @@ test_that("globe charts, height and intrinsic geodesics agree analytically", {
 })
 
 test_that("globe paths follow the surface and furniture shares the adapter", {
+  skip_on_cran()
   d <- data.frame(x = c(170,-170), y = c(0,0), z = 0.05)
   p <- ggplot2::ggplot(d, ggplot2::aes(x,y,z=z)) + geom_path_3d() +
     coord_globe_3d(inner = FALSE, graticule = c(0,0), zlim = c(0,.1))

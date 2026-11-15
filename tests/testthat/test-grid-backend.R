@@ -124,6 +124,7 @@ grid_test_panels <- function(grob) {
 }
 
 test_that("intersecting surfaces paint in few single-layer runs, each underlaid", {
+  skip_on_cran()
   surface <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
   first <- transform(surface, z = 0.6 * x)
   second <- transform(surface, z = -0.6 * x + 0.2 * y)
@@ -163,6 +164,7 @@ test_that("real ggplot path compiles exactly once and resolves physical dimensio
 })
 
 test_that("eight independent azimuths retain panel dimensions and magnification", {
+  skip_on_cran()
   grid_test_device({
     metrics <- lapply(seq(0, 315, 45), function(angle) {
       panel <- grid_test_panels(grid::grid.force(ggplot2::ggplotGrob(grid_test_plot(azimuth = angle, frame = "sphere"))))[[1]]
@@ -330,6 +332,7 @@ test_that("frame selection validates and preserves sphere compatibility", {
 })
 
 test_that("view frames fit native projected box corners in both projections", {
+  skip_on_cran()
   corners <- cube_edges_3d()$corners
   packet <- new_scene_packet(vertices = lapply(as.data.frame(corners), as.double),
     corners = list(vertex = 1:8), text = list(offset = 1:8, partition = rep(2L, 8L)),
@@ -430,6 +433,7 @@ test_that("a short axis under aspect = 'data' keeps label rectangles apart with 
 })
 
 test_that("small facets thin tick labels and share a frame with free labels", {
+  skip_on_cran()
   grid_test_device({
     data <- rbind(data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1), panel = "A"),
       data.frame(x = c(0, 1), y = c(0, 1e5), z = c(0, 1), panel = "B"))
@@ -455,6 +459,7 @@ test_that("small facets thin tick labels and share a frame with free labels", {
 })
 
 test_that("frame groups belong to an individual built gtable", {
+  skip_on_cran()
   grid_test_device({
     p <- grid_test_plot()
     first <- ggplot2::ggplotGrob(p)
@@ -482,6 +487,7 @@ test_that("furniture facing handles poles and finite perspective eyes", {
 })
 
 test_that("pane grids and box edges share fixed furniture partitions", {
+  skip_on_cran()
   grid_test_device({
     for (clip_data in c(TRUE, FALSE)) for (elevation in c(-90, 30, 90)) {
       plot <- grid_test_plot(elevation = elevation, clip_data = clip_data,
@@ -551,6 +557,7 @@ test_that("shaded solids paint seam groups of non-overlapping faces over a two-t
 })
 
 test_that("fragments of one contour line paint as one stroke", {
+  skip_on_cran()
   bump <- expand.grid(x = seq(-2, 2, length.out = 25), y = seq(-2, 2, length.out = 25))
   bump$z <- with(bump, exp(-(x^2 + y^2)) + 0.3 * exp(-((x - 1)^2 + (y + 1)^2) * 3))
   p <- ggplot2::ggplot(bump, ggplot2::aes(x, y, z = z)) + geom_contour_3d(bins = 5) + coord_3d()

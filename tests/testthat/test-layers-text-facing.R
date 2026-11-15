@@ -65,6 +65,7 @@ test_that("curved frame normals follow the inverse transpose of the local map", 
 })
 
 test_that("camera-facing outlines use the actual eye and panel viewport at draw time", {
+  skip_on_cran()
   skip_if_not_installed("systemfonts")
   viewport <- new_scene_viewport(140, 80)
   for (projection in c("perspective", "orthographic", "oblique")) {
@@ -88,6 +89,7 @@ test_that("camera-facing outlines use the actual eye and panel viewport at draw 
 })
 
 test_that("all static backends resolve camera-facing outlines before drawing", {
+  skip_on_cran()
   skip_if_not_installed("systemfonts")
   skip_if_not_installed("ragg")
   for (type in c("vector", "raster", "hybrid", "pathtrace")) {

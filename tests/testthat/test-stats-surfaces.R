@@ -85,6 +85,7 @@ test_that("ridgelines retain grouping in both orientations", {
 })
 
 test_that("all statistical surface layers render", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   d <- expand.grid(x = seq(-1, 1, length.out = 6), y = seq(-1, 1, length.out = 6))
   d$z <- d$x + d$y + sin(d$x * d$y)
@@ -229,6 +230,7 @@ test_that("numerically coincident level vertices preserve closed mesh topology",
 })
 
 test_that("volume layers render through the public face path", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   d <- expand.grid(x = seq(-1, 1, length.out = 6), y = seq(-1, 1, length.out = 6), z = seq(-1, 1, length.out = 6))
   d$value <- with(d, x*x + y*y + z*z)

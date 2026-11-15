@@ -30,6 +30,7 @@ test_that("trail specifications fail early on invalid windows and options", {
 })
 
 test_that("windows contain preceding frames and fade the existing alpha", {
+  skip_on_cran()
   p <- trail_test_plot() + geom_point_3d(alpha = .6)
   job <- trail_test_job(p)
   expect_length(motion_trail_curves_3d(motion_trail_history_3d(job, 1)[[1]], 1), 0)
@@ -48,6 +49,7 @@ test_that("windows contain preceding frames and fade the existing alpha", {
 })
 
 test_that("trails use the same identities as tweening across reordered groups", {
+  skip_on_cran()
   d <- data.frame(x = c(0, 10, 12, 2), y = 0, z = 0,
     id = c("a", "b", "b", "a"), t = c(0, 0, 1, 1))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, group = id, colour = id)) +
@@ -81,6 +83,7 @@ test_that("missing and nonfinite observations split trails and stationary marks 
 })
 
 test_that("static layers and group-based surfaces are excluded and layer selection is validated", {
+  skip_on_cran()
   p <- trail_test_plot() + geom_point_3d(data = data.frame(x = 0, y = 0, z = 0))
   job <- trail_test_job(p)
   expect_identical(job$trail_layers, 1L)
@@ -94,6 +97,7 @@ test_that("static layers and group-based surfaces are excluded and layer selecti
 })
 
 test_that("object absence leaves separate history runs and glyph anchors use the row registry", {
+  skip_on_cran()
   d <- data.frame(x = c(0, 10, 1, 11, 12, 3, 13, 4, 14), y = 0, z = 0,
     id = c("a", "b", "a", "b", "b", "a", "b", "a", "b"), t = c(1, 1, 2, 2, 3, 4, 4, 5, 5))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, group = id, fill = id)) +
@@ -107,6 +111,7 @@ test_that("object absence leaves separate history runs and glyph anchors use the
 })
 
 test_that("tube and ribbon geometry share the sweep with mapped sizes and tapering", {
+  skip_on_cran()
   job <- trail_test_job(trail_test_plot(), list(length = 3, radius = .1))
   history <- motion_trail_history_3d(job, 4)
   params <- job$keyframes[[1]]$layout$panel_params[[1]]
@@ -128,6 +133,7 @@ test_that("tube and ribbon geometry share the sweep with mapped sizes and taperi
 })
 
 test_that("facets and transformed positions retain their own trail coordinates", {
+  skip_on_cran()
   d <- expand.grid(t = 1:3, site = c("a", "b"))
   d$x <- 10^d$t; d$y <- d$t; d$z <- d$t + ifelse(d$site == "b", 100, 0)
   p <- trail_test_plot(d) + ggplot2::scale_x_log10() + ggplot2::facet_wrap(~site) +
@@ -145,6 +151,7 @@ test_that("facets and transformed positions retain their own trail coordinates",
 })
 
 test_that("animate_3d renders native trails with and without tweening", {
+  skip_on_cran()
   p <- trail_test_plot()
   counts <- integer()
   emit <- motion_trail_packets_3d

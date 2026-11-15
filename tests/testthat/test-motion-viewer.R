@@ -29,6 +29,7 @@ test_that("the browser picks primitives by id and maps them to their rows", {
 })
 
 test_that("primitive ids match the scene packet's primitive_id", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   d <- data.frame(x = c(0, 1, 1, 0), y = c(0, 0, 1, 1), z = c(0.5, 0.5, 0.5, 0.5))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_polygon_3d(fill = "steelblue") +

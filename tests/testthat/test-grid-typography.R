@@ -86,6 +86,7 @@ test_that("plane labels are glyph outlines in the pane, foreshortened by perspec
 })
 
 test_that("plane labels take the requested pane and reject panes without the axis", {
+  skip_on_cran()
   for (plane in c("xy", "xz")) {
     panel <- typography_panel(typography_plot(x = guide_axis_3d(label_orientation = "plane", plane = plane, ticks = "in_plane")))
     t <- typography_of(panel, "x")
@@ -138,6 +139,7 @@ test_that("title_position near puts the title past the end nearer the camera", {
 })
 
 test_that("box typography keeps labels and titles inside the panel in every mode", {
+  skip_on_cran()
   for (guide in list(guide_axis_3d(label_orientation = "edge", title_position = "near"),
                      guide_axis_3d(label_orientation = "plane", ticks = "in_plane"),
                      guide_axis_3d(depth_scale = TRUE, ticks = "in_plane"))) {

@@ -27,6 +27,7 @@ test_that("invalid formats and conflicting extensions fail before encoding", {
 
 for (format in ls(motion_outputs_3d)) {
   test_that(paste("format alone writes", format, "output"), {
+    if (format != "png") skip_on_cran()
     output <- motion_outputs_3d[[format]]
     for (package in c(output$packages, "ragg")) skip_if_not_installed(package)
     p <- ggplot2::ggplot(mtcars[1:3, ], ggplot2::aes(wt, mpg, z = hp)) + geom_point_3d() + coord_3d()
@@ -66,6 +67,7 @@ for (format in ls(motion_outputs_3d)) {
 }
 
 test_that("NULL file and format retain the PNG frames", {
+  skip_on_cran()
   p <- ggplot2::ggplot(mtcars[1:3, ], ggplot2::aes(wt, mpg, z = hp)) + geom_point_3d() + coord_3d()
   implicit <- animate_3d(p, frames = 2, width = 160, height = 160, progress = FALSE)
   on.exit(unlink(dirname(implicit$frames[1L]), recursive = TRUE), add = TRUE)

@@ -1,4 +1,5 @@
 test_that("viewer outline buffers follow camera movement and match static geometry", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("systemfonts")
   for (facing in c("camera_plane", "camera_point")) {
@@ -40,6 +41,7 @@ test_that("viewer outline buffers follow camera movement and match static geomet
 })
 
 test_that("facetted outline labels keep independent camera metadata and surface occlusion", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   skip_if_not_installed("systemfonts")
   d <- data.frame(x = .5, y = .5, z = c(.3, .7), label = c("Behind", "Front"), facet = c("a", "b"))

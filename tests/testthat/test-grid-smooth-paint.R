@@ -62,6 +62,7 @@ smooth_shared_edge_pixels <- function(scene, size) {
 }
 
 test_that("lit Gaussian smooth surfaces match raster along every shared triangle edge", {
+  skip_on_cran()
   d <- expand.grid(x = seq(-2, 2, length.out = 30), y = seq(-2, 2, length.out = 30))
   d$z <- exp(-(d$x^2 + d$y^2))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = x)) +
@@ -97,6 +98,7 @@ test_that("a face whose colour varies along one direction is one gradient, witho
 })
 
 test_that("a face with colours varying in two directions is painted as an image matching raster", {
+  skip_on_cran()
   out <- smooth_paint_compare(smooth_paint_packet(diag(3)))
   expect_true("rastergrob" %in% grob_classes(out$grob))
   expect_gt(out$pixels, 2000L)
@@ -173,6 +175,7 @@ test_that("smooth images use perspective-correct corner interpolation", {
 })
 
 test_that("smooth images preserve interpolated ambient accessibility", {
+  skip_on_cran()
   packet <- smooth_paint_packet(diag(3), normals = matrix(c(0, 0, 1), 3L, 3L, byrow = TRUE))
   packet$vertices$z[] <- 0
   packet$styles$shade <- TRUE
@@ -190,6 +193,7 @@ test_that("smooth images preserve interpolated ambient accessibility", {
 })
 
 test_that("interleaved smooth surfaces retain their compiled visibility", {
+  skip_on_cran()
   d <- expand.grid(x = seq(-1, 1, length.out = 9), y = seq(-1, 1, length.out = 9))
   p <- ggplot2::ggplot(transform(d, z = 0.6 * x), ggplot2::aes(x, y, z = z, fill = x)) +
     geom_surface_3d(shading = "smooth", colour = NA) +

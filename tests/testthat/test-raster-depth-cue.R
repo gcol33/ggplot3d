@@ -22,6 +22,7 @@ edl_plot_3d <- function(backend, cue = NULL) {
 }
 
 test_that("eye-dome lighting of depth_cue_3d() darkens rasterised pixels most at depth steps", {
+  skip_on_cran()
   for (backend in c("raster", "hybrid")) {
     plain <- raster_result_3d(edl_plot_3d(backend))
     none <- raster_result_3d(edl_plot_3d(backend, depth_cue_3d(fog = NA)))
@@ -37,6 +38,7 @@ test_that("eye-dome lighting of depth_cue_3d() darkens rasterised pixels most at
 })
 
 test_that("splats keep their layer's eye-dome strength under a depth cue", {
+  skip_on_cran()
   set.seed(2)
   d <- data.frame(x = stats::runif(300), y = stats::runif(300), z = stats::runif(300))
   splats <- function(cue) ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +

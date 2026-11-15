@@ -10,6 +10,7 @@ iso_extract <- function(v, axes, level, method, caps = TRUE)
   ggplot3d:::geometry_isosurface_cpp(axes[[1]], axes[[2]], axes[[3]], as.double(v), level, caps, method)
 
 test_that("both methods give closed oriented surfaces on random fields", {
+  skip_on_cran()
   set.seed(4)
   for (size in c(2L, 2L, 3L)) for (trial in 1:60) {
     axes <- lapply(rep(size, 3L), seq_len)
@@ -69,7 +70,8 @@ test_that("random-field Euler characteristics match a refined trilinear referenc
     m
   }
   compared <- 0
-  for (trial in 1:200) {
+  trials <- if (identical(Sys.getenv("NOT_CRAN"), "true")) 200L else 40L
+  for (trial in seq_len(trials)) {
     v <- rnorm(8)
     if (margin(v) < 0.05) next
     r <- refine(v, 24L)
@@ -77,7 +79,7 @@ test_that("random-field Euler characteristics match a refined trilinear referenc
       iso_topology(iso_extract(r$v, r$axes, 0, "tetra"))$chi, label = paste("trial", trial))
     compared <- compared + 1
   }
-  expect_gt(compared, 150)
+  expect_gt(compared, 0.75 * trials)
 })
 
 test_that("levels share one sweep and match separate extraction", {

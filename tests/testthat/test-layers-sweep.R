@@ -268,6 +268,7 @@ test_that("millimetre ribbons take their width on the page", {
 })
 
 test_that("millimetre tubes draw alike in the vector, raster and hybrid backends", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   d <- data.frame(x = c(0, 10), y = c(0, 1), z = c(0, 1))
   painted <- function(type) {

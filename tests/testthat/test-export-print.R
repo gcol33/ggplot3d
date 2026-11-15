@@ -91,6 +91,7 @@ test_that("printing points and paths respect minimum dimensions", {
 })
 
 test_that("STL and 3MF printing exports carry closed solids and triangle colours", {
+  skip_on_cran()
   p <- export_surface_plot(n = 3, colour = NA, fill = "#336699", coord = coord_3d(light = NULL))
   settings <- print_3d(size_mm = c(30, 30, 15), surface = "base", furniture = "base", text = "none")
   stl <- tempfile(fileext = ".stl"); mf <- tempfile(fileext = ".3mf")
@@ -113,6 +114,7 @@ test_that("STL and 3MF printing exports carry closed solids and triangle colours
 })
 
 test_that("raised and engraved text are extruded with counters and axis furniture", {
+  skip_on_cran()
   skip_if_not_installed("systemfonts")
   for (mode in c("raised", "engraved")) {
     settings <- print_3d(size_mm = rep(20, 3), text = mode, furniture = character())

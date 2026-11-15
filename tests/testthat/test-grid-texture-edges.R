@@ -1,4 +1,5 @@
 test_that("nearest texture samples agree with texel-clipped volcano geometry", {
+  skip_on_cran()
   packet <- stats_scene(texture_volcano_plot())$packet
   geometry <- geometric_texture_packet(packet, checker_colours())
   for (dpi in c(110, 300)) {
@@ -42,6 +43,7 @@ test_that("checker boundaries stay within half a pixel beside shared triangle ed
 })
 
 test_that("the raster and hybrid drape use the same checker sampling and placement", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
   plot <- texture_volcano_plot()

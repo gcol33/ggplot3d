@@ -124,6 +124,7 @@ guide_grobs <- function(plot, name) {
 }
 
 test_that("a legend-box colourbar shows value by light with the face transfer", {
+  skip_on_cran()
   light <- light_3d(light_directional(), mode = "lightness")
   for (direction in c("vertical", "horizontal")) {
     bar <- guide_grobs(transfer_surface(light, guide_colourbar_3d(along = NULL, shading_range = TRUE, nbin = 10,
@@ -152,6 +153,7 @@ test_that("a legend-box colourbar shows value by light with the face transfer", 
 })
 
 test_that("colour steps and bins shade binned scales with uneven intervals", {
+  skip_on_cran()
   light <- light_3d(light_directional(), mode = "lightness")
   steps <- guide_grobs(transfer_surface(light, guide_coloursteps_3d(even.steps = FALSE),
     function(guide) ggplot2::scale_fill_viridis_b(breaks = c(2, 3, 10), guide = guide)), "shaded-coloursteps-3d")
@@ -198,6 +200,7 @@ test_that("legend keys with a categorical scale get the signed transfer strip", 
 })
 
 test_that("the viewer applies the signed transfers like the kernel", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   d <- data.frame(x = c(0, 1, 0, 1), y = c(0, 0, 1, 1), z = c(0, 0, 0, 0))
   for (mode in c("lightness", "tone", "soft")) {
@@ -221,6 +224,7 @@ test_that("the viewer applies the signed transfers like the kernel", {
 })
 
 test_that("raster faces use the signed transfer", {
+  skip_on_cran()
   light <- light_3d(light_directional(), mode = "lightness")
   raster <- transfer_surface(light, "none", backend = backend_3d("raster"))
   expect_no_error(transfer_render(raster))

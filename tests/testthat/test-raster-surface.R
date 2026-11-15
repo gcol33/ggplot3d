@@ -43,6 +43,7 @@ test_that("raster alpha_mode = \"surface\" paints a sheet's nearest piece once",
 })
 
 test_that("raster and grid agree on nested translucent sheets with alpha_mode = \"surface\"", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   n <- 80L
   for (view in names(ref_cameras())) {

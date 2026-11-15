@@ -1,4 +1,5 @@
 test_that("ggplot2 filled contours draw terraced bands with mapped fills", {
+  skip_on_cran()
   d <- expand.grid(x = 1:10, y = 1:10)
   d$z <- d$x * d$y
   for (layer in list(ggplot2::geom_contour_filled(bins = 4),

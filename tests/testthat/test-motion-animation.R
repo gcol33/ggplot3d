@@ -5,6 +5,7 @@ motion_test_plot <- function(...) {
 }
 
 test_that("camera animation builds geometry once and retains every frame", {
+  skip_on_cran()
   calls <- 0L
   collect <- ggplot3d:::collect_scene_layers
   testthat::local_mocked_bindings(collect_scene_layers = function(...) {
@@ -32,6 +33,7 @@ test_that("camera animation builds geometry once and retains every frame", {
 })
 
 test_that("time functions, zoom and varying elevation use a locked sphere", {
+  skip_on_cran()
   a <- animate_3d(motion_test_plot(projection = "perspective", roll = 8),
     azimuth = function(t) -45 + 30 * t, elevation = c(-20, 0, 40),
     zoom = c(.8, 1, 1.1), roll = function(t) 8 + t,
@@ -46,6 +48,7 @@ test_that("time functions, zoom and varying elevation use a locked sphere", {
 })
 
 test_that("facets retain fixed panel dimensions", {
+  skip_on_cran()
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
     geom_point_3d() + ggplot2::facet_wrap(~am) + coord_3d(z_scales = "free")
   a <- animate_3d(p, frames = 2, width = 480, height = 280, progress = FALSE)
@@ -63,6 +66,7 @@ motion_time_plot <- function() {
 }
 
 test_that("time animation draws one subset per frame with limits from all frames", {
+  skip_on_cran()
   p <- motion_time_plot()
   a <- animate_3d(p, time = "t", width = 240, height = 240, progress = FALSE)
   on.exit(unlink(dirname(a$frames[1L]), recursive = TRUE), add = TRUE)
@@ -99,6 +103,7 @@ test_that("geom_blank and expand_limits train scales inside coord_3d", {
 })
 
 test_that("GIF output is encoded from the requested frames", {
+  skip_on_cran()
   skip_if_not_installed("gifski")
   path <- tempfile(fileext = ".gif")
   on.exit(unlink(path), add = TRUE)
@@ -141,6 +146,7 @@ test_that("GIF output is encoded from the requested frames", {
 })
 
 test_that("MP4 output is written", {
+  skip_on_cran()
   skip_if_not_installed("av")
   path <- tempfile(fileext = ".mp4")
   on.exit(unlink(path), add = TRUE)

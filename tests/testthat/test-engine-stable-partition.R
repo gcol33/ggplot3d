@@ -64,6 +64,7 @@ test_that("a stable partition paints what a cold compile paints", {
 })
 
 test_that("stable cuts stay in place while the camera turns", {
+  skip_on_cran()
   withr::local_options(ggplot3d.cache_bytes = 0)
   packet <- stable_soup(200L)
   frames <- function(stable) lapply(seq(0, 60, by = 15), function(azimuth) stable_compile(packet, azimuth, stable))
@@ -136,6 +137,7 @@ test_that("quadric stand-ins keep one refinement through an orbit", {
 })
 
 test_that("animate_3d() passes stable_partition to the vector renderer", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   p <- ggplot2::ggplot(data.frame(x = c(0, 1, 0), y = c(0, 0, 1), z = c(0, 1, 1)), ggplot2::aes(x, y, z = z)) +
     geom_polygon_3d(fill = "steelblue", alpha = 0.6) + coord_3d()

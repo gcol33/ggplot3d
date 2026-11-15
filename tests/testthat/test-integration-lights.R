@@ -112,6 +112,7 @@ test_that("surface layers carry materials and the packet merges them", {
 })
 
 test_that("shiny surfaces show a highlight in raster and vector output", {
+  skip_on_cran()
   d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))
   d$z <- with(d, 1 - x^2 - y^2)
   base <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
@@ -136,6 +137,7 @@ test_that("shiny surfaces show a highlight in raster and vector output", {
 })
 
 test_that("the viewer runs the kernel's GLSL with the same terms", {
+  skip_on_cran()
   glsl <- shade_glsl_cpp(8L)
   for (k in c("case 1:", "case 2:", "case 3:", "case 4:", "pow(max(dot(n, h), 0.0), sh)")) expect_match(glsl, k, fixed = TRUE)
   d <- data.frame(x = c(0, 1, 0, 1), y = c(0, 0, 1, 1), z = c(0, 0, 0, 0))

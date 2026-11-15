@@ -42,6 +42,7 @@ test_that("perspective edges crossing the eye hyperplane end in explicit ideal c
 })
 
 test_that("a tesseract around the perspective eye renders with homogeneous clipping", {
+  skip_on_cran()
   source(testthat::test_path("..", "fixtures", "scenes", "polytopes4d.R"), local = TRUE)
   m <- tesseract_mesh_4d()
   p <- ggplot2::ggplot(m, ggplot2::aes(w = w)) + stat_project_3d(geom = "mesh", projection = "perspective", eye = 0.5, alpha = 0.4) +
@@ -62,6 +63,7 @@ test_that("a tesseract around the perspective eye renders with homogeneous clipp
 })
 
 test_that("stereographic arcs and faces through the pole reach the panel box", {
+  skip_on_cran()
   pole <- projection_normal_3d(diag(4)[, 1:3])[4]
   t <- seq(-0.9, 0.9, length.out = 7) * pi / 2
   d <- data.frame(x = sin(t), y = 0, z = 0, w = pole * cos(t))

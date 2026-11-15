@@ -283,6 +283,7 @@ engine_ray_polygon <- function(origin,direction,polygon) {
 }
 
 test_that("BSP face compositing order agrees with independent rays in both projections", {
+  skip_on_cran()
   set.seed(79)
   polygons <- replicate(18,matrix(runif(9,.05,.95),3,3),simplify=FALSE)
   packet <- engine_packet(polygons,opacity=seq(.1,.9,length.out=18))

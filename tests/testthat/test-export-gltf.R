@@ -1,4 +1,5 @@
 test_that("GLB files have a valid container, one node per layer and a camera", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   p <- export_surface_plot(ggplot2::aes(fill = z), colour = NA) +
     geom_point_3d(data = data.frame(x = 0, y = 0, z = 0.2), colour = "red", size = 3)
@@ -25,6 +26,7 @@ test_that("GLB files have a valid container, one node per layer and a camera", {
 })
 
 test_that("vertical plot axis becomes +y and size scales the model", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   corners <- function(...) ggplot2::ggplot(data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1)), ggplot2::aes(x, y, z = z)) +
     geom_point_3d(size = 1) + coord_3d(expand = FALSE, aspect = c(1, 1, 2), ...)
@@ -44,6 +46,7 @@ test_that("vertical plot axis becomes +y and size scales the model", {
 })
 
 test_that("vertex colours are linear and materials follow lighting and alpha", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   file <- tempfile(fileext = ".glb")
   export_3d(export_surface_plot(fill = "#808080", colour = NA, alpha = 0.5), file)
@@ -65,6 +68,7 @@ test_that("vertex colours are linear and materials follow lighting and alpha", {
 })
 
 test_that("face outlines, paths and markers become tubes, solids or primitives", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   p <- export_surface_plot(fill = "grey80", colour = "black") +
     geom_path_3d(data = data.frame(x = c(-1, 0, 1), y = c(-1, 1, -1), z = 0), colour = "red") +
@@ -87,6 +91,7 @@ test_that("face outlines, paths and markers become tubes, solids or primitives",
 })
 
 test_that("furniture is grouped into panes, grid and box nodes", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   file <- tempfile(fileext = ".glb")
   export_3d(export_surface_plot(), file, furniture = TRUE)
@@ -97,6 +102,7 @@ test_that("furniture is grouped into panes, grid and box nodes", {
 })
 
 test_that("the glTF camera reproduces the plot's view", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   p <- export_surface_plot(coord = coord_3d(azimuth = 20, elevation = 40, roll = 10))
   file <- tempfile(fileext = ".glb")
@@ -124,6 +130,7 @@ test_that("the glTF camera reproduces the plot's view", {
 })
 
 test_that(".gltf output writes a separate binary buffer", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   dir <- tempfile()
   dir.create(dir)
@@ -135,6 +142,7 @@ test_that(".gltf output writes a separate binary buffer", {
 })
 
 test_that("animate_3d() writes camera tracks and per-frame geometry to glTF", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   waves <- expand.grid(x = seq(0, 1, length.out = 5), y = seq(0, 1, length.out = 5), t = c(0, 0.5, 1))
   waves$z <- sin(pi * waves$x) * cos(pi * waves$t)
@@ -178,6 +186,7 @@ test_that("animate_3d() writes camera tracks and per-frame geometry to glTF", {
 })
 
 test_that("camera paths export the same endpoint orientations as static scenes", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   p <- export_surface_plot()
   file <- tempfile(fileext = ".glb")
@@ -196,6 +205,7 @@ test_that("camera paths export the same endpoint orientations as static scenes",
 })
 
 test_that("deferred screen-sized glyphs export their resolved meshes", {
+  skip_on_cran()
   skip_if_not_installed("jsonlite")
   p <- ggplot2::ggplot(data.frame(x = 0, y = 0, z = 0), ggplot2::aes(x, y, z = z)) +
     geom_sphere_3d(radius = 2, radius.unit = "mm", detail = 1) + coord_3d()
@@ -211,6 +221,7 @@ test_that("deferred screen-sized glyphs export their resolved meshes", {
 })
 
 test_that("export and animation arguments are checked", {
+  skip_on_cran()
   p <- export_surface_plot()
   expect_error(export_3d(p, tempfile(fileext = ".xyz")), "file must end in .3mf, .asy, .glb, .gltf, .obj, .ply, .stl, .svg, .tex")
   expect_error(export_3d(p, tempfile(fileext = ".stl"), lines = "line"), "STL files hold triangles only")

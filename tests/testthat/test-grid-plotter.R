@@ -49,6 +49,7 @@ test_that("plotter closes arrowheads with unfilled strokes and draws labels last
 })
 
 test_that("the lighting hatch SVG contains only compact stroked scene geometry", {
+  skip_on_cran()
   skip_if_not_installed("svglite")
   skip_if_not_installed("xml2")
   path <- tempfile(fileext = ".svg")
@@ -72,6 +73,7 @@ test_that("the lighting hatch SVG contains only compact stroked scene geometry",
 })
 
 test_that("plotter and grid visible hatch strokes agree at interior pixels", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   packet <- stats_scene(plotter_hatch_plot())$packet
   vp <- new_scene_viewport(152.4, 101.6, 300)
@@ -98,6 +100,7 @@ test_that("plotter and grid visible hatch strokes agree at interior pixels", {
 })
 
 test_that("smooth surface silhouettes retain the vector visible length and runs", {
+  skip_on_cran()
   skip_if_not_installed("ragg")
   packet <- stats_scene(plotter_hatch_plot(hatch = FALSE))$packet
   vp <- new_scene_viewport(152.4, 101.6, 150)

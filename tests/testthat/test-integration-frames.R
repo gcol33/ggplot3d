@@ -23,6 +23,7 @@ test_that("the box frame is the identity and leaves emitted packets untouched", 
 })
 
 test_that("generic subdivision reproduces box furniture visibility under an identity transform", {
+  skip_on_cran()
   d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
   for (projection in c("orthographic", "perspective")) {
     plain <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() + coord_3d(projection = projection, azimuth = 35)
@@ -109,6 +110,7 @@ test_that("cylindrical and spherical frames place angle, radius and height", {
 })
 
 test_that("curved frames draw with rear panes and curved axes", {
+  skip_on_cran()
   d <- data.frame(month = 1:12, ring = 1, rain = 1:12)
   p <- ggplot2::ggplot(d, ggplot2::aes(month, ring, z = rain)) + geom_path_3d() + coord_cylindrical_3d()
   panel <- draw_plot_3d(p)[[1L]]
@@ -122,6 +124,7 @@ test_that("curved frames draw with rear panes and curved axes", {
 })
 
 test_that("ternary and quaternary frames close parts and map barycentrically", {
+  skip_on_cran()
   frame <- coord_ternary_3d()$frame
   closed <- frame$setup_aesthetics(data.frame(a = 1, b = 1, c = 2))
   expect_equal(c(closed$x, closed$y), c(0.25, 0.25))
@@ -216,6 +219,7 @@ test_that("oblique scenes keep exact occlusion", {
 })
 
 test_that("the viewer receives frame-generic furniture and axis candidates", {
+  skip_on_cran()
   skip_if_not_installed("htmlwidgets")
   d <- data.frame(month = 1:12, ring = 1, rain = 1:12)
   p <- ggplot2::ggplot(d, ggplot2::aes(month, ring, z = rain)) + geom_point_3d() + coord_cylindrical_3d()

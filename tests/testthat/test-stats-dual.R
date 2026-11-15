@@ -19,6 +19,7 @@ dual_manifold <- function(b) {
 }
 
 test_that("surface nets and dual contouring give closed manifolds with caps", {
+  skip_on_cran()
   set.seed(9)
   for (size in c(2L, 3L, 4L)) for (trial in 1:40) {
     axes <- lapply(rep(size, 3L), seq_len); v <- rnorm(size^3)
