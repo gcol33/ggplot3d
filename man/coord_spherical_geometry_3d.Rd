@@ -5,7 +5,6 @@
 \title{Spherical geometry in stereographic and gnomonic charts}
 \usage{
 coord_spherical_geometry_3d(
-  dim = 3,
   model = c("stereographic", "gnomonic"),
   input = model,
   extent = 3,
@@ -16,8 +15,6 @@ coord_spherical_geometry_3d(
 )
 }
 \arguments{
-\item{dim}{Spherical dimension, currently three.}
-
 \item{model, input}{Display model and input chart.}
 
 \item{extent}{Positive half-width of the finite display box. Gnomonic

@@ -47,10 +47,10 @@ direction of a hemisphere light.}
 \item{falloff}{Nonnegative exponent of the distance falloff.}
 }
 \value{
-A light for \code{\link[=lights_3d]{lights_3d()}}.
+A light for \code{\link[=light_3d]{light_3d()}}.
 }
 \description{
-Lights combine in \code{\link[=lights_3d]{lights_3d()}}, which \code{\link[=coord_3d]{coord_3d()}} takes as \code{light}, with
+Lights combine in \code{\link[=light_3d]{light_3d()}}, which \code{\link[=coord_3d]{coord_3d()}} takes as \code{light}, with
 an ambient term. Each face colour is lit by one shading kernel shared by
 the vector and raster backends and the \code{\link[=view_3d]{view_3d()}} viewer: the
 Blinn-Phong model (Phong 1975, Blinn 1977) in linear light, with the
@@ -77,7 +77,7 @@ positions are relative to the camera target in panel units. In
 positions in data units.
 }
 \examples{
-lights_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
+light_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
 }
 \references{
 Phong (1975). Illumination for computer generated pictures.

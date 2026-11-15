@@ -38,12 +38,12 @@ test_that("views are presets or named camera argument lists", {
   expect_error(views_spec_3d(list(list(azimuth = 30))), "needs a name")
   expect_error(views_spec_3d(list(a = list(spin = 3))), "camera_3d\\(\\) arguments")
   expect_error(views_spec_3d(c(a = "front", a = "top")), "unique")
-  expect_error(facet_views(nrow = 0), "positive whole number")
+  expect_error(facet_views_3d(nrow = 0), "positive whole number")
 })
 
 test_that("each panel takes its view's camera over the coord's", {
   p <- views_block() + coord_3d(projection = "perspective", zoom = 0.9) +
-    facet_views(list(front = "front", turned = list(azimuth = 30, elevation = 10)))
+    facet_views_3d(list(front = "front", turned = list(azimuth = 30, elevation = 10)))
   built <- ggplot2::ggplot_build(p)
   cameras <- lapply(built$layout$panel_params, `[[`, "camera")
   expect_identical(cameras[[1L]]$projection, "orthographic")
@@ -51,12 +51,12 @@ test_that("each panel takes its view's camera over the coord's", {
   expect_identical(cameras[[2L]]$projection, "perspective")
   expect_equal(c(cameras[[2L]]$azimuth, cameras[[2L]]$elevation, cameras[[2L]]$zoom), c(30, 10, 0.9))
   expect_identical(as.character(built$layout$layout$view), c("front", "turned"))
-  expect_error(ggplot2::ggplot_build(views_block() + coord_3d(azimuth = c(0, 90)) + facet_views(c("front", "top"))),
+  expect_error(ggplot2::ggplot_build(views_block() + coord_3d(azimuth = c(0, 90)) + facet_views_3d(c("front", "top"))),
     "not both")
 })
 
 test_that("the scene is computed once and shared by every view", {
-  p <- views_block() + coord_3d(z_scales = "free") + facet_views()
+  p <- views_block() + coord_3d(z_scales = "free") + facet_views_3d()
   built <- ggplot2::ggplot_build(p)
   expect_true(all(built$data[[1L]]$PANEL == 1L))
   expect_equal(built$layout$layout$SCALE_Z, rep(1L, 4L))
@@ -67,7 +67,7 @@ test_that("the scene is computed once and shared by every view", {
 })
 
 test_that("views of a projection layout share one magnification and line up", {
-  p <- views_block() + coord_3d() + facet_views(c("front", "top", "right"), layout = "third_angle")
+  p <- views_block() + coord_3d() + facet_views_3d(c("front", "top", "right"), layout = "third_angle")
   panels <- views_panels(p)
   zoom <- vapply(panels, function(q) q$panel_params$camera$zoom, numeric(1))
   expect_equal(zoom, rep(1, 3L))
@@ -88,16 +88,16 @@ test_that("principal presets look along the axes", {
   ragg::agg_png(png, 600, 600)
   on.exit({grDevices::dev.off(); unlink(png)}, add = TRUE)
   expect_no_error(print(views_block() + coord_3d() +
-    facet_views(c("front", "top", "bottom", "left", "right", "rear"), layout = "first_angle")))
+    facet_views_3d(c("front", "top", "bottom", "left", "right", "rear"), layout = "first_angle")))
 })
 
-test_that("facet_views() requires coord_3d()", {
-  p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() + facet_views()
+test_that("facet_views_3d() requires coord_3d()", {
+  p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point() + facet_views_3d()
   expect_error(ggplot2::ggplotGrob(p), "requires coord_3d")
 })
 
 test_that("animated views keep their own projection and offsets", {
-  built <- ggplot2::ggplot_build(views_block() + coord_3d() + facet_views(c("front", "cabinet")))
+  built <- ggplot2::ggplot_build(views_block() + coord_3d() + facet_views_3d(c("front", "cabinet")))
   base <- coord_3d()$camera
   turned <- base
   turned$azimuth <- base$azimuth + 40

@@ -9,7 +9,7 @@
 #' position `"auto"` there.
 #' Labels are thinned automatically using their measured extents along the edge.
 #'
-#' Tick labels can stand upright on the page (`label.orientation = "screen"`),
+#' Tick labels can stand upright on the page (`label_orientation = "screen"`),
 #' turn with the projected edge they label (`"edge"`, as `rotate_labels` in
 #' ggcube and the automatic label rotation of Makie's `Axis3`), or lie flat in
 #' one of the two box panes that meet at the edge (`"plane"`), drawn from the
@@ -28,23 +28,23 @@
 #' @param position "auto", a side (top, bottom, left, right), edge 1 to 4, or
 #'   "origin".
 #' @param check.overlap Use extra clearance between measured label rectangles.
-#' @param angle Label rotation in degrees for `label.orientation = "screen"`.
+#' @param angle Label rotation in degrees for `label_orientation = "screen"`.
 #'   Waiver keeps labels horizontal.
 #' @param n.dodge Number of parallel label rows.
 #' @param minor.ticks Draw minor ticks.
 #' @param cap Trim the lower, upper, both, or neither end to major breaks.
 #' @param order Guide ordering value.
-#' @param label.orientation `"screen"`, `"edge"` or `"plane"`: tick labels
+#' @param label_orientation `"screen"`, `"edge"` or `"plane"`: tick labels
 #'   upright on the page, turned along the projected edge and kept upright, or
 #'   lying in a pane. Titles follow the edge in every orientation and lie in
 #'   the pane with `"plane"`.
 #' @param plane Pane for plane labels and in-plane ticks: `"auto"`,
 #'   `"floor"`, `"xy"`, `"xz"` or `"yz"`. The pane must contain the axis.
-#' @param title.position `"centre"` places the title beside the middle of the
+#' @param title_position `"centre"` places the title beside the middle of the
 #'   axis, beyond the tick labels; `"near"` places it at the end nearer the
 #'   camera. Screen titles sit past that endpoint; plane titles sit inside
 #'   the pane boundary.
-#' @param depth.scale Under perspective projection, scale tick labels and
+#' @param depth_scale Under perspective projection, scale tick labels and
 #'   tick lengths by their distance from the camera: `FALSE` (none), `TRUE`
 #'   (full), or a nonnegative strength `s`, which maps the ratio `d` of the
 #'   distance of the camera target to the distance of the tick to `d^s`, as
@@ -66,22 +66,22 @@
 #' p + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
 #' p + scale_z_continuous(guide = guide_axis_3d(position = "origin")) +
 #'   coord_3d(origin = c(x = 2, y = 1.5))
-#' p + ggplot2::guides(x = guide_axis_3d(label.orientation = "edge"),
-#'                     y = guide_axis_3d(label.orientation = "edge")) +
+#' p + ggplot2::guides(x = guide_axis_3d(label_orientation = "edge"),
+#'                     y = guide_axis_3d(label_orientation = "edge")) +
 #'   coord_3d()
 #' if (requireNamespace("systemfonts", quietly = TRUE)) {
-#'   p + ggplot2::guides(x = guide_axis_3d(label.orientation = "plane", ticks = "in_plane"),
-#'                       y = guide_axis_3d(label.orientation = "plane", ticks = "in_plane")) +
+#'   p + ggplot2::guides(x = guide_axis_3d(label_orientation = "plane", ticks = "in_plane"),
+#'                       y = guide_axis_3d(label_orientation = "plane", ticks = "in_plane")) +
 #'     coord_3d(projection = "perspective")
 #' }
-#' p + ggplot2::guides(z = guide_axis_3d(title.position = "near", depth.scale = TRUE)) +
+#' p + ggplot2::guides(z = guide_axis_3d(title_position = "near", depth_scale = TRUE)) +
 #'   coord_3d(projection = "perspective")
 #' @export
 guide_axis_3d <- function(title = ggplot2::waiver(), theme = NULL, position = "auto",
                           check.overlap = FALSE, angle = ggplot2::waiver(), n.dodge = 1L,
                           minor.ticks = FALSE, cap = "none", order = 0L,
-                          label.orientation = "screen", plane = "auto", title.position = "centre",
-                          depth.scale = FALSE, ticks = "outward") {
+                          label_orientation = "screen", plane = "auto", title_position = "centre",
+                          depth_scale = FALSE, ticks = "outward") {
   if (!(length(position) == 1L && (position %in% c("auto", "origin", "top", "bottom", "left", "right", 1:4)))) stop("Invalid 3D axis position.", call. = FALSE)
   if (length(n.dodge) != 1L || !is.finite(n.dodge) || n.dodge < 1 || n.dodge != trunc(n.dodge)) stop("n.dodge must be a positive integer.", call. = FALSE)
   if (!inherits(angle, "waiver") && !(is.numeric(angle) && length(angle) == 1L && is.finite(angle))) stop("angle must be a finite number or waiver().", call. = FALSE)
@@ -89,24 +89,24 @@ guide_axis_3d <- function(title = ggplot2::waiver(), theme = NULL, position = "a
     check.overlap = check.overlap, angle = angle, n.dodge = as.integer(n.dodge),
     minor.ticks = minor.ticks, cap = match.arg(cap, c("none", "upper", "lower", "both")),
     order = as.integer(order),
-    label.orientation = match.arg(label.orientation, c("screen", "edge", "plane")),
+    label_orientation = match.arg(label_orientation, c("screen", "edge", "plane")),
     plane = match.arg(plane, c("auto", "floor", "xy", "xz", "yz")),
-    title.position = match.arg(title.position, c("centre", "near")),
-    depth.scale = depth_strength_3d(depth.scale),
+    title_position = match.arg(title_position, c("centre", "near")),
+    depth_scale = depth_strength_3d(depth_scale),
     ticks = match.arg(ticks, c("outward", "in_plane")),
     available_aes = c("x", "y", "z"), super = GuideAxis3D)
 }
 
-depth_strength_3d <- function(depth.scale) {
-  if (is.logical(depth.scale) && length(depth.scale) == 1L && !is.na(depth.scale)) return(as.double(depth.scale))
-  if (is.numeric(depth.scale) && length(depth.scale) == 1L && is.finite(depth.scale) && depth.scale >= 0) return(as.double(depth.scale))
-  stop("depth.scale must be TRUE, FALSE or a nonnegative number.", call. = FALSE)
+depth_strength_3d <- function(depth_scale) {
+  if (is.logical(depth_scale) && length(depth_scale) == 1L && !is.na(depth_scale)) return(as.double(depth_scale))
+  if (is.numeric(depth_scale) && length(depth_scale) == 1L && is.finite(depth_scale) && depth_scale >= 0) return(as.double(depth_scale))
+  stop("depth_scale must be TRUE, FALSE or a nonnegative number.", call. = FALSE)
 }
 
 GuideAxis3D <- ggplot2::ggproto("GuideAxis3D", ggplot2::GuideAxis,
   available_aes = c("x", "y", "z"),
-  params = c(ggplot2::GuideAxis$params, list(label.orientation = "screen", plane = "auto",
-    title.position = "centre", depth.scale = 0, ticks = "outward")),
+  params = c(ggplot2::GuideAxis$params, list(label_orientation = "screen", plane = "auto",
+    title_position = "centre", depth_scale = 0, ticks = "outward")),
   extract_key = function(scale, aesthetic, ...) {
     values <- scale$get_breaks()
     data.frame(.value = values, .label = I(scale$get_labels()), stringsAsFactors = FALSE)

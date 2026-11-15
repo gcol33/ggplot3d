@@ -198,7 +198,7 @@ provides tooltip text. The projected view stays fixed.
 
 ```{r semantic-svg}
 svg <- file.path(out, "cars.svg")
-save_svg_3d(p, svg, interactive = TRUE, width = 624, height = 432)
+export_3d(p, svg, interactive = TRUE, width = 624, height = 432)
 doc <- xml2::read_xml(svg)
 fragments <- xml2::xml_find_all(doc, ".//*[@data-primitive]")
 head(unique(xml2::xml_attr(fragments, "data-layer")))
@@ -232,8 +232,8 @@ fill, draw, text and clipping commands. The standalone setting includes a
 document preamble; disable it for code to insert into an existing document.
 
 ```{r tikz}
-tikz <- export_code_3d(p, "tikz", file = file.path(out, "cars.tex"))
-cat(paste(head(strsplit(tikz, "\n")[[1]], 5), collapse = "\n"))
+tikz <- export_3d(p, file.path(out, "cars.tex"))
+cat(head(readLines(tikz), 5), sep = "\n")
 ```
 
 Compile the file with `pdflatex cars.tex`. The generated code uses TikZ's
@@ -248,9 +248,8 @@ model-space geometry, materials, text and a camera, which you can edit to
 render another view. The panel index selects the scene to export.
 
 ```{r asymptote}
-asy <- export_code_3d(p, "asy", panel = 1,
-  file = file.path(out, "cars.asy"), prc = TRUE)
-cat(paste(head(strsplit(asy, "\n")[[1]], 5), collapse = "\n"))
+asy <- export_3d(p, file.path(out, "cars.asy"), panel = 1, prc = TRUE)
+cat(head(readLines(asy), 5), sep = "\n")
 ```
 
 The PRC setting requests embedded 3D content in PDF. Compile with

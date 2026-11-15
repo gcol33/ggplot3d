@@ -28,23 +28,23 @@ typography_of <- function(panel, name) {
 overlay_grobs <- function(panel, class) Filter(function(g) inherits(g, class), as.list(panel$furniture$children))
 
 test_that("guide_axis_3d validates and stores the typography options", {
-  guide <- guide_axis_3d(label.orientation = "edge", plane = "xz", title.position = "near", depth.scale = 0.5, ticks = "in_plane")
-  expect_identical(guide$params$label.orientation, "edge")
+  guide <- guide_axis_3d(label_orientation = "edge", plane = "xz", title_position = "near", depth_scale = 0.5, ticks = "in_plane")
+  expect_identical(guide$params$label_orientation, "edge")
   expect_identical(guide$params$plane, "xz")
-  expect_identical(guide$params$title.position, "near")
-  expect_identical(guide$params$depth.scale, 0.5)
+  expect_identical(guide$params$title_position, "near")
+  expect_identical(guide$params$depth_scale, 0.5)
   expect_identical(guide$params$ticks, "in_plane")
-  expect_identical(guide_axis_3d(depth.scale = TRUE)$params$depth.scale, 1)
-  expect_identical(guide_axis_3d()$params$depth.scale, 0)
-  expect_error(guide_axis_3d(depth.scale = -1), "depth.scale")
-  expect_error(guide_axis_3d(label.orientation = "flat"))
+  expect_identical(guide_axis_3d(depth_scale = TRUE)$params$depth_scale, 1)
+  expect_identical(guide_axis_3d()$params$depth_scale, 0)
+  expect_error(guide_axis_3d(depth_scale = -1), "depth_scale")
+  expect_error(guide_axis_3d(label_orientation = "flat"))
   expect_error(guide_axis_3d(plane = "xx"))
-  expect_identical(normalise_guide_3d(ggplot2::guide_axis(angle = 30), "x")$params$label.orientation, "screen")
+  expect_identical(normalise_guide_3d(ggplot2::guide_axis(angle = 30), "x")$params$label_orientation, "screen")
 })
 
 test_that("edge labels turn with the projected edge and stay upright", {
-  panel <- typography_panel(typography_plot(x = guide_axis_3d(label.orientation = "edge"),
-    y = guide_axis_3d(label.orientation = "edge"), z = guide_axis_3d(label.orientation = "edge")))
+  panel <- typography_panel(typography_plot(x = guide_axis_3d(label_orientation = "edge"),
+    y = guide_axis_3d(label_orientation = "edge"), z = guide_axis_3d(label_orientation = "edge")))
   for (name in c("x", "y", "z")) {
     t <- typography_of(panel, name)
     tangent <- t$layout$tangent
@@ -60,7 +60,7 @@ test_that("edge labels turn with the projected edge and stay upright", {
 })
 
 test_that("edge labels sit beyond the ticks by their height, not their bounding box", {
-  panel <- typography_panel(typography_plot(x = guide_axis_3d(label.orientation = "edge")))
+  panel <- typography_panel(typography_plot(x = guide_axis_3d(label_orientation = "edge")))
   t <- typography_of(panel, "x")
   m <- panel_furniture_3d(panel$panel_params, panel$theme, panel$outer_viewport)$overlay$fit$metrics$x
   normal <- t$layout$normal
@@ -69,7 +69,7 @@ test_that("edge labels sit beyond the ticks by their height, not their bounding 
 })
 
 test_that("plane labels are glyph outlines in the pane, foreshortened by perspective", {
-  plot <- typography_plot(x = guide_axis_3d(label.orientation = "plane"), labels = rep("W", 5L),
+  plot <- typography_plot(x = guide_axis_3d(label_orientation = "plane"), labels = rep("W", 5L),
     coord = coord_3d(projection = "perspective", fov = 60))
   panel <- typography_panel(plot)
   furniture <- panel_furniture_3d(panel$panel_params, panel$theme, panel$outer_viewport)
@@ -87,7 +87,7 @@ test_that("plane labels are glyph outlines in the pane, foreshortened by perspec
 
 test_that("plane labels take the requested pane and reject panes without the axis", {
   for (plane in c("xy", "xz")) {
-    panel <- typography_panel(typography_plot(x = guide_axis_3d(label.orientation = "plane", plane = plane, ticks = "in_plane")))
+    panel <- typography_panel(typography_plot(x = guide_axis_3d(label_orientation = "plane", plane = plane, ticks = "in_plane")))
     t <- typography_of(panel, "x")
     pane <- guide_pane_direction_3d(t$ctx, panel$panel_params$axis_guides$x, t$layout)
     expect_equal(which(pane != 0), if (plane == "xy") 2L else 3L)
@@ -97,7 +97,7 @@ test_that("plane labels take the requested pane and reject panes without the axi
     page <- expected[2L, 1:2] - expected[1L, 1:2]
     expect_equal(sum(direction * page) / sqrt(sum(direction^2) * sum(page^2)), 1, tolerance = 1e-4)
   }
-  expect_error(typography_panel(typography_plot(z = guide_axis_3d(label.orientation = "plane", plane = "floor"))), "vertical")
+  expect_error(typography_panel(typography_plot(z = guide_axis_3d(label_orientation = "plane", plane = "floor"))), "vertical")
   expect_error(typography_panel(typography_plot(x = guide_axis_3d(ticks = "in_plane", plane = "yz"))), "does not contain")
 })
 
@@ -111,22 +111,22 @@ test_that("in-plane ticks shrink with distance and end where the labels start", 
   expect_true(all(away > 0))
 })
 
-test_that("depth.scale grows near labels and ticks under perspective only", {
+test_that("depth_scale grows near labels and ticks under perspective only", {
   near_far <- function(coord) {
-    t <- typography_of(typography_panel(typography_plot(x = guide_axis_3d(depth.scale = TRUE), coord = coord)), "x")
+    t <- typography_of(typography_panel(typography_plot(x = guide_axis_3d(depth_scale = TRUE), coord = coord)), "x")
     t$typography$labels$factor
   }
   factor <- near_far(coord_3d(projection = "perspective", fov = 60))
   expect_gt(max(factor), 1)
   expect_lt(min(factor), 1)
   expect_equal(near_far(coord_3d()), rep(1, 5L))
-  panel <- typography_panel(typography_plot(x = guide_axis_3d(depth.scale = 2), coord = coord_3d(projection = "perspective", fov = 60)))
+  panel <- typography_panel(typography_plot(x = guide_axis_3d(depth_scale = 2), coord = coord_3d(projection = "perspective", fov = 60)))
   sizes <- unlist(lapply(overlay_grobs(panel, "text"), function(g) g$gp$fontsize))
   expect_gt(length(unique(round(sizes, 6))), 2L)
 })
 
-test_that("title.position near puts the title past the end nearer the camera", {
-  plot <- typography_plot(x = guide_axis_3d(title.position = "near"), coord = coord_3d(projection = "perspective"))
+test_that("title_position near puts the title past the end nearer the camera", {
+  plot <- typography_plot(x = guide_axis_3d(title_position = "near"), coord = coord_3d(projection = "perspective"))
   t <- typography_of(typography_panel(plot), "x")
   ends <- t$layout$at(c(0, 1))
   near <- which.min(ends[, 3L])
@@ -138,9 +138,9 @@ test_that("title.position near puts the title past the end nearer the camera", {
 })
 
 test_that("box typography keeps labels and titles inside the panel in every mode", {
-  for (guide in list(guide_axis_3d(label.orientation = "edge", title.position = "near"),
-                     guide_axis_3d(label.orientation = "plane", ticks = "in_plane"),
-                     guide_axis_3d(depth.scale = TRUE, ticks = "in_plane"))) {
+  for (guide in list(guide_axis_3d(label_orientation = "edge", title_position = "near"),
+                     guide_axis_3d(label_orientation = "plane", ticks = "in_plane"),
+                     guide_axis_3d(depth_scale = TRUE, ticks = "in_plane"))) {
     panel <- typography_panel(typography_plot(x = guide, y = guide, z = guide, coord = coord_3d(projection = "perspective", roll = 15)))
     for (bounds in panel$furniture$bounds) {
       expect_true(all(is.finite(bounds)))
@@ -152,8 +152,8 @@ test_that("box typography keeps labels and titles inside the panel in every mode
 })
 
 test_that("origin axes draw plane labels as scene faces and in-plane ticks in model units", {
-  plot <- typography_plot(x = guide_axis_3d(label.orientation = "plane", ticks = "in_plane"),
-    y = guide_axis_3d(label.orientation = "edge"), coord = coord_3d(axis_lines = "origin", origin = c(x = 2, y = 2, z = 2)))
+  plot <- typography_plot(x = guide_axis_3d(label_orientation = "plane", ticks = "in_plane"),
+    y = guide_axis_3d(label_orientation = "edge"), coord = coord_3d(axis_lines = "origin", origin = c(x = 2, y = 2, z = 2)))
   params <- ggplot2::ggplot_build(plot)$layout$panel_params[[1L]]
   path <- tempfile(fileext = ".png")
   ragg::agg_png(path, width = 6, height = 6, units = "in", res = 100)

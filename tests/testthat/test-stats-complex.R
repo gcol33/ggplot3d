@@ -1,21 +1,21 @@
 test_that("Mobius maps handle poles inverse composition and projective scaling", {
-  reciprocal <- mobius(0,1,1,0)
+  reciprocal <- mobius_3d(0,1,1,0)
   expect_equal(reciprocal(c(0,1,Inf)),as.complex(c(Inf,1,0)))
   z <- c(1+2i,-.3i,2)
-  f <- mobius(2,1i,.2,1); inverse <- mobius(1,-1i,-.2,2)
+  f <- mobius_3d(2,1i,.2,1); inverse <- mobius_3d(1,-1i,-.2,2)
   expect_equal(inverse(f(z)),z,tolerance=1e-12)
-  expect_equal(mobius(4,2i,.4,2)(z),f(z),tolerance=1e-12)
-  expect_error(mobius(1,1,1,1),"determinant")
-  expect_error(mobius(a=NA),"finite")
+  expect_equal(mobius_3d(4,2i,.4,2)(z),f(z),tolerance=1e-12)
+  expect_error(mobius_3d(1,1,1,1),"determinant")
+  expect_error(mobius_3d(a=NA),"finite")
 })
 
 test_that("the Riemann sphere represents the complex point at infinity finitely", {
   X <- rbind(c(0,0,1),c(0,0,-1),c(1,0,0))
-  got <- mobius(0,1,1,0)(X,model="sphere")
+  got <- mobius_3d(0,1,1,0)(X,model="sphere")
   expect_equal(unname(got),rbind(c(0,0,-1),c(0,0,1),c(1,0,0)),tolerance=1e-12)
   expect_true(all(is.finite(got)))
   expect_equal(rowSums(got^2),rep(1,3),tolerance=1e-12)
-  rotation <- mobius(exp(.2i),0,0,exp(-.2i))
+  rotation <- mobius_3d(exp(.2i),0,0,exp(-.2i))
   Y <- rotation(X,model="sphere")
   expect_equal(Y%*%t(Y),X%*%t(X),tolerance=1e-12,ignore_attr=TRUE)
   expect_error(rotation(matrix(c(0,0,2),1),model="sphere"),"unit norm")
@@ -24,12 +24,12 @@ test_that("the Riemann sphere represents the complex point at infinity finitely"
 test_that("the half-space extension preserves hyperbolic distance", {
   X <- rbind(c(.2,-.4,.7),c(-1,.5,2),c(.8,.1,.4))
   distance <- function(X) acosh(1+sum((X[1,]-X[2,])^2)/(2*X[1,3]*X[2,3]))
-  for(f in list(mobius(2,0,0,1),mobius(1,1+2i,0,1),mobius(0,1,1,0),mobius(1+.2i,.3i,.1,1))) {
+  for(f in list(mobius_3d(2,0,0,1),mobius_3d(1,1+2i,0,1),mobius_3d(0,1,1,0),mobius_3d(1+.2i,.3i,.1,1))) {
     Y <- f(X,model="halfspace")
     expect_true(all(Y[,3]>0)); expect_equal(unname(distance(Y)),distance(X),tolerance=1e-10)
   }
-  expect_equal(unname(mobius(2,0,0,1)(X,model="halfspace")),2*X,tolerance=1e-12)
-  expect_error(mobius()(matrix(c(0,0,0),1),model="halfspace"),"positive")
+  expect_equal(unname(mobius_3d(2,0,0,1)(X,model="halfspace")),2*X,tolerance=1e-12)
+  expect_error(mobius_3d()(matrix(c(0,0,0),1),model="halfspace"),"positive")
 })
 
 test_that("sphere portraits expose phase modulus and fine domain colours", {

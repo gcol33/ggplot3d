@@ -37,11 +37,11 @@ complex_sphere_3d <- function(u,v=rep(1+0i,length(u))) {
 #' @references Wegert (2010). Phase plots of complex functions.
 #'   <https://arxiv.org/abs/1007.2295>.
 #' @examples
-#' f <- mobius(a=0,b=1,c=1,d=0)
+#' f <- mobius_3d(a=0,b=1,c=1,d=0)
 #' f(c(0,1,Inf))
 #' f(rbind(c(0,0,1),c(0,0,-1)),model="sphere")
 #' @export
-mobius <- function(a=1,b=0,c=0,d=1) {
+mobius_3d <- function(a=1,b=0,c=0,d=1) {
   coefficients <- c(a,b,c,d)
   if(!(is.numeric(coefficients)||is.complex(coefficients))||length(coefficients)!=4L||any(!is.finite(coefficients))) stop("a, b, c and d must be finite complex scalars.",call.=FALSE)
   coefficients <- as.complex(coefficients)/max(Mod(coefficients))
@@ -119,7 +119,7 @@ StatRiemannSphere3D <- ggplot2::ggproto("StatRiemannSphere3D",StatGeometry3D,
 #' @param fun Vectorised complex function.
 #' @param n Longitude resolution; latitude uses half as many samples.
 #' @param contours Draw modulus bands in the domain colour.
-#' @param transform Optional [mobius()] map applied to the sphere mesh.
+#' @param transform Optional [mobius_3d()] map applied to the sphere mesh.
 #' @return A surface layer.
 #' @references Wegert (2010). <https://arxiv.org/abs/1007.2295>.
 #'   Poelke and Polthier (2009). Lifted domain coloring.

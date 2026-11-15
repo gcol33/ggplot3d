@@ -8,7 +8,7 @@ projective_test_space <- function() ggplot2::ggproto("ProjectiveTest", SpaceEucl
 
 projective_test_plot <- function(d, ...) {
   ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_path_3d(...) +
-    coord_3d(space = projective_test_space(), input = "homogeneous", model = "homogeneous",
+    coord_3d(geometry = projective_test_space(), input = "homogeneous", model = "homogeneous",
       xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1), expand = FALSE,
       axes = character(), panes = character(), box = "none")
 }
@@ -64,7 +64,7 @@ test_that("ideal corners from a space reach the panel box through homogeneous cl
   for (backend in c("vector", "raster")) {
     file <- tempfile(fileext = ".png")
     ragg::agg_png(file, 300, 300, res = 72)
-    tryCatch(expect_no_error(print(p + coord_3d(space = projective_test_space(), input = "homogeneous",
+    tryCatch(expect_no_error(print(p + coord_3d(geometry = projective_test_space(), input = "homogeneous",
       model = "homogeneous", xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1), expand = FALSE,
       backend = backend_3d(backend, dpi = 72, antialias = 1)))), finally = grDevices::dev.off())
     expect_gt(file.info(file)$size, 1000)

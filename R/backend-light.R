@@ -25,7 +25,7 @@ encode_rgb_3d <- function(linear) {
 }
 
 # Unit model-space direction toward the first directional light of a
-# lighting configuration (see lights_3d()), for a camera with right, up and
+# lighting configuration (see light_3d()), for a camera with right, up and
 # forward axes and the model scale of the panel box.
 light_vector_3d <- function(camera, light) {
   direction <- light$direction

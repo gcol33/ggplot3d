@@ -111,6 +111,7 @@ immersed_recipes_3d <- list(
 #' twisted parameter seams of [stat_parametric_3d()]. Lighting is two-sided.
 #' @param type Surface name.
 #' @param n Samples per parameter, a scalar or pair of integers.
+#' @param mapping,data Standard layer arguments.
 #' @param ... Arguments to [stat_parametric_3d()].
 #' @return A surface layer.
 #' @references VTK parametric surface definitions:
@@ -119,8 +120,8 @@ immersed_recipes_3d <- list(
 #' @examples
 #' ggplot2::ggplot() + stat_immersed_3d(type="klein_figure8",n=c(24,16)) + coord_3d()
 #' @export
-stat_immersed_3d <- function(type=c("klein_figure8","klein_bottle","boy","cross_cap","moebius"),n=40L,...) {
-  do.call(stat_parametric_3d,c(immersed_recipes_3d[[match.arg(type)]],list(n=n),list(...)))
+stat_immersed_3d <- function(mapping=NULL,data=NULL,...,type=c("klein_figure8","klein_bottle","boy","cross_cap","moebius"),n=40L) {
+  do.call(stat_parametric_3d,c(list(mapping=mapping,data=data),immersed_recipes_3d[[match.arg(type)]],list(n=n),list(...)))
 }
 
 knot_curve_3d <- function(p,q,n,major,minor) {
@@ -143,7 +144,6 @@ StatKnot3D <- ggplot2::ggproto("StatKnot3D",StatGeometry3D,
 #' around the tube. The integers must be coprime. A positive radius sweeps
 #' a closed tube using the shared rotation-minimising frame.
 #' @inheritParams stat_parametric_3d
-#' @param type Knot family, currently "torus".
 #' @param p,q Coprime nonzero integer winding numbers.
 #' @param n Number of samples around the closed knot.
 #' @param major,minor Major and minor radii of the supporting torus.
@@ -154,9 +154,8 @@ StatKnot3D <- ggplot2::ggproto("StatKnot3D",StatGeometry3D,
 #' @examples
 #' ggplot2::ggplot() + stat_knot_3d(p=2,q=3,radius=.12,n=80,sides=8) + coord_3d()
 #' @export
-stat_knot_3d <- function(mapping=NULL,data=NULL,position="identity",...,type="torus",p=2L,q=3L,n=200L,
+stat_knot_3d <- function(mapping=NULL,data=NULL,position="identity",...,p=2L,q=3L,n=200L,
                          major=2,minor=.7,radius=NULL,sides=12L,na.rm=FALSE,show.legend=NA,inherit.aes=TRUE) {
-  if(!identical(type,"torus")) stop("type must be 'torus'.",call.=FALSE)
   integer_winding <- function(x) is.numeric(x)&&length(x)==1L&&is.finite(x)&&x!=0&&x==trunc(x)
   if(!integer_winding(p)||!integer_winding(q)) stop("p and q must be nonzero integers.",call.=FALSE)
   a <- abs(p); b <- abs(q); while(b!=0) {r <- a%%b; a <- b; b <- r}

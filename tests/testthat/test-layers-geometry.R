@@ -68,10 +68,9 @@ test_that("counts aggregate weights by explicit lattice keys and stack signed he
 
 test_that("nudge shifts all endpoint and bound families once", {
   d <- data.frame(x = 1, y = 2, z = 3)
-  p <- geometry_plot(d, geom_segment_3d(zend = 0, position = position_nudge_3d(1, 2, nudge_z = 3)))
+  p <- geometry_plot(d, geom_segment_3d(zend = 0, position = position_nudge_3d(1, 2, 3)))
   b <- geometry_scene(p)$built$data[[1L]]
   expect_equal(b[c("x", "y", "z", "xend", "yend", "zend")], data.frame(x = 2, y = 4, z = 6, xend = 2, yend = 4, zend = 3))
-  expect_error(position_nudge_3d(z = 1, nudge_z = 2), "only one")
   grid <- expand.grid(x = 0:1, y = 0:1); grid$z <- 1
   p <- geometry_plot(grid, geom_surface_3d(position = position_nudge_3d(z = 2)))
   expect_equal(geometry_scene(p)$built$data[[1L]]$z, rep(3, 6L))
@@ -252,7 +251,7 @@ test_that("fixed interval and height aesthetics are prepared before scale transf
 test_that("droplines end on each normalized box face", {
   d <- data.frame(x = 1:2, y = 1:2, z = 1:2)
   for (face in c("xmin", "xmax", "ymin", "ymax", "zmin", "zmax")) {
-    s <- geometry_scene(geometry_plot(d, geom_dropline_3d(face = face)))
+    s <- geometry_scene(geometry_plot(d, geom_dropline_3d(onto = face)))
     p <- s$packet
     endpoints <- p$corners$vertex[p$polylines$offset + 1L]
     expect_equal(p$vertices[[substr(face, 1L, 1L)]][endpoints], rep(if (endsWith(face, "min")) 0 else 1, 2))

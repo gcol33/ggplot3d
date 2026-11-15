@@ -12,7 +12,7 @@ geom_quiver_3d(
   position = "identity",
   ...,
   scale = 1,
-  normalize = FALSE,
+  normalise = FALSE,
   pivot = "tail",
   head = "cone",
   shaft = "line",
@@ -33,7 +33,7 @@ geom_cone_3d(
   position = "identity",
   ...,
   scale = 1,
-  normalize = FALSE,
+  normalise = FALSE,
   pivot = "tail",
   head_width = 0.25,
   detail = 1L,
@@ -48,7 +48,7 @@ geom_cone_3d(
 
 \item{scale}{Nonnegative vector length multiplier.}
 
-\item{normalize}{Whether to normalize the input vectors.}
+\item{normalise}{Whether to normalise the input vectors.}
 
 \item{pivot}{Anchor location: \code{"tail"}, \code{"middle"} or \code{"tip"}.}
 
@@ -74,7 +74,7 @@ is calculated from the resulting endpoints after frame and aspect mapping.
 Filled cone heads and tube shafts are analytic quadrics (Sigg et al.
 2006) with exact outlines and per-sample depth; heads without a fill are
 drawn by the edges of a cone mesh of \code{detail} subdivisions.
-\code{normalize = TRUE} makes the input vectors unit length before applying
+\code{normalise = TRUE} makes the input vectors unit length before applying
 \code{scale}. Computed variables \code{norm}, \code{xend}, \code{yend}, \code{zend} are available
 through \code{after_stat()}. Zero-length vectors draw no geometry.
 }

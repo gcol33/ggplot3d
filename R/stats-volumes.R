@@ -80,13 +80,13 @@ StatIsofunction3D <- ggplot2::ggproto("StatIsofunction3D", StatFunctionRows3D,
   required_aes = character(),
   optional_aes = c("x", "y", "z"),
   compute_group = function(data, scales, fun, n = 24L, args = list(), levels = NULL, caps = FALSE, method = "cubes", refine = 2L,
-                           adaptive = FALSE, depth = c(4L, 8L), tol = 0.002, simplify = NULL, clip = NULL) {
+                           adaptive = FALSE, depth = c(4L, 8L), tolerance = 0.002, simplify = NULL, clip = NULL) {
     if (!is.numeric(refine) || length(refine) != 1L || !is.finite(refine) || refine < 0 || refine != trunc(refine))
       stop("refine must be a non-negative integer.", call. = FALSE)
     stats_function_rows_3d(data, args, function(parameters) {
       if (isTRUE(adaptive)) {
         if (!is.null(clip)) stop("clip requires grid extraction (adaptive = FALSE).", call. = FALSE)
-        return(stats_adaptive_field_3d(fun, parameters, scales, levels, caps, method, depth, tol, as.integer(refine), simplify))
+        return(stats_adaptive_field_3d(fun, parameters, scales, levels, caps, method, depth, tolerance, as.integer(refine), simplify))
       }
       grid <- stats_function_grid_3d(fun, parameters, scales, n)
       stats_field_3d(grid, levels, caps, method, fun, parameters, as.integer(refine), simplify, clip)

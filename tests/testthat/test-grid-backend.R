@@ -113,7 +113,7 @@ test_that("opaque mesh seams are covered by a union underlay, never by outlines"
 
 test_that("lighting changes fill without changing opacity or mapped materials", {
   scene <- grid_test_scene(); saved <- scene$styles
-  fill <- shade_fill_3d("#808080", scene$fragments, 1L, scene$camera, light_3d(ambient = 0.2, diffuse = 0))
+  fill <- shade_fill_3d("#808080", scene$fragments, 1L, scene$camera, light_3d(light_directional(intensity = 0), ambient = 0.2))
   expect_false(identical(fill, "#808080"))
   expect_identical(scene$styles, saved)
 })

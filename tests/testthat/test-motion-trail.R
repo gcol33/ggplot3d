@@ -156,7 +156,7 @@ test_that("animate_3d renders native trails with and without tweening", {
   for (renderer in c("raster", "vector")) {
     for (spec in list(NULL, tween_3d(n = 1))) {
       counts <- integer()
-      out <- animate_3d(p, time = "t", tween = spec, trail = 2, renderer = renderer,
+      out <- animate_3d(p, time = "t", tween = spec, trail = 2, backend = renderer,
         width = 200, height = 200, progress = FALSE)
       on.exit(unlink(out$frames), add = TRUE)
       expect_equal(out$frame_count, if (is.null(spec)) 4L else 7L)

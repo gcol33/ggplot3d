@@ -8,7 +8,6 @@ stat_embedding_3d(
   mapping = NULL,
   data = NULL,
   ...,
-  metric = "schwarzschild",
   rs = 1,
   r = c(rs, 4 * rs),
   both = FALSE,
@@ -63,8 +62,6 @@ lists which parameters it can accept.
 \code{...}. This can be one of the functions described as
 \link[ggplot2:draw_key]{key glyphs}, to change the display of the layer in the legend.
 }}
-
-\item{metric}{Spatial metric, currently "schwarzschild".}
 
 \item{rs}{Positive Schwarzschild radius.}
 

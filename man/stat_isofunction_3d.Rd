@@ -20,7 +20,7 @@ stat_isofunction_3d(
   refine = 2L,
   adaptive = FALSE,
   depth = c(4L, 8L),
-  tol = 0.002,
+  tolerance = 0.002,
   simplify = NULL,
   clip = NULL,
   na.rm = FALSE,
@@ -31,7 +31,30 @@ stat_isofunction_3d(
   trace_steps = 512L
 )
 
-geom_isofunction_3d(...)
+geom_isofunction_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  fun,
+  n = 24L,
+  args = list(),
+  levels = NULL,
+  caps = FALSE,
+  method = NULL,
+  refine = 2L,
+  adaptive = FALSE,
+  depth = c(4L, 8L),
+  tolerance = 0.002,
+  simplify = NULL,
+  clip = NULL,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE,
+  render = c("mesh", "trace"),
+  trace_tolerance = 1e-05,
+  trace_steps = 512L
+)
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
@@ -63,7 +86,7 @@ arithmetic instead of a grid.}
 \item{depth}{Minimum and maximum octree depth; depth d splits each axis
 into 2^d intervals.}
 
-\item{tol}{Geometric tolerance of the octree, relative to the diagonal of
+\item{tolerance}{Geometric tolerance of the octree, relative to the diagonal of
 the scale box.}
 
 \item{simplify}{NULL, or a target face count (or fraction of the extracted
@@ -110,9 +133,9 @@ whose range contains no level is dropped. Every other box is split down to
 \code{depth[1]}, and further, up to \code{depth[2]}, while the inner product of its
 gradient enclosure with itself may reach zero (the small normal variation
 test: without it the level set inside the box can fold) or while the box
-diagonal times r / |c| exceeds \code{tol} times the diagonal of the scale box,
+diagonal times r / |c| exceeds \code{tolerance} times the diagonal of the scale box,
 where c and r are the centre and half diagonal of the gradient enclosure.
-Every gradient in the box then lies within asin(r / |c|) of c, so \code{tol}
+Every gradient in the box then lies within asin(r / |c|) of c, so \code{tolerance}
 bounds how far the level set bends away from a plane inside a box.
 Gradients are measured with each axis scaled to the unit interval. The
 surface is then extracted by dual contouring on the octree (Ju et al.

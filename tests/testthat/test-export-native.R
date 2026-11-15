@@ -1,3 +1,5 @@
+read_code_3d <- function(file) paste(readLines(file, warn = FALSE), collapse = "\n")
+
 native_plot <- function() {
   d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3), label = c("<one>&\"", "two", "three"))
   ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, tooltip = label)) + geom_point_3d() +
@@ -16,7 +18,7 @@ test_that("native SVG preserves source identities tooltips and whole plot furnit
   skip_if_not_installed("xml2");skip_if_not_installed("svglite")
   file <- tempfile(fileext = ".svg");on.exit(unlink(file))
   p <- native_plot() + ggplot2::labs(title = "Plot <title>") + ggplot2::facet_wrap(~label)
-  save_svg_3d(p, file, width = 720, height = 360)
+  export_3d(p, file, width = 720, height = 360)
   doc <- xml2::read_xml(file)
   ids <- xml2::xml_attr(xml2::xml_find_all(doc, ".//*[@id]"), "id")
   expect_false(anyDuplicated(ids) > 0)
@@ -46,7 +48,7 @@ test_that("native SVG writes glyph masks and compound surface seam paths", {
   paths <- xml2::xml_attr(xml2::xml_find_all(doc, ".//*[local-name()='mask']/*[local-name()='path']"), "d")
   expect_true(any(vapply(strsplit(paths, "M", fixed = TRUE), length, integer(1)) > 2L))
   if (requireNamespace("png", quietly = TRUE)) {
-    code <- export_code_3d(p, "tikz", standalone = FALSE, width = 400, height = 400)
+    code <- read_code_3d(export_3d(p, format = "tex", standalone = FALSE, width = 400, height = 400))
     expect_match(code, "fill opacity=", fixed = TRUE)
     expect_false(grepl("NApt", code, fixed = TRUE))
   }
@@ -68,7 +70,7 @@ test_that("native SVG hover links actual browser primitives", {
   skip_on_cran();skip_if_not_installed("chromote");skip_if_not_installed("xml2");skip_if_not_installed("svglite")
   if (!nzchar(chromote::find_chrome() %or3d% "")) skip("Chrome is unavailable")
   file <- tempfile(fileext = ".svg");on.exit(unlink(file))
-  save_svg_3d(native_plot(), file, width = 400, height = 400)
+  export_3d(native_plot(), file, width = 400, height = 400)
   browser <- viewer_browser_session(width = 500, height = 500)
   on.exit(browser$close(), add = TRUE)
   browser$Page$navigate(paste0("file:///", normalizePath(file, winslash = "/")))
@@ -85,20 +87,31 @@ test_that("native SVG hover links actual browser primitives", {
   expect_gt(out, 0)
 })
 
+test_that("export_3d() rejects settings of other formats and resolves format paths", {
+  p <- native_plot()
+  expect_error(export_3d(p, format = "asy", standalone = FALSE), "standalone does not apply to ASY")
+  expect_error(export_3d(p, format = "glb", interactive = FALSE), "interactive does not apply to GLB")
+  expect_error(export_3d(p, tempfile(fileext = ".asy"), format = "svg"), "agree")
+  expect_error(export_3d(p), "file or format")
+  path <- export_3d(p, format = "asy")
+  expect_identical(tools::file_ext(path), "asy")
+  expect_true(file.exists(path))
+})
+
 test_that("code exports write editable 2D paths and a camera-bearing 3D scene", {
   skip_if_not_installed("xml2");skip_if_not_installed("svglite")
   p <- native_plot()
-  tikz <- export_code_3d(p, "tikz", standalone = FALSE, width = 400, height = 300)
+  tikz <- read_code_3d(export_3d(p, format = "tex", standalone = FALSE, width = 400, height = 300))
   expect_match(tikz, "\\begin{tikzpicture}", fixed = TRUE)
   expect_match(tikz, "\\draw[", fixed = TRUE)
   expect_match(tikz, "\\fill[", fixed = TRUE)
   expect_match(tikz, "\\clip", fixed = TRUE)
-  asy <- export_code_3d(p, "asy", prc = TRUE)
+  asy <- read_code_3d(export_3d(p, format = "asy", prc = TRUE))
   expect_match(asy, "settings.prc=true;", fixed = TRUE)
   expect_match(asy, "currentprojection=orthographic", fixed = TRUE)
   expect_match(asy, "draw(ggplotModel,surfacepen=ggplotMaterials", fixed = TRUE)
   perspective <- suppressMessages(p + coord_3d(projection = "perspective"))
-  expect_match(export_code_3d(perspective, "asy"), "autoadjust=false,angle=", fixed = TRUE)
+  expect_match(read_code_3d(export_3d(perspective, format = "asy")), "autoadjust=false,angle=", fixed = TRUE)
   expect_identical(tex_escape_3d("a_b & c%"), "a\\_b \\& c\\%")
 })
 
@@ -108,7 +121,7 @@ test_that("generated TikZ compiles with pdfLaTeX", {
   skip_if(!nzchar(compiler), "pdfLaTeX is unavailable")
   dir <- tempfile("tikz-");dir.create(dir)
   old <- getwd();setwd(dir);on.exit({setwd(old);unlink(dir, recursive = TRUE)})
-  export_code_3d(native_plot(), "tikz", file = "plot.tex", width = 400, height = 300)
+  export_3d(native_plot(), "plot.tex", width = 400, height = 300)
   status <- system2(compiler, c("-interaction=nonstopmode", "-halt-on-error", "plot.tex"), stdout = "compile.log", stderr = "compile.log")
   expect_equal(status, 0L, info = paste(tail(readLines("compile.log", warn = FALSE), 12L), collapse = "\n"))
   expect_true(file.exists("plot.pdf"))
@@ -120,7 +133,7 @@ test_that("generated Asymptote compiles with its renderer", {
   skip_if(!nzchar(compiler), "Asymptote is unavailable")
   dir <- tempfile("asy-");dir.create(dir)
   old <- getwd();setwd(dir);on.exit({setwd(old);unlink(dir, recursive = TRUE)})
-  export_code_3d(native_plot(), "asy", file = "plot.asy", width = 400, height = 300)
+  export_3d(native_plot(), "plot.asy", width = 400, height = 300)
   arguments <- c("-noV", "-f", "pdf", "-render=0")
   source <- Sys.getenv("GGPLOT3D_TEST_ASY_DIR")
   gs <- Sys.getenv("GGPLOT3D_TEST_GS")

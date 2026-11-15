@@ -9,7 +9,6 @@ stat_knot_3d(
   data = NULL,
   position = "identity",
   ...,
-  type = "torus",
   p = 2L,
   q = 3L,
   n = 200L,
@@ -24,8 +23,6 @@ stat_knot_3d(
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
-
-\item{type}{Knot family, currently "torus".}
 
 \item{p, q}{Coprime nonzero integer winding numbers.}
 

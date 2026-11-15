@@ -60,7 +60,7 @@ test_that("volume layers draw all three modes on small images", {
   d <- expand.grid(x=seq(-1,1,length.out=4),y=seq(-1,1,length.out=4),z=seq(-1,1,length.out=4))
   d$v <- with(d,x^2+y^2+z^2)
   for (mode in c("absorption","mip","iso")) {
-    p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z,value=v)) + geom_volume_3d(mode=mode,level=.8,samples=8) +
+    p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z,value=v)) + geom_volume_3d(mode=mode,levels=.8,samples=8) +
       coord_3d(backend=backend_3d("raster",dpi=20,antialias=1))
     path <- tempfile(fileext=".png")
     grDevices::png(path,width=100,height=100)

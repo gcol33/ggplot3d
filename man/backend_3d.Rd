@@ -121,7 +121,7 @@ Points and paths use the solid conversion of \code{\link[=export_3d]{export_3d()
 use the shared sphere tracer. Furniture and text remain vector graphics.
 
 The raymarch backend traces geodesics from an observer inside the geometry.
-Use \code{\link[=geom_thurston_3d]{geom_thurston_3d()}} for balls, cylinders and half-spaces, or traced SDF
+Use \code{\link[=annotation_thurston_3d]{annotation_thurston_3d()}} for balls, cylinders and half-spaces, or traced SDF
 layers for chart-defined CSG. It draws a full-panel perspective image;
 Euclidean plot axes and exterior-camera settings have no intrinsic meaning.
 Lighting is an isotropic point light at the observer, with the ambient and

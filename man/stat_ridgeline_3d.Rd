@@ -22,7 +22,21 @@ stat_ridgeline_3d(
   inherit.aes = TRUE
 )
 
-geom_ridgeline_3d(...)
+geom_ridgeline_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  along = "x",
+  n = 128L,
+  bw = "nrd0",
+  adjust = 1,
+  base = 0,
+  height = 1,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}

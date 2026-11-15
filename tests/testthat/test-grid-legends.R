@@ -110,10 +110,10 @@ test_that("axis colourbars match expressions and support distinct scale transfor
 
 test_that("lit legend keys use the scene light response and retain unshaded keys", {
   d <- data.frame(x = 1:2, y = 1:2, z = c(1, 2), group = c("a", "b"))
-  light <- light_3d(ambient = 0.2, diffuse = 0.6)
+  light <- light_3d(light_directional(intensity = 0.6), ambient = 0.2)
   make <- function(lit = TRUE, shade = TRUE, range = TRUE) {
     ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = group)) + geom_col_3d(shade = shade) +
-      ggplot2::guides(fill = guide_legend_3d(lit = lit, shading.range = range)) + coord_3d(light = light)
+      ggplot2::guides(fill = guide_legend_3d(lit = lit, shading_range = range)) + coord_3d(light = light)
   }
   keys <- lit_keys(legend_render(make()))
   expect_length(keys, 2L)
@@ -126,12 +126,12 @@ test_that("lit legend keys use the scene light response and retain unshaded keys
   }
   expect_length(lit_keys(legend_render(make(lit = FALSE))), 0L)
   expect_length(lit_keys(legend_render(make(shade = FALSE))), 0L)
-  scaled <- make() + coord_3d(aspect = "data", light = light_3d(space = "data")) + facet_views(c("front", "isometric"))
+  scaled <- make() + coord_3d(aspect = "data", light = light_3d(light_directional(space = "data"))) + facet_views_3d(c("front", "isometric"))
   built <- ggplot2::ggplot_build(scaled)
   actual <- lit_keys(legend_render(scaled))[[1L]]
   camera <- scene_compile(new_scene_packet(), built$layout$panel_params[[1L]]$camera, new_scene_viewport(100, 100))$camera
   expect_equal(actual$lit_fill, shade_fill_3d(actual$base_fill, list(normal_x = 0, normal_y = 0, normal_z = 1),
-    1L, camera, light_3d(space = "data")))
+    1L, camera, light_3d(light_directional(space = "data"))))
   expect_error(guide_legend_3d(normal = c(0, 0, 0)), "nonzero")
 })
 

@@ -21,7 +21,20 @@ stat_revolve_3d(
   inherit.aes = TRUE
 )
 
-geom_revolve_3d(...)
+geom_revolve_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  axis = c("z", "x", "y"),
+  n = 48L,
+  closed = FALSE,
+  angle = c(0, 360),
+  centre = c(0, 0),
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}

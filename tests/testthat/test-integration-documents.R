@@ -5,12 +5,12 @@ document_plot <- function() {
 
 test_that("alt text names layers, mappings, camera and explicit descriptions", {
   p <- document_plot()
-  alt <- alt_text_3d(p)
+  alt <- get_alt_text(p)
   expect_match(alt, "Point")
   expect_match(alt, "x = wt, y = mpg, z = hp", fixed = TRUE)
   expect_match(alt, "azimuth 40 degrees, elevation 25 degrees", fixed = TRUE)
-  expect_identical(alt_text_3d(p + ggplot2::labs(alt = "My description")), "My description")
-  expect_identical(alt_text_3d(p + ggplot2::labs(alt = function(p) "Computed description")), "Computed description")
+  expect_identical(get_alt_text(p + ggplot2::labs(alt = "My description")), "My description")
+  expect_identical(get_alt_text(p + ggplot2::labs(alt = function(p) "Computed description")), "Computed description")
   expect_identical(knit_print.ggplot3d(p, inline = TRUE), alt)
 })
 

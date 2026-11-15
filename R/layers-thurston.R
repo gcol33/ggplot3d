@@ -1,6 +1,6 @@
 #' Draw an intrinsic ball, tube, or half-space
 #' @param shape `"ball"`, `"cylinder"`, or `"halfspace"`.
-#' @param center Three coordinates of the centre or a point on the boundary.
+#' @param centre Three coordinates of the centre or a point on the boundary.
 #' @param radius Positive intrinsic radius for balls and cylinders.
 #' @param direction Unit normal for a half-space at its centre. Nil and Sol
 #'   use chart half-spaces; product spaces support vertical or horizontal ones.
@@ -17,16 +17,16 @@
 #'   `render = "trace"`; their SDF algebra is compiled by the shared registry.
 #' @return A three-dimensional ggplot layer.
 #' @examples
-#' ggplot2::ggplot() + geom_thurston_3d(center = c(0, 0, 2), fill = "steelblue") +
+#' ggplot2::ggplot() + annotation_thurston_3d(centre = c(0, 0, 2), fill = "steelblue") +
 #'   coord_3d(backend = backend_3d("raymarch", geometry = "nil", dpi = 40))
 #' @export
-geom_thurston_3d <- function(shape = "ball", center = c(0, 0, 2), radius = 0.5, direction = c(0, 0, 1), ...) {
+annotation_thurston_3d <- function(shape = "ball", centre = c(0, 0, 2), radius = 0.5, direction = c(0, 0, 1), ...) {
   shape <- match.arg(shape, c("ball", "cylinder", "halfspace"))
-  center <- thurston_point_3d(center, "e3", "center")
+  centre <- thurston_point_3d(centre, "e3", "centre")
   direction <- thurston_point_3d(direction, "e3", "direction")
   if (sum(direction^2) == 0) stop("direction must be nonzero.", call. = FALSE)
   spec <- list(kind = "thurston", shape = match(shape, c("ball", "cylinder", "halfspace")) - 1L,
-    center = center, radius = check_positive_3d(radius, "radius"), direction = direction / sqrt(sum(direction^2)))
+    center = centre, radius = check_positive_3d(radius, "radius"), direction = direction / sqrt(sum(direction^2)))
   make_layer_3d(GeomRaymarch3D, NULL, stats_seed_data_3d(NULL), "identity", "identity",
     stats_params_3d(list(ray_spec = spec), list(...)), FALSE, FALSE)
 }

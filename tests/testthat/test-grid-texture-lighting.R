@@ -50,13 +50,13 @@ texture_lighting_compare <- function(case, camera = new_camera_3d(elevation = 90
 test_that("textured lighting matches raster colour and highlights", {
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
-  coloured <- lights_3d(light_directional(c(0, 0, 1), space = "data", colour = "#FF5030", intensity = .7), ambient = .05)
+  coloured <- light_3d(light_directional(c(0, 0, 1), space = "data", colour = "#FF5030", intensity = .7), ambient = .05)
   texture_lighting_compare(texture_lighting_case(material_3d(), coloured))
-  highlight <- lights_3d(light_head(intensity = .65), ambient = .1)
+  highlight <- light_3d(light_head(intensity = .65), ambient = .1)
   painted <- texture_lighting_compare(texture_lighting_case(material_3d("shiny"), highlight))
   expect_gt(min(painted$vector[50, 35, ]), 150)
   texture_lighting_compare(texture_lighting_case(material_3d("shiny"), coloured, smooth = TRUE))
-  point <- lights_3d(light_point(c(.7, .3, 1.5), colour = "#40A0FF"), light_head(intensity = .2), ambient = .05)
+  point <- light_3d(light_point(c(.7, .3, 1.5), colour = "#40A0FF"), light_head(intensity = .2), ambient = .05)
   texture_lighting_compare(texture_lighting_case(material_3d("metal"), point, smooth = TRUE),
     new_camera_3d("perspective", azimuth = -35, elevation = 35, fov = 60, zoom = 1.4))
 })
@@ -64,7 +64,7 @@ test_that("textured lighting matches raster colour and highlights", {
 test_that("one lighting group spans a triangulated face run without hairlines", {
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
-  light <- lights_3d(light_head(colour = "#70A0FF", intensity = .5), ambient = .1)
+  light <- light_3d(light_head(colour = "#70A0FF", intensity = .5), ambient = .1)
   case <- texture_lighting_case(material_3d("shiny"), light, triangles = TRUE)
   case$packet$styles$texture[[1L]] <- texture_3d(matrix("#506070"))
   painted <- texture_lighting_compare(case)
@@ -84,7 +84,7 @@ test_that("textured lighting retains canonical attributes with ambient occlusion
 test_that("texture lighting preserves transparent holes and layer alpha", {
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
-  case <- texture_lighting_case(material_3d("shiny"), lights_3d(light_head()))
+  case <- texture_lighting_case(material_3d("shiny"), light_3d(light_head()))
   case$packet$styles$texture[[1L]] <- texture_3d(matrix(c("#102030", "transparent"), 1L), interpolate = FALSE)
   case$packet$faces$opacity <- .5
   case$packet$faces$coverage_opaque <- FALSE
@@ -105,7 +105,7 @@ test_that("split texture runs paint only their own source fragments", {
   skip_if_not_installed("png")
   packet <- crossing_texture_packet()
   camera <- new_camera_3d(elevation = 90, azimuth = -90)
-  light <- light_3d(direction = c(0, 0, 1), space = "data")
+  light <- light_3d(light_directional(c(0, 0, 1), space = "data"))
   for (pixels in c(100L, 101L)) {
     viewport <- new_scene_viewport(25.4, 25.4, dpi = pixels)
     scene <- scene_compile(packet, camera, viewport)

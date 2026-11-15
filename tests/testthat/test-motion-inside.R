@@ -17,7 +17,7 @@ test_that("inside animations rotate the observer with a fixed eye", {
         geom_point_3d(size = 4) + coord + ggplot2::theme_void() + ggplot2::theme(legend.position = "none")
       for (renderer in c("raster", "vector")) for (path in list(NULL, orbit_3d(degrees = 240, duration = 1))) {
         captured <- list()
-        animation <- animate_3d(p, path = path, renderer = renderer, frames = 3, width = 140, height = 140, progress = FALSE)
+        animation <- animate_3d(p, path = path, backend = renderer, frames = 3, width = 140, height = 140, progress = FALSE)
         expect_identical(animation$frame_count, 3L)
         expect_identical(animation$frame, "sphere")
         expect_true(all(file.exists(animation$frames)))

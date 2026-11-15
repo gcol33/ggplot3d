@@ -1,15 +1,23 @@
-#' Export a panel as a 3D model file
+#' Export a plot to a 3D model, vector or source-code file
 #'
-#' Write the scene of one panel to a file that 3D software opens: glTF binary
-#' (`.glb`) or glTF with a separate buffer (`.gltf` and `.bin`) for Blender
-#' and the web, PLY, OBJ with an MTL material file, or binary STL. Faces are
-#' triangulated, paths become tubes or line primitives, and points become
-#' small solids or point primitives, all in model coordinates: the panel box
-#' scaled by the aspect of [coord_3d()], with its longest side `size` long.
+#' Writes the scene of a plot to a file that other software opens. Model
+#' formats hold the scene of one panel in 3D: glTF binary (`.glb`) or glTF with
+#' a separate buffer (`.gltf` and `.bin`) for Blender and the web, PLY, OBJ
+#' with an MTL material file, binary STL and 3MF. Faces are triangulated,
+#' paths become tubes or line primitives, and points become small solids or
+#' point primitives, all in model coordinates: the panel box scaled by the
+#' aspect of [coord_3d()], with its longest side `size` long. Vector and
+#' source formats hold the projected plot: SVG with source rows and hover
+#' text, TikZ (`.tex`) and an Asymptote scene (`.asy`).
 #' @param plot A ggplot with [coord_3d()].
-#' @param file Output path. Its extension selects the format: `.glb`,
-#'   `.gltf`, `.ply`, `.obj`, `.stl` or `.3mf`.
-#' @param panel Panel index in layout order, default 1.
+#' @param file Output path, or NULL to use `format`. Its extension selects the
+#'   format: `.glb`, `.gltf`, `.ply`, `.obj`, `.stl`, `.3mf`, `.svg`, `.tex`
+#'   (TikZ) or `.asy`.
+#' @param format Output format as one of these extension names. With
+#'   `file = NULL`, the format writes to a session temporary path. When both
+#'   are supplied, the extension of `file` must agree with `format`.
+#' @param panel Panel index in layout order, default 1, for model formats
+#'   and Asymptote; SVG and TikZ hold every panel.
 #' @param furniture Whether to include the panes, grid lines and box edges,
 #'   default FALSE.
 #' @param lines `"tube"` (default) writes each path as a closed tube with the
@@ -25,7 +33,11 @@
 #' @param dpi Device resolution, default 96 dots per inch.
 #' @param print Optional [print_3d()] specification for closed millimetre solids
 #'   in STL or 3MF output.
-#' @return `file`, invisibly.
+#' @param interactive SVG: whether to include tooltips, keyboard focus and
+#'   linked hover highlighting for fragments of the same source row.
+#' @param standalone TikZ: whether to include a LaTeX document preamble.
+#' @param prc Asymptote: whether to include PRC in its PDF output.
+#' @return The written path, invisibly.
 #' @details
 #' glTF output follows the glTF 2.0 specification and is the route into
 #' Blender, whose importer reads its meshes, materials, cameras and
@@ -51,6 +63,23 @@
 #'
 #' Ordinary model exports omit text and write dashed lines solid. Printing
 #' exports include extruded text according to [print_3d()].
+#'
+#' SVG output writes the compiled, depth-ordered fragments as SVG geometry.
+#' Each fragment carries data-layer, data-row and data-primitive attributes.
+#' Consecutive runs of each layer share a group so that interleaved layers
+#' retain their visibility order. Scene masks become clipping paths, and
+#' surface seams share compound-path underlays. Static plot furniture is
+#' embedded as SVG. A `tooltip` aesthetic sets the hover text.
+#'
+#' TikZ writes the complete SVG paint order as editable fill, draw and text
+#' commands, including clip paths, furniture and legends. Requires TikZ's
+#' `svg.path` library. Raster colourbars and annotations become coloured pixel
+#' rectangles using the optional png decoder. TeX selects the text font.
+#' Asymptote writes model-space triangles, paths, marker solids, text and a
+#' camera, so it can re-render the scene from another view or produce an
+#' interactive PRC PDF. For a PRC PDF, compile with
+#' `asy -tex pdflatex -f pdf plot.asy` and install the TeX packages media9 and
+#' ocgx2. A PDF reader with PRC support supplies the interactive view.
 #' @seealso [animate_3d()] for animated glTF files.
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))
@@ -60,10 +89,27 @@
 #' glb <- export_3d(p, tempfile(fileext = ".glb"))
 #' file.size(glb)
 #' export_3d(p, tempfile(fileext = ".stl"), size = 50)
+#' asy <- export_3d(p, format = "asy")
+#' if (requireNamespace("svglite", quietly = TRUE) && requireNamespace("xml2", quietly = TRUE)) {
+#'   export_3d(p, format = "svg")
+#'   export_3d(p, format = "tex", standalone = FALSE)
+#' }
 #' @export
-export_3d <- function(plot, file, panel = 1L, furniture = FALSE, lines = c("tube", "line"),
-                      points = c("mesh", "point"), size = 1, width = 640L, height = 640L, dpi = 96, print = NULL) {
-  writer <- export_writer_3d(file)
+export_3d <- function(plot, file = NULL, format = NULL, panel = 1L, furniture = FALSE, lines = c("tube", "line"),
+                      points = c("mesh", "point"), size = 1, width = 640L, height = 640L, dpi = 96, print = NULL,
+                      interactive = TRUE, standalone = TRUE, prc = FALSE) {
+  writer <- export_writer_3d(file, format)
+  file <- writer$file
+  unused <- setdiff(intersect(names(match.call())[-1L], export_settings_3d), writer$settings)
+  scene_assert(!length(unused), sprintf("%s %s not apply to %s files", paste(unused, collapse = ", "),
+    if (length(unused) == 1L) "does" else "do", toupper(writer$extension)))
+  if (writer$input == "plot") {
+    motion_plot_coord_3d(plot)
+    writer$write(plot, file, list(panel = panel, width = width, height = height,
+      interactive = check_flag_3d(interactive, "interactive"), standalone = check_flag_3d(standalone, "standalone"),
+      prc = check_flag_3d(prc, "prc")))
+    return(invisible(file))
+  }
   if (!is.null(print)) {
     scene_assert(inherits(print, "ggplot3d_print"), "print must be a print_3d() specification")
     scene_assert(writer$printing, "This file format does not support printing solids")
@@ -83,26 +129,46 @@ export_3d <- function(plot, file, panel = 1L, furniture = FALSE, lines = c("tube
 
 .exporters_3d <- new.env(parent = emptyenv())
 
-# A format writer receives the captured scenes (one per animation frame), the
-# path and the export options. `animation` marks writers that store more than
-# one frame; `triangles` marks formats without line or point primitives.
-register_exporter_3d <- function(extension, write, animation = FALSE, triangles = FALSE, printing = FALSE, print_only = FALSE) {
-  .exporters_3d[[extension]] <- list(extension = extension, write = write,
-    animation = animation, triangles = triangles, printing = printing, print_only = print_only)
+# Arguments of export_3d() that only some formats use; each writer lists the
+# ones it reads in `settings`.
+export_settings_3d <- c("panel", "furniture", "lines", "points", "size", "dpi", "print",
+  "interactive", "standalone", "prc")
+
+# A writer with `input = "scene"` receives the captured scenes (one per
+# animation frame), the path and the export options; `animation` marks writers
+# that store more than one frame, `triangles` formats without line or point
+# primitives. A writer with `input = "plot"` receives the plot, the path and the
+# settings of export_3d().
+register_exporter_3d <- function(extension, write, animation = FALSE, triangles = FALSE, printing = FALSE,
+                                 print_only = FALSE, input = c("scene", "plot"),
+                                 settings = c("panel", "furniture", "lines", "points", "size", "dpi", if (printing) "print")) {
+  .exporters_3d[[extension]] <- list(extension = extension, write = write, input = match.arg(input),
+    animation = animation, triangles = triangles, printing = printing, print_only = print_only, settings = settings)
   if (animation) motion_outputs_3d[[extension]] <- list(device = "pdf", kind = "scene",
     packages = character(), write = write)
   invisible(extension)
 }
 
-export_writer_3d <- function(file, animation = FALSE) {
+export_writer_3d <- function(file, format = NULL) {
+  known <- export_extensions_3d()
+  if (!is.null(format)) {
+    scene_assert(is.character(format) && length(format) == 1L && !is.na(format) && nzchar(format),
+      "format must be a single output format or NULL")
+    format <- tolower(format)
+    scene_assert(format %in% known, paste0("format must be one of ", paste(known, collapse = ", ")))
+  }
+  if (is.null(file)) {
+    scene_assert(!is.null(format), "Supply file or format")
+    file <- tempfile("ggplot3d-export-", fileext = paste0(".", format))
+  }
   scene_assert(is.character(file) && length(file) == 1L && !is.na(file) && nzchar(file),
     "file must be a single output path")
   extension <- tolower(tools::file_ext(file))
-  known <- export_extensions_3d(animation)
   scene_assert(extension %in% known,
     paste0("file must end in ", paste0(".", known, collapse = ", ")))
+  scene_assert(is.null(format) || identical(extension, format), "file extension must agree with format")
   scene_assert(dir.exists(dirname(file)), "The output directory does not exist")
-  .exporters_3d[[extension]]
+  c(.exporters_3d[[extension]], list(file = file))
 }
 
 export_extensions_3d <- function(animation = FALSE) {

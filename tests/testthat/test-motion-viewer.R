@@ -140,7 +140,7 @@ test_that("crosstalk shares selections and filters between widgets", {
 
 test_that("viewers in one link group turn and reset together, and paths play", {
   skip_if_not_installed("htmlwidgets")
-  p <- viewer_cars() + facet_views(c("front", "isometric"))
+  p <- viewer_cars() + facet_views_3d(c("front", "isometric"))
   path <- orbit_3d(360, 2)
   b <- viewer_browser(list(
     view_3d(p, panel = 1, width = 320, height = 320, link = "cars", elementId = "front", path = path, fps = 10),

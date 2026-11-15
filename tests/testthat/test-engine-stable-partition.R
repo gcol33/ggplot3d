@@ -145,7 +145,7 @@ test_that("animate_3d() passes stable_partition to the vector renderer", {
     calls[[length(calls) + 1L]] <<- stable_partition
     compile(packet, camera, viewport, stable_partition)
   }, .package = "ggplot3d")
-  movie <- animate_3d(p, frames = 2, renderer = "vector", width = 320, height = 320,
+  movie <- animate_3d(p, frames = 2, backend = "vector", width = 320, height = 320,
                       progress = FALSE, stable_partition = TRUE)
   unlink(movie$frames)
   expect_true(any(unlist(calls)))

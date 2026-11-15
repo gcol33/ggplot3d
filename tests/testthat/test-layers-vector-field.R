@@ -3,7 +3,7 @@ test_that("quiver endpoints honour pivots normalization and raw magnitude", {
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, u = u, v = v, w = w,
     fill = ggplot2::after_stat(norm)))
   for (pivot in c("tail", "middle", "tip")) {
-    values <- ggplot2::ggplot_build(p + geom_quiver_3d(scale = 2, pivot = pivot, normalize = TRUE) + coord_3d())$data[[1L]]
+    values <- ggplot2::ggplot_build(p + geom_quiver_3d(scale = 2, pivot = pivot, normalise = TRUE) + coord_3d())$data[[1L]]
     expect_equal(values$norm, 5)
     expect_equal(c(values$xend - values$x, values$yend - values$y, values$zend - values$z), c(1.2, 1.6, 0))
     fraction <- switch(pivot, tail = 0, middle = .5, tip = 1)

@@ -53,23 +53,23 @@ test_that("biplots preserve source scores and join groups by identifier", {
   expect_error(ordination_groups_3d(scores$sites, unname(groups)), "identify every site")
   expect_error(ordination_scores_3d(fit, c(1, 1, 2), list()), "distinct")
   for (region in c("none", "ellipsoid", "hull")) {
-    p <- ggplot2::ggplot() + stat_biplot_3d(fit, groups = rev(groups), region = region,
+    p <- ggplot2::ggplot() + biplot_3d(fit, groups = rev(groups), region = region,
       loading_scale = 2) + coord_3d()
     expect_silent(ggplot2::ggplotGrob(p))
   }
   label_layer <- function(...) {
-    layers <- stat_biplot_3d(fit, ...)
+    layers <- biplot_3d(fit, ...)
     Filter(function(l) inherits(l$geom, "GeomText"), layers)[[1L]]
   }
   expect_equal(label_layer()$aes_params$size, 4)
   expect_equal(label_layer(label_size = 5.5)$aes_params$size, 5.5)
-  expect_error(stat_biplot_3d(fit, label_size = -1), "label_size")
+  expect_error(biplot_3d(fit, label_size = -1), "label_size")
 })
 
 test_that("biplot arrows draw their heads and labels sit beyond the tips on the page", {
   scores <- list(sites = cbind(c(-1, 1, 0, 0), c(0, 0, -1, 1), c(-1, 1, 1, -1)),
     species = rbind(a = c(1, 0, 0), b = c(-1, 0, 0), c = c(0, 0, 1), d = c(0.9, 0.1, 0)))
-  p <- ggplot2::ggplot() + stat_biplot_3d(scores, arrow_colour = "red") +
+  p <- ggplot2::ggplot() + biplot_3d(scores, arrow_colour = "red") +
     coord_3d(azimuth = -90, elevation = 90, frame = "view")
   packet <- stats_scene(p)$packet
   q <- packet$quadrics

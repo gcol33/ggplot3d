@@ -4,7 +4,7 @@ prepare_vectors_3d <- function(out, data, plot, params) {
   if (!all(c("x", "y", "z", "u", "v", "w") %in% names(out))) return(out)
   out$norm <- vector_norm_3d(out)
   length <- rep(params$scale, nrow(out))
-  if (isTRUE(params$normalize)) length <- ifelse(out$norm > 0, length / out$norm, 0)
+  if (isTRUE(params$normalise)) length <- ifelse(out$norm > 0, length / out$norm, 0)
   pivot <- switch(params$pivot, tail = 0, middle = 0.5, tip = 1)
   for (i in seq_len(3L)) {
     axis <- c("x", "y", "z")[i]
@@ -109,14 +109,14 @@ emit_vectors_3d <- function(data, params, panel_params) {
   packet
 }
 
-vector_parameters_3d <- list(scale = 1, normalize = FALSE, pivot = "tail", head = "cone",
+vector_parameters_3d <- list(scale = 1, normalise = FALSE, pivot = "tail", head = "cone",
   shaft = "line", head_length = 0.25, head_width = 0.1, shaft_width = 0.025, detail = 1L)
 register_geom_3d(GeomQuiver3D, emit_vectors_3d,
   prepare_aesthetics = prepare_vectors_3d, parameters = vector_parameters_3d,
   positions = c("nudge", "jitter"), tween = "row",
   extents = list(x = extent_3d("x", "xend"), y = extent_3d("y", "yend"), z = extent_3d("z", "zend")))
 
-vector_layer_3d <- function(mapping, data, stat, position, extra, scale, normalize, pivot, head, shaft,
+vector_layer_3d <- function(mapping, data, stat, position, extra, scale, normalise, pivot, head, shaft,
                             head_length, head_width, shaft_width, detail, shade, na.rm, show.legend, inherit.aes) {
   for (name in c("scale", "head_length", "head_width", "shaft_width")) {
     value <- get(name)
@@ -124,7 +124,7 @@ vector_layer_3d <- function(mapping, data, stat, position, extra, scale, normali
   }
   if (head_length > 1) stop("head_length must be at most one.", call. = FALSE)
   make_layer_3d(GeomQuiver3D, mapping, data, stat, position,
-    stats_params_3d(list(scale = scale, normalize = check_flag_3d(normalize, "normalize"),
+    stats_params_3d(list(scale = scale, normalise = check_flag_3d(normalise, "normalise"),
       pivot = match.arg(pivot, c("tail", "middle", "tip")), head = match.arg(head, c("cone", "flat", "none")),
       shaft = match.arg(shaft, c("line", "tube", "none")), head_length = head_length,
       head_width = head_width, shaft_width = shaft_width, detail = check_detail_3d(detail),
@@ -139,12 +139,12 @@ vector_layer_3d <- function(mapping, data, stat, position, extra, scale, normali
 #' Filled cone heads and tube shafts are analytic quadrics (Sigg et al.
 #' 2006) with exact outlines and per-sample depth; heads without a fill are
 #' drawn by the edges of a cone mesh of `detail` subdivisions.
-#' `normalize = TRUE` makes the input vectors unit length before applying
+#' `normalise = TRUE` makes the input vectors unit length before applying
 #' `scale`. Computed variables `norm`, `xend`, `yend`, `zend` are available
 #' through `after_stat()`. Zero-length vectors draw no geometry.
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param scale Nonnegative vector length multiplier.
-#' @param normalize Whether to normalize the input vectors.
+#' @param normalise Whether to normalise the input vectors.
 #' @param pivot Anchor location: `"tail"`, `"middle"` or `"tip"`.
 #' @param head Head type: solid `"cone"`, a `"flat"` arrow, or `"none"`.
 #' @param shaft Shaft geometry: `"line"`, `"tube"` or `"none"`.
@@ -161,18 +161,18 @@ vector_layer_3d <- function(mapping, data, stat, position, extra, scale, normali
 #'   geom_quiver_3d(scale = 0.4) + coord_3d()
 #' @export
 geom_quiver_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
-                           scale = 1, normalize = FALSE, pivot = "tail", head = "cone", shaft = "line",
+                           scale = 1, normalise = FALSE, pivot = "tail", head = "cone", shaft = "line",
                            head_length = 0.25, head_width = 0.1, shaft_width = 0.025, detail = 1L,
                            shade = TRUE, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  vector_layer_3d(mapping, data, stat, position, list(...), scale, normalize, pivot, head, shaft,
+  vector_layer_3d(mapping, data, stat, position, list(...), scale, normalise, pivot, head, shaft,
     head_length, head_width, shaft_width, detail, shade, na.rm, show.legend, inherit.aes)
 }
 
 #' @rdname geom_quiver_3d
 #' @export
 geom_cone_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
-                         scale = 1, normalize = FALSE, pivot = "tail", head_width = 0.25, detail = 1L,
+                         scale = 1, normalise = FALSE, pivot = "tail", head_width = 0.25, detail = 1L,
                          shade = TRUE, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  vector_layer_3d(mapping, data, stat, position, list(...), scale, normalize, pivot, "cone", "none",
+  vector_layer_3d(mapping, data, stat, position, list(...), scale, normalise, pivot, "cone", "none",
     1, head_width, 0, detail, shade, na.rm, show.legend, inherit.aes)
 }

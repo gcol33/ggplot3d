@@ -14,10 +14,10 @@ guide_axis_3d(
   minor.ticks = FALSE,
   cap = "none",
   order = 0L,
-  label.orientation = "screen",
+  label_orientation = "screen",
   plane = "auto",
-  title.position = "centre",
-  depth.scale = FALSE,
+  title_position = "centre",
+  depth_scale = FALSE,
   ticks = "outward"
 )
 }
@@ -31,7 +31,7 @@ guide_axis_3d(
 
 \item{check.overlap}{Use extra clearance between measured label rectangles.}
 
-\item{angle}{Label rotation in degrees for \code{label.orientation = "screen"}.
+\item{angle}{Label rotation in degrees for \code{label_orientation = "screen"}.
 Waiver keeps labels horizontal.}
 
 \item{n.dodge}{Number of parallel label rows.}
@@ -42,7 +42,7 @@ Waiver keeps labels horizontal.}
 
 \item{order}{Guide ordering value.}
 
-\item{label.orientation}{\code{"screen"}, \code{"edge"} or \code{"plane"}: tick labels
+\item{label_orientation}{\code{"screen"}, \code{"edge"} or \code{"plane"}: tick labels
 upright on the page, turned along the projected edge and kept upright, or
 lying in a pane. Titles follow the edge in every orientation and lie in
 the pane with \code{"plane"}.}
@@ -50,12 +50,12 @@ the pane with \code{"plane"}.}
 \item{plane}{Pane for plane labels and in-plane ticks: \code{"auto"},
 \code{"floor"}, \code{"xy"}, \code{"xz"} or \code{"yz"}. The pane must contain the axis.}
 
-\item{title.position}{\code{"centre"} places the title beside the middle of the
+\item{title_position}{\code{"centre"} places the title beside the middle of the
 axis, beyond the tick labels; \code{"near"} places it at the end nearer the
 camera. Screen titles sit past that endpoint; plane titles sit inside
 the pane boundary.}
 
-\item{depth.scale}{Under perspective projection, scale tick labels and
+\item{depth_scale}{Under perspective projection, scale tick labels and
 tick lengths by their distance from the camera: \code{FALSE} (none), \code{TRUE}
 (full), or a nonnegative strength \code{s}, which maps the ratio \code{d} of the
 distance of the camera target to the distance of the tick to \code{d^s}, as
@@ -80,7 +80,7 @@ position \code{"auto"} there.
 Labels are thinned automatically using their measured extents along the edge.
 }
 \details{
-Tick labels can stand upright on the page (\code{label.orientation = "screen"}),
+Tick labels can stand upright on the page (\code{label_orientation = "screen"}),
 turn with the projected edge they label (\code{"edge"}, as \code{rotate_labels} in
 ggcube and the automatic label rotation of Makie's \code{Axis3}), or lie flat in
 one of the two box panes that meet at the edge (\code{"plane"}), drawn from the
@@ -101,15 +101,15 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d()
 p + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
 p + scale_z_continuous(guide = guide_axis_3d(position = "origin")) +
   coord_3d(origin = c(x = 2, y = 1.5))
-p + ggplot2::guides(x = guide_axis_3d(label.orientation = "edge"),
-                    y = guide_axis_3d(label.orientation = "edge")) +
+p + ggplot2::guides(x = guide_axis_3d(label_orientation = "edge"),
+                    y = guide_axis_3d(label_orientation = "edge")) +
   coord_3d()
 if (requireNamespace("systemfonts", quietly = TRUE)) {
-  p + ggplot2::guides(x = guide_axis_3d(label.orientation = "plane", ticks = "in_plane"),
-                      y = guide_axis_3d(label.orientation = "plane", ticks = "in_plane")) +
+  p + ggplot2::guides(x = guide_axis_3d(label_orientation = "plane", ticks = "in_plane"),
+                      y = guide_axis_3d(label_orientation = "plane", ticks = "in_plane")) +
     coord_3d(projection = "perspective")
 }
-p + ggplot2::guides(z = guide_axis_3d(title.position = "near", depth.scale = TRUE)) +
+p + ggplot2::guides(z = guide_axis_3d(title_position = "near", depth_scale = TRUE)) +
   coord_3d(projection = "perspective")
 }
 \references{

@@ -23,7 +23,20 @@ stat_slice_3d(
   inherit.aes = TRUE
 )
 
-geom_slice_3d(...)
+geom_slice_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  xslice = NULL,
+  yslice = NULL,
+  zslice = NULL,
+  slice = NULL,
+  n = NULL,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 
 stat_density_slice_3d(
   mapping = NULL,
@@ -43,7 +56,22 @@ stat_density_slice_3d(
   inherit.aes = TRUE
 )
 
-geom_density_slice_3d(...)
+geom_density_slice_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  h = NULL,
+  adjust = 1,
+  n = 32L,
+  xslice = NULL,
+  yslice = NULL,
+  zslice = NULL,
+  slice = NULL,
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}

@@ -237,7 +237,7 @@ test_that("log-ratio statistics stay inside the simplex", {
   g <- exp(matrix(stats::rnorm(400, sd = 0.5), ncol = 4))
   comp <- data.frame(a = g[, 1], b = g[, 2], c = g[, 3], d = g[, 4])
   p <- ggplot2::ggplot(comp, ggplot2::aes(a = a, b = b, c = c, d = d)) +
-    stat_density_3d(space = "ilr", levels = probs(0.5), n = 12) + coord_simplex_3d()
+    stat_density_3d(space = "ilr", probs = 0.5, n = 12) + coord_simplex_3d()
   out <- ggplot2::layer_data(p)
   expect_gt(nrow(out), 0L)
   expect_true(all(out$x > 0 & out$y > 0 & out$z > 0 & out$x + out$y + out$z < 1))

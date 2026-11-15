@@ -14,7 +14,7 @@ geom_errorbar_3d(
   position = "identity",
   ...,
   width = NULL,
-  cap.plane = "auto",
+  cap_plane = "auto",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -49,7 +49,7 @@ geom_crossbar_3d(
   position = "identity",
   ...,
   width = NULL,
-  cap.plane = "auto",
+  cap_plane = "auto",
   fatten = 2.5,
   middle.colour = NULL,
   middle.color = NULL,
@@ -73,7 +73,7 @@ and \code{\link[=position_dodge_3d]{position_dodge_3d()}}.}
 extends along. Defaults to 0.9 times the spacing of the positions along
 that axis.}
 
-\item{cap.plane}{Plane of the caps: \code{"auto"}, \code{"xy"}, \code{"xz"}, \code{"yz"} or
+\item{cap_plane}{Plane of the caps: \code{"auto"}, \code{"xy"}, \code{"xz"}, \code{"yz"} or
 \code{"cross"}.}
 
 \item{fatten}{Factor applied to \code{linewidth} for the crossbar's middle line.}
@@ -95,7 +95,7 @@ lies on the floor of the box.
 }
 \details{
 Caps and crossbar boxes are perpendicular to their bar and lie in the plane
-named by \code{cap.plane}. A bar lying in that plane is capped along the plane's
+named by \code{cap_plane}. A bar lying in that plane is capped along the plane's
 other axis. A bar normal to the plane, or any bar with \code{"cross"}, is capped
 along both perpendicular axes: a cross for error bars and a cuboid for
 crossbars, which read the same from every view. With \code{"auto"}, bars along z
@@ -114,14 +114,14 @@ d$se <- c(0.4, 0.6, 0.5, 0.8, 0.3, 0.7)
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, zmin = z - se, zmax = z + se))
 p + geom_errorbar_3d(width = 0.2) + geom_point_3d() + coord_3d()
 p + geom_pointrange_3d(colour = "steelblue") + coord_3d()
-p + geom_crossbar_3d(width = 0.3, fill = "grey85", cap.plane = "cross") + coord_3d()
+p + geom_crossbar_3d(width = 0.3, fill = "grey85", cap_plane = "cross") + coord_3d()
 
 # Intervals on all three axes at once
 e <- data.frame(x = c(1, 2), y = c(1, 3), z = c(2, 1))
 ggplot2::ggplot(e, ggplot2::aes(x, y, z = z,
     xmin = x - 0.3, xmax = x + 0.3, ymin = y - 0.5, ymax = y + 0.5,
     zmin = z - 0.4, zmax = z + 0.4)) +
-  geom_errorbar_3d(width = 0.15, cap.plane = "cross") + coord_3d()
+  geom_errorbar_3d(width = 0.15, cap_plane = "cross") + coord_3d()
 
 # Ranges on the floor, from x/y alone
 ggplot2::ggplot(e, ggplot2::aes(x, y, ymin = y - 1, ymax = y + 1)) +

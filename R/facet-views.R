@@ -1,6 +1,6 @@
 #' Show one 3D scene from several views
 #'
-#' `facet_views()` draws all data of a [coord_3d()] plot once per view, one
+#' `facet_views_3d()` draws all data of a [coord_3d()] plot once per view, one
 #' panel per camera, like the multi-view drawings of engineering graphics and
 #' the shared views of matplotlib's 3D axes. Every panel shows the same scene
 #' with the same x, y and z scales and the same magnification, so a length
@@ -28,7 +28,7 @@
 #'   are labelled by the preset name.
 #'   `NULL` uses the coordinate's camera.
 #' @param lights NULL inherits coordinate lighting. A named list of lights
-#'   from [lights_3d()], [light_3d()] or the individual light constructors
+#'   from [light_3d()] or the individual light constructors
 #'   supplies lighting conditions; a NULL list entry selects an unlit panel.
 #' @param combine `"cross"` visits the lights in order for each camera;
 #'   `"pair"` pairs the specifications, broadcasting a singleton. Shared
@@ -50,15 +50,15 @@
 #' p <- ggplot2::ggplot(block, ggplot2::aes(x, y, z = z)) +
 #'   geom_voxel_3d(fill = "grey80", colour = "grey20") +
 #'   coord_3d()
-#' p + facet_views()
-#' p + facet_views(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
-#' p + facet_views(c("front", "top", "right", iso = "isometric"), layout = "first_angle")
-#' p + facet_views(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
-#' p + facet_views(views = NULL, lights = list(
-#'   left = lights_3d(light_directional(c(-1, 1, 2))),
-#'   right = lights_3d(light_directional(c(1, 1, 2)))))
+#' p + facet_views_3d()
+#' p + facet_views_3d(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
+#' p + facet_views_3d(c("front", "top", "right", iso = "isometric"), layout = "first_angle")
+#' p + facet_views_3d(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
+#' p + facet_views_3d(views = NULL, lights = list(
+#'   left = light_3d(light_directional(c(-1, 1, 2))),
+#'   right = light_3d(light_directional(c(1, 1, 2)))))
 #' @export
-facet_views <- function(views = c("front", "top", "right", "isometric"),
+facet_views_3d <- function(views = c("front", "top", "right", "isometric"),
                         layout = c("wrap", "third_angle", "first_angle"),
                         nrow = NULL, ncol = NULL, labeller = "label_value", strip.position = "top",
                         lights = NULL, combine = c("cross", "pair")) {
@@ -186,7 +186,7 @@ FacetViews <- ggplot2::ggproto("FacetViews", ggplot2::FacetWrap,
     data
   },
   draw_panel_content = function(self, panels, layout, x_scales, y_scales, ranges, coord, data, theme, params, ...) {
-    if (!inherits(coord, "Coord3D")) stop("facet_views() requires coord_3d().", call. = FALSE)
+    if (!inherits(coord, "Coord3D")) stop("facet_views_3d() requires coord_3d().", call. = FALSE)
     shared <- lapply(panels, function(layer) rep(list(layer[[1L]]), nrow(layout)))
     ggplot2::ggproto_parent(ggplot2::FacetWrap, self)$draw_panel_content(shared, layout, x_scales, y_scales,
       ranges, coord, data, theme, params, ...)

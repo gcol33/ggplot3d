@@ -1,17 +1,7 @@
-#' Request probability-content density levels
-#'
-#' Converts requested enclosed probabilities into a tagged specification for
-#' stat_density_3d. Grid quadrature accumulates Gaussian density from highest
-#' values downwards until each absolute probability content is reached. Scale
-#' limits should include the density tails; inadequate captured mass warns.
-#' @param ... Probabilities strictly between zero and one.
-#' @return A numeric vector tagged as a probability-content specification.
-#' @export
-#' @examples
-#' probs(0.5, 0.9)
-probs <- function(...) {
-  p <- c(...)
-  if (!is.numeric(p) || !length(p) || any(!is.finite(p) | p <= 0 | p >= 1)) stop("Probabilities must lie strictly between zero and one.", call. = FALSE)
+# Probability contents for stat_density_3d(probs = ), tagged so the level
+# resolver accumulates density mass instead of reading thresholds.
+probability_levels_3d <- function(p) {
+  if (!is.numeric(p) || !length(p) || any(!is.finite(p) | p <= 0 | p >= 1)) stop("probs must lie strictly between zero and one.", call. = FALSE)
   structure(as.double(p), class = "ggplot3d_probs")
 }
 
@@ -129,7 +119,7 @@ stat_isosurface_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurf
 
 #' @rdname stat_isosurface_3d
 #' @export
-geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
+geom_isosurface_3d <- geom_from_stat_3d("stat_isosurface_3d")
 
 #' Trivariate density isosurfaces
 #'
@@ -137,12 +127,17 @@ geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
 #' ranges. h contains Gaussian standard deviations in transformed units.
 #' Automatic bandwidths use normal-reference marginal bandwidths with sample
 #' size exponent -1/7. adjust multiplies automatic bandwidths.
-#' Numeric levels are density thresholds; probs() specifies absolute enclosed
-#' probability contents estimated by tensor trapezoidal quadrature.
+#' `levels` are density thresholds; `probs` are absolute enclosed probability
+#' contents, estimated by tensor trapezoidal quadrature. Grid quadrature
+#' accumulates density from the highest values downwards until each content is
+#' reached, so the scale limits should include the density tails; inadequate
+#' captured mass warns.
 #' Computed level and density contain the resolved density threshold.
 #' @inheritParams stat_isosurface_3d
 #' @inheritParams stat_density_2d_3d
 #' @param n Grid resolution, scalar or three integers.
+#' @param probs Probabilities strictly between zero and one: the enclosed
+#'   probability content of each surface. Use instead of `levels`.
 #' @param space `"data"` estimates in the position scales. `"ilr"` estimates a
 #'   composition mapped with `a`, `b`, `c` (and `d`) in isometric log-ratio
 #'   coordinates, where a Gaussian kernel respects relative scale, and maps
@@ -155,11 +150,19 @@ geom_isosurface_3d <- function(...) stat_isosurface_3d(...)
 #'   geom_isodensity_3d(h = 0.6, levels = 0.02, n = 12) + coord_3d()
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   stat_density_3d(h = 0.6, levels = 0.02, n = 8) + coord_3d()
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   stat_density_3d(h = 0.6, probs = 0.5, n = 12) +
+#'   ggplot2::xlim(-4, 4) + ggplot2::ylim(-4, 4) +
+#'   scale_z_continuous(limits = c(-4, 4)) + coord_3d()
 stat_density_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                              position = "identity", ..., h = NULL, adjust = 1, n = 32L,
-                             levels = NULL, caps = FALSE, space = "data", method = "cubes", simplify = NULL, clip = NULL,
+                             levels = NULL, probs = NULL, caps = FALSE, space = "data", method = "cubes", simplify = NULL, clip = NULL,
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.null(clip)) plane_coefficients_3d(clip, "clip")
+  if (!is.null(probs)) {
+    if (!is.null(levels)) stop("Supply levels or probs, not both.", call. = FALSE)
+    levels <- probability_levels_3d(probs)
+  }
   make_layer_3d(geom, mapping, data, StatDensity3D, position,
     stats_params_3d(list(h = h, adjust = adjust, n = n, levels = levels, caps = caps, method = isosurface_method_3d(method), simplify = simplify, clip = clip,
       space = match.arg(space, c("data", "ilr")), na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
@@ -167,7 +170,7 @@ stat_density_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface
 
 #' @rdname stat_density_3d
 #' @export
-geom_isodensity_3d <- function(...) stat_density_3d(...)
+geom_isodensity_3d <- geom_from_stat_3d("stat_density_3d")
 
 #' Level surfaces of a trivariate function
 #'
@@ -187,9 +190,9 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #' `depth[1]`, and further, up to `depth[2]`, while the inner product of its
 #' gradient enclosure with itself may reach zero (the small normal variation
 #' test: without it the level set inside the box can fold) or while the box
-#' diagonal times r / |c| exceeds `tol` times the diagonal of the scale box,
+#' diagonal times r / |c| exceeds `tolerance` times the diagonal of the scale box,
 #' where c and r are the centre and half diagonal of the gradient enclosure.
-#' Every gradient in the box then lies within asin(r / |c|) of c, so `tol`
+#' Every gradient in the box then lies within asin(r / |c|) of c, so `tolerance`
 #' bounds how far the level set bends away from a plane inside a box.
 #' Gradients are measured with each axis scaled to the unit interval. The
 #' surface is then extracted by dual contouring on the octree (Ju et al.
@@ -230,7 +233,7 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 #'   arithmetic instead of a grid.
 #' @param depth Minimum and maximum octree depth; depth d splits each axis
 #'   into 2^d intervals.
-#' @param tol Geometric tolerance of the octree, relative to the diagonal of
+#' @param tolerance Geometric tolerance of the octree, relative to the diagonal of
 #'   the scale box.
 #' @param render `"mesh"` extracts triangles. `"trace"` sphere-traces an SDF
 #'   with an opaque fill per raster sample. In the raster backend the traced
@@ -266,7 +269,7 @@ geom_isodensity_3d <- function(...) stat_density_3d(...)
 stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                  position = "identity", ..., fun, n = 24L, args = list(),
                                  levels = NULL, caps = FALSE, method = NULL, refine = 2L,
-                                 adaptive = FALSE, depth = c(4L, 8L), tol = 0.002, simplify = NULL, clip = NULL,
+                                 adaptive = FALSE, depth = c(4L, 8L), tolerance = 0.002, simplify = NULL, clip = NULL,
                                  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE,
                                  render = c("mesh", "trace"), trace_tolerance = 1e-5, trace_steps = 512L) {
   render <- match.arg(render)
@@ -282,12 +285,12 @@ stat_isofunction_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSur
   if (is.null(levels) && inherits(fun, "ggplot3d_sdf")) levels <- 0
   stats_function_layer_3d(make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsofunction3D, position,
     stats_params_3d(list(fun = fun, n = n, args = args, levels = levels, caps = caps, method = method, refine = refine,
-      adaptive = adaptive, depth = depth, tol = tol, simplify = simplify, clip = clip, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes))
+      adaptive = adaptive, depth = depth, tolerance = tolerance, simplify = simplify, clip = clip, na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes))
 }
 
 #' @rdname stat_isofunction_3d
 #' @export
-geom_isofunction_3d <- function(...) stat_isofunction_3d(...)
+geom_isofunction_3d <- geom_from_stat_3d("stat_isofunction_3d")
 
 check_slices_3d <- function(xslice, yslice, zslice, slice) {
   for (at in list(xslice, yslice, zslice))
@@ -357,7 +360,7 @@ stat_slice_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D
 
 #' @rdname stat_slice_3d
 #' @export
-geom_slice_3d <- function(...) stat_slice_3d(...)
+geom_slice_3d <- geom_from_stat_3d("stat_slice_3d")
 
 #' @rdname stat_slice_3d
 #' @inheritParams stat_density_3d
@@ -374,7 +377,7 @@ stat_density_slice_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsS
 
 #' @rdname stat_slice_3d
 #' @export
-geom_density_slice_3d <- function(...) stat_density_slice_3d(...)
+geom_density_slice_3d <- geom_from_stat_3d("stat_density_slice_3d")
 
 #' Contour lines on slices through a gridded scalar field
 #'
@@ -406,7 +409,7 @@ stat_slice_contour_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::G
 
 #' @rdname stat_slice_contour_3d
 #' @export
-geom_slice_contour_3d <- function(...) stat_slice_contour_3d(...)
+geom_slice_contour_3d <- geom_from_stat_3d("stat_slice_contour_3d")
 
 #' Intersection curves of two implicit surfaces
 #'
@@ -458,7 +461,7 @@ stat_isocurve_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::GeomPa
 
 #' @rdname stat_isocurve_3d
 #' @export
-geom_isocurve_3d <- function(...) stat_isocurve_3d(...)
+geom_isocurve_3d <- geom_from_stat_3d("stat_isocurve_3d")
 
 #' Convex hulls in three dimensions
 #'
@@ -501,4 +504,4 @@ stat_hull_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
 
 #' @rdname stat_hull_3d
 #' @export
-geom_hull_3d <- function(...) stat_hull_3d(...)
+geom_hull_3d <- geom_from_stat_3d("stat_hull_3d")

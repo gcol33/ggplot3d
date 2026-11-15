@@ -12,7 +12,7 @@ geom_volume_3d(
   opacity = c(0, 1),
   colours = c("#132B43", "#56B1F7"),
   samples = 256L,
-  level = NULL,
+  levels = NULL,
   show.legend = NA,
   inherit.aes = TRUE
 )
@@ -32,7 +32,7 @@ scalar values. A constant coefficient s over distance d transmits exp(-s*d).}
 \item{samples}{Number of integration steps across the volume diagonal.
 Grid-cell boundaries also split integration intervals.}
 
-\item{level}{Isovalue for \code{mode = "iso"}; defaults to the scalar-range midpoint.}
+\item{levels}{Isovalue for \code{mode = "iso"}; defaults to the scalar-range midpoint.}
 }
 \value{
 A ggplot2 layer.

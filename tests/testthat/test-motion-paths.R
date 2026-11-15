@@ -247,7 +247,7 @@ test_that("frame sequences, SVG and PDF pages are written per frame", {
     width = 240, height = 240, progress = FALSE)
   expect_identical(basename(b$frames), c("turn-0001.png", "turn-0002.png"))
   pdf <- file.path(directory, "turn.pdf")
-  animate_3d(p, frames = 3, file = pdf, renderer = "vector", width = 200, height = 200, progress = FALSE)
+  animate_3d(p, frames = 3, file = pdf, backend = "vector", width = 200, height = 200, progress = FALSE)
   bytes <- readBin(pdf, "raw", n = file.info(pdf)$size)
   bytes[bytes == as.raw(0)] <- as.raw(32)
   text <- rawToChar(bytes)
@@ -255,7 +255,7 @@ test_that("frame sequences, SVG and PDF pages are written per frame", {
   expect_match(text, "/Type /Pages", fixed = TRUE, useBytes = TRUE)
   expect_match(text, "/Count 3", fixed = TRUE, useBytes = TRUE)
   skip_if_not_installed("svglite")
-  s <- animate_3d(p, frames = 2, file = file.path(directory, "turn.svg"), renderer = "vector",
+  s <- animate_3d(p, frames = 2, file = file.path(directory, "turn.svg"), backend = "vector",
     width = 200, height = 200, progress = FALSE)
   expect_length(s$frames, 2L)
   expect_match(readLines(s$frames[2L], warn = FALSE)[1L], "<?xml", fixed = TRUE)

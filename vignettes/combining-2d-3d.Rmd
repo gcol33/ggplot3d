@@ -80,7 +80,7 @@ Mapping `z = -Inf` draws each point's shadow on the floor, and a dropline joins 
 k <- ggplot(cloud, aes(x, y, z = z))
 k + geom_point_3d(aes(z = -Inf), colour = PAL["grey"], size = 1.5) +
   geom_point_3d(aes(y = Inf), colour = PAL["orange"], size = 1.5) +
-  geom_dropline_3d(face = "zmin", colour = PAL["grey"]) +
+  geom_dropline_3d(onto = "zmin", colour = PAL["grey"]) +
   geom_point_3d(size = 2.5) +
   coord_3d()
 ```
@@ -117,7 +117,7 @@ Both routes accept one 2D panel; place several panels with separate calls.
 
 ```{r raster-wall, fig.alt="The fitted 2D scatter plot rendered as a small raster on the back wall behind the point cloud."}
 k + annotation_plot_3d(side, plane = "xz", at = Inf,
-                       route = "raster", resolution = 64) +
+                       backend = "raster", resolution = 64) +
   geom_point_3d(size = 2.5) + coord_3d()
 ```
 

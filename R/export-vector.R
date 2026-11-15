@@ -256,35 +256,12 @@ native_svg_3d <- function(plot, width, height, interactive) {
     "root.addEventListener('pointerover',function(e){hover(e,true);});root.addEventListener('pointerout',function(e){hover(e,false);});})(document.currentScript.ownerSVGElement);")
   svg_element_3d("svg", list(xmlns = "http://www.w3.org/2000/svg", `xmlns:xlink` = "http://www.w3.org/1999/xlink", width = paste0(svg_number_3d(W), "mm"),
     height = paste0(svg_number_3d(H), "mm"), viewBox = paste(0, 0, svg_number_3d(W), svg_number_3d(H)), role = "img", `aria-labelledby` = "gg3d-title"),
-    c(svg_element_3d("title", list(id = "gg3d-title"), knit_escape_3d(alt_text_3d(plot))),
+    c(svg_element_3d("title", list(id = "gg3d-title"), knit_escape_3d(get_alt_text(plot))),
       svg_element_3d("defs", content = definitions), svg_element_3d("style", content = css),
       svg_chrome_3d(table, width, height, "under-"), commands,
       svg_chrome_3d(table, width, height, "over-", TRUE), if (interactive) svg_element_3d("script", content = paste0("<![CDATA[", script, "]]>"))))
 }
 
-#' Save an SVG with source rows and hover text
-#'
-#' Writes compiled, depth-ordered fragments as SVG geometry. Each fragment
-#' carries data-layer, data-row and data-primitive attributes. Consecutive
-#' runs of each layer share a group so that interleaved layers retain their
-#' visibility order. Scene masks become clipping paths, and surface seams
-#' share compound-path underlays. Static plot furniture is embedded as SVG.
-#' @param plot A ggplot with [coord_3d()].
-#' @param file Output SVG path.
-#' @param interactive Whether to include tooltips, keyboard focus and linked
-#'   hover highlighting for fragments of the same source row.
-#' @param width,height Plot dimensions in pixels at 96 pixels per inch.
-#' @return `file`, invisibly.
-#' @examples
-#' p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp, tooltip = rownames(mtcars))) +
-#'   geom_point_3d() + coord_3d()
-#' if (requireNamespace("svglite", quietly = TRUE) && requireNamespace("xml2", quietly = TRUE)) {
-#'   save_svg_3d(p, tempfile(fileext = ".svg"))
-#' }
-#' @export
-save_svg_3d <- function(plot, file, interactive = TRUE, width = 640L, height = 640L) {
-  scene_assert(is.character(file) && length(file) == 1L && !is.na(file) && dir.exists(dirname(file)), "file must be an output path in an existing directory")
-  interactive <- check_flag_3d(interactive, "interactive")
-  writeLines(native_svg_3d(plot, width, height, interactive), file, useBytes = TRUE)
-  invisible(file)
-}
+register_exporter_3d("svg", function(plot, file, settings)
+  writeLines(native_svg_3d(plot, settings$width, settings$height, settings$interactive), file, useBytes = TRUE),
+  input = "plot", settings = "interactive")

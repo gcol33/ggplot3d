@@ -257,7 +257,7 @@ coord_hyperbolic_3d <- function(model="klein",input=model,
   bounds <- space$model_ranges(model,NULL)
   if(!is.null(args$aspect)&&!isTRUE(all.equal(as.numeric(args$aspect),vapply(bounds,diff,numeric(1))/diff(bounds$x)))) stop("Hyperbolic aspect is fixed by model units.",call.=FALSE)
   args$aspect <- vapply(bounds,diff,numeric(1))
-  coord <- do.call(coord_3d,stats_params_3d(list(space=space,input=input,model=model,
+  coord <- do.call(coord_3d,stats_params_3d(list(geometry=space,input=input,model=model,
     axes=character(),panes=character(),box="none",clip_data=TRUE),args))
   coord$frame <- ggplot2::ggproto(NULL,FrameHyperbolicFinite,space=space,model=model,references=references,distance_breaks=distance_breaks)
   if(inside) inside_coord_3d(coord) else coord

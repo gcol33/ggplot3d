@@ -41,7 +41,7 @@ emit_boxplots_3d <- function(data, params, panel_params) {
     crossbar <- boxes[setdiff(names(boxes), c("xmin", "xmax", "ymin", "ymax"))]
     crossbar$xend <- boxes$xmin; crossbar$xintercept <- boxes$xmax
     crossbar$yend <- boxes$ymin; crossbar$yintercept <- boxes$ymax
-    settings <- utils::modifyList(params, list(cap.plane = "cross", fatten = params$fatten,
+    settings <- utils::modifyList(params, list(cap_plane = "cross", fatten = params$fatten,
       middle_gp = NULL, box_gp = NULL))
     pieces[[1L]] <- emit_crossbar_3d(crossbar, settings, panel_params)
     whiskers <- rbind(segment_rows_3d(boxes, list(z = boxes$zintercept), list(z = boxes$zmin)),

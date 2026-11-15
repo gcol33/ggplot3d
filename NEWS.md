@@ -1,5 +1,33 @@
 # ggplot3d 0.0.0.9000
 
+* The exported API follows one name per concept (`dev_notes/11-api-naming.md`):
+  - `export_3d()` writes SVG, TikZ (`.tex`) and Asymptote (`.asy`) through its
+    format registry and accepts `format` without `file`; `save_svg_3d()` and
+    `export_code_3d()` are removed.
+  - `light_3d(...)` takes light sources and replaces `lights_3d()`; with none
+    it uses one `light_directional()`. Its tone colours are `shadow_colour`
+    and `highlight_colour`.
+  - Plots with `coord_3d()` have a `ggplot2::get_alt_text()` method, which
+    replaces `alt_text_3d()`.
+  - `stat_density_3d(probs = )` replaces `levels = probs(...)`.
+  - Renamed functions: `biplot_3d()` (was `stat_biplot_3d()`),
+    `annotation_thurston_3d()` (`geom_thurston_3d()`), `facet_views_3d()`
+    (`facet_views()`), `grand_tour_3d()` (`tour_grand()`), `mobius_3d()`
+    (`mobius()`).
+  - Renamed arguments: `backend` in `animate_3d()` and `annotation_plot_3d()`
+    (was `renderer`, `route`); `onto` in `shadow_3d()` and
+    `geom_dropline_3d()` (`on`, `face`); `geometry` in `coord_3d()` (`space`);
+    `levels` in `geom_volume_3d()` (`level`); `tolerance` in
+    `stat_isofunction_3d()` (`tol`); `normalise`, `centre`, `fibre`
+    (`normalize`, `center`, `fiber`); `cap_plane`, `shading_range`,
+    `depth_scale`, `se_alpha`, `label_orientation`, `title_position`
+    (dotted spellings).
+  - Removed single-valued arguments: `dim` of `coord_spherical_geometry_3d()`,
+    `d` of `grand_tour_3d()`, `type` of `stat_knot_3d()`, `metric` of
+    `stat_embedding_3d()`, and `nudge_z` of `position_nudge_3d()`.
+  - `geom_*_3d()` functions paired with a stat show the stat's full signature;
+    `stat_immersed_3d()` starts with `mapping` and `data`.
+
 * `animate_3d(format = "mp4")` selects an output format and writes to a
   session temporary path. Formats follow the output registry; an explicit
   `file` must have a matching extension. With both arguments NULL, PNG frame
@@ -93,7 +121,7 @@
   WebGL texture array; glTF export writes `TEXCOORD_0` and embedded PNG
   textures (#64).
 
-* `facet_views(lights = , combine = "cross" | "pair")` compares panel
+* `facet_views_3d(lights = , combine = "cross" | "pair")` compares panel
   lighting through the existing light collections. Camera and light keys
   retain each condition through layout changes; NULL entries select unlit
   panels. `views = NULL` inherits the coordinate camera. Shared guides use
@@ -152,7 +180,7 @@
   colour modes, guides, styles and line drawings.
 
 * Shading can keep data colours readable against their legend.
-  `lights_3d(mode = "lightness" | "tone" | "overlay" | "soft", range, neutral)`
+  `light_3d(mode = "lightness" | "tone" | "overlay" | "soft", range, neutral)`
   moves a colour by a signed level per light, 0 at the `neutral` angle
   (ggcube's `ramp_smooth()`): OKLab lightness toward black or white with
   hue kept and chroma reduced only to fit the gamut (Ottosson 2020; ggcube's
@@ -160,7 +188,7 @@
   or matplotlib's `LightSource` overlay and soft-light blends. The transfers
   live in the one shading kernel, so vector, raster and the viewer agree.
   `guide_colourbar_3d(along = NULL)`, `guide_coloursteps_3d()`,
-  `guide_bins_3d()` and `guide_legend_3d()` take `shading.range` (`TRUE` or
+  `guide_bins_3d()` and `guide_legend_3d()` take `shading_range` (`TRUE` or
   two angles) and show value by light, sampled from the same kernel without
   the specular term; the axis colourbar shades across its width (#59;
   Szafir et al. 2016, Kovesi 2015).
@@ -229,7 +257,7 @@
   (`geom_text_3d(orientation = "plane")`) is font outline geometry and still
   hides and is hidden by the data.
 
-* `stat_biplot_3d()` arrows are drawn with unshaded heads in `arrow_colour`
+* `biplot_3d()` arrows are drawn with unshaded heads in `arrow_colour`
   (a mid grey by default) and slightly larger heads, and each arrow-tip label
   touches its tip on the side the arrow points to on the page, as vegan's
   `ordiArrowTextXY()` places them. Rotations that align several glyphs or
@@ -289,7 +317,7 @@
   every edge plane, which keeps `hidden = "show"` and halos within the
   vector engine's budget on finer meshes (#61).
 
-* Lighting has materials and several lights. `lights_3d()` combines
+* Lighting has materials and several lights. `light_3d()` combines
   `light_directional()`, `light_point(position, falloff)` (inverse-square at
   `falloff = 2`, independent of the other geometry), `light_head()` (MATLAB's
   `camlight headlight`) and `light_hemisphere(sky, ground)` (three.js) with
@@ -398,7 +426,7 @@
 
 * Project 4D and n-D data with `stat_project_3d()`, all six SO(4) plane
   rotations and quaternion double rotations, finite perspective and adaptive
-  stereographic surfaces. `tour_grand()` drives Grassmann-interpolated
+  stereographic surfaces. `grand_tour_3d()` drives Grassmann-interpolated
   projection animations. `stat_section_4d()` shares marching-tetrahedra topology
   with isosurfaces and welds hyperplane-section vertices (#20).
 
@@ -408,7 +436,7 @@
 
 * Relativity layers draw light cones, constant-interval hyperboloids, Schwarzschild spatial embeddings and equatorial timelike/null orbits. `coord_spacetime_3d()` and `lorentz_boost_3d()` support finite Lorentz transformations, including per-frame `animate_3d(isometry = )` schedules.
 
-* Complex-analysis layers draw Riemann-sphere phase portraits and inverse-parametrised Riemann surfaces. `mobius()` maps extended complex values, the finite Riemann sphere and hyperbolic half-space.
+* Complex-analysis layers draw Riemann-sphere phase portraits and inverse-parametrised Riemann surfaces. `mobius_3d()` maps extended complex values, the finite Riemann sphere and hyperbolic half-space.
 
 * `stat_self_intersection_3d()` extracts transverse triangle crossings as stitched paths. `stat_immersed_3d()` supplies Klein bottles, Boy's surface, a cross-cap and a Moebius band; `stat_knot_3d()` generates torus knots and closed tubes.
 
@@ -433,20 +461,20 @@
 
 * `view_3d(panel = )` sizes the selected facet and its axis furniture for the widget, preserving the panel aspect. knitr and Quarto round figure dimensions to whole pixels for HTML viewers.
 
-* Domain recipes cover symmetric tensor glyphs, ordination biplots, molecular ball-and-stick views and sampled Lab colour gamuts. `geom_tensor_3d()` adds Kindlmann superquadrics through shared glyph instancing, `stat_biplot_3d()` composes score points, quivers, arrow-tip labels sized by `label_size` and group regions, and `fortify.pdb()` joins atoms and bonds by serial number.
+* Domain recipes cover symmetric tensor glyphs, ordination biplots, molecular ball-and-stick views and sampled Lab colour gamuts. `geom_tensor_3d()` adds Kindlmann superquadrics through shared glyph instancing, `biplot_3d()` composes score points, quivers, arrow-tip labels sized by `label_size` and group regions, and `fortify.pdb()` joins atoms and bonds by serial number.
 
-* `save_svg_3d()` writes native depth-ordered SVG with layer and row identities, tooltips and linked hover highlighting. `export_code_3d()` writes editable TikZ paths or model-space Asymptote scenes with camera and optional PRC output.
+* `export_3d()` writes native depth-ordered SVG with layer and row identities, tooltips and linked hover highlighting, editable TikZ paths (`.tex`) and model-space Asymptote scenes (`.asy`) with camera and optional PRC output, alongside its 3D model formats.
 
 * ggplot2's `geom_contour_filled()` draws terraced bands at their level midpoints inside `coord_3d()`, preserving polygon holes and the band fill scale.
 
 * `geom_quiver_3d()` draws vectors with solid cone heads and line or tube shafts; `geom_cone_3d()` draws magnitude-scaled cones. `stat_streamline_3d()` integrates trilinear vector fields with RK4 or adaptive RK45, accepts point/rake/plane seeds and Jobard-Lefer slice placement, and sweeps streamtubes through the shared tube machinery.
 
-* `backend_3d("raymarch")` renders in-space views of all eight Thurston geometries with geodesic sphere tracing, paired quotient faces, parallel transport, and geodesic-sphere area lighting. `geom_thurston_3d()` supplies intrinsic primitives, and `geodesic_3d()` exposes the shared flow and transport calculations.
+* `backend_3d("raymarch")` renders in-space views of all eight Thurston geometries with geodesic sphere tracing, paired quotient faces, parallel transport, and geodesic-sphere area lighting. `annotation_thurston_3d()` supplies intrinsic primitives, and `geodesic_3d()` exposes the shared flow and transport calculations.
 
 * `geom_boxplot_3d()` draws box prisms, median faces, whiskers and outliers on x/y cells. `geom_violin_3d()` draws mirrored density walls or revolved solids. `geom_waterfall_3d()` draws curtains and `geom_area_3d()` stacks area walls through `position_stack_3d()`.
 * `backend_3d("pathtrace")` adds diffuse global illumination, distant-disk soft shadows, thin-lens depth of field and seeded progressive accumulation. Native BVH traversal shares the SDF ray kernel; batches and worker counts produce identical samples.
 
-* knitr and Quarto chunks accept `view3d = TRUE` for the HTML viewer and static vector scenes in PDF and Word. `alt_text_3d()` supplies figure descriptions, with `fig.alt` and `labs(alt = )` overrides. Patchwork and cowplot compositions retain their separate panel scenes.
+* knitr and Quarto chunks accept `view3d = TRUE` for the HTML viewer and static vector scenes in PDF and Word. `ggplot2::get_alt_text()` supplies figure descriptions, with `fig.alt` and `labs(alt = )` overrides. Patchwork and cowplot compositions retain their separate panel scenes.
 * `geom_volume_3d()` renders trilinear scalar grids with emission-absorption transfer functions, maximum-intensity projection, and per-cell cubic isosurface intersections. Overlapping media combine extinction and emission, and opaque scene depth bounds the integration.
 
 * `animate_3d(time = , tween = tween_3d())` interpolates built layer data between states. Marks match by group or source row, paths resample by arc length, fixed meshes morph by face keys, and changing connectivity cross-fades. Direct gganimate transitions give guidance to use the 3D animation pipeline.
@@ -501,7 +529,7 @@
 * `geom_label_3d()` draws boxed labels. `geom_text_repel_3d()` and `geom_label_repel_3d()` move labels off each other and off the data points on the page at draw time, after projection, and join each moved label to its point with a leader line. The C++ solver takes ggrepel's arguments (`force`, `force_pull`, `max.iter`, `max.time`, `max.overlaps`, `box.padding`, `point.padding`, `min.segment.length`, `direction`, `seed`); `animate_3d()` starts each frame's labels from the previous frame's offsets.
 * `stat_density_2d_3d(plane = )` draws the density flat on the floor or at a given height, filled by density.
 * The camera arguments of `coord_3d()` take one value per panel, so facets can show different views; `animate_3d()` keeps each panel's offset.
-* `facet_views()` draws one scene from several cameras, one panel per view, with the layers computed once and one magnification across panels. `layout = "third_angle"` and `"first_angle"` place front, top, bottom, left, right and rear views by the projection methods of ISO 5456-2, so edges line up across adjacent views. `camera_3d()` gains the `"bottom"`, `"rear"` and `"left"` views.
+* `facet_views_3d()` draws one scene from several cameras, one panel per view, with the layers computed once and one magnification across panels. `layout = "third_angle"` and `"first_angle"` place front, top, bottom, left, right and rear views by the projection methods of ISO 5456-2, so edges line up across adjacent views. `camera_3d()` gains the `"bottom"`, `"rear"` and `"left"` views.
 * `view_3d(link = )` links viewers on one page: an orbit, zoom or reset in one moves every viewer of the group, each keeping its own view.
 * Outlined faces seen edge-on, as in front, top and side views, no longer stop the compilation of hidden strokes.
 * `labs(x = NULL)` and friends remove a 3D axis title.

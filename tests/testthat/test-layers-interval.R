@@ -50,17 +50,17 @@ test_that("rows use any subset of the three intervals", {
   s <- interval_segments(stats_scene(p)$packet)
   expect_equal(sort(segment_axes(s)), c("x", "y", "y", "z", "z"))
   cross <- ggplot2::ggplot(e, ggplot2::aes(x, y, z = z, ymin = y - 0.5, ymax = y + 0.5,
-      zmin = z - 0.4, zmax = z + 0.4)) + geom_errorbar_3d(width = 0.1, cap.plane = "cross") + coord_3d()
+      zmin = z - 0.4, zmax = z + 0.4)) + geom_errorbar_3d(width = 0.1, cap_plane = "cross") + coord_3d()
   s <- interval_segments(stats_scene(cross)$packet)
   expect_equal(nrow(s), 2L * (2L + 2L * 2L * 2L))
   expect_true(all(segment_axes(s) %in% c("x", "y", "z")))
 })
 
-test_that("cap.plane chooses the axis of the caps", {
+test_that("cap_plane chooses the axis of the caps", {
   d <- interval_data()
   base <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, zmin = z - se, zmax = z + se))
   caps <- function(plane) {
-    s <- interval_segments(stats_scene(base + geom_errorbar_3d(cap.plane = plane) + coord_3d())$packet)
+    s <- interval_segments(stats_scene(base + geom_errorbar_3d(cap_plane = plane) + coord_3d())$packet)
     sort(unique(segment_axes(s)))
   }
   expect_equal(caps("auto"), c("x", "z"))
@@ -69,7 +69,7 @@ test_that("cap.plane chooses the axis of the caps", {
   expect_equal(cap_axes_3d("x", "auto"), "y")
   expect_equal(cap_axes_3d("y", "yz"), "z")
   expect_equal(cap_axes_3d("z", "cross"), c("x", "y"))
-  expect_error(geom_errorbar_3d(cap.plane = "zz"), "cap.plane")
+  expect_error(geom_errorbar_3d(cap_plane = "zz"), "cap_plane")
 })
 
 test_that("a missing centre is the middle of its interval and z-less layers lie on the floor", {
@@ -106,7 +106,7 @@ test_that("crossbars draw a rectangle, or a cuboid with outward faces, and a mid
   flat <- stats_scene(p + geom_crossbar_3d(fill = "grey80", width = 0.4) + coord_3d())$packet
   expect_equal(flat$faces$count, rep(4L, 6L))
   expect_length(flat$polylines$offset, 6L * 4L + 6L)
-  solid <- stats_scene(p + geom_crossbar_3d(fill = "grey80", width = 0.4, cap.plane = "cross",
+  solid <- stats_scene(p + geom_crossbar_3d(fill = "grey80", width = 0.4, cap_plane = "cross",
     middle.colour = "red", fatten = 3) + coord_3d())$packet
   expect_equal(solid$faces$count, rep(4L, 36L))
   expect_length(solid$polylines$offset, 6L * 12L + 6L * 4L)

@@ -137,7 +137,7 @@ print_axis_parts_3d <- function(scene, settings, transform, fit) {
     line <- transform(sweep(frame$map(axis_candidate_points_3d(layout$candidate, seq(0, 1, length.out = 33L))), 2L, scene$box, "*"))
     paths <- list(position = line, path = rep(1L, nrow(line)), colour = matrix(c(.3, .3, .3, 1), 1L), radius = settings$min_mm / 2)
     meshes <- c(meshes, print_paths_3d(paths, label, settings))
-    guide$params$label.orientation <- if (settings$text == "none") "screen" else "plane"
+    guide$params$label_orientation <- if (settings$text == "none") "screen" else "plane"
     guide$params$ticks <- "in_plane"
     typography <- print_layer_error_3d(label, guide_typography_3d(ctx, guide, overlay$fit$metrics[[name]], layout))
     for (kind in c("major", "minor")) {

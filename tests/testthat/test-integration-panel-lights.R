@@ -5,14 +5,14 @@ panel_light_surface <- function() {
 }
 
 panel_light_conditions <- function() list(
-  left = lights_3d(light_directional(c(-1, 1, 2), space = "camera"),
+  left = light_3d(light_directional(c(-1, 1, 2), space = "camera"),
     light_hemisphere(intensity = 0.1), ambient = 0.2),
-  right = lights_3d(light_point(c(2, 2, 7), space = "data", falloff = 0), ambient = 0.3),
+  right = light_3d(light_point(c(2, 2, 7), space = "data", falloff = 0), ambient = 0.3),
   unlit = NULL)
 
 test_that("crossed camera and lighting conditions retain stable keys and shared data", {
   p <- panel_light_surface() + coord_3d() +
-    facet_views(c("front", "isometric"), lights = panel_light_conditions(), ncol = 3)
+    facet_views_3d(c("front", "isometric"), lights = panel_light_conditions(), ncol = 3)
   built <- ggplot2::ggplot_build(p)
   layout <- built$layout$layout
   expect_identical(layout$VIEW, rep(1:2, each = 3L))
@@ -32,29 +32,29 @@ test_that("crossed camera and lighting conditions retain stable keys and shared 
 
 test_that("paired lights broadcast singletons and explicit NULL differs from inheritance", {
   build <- function(facet) ggplot2::ggplot_build(panel_light_surface() + coord_3d(azimuth = 17) + facet)$layout
-  paired <- build(facet_views(c("front", "top", "right"), lights = panel_light_conditions(), combine = "pair"))
+  paired <- build(facet_views_3d(c("front", "top", "right"), lights = panel_light_conditions(), combine = "pair"))
   expect_identical(paired$layout$VIEW, 1:3)
   expect_identical(paired$layout$LIGHT, 1:3)
-  camera <- build(facet_views(NULL, lights = panel_light_conditions(), combine = "pair"))
+  camera <- build(facet_views_3d(NULL, lights = panel_light_conditions(), combine = "pair"))
   expect_true(all(vapply(camera$panel_params, function(p) p$camera$azimuth == 17, logical(1))))
   expect_identical(as.character(camera$layout$view), names(panel_light_conditions()))
-  light <- build(facet_views(c("front", "top"), lights = list(off = NULL), combine = "pair"))
+  light <- build(facet_views_3d(c("front", "top"), lights = list(off = NULL), combine = "pair"))
   expect_true(all(vapply(light$panel_params, function(p) is.null(p$coord_params$light), logical(1))))
-  inherited <- build(facet_views(c("front", "top")))
+  inherited <- build(facet_views_3d(c("front", "top")))
   expect_true(all(vapply(inherited$panel_params, function(p) !is.null(p$coord_params$light), logical(1))))
-  off <- build(facet_views(NULL, lights = list(off = NULL)))
+  off <- build(facet_views_3d(NULL, lights = list(off = NULL)))
   expect_null(off$context$key_context$light)
-  expect_error(facet_views(c("front", "top"), lights = panel_light_conditions(), combine = "pair"), "equal lengths")
-  expect_error(facet_views(lights = list(a = NULL, a = NULL)), "unique")
-  expect_error(facet_views(lights = list(a = 42)), "light must")
-  expect_error(facet_views(lights = lights_3d()), "list of lighting")
-  expect_error(facet_views(lights = panel_light_conditions(), layout = "third_angle"), "one lighting")
-  expect_identical(build(facet_views(c("front", "top"), layout = "third_angle"))$layout$ROW, c(2L, 1L))
+  expect_error(facet_views_3d(c("front", "top"), lights = panel_light_conditions(), combine = "pair"), "equal lengths")
+  expect_error(facet_views_3d(lights = list(a = NULL, a = NULL)), "unique")
+  expect_error(facet_views_3d(lights = list(a = 42)), "light must")
+  expect_error(facet_views_3d(lights = light_3d()), "list of lighting")
+  expect_error(facet_views_3d(lights = panel_light_conditions(), layout = "third_angle"), "one lighting")
+  expect_identical(build(facet_views_3d(c("front", "top"), layout = "third_angle"))$layout$ROW, c(2L, 1L))
 })
 
 test_that("each panel matches its standalone vector and raster shading", {
   conditions <- panel_light_conditions()
-  p <- panel_light_surface() + coord_3d() + facet_views(c("front", "isometric"), lights = conditions)
+  p <- panel_light_surface() + coord_3d() + facet_views_3d(c("front", "isometric"), lights = conditions)
   input <- integration_packets(p)
   viewport <- new_scene_viewport(25.4, 25.4, 20)
   params <- ggplot2::ggplot_build(p)$layout$panel_params
@@ -77,8 +77,8 @@ test_that("each panel matches its standalone vector and raster shading", {
 })
 
 test_that("the guide reference binds data-space point lights to its panel ranges", {
-  point <- lights_3d(light_point(c(2, 2, 7), space = "data", falloff = 2))
-  p <- panel_light_surface() + coord_3d() + facet_views(NULL, lights = list(point = point))
+  point <- light_3d(light_point(c(2, 2, 7), space = "data", falloff = 2))
+  p <- panel_light_surface() + coord_3d() + facet_views_3d(NULL, lights = list(point = point))
   layout <- ggplot2::ggplot_build(p)$layout
   panel <- layout$panel_params[[1L]]
   reference <- layout$context$key_context$light
@@ -91,7 +91,7 @@ test_that("the guide reference binds data-space point lights to its panel ranges
 
 test_that("viewer payloads keep panel lights and progressive caches include their condition", {
   skip_if_not_installed("htmlwidgets")
-  p <- panel_light_surface() + coord_3d() + facet_views(NULL, lights = panel_light_conditions())
+  p <- panel_light_surface() + coord_3d() + facet_views_3d(NULL, lights = panel_light_conditions())
   widget <- view_3d(p)
   expect_length(widget$x$panels, 3L)
   panels <- widget$x$panels[match(1:3, vapply(widget$x$panels, `[[`, integer(1), "id"))]

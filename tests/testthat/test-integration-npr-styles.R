@@ -1,5 +1,5 @@
 npr_camera <- function() key_camera_3d(coord_3d()$camera)
-npr_swatch <- function(colour, x, material, light = lights_3d(light_directional(), ambient = 0.35)) {
+npr_swatch <- function(colour, x, material, light = light_3d(light_directional(), ambient = 0.35)) {
   n <- length(x)
   shade_swatch_cpp(linear_rgb_3d(rep(colour, n)), as.double(x), rep(1L, n),
     kernel_materials_3d(material_table_3d(material)), resolved_light_3d(light, npr_camera()))
@@ -21,7 +21,7 @@ test_that("toon bands split exactly at explicit breaks and evenly by cosine", {
 
 test_that("toon steps divide the signed level of signed transfers", {
   toon <- material_3d(style = "toon", bands = 3)
-  light <- lights_3d(light_directional(), mode = "lightness", range = c(-0.5, 0.5))
+  light <- light_3d(light_directional(), mode = "lightness", range = c(-0.5, 0.5))
   x <- cospi(seq(0, 180, by = 5) / 180)
   out <- npr_swatch("#3366CC", x, toon, light)
   expect_identical(nrow(unique(round(out, 12))), 3L)
@@ -29,7 +29,7 @@ test_that("toon steps divide the signed level of signed transfers", {
 })
 
 test_that("a quantised specular is a flat spot, a continuous one a lobe", {
-  light <- lights_3d(light_directional(c(0, 0, 1), space = "data"), ambient = 0.3)
+  light <- light_3d(light_directional(c(0, 0, 1), space = "data"), ambient = 0.3)
   view <- list(perspective = FALSE, eye = c(0, 0, 10), toward = c(0, 0, 1))
   angles <- seq(0, 40, by = 1)
   normal <- cbind(sinpi(angles / 180), 0, cospi(angles / 180))
@@ -62,7 +62,7 @@ test_that("Gooch shading blends cool and warm by the light value", {
   expect_equal(custom[1L, ], c(1, 0, 0), tolerance = 1e-12)
 })
 
-normal_colour <- function(normal, camera, material, light = lights_3d(light_directional(c(0, 0, 1)))) {
+normal_colour <- function(normal, camera, material, light = light_3d(light_directional(c(0, 0, 1)))) {
   view <- list(perspective = FALSE, eye = c(0, 0, 10), toward = -camera$forward)
   n <- nrow(normal)
   srgb_encode_3d(shade_cpp(normal, matrix(0, n, 3L), matrix(0.5, n, 3L), rep(1L, n),
@@ -85,7 +85,7 @@ test_that("normal colours encode axis and diagonal normals in each frame", {
   facing <- normal_colour(rbind(c(1, 0, 0)), turned, material_3d(style = "normals", normal_space = "camera"))
   expect_equal(facing[1L, ], c(0.5, 0.5, 1), tolerance = 1e-6)
   lit <- normal_colour(rbind(c(0, 0, 1)), camera, material_3d(style = "normals", normal_space = "light"),
-    lights_3d(light_directional(c(0, 0, 1), space = "data")))
+    light_3d(light_directional(c(0, 0, 1), space = "data")))
   expect_equal(lit[1L, ], c(0.5, 0.5, 1), tolerance = 1e-6)
   expect_error(material_3d(style = "normals", normal_space = "world"))
 })
@@ -213,7 +213,7 @@ test_that("the viewer applies the styles like the kernel", {
   styles <- list(toon = material_3d(style = "toon", bands = 4), gooch = material_3d(style = "gooch"),
     normals = material_3d(style = "normals", normal_space = "camera"))
   for (name in names(styles)) {
-    light <- lights_3d(light_directional(c(0.6, 0.2, 1)), ambient = 0.2)
+    light <- light_3d(light_directional(c(0.6, 0.2, 1)), ambient = 0.2)
     p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_surface_3d(fill = "#4080C0", material = styles[[name]]) +
       coord_3d(light = light, elevation = 90, azimuth = -90, panes = character(), axes = character(), box = "none")
     browser <- viewer_browser(list(view_3d(p, width = 200, height = 200, elementId = paste0("style-", name))), 200, 200)
@@ -232,7 +232,7 @@ test_that("the viewer applies the styles like the kernel", {
 })
 
 test_that("illustrative path-trace hits return kernel colours", {
-  light <- lights_3d(light_head(), ambient = 0.2)
+  light <- light_3d(light_head(), ambient = 0.2)
   for (style in c("toon", "gooch", "normals")) for (elevation in c(90, -90)) {
     material <- material_3d(style = style, back = "#F08040")
     d <- expand.grid(x = 0:1, y = 0:1); d$z <- 0

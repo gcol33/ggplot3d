@@ -5,17 +5,21 @@
 \title{Immersed surface examples}
 \usage{
 stat_immersed_3d(
+  mapping = NULL,
+  data = NULL,
+  ...,
   type = c("klein_figure8", "klein_bottle", "boy", "cross_cap", "moebius"),
-  n = 40L,
-  ...
+  n = 40L
 )
 }
 \arguments{
+\item{mapping, data}{Standard layer arguments.}
+
+\item{...}{Arguments to \code{\link[=stat_parametric_3d]{stat_parametric_3d()}}.}
+
 \item{type}{Surface name.}
 
 \item{n}{Samples per parameter, a scalar or pair of integers.}
-
-\item{...}{Arguments to \code{\link[=stat_parametric_3d]{stat_parametric_3d()}}.}
 }
 \value{
 A surface layer.

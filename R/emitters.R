@@ -228,7 +228,7 @@ scene_draw_formals_3d <- function() {
     lineend = "butt", linejoin = "round", linemitre = 10,
     arrow = NULL, arrow.fill = NULL, parse = FALSE, check_overlap = FALSE,
     size.unit = "mm", rule = "evenodd", base = 0, cap = "both",
-    width = NULL, depth = NULL, face = "zmin", .project = NULL,
+    width = NULL, depth = NULL, onto = "zmin", .project = NULL,
     render = "marker", edl = 1, raster = FALSE, clip_planes = NULL, .key_context = NULL)
 }
 
@@ -743,3 +743,18 @@ register_geom_3d(ggplot2::GeomText, emit_text_3d, positions = mark_positions_3d,
 register_geom_3d(ggplot2::GeomBlank, function(data, params, panel_params) {
   new_scene_packet(vertices = list(x = numeric(), y = numeric(), z = numeric()))
 }, positions = mark_positions_3d)
+
+# The geom_*_3d() of a stat_*_3d(): the stat's arguments without `geom`, so
+# the stat's default geom draws the layer. Built from the stat's formals so
+# both functions show the same signature.
+geom_from_stat_3d <- function(stat) {
+  args <- formals(get(stat, mode = "function"))
+  args$geom <- NULL
+  forward <- lapply(names(args), as.name)
+  names(forward) <- ifelse(names(args) == "...", "", names(args))
+  geom <- function() NULL
+  formals(geom) <- args
+  body(geom) <- as.call(c(list(as.name(stat)), forward))
+  environment(geom) <- topenv()
+  geom
+}

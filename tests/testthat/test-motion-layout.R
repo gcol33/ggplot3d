@@ -10,7 +10,7 @@ test_that("viewer layout bypasses static marker limits across facets", {
     expect_length(decode_column(widget$x$panels[[1L]]$scene$markers$offset), 2L)
     expect_true(all(is.finite(unlist(widget$x$panels[[1L]]$viewport))))
   }
-  faceted <- p + facet_views(c("front", "isometric"))
+  faceted <- p + facet_views_3d(c("front", "isometric"))
   widget <- view_3d(faceted, width = 400, height = 240)
   expect_length(widget$x$panels, 2L)
   expect_true(all(vapply(widget$x$panels, function(panel)

@@ -16,7 +16,7 @@
 #' the camera, as panes drawn behind the data do. The shadows are vector
 #' geometry in every backend: the raster and hybrid backends draw them with
 #' the panel furniture.
-#' @param on Panes that receive shadows: `"floor"`, `"back"`, or pane names
+#' @param onto Panes that receive shadows: `"floor"`, `"back"`, or pane names
 #'   `"xmin"` to `"zmax"`.
 #' @param alpha Opacity of the shadow film, greater than 0 and at most 1.
 #' @param colour Shadow colour.
@@ -31,24 +31,24 @@
 #' d$z <- exp(-2 * (d$x^2 + d$y^2))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "steelblue", colour = NA) +
-#'   coord_3d(shadow = shadow_3d(light = light_3d(c(1, 1, 3), space = "data")),
+#'   coord_3d(shadow = shadow_3d(light = light_3d(light_directional(c(1, 1, 3), space = "data"))),
 #'     zlim = c(-1, 1))
 #' @export
-shadow_3d <- function(on = "floor", alpha = 0.3, colour = "black", light = NULL) {
+shadow_3d <- function(onto = "floor", alpha = 0.3, colour = "black", light = NULL) {
   panes <- c("back", "floor", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax")
-  if (!is.character(on) || !length(on) || anyNA(on) || !all(on %in% panes))
-    stop("on must name panes: ", paste(panes, collapse = ", "), ".", call. = FALSE)
+  if (!is.character(onto) || !length(onto) || anyNA(onto) || !all(onto %in% panes))
+    stop("onto must name panes: ", paste(panes, collapse = ", "), ".", call. = FALSE)
   if (!is.numeric(alpha) || length(alpha) != 1L || !is.finite(alpha) || alpha <= 0 || alpha > 1)
     stop("alpha must be a number greater than 0 and at most 1.", call. = FALSE)
   check_colour_3d(colour, "colour")
   if (!is.null(light) && !(is.list(light) && all(c("direction", "space") %in% names(light))))
     stop("light must be NULL or a light_3d() configuration.", call. = FALSE)
-  structure(list(on = unique(on), alpha = alpha, colour = colour, light = light), class = "ggplot3d_shadow")
+  structure(list(onto = unique(onto), alpha = alpha, colour = colour, light = light), class = "ggplot3d_shadow")
 }
 
 #' @export
 print.ggplot3d_shadow <- function(x, ...) {
-  cat("<shadow_3d> on ", paste(x$on, collapse = ", "), ", ", x$colour, " at alpha ", format(x$alpha), "\n", sep = "")
+  cat("<shadow_3d> onto ", paste(x$onto, collapse = ", "), ", ", x$colour, " at alpha ", format(x$alpha), "\n", sep = "")
   invisible(x)
 }
 
@@ -383,7 +383,7 @@ shadow_packet_3d <- function(packets, spec, panel_params, camera, viewport) {
   partitions <- furniture_partitions_3d(camera, viewport, frame)
   casters <- Filter(function(p) any(unlist(lapply(p[c("faces", "polylines", "markers")], `[[`, "layer_id")) > 0L), packets)
   parts <- list()
-  for (plane in resolve_panes_3d(spec$on, panel_params)) {
+  for (plane in resolve_panes_3d(spec$onto, panel_params)) {
     along <- towards[plane$axis]
     if (if (plane$value == 0) along <= 1e-9 else along >= -1e-9) next
     partition <- if (isTRUE(camera$clip_data)) unname(partitions[plane$pane$name]) else 1L

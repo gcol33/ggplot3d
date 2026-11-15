@@ -114,7 +114,6 @@ SpaceSpherical3D <- ggplot2::ggproto("SpaceSpherical3D",Space3D,
 #' whose image lies outside twice the box circumradius, and the scene engine
 #' clips their triangles to the box in homogeneous coordinates, so fibres and
 #' faces through the pole are drawn up to the panel box.
-#' @param dim Spherical dimension, currently three.
 #' @param model,input Display model and input chart.
 #' @param extent Positive half-width of the finite display box. Gnomonic
 #'   geometry is clipped to the finite box of the hemisphere in front of the
@@ -156,9 +155,8 @@ SpaceSpherical3D <- ggplot2::ggproto("SpaceSpherical3D",Space3D,
 #' ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_polygon_3d(fill="steelblue")+
 #'   coord_spherical_geometry_3d(inside=TRUE,azimuth=180,elevation=0,fog=.1)
 #' @export
-coord_spherical_geometry_3d <- function(dim=3,model=c("stereographic","gnomonic"),input=model,
+coord_spherical_geometry_3d <- function(model=c("stereographic","gnomonic"),input=model,
                                        extent=3,inside=FALSE,observer=NULL,fog=NULL,...) {
-  if(length(dim)!=1L||is.na(dim)||dim!=3) stop("dim must be 3.",call.=FALSE)
   args <- check_inside_options_3d(inside,fog,list(...))
   if(inside&&missing(model)) model <- "gnomonic"
   model <- match.arg(model); input <- match.arg(input,SpaceSpherical3D$charts)
@@ -169,7 +167,7 @@ coord_spherical_geometry_3d <- function(dim=3,model=c("stereographic","gnomonic"
     if(!is.null(args$isometry)) stop("Supply observer or isometry, one action at a time.",call.=FALSE)
     args$isometry <- spherical_observer_3d(observer,space,input)
   }
-  coord <- do.call(coord_3d,stats_params_3d(list(space=space,model=model,input=input,
+  coord <- do.call(coord_3d,stats_params_3d(list(geometry=space,model=model,input=input,
     aspect=c(1,1,1),axes=character(),panes=character(),box="none",clip_data=TRUE),args))
   if(inside) inside_coord_3d(coord) else coord
 }

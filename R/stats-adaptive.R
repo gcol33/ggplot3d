@@ -7,14 +7,14 @@ utils::globalVariables("geometry_octree_isosurface_cpp")
 # to depth[2], while its gradient box fails the small normal variation test
 # <grad f(B), grad f(B)> > 0 (their C1, which makes the level set inside a
 # single sheet, monotone along any gradient), or while the box diagonal
-# times r / |c| exceeds tol times the diagonal of the root box, where c and r
+# times r / |c| exceeds tolerance times the diagonal of the root box, where c and r
 # are the centre and half diagonal of the gradient box: every gradient in
 # the box lies within the angle asin(r / |c|) of c, so the level set
 # deviates from a plane by about the box size times that ratio. Gradients are measured in
 # box coordinates scaled to the unit cube. Returns the terminal boxes as
 # lattice origins and sizes on 2^depth[2] intervals per axis, with a flag for
 # boxes the level set cannot meet, and the number of boxes evaluated.
-isofunction_octree_3d <- function(fun, args, limits, levels, depth, tol) {
+isofunction_octree_3d <- function(fun, args, limits, levels, depth, tolerance) {
   fun <- interval_function_3d(fun)
   top <- depth[2L]; lattice <- 2^top
   span <- vapply(limits, diff, numeric(1))
@@ -34,7 +34,7 @@ isofunction_octree_3d <- function(fun, args, limits, levels, depth, tol) {
       inner <- Reduce(`+`, lapply(value$d, function(g) bounds_mul_3d(g, g)$lo))
       centre <- sqrt(Reduce(`+`, lapply(value$d, function(g) ((g$lo + g$hi) / 2)^2)))
       radius <- sqrt(Reduce(`+`, lapply(value$d, function(g) ((g$hi - g$lo) / 2)^2)))
-      settled <- is.finite(inner) & inner > 0 & is.finite(radius) & 2^-d * radius / centre <= tol
+      settled <- is.finite(inner) & inner > 0 & is.finite(radius) & 2^-d * radius / centre <= tolerance
       split <- split & !settled
     }
     if (!all(split)) boxes[[length(boxes) + 1L]] <- cbind(origin[!split, , drop = FALSE], rep(size, sum(!split)), !meets[!split])
@@ -48,18 +48,18 @@ isofunction_octree_3d <- function(fun, args, limits, levels, depth, tol) {
 
 # Level surfaces of fun by dual contouring on an adaptive octree over the
 # position scale box.
-stats_adaptive_field_3d <- function(fun, args, scales, levels, caps, method, depth, tol, refine, simplify = NULL) {
+stats_adaptive_field_3d <- function(fun, args, scales, levels, caps, method, depth, tolerance, refine, simplify = NULL) {
   if (!is.logical(caps) || length(caps) != 1L || is.na(caps)) stop("caps must be TRUE or FALSE.", call. = FALSE)
   if (!method %in% c("dual", "nets")) stop('Adaptive extraction requires method = "dual" or "nets".', call. = FALSE)
   if (!is.numeric(depth) || length(depth) != 2L || any(!is.finite(depth) | depth != trunc(depth)) ||
       depth[1L] < 0 || depth[1L] > depth[2L] || depth[2L] > 10)
     stop("depth must be two integers 0 <= min <= max <= 10.", call. = FALSE)
-  if (!is.numeric(tol) || length(tol) != 1L || !is.finite(tol) || tol <= 0) stop("tol must be a positive number.", call. = FALSE)
+  if (!is.numeric(tolerance) || length(tolerance) != 1L || !is.finite(tolerance) || tolerance <= 0) stop("tolerance must be a positive number.", call. = FALSE)
   limits <- lapply(stats_grid_3d(scales, 2L, c("x", "y", "z")), range)
   f <- function_evaluator_3d(fun, args)
   if (is.null(levels)) levels <- stats_levels_3d(f(as.matrix(expand.grid(lapply(limits, function(r) seq(r[1L], r[2L], length.out = 9L))))), NULL)
   levels <- stats_levels_3d(numeric(), levels)
-  tree <- isofunction_octree_3d(fun, args, limits, levels, depth, tol)
+  tree <- isofunction_octree_3d(fun, args, limits, levels, depth, tolerance)
   crossing <- if (refine > 0L) function(a, b, fa, fb, level)
     a + (b - a) * regula_falsi_3d(a, b, fa - level, fb - level, function(p) f(p) - level, refine)
   out <- geometry_octree_isosurface_cpp(vapply(limits, `[`, 1, 1L), vapply(limits, `[`, 1, 2L), as.integer(depth[2L]),

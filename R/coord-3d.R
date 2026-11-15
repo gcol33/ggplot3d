@@ -1,29 +1,3 @@
-#' Lighting for a 3D scene
-#'
-#' One directional light with an ambient term: the shorthand for
-#' `lights_3d(light_directional(direction, space, intensity = diffuse),
-#' ambient = ambient, mode = mode, ...)`. See [lights_3d()] for several
-#' lights, point, head and hemisphere lights and the colour modes, and
-#' [material_3d()] for specular highlights.
-#' @param direction Direction from a surface toward the light.
-#' @param space Coordinate space, camera or data.
-#' @param ambient,diffuse Nonnegative light contributions with sum at most one.
-#' @param mode Colour operation: `"multiply"`, `"tint"`, `"lightness"`,
-#'   `"tone"`, `"overlay"` or `"soft"`; see [lights_3d()].
-#' @param ... `range`, `neutral`, `shadow` and `highlight` of [lights_3d()].
-#' @return A lighting configuration for coord_3d().
-#' @examples
-#' light_3d(direction = c(1, 1, 2), space = "camera")
-#' light_3d(mode = "lightness", range = c(-0.5, 0.2))
-#' @export
-light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, diffuse = 0.65, mode = "multiply", ...) {
-  stopifnot(is.numeric(direction), length(direction) == 3L, all(is.finite(direction)), sum(direction^2) > 0,
-            length(ambient) == 1L, length(diffuse) == 1L, is.finite(ambient), is.finite(diffuse),
-            ambient >= 0, diffuse >= 0, ambient + diffuse <= 1)
-  lights_3d(light_directional(direction, match.arg(space, c("camera", "data")), intensity = diffuse),
-            ambient = ambient, mode = match.arg(mode, light_transfers_3d), ...)
-}
-
 #' Select a 3D rendering backend
 #' @param type Backend: `"vector"`, `"raster"`, `"hybrid"`, `"pathtrace"`,
 #'   `"raymarch"` (an intrinsic view in a Thurston geometry) or `"plotter"`.
@@ -87,7 +61,7 @@ light_3d <- function(direction = c(-1, 1, 2), space = "camera", ambient = 0.35, 
 #' use the shared sphere tracer. Furniture and text remain vector graphics.
 #'
 #' The raymarch backend traces geodesics from an observer inside the geometry.
-#' Use [geom_thurston_3d()] for balls, cylinders and half-spaces, or traced SDF
+#' Use [annotation_thurston_3d()] for balls, cylinders and half-spaces, or traced SDF
 #' layers for chart-defined CSG. It draws a full-panel perspective image;
 #' Euclidean plot axes and exterior-camera settings have no intrinsic meaning.
 #' Lighting is an isotropic point light at the observer, with the ambient and
@@ -187,7 +161,7 @@ plot_backend_3d <- function(plot, backend) {
 #'   value outside the panel range is moved to the nearest end of the range.
 #' @param z_scales Fixed or free z scales across panels.
 #' @param crs Target spatial coordinate reference system.
-#' @param light Lighting from [light_3d()] or [lights_3d()], one light such as
+#' @param light Lighting from [light_3d()], one light such as
 #'   [light_point()], or NULL for none.
 #' @param shadow Planar cast shadows from [shadow_3d()], or NULL for none.
 #' @param depth_cue Fog, depth-thinned strokes and eye-dome lighting from
@@ -199,7 +173,7 @@ plot_backend_3d <- function(plot, backend) {
 #'   transformation name such as `"log10"` or a scales transformation. Lines
 #'   and faces are subdivided so their images bend with the transformation.
 #' @param default Whether this is the default coordinate system.
-#' @param space Geometry of paths and faces: `"euclidean"` or an internal
+#' @param geometry Geometry of paths and faces: `"euclidean"` or an internal
 #'   `Space3D` extension. Spaces define canonical points, chart conversions,
 #'   distance, geodesics and isometries. See Details.
 #' @param model Display model supplied by the space; NULL uses its default.
@@ -298,10 +272,10 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      panes = c("back", "floor"), box = "back", z_scales = "fixed", crs = NULL,
                      light = light_3d(), backend = backend_3d(), default = FALSE, frame = "view",
                      transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0),
-                     clip_planes = list(), stereo = NULL, space = "euclidean", model = NULL,
+                     clip_planes = list(), stereo = NULL, geometry = "euclidean", model = NULL,
                      input = NULL, isometry = NULL, munch_tolerance = 1e-3, munch_max_depth = 9L,
                      shadow = NULL, depth_cue = NULL) {
-  space_spec <- space_spec_3d(space, model, input, isometry, munch_tolerance, munch_max_depth)
+  space_spec <- space_spec_3d(geometry, model, input, isometry, munch_tolerance, munch_max_depth)
   clip <- match.arg(clip, c("on", "off"))
   clip_planes <- check_clip_planes_3d(clip_planes)
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
@@ -408,7 +382,7 @@ camera_presets_3d <- function() {
 #' @param preset One of `"default"`, `"isometric"`, `"dimetric"` (x drawn at
 #'   half the length of y and z), `"trimetric"`, the six principal views
 #'   `"top"`, `"bottom"`, `"front"`, `"rear"`, `"left"` and `"right"` (each
-#'   looking along one axis, as placed by [facet_views()]), and the oblique views `"cabinet"` (depth at 45 degrees, half length),
+#'   looking along one axis, as placed by [facet_views_3d()]), and the oblique views `"cabinet"` (depth at 45 degrees, half length),
 #'   `"cavalier"` (depth at 45 degrees, full length) and `"military"` (the
 #'   floor plan turned 45 degrees, heights drawn straight up at full length).
 #' @param projection,azimuth,elevation,roll,distance,fov,zoom,target,oblique,up
@@ -460,7 +434,7 @@ Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
   # Camera of a panel showing `view`, a list of camera_3d() arguments that
   # replace the coord's own.
   view_camera = function(self, view) {
-    if (length(self$cameras) > 1L) stop("Give camera views either to facet_views() or as camera argument vectors of coord_3d(), not both.", call. = FALSE)
+    if (length(self$cameras) > 1L) stop("Give camera views either to facet_views_3d() or as camera argument vectors of coord_3d(), not both.", call. = FALSE)
     camera_from_args_3d(camera_args_update_3d(self$camera_args, view))
   },
   is_free = function() TRUE,
@@ -469,7 +443,7 @@ Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
   aspect = function(self, ranges) if (stereo_side_by_side_3d(self$config$stereo)) 0.5 else 1,
   setup_params = function(self, data) list(),
   setup_layout = function(self, layout, params) {
-    # Views of one scene (facet_views()) share its z scale.
+    # Views of one scene (facet_views_3d()) share its z scale.
     free <- self$z_scales == "free" && is.null(layout$VIEW)
     layout$SCALE_Z <- if (free) seq_len(nrow(layout)) else rep.int(1L, nrow(layout))
     triples <- paste(layout$SCALE_X, layout$SCALE_Y, layout$SCALE_Z, sep = ":")

@@ -105,7 +105,7 @@ test_that("stereo pairs work per facet and per view", {
   expect_length(panels, 2L)
   expect_true(all(vapply(panels, function(q) length(q$children) == 2L, logical(1))))
   expect_length(as.list(panels[[1L]]$children)[[1L]]$eye_group, 4L)
-  v <- stereo_drawn(stereo_plot(stereo_3d("pair")) + facet_views(c("front", "isometric")))
+  v <- stereo_drawn(stereo_plot(stereo_3d("pair")) + facet_views_3d(c("front", "isometric")))
   expect_length(v, 2L)
   iso <- camera_3d("isometric")
   expected <- c(stereo_camera_3d(new_camera_3d(azimuth = -90, elevation = 0), -1.5)$azimuth,
@@ -207,7 +207,7 @@ test_that("view_3d() and mono_plot_3d() use the central camera", {
 test_that("animate_3d() draws stereo frames", {
   skip_if_not_installed("ragg")
   result <- animate_3d(stereo_plot(stereo_3d("pair")), azimuth = c(-60, -30), frames = 2L,
-    width = 640L, height = 320L, renderer = "vector")
+    width = 640L, height = 320L, backend = "vector")
   on.exit(unlink(result$frames), add = TRUE)
   expect_equal(result$frame_count, 2L)
   expect_true(all(file.exists(result$frames)))

@@ -26,7 +26,7 @@ space_test_plot <- function(backend = "vector", tolerance = 1e-3) {
   ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
     geom_polygon_3d(fill = "#5CA7CE", colour = "#174A6C", linewidth = 0.8) +
     geom_point_3d(size = 2, colour = "#B84034") +
-    coord_3d(space = test_sphere_space(), xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1),
+    coord_3d(geometry = test_sphere_space(), xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1),
       expand = FALSE, axes = character(), panes = character(), box = "none", azimuth = 40, elevation = 25,
       backend = backend_3d(backend, dpi = 72, antialias = 1), munch_tolerance = tolerance)
 }

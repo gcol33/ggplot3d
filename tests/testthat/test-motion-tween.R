@@ -141,7 +141,7 @@ test_that("animate_3d renders in-between frames with fixed limits and transition
     coord_3d(axes = character())
   for (renderer in c("vector", "raster")) {
     out <- animate_3d(p, time = "t", tween = tween_3d(n = 1), width = 240, height = 240,
-      renderer = renderer, progress = FALSE)
+      backend = renderer, progress = FALSE)
     on.exit(unlink(out$frames), add = TRUE)
     expect_equal(out$frame_count, 3L)
     expect_equal(out$camera$value, c(0, .5, 1))

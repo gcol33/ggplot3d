@@ -15,7 +15,7 @@ cap_planes_3d <- c("auto", "xy", "xz", "yz", "cross")
 
 check_cap_plane_3d <- function(plane) {
   if (!is.character(plane) || length(plane) != 1L || !plane %in% cap_planes_3d) {
-    stop("cap.plane must be one of ", paste0('"', cap_planes_3d, '"', collapse = ", "), ".", call. = FALSE)
+    stop("cap_plane must be one of ", paste0('"', cap_planes_3d, '"', collapse = ", "), ".", call. = FALSE)
   }
   plane
 }
@@ -61,7 +61,7 @@ setup_interval_3d <- function(caps) {
     if (!caps) return(data)
     size <- data$width %or3d% params$width
     if (!is.null(size) && (!is.numeric(size) || any(!is.finite(size) | size < 0))) stop("width must be a nonnegative number.", call. = FALSE)
-    for (axis in unique(unlist(lapply(interval_axes_3d(data), cap_axes_3d, plane = params$cap.plane)))) {
+    for (axis in unique(unlist(lapply(interval_axes_3d(data), cap_axes_3d, plane = params$cap_plane)))) {
       spacing <- vapply(split(data[[axis]], data$PANEL), lattice_spacing_3d, numeric(1)) * 0.9
       half <- rep_len(size %or3d% unname(spacing[as.character(data$PANEL)]), nrow(data)) / 2
       data[[paste0(axis, "end")]] <- data[[axis]] - half
@@ -99,7 +99,7 @@ interval_caps_3d <- function(data, params) {
   caps <- list()
   for (axis in interval_axes_3d(data)) {
     rows <- data[interval_rows_3d(data, axis), , drop = FALSE]
-    for (bound in paste0(axis, c("min", "max"))) for (cap in cap_axes_3d(axis, params$cap.plane)) {
+    for (bound in paste0(axis, c("min", "max"))) for (cap in cap_axes_3d(axis, params$cap_plane)) {
       half <- cap_width_3d(rows, cap) / 2
       at <- stats::setNames(list(rows[[bound]]), axis)
       caps[[length(caps) + 1L]] <- segment_rows_3d(rows,
@@ -178,7 +178,7 @@ emit_crossbar_3d <- function(data, params, panel_params) {
     rows <- rows[valid_rows_3d(rows, params, c(axes_3d, paste0(axis, c("min", "max")))), , drop = FALSE]
     m <- nrow(rows)
     if (!m) next
-    caps <- cap_axes_3d(axis, params$cap.plane)
+    caps <- cap_axes_3d(axis, params$cap_plane)
     template <- cube_template_3d(length(caps) + 1L)
     for (v in seq_len(nrow(template$bits))) {
       vertices[[length(vertices) + 1L]] <- cell_vertices_3d(rows, axis, caps, template$bits[v, ])
@@ -284,7 +284,7 @@ crossbar_gp_3d <- function(colour, linetype, linewidth) {
 #' lies on the floor of the box.
 #'
 #' Caps and crossbar boxes are perpendicular to their bar and lie in the plane
-#' named by `cap.plane`. A bar lying in that plane is capped along the plane's
+#' named by `cap_plane`. A bar lying in that plane is capped along the plane's
 #' other axis. A bar normal to the plane, or any bar with `"cross"`, is capped
 #' along both perpendicular axes: a cross for error bars and a cuboid for
 #' crossbars, which read the same from every view. With `"auto"`, bars along z
@@ -301,7 +301,7 @@ crossbar_gp_3d <- function(colour, linetype, linewidth) {
 #' @param width Cap and box width in transformed data units of the axis it
 #'   extends along. Defaults to 0.9 times the spacing of the positions along
 #'   that axis.
-#' @param cap.plane Plane of the caps: `"auto"`, `"xy"`, `"xz"`, `"yz"` or
+#' @param cap_plane Plane of the caps: `"auto"`, `"xy"`, `"xz"`, `"yz"` or
 #'   `"cross"`.
 #' @param fatten Factor applied to `linewidth` for the crossbar's middle line.
 #' @param middle.colour,middle.color,middle.linetype,middle.linewidth,box.colour,box.color,box.linetype,box.linewidth
@@ -317,24 +317,24 @@ crossbar_gp_3d <- function(colour, linetype, linewidth) {
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, zmin = z - se, zmax = z + se))
 #' p + geom_errorbar_3d(width = 0.2) + geom_point_3d() + coord_3d()
 #' p + geom_pointrange_3d(colour = "steelblue") + coord_3d()
-#' p + geom_crossbar_3d(width = 0.3, fill = "grey85", cap.plane = "cross") + coord_3d()
+#' p + geom_crossbar_3d(width = 0.3, fill = "grey85", cap_plane = "cross") + coord_3d()
 #'
 #' # Intervals on all three axes at once
 #' e <- data.frame(x = c(1, 2), y = c(1, 3), z = c(2, 1))
 #' ggplot2::ggplot(e, ggplot2::aes(x, y, z = z,
 #'     xmin = x - 0.3, xmax = x + 0.3, ymin = y - 0.5, ymax = y + 0.5,
 #'     zmin = z - 0.4, zmax = z + 0.4)) +
-#'   geom_errorbar_3d(width = 0.15, cap.plane = "cross") + coord_3d()
+#'   geom_errorbar_3d(width = 0.15, cap_plane = "cross") + coord_3d()
 #'
 #' # Ranges on the floor, from x/y alone
 #' ggplot2::ggplot(e, ggplot2::aes(x, y, ymin = y - 1, ymax = y + 1)) +
 #'   geom_linerange_3d(linewidth = 1) + coord_3d()
 #' @export
 geom_errorbar_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
-                             width = NULL, cap.plane = "auto",
+                             width = NULL, cap_plane = "auto",
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomErrorbar3D, mapping, data, stat, position,
-    c(list(width = width, cap.plane = check_cap_plane_3d(cap.plane), na.rm = na.rm), list(...)),
+    c(list(width = width, cap_plane = check_cap_plane_3d(cap_plane), na.rm = na.rm), list(...)),
     show.legend, inherit.aes)
 }
 
@@ -357,13 +357,13 @@ geom_pointrange_3d <- function(mapping = NULL, data = NULL, stat = "identity", p
 #' @rdname geom_errorbar_3d
 #' @export
 geom_crossbar_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
-                             width = NULL, cap.plane = "auto", fatten = 2.5,
+                             width = NULL, cap_plane = "auto", fatten = 2.5,
                              middle.colour = NULL, middle.color = NULL, middle.linetype = NULL,
                              middle.linewidth = NULL, box.colour = NULL, box.color = NULL,
                              box.linetype = NULL, box.linewidth = NULL,
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomCrossbar3D, mapping, data, stat, position,
-    c(list(width = width, cap.plane = check_cap_plane_3d(cap.plane), fatten = fatten,
+    c(list(width = width, cap_plane = check_cap_plane_3d(cap_plane), fatten = fatten,
       middle_gp = crossbar_gp_3d(middle.color %or3d% middle.colour, middle.linetype, middle.linewidth),
       box_gp = crossbar_gp_3d(box.color %or3d% box.colour, box.linetype, box.linewidth),
       na.rm = na.rm), list(...)),
@@ -371,9 +371,9 @@ geom_crossbar_3d <- function(mapping = NULL, data = NULL, stat = "identity", pos
 }
 
 interval_positions_3d <- c("nudge", "jitter", "dodge")
-crossbar_parameters_3d <- list(cap.plane = "auto", fatten = 2.5, middle_gp = NULL, box_gp = NULL)
+crossbar_parameters_3d <- list(cap_plane = "auto", fatten = 2.5, middle_gp = NULL, box_gp = NULL)
 
-register_interval_3d <- function(geom, emit, parameters = list(cap.plane = "auto"), caps = FALSE) {
+register_interval_3d <- function(geom, emit, parameters = list(cap_plane = "auto"), caps = FALSE) {
   register_geom_3d(geom, emit, aesthetics = interval_aes_3d, setup_data = setup_interval_3d(caps),
     parameters = parameters, default_z = -Inf, positions = interval_positions_3d, tween = "row")
 }
@@ -384,7 +384,7 @@ register_interval_3d(GeomPointrange3D, emit_pointrange_3d)
 register_interval_3d(GeomCrossbar3D, emit_crossbar_3d, crossbar_parameters_3d, caps = TRUE)
 register_interval_3d(ggplot2::GeomLinerange, emit_linerange_3d)
 register_interval_3d(ggplot2::GeomErrorbar, emit_errorbar_3d, caps = TRUE)
-register_interval_3d(ggplot2::GeomPointrange, emit_pointrange_3d, list(cap.plane = "auto", fatten = 4))
+register_interval_3d(ggplot2::GeomPointrange, emit_pointrange_3d, list(cap_plane = "auto", fatten = 4))
 register_interval_3d(ggplot2::GeomCrossbar, emit_crossbar_3d, crossbar_parameters_3d, caps = TRUE)
 
 GeomStem3D <- ggplot2::ggproto("GeomStem3D", ggplot2::Geom,
@@ -517,7 +517,7 @@ summary_geoms_3d <- function() {
 #'   fun.min = function(z) quantile(z, 0.25), fun.max = function(z) quantile(z, 0.75),
 #'   width = 0.2) + coord_3d()
 #' p + stat_summary_3d(geom = "crossbar", fun.data = ggplot2::mean_se,
-#'   fun.args = list(mult = 2), width = 0.3, cap.plane = "cross", fill = "grey90") + coord_3d()
+#'   fun.args = list(mult = 2), width = 0.3, cap_plane = "cross", fill = "grey90") + coord_3d()
 #' @export
 stat_summary_3d <- function(mapping = NULL, data = NULL, geom = "pointrange", position = "identity", ...,
                             fun.data = NULL, fun = NULL, fun.max = NULL, fun.min = NULL,

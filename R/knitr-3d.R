@@ -1,9 +1,10 @@
 #' Describe a three-dimensional plot for a document
 #'
-#' Describes the layers, mapped variables and initial camera. An explicit
-#' `labs(alt = ...)` takes precedence. Review the description when the plot
-#' communicates a finding that needs words beyond its mapped variables.
-#' @param plot A ggplot with [coord_3d()].
+#' [ggplot2::get_alt_text()] of a plot with [coord_3d()] describes the layers,
+#' mapped variables and initial camera. An explicit `labs(alt = ...)` takes
+#' precedence. Review the description when the plot communicates a finding
+#' that needs words beyond its mapped variables.
+#' @name get_alt_text_3d
 #' @return One character string.
 #' @details In knitr and Quarto documents, `view3d = TRUE` in a chunk selects
 #'   [view_3d()] for HTML output. PDF and Word receive a static plot drawn
@@ -32,10 +33,17 @@
 #' @examples
 #' p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
 #'   geom_point_3d() + coord_3d(azimuth = 40, elevation = 25)
-#' alt_text_3d(p)
-#' alt_text_3d(p + ggplot2::labs(alt = "Fuel economy, weight and horsepower."))
+#' get_alt_text(p)
+#' get_alt_text(p + ggplot2::labs(alt = "Fuel economy, weight and horsepower."))
+NULL
+
+#' @importFrom ggplot2 get_alt_text
 #' @export
-alt_text_3d <- function(plot) {
+ggplot2::get_alt_text
+
+S7::method(get_alt_text, S7::new_S3_class("ggplot3d")) <- function(p, ...) {
+  plot <- p
+  if (!inherits(plot@coordinates, "Coord3D")) return(get_alt_text(S7::super(p, ggplot2::class_ggplot), ...))
   coord <- motion_plot_coord_3d(plot)
   alt <- plot@labels$alt
   if (is.function(alt)) alt <- alt(plot)
@@ -58,8 +66,8 @@ alt_text_3d <- function(plot) {
 
 #' @exportS3Method knitr::knit_print
 knit_print.ggplot3d <- function(x, ..., options = knitr::opts_current$get(), inline = FALSE) {
-  if (inline) return(alt_text_3d(x))
-  options <- knit_figure_options_3d(options, alt_text_3d(x))
+  if (inline) return(get_alt_text(x))
+  options <- knit_figure_options_3d(options, get_alt_text(x))
   if (isTRUE(options$view3d) && knitr::is_html_output()) {
     widget <- view_3d(x, width = round(options$fig.width * 96), height = round(options$fig.height * 96))
     result <- knitr::knit_print(widget, options = options, ...)
@@ -75,7 +83,7 @@ knit_print.patchwork <- function(x, ..., options = knitr::opts_current$get(), in
   plots <- list()
   map_plots_3d(x, function(p) { plots[[length(plots) + 1L]] <<- p; p })
   if (inline || !length(plots)) return(NextMethod())
-  options <- knit_figure_options_3d(options, paste(vapply(plots, alt_text_3d, character(1)), collapse = " "))
+  options <- knit_figure_options_3d(options, paste(vapply(plots, get_alt_text, character(1)), collapse = " "))
   knit_static_3d(x, options)
 }
 

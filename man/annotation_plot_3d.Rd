@@ -9,7 +9,7 @@ annotation_plot_3d(
   plane = "xz",
   at = Inf,
   extent = NULL,
-  route = c("vector", "raster"),
+  backend = c("vector", "raster"),
   resolution = 150,
   alpha = 1
 )
@@ -26,7 +26,7 @@ then the axis carrying its y, for example \code{"xz"}, \code{"yz"} or \code{"xy"
 positions of the plot's panel along the two plane axes. A reversed pair
 mirrors the plot.}
 
-\item{route}{\code{"vector"} or \code{"raster"} (which requires ragg).}
+\item{backend}{\code{"vector"} or \code{"raster"} (which requires ragg).}
 
 \item{resolution}{Pixels along each side of the raster image.}
 
@@ -47,12 +47,12 @@ plane axes, so its data line up with the 3D layers that share those axes.
 \code{extent} places it elsewhere.
 }
 \details{
-The vector route decomposes the drawn panel into points, lines, polygons,
+The vector backend decomposes the drawn panel into points, lines, polygons,
 rectangles and text that join the 3D scene and its exact visibility, as
 matplotlib places 2D artists on a plane of 3D axes and ggcube projects
 layers onto the faces of its cube. Marks lie in the plane, foreshortened
 with it, at the size they have on a 2D panel 4 inches wide; text faces the
-viewer and is drawn over the scene. The raster route renders the panel
+viewer and is drawn over the scene. The raster backend renders the panel
 to an image of \code{resolution} pixels a side, as rayshader does for a whole
 ggplot, and lays its pixels on the plane as rectangles, joining runs of
 equal colour; it suits dense plots whose vector form would be large.

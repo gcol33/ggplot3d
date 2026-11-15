@@ -276,17 +276,12 @@ PositionJitter3D <- ggplot2::ggproto("PositionJitter3D", Position3D,
 
 #' Nudge all three position families
 #' @param x,y,z Displacements in transformed coordinate units.
-#' @param nudge_z Optional spelling of the z displacement.
 #' @return A ggplot2 position adjustment.
 #' @examples
 #' ggplot2::ggplot(data.frame(x = 1, y = 1, z = 1), ggplot2::aes(x, y, z = z)) +
-#'   geom_point_3d(position = position_nudge_3d(nudge_z = 0.5)) + coord_3d()
+#'   geom_point_3d(position = position_nudge_3d(z = 0.5)) + coord_3d()
 #' @export
-position_nudge_3d <- function(x = 0, y = 0, z = 0, nudge_z = NULL) {
-  if (!is.null(nudge_z)) {
-    if (!missing(z)) stop("Supply only one of z and nudge_z.", call. = FALSE)
-    z <- nudge_z
-  }
+position_nudge_3d <- function(x = 0, y = 0, z = 0) {
   stopifnot(all(vapply(list(x, y, z), function(v) is.numeric(v) && length(v) == 1L && is.finite(v), logical(1))))
   ggplot2::ggproto(NULL, PositionNudge3D, x = x, y = y, z = z)
 }

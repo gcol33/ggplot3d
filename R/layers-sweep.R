@@ -131,7 +131,7 @@ stat_sweep_3d <- function(mapping = NULL, data = NULL, geom = GeomSweep3D, posit
 
 #' @rdname stat_sweep_3d
 #' @export
-geom_sweep_3d <- function(...) stat_sweep_3d(...)
+geom_sweep_3d <- geom_from_stat_3d("stat_sweep_3d")
 
 # Swept surfaces: the mesh of StatSweep3D, or, with radius.unit = "mm", its
 # centre line.
@@ -318,7 +318,7 @@ stat_revolve_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface
 
 #' @rdname stat_revolve_3d
 #' @export
-geom_revolve_3d <- function(...) stat_revolve_3d(...)
+geom_revolve_3d <- geom_from_stat_3d("stat_revolve_3d")
 
 #' Smooth curves through points
 #'

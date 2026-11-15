@@ -12,7 +12,7 @@ grassmann_basis_3d <- function(A,B,s) {
 }
 
 tour_basis_frames_3d <- function(spec,p,frames) {
-  if(!inherits(spec,"ggplot3d_tour")) spec <- tour_grand(history=spec)
+  if(!inherits(spec,"ggplot3d_tour")) spec <- grand_tour_3d(history=spec)
   history <- spec$history
   if(is.null(history)) {
     exists_seed <- exists(".Random.seed",.GlobalEnv,inherits=FALSE)
@@ -50,7 +50,6 @@ tour_basis_frames_3d <- function(spec,p,frames) {
 #' orientation. A tourr history array (p by 3 by k) is accepted directly.
 #' Random targets use a local seed and preserve the caller's random state.
 #' Pass the result to animate_3d(tour=...) on a plot using [stat_project_3d()].
-#' @param d Projection dimension, currently three.
 #' @param history Optional p by 3 by k array of orthonormal projection frames.
 #' @param steps Frames between random target subspaces.
 #' @param seed Local random seed for a generated grand tour.
@@ -58,10 +57,9 @@ tour_basis_frames_3d <- function(spec,p,frames) {
 #' @references Wickham, Cook, Hofmann and Buja (2011). tourr.
 #' \doi{10.18637/jss.v040.i02}.
 #' @examples
-#' tour_grand(d=3,steps=20,seed=1)
+#' grand_tour_3d(steps=20,seed=1)
 #' @export
-tour_grand <- function(d=3L,history=NULL,steps=30L,seed=1L) {
-  if(!identical(as.integer(d),3L)||length(d)!=1L) stop("A 3D tour requires d=3.",call.=FALSE)
+grand_tour_3d <- function(history=NULL,steps=30L,seed=1L) {
   steps <- mesh_count_3d(steps,"steps",1L); seed <- mesh_count_3d(seed,"seed",0L)
   structure(list(history=history,steps=steps,seed=seed),class="ggplot3d_tour")
 }

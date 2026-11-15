@@ -64,10 +64,10 @@ ordination_groups_3d <- function(sites, groups) {
 #' @examples
 #' fit <- stats::prcomp(iris[1:4], scale. = TRUE)
 #' groups <- stats::setNames(iris$Species, rownames(iris))
-#' ggplot2::ggplot() + stat_biplot_3d(fit, groups = groups,
+#' ggplot2::ggplot() + biplot_3d(fit, groups = groups,
 #'   region = "ellipsoid", loading_scale = 2) + coord_3d()
 #' @export
-stat_biplot_3d <- function(model, choices = 1:3, groups = NULL, region = c("none", "ellipsoid", "hull"),
+biplot_3d <- function(model, choices = 1:3, groups = NULL, region = c("none", "ellipsoid", "hull"),
                            loading_scale = 1, point_size = 1.5, label_loadings = TRUE, label_size = 4, arrow_colour = "#5C6166", level = 0.95, scores_args = list()) {
   region <- match.arg(region)
   for (name in c("loading_scale", "point_size", "label_size")) {

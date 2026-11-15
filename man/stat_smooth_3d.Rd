@@ -18,7 +18,7 @@ stat_smooth_3d(
   level = 0.95,
   span = 0.75,
   method.args = list(),
-  se.alpha = 0.2,
+  se_alpha = 0.2,
   domain = c("box", "hull"),
   view = NULL,
   cond = list(),
@@ -27,7 +27,26 @@ stat_smooth_3d(
   inherit.aes = TRUE
 )
 
-geom_smooth_3d(...)
+geom_smooth_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  method = "loess",
+  formula = NULL,
+  n = 30L,
+  se = TRUE,
+  level = 0.95,
+  span = 0.75,
+  method.args = list(),
+  se_alpha = 0.2,
+  domain = c("box", "hull"),
+  view = NULL,
+  cond = list(),
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
@@ -54,7 +73,7 @@ the fit alone, filled by the standard error unless fill is mapped or set;
 
 \item{method.args}{Named arguments passed to the fitting function.}
 
-\item{se.alpha}{Opacity multiplier for confidence surfaces and walls.}
+\item{se_alpha}{Opacity multiplier for confidence surfaces and walls.}
 
 \item{domain}{\code{"box"} fills the x/y range of the panel; \code{"hull"} clips the
 surface to the convex hull of the group's observations, so the model is

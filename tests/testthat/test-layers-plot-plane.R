@@ -124,7 +124,7 @@ test_that("annotation_plot_3d takes an extent, a floor plane, opacity and a rast
   expect_equal(range(floor[, 1L]), (c(2, 4) - params$x.range[1L]) / diff(params$x.range), tolerance = 1e-9)
   expect_true(all(scene$packet$faces$opacity <= 0.5 + 1e-12))
   skip_if_not_installed("ragg")
-  raster <- stats_scene(base + annotation_plot_3d(bars, plane = "yz", route = "raster", resolution = 24))
+  raster <- stats_scene(base + annotation_plot_3d(bars, plane = "yz", backend = "raster", resolution = 24))
   expect_gt(length(raster$packet$faces$offset), 2L)
   expect_true(all(abs(do.call(rbind, face_rings(raster$packet))[, 1L] - 1) < 1e-12))
 })

@@ -14,14 +14,14 @@
 #' small facet lit by the plot's light and first camera. `normal` specifies the
 #' facet's model-space normal. Unshaded layers retain their own key geometry.
 #'
-#' `shading.range` shows what the light does to each colour. The colourbars
+#' `shading_range` shows what the light does to each colour. The colourbars
 #' and colour steps become a two-dimensional swatch, value along the bar and
 #' light across it; legend and bin keys get a strip below the facet. The
 #' colours come from the same shading kernel as the faces, for a surface whose
 #' normal makes each angle along the range with every light, without the
 #' specular term, using the material of the first layer with one. `TRUE`
 #' spans 90 to 0 degrees for the `"multiply"` and `"tint"` modes of
-#' [lights_3d()] (from ambient to full light) and 180 to 0 degrees for the
+#' [light_3d()] (from ambient to full light) and 180 to 0 degrees for the
 #' signed modes; two angles in degrees, `c(from, to)`, set the span, and
 #' reversing them reverses the strip. With several facet panels, guides use
 #' the plot's light.
@@ -32,7 +32,7 @@
 #' @param nbin Number of colour intervals along the bar.
 #' @param lit Whether shaded layers use lit facet keys.
 #' @param normal Finite nonzero model-space facet normal, length three.
-#' @param shading.range `FALSE`, `TRUE`, or two angles in degrees in \[0,
+#' @param shading_range `FALSE`, `TRUE`, or two angles in degrees in \[0,
 #'   180\], the span of light shown.
 #' @param ... Arguments passed to [ggplot2::guide_colourbar()],
 #'   [ggplot2::guide_coloursteps()], [ggplot2::guide_bins()] or
@@ -47,20 +47,20 @@
 #'   ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d()) + coord_3d()
 #' p + geom_surface_3d() +
 #'   ggplot2::scale_fill_distiller(palette = "Spectral",
-#'     guide = guide_colourbar_3d(along = NULL, shading.range = TRUE)) +
+#'     guide = guide_colourbar_3d(along = NULL, shading_range = TRUE)) +
 #'   coord_3d(light = light_3d(mode = "lightness"))
 #' p + geom_surface_3d() +
-#'   ggplot2::scale_fill_viridis_b(guide = guide_coloursteps_3d(shading.range = TRUE)) + coord_3d()
+#'   ggplot2::scale_fill_viridis_b(guide = guide_coloursteps_3d(shading_range = TRUE)) + coord_3d()
 #' p + geom_col_3d(ggplot2::aes(fill = factor(x))) +
-#'   ggplot2::guides(fill = guide_legend_3d(shading.range = TRUE)) + coord_3d()
+#'   ggplot2::guides(fill = guide_legend_3d(shading_range = TRUE)) + coord_3d()
 #' @export
 guide_colourbar_3d <- function(along = "z", width = grid::unit(2, "mm"),
-                                gap = grid::unit(0.5, "mm"), nbin = 128L, shading.range = FALSE, ...) {
-  shading.range <- shading_range_spec_3d(shading.range)
+                                gap = grid::unit(0.5, "mm"), nbin = 128L, shading_range = FALSE, ...) {
+  shading_range <- shading_range_spec_3d(shading_range)
   if (is.null(along)) {
     base <- ggplot2::guide_colourbar(nbin = nbin, ...)
     return(ggplot2::ggproto(NULL, GuideColourbarShaded3D,
-      params = c(base$params, list(shading.range = shading.range, .key_context = NULL, .material = NULL))))
+      params = c(base$params, list(shading_range = shading_range, .key_context = NULL, .material = NULL))))
   }
   along <- match.arg(along, c("x", "y", "z"))
   for (value in list(width, gap)) {
@@ -70,17 +70,17 @@ guide_colourbar_3d <- function(along = "z", width = grid::unit(2, "mm"),
   }
   if (as.numeric(width) == 0) stop("width must be positive.", call. = FALSE)
   if (!is.numeric(nbin) || length(nbin) != 1L || !is.finite(nbin) || nbin < 2 || nbin != trunc(nbin)) stop("nbin must be an integer of at least two.", call. = FALSE)
-  ggplot2::new_guide(along = along, width = width, gap = gap, nbin = as.integer(nbin), shading.range = shading.range,
+  ggplot2::new_guide(along = along, width = width, gap = gap, nbin = as.integer(nbin), shading_range = shading_range,
     available_aes = c("fill", "colour"), super = GuideColourbar3D)
 }
 
-# A shading.range argument as NULL (none) or the angles in degrees of the span
+# A shading_range argument as NULL (none) or the angles in degrees of the span
 # (NA for the default of the light's mode).
 shading_range_spec_3d <- function(range) {
   if (isFALSE(range)) return(NULL)
   if (isTRUE(range)) return(c(NA_real_, NA_real_))
   if (!is.numeric(range) || length(range) != 2L || any(!is.finite(range)) || any(range < 0 | range > 180) || range[1L] == range[2L])
-    stop("shading.range must be TRUE, FALSE or two distinct angles in [0, 180] degrees.", call. = FALSE)
+    stop("shading_range must be TRUE, FALSE or two distinct angles in [0, 180] degrees.", call. = FALSE)
   as.double(range)
 }
 
@@ -123,7 +123,7 @@ guide_key_context_3d <- function(layers) {
 shading_steps_3d <- 24L
 
 GuideColourbarShaded3D <- ggplot2::ggproto("GuideColourbarShaded3D", ggplot2::GuideColourbar,
-  params = c(ggplot2::GuideColourbar$params, list(shading.range = NULL, .key_context = NULL, .material = NULL)),
+  params = c(ggplot2::GuideColourbar$params, list(shading_range = NULL, .key_context = NULL, .material = NULL)),
   get_layer_key = function(self, params, layers, data = NULL, theme = NULL) {
     found <- guide_key_context_3d(layers)
     params$.key_context <- found$context
@@ -132,8 +132,8 @@ GuideColourbarShaded3D <- ggplot2::ggproto("GuideColourbarShaded3D", ggplot2::Gu
   },
   build_decor = function(self, decor, grobs, elements, params) {
     light <- params$.key_context$light
-    if (is.null(params$shading.range) || is.null(light)) return(ggplot2::ggproto_parent(ggplot2::GuideColourbar, self)$build_decor(decor, grobs, elements, params))
-    x <- shading_values_3d(params$shading.range, light, shading_steps_3d)
+    if (is.null(params$shading_range) || is.null(light)) return(ggplot2::ggproto_parent(ggplot2::GuideColourbar, self)$build_decor(decor, grobs, elements, params))
+    x <- shading_values_3d(params$shading_range, light, shading_steps_3d)
     colours <- shade_swatch_3d(decor$colour, x, light, key_camera_3d(params$.key_context$camera), params$.material)
     image <- if (params$direction == "horizontal") t(colours[, rev(seq_along(x)), drop = FALSE]) else
       colours[rev(seq_len(nrow(colours))), , drop = FALSE]
@@ -146,19 +146,19 @@ GuideColourbarShaded3D <- ggplot2::ggproto("GuideColourbarShaded3D", ggplot2::Gu
 
 #' @rdname guide_colourbar_3d
 #' @export
-guide_coloursteps_3d <- function(..., shading.range = TRUE) {
+guide_coloursteps_3d <- function(..., shading_range = TRUE) {
   base <- ggplot2::guide_coloursteps(...)
   ggplot2::ggproto(NULL, GuideColoursteps3D,
-    params = c(base$params, list(shading.range = shading_range_spec_3d(shading.range), .key_context = NULL, .material = NULL)))
+    params = c(base$params, list(shading_range = shading_range_spec_3d(shading_range), .key_context = NULL, .material = NULL)))
 }
 
 GuideColoursteps3D <- ggplot2::ggproto("GuideColoursteps3D", ggplot2::GuideColoursteps,
-  params = c(ggplot2::GuideColoursteps$params, list(shading.range = NULL, .key_context = NULL, .material = NULL)),
+  params = c(ggplot2::GuideColoursteps$params, list(shading_range = NULL, .key_context = NULL, .material = NULL)),
   get_layer_key = GuideColourbarShaded3D$get_layer_key,
   build_decor = function(self, decor, grobs, elements, params) {
     light <- params$.key_context$light
-    if (is.null(params$shading.range) || is.null(light)) return(ggplot2::ggproto_parent(ggplot2::GuideColoursteps, self)$build_decor(decor, grobs, elements, params))
-    x <- shading_values_3d(params$shading.range, light, shading_steps_3d)
+    if (is.null(params$shading_range) || is.null(light)) return(ggplot2::ggproto_parent(ggplot2::GuideColoursteps, self)$build_decor(decor, grobs, elements, params))
+    x <- shading_values_3d(params$shading_range, light, shading_steps_3d)
     colours <- shade_swatch_3d(decor$colour, x, light, key_camera_3d(params$.key_context$camera), params$.material)
     m <- length(x); k <- rep(seq_len(m), each = nrow(decor))
     size <- abs(decor$max - decor$min); just <- as.numeric(decor$min > decor$max)
@@ -181,7 +181,7 @@ mapping_expression_3d <- function(mapping) {
 
 GuideColourbar3D <- ggplot2::ggproto("GuideColourbar3D", ggplot2::Guide,
   params = c(ggplot2::Guide$params, list(along = "z", width = grid::unit(2, "mm"), gap = grid::unit(0.5, "mm"), nbin = 128L,
-    shading.range = NULL)),
+    shading_range = NULL)),
   train = function(...) NULL,
   setup_panel_3d = function(self, panel_params, scale, aesthetic, mappings) {
     along <- self$params$along
@@ -220,9 +220,9 @@ GuideColourbar3D <- ggplot2::ggproto("GuideColourbar3D", ggplot2::Guide,
     raw <- params[[along]]$get_transformation()$inverse(params$ranges[[along]][1L] + middle * diff(params$ranges[[along]]))
     colours <- self$scale$map(self$scale$transform(raw))
     light <- params$coord_params$light
-    if (!is.null(self$params$shading.range) && !is.null(light)) {
+    if (!is.null(self$params$shading_range) && !is.null(light)) {
       light <- panel_lights_3d(light, params)
-      x_light <- shading_values_3d(self$params$shading.range, light, shading_steps_3d)
+      x_light <- shading_values_3d(self$params$shading_range, light, shading_steps_3d)
       shaded <- shade_swatch_3d(colours, x_light, light, key_camera_3d(params$camera), NULL)
       m <- length(x_light); cells <- expand.grid(i = i, k = seq_len(m))
       a <- (cells$k - 1) / m; b <- cells$k / m
@@ -256,21 +256,21 @@ GuideColourbar3D <- ggplot2::ggproto("GuideColourbar3D", ggplot2::Guide,
 
 #' @rdname guide_colourbar_3d
 #' @export
-guide_legend_3d <- function(..., lit = TRUE, normal = c(0, 0, 1), shading.range = FALSE) {
-  lit_guide_3d(ggplot2::guide_legend(...), GuideLegend3D, lit, normal, shading.range)
+guide_legend_3d <- function(..., lit = TRUE, normal = c(0, 0, 1), shading_range = FALSE) {
+  lit_guide_3d(ggplot2::guide_legend(...), GuideLegend3D, lit, normal, shading_range)
 }
 
 #' @rdname guide_colourbar_3d
 #' @export
-guide_bins_3d <- function(..., lit = TRUE, normal = c(0, 0, 1), shading.range = FALSE) {
-  lit_guide_3d(ggplot2::guide_bins(...), GuideBins3D, lit, normal, shading.range)
+guide_bins_3d <- function(..., lit = TRUE, normal = c(0, 0, 1), shading_range = FALSE) {
+  lit_guide_3d(ggplot2::guide_bins(...), GuideBins3D, lit, normal, shading_range)
 }
 
-lit_guide_3d <- function(base, super, lit, normal, shading.range) {
+lit_guide_3d <- function(base, super, lit, normal, shading_range) {
   if (!is.logical(lit) || length(lit) != 1L || is.na(lit)) stop("lit must be TRUE or FALSE.", call. = FALSE)
   if (!is.numeric(normal) || length(normal) != 3L || any(!is.finite(normal)) || sum(normal^2) <= 0) stop("normal must be a finite nonzero vector of length three.", call. = FALSE)
   ggplot2::ggproto(NULL, super, params = c(base$params, list(lit = lit,
-    normal = normal / sqrt(sum(normal^2)), shading.range = shading_range_spec_3d(shading.range))))
+    normal = normal / sqrt(sum(normal^2)), shading_range = shading_range_spec_3d(shading_range))))
 }
 
 lit_key_3d <- function(normal, context, range, original) {
@@ -304,7 +304,7 @@ lit_layer_key_3d <- function(parent) {
   function(self, params, layers, data, theme = NULL) {
     params <- ggplot2::ggproto_parent(parent, self)$get_layer_key(params, layers, data, theme)
     if (isTRUE(params$lit)) params$decor <- lapply(params$decor, function(decor) {
-      decor$draw_key <- lit_key_3d(params$normal, decor$params$.key_context, params$shading.range, decor$draw_key)
+      decor$draw_key <- lit_key_3d(params$normal, decor$params$.key_context, params$shading_range, decor$draw_key)
       decor
     })
     params
@@ -312,13 +312,13 @@ lit_layer_key_3d <- function(parent) {
 }
 
 GuideLegend3D <- ggplot2::ggproto("GuideLegend3D", ggplot2::GuideLegend,
-  params = c(ggplot2::GuideLegend$params, list(lit = TRUE, normal = c(0, 0, 1), shading.range = NULL)),
-  hashables = c(ggplot2::GuideLegend$hashables, alist(lit, normal, shading.range)),
+  params = c(ggplot2::GuideLegend$params, list(lit = TRUE, normal = c(0, 0, 1), shading_range = NULL)),
+  hashables = c(ggplot2::GuideLegend$hashables, alist(lit, normal, shading_range)),
   get_layer_key = lit_layer_key_3d(ggplot2::GuideLegend)
 )
 
 GuideBins3D <- ggplot2::ggproto("GuideBins3D", ggplot2::GuideBins,
-  params = c(ggplot2::GuideBins$params, list(lit = TRUE, normal = c(0, 0, 1), shading.range = NULL)),
-  hashables = c(ggplot2::GuideBins$hashables %or3d% ggplot2::GuideLegend$hashables, alist(lit, normal, shading.range)),
+  params = c(ggplot2::GuideBins$params, list(lit = TRUE, normal = c(0, 0, 1), shading_range = NULL)),
+  hashables = c(ggplot2::GuideBins$hashables %or3d% ggplot2::GuideLegend$hashables, alist(lit, normal, shading_range)),
   get_layer_key = lit_layer_key_3d(ggplot2::GuideBins)
 )

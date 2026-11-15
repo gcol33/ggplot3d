@@ -36,7 +36,7 @@
 #'   `"svg"` write numbered frame sequences; `"apng"` writes one animated PNG.
 #'   When both `file` and `format` are supplied, the extension must agree with
 #'   the format. With both NULL, returns temporary PNG frame paths.
-#' @param renderer Scene backend, "raster" (default) or "vector". Use "vector"
+#' @param backend Scene backend, "raster" (default) or "vector". Use "vector"
 #'   for vector pages in SVG and PDF output.
 #' @param width,height Frame dimensions in pixels, default 640 each.
 #' @param dpi Device resolution, default 96 dots per inch. SVG and PDF pages
@@ -75,7 +75,7 @@
 #'   list. Re-emits geometry through the space adapter; an isometry that acts
 #'   linearly on the display model (Lorentz transformations in the Klein
 #'   model) changes only the camera pre-transform. Limits remain fixed.
-#' @param tour A [tour_grand()] specification or tourr history array. Applies
+#' @param tour A [grand_tour_3d()] specification or tourr history array. Applies
 #'   Grassmann-interpolated bases to stat_project_3d() layers with orthographic
 #'   or finite perspective projection. Uses fixed limits across frames. Requires static
 #'   input data, linear position scales, and no tween or trail.
@@ -111,7 +111,7 @@
 #'   specification: browsers play it and viewers without APNG support show its
 #'   first frame.
 #'
-#'   `renderer` selects the scene backend; `format` selects the encoded file
+#'   `backend` selects the scene backend; `format` selects the encoded file
 #'   type or frame layout, and `file` sets its location. gganimate selects
 #'   encoding through `animate(renderer = ...)`; its `gifski_renderer()` and
 #'   `av_renderer()` create temporary files when their `file` is NULL.
@@ -167,12 +167,12 @@
 #' @export
 animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        frames = 60L, fps = 20, file = NULL,
-                       renderer = c("raster", "vector"), roll = NULL,
+                       backend = c("raster", "vector"), roll = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
                        path = NULL, workers = 1L, tween = NULL, trail = NULL, isometry = NULL, tour = NULL,
                        stable_partition = FALSE, format = NULL, ...) {
-  renderer <- match.arg(renderer)
+  backend <- match.arg(backend)
   scene_assert(is.logical(stable_partition) && length(stable_partition) == 1L && !is.na(stable_partition),
     "stable_partition must be TRUE or FALSE")
   motion_dimensions_3d(width, height, dpi)
@@ -214,7 +214,7 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
   scene_assert(is.logical(progress) && length(progress) == 1L && !is.na(progress),
     "progress must be TRUE or FALSE")
   workers <- motion_workers_3d(workers)
-  backend <- backend_3d(renderer, dpi, antialias)
+  backend <- backend_3d(backend, dpi, antialias)
   output <- motion_output_3d(file, format)
   file <- output$file
   scene_assert(!...length() || output$kind == "scene", "Further arguments apply to .glb and .gltf output only")

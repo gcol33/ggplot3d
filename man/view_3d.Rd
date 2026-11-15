@@ -39,7 +39,7 @@ the panel under the pointer alone. A group name links the panels and
 also links this viewer with the other viewers on the page that carry
 the same name: an orbit, zoom or reset in one applies to all, azimuth,
 elevation and roll changes add and zoom factors multiply, so each viewer
-keeps its own view. Linking the panels of a \code{\link[=facet_views]{facet_views()}} plot shown
+keeps its own view. Linking the panels of a \code{\link[=facet_views_3d]{facet_views_3d()}} plot shown
 in separate viewers turns the front, top and side views as one object.}
 
 \item{selection}{\code{"multiple"} (default) lets shift- or control-click add
@@ -143,7 +143,7 @@ if (requireNamespace("htmlwidgets", quietly = TRUE) &&
 if (requireNamespace("htmlwidgets", quietly = TRUE)) {
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
     geom_point_3d(size = 3) + coord_3d()
-  views <- p + facet_views(c("front", "isometric"))
+  views <- p + facet_views_3d(c("front", "isometric"))
   front <- view_3d(views, panel = 1, width = 320, height = 320, link = "cars")
   iso <- view_3d(views, panel = 2, width = 320, height = 320, link = "cars")
   view_3d(p, panel = 1, path = orbit_3d(degrees = 360, duration = 6))

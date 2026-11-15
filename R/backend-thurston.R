@@ -84,7 +84,7 @@ geodesic_3d <- function(geometry, origin = c(0, 0, 0), direction = c(0, 0, 1), d
 #'   paired face. The differential transports the ray's tangent on crossing.
 #' @param lift Fibre displacement for product geometries, or an additional
 #'   multiple of `4*pi` selecting a lift of an SL2R isometry.
-#' @param fiber Use `normal[4] * w < offset` in the unwrapped fibre coordinate
+#' @param fibre Use `normal[4] * w < offset` in the unwrapped fibre coordinate
 #'   of SL2R or a product space. The first three normal entries must be zero.
 #' @details E3, Nil and Sol embed as `(x,y,z,1)`. S3 and H3 embed on the unit
 #'   sphere and hyperboloid with the distinguished fourth coordinate. Product
@@ -98,21 +98,21 @@ geodesic_3d <- function(geometry, origin = c(0, 0, 0), direction = c(0, 0, 1), d
 #' m <- diag(4); m[1, 4] <- -2
 #' thurston_portal_3d(c(1, 0, 0, 0), 1, m)
 #' @export
-thurston_portal_3d <- function(normal, offset, matrix, lift = 0, fiber = FALSE) {
+thurston_portal_3d <- function(normal, offset, matrix, lift = 0, fibre = FALSE) {
   if (!is.numeric(normal) || length(normal) != 4L || any(!is.finite(normal)) || sum(normal^2) == 0)
     stop("normal must have four finite, nonzero coefficients.", call. = FALSE)
   if (!is.numeric(offset) || length(offset) != 1L || !is.finite(offset) ||
       !is.numeric(lift) || length(lift) != 1L || !is.finite(lift)) stop("offset and lift must be finite scalars.", call. = FALSE)
   if (!is.matrix(matrix) || !identical(dim(matrix), c(4L, 4L)) || any(!is.finite(matrix)) || abs(det(matrix)) < 1e-12)
     stop("matrix must be a nonsingular finite 4 by 4 matrix.", call. = FALSE)
-  if (!is.logical(fiber) || length(fiber) != 1L || is.na(fiber) || (fiber && any(normal[1:3] != 0)))
-    stop("fiber must be TRUE or FALSE; fibre normals use only the fourth entry.", call. = FALSE)
-  structure(list(normal = as.double(normal), offset = offset, matrix = matrix, lift = lift, fiber = fiber), class = "ggplot3d_portal")
+  if (!is.logical(fibre) || length(fibre) != 1L || is.na(fibre) || (fibre && any(normal[1:3] != 0)))
+    stop("fibre must be TRUE or FALSE; fibre normals use only the fourth entry.", call. = FALSE)
+  structure(list(normal = as.double(normal), offset = offset, matrix = matrix, lift = lift, fiber = fibre), class = "ggplot3d_portal")
 }
 
 thurston_scene_3d <- function(specs, viewport, backend, light) {
   fields <- lapply(specs, function(s) {
-    if (!(s$kind %in% c("sdf", "thurston"))) stop("Intrinsic rendering requires SDF or geom_thurston_3d() surfaces.", call. = FALSE)
+    if (!(s$kind %in% c("sdf", "thurston"))) stop("Intrinsic rendering requires SDF or annotation_thurston_3d() surfaces.", call. = FALSE)
     if (s$kind == "thurston") {
       thurston_point_3d(s$center, backend$geometry, "center")
       if (backend$geometry == "s3" && s$shape < 2L && s$radius >= pi / (s$shape + 1L)) stop("S3 radius exceeds the primitive's injective range.", call. = FALSE)
@@ -147,7 +147,7 @@ render_thurston_panel_3d <- function(x, viewport, backend) {
   specs <- Filter(Negate(is.null), lapply(x$packets, attr, "raymarch"))
   ordinary <- Filter(function(p) is.null(attr(p, "raymarch")), x$packets)
   if (length(ordinary) && any(vapply(ordinary, function(p) length(p$faces$offset) + length(p$polylines$offset) + length(p$markers$style_id) + length(p$text$style_id) > 0L, logical(1))))
-    stop("In-space views accept geom_thurston_3d() primitives and traced SDF layers. Express points as balls, paths as SDF capsules, and planes as half-spaces.", call. = FALSE)
+    stop("In-space views accept annotation_thurston_3d() primitives and traced SDF layers. Express points as balls, paths as SDF capsules, and planes as half-spaces.", call. = FALSE)
   result <- thurston_scene_3d(specs, viewport, backend, x$panel_params$coord_params$light)
   grid::gTree(children = grid::gList(raster_image_grob_3d(result)), raster_result = result, name = "scene-thurston-3d")
 }

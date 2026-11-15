@@ -22,7 +22,21 @@ stat_residual_3d(
   inherit.aes = TRUE
 )
 
-geom_residual_3d(...)
+geom_residual_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  method = "loess",
+  formula = NULL,
+  span = 0.75,
+  method.args = list(),
+  view = NULL,
+  cond = list(),
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}

@@ -12,7 +12,7 @@ animate_3d(
   frames = 60L,
   fps = 20,
   file = NULL,
-  renderer = c("raster", "vector"),
+  backend = c("raster", "vector"),
   roll = NULL,
   width = 640L,
   height = 640L,
@@ -60,7 +60,7 @@ tracks, with per-frame visibility tracks for changing geometry.
 Each glTF animation uses one projection type; export perspective and
 orthographic paths separately.}
 
-\item{renderer}{Scene backend, "raster" (default) or "vector". Use "vector"
+\item{backend}{Scene backend, "raster" (default) or "vector". Use "vector"
 for vector pages in SVG and PDF output.}
 
 \item{width, height}{Frame dimensions in pixels, default 640 each.}
@@ -113,7 +113,7 @@ list. Re-emits geometry through the space adapter; an isometry that acts
 linearly on the display model (Lorentz transformations in the Klein
 model) changes only the camera pre-transform. Limits remain fixed.}
 
-\item{tour}{A \code{\link[=tour_grand]{tour_grand()}} specification or tourr history array. Applies
+\item{tour}{A \code{\link[=grand_tour_3d]{grand_tour_3d()}} specification or tourr history array. Applies
 Grassmann-interpolated bases to stat_project_3d() layers with orthographic
 or finite perspective projection. Uses fixed limits across frames. Requires static
 input data, linear position scales, and no tween or trail.}
@@ -168,7 +168,7 @@ plotly's \code{frame} aesthetic. The animated PNG follows the APNG 1.0
 specification: browsers play it and viewers without APNG support show its
 first frame.
 
-\code{renderer} selects the scene backend; \code{format} selects the encoded file
+\code{backend} selects the scene backend; \code{format} selects the encoded file
 type or frame layout, and \code{file} sets its location. gganimate selects
 encoding through \code{animate(renderer = ...)}; its \code{gifski_renderer()} and
 \code{av_renderer()} create temporary files when their \code{file} is NULL.

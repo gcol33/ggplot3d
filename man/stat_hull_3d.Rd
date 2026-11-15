@@ -17,7 +17,16 @@ stat_hull_3d(
   inherit.aes = TRUE
 )
 
-geom_hull_3d(...)
+geom_hull_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  space = "data",
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}

@@ -56,7 +56,7 @@ A material for the \code{material} argument of the surface layers.
 }
 \description{
 A material sets how strongly a face reflects the ambient, diffuse and
-specular light of \code{\link[=lights_3d]{lights_3d()}}. The presets follow MATLAB's \code{material}:
+specular light of \code{\link[=light_3d]{light_3d()}}. The presets follow MATLAB's \code{material}:
 \code{"matte"} (MATLAB \code{dull}), \code{"shiny"} and \code{"metal"}, with the ambient and
 diffuse strengths taken relative to \code{dull} so that \code{"matte"} reproduces
 plain Lambert shading. The specular highlight is Blinn's (1977) halfway
@@ -73,7 +73,7 @@ kernel in the vector and raster backends and the viewer:
 steps of the cosine, or at the angles \code{breaks} (degrees from the light,
 increasing, at most seven; a normal exactly at a break, within 1e-6 in
 cosine, falls in the darker band), as ggcube's \code{ramp_steps()}. With the
-signed modes of \code{\link[=lights_3d]{lights_3d()}} the steps divide the signed level instead.
+signed modes of \code{\link[=light_3d]{light_3d()}} the steps divide the signed level instead.
 \code{specular_steps = TRUE} (the default for toon) turns the highlight into a
 flat spot where Blinn's term reaches one half.
 \item \code{"gooch"} is the cool-to-warm shading of Gooch et al. (1998): the colour

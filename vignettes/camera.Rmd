@@ -73,7 +73,7 @@ p + coord_3d(aspect = c(1, 1, 2), panes = "floor", box = "all")
 Lighting changes the colours used to draw surface faces. Its direction can be expressed in camera coordinates or data coordinates. Use camera space to keep lighting tied to the view.
 
 ```{r light, fig.alt="Blue columns lit from the upper right of the view."}
-p + coord_3d(light = light_3d(direction = c(1, 1, 2), space = "camera"))
+p + coord_3d(light = light_3d(light_directional(c(1, 1, 2), space = "camera")))
 ```
 
 ## Stereo pairs

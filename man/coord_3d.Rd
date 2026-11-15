@@ -38,7 +38,7 @@ coord_3d(
   origin = c(x = 0, y = 0, z = 0),
   clip_planes = list(),
   stereo = NULL,
-  space = "euclidean",
+  geometry = "euclidean",
   model = NULL,
   input = NULL,
   isometry = NULL,
@@ -94,7 +94,7 @@ over the data without grid lines), or pane names \code{"xmin"} to \code{"zmax"}.
 
 \item{crs}{Target spatial coordinate reference system.}
 
-\item{light}{Lighting from \code{\link[=light_3d]{light_3d()}} or \code{\link[=lights_3d]{lights_3d()}}, one light such as
+\item{light}{Lighting from \code{\link[=light_3d]{light_3d()}}, one light such as
 \code{\link[=light_point]{light_point()}}, or NULL for none.}
 
 \item{backend}{Backend configuration.}
@@ -128,7 +128,7 @@ that layer.}
 
 \item{stereo}{Stereo output from \code{\link[=stereo_3d]{stereo_3d()}}, or NULL for one view.}
 
-\item{space}{Geometry of paths and faces: \code{"euclidean"} or an internal
+\item{geometry}{Geometry of paths and faces: \code{"euclidean"} or an internal
 \code{Space3D} extension. Spaces define canonical points, chart conversions,
 distance, geodesics and isometries. See Details.}
 

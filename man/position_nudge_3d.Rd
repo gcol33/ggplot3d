@@ -4,12 +4,10 @@
 \alias{position_nudge_3d}
 \title{Nudge all three position families}
 \usage{
-position_nudge_3d(x = 0, y = 0, z = 0, nudge_z = NULL)
+position_nudge_3d(x = 0, y = 0, z = 0)
 }
 \arguments{
 \item{x, y, z}{Displacements in transformed coordinate units.}
-
-\item{nudge_z}{Optional spelling of the z displacement.}
 }
 \value{
 A ggplot2 position adjustment.
@@ -19,5 +17,5 @@ Nudge all three position families
 }
 \examples{
 ggplot2::ggplot(data.frame(x = 1, y = 1, z = 1), ggplot2::aes(x, y, z = z)) +
-  geom_point_3d(position = position_nudge_3d(nudge_z = 0.5)) + coord_3d()
+  geom_point_3d(position = position_nudge_3d(z = 0.5)) + coord_3d()
 }

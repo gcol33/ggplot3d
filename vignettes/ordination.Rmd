@@ -20,12 +20,12 @@ theme_set(theme_minimal(base_size = 17) + theme(
   legend.box.background = element_rect(fill = "transparent", colour = NA)))
 ```
 
-An ordination places observations on a small set of axes computed from their measured variables. A biplot draws the observations and variable directions in the same view. `stat_biplot_3d()` composes site points, solid-headed quiver arrows and optional group regions.
+An ordination places observations on a small set of axes computed from their measured variables. A biplot draws the observations and variable directions in the same view. `biplot_3d()` composes site points, solid-headed quiver arrows and optional group regions.
 
 ```{r iris}
 fit <- prcomp(iris[1:4], scale. = TRUE)
 groups <- setNames(iris$Species, rownames(iris))
-ggplot() + stat_biplot_3d(fit, groups = groups, region = "ellipsoid",
+ggplot() + biplot_3d(fit, groups = groups, region = "ellipsoid",
                         loading_scale = 2, label_size = 5) + coord_3d()
 ```
 
@@ -36,17 +36,17 @@ Site identifiers are the score matrix's row names, or sequential character ident
 ```{r hull}
 membership <- data.frame(id = names(groups), group = unname(groups))
 membership <- membership[rev(seq_len(nrow(membership))), ]
-ggplot() + stat_biplot_3d(fit, groups = membership, region = "hull",
+ggplot() + biplot_3d(fit, groups = membership, region = "hull",
                         loading_scale = 2, label_size = 5) + coord_3d()
 ```
 
 ## Vegan scores
 
-[vegan](https://vegandevs.github.io/vegan/) supplies ecological ordination methods and a `scores()` generic that applies their scaling conventions. `stat_biplot_3d()` calls that generic for vegan fits. Pass method-specific arguments in `scores_args`, or supply a list containing `sites` and `species` score matrices directly.
+[vegan](https://vegandevs.github.io/vegan/) supplies ecological ordination methods and a `scores()` generic that applies their scaling conventions. `biplot_3d()` calls that generic for vegan fits. Pass method-specific arguments in `scores_args`, or supply a list containing `sites` and `species` score matrices directly.
 
 ```{r vegan, eval=requireNamespace("vegan", quietly=TRUE)}
 model <- vegan::rda(iris[1:4], scale = TRUE)
-ggplot() + stat_biplot_3d(model, groups = groups,
+ggplot() + biplot_3d(model, groups = groups,
                         scores_args = list(scaling = 2), label_size = 5) + coord_3d(clip = "off")
 ```
 

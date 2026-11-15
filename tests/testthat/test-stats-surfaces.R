@@ -165,13 +165,14 @@ test_that("probability-content levels recover spherical Gaussian mass", {
   a <- seq(-4, 4, length.out = 45)
   d <- expand.grid(x = a, y = a, z = a)
   density <- with(d, stats::dnorm(x) * stats::dnorm(y) * stats::dnorm(z))
-  levels <- stats_probability_levels_3d(density, list(a, a, a), probs(0.5, 0.9))
+  levels <- stats_probability_levels_3d(density, list(a, a, a), probability_levels_3d(c(0.5, 0.9)))
   expected <- exp(-stats::qchisq(c(0.5, 0.9), df = 3) / 2) / (2*pi)^1.5
   expect_lt(max(abs(levels - expected)), 0.002)
-  expect_error(probs(1), "strictly")
+  expect_error(stat_density_3d(probs = 1), "strictly")
+  expect_error(stat_density_3d(levels = 0.1, probs = 0.5), "not both")
   set.seed(12); data <- data.frame(x = rnorm(50), y = rnorm(50), z = rnorm(50))
   s <- stats_scene(ggplot2::ggplot(data, ggplot2::aes(x, y, z = z)) +
-    geom_isodensity_3d(h = 0.6, n = 10, levels = probs(0.5)) +
+    geom_isodensity_3d(h = 0.6, n = 10, probs = 0.5) +
     ggplot2::xlim(-5, 5) + ggplot2::ylim(-5, 5) + scale_z_continuous(limits = c(-5, 5)) + coord_3d())
   expect_true(all(s$built$data[[1L]]$probability == 0.5))
   expect_gt(length(s$packet$faces$primitive_id), 0L)

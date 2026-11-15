@@ -67,4 +67,4 @@ stat_parametric_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurf
 
 #' @rdname stat_parametric_3d
 #' @export
-geom_parametric_3d <- function(...) stat_parametric_3d(...)
+geom_parametric_3d <- geom_from_stat_3d("stat_parametric_3d")

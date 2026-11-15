@@ -179,7 +179,7 @@ test_that("smooth images preserve interpolated ambient accessibility", {
   mesh <- list(position = rbind(c(-2, -2, 0.25), c(2, -2, 0.25), c(2, 2, 0.25), c(-2, 2, 0.25)),
     normal = matrix(0, 4L, 3L), colour = cbind(matrix(0, 4L, 3L), 1),
     triangles = matrix(c(1L, 2L, 3L, 1L, 3L, 4L), 3L))
-  light <- light_3d(ambient = 1, diffuse = 0)
+  light <- light_3d(light_directional(intensity = 0), ambient = 1)
   plain <- smooth_paint_compare(packet, dpi = 150, light = light)
   light$ao <- list(amount = 1, radius = 0.5, samples = 64L)
   light$occlusion <- ggplot3d:::ambient_occlusion_prepare_cpp(mesh, 64L, 0.5, 1, 1e-8)

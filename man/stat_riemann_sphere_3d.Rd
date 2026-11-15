@@ -30,7 +30,7 @@ stat_riemann_sphere_3d(
 
 \item{contours}{Draw modulus bands in the domain colour.}
 
-\item{transform}{Optional \code{\link[=mobius]{mobius()}} map applied to the sphere mesh.}
+\item{transform}{Optional \code{\link[=mobius_3d]{mobius_3d()}} map applied to the sphere mesh.}
 }
 \value{
 A surface layer.

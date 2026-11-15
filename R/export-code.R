@@ -251,42 +251,9 @@ asy_code_3d <- function(plot, panel, width, height, prc) {
   paste(c(lines, surfaces, "draw(ggplotModel,surfacepen=ggplotMaterials,meshpen=nullpen);", strokes), collapse = "\n")
 }
 
-#' Export TikZ paths or an Asymptote scene
-#'
-#' TikZ writes the complete SVG paint order as editable fill, draw and text
-#' commands, including clip paths, furniture and legends. Requires TikZ's
-#' `svg.path` library. Raster colourbars and annotations become coloured pixel
-#' rectangles using the optional png decoder. TeX selects the text font.
-#' Asymptote writes model-space
-#' triangles, paths, marker solids, text and a camera, so it can re-render the
-#' scene from another view or produce an interactive PRC PDF.
-#' For a PRC PDF, compile with `asy -tex pdflatex -f pdf plot.asy` and install
-#' the TeX packages media9 and ocgx2. A PDF reader with PRC support supplies
-#' the interactive view.
-#' @param plot A ggplot with [coord_3d()].
-#' @param format `"tikz"` or `"asy"`.
-#' @param file Optional output path; NULL returns the code without writing.
-#' @param width,height Plot size in pixels at 96 pixels per inch.
-#' @param panel Panel index for the Asymptote scene; TikZ includes every panel.
-#' @param standalone Whether TikZ includes a LaTeX document preamble.
-#' @param prc Whether Asymptote should include PRC in its PDF output.
-#' @return One character string of source code, invisibly when `file` is given.
-#' @examples
-#' p <- ggplot2::ggplot(data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3)),
-#'   ggplot2::aes(x, y, z = z)) + geom_point_3d() + coord_3d()
-#' code <- export_code_3d(p, "asy")
-#' if (requireNamespace("xml2", quietly = TRUE) && requireNamespace("svglite", quietly = TRUE)) {
-#'   code <- export_code_3d(p, "tikz")
-#' }
-#' @export
-export_code_3d <- function(plot, format = c("tikz", "asy"), file = NULL, width = 640L, height = 640L,
-                            panel = 1L, standalone = TRUE, prc = FALSE) {
-  format <- match.arg(format)
-  standalone <- check_flag_3d(standalone, "standalone");prc <- check_flag_3d(prc, "prc")
-  code <- switch(format, tikz = tikz_code_3d(native_svg_3d(plot, width, height, FALSE), standalone),
-    asy = asy_code_3d(plot, panel, width, height, prc))
-  if (is.null(file)) return(code)
-  scene_assert(is.character(file) && length(file) == 1L && !is.na(file) && dir.exists(dirname(file)), "file must be an output path in an existing directory")
-  writeLines(code, file, useBytes = TRUE)
-  invisible(code)
-}
+register_exporter_3d("tex", function(plot, file, settings)
+  writeLines(tikz_code_3d(native_svg_3d(plot, settings$width, settings$height, FALSE), settings$standalone), file, useBytes = TRUE),
+  input = "plot", settings = "standalone")
+register_exporter_3d("asy", function(plot, file, settings)
+  writeLines(asy_code_3d(plot, settings$panel, settings$width, settings$height, settings$prc), file, useBytes = TRUE),
+  input = "plot", settings = c("panel", "prc"))

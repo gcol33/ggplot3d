@@ -673,7 +673,7 @@ plot_panel_3d <- function(plot) {
 }
 
 render_panel_3d <- function(grob, resolution) {
-  if (!requireNamespace("ragg", quietly = TRUE)) stop("route = \"raster\" requires the ragg package.", call. = FALSE)
+  if (!requireNamespace("ragg", quietly = TRUE)) stop("backend = \"raster\" requires the ragg package.", call. = FALSE)
   previous <- grDevices::dev.cur()
   capture <- ragg::agg_capture(width = resolution, height = resolution, units = "px",
     res = resolution / plane_panel_inches_3d, background = "transparent")
@@ -698,12 +698,12 @@ render_panel_3d <- function(grob, resolution) {
 #' plane axes, so its data line up with the 3D layers that share those axes.
 #' `extent` places it elsewhere.
 #'
-#' The vector route decomposes the drawn panel into points, lines, polygons,
+#' The vector backend decomposes the drawn panel into points, lines, polygons,
 #' rectangles and text that join the 3D scene and its exact visibility, as
 #' matplotlib places 2D artists on a plane of 3D axes and ggcube projects
 #' layers onto the faces of its cube. Marks lie in the plane, foreshortened
 #' with it, at the size they have on a 2D panel 4 inches wide; text faces the
-#' viewer and is drawn over the scene. The raster route renders the panel
+#' viewer and is drawn over the scene. The raster backend renders the panel
 #' to an image of `resolution` pixels a side, as rayshader does for a whole
 #' ggplot, and lays its pixels on the plane as rectangles, joining runs of
 #' equal colour; it suits dense plots whose vector form would be large.
@@ -714,7 +714,7 @@ render_panel_3d <- function(grob, resolution) {
 #' @param extent `NULL`, or four numbers `c(min, max, min, max)`: the
 #'   positions of the plot's panel along the two plane axes. A reversed pair
 #'   mirrors the plot.
-#' @param route `"vector"` or `"raster"` (which requires ragg).
+#' @param backend `"vector"` or `"raster"` (which requires ragg).
 #' @param resolution Pixels along each side of the raster image.
 #' @param alpha Opacity multiplying the plot's own.
 #' @return A ggplot2 layer.
@@ -733,10 +733,10 @@ render_panel_3d <- function(grob, resolution) {
 #'   geom_point_3d(colour = "steelblue") +
 #'   coord_3d()
 #' @export
-annotation_plot_3d <- function(plot, plane = "xz", at = Inf, extent = NULL, route = c("vector", "raster"),
+annotation_plot_3d <- function(plot, plane = "xz", at = Inf, extent = NULL, backend = c("vector", "raster"),
                                resolution = 150, alpha = 1) {
   axes <- check_plane_axes_3d(plane)
-  route <- match.arg(route)
+  backend <- match.arg(backend)
   if (!is.numeric(at) || length(at) != 1L || is.na(at)) stop("at must be a number.", call. = FALSE)
   if (!is.numeric(alpha) || length(alpha) != 1L || !is.finite(alpha) || alpha < 0 || alpha > 1) stop("alpha must be a number between 0 and 1.", call. = FALSE)
   if (!is.numeric(resolution) || length(resolution) != 1L || !is.finite(resolution) || resolution < 2) stop("resolution must be a number of pixels of at least 2.", call. = FALSE)
@@ -748,7 +748,7 @@ annotation_plot_3d <- function(plot, plane = "xz", at = Inf, extent = NULL, rout
   if (!is.numeric(extent) || length(extent) != 4L || any(!is.finite(extent)) || extent[1L] == extent[2L] || extent[3L] == extent[4L]) {
     stop("extent must be four finite numbers c(min, max, min, max) with distinct ends.", call. = FALSE)
   }
-  primitives <- if (route == "vector") grob_primitives_3d(panel$grob) else
+  primitives <- if (backend == "vector") grob_primitives_3d(panel$grob) else
     list(rects = raster_cells_3d(render_panel_3d(panel$grob, round(resolution))))
   make_layer_3d(GeomPlotPlane3D, NULL, data.frame(.grid = 1), StatPlotPlane3D, "identity",
     list(axes = axes, at = at, extent = as.double(extent), primitives = primitives, plot_alpha = alpha),

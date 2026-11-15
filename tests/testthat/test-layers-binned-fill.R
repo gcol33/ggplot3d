@@ -150,7 +150,7 @@ test_that("vector, raster and viewer share the same band faces and smooth paint"
   difference <- apply(abs(vector - raster), 1:2, max)
   expect_lt(mean(difference > 5 / 255), 0.01)
   packet$styles$shade <- TRUE
-  light <- lights_3d(light_directional(), mode = "tone", shadow = "#22305a", highlight = "#fff3d0")
+  light <- light_3d(light_directional(), mode = "tone", shadow_colour = "#22305a", highlight_colour = "#fff3d0")
   scene <- scene_compile(packet, camera, viewport)
   vector <- band_image(render_scene_grid(scene, viewport, light))
   raster <- band_image(raster_image_grob_3d(raster_scene_3d(packet, camera, viewport, 4L, light)))

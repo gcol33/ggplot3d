@@ -26,7 +26,7 @@ new_light_3d <- function(kind, vector = c(0, 0, 1), space = "camera", colour = "
 
 #' Lights for a 3D scene
 #'
-#' Lights combine in [lights_3d()], which [coord_3d()] takes as `light`, with
+#' Lights combine in [light_3d()], which [coord_3d()] takes as `light`, with
 #' an ambient term. Each face colour is lit by one shading kernel shared by
 #' the vector and raster backends and the [view_3d()] viewer: the
 #' Blinn-Phong model (Phong 1975, Blinn 1977) in linear light, with the
@@ -57,14 +57,14 @@ new_light_3d <- function(kind, vector = c(0, 0, 1), space = "camera", colour = "
 #' @param colour,sky,ground Light colours.
 #' @param intensity Nonnegative multiplier of the light colour.
 #' @param falloff Nonnegative exponent of the distance falloff.
-#' @return A light for [lights_3d()].
+#' @return A light for [light_3d()].
 #' @references Phong (1975). Illumination for computer generated pictures.
 #'   Communications of the ACM 18, 311-317. \doi{10.1145/360825.360839}
 #'
 #'   Blinn (1977). Models of light reflection for computer synthesized
 #'   pictures. SIGGRAPH '77, 192-198. \doi{10.1145/563858.563893}
 #' @examples
-#' lights_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
+#' light_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
 #' @export
 light_directional <- function(direction = c(-1, 1, 2), space = "camera", colour = "white", intensity = 0.65) {
   direction <- check_light_vector_3d(direction, "direction")
@@ -93,7 +93,12 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
     match.arg(space, c("camera", "data")), sky, intensity, ground = ground)
 }
 
-#' Combine lights for a 3D scene
+#' Lighting for a 3D scene
+#'
+#' Combines light sources with an ambient term and sets how the light changes
+#' face colours. Without light sources the scene has one directional light,
+#' `light_directional()`, from the upper left of the camera. See
+#' [material_3d()] for specular highlights.
 #'
 #' `mode` sets how the light changes a face colour. `"multiply"` scales the
 #' colour by the ambient and diffuse light and `"tint"` scales its distance
@@ -111,7 +116,7 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   `range[2]` in light, and keeps the hue; where the moved colour leaves the
 #'   sRGB gamut, its chroma is reduced until it fits (ggcube's
 #'   `tone_lightness()`).
-#' - `"tone"` moves the colour in OKLab toward `shadow` or `highlight`, up to
+#' - `"tone"` moves the colour in OKLab toward `shadow_colour` or `highlight_colour`, up to
 #'   the fractions `abs(range)`.
 #' - `"overlay"` and `"soft"` are matplotlib's `LightSource` blend modes on the
 #'   encoded colour, with an intensity of `0.5 + level * abs(range) / 2`.
@@ -122,7 +127,8 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' [guide_colourbar_3d()], [guide_coloursteps_3d()], [guide_bins_3d()] and
 #' [guide_legend_3d()] show the shaded colours of a key.
 #' @param ... Lights made with [light_directional()], [light_point()],
-#'   [light_head()] or [light_hemisphere()].
+#'   [light_head()] or [light_hemisphere()]. None gives one
+#'   `light_directional()`.
 #' @param ambient Nonnegative strength of the uniform ambient light.
 #' @param mode Colour operation: `"multiply"`, `"tint"`, `"lightness"`,
 #'   `"tone"`, `"overlay"` or `"soft"`.
@@ -133,7 +139,7 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   `c(-0.45, 0.3)` for `"lightness"` and `c(-0.6, 0.6)` otherwise.
 #' @param neutral Angle in degrees, in \[0, 180), between the normal and the
 #'   light at which a signed mode leaves the colour unchanged.
-#' @param shadow,highlight Tone colours of `"tone"`.
+#' @param shadow_colour,highlight_colour Tone colours of `"tone"`.
 #' @return A lighting configuration for [coord_3d()]. The backends that take
 #'   one directional light (the path tracer and the raymarch backend) use the
 #'   first directional light.
@@ -147,18 +153,19 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   Ottosson (2020). A perceptual color space for image processing.
 #'   \url{https://bottosson.github.io/posts/oklab/}
 #' @examples
-#' lights_3d(light_head(), light_hemisphere("lightblue", "brown"), ambient = 0.1)
+#' light_3d(light_head(), light_hemisphere("lightblue", "brown"), ambient = 0.1)
 #' d <- expand.grid(x = seq(-2, 2, length.out = 25), y = seq(-2, 2, length.out = 25))
 #' d$z <- with(d, exp(-(x^2 + y^2)))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
 #'   geom_surface_3d(shading = "smooth", colour = NA) +
 #'   ggplot2::scale_fill_distiller(palette = "Spectral") +
-#'   coord_3d(light = lights_3d(light_directional(), mode = "lightness"))
+#'   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
 #' @export
-lights_3d <- function(..., ambient = 0.35, mode = "multiply", range = NULL, neutral = 45,
-                      shadow = "#1d2b53", highlight = "#fff1d6") {
+light_3d <- function(..., ambient = 0.35, mode = "multiply", range = NULL, neutral = 45,
+                     shadow_colour = "#1d2b53", highlight_colour = "#fff1d6") {
   lights <- list(...)
-  if (!all(vapply(lights, inherits, logical(1), "ggplot3d_light"))) stop("lights_3d() takes lights made with light_*().", call. = FALSE)
+  if (!length(lights)) lights <- list(light_directional())
+  if (!all(vapply(lights, inherits, logical(1), "ggplot3d_light"))) stop("light_3d() takes lights made with light_*().", call. = FALSE)
   ambient <- check_light_number_3d(ambient, "ambient")
   mode <- match.arg(mode, light_transfers_3d)
   range <- range %or3d% if (mode == "lightness") c(-0.45, 0.3) else c(-0.6, 0.6)
@@ -169,14 +176,14 @@ lights_3d <- function(..., ambient = 0.35, mode = "multiply", range = NULL, neut
   primary <- Filter(function(l) l$kind == light_kinds_3d[["directional"]], lights)
   primary <- if (length(primary)) primary[[1L]] else NULL
   structure(list(lights = unname(lights), ambient = ambient, mode = mode, range = as.double(range),
-    neutral = as.double(neutral), shadow = check_light_colour_3d(shadow, "shadow"),
-    highlight = check_light_colour_3d(highlight, "highlight"),
+    neutral = as.double(neutral), shadow = check_light_colour_3d(shadow_colour, "shadow_colour"),
+    highlight = check_light_colour_3d(highlight_colour, "highlight_colour"),
     direction = if (is.null(primary)) c(0, 0, 1) else primary$vector,
     space = if (is.null(primary)) "camera" else primary$space,
     diffuse = if (is.null(primary)) 0 else primary$intensity), class = "ggplot3d_lights")
 }
 
-# Colour transfers of lights_3d(), in the order of the kernel's transfer ids
+# Colour transfers of light_3d(), in the order of the kernel's transfer ids
 # (src/shade/shade.h), starting at 0.
 light_transfers_3d <- c("multiply", "tint", "lightness", "tone", "overlay", "soft")
 
@@ -186,14 +193,14 @@ signed_transfer_3d <- function(mode) !mode %in% c("multiply", "tint")
 # A lighting argument as a lights configuration: NULL, one light, or lights.
 as_lights_3d <- function(light) {
   if (is.null(light) || inherits(light, "ggplot3d_lights")) return(light)
-  if (inherits(light, "ggplot3d_light")) return(lights_3d(light))
-  stop("light must be NULL, a light or lights_3d().", call. = FALSE)
+  if (inherits(light, "ggplot3d_light")) return(light_3d(light))
+  stop("light must be NULL, a light or light_3d().", call. = FALSE)
 }
 
 #' Surface materials
 #'
 #' A material sets how strongly a face reflects the ambient, diffuse and
-#' specular light of [lights_3d()]. The presets follow MATLAB's `material`:
+#' specular light of [light_3d()]. The presets follow MATLAB's `material`:
 #' `"matte"` (MATLAB `dull`), `"shiny"` and `"metal"`, with the ambient and
 #' diffuse strengths taken relative to `dull` so that `"matte"` reproduces
 #' plain Lambert shading. The specular highlight is Blinn's (1977) halfway
@@ -209,7 +216,7 @@ as_lights_3d <- function(light) {
 #'   steps of the cosine, or at the angles `breaks` (degrees from the light,
 #'   increasing, at most seven; a normal exactly at a break, within 1e-6 in
 #'   cosine, falls in the darker band), as ggcube's `ramp_steps()`. With the
-#'   signed modes of [lights_3d()] the steps divide the signed level instead.
+#'   signed modes of [light_3d()] the steps divide the signed level instead.
 #'   `specular_steps = TRUE` (the default for toon) turns the highlight into a
 #'   flat spot where Blinn's term reaches one half.
 #' - `"gooch"` is the cool-to-warm shading of Gooch et al. (1998): the colour

@@ -42,7 +42,7 @@
 #' @param colours Two filter colours, the left eye's first, as in the colour
 #'   glasses used to view an anaglyph.
 #' @return A stereo configuration for the `stereo` argument of [coord_3d()].
-#' @seealso [coord_3d()], [facet_views()], whose views each become a stereo
+#' @seealso [coord_3d()], [facet_views_3d()], whose views each become a stereo
 #'   pair.
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 25), y = seq(-1, 1, length.out = 25))

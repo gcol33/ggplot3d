@@ -117,7 +117,7 @@ test_that("selected panels reflow their aspect and furniture at the widget size"
       expect_setequal(decode_column(panel$scene$markers$source_row), which(mtcars$am == 1))
     }
   }
-  views <- p + facet_views(c("front", "isometric"), ncol = 1)
+  views <- p + facet_views_3d(c("front", "isometric"), ncol = 1)
   selected <- view_3d(views, panel = 2, width = 624, height = 384)$x$panels[[1L]]
   complete <- view_3d(p + do.call(coord_3d, camera_3d("isometric")),
     width = 624, height = 384)$x$panels[[1L]]
@@ -150,7 +150,7 @@ test_that("the whole plot keeps every panel at its place and embeds the rest as 
 test_that("viewers in one link group carry the group name", {
   skip_if_not_installed("htmlwidgets")
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
-    geom_point_3d() + coord_3d() + facet_views(c("front", "isometric"))
+    geom_point_3d() + coord_3d() + facet_views_3d(c("front", "isometric"))
   front <- view_3d(p, panel = 1, width = 320, height = 320, link = "cars")
   iso <- view_3d(p, panel = 2, width = 320, height = 320, link = "cars")
   expect_identical(front$x$link_group, "cars")

@@ -75,7 +75,7 @@ GeomDropline3D <- ggplot2::ggproto("GeomDropline3D", ggplot2::GeomSegment,
 
 #' Drop segments from points to a box face
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
-#' @param face Box face: zmin (floor), zmax, xmin, xmax, ymin or ymax.
+#' @param onto Box face: zmin (floor), zmax, xmin, xmax, ymin or ymax.
 #' @return A ggplot2 layer.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))
@@ -83,15 +83,15 @@ GeomDropline3D <- ggplot2::ggproto("GeomDropline3D", ggplot2::GeomSegment,
 #'   geom_dropline_3d() + geom_point_3d() + coord_3d()
 #' @export
 geom_dropline_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
-                             face = "zmin", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  face <- match.arg(face, c("zmin", "zmax", "xmin", "xmax", "ymin", "ymax"))
+                             onto = "zmin", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+  onto <- match.arg(onto, c("zmin", "zmax", "xmin", "xmax", "ymin", "ymax"))
   make_layer_3d(GeomDropline3D, mapping, data, stat, position,
-    c(list(face = face, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+    c(list(onto = onto, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
 emit_droplines_3d <- function(data, params, panel_params) {
   for (axis in c("x", "y", "z")) data[[paste0(axis, "end")]] <- data[[axis]]
-  data[[paste0(substr(params$face, 1L, 1L), "end")]] <- if (endsWith(params$face, "min")) 0 else 1
+  data[[paste0(substr(params$onto, 1L, 1L), "end")]] <- if (endsWith(params$onto, "min")) 0 else 1
   emit_segments_3d(data, params, panel_params)
 }
 

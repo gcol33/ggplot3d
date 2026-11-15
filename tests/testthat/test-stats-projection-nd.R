@@ -69,14 +69,14 @@ test_that("Grassmann tours preserve frames endpoints principal angles and random
   expect_equal(crossprod(M),diag(3),tolerance=1e-12)
   expect_equal(M[,3],c(0,0,cos(angle/2),sin(angle/2),0),tolerance=1e-12)
   history <- array(c(A,B),c(5,3,2))
-  frames <- tour_basis_frames_3d(tour_grand(history=history),5,5)
+  frames <- tour_basis_frames_3d(grand_tour_3d(history=history),5,5)
   expect_equal(tour_basis_frames_3d(history,5,5),frames,tolerance=1e-12)
   expect_equal(frames[[1]],A,tolerance=1e-12)
   expect_equal(tcrossprod(frames[[5]]),tcrossprod(B),tolerance=1e-12)
   set.seed(42); before <- .Random.seed
-  first <- tour_basis_frames_3d(tour_grand(seed=3),6,5)
+  first <- tour_basis_frames_3d(grand_tour_3d(seed=3),6,5)
   expect_identical(.Random.seed,before)
-  expect_identical(first,tour_basis_frames_3d(tour_grand(seed=3),6,5))
+  expect_identical(first,tour_basis_frames_3d(grand_tour_3d(seed=3),6,5))
   expect_true(all(vapply(first,function(B) max(abs(crossprod(B)-diag(3)))<1e-10,logical(1))))
 })
 
@@ -100,13 +100,13 @@ test_that("four-dimensional sections recover a closed tetrahedron including boun
 test_that("grand tours render changing orthographic projections with fixed limits", {
   d <- as.data.frame(matrix(sin(1:40),10,4)); names(d) <- c("x","y","z","w")
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z,w=w))+stat_project_3d(size=3)+coord_3d(axes=character(),panes=character(),box="none")
-  a <- animate_3d(p,tour=tour_grand(steps=2,seed=1),frames=3,width=120,height=120,workers=1,progress=FALSE)
+  a <- animate_3d(p,tour=grand_tour_3d(steps=2,seed=1),frames=3,width=120,height=120,workers=1,progress=FALSE)
   on.exit(unlink(a$frames),add=TRUE)
   expect_equal(a$frame_count,3L)
   expect_equal(length(a$tour_bases),3L)
   expect_equal(a$camera$azimuth,rep(p@coordinates$camera$azimuth,3L))
   expect_false(identical(readBin(a$frames[1],"raw",n=file.info(a$frames[1])$size),readBin(a$frames[3],"raw",n=file.info(a$frames[3])$size)))
-  state <- motion_tour_prepare_3d(p,tour_grand(),3)
+  state <- motion_tour_prepare_3d(p,grand_tour_3d(),3)
   radius <- max(sqrt(rowSums(as.matrix(d)^2)))
   expect_equal(state$plot@coordinates$limits$x,c(-radius,radius))
   expect_null(p@coordinates$limits$x)
@@ -156,7 +156,7 @@ test_that("mesh projections retain ambient coordinates and face materials", {
 test_that("finite perspective tours share projection frames and fixed limits", {
   d <- data.frame(x=c(.2,.4),y=c(-.4,.3),z=c(.2,-.2),w=c(.3,-.4))
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z,w=w))+stat_project_3d(projection="perspective",eye=3)+coord_3d()
-  state <- motion_tour_prepare_3d(p,tour_grand(steps=1),3)
+  state <- motion_tour_prepare_3d(p,grand_tour_3d(steps=1),3)
   for(basis in state$bases) {
     frame <- motion_tour_plot_3d(state$plot,basis)
     got <- ggplot2::layer_data(frame)

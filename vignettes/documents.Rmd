@@ -100,13 +100,13 @@ knitr::opts_chunk$set(dev = "svglite", fig.ext = "svg", fig.width = 6.5,
 
 ## Accessible descriptions
 
-`alt_text_3d()` describes the layer types, mapped variables and initial camera
+`get_alt_text()` from ggplot2 describes the layer types, mapped variables and initial camera
 angles. The generated description supplies the default alternative text for
 static figures and an accessible group name around HTML viewers. Inspect it
 before adding words about what the figure communicates.
 
 ```{r description}
-alt_text_3d(p)
+get_alt_text(p)
 ```
 
 An explicit chunk `fig.alt` takes precedence. A description supplied by
@@ -118,7 +118,7 @@ motor-car plot.
 described <- p + labs(alt = paste(
   "Motor cars plotted by weight, fuel economy and horsepower.",
   "Heavier cars generally have lower fuel economy."))
-alt_text_3d(described)
+get_alt_text(described)
 ```
 
 When a chunk prints several plots, supply a vector of descriptions in their

@@ -23,7 +23,7 @@ test_that("orientation guides follow each panel camera with physical size and co
     expect_equal(as.numeric(triad$vp$y), panel$outer_viewport$height_mm - 22)
     expect_length(triad$children, 6L)
   }
-  p <- orientation_plot(axes = character()) + facet_views(c("top", "front")) +
+  p <- orientation_plot(axes = character()) + facet_views_3d(c("top", "front")) +
     ggplot2::guides(orientation = guide_triad_3d())
   panels <- orientation_panels(p)
   expect_length(panels, 2L)

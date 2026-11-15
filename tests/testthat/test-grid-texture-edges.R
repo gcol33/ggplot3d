@@ -32,7 +32,7 @@ test_that("checker boundaries stay within half a pixel beside shared triangle ed
       for (lit in c(FALSE, TRUE)) {
         painted <- scene; painted$styles$shade <- lit
         actual <- texture_device_image(painted, viewport, device, browser,
-          light = if (lit) light_3d(ambient = 1, diffuse = 0) else NULL)
+          light = if (lit) light_3d(light_directional(intensity = 0), ambient = 1) else NULL)
         error <- texture_edge_displacements(actual, reference, segments)
         expect_gt(length(error), 100L)
         expect_lte(max(abs(error)), .5, label = paste(device, dpi, lit))

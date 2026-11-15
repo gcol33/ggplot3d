@@ -91,7 +91,7 @@ reference:
   - stat_tiling_3d
   - stat_project_3d
   - rotate_4d
-  - tour_grand
+  - grand_tour_3d
   - stat_section_4d
   - stat_honeycomb_3d
 - title: Hyperbolic geometry and data
@@ -108,7 +108,7 @@ reference:
   - coord_spacetime_3d
 - title: Complex analysis
   contents:
-  - mobius
+  - mobius_3d
   - stat_riemann_sphere_3d
   - stat_riemann_surface_3d
 - title: Immersed surfaces and knots
@@ -121,10 +121,9 @@ reference:
   contents:
   - coord_3d
   - camera_3d
-  - facet_views
+  - facet_views_3d
   - stereo_3d
   - light_3d
-  - lights_3d
   - light_directional
   - material_3d
   - shadow_3d
@@ -196,7 +195,7 @@ reference:
   - geom_ellipsoid_3d
   - geom_tensor_3d
   - stat_ellipsoid_3d
-  - stat_biplot_3d
+  - biplot_3d
   - geom_glyph_3d
 - title: Network and tree layers
   contents:
@@ -268,7 +267,6 @@ reference:
   - stat_streamline_3d
   - stat_revolve_3d
   - stat_spline_3d
-  - probs
 - title: Signed distance functions
   contents:
   - sdf_sphere
@@ -294,7 +292,7 @@ reference:
 - title: Output backends
   contents:
   - backend_3d
-  - geom_thurston_3d
+  - annotation_thurston_3d
   - geodesic_3d
   - thurston_portal_3d
   - animate_3d
@@ -302,9 +300,7 @@ reference:
   - view_3d
   - view3dOutput
   - renderView3d
-  - alt_text_3d
-  - save_svg_3d
-  - export_code_3d
+  - get_alt_text_3d
 - title: Camera paths
   contents:
   - camera_path_3d

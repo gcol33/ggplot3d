@@ -116,13 +116,13 @@ test_that("Jacobi areas agree with axial closed forms", {
 test_that("Nil, Sol, hyperbolic and lifted fibre quotients preserve rays", {
   for (g in c("nil","sol","h3","sl2r","s2xe","h2xe")) {
     right <- left <- diag(4);axis <- 1L;extent <- 1;origin <- c(0,0,0);center <- c(-.5,0,0)
-    lift <- 0;fiber <- FALSE
+    lift <- 0;fibre <- FALSE
     if (g=="nil") {right[1,4] <- -2;right[3,2] <- -1;left <- solve(right)}
     if (g=="sol") {right[1,1] <- exp(-2);right[2,2] <- exp(2);right[3,4] <- -2;left <- solve(right);axis <- 3L;center <- c(0,0,-.5)}
     if (g=="h3") {right[c(1,4),c(1,4)] <- matrix(c(cosh(2),-sinh(2),-sinh(2),cosh(2)),2);left <- solve(right);extent <- sinh(1);center <- c(-tanh(.25),0,0)}
-    if (g %in% c("sl2r","s2xe","h2xe")) {axis <- 4L;fiber <- TRUE;extent <- if(g=="sl2r") 2*pi else 1;lift <- -2*extent;origin <- c(0,0,extent-1);center <- c(0,0,-extent+.5)}
+    if (g %in% c("sl2r","s2xe","h2xe")) {axis <- 4L;fibre <- TRUE;extent <- if(g=="sl2r") 2*pi else 1;lift <- -2*extent;origin <- c(0,0,extent-1);center <- c(0,0,-extent+.5)}
     n <- rep(0,4);n[axis] <- 1;u <- rep(0,3);u[min(3L,axis)] <- 1
-    faces <- list(thurston_portal_3d(n,extent,right,lift,fiber),thurston_portal_3d(-n,extent,left,-lift,fiber))
+    faces <- list(thurston_portal_3d(n,extent,right,lift,fibre),thurston_portal_3d(-n,extent,left,-lift,fibre))
     settings <- backend_3d("raymarch",geometry=g,observer=origin,quotient=faces,max_distance=3,tolerance=1e-7)
     hit <- ggplot3d:::raymarch_curved_cpp(list(thurston_field(center)),matrix(u,1,3),settings,1L)
     expect_equal(hit$distance,1.3,tolerance=3e-6,info=g)
@@ -160,7 +160,7 @@ test_that("cylinders and half-spaces have intrinsic distances", {
 })
 
 test_that("intrinsic panels render without exterior furniture", {
-  p <- ggplot2::ggplot()+geom_thurston_3d(center=c(0,0,2),fill="red")+
+  p <- ggplot2::ggplot()+annotation_thurston_3d(centre=c(0,0,2),fill="red")+
     coord_3d(backend=backend_3d("raymarch",geometry="nil",dpi=12,max_distance=4))
   path <- tempfile(fileext=".png");grDevices::png(path,width=100,height=100)
   expect_no_error(print(p));grid::grid.force()

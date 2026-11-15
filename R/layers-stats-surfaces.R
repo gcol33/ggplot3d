@@ -38,7 +38,7 @@ stat_function_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurfac
 
 #' @rdname stat_function_3d
 #' @export
-geom_function_3d <- function(...) stat_function_3d(...)
+geom_function_3d <- geom_from_stat_3d("stat_function_3d")
 
 #' Fit a bivariate response surface
 #'
@@ -85,7 +85,7 @@ geom_function_3d <- function(...) stat_function_3d(...)
 #' @param level Pointwise confidence level.
 #' @param span Loess span.
 #' @param method.args Named arguments passed to the fitting function.
-#' @param se.alpha Opacity multiplier for confidence surfaces and walls.
+#' @param se_alpha Opacity multiplier for confidence surfaces and walls.
 #' @param domain `"box"` fills the x/y range of the panel; `"hull"` clips the
 #'   surface to the convex hull of the group's observations, so the model is
 #'   not drawn where it extrapolates. Grid cells crossed by the hull edge are
@@ -116,7 +116,7 @@ geom_function_3d <- function(...) stat_function_3d(...)
 stat_smooth_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                             position = "identity", ..., method = "loess", formula = NULL,
                             n = 30L, se = TRUE, level = 0.95, span = 0.75,
-                            method.args = list(), se.alpha = 0.2, domain = c("box", "hull"),
+                            method.args = list(), se_alpha = 0.2, domain = c("box", "hull"),
                             view = NULL, cond = list(),
                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   domain <- match.arg(domain)
@@ -125,13 +125,13 @@ stat_smooth_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3
     mapping <- stats_default_mapping_3d(mapping, extra, ggplot2::aes(fill = ggplot2::after_stat(se)))
   model_view_layer_3d(make_layer_3d(geom, mapping, data, StatSmooth3D, position,
     stats_params_3d(list(method = method, formula = formula, n = n, se = se, level = level, span = span,
-      method.args = method.args, se.alpha = se.alpha, domain = domain, view = view, cond = cond,
+      method.args = method.args, se_alpha = se_alpha, domain = domain, view = view, cond = cond,
       na.rm = na.rm, shade = TRUE), extra), show.legend, inherit.aes), method, view)
 }
 
 #' @rdname stat_smooth_3d
 #' @export
-geom_smooth_3d <- function(...) stat_smooth_3d(...)
+geom_smooth_3d <- geom_from_stat_3d("stat_smooth_3d")
 
 #' Residuals from a fitted surface
 #'
@@ -170,7 +170,7 @@ stat_residual_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::GeomSe
 
 #' @rdname stat_residual_3d
 #' @export
-geom_residual_3d <- function(...) stat_residual_3d(...)
+geom_residual_3d <- geom_from_stat_3d("stat_residual_3d")
 
 # For a fitted model without an explicit view, names the predictors after the
 # layer's x and y mappings when these are bare column names.
@@ -262,4 +262,4 @@ stat_ridgeline_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurfa
 
 #' @rdname stat_ridgeline_3d
 #' @export
-geom_ridgeline_3d <- function(...) stat_ridgeline_3d(...)
+geom_ridgeline_3d <- geom_from_stat_3d("stat_ridgeline_3d")

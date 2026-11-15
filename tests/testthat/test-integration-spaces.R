@@ -2,7 +2,7 @@ test_that("Euclidean spaces preserve packets and expose their metric and actions
   d <- data.frame(x = c(1, 3, 2), y = c(1, 2, 3), z = c(2, 3, 1))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_path_3d() + geom_point_3d()
   a <- integration_packets(p + coord_3d())
-  b <- integration_packets(p + coord_3d(space = SpaceEuclidean, model = "cartesian", input = "cartesian"))
+  b <- integration_packets(p + coord_3d(geometry = SpaceEuclidean, model = "cartesian", input = "cartesian"))
   expect_identical(serialize(a$packet, NULL), serialize(b$packet, NULL))
   X <- rbind(c(1, 2, 3), c(0, 0, 0)); Y <- X + 1
   expect_equal(SpaceEuclidean$distance(X, Y), rep(sqrt(3), 2))
@@ -10,7 +10,7 @@ test_that("Euclidean spaces preserve packets and expose their metric and actions
   g <- diag(4); g[1:3, 4] <- c(2, 3, 4)
   expect_equal(SpaceEuclidean$act(g, X), sweep(X, 2, c(2, 3, 4), "+"))
   expect_error(SpaceEuclidean$act(matrix(1, 4, 4), X), "rigid")
-  expect_error(coord_3d(space = "sphere"), "Space3D")
+  expect_error(coord_3d(geometry = "sphere"), "Space3D")
   expect_error(coord_3d(model = "missing"), "model")
   expect_error(coord_3d(input = "missing"), "chart")
   expect_error(coord_3d(munch_tolerance = 0), "positive")
@@ -93,7 +93,7 @@ test_that("canonical dimension, charts, projectivity and homogeneous output are 
     to_canonical = function(data, chart) cbind(as.matrix(data[c("x", "y", "z")]), 1),
     from_canonical = function(X, model) X[, 1:3, drop = FALSE])
   p <- ggplot2::ggplot(data.frame(x = 0:1, y = 0:1, z = 0:1), ggplot2::aes(x, y, z = z)) +
-    geom_path_3d() + coord_3d(space = lifted)
+    geom_path_3d() + coord_3d(geometry = lifted)
   result <- integration_packets(p)
   expect_length(result$packet$vertices$x, 2L)
   context <- result$params$space_context
@@ -176,7 +176,7 @@ test_that("input charts and isometries act before display projection", {
   d <- data.frame(x = c(0, pi / 2), y = 0, z = 0)
   rotate <- matrix(c(0, 1, 0, -1, 0, 0, 0, 0, 1), 3)
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
-    coord_3d(space = test_sphere_space(), input = "lonlat", isometry = rotate)
+    coord_3d(geometry = test_sphere_space(), input = "lonlat", isometry = rotate)
   result <- integration_packets(p)
   xyz <- scene_vertices_xyz_3d(result$packet$vertices)
   expect_equal(unname(xyz), rbind(c(0.5, 1, 0.5), c(0, 0.5, 0.5)), tolerance = 1e-12)

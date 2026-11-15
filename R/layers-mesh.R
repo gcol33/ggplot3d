@@ -251,7 +251,7 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 #'   c(1, 5, 7, 3), c(2, 4, 8, 6))
 #' ggplot2::ggplot() +
 #'   geom_mesh_3d(ggplot2::aes(fill = ggplot2::after_stat(mean_curvature)),
-#'     vertices = cube, faces = quads, subdivide = 3, curvature = TRUE) +
+#'     vertices = cube, faces = quads, subdivide = 3, curvature = TRUE, shading = "smooth") +
 #'   coord_3d()
 #' @export
 geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, position = "identity", ...,

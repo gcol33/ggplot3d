@@ -19,7 +19,18 @@ stat_function_3d(
   inherit.aes = TRUE
 )
 
-geom_function_3d(...)
+geom_function_3d(
+  mapping = NULL,
+  data = NULL,
+  position = "identity",
+  ...,
+  fun,
+  n = 40L,
+  args = list(),
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
 }
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}

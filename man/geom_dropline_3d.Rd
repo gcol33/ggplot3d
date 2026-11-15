@@ -10,7 +10,7 @@ geom_dropline_3d(
   stat = "identity",
   position = "identity",
   ...,
-  face = "zmin",
+  onto = "zmin",
   na.rm = FALSE,
   show.legend = NA,
   inherit.aes = TRUE
@@ -19,7 +19,7 @@ geom_dropline_3d(
 \arguments{
 \item{mapping, data, stat, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
 
-\item{face}{Box face: zmin (floor), zmax, xmin, xmax, ymin or ymax.}
+\item{onto}{Box face: zmin (floor), zmax, xmin, xmax, ymin or ymax.}
 }
 \value{
 A ggplot2 layer.

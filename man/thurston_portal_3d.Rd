@@ -4,7 +4,7 @@
 \alias{thurston_portal_3d}
 \title{Pair a face of a Thurston fundamental domain}
 \usage{
-thurston_portal_3d(normal, offset, matrix, lift = 0, fiber = FALSE)
+thurston_portal_3d(normal, offset, matrix, lift = 0, fibre = FALSE)
 }
 \arguments{
 \item{normal}{Four coefficients of the domain face in the geometry's
@@ -18,7 +18,7 @@ paired face. The differential transports the ray's tangent on crossing.}
 \item{lift}{Fibre displacement for product geometries, or an additional
 multiple of \code{4*pi} selecting a lift of an SL2R isometry.}
 
-\item{fiber}{Use \code{normal[4] * w < offset} in the unwrapped fibre coordinate
+\item{fibre}{Use \code{normal[4] * w < offset} in the unwrapped fibre coordinate
 of SL2R or a product space. The first three normal entries must be zero.}
 }
 \value{

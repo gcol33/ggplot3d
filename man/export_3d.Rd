@@ -2,11 +2,12 @@
 % Please edit documentation in R/export-3d.R
 \name{export_3d}
 \alias{export_3d}
-\title{Export a panel as a 3D model file}
+\title{Export a plot to a 3D model, vector or source-code file}
 \usage{
 export_3d(
   plot,
-  file,
+  file = NULL,
+  format = NULL,
   panel = 1L,
   furniture = FALSE,
   lines = c("tube", "line"),
@@ -15,16 +16,25 @@ export_3d(
   width = 640L,
   height = 640L,
   dpi = 96,
-  print = NULL
+  print = NULL,
+  interactive = TRUE,
+  standalone = TRUE,
+  prc = FALSE
 )
 }
 \arguments{
 \item{plot}{A ggplot with \code{\link[=coord_3d]{coord_3d()}}.}
 
-\item{file}{Output path. Its extension selects the format: \code{.glb},
-\code{.gltf}, \code{.ply}, \code{.obj}, \code{.stl} or \verb{.3mf}.}
+\item{file}{Output path, or NULL to use \code{format}. Its extension selects the
+format: \code{.glb}, \code{.gltf}, \code{.ply}, \code{.obj}, \code{.stl}, \verb{.3mf}, \code{.svg}, \code{.tex}
+(TikZ) or \code{.asy}.}
 
-\item{panel}{Panel index in layout order, default 1.}
+\item{format}{Output format as one of these extension names. With
+\code{file = NULL}, the format writes to a session temporary path. When both
+are supplied, the extension of \code{file} must agree with \code{format}.}
+
+\item{panel}{Panel index in layout order, default 1, for model formats
+and Asymptote; SVG and TikZ hold every panel.}
 
 \item{furniture}{Whether to include the panes, grid lines and box edges,
 default FALSE.}
@@ -47,17 +57,27 @@ lines and points have in a plot of this size.}
 
 \item{print}{Optional \code{\link[=print_3d]{print_3d()}} specification for closed millimetre solids
 in STL or 3MF output.}
+
+\item{interactive}{SVG: whether to include tooltips, keyboard focus and
+linked hover highlighting for fragments of the same source row.}
+
+\item{standalone}{TikZ: whether to include a LaTeX document preamble.}
+
+\item{prc}{Asymptote: whether to include PRC in its PDF output.}
 }
 \value{
-\code{file}, invisibly.
+The written path, invisibly.
 }
 \description{
-Write the scene of one panel to a file that 3D software opens: glTF binary
-(\code{.glb}) or glTF with a separate buffer (\code{.gltf} and \code{.bin}) for Blender
-and the web, PLY, OBJ with an MTL material file, or binary STL. Faces are
-triangulated, paths become tubes or line primitives, and points become
-small solids or point primitives, all in model coordinates: the panel box
-scaled by the aspect of \code{\link[=coord_3d]{coord_3d()}}, with its longest side \code{size} long.
+Writes the scene of a plot to a file that other software opens. Model
+formats hold the scene of one panel in 3D: glTF binary (\code{.glb}) or glTF with
+a separate buffer (\code{.gltf} and \code{.bin}) for Blender and the web, PLY, OBJ
+with an MTL material file, binary STL and 3MF. Faces are triangulated,
+paths become tubes or line primitives, and points become small solids or
+point primitives, all in model coordinates: the panel box scaled by the
+aspect of \code{\link[=coord_3d]{coord_3d()}}, with its longest side \code{size} long. Vector and
+source formats hold the projected plot: SVG with source rows and hover
+text, TikZ (\code{.tex}) and an Asymptote scene (\code{.asy}).
 }
 \details{
 glTF output follows the glTF 2.0 specification and is the route into
@@ -84,6 +104,23 @@ it requires \code{lines = "tube"} and \code{points = "mesh"}.
 
 Ordinary model exports omit text and write dashed lines solid. Printing
 exports include extruded text according to \code{\link[=print_3d]{print_3d()}}.
+
+SVG output writes the compiled, depth-ordered fragments as SVG geometry.
+Each fragment carries data-layer, data-row and data-primitive attributes.
+Consecutive runs of each layer share a group so that interleaved layers
+retain their visibility order. Scene masks become clipping paths, and
+surface seams share compound-path underlays. Static plot furniture is
+embedded as SVG. A \code{tooltip} aesthetic sets the hover text.
+
+TikZ writes the complete SVG paint order as editable fill, draw and text
+commands, including clip paths, furniture and legends. Requires TikZ's
+\code{svg.path} library. Raster colourbars and annotations become coloured pixel
+rectangles using the optional png decoder. TeX selects the text font.
+Asymptote writes model-space triangles, paths, marker solids, text and a
+camera, so it can re-render the scene from another view or produce an
+interactive PRC PDF. For a PRC PDF, compile with
+\verb{asy -tex pdflatex -f pdf plot.asy} and install the TeX packages media9 and
+ocgx2. A PDF reader with PRC support supplies the interactive view.
 }
 \examples{
 d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))
@@ -93,6 +130,11 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 glb <- export_3d(p, tempfile(fileext = ".glb"))
 file.size(glb)
 export_3d(p, tempfile(fileext = ".stl"), size = 50)
+asy <- export_3d(p, format = "asy")
+if (requireNamespace("svglite", quietly = TRUE) && requireNamespace("xml2", quietly = TRUE)) {
+  export_3d(p, format = "svg")
+  export_3d(p, format = "tex", standalone = FALSE)
+}
 }
 \seealso{
 \code{\link[=animate_3d]{animate_3d()}} for animated glTF files.

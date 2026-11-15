@@ -147,7 +147,7 @@ ggplot() + stat_isofunction_3d(fun = ball, n = 8, levels = 0.5) +
 
 ## Trivariate density
 
-A trivariate density estimates the distribution of observations in three dimensions. Numeric levels select density thresholds. Probability contents, specified with `probs()`, select enclosed mass estimated from the sampled grid. The grid ranges need to include the density tails for probability-content requests.
+A trivariate density estimates the distribution of observations in three dimensions. Numeric levels select density thresholds. Probability contents, given as `probs`, select enclosed mass estimated from the sampled grid. The grid ranges need to include the density tails for probability-content requests.
 
 ```{r isodensity, fig.alt="A density level surface around a deterministic three-dimensional point sample."}
 set.seed(4)
@@ -160,8 +160,10 @@ c + geom_isodensity_3d(h = 0.7, levels = 0.02, n = 8) + coord_3d()
 c + stat_density_3d(h = 0.7, levels = 0.02, n = 8) + coord_3d()
 ```
 
-```{r}
-probs(0.5, 0.9)
+```{r density-probs, fig.alt="Two nested density surfaces enclosing half and nine tenths of the probability mass."}
+ggplot(cloud, aes(x, y, z = z)) +
+  stat_density_3d(h = 0.7, probs = c(0.5, 0.9), n = 12, alpha = 0.4) +
+  xlim(-4, 4) + ylim(-4, 4) + scale_z_continuous(limits = c(-4, 4)) + coord_3d()
 ```
 
 ## Convex hulls

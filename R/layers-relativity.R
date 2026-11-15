@@ -105,7 +105,6 @@ flamm_surface_3d <- function(u,v,rs,sign=1) {
 #' keeps the throat regular. Set both=TRUE for both sheets of the bridge.
 #' @inheritParams stat_parametric_3d
 #' @inheritParams ggplot2::stat_identity
-#' @param metric Spatial metric, currently "schwarzschild".
 #' @param rs Positive Schwarzschild radius.
 #' @param r Radial range, beginning at or outside rs.
 #' @param both Draw both sheets.
@@ -115,8 +114,7 @@ flamm_surface_3d <- function(u,v,rs,sign=1) {
 #' @examples
 #' ggplot2::ggplot()+stat_embedding_3d(rs=1,n=c(24,12))+coord_3d()
 #' @export
-stat_embedding_3d <- function(mapping=NULL,data=NULL,...,metric="schwarzschild",rs=1,r=c(rs,4*rs),both=FALSE,n=40L) {
-  if(!identical(metric,"schwarzschild")) stop("metric must be 'schwarzschild'.",call.=FALSE)
+stat_embedding_3d <- function(mapping=NULL,data=NULL,...,rs=1,r=c(rs,4*rs),both=FALSE,n=40L) {
   rs <- mesh_number_3d(rs,"rs",function(x) is.finite(x)&&x>0,"positive")
   if(!is.numeric(r)||length(r)!=2L||any(!is.finite(r))||r[1L]<rs||diff(r)<=0) stop("r must be an increasing range at or outside rs.",call.=FALSE)
   if(!is.logical(both)||length(both)!=1L||is.na(both)) stop("both must be TRUE or FALSE.",call.=FALSE)
@@ -230,7 +228,7 @@ SpaceSpacetime3D <- ggplot2::ggproto("SpaceSpacetime3D",Space3D,
 #' @export
 coord_spacetime_3d <- function(speed=1,...) {
   speed <- mesh_number_3d(speed,"speed",function(x) is.finite(x)&&x>0,"positive")
-  do.call(coord_3d,stats_params_3d(list(space=ggplot2::ggproto(NULL,SpaceSpacetime3D,speed=speed),
+  do.call(coord_3d,stats_params_3d(list(geometry=ggplot2::ggproto(NULL,SpaceSpacetime3D,speed=speed),
     input="cartesian",clip_data=FALSE),list(...)))
 }
 check_lorentz_matrix_3d <- function(g,dimension) {

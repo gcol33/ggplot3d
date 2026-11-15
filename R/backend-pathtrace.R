@@ -38,7 +38,7 @@ pathtrace_scene_3d <- function(packet, specs, camera, viewport, backend, light) 
   settings$epsilon <- 1e-6 * max(scale)
   if (length(fields)) settings$epsilon <- max(settings$epsilon, vapply(fields, function(s)
     4 * s$tolerance * max(scale / vapply(s$ranges, diff, numeric(1))), numeric(1)))
-  light <- light %or3d% light_3d(ambient = 1, diffuse = 0)
+  light <- light %or3d% light_3d(light_directional(intensity = 0), ambient = 1)
   illumination <- c(light_vector_3d(resolved, light), light$ambient, light$diffuse)
   key <- serialize(list(mesh, fields, camera, viewport, settings, illumination, result$extent), NULL, version = 2L)
   panel <- as.character(packet$panel_id)
@@ -80,7 +80,7 @@ pathtrace_mesh_3d <- function(nodes, packet, camera, light) {
     rep(id, ncol(part$triangles))
   }, nodes, meshes), use.names = FALSE)
   mesh$materials <- kernel_materials_3d(packet$materials)
-  mesh$lights <- if (is.null(light)) resolved_light_3d(lights_3d(ambient = 1), camera) else resolved_light_3d(light, camera)
+  mesh$lights <- if (is.null(light)) resolved_light_3d(light_3d(light_directional(intensity = 0), ambient = 1), camera) else resolved_light_3d(light, camera)
   mesh
 }
 

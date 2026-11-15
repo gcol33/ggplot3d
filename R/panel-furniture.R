@@ -710,7 +710,7 @@ pane_partners_3d <- function(k, plane, up) {
 # frame and the projection to millimetres in the scene viewport.
 origin_axis_primitives_3d <- function(ctx, guide, metrics, origin, line = TRUE, crossing = FALSE) {
   frame <- ctx$frame; project <- ctx$project; params <- guide$params
-  orientation <- params$label.orientation %or3d% "screen"
+  orientation <- params$label_orientation %or3d% "screen"
   in_plane <- identical(params$ticks, "in_plane")
   k <- match(guide$axis, c("x", "y", "z"))
   path <- frame$origin_axis(k, origin)
@@ -738,7 +738,7 @@ origin_axis_primitives_3d <- function(ctx, guide, metrics, origin, line = TRUE, 
   if (!nrow(options)) return(out)
   best <- options[which.max(options$score), ]
   direction <- replace(numeric(3), best$axis, best$sign)
-  strength <- params$depth.scale %or3d% 0
+  strength <- params$depth_scale %or3d% 0
   # Base points on the axis, unit page directions toward `toward`, model
   # offsets per millimetre (on the page, or in the pane), and depth factors.
   outward <- function(values, toward, pane = FALSE) {
@@ -795,7 +795,7 @@ origin_axis_primitives_3d <- function(ctx, guide, metrics, origin, line = TRUE, 
     }
   }
   if (length(guide$title) && visible_element_3d(metrics$title)) {
-    near <- identical(params$title.position, "near")
+    near <- identical(params$title_position, "near")
     end <- 0.5
     if (near) {
       depths <- project(frame$map(axis_candidate_points_3d(path, c(0, 1))))[, 3L]
@@ -1049,9 +1049,9 @@ plane_label_paths_3d <- function(ctx, outline, centre, axes) {
 # end. Everything in page millimetres; labels carry their bounding boxes.
 guide_typography_3d <- function(ctx, guide, m, layout) {
   params <- guide$params
-  orientation <- params$label.orientation %or3d% "screen"
+  orientation <- params$label_orientation %or3d% "screen"
   in_plane <- identical(params$ticks, "in_plane")
-  strength <- params$depth.scale %or3d% 0
+  strength <- params$depth_scale %or3d% 0
   pane <- if (in_plane || orientation == "plane") guide_pane_direction_3d(ctx, guide, layout)
   along <- layout$candidate$end - layout$candidate$start
   tick_shown <- visible_element_3d(element_3d(paste0("axis.ticks.", guide$axis), guide$theme))
@@ -1124,7 +1124,7 @@ guide_typography_3d <- function(ctx, guide, m, layout) {
   if (orientation != "plane" && !in_plane && (is.null(labels) || all(labels$factor == 1))) reach <- m$tick_length + m$gap + band
   title <- NULL
   if (length(guide$title) && visible_element_3d(m$title)) {
-    near <- identical(params$title.position, "near")
+    near <- identical(params$title_position, "near")
     end <- if (near) {
       depths <- layout$at(c(0, 1))[, 3L]
       if (depths[1L] < depths[2L]) 0 else 1

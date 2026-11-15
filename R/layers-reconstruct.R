@@ -48,7 +48,7 @@ stat_alpha_shape_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSur
 
 #' @rdname stat_alpha_shape_3d
 #' @export
-geom_alpha_shape_3d <- function(...) stat_alpha_shape_3d(...)
+geom_alpha_shape_3d <- geom_from_stat_3d("stat_alpha_shape_3d")
 
 #' Implicit surfaces fitted to point clouds
 #'

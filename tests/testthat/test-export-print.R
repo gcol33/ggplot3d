@@ -18,7 +18,7 @@ test_that("printing settings validate physical sizes and layer methods", {
   expect_error(print_3d(layers = c(foo = "thin")), "layers")
   expect_error(print_3d(sides = 5), "sides")
   expect_error(export_3d(NULL, tempfile(fileext = ".3mf")), "requires print")
-  expect_error(export_3d(NULL, tempfile(fileext = ".ply"), print = print_3d()), "does not support")
+  expect_error(export_3d(NULL, tempfile(fileext = ".ply"), print = print_3d()), "print does not apply to PLY")
 })
 
 test_that("native printing checks find boundary, winding, incidence and intersections", {

@@ -77,7 +77,7 @@ Camera arguments accept a scalar, a vector with one value per frame, or a functi
 ```{r custom}
 frames <- animate_3d(p, frames = 3, fps = 2,
   azimuth = function(t) -60 + 90 * t,
-  elevation = c(20, 35, 50), renderer = "vector",
+  elevation = c(20, 35, 50), backend = "vector",
   width = 320, height = 320, progress = FALSE)
 frames$camera
 frames$panel_extents[[1]]
@@ -121,7 +121,7 @@ states before interpolation, and all states train one set of scales.
 
 ```{r tween-points}
 movement <- animate_3d(moving, time = "state", tween = tween_3d(n = 3),
-  renderer = "vector", width = 480, height = 360, fps = 5, progress = FALSE)
+  backend = "vector", width = 480, height = 360, fps = 5, progress = FALSE)
 movement$frame_count
 movement$transition
 ```
@@ -150,7 +150,7 @@ object's observations break its trail.
 ```{r motion-trails}
 wake <- animate_3d(moving, time = "state", tween = tween_3d(n = 3),
   trail = list(length = 4, radius = 0.05, taper = TRUE),
-  renderer = "vector", width = 480, height = 360, progress = FALSE)
+  backend = "vector", width = 480, height = 360, progress = FALSE)
 ```
 
 ```{r trail-frames, echo=FALSE, fig.alt=c("Three cars halfway along their motion, with fading tapered trails.", "The cars at their final positions, with trails showing their recent paths.")}
@@ -183,7 +183,7 @@ wave <- ggplot(waves, aes(x, y, z = z, fill = z)) + geom_surface_3d() +
   scale_fill_gradient2(low = PAL["blue"], mid = "white", high = PAL["red"]) +
   coord_3d()
 morph <- animate_3d(wave, time = "state", tween = tween_3d(n = 1),
-  renderer = "vector", width = 480, height = 360, progress = FALSE)
+  backend = "vector", width = 480, height = 360, progress = FALSE)
 ```
 
 ```{r surface-frames, echo=FALSE, fig.alt=c("A wave surface in its first state, coloured by height.", "The flat middle frame interpolated between opposite wave heights.", "The final wave with all heights reversed.")}

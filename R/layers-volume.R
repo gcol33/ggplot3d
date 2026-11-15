@@ -29,15 +29,15 @@ emit_volume_3d <- function(data, params, panel_params) {
   for (axis in c("x", "y", "z")) data[[axis]] <- data[[axis]] * diff(panel_params$ranges[[axis]]) + panel_params$ranges[[axis]][1L]
   field <- stats_scalar_grid_3d(data)
   spec <- c(list(kind = "volume", mode = match(params$mode, c("absorption", "mip", "iso")) - 1L,
-    samples = params$samples, level = params$level %or3d% mean(range(field$value))), field,
+    samples = params$samples, level = params$levels %or3d% mean(range(field$value))), field,
     volume_transfer_3d(field, params$opacity, params$colours))
   spec$layer_id <- data$.layer[1L]
-  if (length(spec$level) != 1L || !is.finite(spec$level)) stop("level must be one finite number.", call. = FALSE)
+  if (length(spec$level) != 1L || !is.finite(spec$level)) stop("levels must be one finite number.", call. = FALSE)
   raymarch_payload_3d(spec, params, panel_params)
 }
 
 register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
-  parameters = list(mode = "absorption", opacity = c(0, 1), colours = c("#132B43", "#56B1F7"), samples = 256L, level = NULL))
+  parameters = list(mode = "absorption", opacity = c(0, 1), colours = c("#132B43", "#56B1F7"), samples = 256L, levels = NULL))
 
 #' Ray-marched scalar volumes
 #'
@@ -65,7 +65,7 @@ register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
 #' @param colours Colour ramp, or a function mapping scalar values to colours.
 #' @param samples Number of integration steps across the volume diagonal.
 #'   Grid-cell boundaries also split integration intervals.
-#' @param level Isovalue for `mode = "iso"`; defaults to the scalar-range midpoint.
+#' @param levels Isovalue for `mode = "iso"`; defaults to the scalar-range midpoint.
 #' @return A ggplot2 layer.
 #' @references Max (1995). Optical models for direct volume rendering.
 #'   IEEE Transactions on Visualization and Computer Graphics 1, 99-108.
@@ -80,10 +80,10 @@ register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
 #'   coord_3d(backend = backend_3d("raster", dpi = 60))
 geom_volume_3d <- function(mapping = NULL, data = NULL, ..., mode = c("absorption", "mip", "iso"),
                            opacity = c(0, 1), colours = c("#132B43", "#56B1F7"), samples = 256L,
-                           level = NULL, show.legend = NA, inherit.aes = TRUE) {
+                           levels = NULL, show.legend = NA, inherit.aes = TRUE) {
   if (!is.numeric(samples) || length(samples) != 1L || !is.finite(samples) || samples < 1 ||
       samples != trunc(samples) || samples > .Machine$integer.max) stop("samples must be a positive integer.", call. = FALSE)
   make_layer_3d(GeomVolume3D, mapping, data, "identity", "identity",
     stats_params_3d(list(mode = match.arg(mode), opacity = opacity, colours = colours,
-      samples = as.integer(samples), level = level), list(...)), show.legend, inherit.aes)
+      samples = as.integer(samples), levels = levels), list(...)), show.legend, inherit.aes)
 }

@@ -35,7 +35,7 @@ test_that("time functions, zoom and varying elevation use a locked sphere", {
   a <- animate_3d(motion_test_plot(projection = "perspective", roll = 8),
     azimuth = function(t) -45 + 30 * t, elevation = c(-20, 0, 40),
     zoom = c(.8, 1, 1.1), roll = function(t) 8 + t,
-    frames = 3, fps = 2, renderer = "vector", width = 260, height = 260,
+    frames = 3, fps = 2, backend = "vector", width = 260, height = 260,
     progress = FALSE)
   on.exit(unlink(dirname(a$frames[1L]), recursive = TRUE), add = TRUE)
   expect_equal(a$camera$azimuth, c(-45, -30, -15))

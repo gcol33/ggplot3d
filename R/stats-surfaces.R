@@ -18,11 +18,11 @@ StatSmooth3D <- ggplot2::ggproto("StatSmooth3D", StatGeometry3D,
   required_aes = c("x", "y", "z"),
   optional_aes = "weight",
   compute_group = function(data, scales, method = "loess", formula = NULL, n = 30L,
-                           se = TRUE, level = 0.95, span = 0.75, method.args = list(), se.alpha = 0.2,
+                           se = TRUE, level = 0.95, span = 0.75, method.args = list(), se_alpha = 0.2,
                            domain = "box", view = NULL, cond = list()) {
     se <- smooth_se_mode_3d(se)
     domain <- match.arg(domain, c("box", "hull"))
-    if (length(se.alpha) != 1L || !is.finite(se.alpha) || se.alpha < 0 || se.alpha > 1) stop("se.alpha must lie between zero and one.", call. = FALSE)
+    if (length(se_alpha) != 1L || !is.finite(se_alpha) || se_alpha < 0 || se_alpha > 1) stop("se_alpha must lie between zero and one.", call. = FALSE)
     model <- smooth_model_3d(data, scales, method, formula, span, method.args, view, cond)
     mesh <- stats_mesh_3d(scales, n, domain, data)
     values <- model(mesh$points, se != "none", level)
@@ -31,7 +31,7 @@ StatSmooth3D <- ggplot2::ggproto("StatSmooth3D", StatGeometry3D,
       warning("The model's predict() method returns no standard errors; drawing the fitted surface only.", call. = FALSE)
       se <- "none"
     }
-    smooth_surfaces_3d(mesh, values, se, se.alpha)
+    smooth_surfaces_3d(mesh, values, se, se_alpha)
   }
 )
 
@@ -163,7 +163,7 @@ typical_values_3d <- function(model, variables) {
   })
 }
 
-smooth_surfaces_3d <- function(mesh, values, se, se.alpha) {
+smooth_surfaces_3d <- function(mesh, values, se, se_alpha) {
   if (se == "band") values[!(is.finite(values$fit) & is.finite(values$lower) & is.finite(values$upper)), c("fit", "lower", "upper")] <- NA_real_
   base <- mesh$points; base$se <- values$se
   surface <- function(name, z, opacity, layer) {
@@ -173,14 +173,14 @@ smooth_surfaces_3d <- function(mesh, values, se, se.alpha) {
     out
   }
   out <- list(surface("fit", values$fit, 1, 0L))
-  if (se %in% c("surfaces", "band")) out <- c(out, list(surface("lower", values$lower, se.alpha, 1L), surface("upper", values$upper, se.alpha, 2L)))
-  if (se == "band") out <- c(out, list(smooth_walls_3d(out[[1L]], base, values, se.alpha)))
+  if (se %in% c("surfaces", "band")) out <- c(out, list(surface("lower", values$lower, se_alpha, 1L), surface("upper", values$upper, se_alpha, 2L)))
+  if (se == "band") out <- c(out, list(smooth_walls_3d(out[[1L]], base, values, se_alpha)))
   stats_bind_faces_3d(out)
 }
 
 # Vertical walls along the boundary edges of the fitted mesh, from the lower
 # to the upper confidence surface, so that the band encloses the fit.
-smooth_walls_3d <- function(fit, base, values, se.alpha) {
+smooth_walls_3d <- function(fit, base, values, se_alpha) {
   if (!nrow(fit)) return(data.frame())
   faces <- matrix(fit$.vertex, ncol = 3L, byrow = TRUE)
   edges <- rbind(faces[, 1:2, drop = FALSE], faces[, 2:3, drop = FALSE], faces[, c(3L, 1L), drop = FALSE])
@@ -194,7 +194,7 @@ smooth_walls_3d <- function(fit, base, values, se.alpha) {
   dx <- base$x[b] - base$x[a]; dy <- base$y[b] - base$y[a]; size <- sqrt(dx^2 + dy^2)
   out$nx <- rep(dy / size, each = 6L); out$ny <- rep(-dx / size, each = 6L); out$nz <- 0
   out$se <- rep((values$se[a] + values$se[b]) / 2, each = 6L)
-  out$surface <- "side"; out$.opacity <- se.alpha
+  out$surface <- "side"; out$.opacity <- se_alpha
   faces <- 2L * length(a)
   out$.face <- rep(seq_len(faces), each = 3L)
   out$.corner <- rep.int(1:3, faces)

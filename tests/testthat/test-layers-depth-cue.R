@@ -14,7 +14,7 @@ unit_limits_3d <- function() list(ggplot2::lims(x = c(0, 1), y = c(0, 1)), zlim(
 
 test_that("shadow_3d() and depth_cue_3d() validate their settings", {
   expect_s3_class(shadow_3d(), "ggplot3d_shadow")
-  expect_error(shadow_3d(on = "ceiling"), "on must name panes")
+  expect_error(shadow_3d(onto = "ceiling"), "onto must name panes")
   expect_error(shadow_3d(alpha = 0), "alpha")
   expect_error(shadow_3d(colour = "nocolour"), "colour must be one colour")
   expect_error(shadow_3d(light = c(0, 0, 1)), "light_3d")
@@ -36,7 +36,7 @@ test_that("a face casts its shadow along the light onto the floor and is cut to 
     unit_limits_3d() + coord_3d(expand = FALSE)
   s <- integration_packets(p)
   viewport <- ggplot3d:::new_scene_viewport(100, 100, 72)
-  spec <- shadow_3d(light = light_3d(c(1, 0, 1), space = "data"))
+  spec <- shadow_3d(light = light_3d(light_directional(c(1, 0, 1), space = "data")))
   shadow <- ggplot3d:::shadow_packet_3d(list(s$packet), spec, s$params, s$params$camera, viewport)
   xyz <- face_points_3d(shadow)
   expect_equal(range(xyz[, 1L]), c(.1, .4), tolerance = 1e-9)
@@ -45,17 +45,17 @@ test_that("a face casts its shadow along the light onto the floor and is cut to 
   expect_identical(shadow$styles$alpha_mode, "surface")
   expect_identical(unique(shadow$faces$opacity), 0.3)
   expect_identical(unique(shadow$faces$layer_id), 0L)
-  far <- shadow_3d(light = light_3d(c(1.5, 0, 1), space = "data"))
+  far <- shadow_3d(light = light_3d(light_directional(c(1.5, 0, 1), space = "data")))
   cut <- ggplot3d:::shadow_packet_3d(list(s$packet), far, s$params, s$params$camera, viewport)
   xyz <- face_points_3d(cut)
   expect_equal(range(xyz[, 1L]), c(0, .15), tolerance = 1e-9)
-  below <- shadow_3d(light = light_3d(c(0, 0, -1), space = "data"))
+  below <- shadow_3d(light = light_3d(light_directional(c(0, 0, -1), space = "data")))
   expect_null(ggplot3d:::shadow_packet_3d(list(s$packet), below, s$params, s$params$camera, viewport))
 })
 
 test_that("points cast discs of their drawn radius and strokes ribbons of their width", {
   d <- data.frame(x = .5, y = .5, z = .7)
-  overhead <- light_3d(c(0, 0, 1), space = "data")
+  overhead <- light_3d(light_directional(c(0, 0, 1), space = "data"))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 6) + unit_limits_3d() +
     coord_3d(azimuth = -90, elevation = 90, expand = FALSE, shadow = shadow_3d(light = overhead), panes = "floor")
   drawn <- drawn_panel_3d(p)
