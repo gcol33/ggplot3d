@@ -154,8 +154,7 @@ export_writer_3d <- function(file, format = NULL) {
   if (!is.null(format)) {
     scene_assert(is.character(format) && length(format) == 1L && !is.na(format) && nzchar(format),
       "format must be a single output format or NULL")
-    format <- tolower(format)
-    scene_assert(format %in% known, paste0("format must be one of ", paste(known, collapse = ", ")))
+    format <- check_choice_3d(tolower(format), known, "format")
   }
   if (is.null(file)) {
     scene_assert(!is.null(format), "Supply file or format")
@@ -541,18 +540,12 @@ export_tubes_3d <- function(paths, sides = 8L) {
   export_join_soups_3d(pieces)
 }
 
-export_unit_rows_3d <- function(x) {
-  length <- sqrt(rowSums(x^2))
-  length[!(length > 0)] <- 1
-  x / length
-}
-
 # A unit vector perpendicular to each row, built from the coordinate axis
 # least aligned with it.
 export_perpendicular_3d <- function(tangent) {
   axis <- max.col(-abs(tangent), ties.method = "first")
   e <- diag(3L)[axis, , drop = FALSE]
-  export_unit_rows_3d(e - rowSums(e * tangent) * tangent)
+  unit_rows_3d(e - rowSums(e * tangent) * tangent)
 }
 
 # Unit solids for marker shapes as flat-shaded soups, each fitting the unit
@@ -576,7 +569,7 @@ export_solid_templates_3d <- function() {
   ab <- (a + b) / 2; bc <- (b + c) / 2; ca <- (c + a) / 2
   k <- nrow(ico_t)
   sphere <- rbind(a, b, c, ab, bc, ca)
-  sphere <- sphere / sqrt(rowSums(sphere^2))
+  sphere <- unit_rows_3d(sphere)
   at <- function(block) (block - 1L) * k + seq_len(k)
   sphere_t <- rbind(cbind(at(1), at(4), at(6)), cbind(at(4), at(2), at(5)),
     cbind(at(6), at(5), at(3)), cbind(at(4), at(5), at(6)))

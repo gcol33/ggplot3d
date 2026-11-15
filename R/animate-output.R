@@ -39,9 +39,7 @@ motion_output_3d <- function(file, format = NULL) {
   if (!is.null(format)) {
     scene_assert(is.character(format) && length(format) == 1L && !is.na(format) && nzchar(format),
       "format must be a single output format or NULL")
-    format <- tolower(format)
-    scene_assert(format %in% known,
-      paste0("format must be one of ", paste(known, collapse = ", ")))
+    format <- check_choice_3d(tolower(format), known, "format")
   }
   if (is.null(file) && !is.null(format)) file <- tempfile("ggplot3d-animation-", fileext = paste0(".", format))
   if (is.null(file)) {

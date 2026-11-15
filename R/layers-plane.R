@@ -97,7 +97,7 @@ plane_rows_3d <- function(data, params, panel_params) {
   if (all(c("x", "y", "z", "nx", "ny", "nz") %in% names(data))) {
     rows <- which(is.na(offset))
     m <- cbind(data$nx, data$ny, data$nz)[rows, , drop = FALSE]
-    m <- m / sqrt(rowSums(m^2))
+    m <- unit_rows_3d(m, NaN)
     normal[rows, ] <- m
     offset[rows] <- -rowSums(m * cbind(data$x, data$y, data$z)[rows, , drop = FALSE])
   }

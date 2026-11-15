@@ -14,10 +14,10 @@ struct SurfaceHit {bool found=false;int illustrative=0,triangle=-1;double t=0,al
 struct Triangle {
   std::array<Vec3,3> p,n,c;std::array<double,3> alpha;int illustrative=0;
   SurfaceHit intersect(const Ray& ray) const {
-    SurfaceHit out;Vec3 e1=engine::subtract(p[1],p[0]),e2=engine::subtract(p[2],p[0]);
+    SurfaceHit out;Vec3 e1=engine::sub(p[1],p[0]),e2=engine::sub(p[2],p[0]);
     Vec3 h=engine::cross(ray.direction,e2);double det=engine::dot(e1,h);
     if(std::abs(det)<=1e-14*norm(e1)*norm(e2))return out;
-    Vec3 s=engine::subtract(ray.origin,p[0]);double u=engine::dot(s,h)/det;if(u<0 || u>1)return out;
+    Vec3 s=engine::sub(ray.origin,p[0]);double u=engine::dot(s,h)/det;if(u<0 || u>1)return out;
     Vec3 q=engine::cross(s,e1);double v=engine::dot(ray.direction,q)/det;if(v<0 || u+v>1)return out;
     double t=engine::dot(e2,q)/det;if(t<ray.near || t>ray.far)return out;
     out.found=true;out.t=t;out.illustrative=illustrative;double weights[3]={1-u-v,u,v};out.alpha=0;
@@ -48,7 +48,7 @@ struct Bounds {
   Vec3 lo{INFINITY,INFINITY,INFINITY},hi{-INFINITY,-INFINITY,-INFINITY};
   void add(const Vec3& p){for(int k=0;k<3;++k){lo[k]=std::min(lo[k],p[k]);hi[k]=std::max(hi[k],p[k]);}}
   void add(const Bounds& b){add(b.lo);add(b.hi);}
-  double area()const{Vec3 d=engine::subtract(hi,lo);return 2*(d[0]*d[1]+d[1]*d[2]+d[2]*d[0]);}
+  double area()const{Vec3 d=engine::sub(hi,lo);return 2*(d[0]*d[1]+d[1]*d[2]+d[2]*d[0]);}
   bool intersects(const Ray& r)const{Ray clipped=r;return clip_box(clipped,lo,hi);}
 };
 struct Object {Bounds bounds;int kind,index;double centre(int k)const{return (bounds.lo[k]+bounds.hi[k])/2;}};

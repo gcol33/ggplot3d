@@ -82,8 +82,8 @@ geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
                              texture = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSurface3D, mapping, data, stat, position,
     c(list(method = method, max_edge = max_edge, shade = shade, wireframe = wireframe,
-           hidden = hidden, outline = outline, alpha_mode = alpha_mode_3d(alpha_mode),
-           shading = shading_mode_3d(shading), material = material_argument_3d(material), hatch = hatch_argument_3d(hatch),
+           hidden = hidden, outline = outline, alpha_mode = check_choice_3d(alpha_mode, c("face", "surface"), "alpha_mode"),
+           shading = check_choice_3d(shading, c("flat", "smooth"), "shading"), material = material_argument_3d(material), hatch = hatch_argument_3d(hatch),
            texture = texture_argument_3d(texture), na.rm = na.rm), list(...)),
     material_legend_3d(material, show.legend), inherit.aes)
 }

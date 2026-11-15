@@ -43,7 +43,7 @@ icosphere_3d <- function(detail) {
   f <- rbind(c(1, 12, 6), c(1, 6, 2), c(1, 2, 8), c(1, 8, 11), c(1, 11, 12), c(2, 6, 10), c(6, 12, 5),
              c(12, 11, 3), c(11, 8, 7), c(8, 2, 9), c(4, 10, 5), c(4, 5, 3), c(4, 3, 7), c(4, 7, 9),
              c(4, 9, 10), c(5, 10, 6), c(3, 5, 12), c(7, 3, 11), c(9, 7, 8), c(10, 9, 2))
-  v <- v / sqrt(rowSums(v^2))
+  v <- unit_rows_3d(v)
   for (level in seq_len(detail)) {
     n <- nrow(v)
     a <- f[, 1L]; b <- f[, 2L]; c <- f[, 3L]
@@ -52,7 +52,7 @@ icosphere_3d <- function(detail) {
     unique_keys <- unique(keys)
     lo <- unique_keys %/% (n + 1); hi <- unique_keys %% (n + 1)
     mid <- v[lo, , drop = FALSE] + v[hi, , drop = FALSE]
-    v <- rbind(v, mid / sqrt(rowSums(mid^2)))
+    v <- rbind(v, unit_rows_3d(mid))
     m <- matrix(n + match(keys, unique_keys), ncol = 3L)
     ab <- m[, 1L]; bc <- m[, 2L]; ca <- m[, 3L]
     f <- rbind(cbind(a, ab, ca), cbind(b, bc, ab), cbind(c, ca, bc), cbind(ab, bc, ca))
@@ -133,7 +133,7 @@ check_detail_3d <- function(detail) {
 glyph_mesh_3d <- function(glyph = "sphere", detail = 2L) {
   detail <- check_detail_3d(detail)
   if (is.character(glyph)) {
-    if (length(glyph) != 1L || !glyph %in% glyph_names_3d) stop("glyph must be one of ", paste(glyph_names_3d, collapse = ", "), " or a mesh.", call. = FALSE)
+    check_choice_3d(glyph, glyph_names_3d, "glyph", c(paste0('"', glyph_names_3d, '"'), "a mesh"))
     key <- paste(glyph, detail)
     if (is.null(.glyph_cache_3d[[key]])) .glyph_cache_3d[[key]] <- builtin_glyph_3d(glyph, detail)
     return(.glyph_cache_3d[[key]])
@@ -155,7 +155,7 @@ align_z_3d <- function(direction) {
   along_x <- abs(z[, 1L]) > 0.9
   helper[along_x, 1L] <- 0
   helper[along_x, 2L] <- 1
-  x <- cross_rows_3d(helper, z); x <- x / sqrt(rowSums(x^2))
+  x <- unit_rows_3d(cross_rows_3d(helper, z))
   y <- cross_rows_3d(z, x)
   out[, 1L, turn] <- t(x); out[, 2L, turn] <- t(y); out[, 3L, turn] <- t(z)
   out

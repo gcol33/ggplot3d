@@ -4,12 +4,13 @@
 using namespace ggplot3d_geometry;
 
 namespace {
-std::vector<V> rows(const Rcpp::NumericMatrix& m) {
-  std::vector<V> out(m.nrow(),V{0,0,0});
-  for(int i=0;i<m.nrow();++i) for(int k=0;k<m.ncol()&&k<3;++k) {
-    out[i][k]=m(i,k);
-    if(!std::isfinite(out[i][k])) Rcpp::stop("Coordinates must be finite.");
-  }
+// Delaunay cells of the rows of an n x D matrix, as 1-based row indices.
+template<int D> Rcpp::IntegerMatrix delaunay_cells(const Rcpp::NumericMatrix& m) {
+  Delaunay<D> dt(matrix_points(m,true));
+  std::vector<int> kept;
+  for(size_t s=0;s<dt.vertex.size();++s) if(dt.alive[s]&&!dt.ghost(s)) kept.push_back(s);
+  Rcpp::IntegerMatrix out(kept.size(),D+1);
+  for(size_t i=0;i<kept.size();++i) for(int k=0;k<=D;++k) out(i,k)=dt.vertex[kept[i]][k]+1;
   return out;
 }
 }
@@ -19,12 +20,7 @@ std::vector<V> rows(const Rcpp::NumericMatrix& m) {
 // [[Rcpp::export(rng = false)]]
 Rcpp::IntegerMatrix geometry_delaunay_cpp(Rcpp::NumericMatrix xy) {
   if(xy.ncol()!=2) Rcpp::stop("Delaunay triangulation requires two columns.");
-  Delaunay<2> dt(rows(xy));
-  std::vector<int> kept;
-  for(size_t s=0;s<dt.vertex.size();++s) if(dt.alive[s]&&!dt.ghost(s)) kept.push_back(s);
-  Rcpp::IntegerMatrix out(kept.size(),3);
-  for(size_t i=0;i<kept.size();++i) for(int k=0;k<3;++k) out(i,k)=dt.vertex[kept[i]][k]+1;
-  return out;
+  return delaunay_cells<2>(xy);
 }
 
 // Delaunay tetrahedra of the rows of an n x 3 matrix, positively oriented,
@@ -32,12 +28,7 @@ Rcpp::IntegerMatrix geometry_delaunay_cpp(Rcpp::NumericMatrix xy) {
 // [[Rcpp::export(rng = false)]]
 Rcpp::IntegerMatrix geometry_delaunay3_cpp(Rcpp::NumericMatrix xyz) {
   if(xyz.ncol()!=3) Rcpp::stop("Delaunay tetrahedralisation requires three columns.");
-  Delaunay<3> dt(rows(xyz));
-  std::vector<int> kept;
-  for(size_t s=0;s<dt.vertex.size();++s) if(dt.alive[s]&&!dt.ghost(s)) kept.push_back(s);
-  Rcpp::IntegerMatrix out(kept.size(),4);
-  for(size_t i=0;i<kept.size();++i) for(int k=0;k<4;++k) out(i,k)=dt.vertex[kept[i]][k]+1;
-  return out;
+  return delaunay_cells<3>(xyz);
 }
 
 // Boundary triangles of the alpha complex, as 1-based row indices with a
@@ -48,7 +39,7 @@ Rcpp::IntegerMatrix geometry_delaunay3_cpp(Rcpp::NumericMatrix xyz) {
 // [[Rcpp::export(rng = false)]]
 Rcpp::IntegerMatrix geometry_alpha_shape_cpp(Rcpp::NumericMatrix xyz,double alpha) {
   if(xyz.ncol()!=3) Rcpp::stop("Alpha shapes require three columns.");
-  Delaunay<3> dt(rows(xyz));
+  Delaunay<3> dt(matrix_points(xyz,true));
   if(std::isnan(alpha)) alpha=alpha::covering_alpha(dt)*(1+1e-9);
   auto faces=alpha::faces(dt,alpha);
   Rcpp::IntegerMatrix out(faces.size(),4);
@@ -82,7 +73,7 @@ Rcpp::NumericVector geometry_rbf_cpp(Rcpp::NumericMatrix centres,Rcpp::NumericVe
 Rcpp::NumericMatrix geometry_point_normals_cpp(Rcpp::NumericMatrix xyz,int k) {
   if(xyz.ncol()!=3||xyz.nrow()<2) Rcpp::stop("Normal estimation needs at least two points in three columns.");
   if(k<1) Rcpp::stop("k must be positive.");
-  std::vector<V> n=normals::estimate(rows(xyz),k);
+  std::vector<V> n=normals::estimate(matrix_points(xyz,true),k);
   Rcpp::NumericMatrix out(n.size(),3);
   for(size_t i=0;i<n.size();++i) for(int a=0;a<3;++a) out(i,a)=n[i][a];
   return out;
@@ -101,7 +92,7 @@ Rcpp::DataFrame geometry_poisson_cpp(Rcpp::NumericMatrix xyz,Rcpp::NumericMatrix
   if(depth<1||depth>10) Rcpp::stop("depth must lie between 1 and 10.");
   if(method!="dual"&&method!="nets") Rcpp::stop("Poisson reconstruction extracts with the \"dual\" or \"nets\" method.");
   poisson::Options opt; opt.depth=depth; opt.screening=screening; opt.samples_per_node=samples_per_node;
-  poisson::Fit f=poisson::fit(rows(xyz),rows(normal),opt);
+  poisson::Fit f=poisson::fit(matrix_points(xyz,true),matrix_points(normal,true),opt);
   auto clock=std::chrono::steady_clock::now();
   Mesh mesh=method=="dual"?poisson::extract<true>(f,refine):poisson::extract<false>(f,refine);
   f.seconds.push_back(poisson::seconds_since(clock));

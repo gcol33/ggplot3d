@@ -208,6 +208,7 @@ Collate:
     'theme-3d.R'
     'tour-section-4d.R'
     'tween-3d.R'
+    'utils-3d.R'
     'view-3d.R'
     'view-interaction.R'
     'zzz.R'

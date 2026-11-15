@@ -86,8 +86,8 @@ static inline Vec3 area_vector(const Polygon& polygon, const Projection& project
   Vec3 normal{0, 0, 0};
   const Vec3 origin = projection.model(polygon[0].xyz);
   for (std::size_t i = 1; i+1 < polygon.size(); ++i) {
-    Vec3 part = cross(subtract(projection.model(polygon[i].xyz), origin),
-                      subtract(projection.model(polygon[i+1].xyz), origin));
+    Vec3 part = cross(sub(projection.model(polygon[i].xyz), origin),
+                      sub(projection.model(polygon[i+1].xyz), origin));
     for (int k = 0; k < 3; ++k) normal[k] += part[k];
   }
   return normal;
@@ -102,7 +102,7 @@ static inline Vec3 face_normal(const Polygon& polygon, const Projection& project
   double length = std::sqrt(dot(normal, normal));
   double extent=0;
   for(const Vertex& v:polygon) {
-    Vec3 delta=subtract(projection.model(v.xyz),origin);
+    Vec3 delta=sub(projection.model(v.xyz),origin);
     extent=std::max(extent,std::sqrt(dot(delta,delta)));
   }
   const bool flat = !(std::isfinite(length) && length > projection.resolved.tolerance*extent);
@@ -118,13 +118,13 @@ static inline Vec3 face_normal(const Polygon& polygon, const Projection& project
   for (std::size_t i = 0; i < polygon.size(); ++i) {
     Vec3 a = projection.model(polygon[i].xyz);
     Vec3 b = projection.model(polygon[(i+1)%polygon.size()].xyz);
-    require(std::abs(dot(subtract(a, origin), normal)) <= relative,
+    require(std::abs(dot(sub(a, origin), normal)) <= relative,
             "faces must be planar");
-    Vec3 edge = subtract(b, a);
+    Vec3 edge = sub(b, a);
     require(std::sqrt(dot(edge, edge)) > projection.resolved.tolerance,
             "face rings must have distinct consecutive corners and implicit closure");
     for (const Vertex& vertex : polygon) {
-      require(dot(cross(edge, subtract(projection.model(vertex.xyz), a)), normal) >=
+      require(dot(cross(edge, sub(projection.model(vertex.xyz), a)), normal) >=
               -relative*std::sqrt(dot(edge,edge)), "faces must be convex simple rings");
     }
   }

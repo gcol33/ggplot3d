@@ -26,14 +26,9 @@ text_orientation_3d <- function(params, centre, panel_params) {
   if (sum(supplied) > 1L) stop("Supply only one of plane, normal or facing.", call. = FALSE)
   plane <- params$plane
   if (is.null(params$normal) && is.null(params$facing)) plane <- plane %or3d% "xy"
-  if (!is.null(plane) && !(is.character(plane) && length(plane) == 1L && !is.na(plane) && plane %in% text_planes_3d)) {
-    stop("plane must be one of \"xy\", \"xz\" or \"yz\".", call. = FALSE)
-  }
+  if (!is.null(plane)) check_choice_3d(plane, text_planes_3d, "plane")
   facing <- params$facing %or3d% "fixed"
-  if (!is.null(params$facing) && !(is.character(facing) && length(facing) == 1L &&
-      !is.na(facing) && facing %in% c("camera_plane", "camera_point"))) {
-    stop("facing must be \"camera_plane\" or \"camera_point\".", call. = FALSE)
-  }
+  if (!is.null(params$facing)) check_choice_3d(facing, c("camera_plane", "camera_point"), "facing")
   hint <- if (!is.null(params$up)) text_direction_3d(params$up, "up") else NULL
   frame <- frame_of_3d(panel_params)
   scale <- panel_params$camera$aspect / max(panel_params$camera$aspect)

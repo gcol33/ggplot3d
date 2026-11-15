@@ -83,7 +83,7 @@ static inline SplitPlane supporting_plane(const Piece& piece, const Projection& 
   if (piece.kind != Kind::face && dot(normal,normal)==0) {
     normal = p.resolved.forward;
     if (piece.polygon.size() == 2) {
-      Vec3 direction = subtract(p.model(piece.polygon[1].xyz), p.model(piece.polygon[0].xyz));
+      Vec3 direction = sub(p.model(piece.polygon[1].xyz), p.model(piece.polygon[0].xyz));
       normal = cross(direction, p.resolved.right);
       Vec3 alternate = cross(direction, p.resolved.up);
       if (dot(alternate, alternate) > dot(normal, normal)) normal = alternate;
@@ -254,7 +254,7 @@ static inline std::vector<Piece> partition_scene(std::vector<Piece> pieces,
       }
     }
     double eye_side = projection.camera.perspective ?
-      dot(plane.normal, subtract(projection.resolved.eye, plane.origin)) :
+      dot(plane.normal, sub(projection.resolved.eye, plane.origin)) :
       -dot(plane.normal, projection.resolved.ray);
     auto& near = eye_side >= 0 ? positive : negative;
     auto& far = eye_side >= 0 ? negative : positive;

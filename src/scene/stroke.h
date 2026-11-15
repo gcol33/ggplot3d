@@ -12,7 +12,7 @@ static inline std::vector<Piece> stroke_area(Piece source,const ScenePacket& pac
   for(const auto& vertex:original) {
     while(path.size()>=2) {
       auto a=p.model(path[path.size()-2].xyz),b=p.model(path.back().xyz),c=p.model(vertex.xyz);
-      auto ab=subtract(b,a),bc=subtract(c,b),normal=cross(ab,bc);
+      auto ab=sub(b,a),bc=sub(c,b),normal=cross(ab,bc);
       double length=std::sqrt(dot(ab,ab))+std::sqrt(dot(bc,bc));
       if(dot(ab,bc)<0 || std::sqrt(dot(normal,normal))>p.resolved.tolerance*length) break;
       path.pop_back();

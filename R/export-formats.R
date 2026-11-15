@@ -32,7 +32,7 @@ write_stl_3d <- function(scene, file, options) {
   tri <- mesh$triangles
   a <- mesh$position[tri[1L, ], , drop = FALSE]; b <- mesh$position[tri[2L, ], , drop = FALSE]
   c <- mesh$position[tri[3L, ], , drop = FALSE]
-  normal <- export_unit_rows_3d(cross_rows_3d(b - a, c - a))
+  normal <- unit_rows_3d(cross_rows_3d(b - a, c - a))
   header <- charToRaw("binary STL written by ggplot3d")
   records <- rbind(matrix(float_bytes_3d(rbind(t(normal), t(a), t(b), t(c))), 48L), matrix(raw(2L * ncol(tri)), 2L))
   writeBin(c(header, raw(80L - length(header)), int_bytes_3d(ncol(tri)), as.vector(records)), file)

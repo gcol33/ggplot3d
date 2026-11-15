@@ -105,8 +105,7 @@ hatch_merge_3d <- function(packet, data, faces, params, panel_params) {
     camera <- key_camera_3d(panel_params$camera %or3d% new_camera_3d())
     scaled <- sweep(model, 2L, camera$model_scale, "*")
     a <- scaled[triangles[, 1L], , drop = FALSE]; b <- scaled[triangles[, 2L], , drop = FALSE]; c <- scaled[triangles[, 3L], , drop = FALSE]
-    normal <- cross_rows_3d(b - a, c - a)
-    length <- sqrt(rowSums(normal^2)); normal <- normal / ifelse(length > 0, length, 1)
+    normal <- unit_rows_3d(cross_rows_3d(b - a, c - a))
     levels <- hatch_levels_3d(hatch_darkness_3d(normal, (a + b + c) / 3, camera, light, params$material), spec$cross)
   } else levels <- cbind(rep(3L, nrow(triangles)), if (spec$cross) rep(if (spec$tone) 0L else 3L, nrow(triangles)))
   lines <- hatch_lines_cpp(model, triangles - 1L, directions, spec$spacing, matrix(as.integer(levels), nrow(triangles)))

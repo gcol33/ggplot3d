@@ -273,7 +273,7 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
   make_layer_3d(GeomMesh3D, mapping, data, stat, position,
     c(list(shade = shade, wireframe = wireframe, hidden = hidden, subdivide = subdivide, remesh = remesh,
       decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, outline = outline,
-      alpha_mode = alpha_mode_3d(alpha_mode), shading = shading_mode_3d(shading), material = material_argument_3d(material),
+      alpha_mode = check_choice_3d(alpha_mode, c("face", "surface"), "alpha_mode"), shading = check_choice_3d(shading, c("flat", "smooth"), "shading"), material = material_argument_3d(material),
       hatch = hatch_argument_3d(hatch), texture = texture, na.rm = na.rm), list(...)),
     material_legend_3d(material, show.legend), inherit.aes)
 }

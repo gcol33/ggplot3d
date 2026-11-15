@@ -618,7 +618,7 @@ depth_factor_3d <- function(ctx, depth, strength) {
 # through the frame's Jacobian.
 frame_directions_3d <- function(frame, points, direction, scale) {
   d <- sweep(frame_derivative_3d(frame, points, direction, identity)$model, 2L, scale, "*")
-  d / sqrt(rowSums(d^2))
+  unit_rows_3d(d, NaN)
 }
 
 # Model points of text-local millimetres (x, y) placed at a model centre, with
@@ -969,7 +969,7 @@ axis_layout_3d <- function(frame, guide, project, centre) {
     if (straight) return(matrix(tangent, length(values), 2L, byrow = TRUE))
     delta <- 1e-4
     d <- at(values + delta)[, 1:2, drop = FALSE] - at(values - delta)[, 1:2, drop = FALSE]
-    d / sqrt(rowSums(d^2))
+    unit_rows_3d(d, NaN)
   }
   normals_at <- function(values) {
     if (straight || !length(values)) return(normal)

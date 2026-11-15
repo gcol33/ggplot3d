@@ -66,7 +66,7 @@ static inline ProjectedPiece project_piece(const Piece& piece,const Projection& 
     long double nx=dot(plane.normal,p.resolved.right), ny=dot(plane.normal,p.resolved.up);
     long double nz=dot(plane.normal,p.resolved.ray);
     out.ray_normal={nx,ny,nz};
-    long double d=dot(plane.normal,subtract(plane.origin,p.resolved.eye));
+    long double d=dot(plane.normal,sub(plane.origin,p.resolved.eye));
     if(p.camera.perspective && d!=0) out.field={nx/d,ny/d,nz/d};
     else if(!p.camera.perspective && nz!=0) out.field={-nx/nz,-ny/nz,d/nz};
     else out.area=false;
@@ -245,7 +245,7 @@ static inline int occlusion_relation(const Piece& a,const Piece& b,const Project
         auto plane=supporting_plane(face,p);
         int sa=classify(a,plane,p),sb=classify(b,plane,p);
         if(!((sa==1 && sb==2)||(sa==2 && sb==1))) return 0;
-        double eye=p.camera.perspective ? dot(plane.normal,subtract(p.resolved.eye,plane.origin)):
+        double eye=p.camera.perspective ? dot(plane.normal,sub(p.resolved.eye,plane.origin)):
           -dot(plane.normal,p.resolved.ray);
         return (eye>=0 ? sa==2:sa==1) ? 1:2;
       };

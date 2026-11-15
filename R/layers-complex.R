@@ -99,7 +99,7 @@ StatRiemannSphere3D <- ggplot2::ggproto("StatRiemannSphere3D",StatGeometry3D,
     out <- parametric_surface_3d(sphere,c(0,2*pi),c(0,pi),c(n,max(3L,ceiling(n/2))),c(TRUE,FALSE),FALSE,list(),FALSE,.002,10,0L)
     X <- as.matrix(out[c("x","y","z")])
     centroid <- vapply(seq_len(3L),function(j) rep(rowMeans(matrix(X[,j],ncol=3,byrow=TRUE)),each=3L),numeric(nrow(out)))
-    centroid <- centroid/sqrt(rowSums(centroid^2))
+    centroid <- unit_rows_3d(centroid)
     value <- complex_values_3d(fun,sphere_complex_3d(centroid))
     out$arg <- Arg(value); out$mod <- Mod(value); out$domain_colour <- phase_colour_3d(value,contours)
     out[c("nx","ny","nz")] <- as.data.frame(X)

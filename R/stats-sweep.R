@@ -197,7 +197,7 @@ StatSweep3D <- ggplot2::ggproto("StatSweep3D", StatGeometry3D,
       data <- curve_points_3d(data, closed)
     }
     shape <- sweep_profile_3d(profile, sides, profile_closed)
-    millimetres <- check_unit_3d(radius.unit, "radius.unit") == "mm"
+    millimetres <- check_choice_3d(radius.unit, c("data", "mm"), "radius.unit") == "mm"
     default <- if (millimetres) sweep_default_mm_3d[[if (shape$closed) "tube" else "ribbon"]] else
       (if (shape$closed) 0.02 else 0.08) * sqrt(sum(vapply(c("x", "y", "z"), function(a) diff(stats_scale_3d(scales, a)$dimension())^2, numeric(1))))
     fallback <- radius %or3d% width %or3d% default

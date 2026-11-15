@@ -79,7 +79,7 @@ geom_tube_3d <- function(mapping = NULL, data = NULL, position = "identity", ...
                          radius.unit = "data", cap = c("round", "flat", "none"), closed = FALSE, spline = NULL, n = 100L,
                          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSweep3D, mapping, data, StatSweep3D, position,
-    stats_params_3d(list(sides = sides, radius = radius, radius.unit = check_unit_3d(radius.unit, "radius.unit"),
+    stats_params_3d(list(sides = sides, radius = radius, radius.unit = check_choice_3d(radius.unit, c("data", "mm"), "radius.unit"),
       cap = match.arg(cap), closed = closed, spline = spline, n = n, na.rm = na.rm, shade = TRUE), list(...)),
     show.legend, inherit.aes)
 }
@@ -91,7 +91,7 @@ geom_ribbon_3d <- function(mapping = NULL, data = NULL, position = "identity", .
                            na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSweep3D, mapping, data, StatSweep3D, position,
     stats_params_3d(list(profile = rbind(c(0, -0.5), c(0, 0.5)), width = width,
-      radius.unit = check_unit_3d(width.unit, "width.unit"), normal = normal, closed = closed,
+      radius.unit = check_choice_3d(width.unit, c("data", "mm"), "width.unit"), normal = normal, closed = closed,
       spline = spline, n = n, cap = "none", na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
 
@@ -124,7 +124,7 @@ stat_sweep_3d <- function(mapping = NULL, data = NULL, geom = GeomSweep3D, posit
                           closed = FALSE, profile_closed = NULL, spline = NULL, n = 100L,
                           na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(geom, mapping, data, StatSweep3D, position,
-    stats_params_3d(list(profile = profile, radius = radius, radius.unit = check_unit_3d(radius.unit, "radius.unit"),
+    stats_params_3d(list(profile = profile, radius = radius, radius.unit = check_choice_3d(radius.unit, c("data", "mm"), "radius.unit"),
       cap = match.arg(cap), normal = normal, closed = closed, profile_closed = profile_closed, spline = spline, n = n,
       na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
 }
@@ -147,7 +147,7 @@ GeomSweep3D <- ggplot2::ggproto("GeomSweep3D", GeomStatsSurface3D,
 # millimetre sweeps are meshes swept from the centre line.
 emit_sweep_3d <- function(data, params, panel_params) {
   if (is.null(data$.sweep_size)) return(emit_stats_surface_3d(data, params, panel_params))
-  unit <- check_unit_3d(params$radius.unit, "radius.unit")
+  unit <- check_choice_3d(params$radius.unit, c("data", "mm"), "radius.unit")
   if (unit == "mm" && !is.null(panel_params$space_context)) stop("radius.unit = \"mm\" needs the Euclidean coordinates of coord_3d().", call. = FALSE)
   if (sweep_quadrics_3d(data, params, panel_params)) return(emit_tube_quadrics_3d(data, params, panel_params, unit))
   if (unit == "data") return(emit_stats_surface_3d(sweep_space_mesh_3d(data, params, panel_params, "data"), params, panel_params))

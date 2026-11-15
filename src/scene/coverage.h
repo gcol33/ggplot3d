@@ -94,7 +94,7 @@ static inline Polygon stroke_bounds(const Piece& piece, const ScenePacket& packe
   bool constant_depth=std::abs(a[2]-b[2])<=p.resolved.tolerance;
   Vec3 across{};
   for(int k=0;k<3;++k) across[k]=(-uy*p.resolved.right[k]+ux*p.resolved.up[k]);
-  Vec3 direction=subtract(p.model(piece.polygon[1].xyz),p.model(piece.polygon[0].xyz));
+  Vec3 direction=sub(p.model(piece.polygon[1].xyz),p.model(piece.polygon[0].xyz));
   normal=cross(direction,across);
   double norm=std::sqrt(dot(normal,normal));
   for(double& x:normal) x/=norm;
@@ -145,17 +145,17 @@ struct CoverageFace {
 static inline double face_ray_parameter(const CoverageFace& face,const Vertex& vertex,
                                        const Projection& p) {
   Vec3 model=p.model(vertex.xyz);
-  Vec3 ray=p.camera.perspective ? subtract(model,p.resolved.eye) : p.resolved.ray;
+  Vec3 ray=p.camera.perspective ? sub(model,p.resolved.eye) : p.resolved.ray;
   double denominator=dot(face.plane.normal,ray);
   if(std::abs(denominator)<=p.resolved.tolerance) return R_PosInf;
-  return -dot(face.plane.normal,subtract(model,face.plane.origin))/denominator;
+  return -dot(face.plane.normal,sub(model,face.plane.origin))/denominator;
 }
 static inline void lift_coverage(Piece& piece,const CoverageFace& face,const Projection& p) {
   piece.whole_stroke_parts=0;
   if(piece.anchor.empty()) piece.anchor=piece.polygon;
   for(Vertex& v:piece.polygon) {
     Vec3 model=p.model(v.xyz);
-    Vec3 ray=p.camera.perspective ? subtract(model,p.resolved.eye) : p.resolved.ray;
+    Vec3 ray=p.camera.perspective ? sub(model,p.resolved.eye) : p.resolved.ray;
     double t=face_ray_parameter(face,v,p);
     require(std::isfinite(t),"unrepresentable hidden-stroke coverage plane");
     for(int k=0;k<3;++k) v.xyz[k]=(model[k]+t*ray[k])/p.scale[k];
@@ -238,8 +238,8 @@ public:
         for(std::size_t i=0;i<face->polygon.size();++i) {
           Vec3 a=projection.model(face->polygon[i].xyz);
           Vec3 b=projection.model(face->polygon[(i+1)%face->polygon.size()].xyz);
-          Vec3 ray=projection.camera.perspective ? subtract(a,projection.resolved.eye) : projection.resolved.ray;
-          Vec3 normal=cross(subtract(b,a),ray);
+          Vec3 ray=projection.camera.perspective ? sub(a,projection.resolved.eye) : projection.resolved.ray;
+          Vec3 normal=cross(sub(b,a),ray);
           double length=std::sqrt(dot(normal,normal));
           if(length<=projection.resolved.tolerance) continue;
           for(double& x:normal) x/=length;
@@ -256,7 +256,7 @@ public:
         };
         auto behind=[&](const Vertex& centre) {
           double t=face_ray_parameter(*face,centre,projection);
-          Vec3 ray=projection.camera.perspective ? subtract(projection.model(centre.xyz),projection.resolved.eye) : projection.resolved.ray;
+          Vec3 ray=projection.camera.perspective ? sub(projection.model(centre.xyz),projection.resolved.eye) : projection.resolved.ray;
           return t < -projection.resolved.tolerance/std::sqrt(dot(ray,ray));
         };
         std::vector<Piece> settled;

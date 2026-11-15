@@ -102,7 +102,7 @@ Rcpp::List quadric_fragment_parts_cpp(Rcpp::List packet, Rcpp::List camera, Rcpp
   for (R_xlen_t i = 0; i < n; ++i) {
     const Vec3 nm{normal(i, 0), normal(i, 1), normal(i, 2)}, box{point(i, 0), point(i, 1), point(i, 2)};
     part[i] = quadric_facet_part(view.shape(rows[i]), p, nm, box);
-    const Vec3 sight = p.camera.perspective ? subtract(p.model(box), p.resolved.eye) : p.resolved.ray;
+    const Vec3 sight = p.camera.perspective ? sub(p.model(box), p.resolved.eye) : p.resolved.ray;
     back[i] = dot(nm, sight) >= 0;
   }
   return Rcpp::List::create(Rcpp::Named("part")=part, Rcpp::Named("back")=back);

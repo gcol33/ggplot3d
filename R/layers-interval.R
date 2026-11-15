@@ -13,18 +13,11 @@ interval_rows_3d <- function(data, axis) {
 
 cap_planes_3d <- c("auto", "xy", "xz", "yz", "cross")
 
-check_cap_plane_3d <- function(plane) {
-  if (!is.character(plane) || length(plane) != 1L || !plane %in% cap_planes_3d) {
-    stop("cap_plane must be one of ", paste0('"', cap_planes_3d, '"', collapse = ", "), ".", call. = FALSE)
-  }
-  plane
-}
-
 # Axes along which the caps of a bar on `axis` extend. A bar lying in the plane
 # is capped along the plane's other axis; a bar normal to the plane, or any bar
 # with "cross", is capped along both perpendicular axes.
 cap_axes_3d <- function(axis, plane) {
-  plane <- check_cap_plane_3d(plane %or3d% "auto")
+  plane <- check_choice_3d(plane %or3d% "auto", cap_planes_3d, "cap_plane")
   if (plane == "auto") plane <- if (axis == "z") "xz" else "xy"
   if (plane == "cross") return(setdiff(axes_3d, axis))
   in_plane <- strsplit(plane, "", fixed = TRUE)[[1L]]
@@ -334,7 +327,7 @@ geom_errorbar_3d <- function(mapping = NULL, data = NULL, stat = "identity", pos
                              width = NULL, cap_plane = "auto",
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomErrorbar3D, mapping, data, stat, position,
-    c(list(width = width, cap_plane = check_cap_plane_3d(cap_plane), na.rm = na.rm), list(...)),
+    c(list(width = width, cap_plane = check_choice_3d(cap_plane, cap_planes_3d, "cap_plane"), na.rm = na.rm), list(...)),
     show.legend, inherit.aes)
 }
 
@@ -363,7 +356,7 @@ geom_crossbar_3d <- function(mapping = NULL, data = NULL, stat = "identity", pos
                              box.linetype = NULL, box.linewidth = NULL,
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomCrossbar3D, mapping, data, stat, position,
-    c(list(width = width, cap_plane = check_cap_plane_3d(cap_plane), fatten = fatten,
+    c(list(width = width, cap_plane = check_choice_3d(cap_plane, cap_planes_3d, "cap_plane"), fatten = fatten,
       middle_gp = crossbar_gp_3d(middle.color %or3d% middle.colour, middle.linetype, middle.linewidth),
       box_gp = crossbar_gp_3d(box.color %or3d% box.colour, box.linetype, box.linewidth),
       na.rm = na.rm), list(...)),
@@ -423,7 +416,7 @@ prepare_stem_3d <- function(out, data, plot, params) {
 #' @export
 geom_stem_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
                          base = 0, axis = "z", na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  axis <- check_axis_3d(axis, axes_3d)
+  axis <- check_choice_3d(axis, axes_3d, "axis")
   if (!is.numeric(base) || length(base) != 1L || is.na(base)) stop("base must be a number.", call. = FALSE)
   make_layer_3d(GeomStem3D, mapping, data, stat, position,
     c(list(base = base, axis = axis, na.rm = na.rm), list(...)), show.legend, inherit.aes)
@@ -525,14 +518,12 @@ stat_summary_3d <- function(mapping = NULL, data = NULL, geom = "pointrange", po
                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (is.character(geom)) {
     geoms <- summary_geoms_3d()
-    if (length(geom) != 1L || !geom %in% names(geoms)) {
-      stop("geom must be one of ", paste0('"', names(geoms), '"', collapse = ", "), " or a geom prototype.", call. = FALSE)
-    }
+    check_choice_3d(geom, names(geoms), "geom", c(paste0('"', names(geoms), '"'), "a geom prototype"))
     geom <- geoms[[geom]]
   }
   if (!inherits(geom, "Geom")) stop("geom must be a geometry name or prototype.", call. = FALSE)
   make_layer_3d(geom, mapping, data, StatSummary3D, position,
     c(list(fun.data = fun.data, fun = fun, fun.max = fun.max, fun.min = fun.min, fun.args = fun.args,
-      axis = check_axis_3d(axis, axes_3d), na.rm = na.rm), list(...)),
+      axis = check_choice_3d(axis, axes_3d, "axis"), na.rm = na.rm), list(...)),
     show.legend, inherit.aes)
 }

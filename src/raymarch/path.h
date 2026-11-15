@@ -25,8 +25,8 @@ inline Ray lens_ray(const engine::Projection& p,double x,double y,double apertur
     Vec3 target=point(r.origin,r.direction,focus/engine::dot(r.direction,c.forward));
     double radius=aperture*std::sqrt(rng.next()),phi=2*engine::pi*rng.next();
     for(int k=0;k<3;++k)r.origin[k]+=radius*(std::cos(phi)*c.right[k]+std::sin(phi)*c.up[k]);
-    r.direction=unit(engine::subtract(target,r.origin));
-    double forward=engine::dot(r.direction,c.forward),offset=engine::dot(engine::subtract(r.origin,c.eye),c.forward);
+    r.direction=unit(engine::sub(target,r.origin));
+    double forward=engine::dot(r.direction,c.forward),offset=engine::dot(engine::sub(r.origin,c.eye),c.forward);
     r.near=(c.near-offset)/forward;r.far=(c.far-offset)/forward;
   }
   return r;

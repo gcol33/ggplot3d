@@ -183,12 +183,6 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
 # Drawing parameters of the geoms that draw triangulated surfaces.
 surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL, texture = NULL)
 
-shading_mode_3d <- function(shading) {
-  if (!is.character(shading) || length(shading) != 1L || !(shading %in% c("flat", "smooth")))
-    stop("shading must be \"flat\" or \"smooth\".", call. = FALSE)
-  shading
-}
-
 # Per-corner attributes of a smooth-shaded layer: the unit vertex normals of
 # face corners and, where the fill varies within a face, the encoded sRGB fill
 # channels of every face corner. Other corners carry NA.
@@ -333,12 +327,6 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
 
 `%or3d%` <- function(x, y) if (is.null(x)) y else x
 
-alpha_mode_3d <- function(mode) {
-  if (!is.character(mode) || length(mode) != 1L || !(mode %in% c("face", "surface")))
-    stop("alpha_mode must be \"face\" or \"surface\".", call. = FALSE)
-  mode
-}
-
 # Sheet of each face: the connected component of the faces that share a vertex
 # position. The label is the smallest face index of the component, reached by
 # taking the minimum over shared vertices and then following labels to their
@@ -376,7 +364,7 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL, sheets = NULL) 
   styles$colour[kinds == "faces"] <- NA_character_
   styles$alpha[is.na(styles$alpha)] <- 1
   if (!is.null(normals)) styles[c("normal_x", "normal_y", "normal_z")] <- as.data.frame(normals)
-  if (!is.null(params$alpha_mode)) styles$alpha_mode <- rep(alpha_mode_3d(params$alpha_mode), length(rows))
+  if (!is.null(params$alpha_mode)) styles$alpha_mode <- rep(check_choice_3d(params$alpha_mode, c("face", "surface"), "alpha_mode"), length(rows))
   if (!is.null(sheets)) styles$sheet <- sheets
   keys <- lapply(styles[setdiff(names(styles), "style_id")], function(x) match(x, unique(x)))
   order <- do.call(order, c(keys, list(method = "radix")))
@@ -461,12 +449,9 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     corner <- kinds[owner] == "faces"
     if (any(corner)) {
       vertex_normals <- cbind(data$nx, data$ny, data$nz)[primitives[corner], , drop = FALSE]
-      vertex_normals <- vertex_normals / sqrt(rowSums(vertex_normals^2))
+      vertex_normals <- unit_rows_3d(vertex_normals, NaN)
       face <- unique(owner[corner])
-      mean <- rowsum(vertex_normals, owner[corner], reorder = FALSE) / counts[face]
-      length <- sqrt(rowSums(mean^2))
-      ok <- is.finite(length) & length > 0
-      normals[face[ok], ] <- mean[ok, , drop = FALSE] / length[ok]
+      normals[face, ] <- unit_rows_3d(rowsum(vertex_normals, owner[corner], reorder = FALSE) / counts[face], NaN)
     }
   }
   sheets <- NULL

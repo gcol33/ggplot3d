@@ -93,7 +93,7 @@ StatImplicitFit3D <- ggplot2::ggproto("StatImplicitFit3D", StatGeometry3D,
     }
     normal <- if (all(c("nx", "ny", "nz") %in% names(data))) {
       given <- as.matrix(data[keep, c("nx", "ny", "nz")])
-      given / sqrt(rowSums(given^2))
+      unit_rows_3d(given, NaN)
     } else point_normals_3d(xyz, as.integer(k))
     if (any(!is.finite(normal))) stop("Point normals must be finite and nonzero.", call. = FALSE)
     if (method == "poisson") {

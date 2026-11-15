@@ -4,11 +4,6 @@ using namespace ggplot3d_geometry;
 using parametric::UV;
 
 namespace {
-std::vector<V> points(const Rcpp::NumericMatrix& m) {
-  std::vector<V> out(m.nrow());
-  for(int i=0;i<m.nrow();++i) out[i]={m(i,0),m(i,1),m(i,2)};
-  return out;
-}
 std::vector<std::array<int,3>> triangles(const Rcpp::IntegerMatrix& m) {
   std::vector<std::array<int,3>> out(m.nrow());
   for(int i=0;i<m.nrow();++i) out[i]={m(i,0)-1,m(i,1)-1,m(i,2)-1};
@@ -38,7 +33,7 @@ Rcpp::List mesh_list(const std::vector<std::array<int,3>>& tri,const std::vector
 Rcpp::List parametric_grid_cpp(Rcpp::IntegerVector n,Rcpp::LogicalVector closed,Rcpp::LogicalVector twist,
                                Rcpp::NumericMatrix xyz,Rcpp::NumericVector u,Rcpp::NumericVector v) {
   parametric::QuadGrid grid{{n[0],n[1]},{closed[0]==TRUE,closed[1]==TRUE},{twist[0]==TRUE,twist[1]==TRUE}};
-  std::vector<V> p=points(xyz); int m=p.size();
+  std::vector<V> p=matrix_points(xyz); int m=p.size();
   V lo=p[0],hi=p[0];
   for(const V& x:p) for(int a=0;a<3;++a) { lo[a]=std::min(lo[a],x[a]); hi[a]=std::max(hi[a],x[a]); }
   double eps=1e-10*std::max(norm(sub(hi,lo)),std::numeric_limits<double>::min());
@@ -92,7 +87,7 @@ Rcpp::List parametric_bisect_cpp(Rcpp::IntegerMatrix tri,Rcpp::NumericMatrix u,R
   auto e=parametric::edges(t,c,f);
   if(static_cast<size_t>(marked.size())!=e.ends.size()) Rcpp::stop("One mark per edge is required.");
   std::vector<char> mark(marked.size()); for(int i=0;i<marked.size();++i) mark[i]=marked[i]==TRUE;
-  auto s=parametric::bisect(t,c,f,points(xyz),e,mark);
+  auto s=parametric::bisect(t,c,f,matrix_points(xyz),e,mark);
   Rcpp::List out=mesh_list(s.tri,s.uv);
   Rcpp::IntegerVector split(s.split_edges.size());
   for(size_t i=0;i<s.split_edges.size();++i) split[i]=s.split_edges[i]+1;
@@ -102,7 +97,7 @@ Rcpp::List parametric_bisect_cpp(Rcpp::IntegerMatrix tri,Rcpp::NumericMatrix u,R
 
 // [[Rcpp::export(rng = false)]]
 Rcpp::NumericMatrix parametric_face_normals_cpp(Rcpp::IntegerMatrix tri,Rcpp::NumericMatrix xyz) {
-  auto n=parametric::face_normals(triangles(tri),points(xyz));
+  auto n=parametric::face_normals(triangles(tri),matrix_points(xyz));
   Rcpp::NumericMatrix out(n.size(),3);
   for(size_t i=0;i<n.size();++i) for(int a=0;a<3;++a) out(i,a)=n[i][a];
   return out;

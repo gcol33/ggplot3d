@@ -32,7 +32,7 @@ struct Context {
       const auto& triangle=scene.triangles[surface.triangle];
       Vec3 centre;
       for(int k=0;k<3;++k) centre[k]=(triangle.p[0][k]+triangle.p[1][k]+triangle.p[2][k])/3;
-      origin=raymarch::point(origin,raymarch::unit(engine::subtract(centre,p)),epsilon);
+      origin=raymarch::point(origin,raymarch::unit(engine::sub(centre,p)),epsilon);
     }
     const double golden = (std::sqrt(5.0)-1)/2;
     double sum = 0;

@@ -102,8 +102,7 @@ material_index_3d <- function(styles) {
 # Unit model-space normals from normals in normalised panel coordinates: the
 # aspect scaling maps a normal by its inverse transpose.
 model_normals_3d <- function(normal, camera) {
-  normal <- sweep(normal, 2L, camera$model_scale, "/")
-  normal / sqrt(rowSums(normal^2))
+  unit_rows_3d(sweep(normal, 2L, camera$model_scale, "/"), NaN)
 }
 
 # Linear-light colours (rows) lit by the shading kernel at unit model-space

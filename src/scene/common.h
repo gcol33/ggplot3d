@@ -2,6 +2,7 @@
 
 #include <Rcpp.h>
 #include "contract.h"
+#include "../vec3.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -12,7 +13,7 @@
 #include <utility>
 
 namespace ggplot3d { namespace engine {
-using Vec3 = std::array<double, 3>;
+using vec3::Vec3;
 constexpr double pi = 3.14159265358979323846;
 
 // Engine failures are plain C++ exceptions so that they can be raised on worker

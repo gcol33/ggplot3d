@@ -61,9 +61,9 @@ static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,
       for(const auto& plane:planes) if(signed_distance(plane,vertex)<0) closed[r]=false;
       for(int a=0;a<3;++a) {lo[r][a]=std::min(lo[r][a],m[a]);hi[r][a]=std::max(hi[r][a],m[a]);}
     }
-    auto a=subtract(p.model(polygon[0].xyz),origin[r]);
+    auto a=sub(p.model(polygon[0].xyz),origin[r]);
     for(std::size_t k=1;k+1<polygon.size();++k)
-      volume[r]+=dot(a,cross(subtract(p.model(polygon[k].xyz),origin[r]),subtract(p.model(polygon[k+1].xyz),origin[r])));
+      volume[r]+=dot(a,cross(sub(p.model(polygon[k].xyz),origin[r]),sub(p.model(polygon[k+1].xyz),origin[r])));
   }
   for(Index i=0;i<static_cast<Index>(n);++i) {
     Index r=root(i);if(!closed[r] || volume[r]==0) continue;
@@ -71,7 +71,7 @@ static inline std::vector<bool> solid_backfaces(const ScenePacket& packet,
     for(int a=0;a<3;++a) inside=inside && p.resolved.eye[a]>=lo[r][a] && p.resolved.eye[a]<=hi[r][a];
     if(inside) continue;
     components[i]=r;
-    Vec3 direction=p.camera.perspective ? subtract(p.model(polygons[i][0].xyz),p.resolved.eye):p.resolved.ray;
+    Vec3 direction=p.camera.perspective ? sub(p.model(polygons[i][0].xyz),p.resolved.eye):p.resolved.ray;
     double facing=dot(normals[i],direction)*(volume[r]>0 ? 1:-1);
     culled[i]=facing>p.resolved.tolerance;
   }

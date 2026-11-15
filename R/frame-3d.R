@@ -432,7 +432,7 @@ cotransform_normals_3d <- function(normal, jacobian) {
   bc <- cross_rows_3d(b, c); ca <- cross_rows_3d(c, a); ab <- cross_rows_3d(a, b)
   out <- normal[, 1L] * bc + normal[, 2L] * ca + normal[, 3L] * ab
   out <- out * sign(rowSums(a * bc))
-  out / sqrt(rowSums(out^2))
+  unit_rows_3d(out, NaN)
 }
 
 # Corner columns with their finite normals mapped by `cotransform(normal,
@@ -601,10 +601,6 @@ munch_packet_3d <- function(frame, packet, clip = TRUE, coordinates = NULL) {
   packet
 }
 
-cross_rows_3d <- function(u, v) {
-  cbind(u[, 2L] * v[, 3L] - u[, 3L] * v[, 2L], u[, 3L] * v[, 1L] - u[, 1L] * v[, 3L], u[, 1L] * v[, 2L] - u[, 2L] * v[, 1L])
-}
-
 # Local linear map from normalized panel coordinates into model coordinates.
 frame_jacobian_3d <- function(frame, points) {
   jacobian <- array(diag(3), c(3L, 3L, nrow(points)))
@@ -635,7 +631,7 @@ pane_normals_3d <- function(frame, pane, points, camera) {
   outward[weak, ] <- centre[weak, , drop = FALSE]
   flip <- rowSums(n * outward) < 0
   n[flip, ] <- -n[flip, ]
-  n / sqrt(rowSums(n^2))
+  unit_rows_3d(n, NaN)
 }
 
 facing_3d <- function(normals, model_points, camera, basis) {

@@ -133,8 +133,7 @@ raster_traced_input_3d <- function(specs, camera, viewport, canvas, resolved, li
     take <- which(is.finite(z) & z <= rays$far & (is.na(depth) | z < depth))
     if (!length(take)) next
     span <- vapply(spec$ranges, diff, numeric(1))
-    unit <- sweep(hit$normal[take, , drop = FALSE], 2L, span / resolved$model_scale, "*")
-    unit <- unit / pmax(sqrt(rowSums(unit^2)), .Machine$double.eps)
+    unit <- unit_rows_3d(sweep(hit$normal[take, , drop = FALSE], 2L, span / resolved$model_scale, "*"))
     base <- if (is.null(hit$colour)) {
       matrix(srgb_decode_3d(colour_channels_3d(spec$fill) / 255), length(take), 3L, byrow = TRUE)
     } else hit$colour[take, , drop = FALSE]

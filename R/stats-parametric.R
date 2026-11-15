@@ -46,9 +46,7 @@ parametric_frame_3d <- function(evaluate, uv, h) {
   if (!k) return(list(normal = matrix(0, 0, 3), gaussian = numeric(), mean = numeric()))
   d <- parametric_derivatives_3d(evaluate, uv, h)
   ru <- d$ru; rv <- d$rv; ruu <- d$ruu; rvv <- d$rvv; ruv <- d$ruv
-  n <- cbind(ru[, 2] * rv[, 3] - ru[, 3] * rv[, 2], ru[, 3] * rv[, 1] - ru[, 1] * rv[, 3], ru[, 1] * rv[, 2] - ru[, 2] * rv[, 1])
-  size <- sqrt(rowSums(n^2))
-  n <- n / ifelse(size > 0, size, NA_real_)
+  n <- unit_rows_3d(cross_rows_3d(ru, rv), NA_real_)
   E <- rowSums(ru * ru); F <- rowSums(ru * rv); G <- rowSums(rv * rv)
   L <- rowSums(ruu * n); M <- rowSums(ruv * n); N <- rowSums(rvv * n)
   det <- E * G - F^2
@@ -179,7 +177,7 @@ parametric_geodesics_3d <- function(fun, start, angle, length, n, args) {
   }
   g <- metric(q, FALSE)
   e1 <- g$d$ru / sqrt(g$E)
-  e2 <- g$d$rv - e1 * rowSums(g$d$rv * e1); e2 <- e2 / sqrt(rowSums(e2^2))
+  e2 <- unit_rows_3d(g$d$rv - e1 * rowSums(g$d$rv * e1), NaN)
   a <- angle[rays$angle]
   tangent <- e1 * cos(a) + e2 * sin(a)
   p <- cbind(rowSums(g$d$ru * tangent), rowSums(g$d$rv * tangent))

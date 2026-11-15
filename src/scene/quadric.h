@@ -274,11 +274,6 @@ static inline Vec3 quadric_covector(const QuadricShape& s, const Vec3& box, int 
   const Point4 covector = transpose_point(s.to_local, g);
   return {covector[0], covector[1], covector[2]};
 }
-static inline Vec3 unit(Vec3 n) {
-  const double length = std::sqrt(dot(n, n));
-  if (length > 0) for (double& v : n) v /= length;
-  return n;
-}
 // Outward unit normal in aspect-scaled model space.
 static inline Vec3 quadric_normal(const QuadricShape& s, const Projection& p, const Vec3& box, int part) {
   const Vec3 g = quadric_covector(s, box, part);
@@ -539,7 +534,7 @@ static inline int quadric_orbit_segments(const QuadricShape& s, const Projection
     Point4 x = c; x[k] += sign;
     const Point4 y = transform_point(s.to_box, x);
     if (!(y[3] > 0)) return finest;
-    const Vec3 d = subtract(model(y), centre);
+    const Vec3 d = sub(model(y), centre);
     unit = std::max(unit, std::sqrt(dot(d, d)));
   }
   double scale = 0.5*p.sy*p.viewport.height_mm;
@@ -548,7 +543,7 @@ static inline int quadric_orbit_segments(const QuadricShape& s, const Projection
     for (const auto& corner : quadric_corners(s)) {
       const Point4 y = transform_point(s.to_box, corner);
       if (!(y[3] > 0)) return finest;
-      const Vec3 d = subtract(model(y), p.target);
+      const Vec3 d = sub(model(y), p.target);
       reach = std::max(reach, std::sqrt(dot(d, d)));
     }
     const double nearest = std::max(p.resolved.distance - reach, p.resolved.near);

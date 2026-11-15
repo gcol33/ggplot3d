@@ -121,8 +121,7 @@ views_spec_3d <- function(views) {
   out <- lapply(seq_along(views), function(i) {
     view <- views[[i]]
     if (is.character(view)) {
-      if (length(view) != 1L || !(view %in% presets))
-        stop("Unknown camera view '", paste(view, collapse = ", "), "'; use one of ", paste(presets, collapse = ", "), ".", call. = FALSE)
+      check_choice_3d(view, presets, "Each camera view")
       if (!nzchar(labels[i])) labels[i] <<- view
       return(camera_3d(view))
     }

@@ -2,15 +2,10 @@
 #include "common.h"
 
 namespace ggplot3d { namespace engine {
-static inline double dot(const Vec3& a, const Vec3& b) {
-  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-}
-static inline Vec3 cross(const Vec3& a, const Vec3& b) {
-  return {a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]};
-}
-static inline Vec3 subtract(const Vec3& a, const Vec3& b) {
-  return {a[0]-b[0], a[1]-b[1], a[2]-b[2]};
-}
+using vec3::dot;
+using vec3::cross;
+using vec3::sub;
+using vec3::unit;
 
 struct Projection {
   Camera camera;
@@ -91,7 +86,7 @@ struct Projection {
 
   Vec3 model(const Vec3& p) const { return {p[0]*scale[0], p[1]*scale[1], p[2]*scale[2]}; }
   Vec3 camera_point(const Vec3& p) const {
-    Vec3 delta = subtract(model(p), target);
+    Vec3 delta = sub(model(p), target);
     return {dot(delta, resolved.screen_right), dot(delta, resolved.screen_up),
             resolved.distance + dot(delta, resolved.forward)};
   }

@@ -64,8 +64,8 @@ struct Tape {
   }
 };
 inline Vec3 point(const Vec3& o,const Vec3& d,double t) {return {o[0]+d[0]*t,o[1]+d[1]*t,o[2]+d[2]*t};}
-inline double norm(const Vec3& p) {return std::sqrt(engine::dot(p,p));}
-inline Vec3 unit(Vec3 p) {double n=norm(p);if(n>0) for(double& x:p)x/=n;return p;}
+using vec3::norm;
+using vec3::unit;
 struct Ray {Vec3 origin,direction;double near,far;};
 inline Ray camera_ray(const engine::Projection& p,double x,double y) {
   const auto& c=p.resolved;double u=(2*x-1)/p.sx,v=(2*y-1)/p.sy;Ray r;

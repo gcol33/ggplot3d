@@ -48,7 +48,7 @@ struct Volume {
   std::pair<Vec3,double> transfer(double v) const {
     int i=std::max(0,std::min(int(knots.size())-2,int(std::upper_bound(knots.begin(),knots.end(),v)-knots.begin())-1));
     double u=std::max(0.0,std::min(1.0,(v-knots[i])/(knots[i+1]-knots[i])));
-    return {point(colours[i],engine::subtract(colours[i+1],colours[i]),u),(1-u)*sigma[i]+u*sigma[i+1]};
+    return {point(colours[i],engine::sub(colours[i+1],colours[i]),u),(1-u)*sigma[i]+u*sigma[i+1]};
   }
   std::vector<double> breaks(const Ray& ray) const {
     Ray r=ray;if(!clip_box(r,lo,hi))return {};
@@ -113,7 +113,7 @@ inline Medium absorb(const std::vector<Volume>& volumes,const Ray& ray) {
   Medium out;std::vector<double> breaks;double step=std::numeric_limits<double>::infinity();
   for(const auto& v:volumes) {
     auto b=v.breaks(ray);breaks.insert(breaks.end(),b.begin(),b.end());
-    step=std::min(step,norm(engine::subtract(v.hi,v.lo))/v.samples);
+    step=std::min(step,norm(engine::sub(v.hi,v.lo))/v.samples);
   }
   std::sort(breaks.begin(),breaks.end());breaks.erase(std::unique(breaks.begin(),breaks.end()),breaks.end());
   for(std::size_t i=1;i<breaks.size();++i) {

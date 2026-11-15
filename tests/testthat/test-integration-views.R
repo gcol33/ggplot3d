@@ -34,7 +34,7 @@ test_that("views are presets or named camera argument lists", {
   expect_identical(views$iso, camera_3d("isometric"))
   custom <- views_spec_3d(list(a = list(azimuth = 30), b = "top"))
   expect_identical(custom$a, list(azimuth = 30))
-  expect_error(views_spec_3d("sideways"), "Unknown camera view")
+  expect_error(views_spec_3d("sideways"), "Each camera view must be one of")
   expect_error(views_spec_3d(list(list(azimuth = 30))), "needs a name")
   expect_error(views_spec_3d(list(a = list(spin = 3))), "camera_3d\\(\\) arguments")
   expect_error(views_spec_3d(c(a = "front", a = "top")), "unique")

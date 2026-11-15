@@ -1,14 +1,6 @@
 #include "geometry/outline.h"
 using namespace ggplot3d_geometry;
 
-namespace {
-std::vector<V> rows3(const Rcpp::NumericMatrix& m) {
-  std::vector<V> out(m.nrow());
-  for(int i=0;i<m.nrow();++i) out[i]={m(i,0),m(i,1),m(i,2)};
-  return out;
-}
-}
-
 // Feature lines of a triangle mesh: xyz the drawn positions, view the same
 // vertices in camera model space, normals optional vertex normals in that
 // space (zero columns for none), tri one-based triangles, eye the camera
@@ -27,7 +19,7 @@ Rcpp::List outline_lines_cpp(Rcpp::NumericMatrix xyz,Rcpp::NumericMatrix view,Rc
     int v=tri(f,c)-1; if(v<0||v>=xyz.nrow()) Rcpp::stop("Outline triangles reference missing vertices.");
     t[f][c]=v;
   }
-  auto lines=outline::feature_lines(rows3(xyz),rows3(view),normals.ncol()?rows3(normals):std::vector<V>(),t,
+  auto lines=outline::feature_lines(matrix_points(xyz),matrix_points(view),normals.ncol()?matrix_points(normals):std::vector<V>(),t,
     V{eye[0],eye[1],eye[2]},perspective,silhouette,crease,boundary);
   int n=lines.p.size(); Rcpp::NumericVector x(n),y(n),z(n); Rcpp::IntegerVector line(n),vertex(n);
   for(int i=0;i<n;++i) { x[i]=lines.p[i][0]; y[i]=lines.p[i][1]; z[i]=lines.p[i][2]; line[i]=lines.line[i]+1; vertex[i]=lines.vertex[i]+1; }

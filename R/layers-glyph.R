@@ -47,11 +47,6 @@ constant_aes_3d <- function(data, params, names) {
   data
 }
 
-check_unit_3d <- function(unit, name) {
-  if (!is.character(unit) || length(unit) != 1L || !unit %in% c("data", "mm")) stop(name, " must be \"data\" or \"mm\".", call. = FALSE)
-  unit
-}
-
 # Spheres ---------------------------------------------------------------------
 
 sphere_maps_3d <- function(data) identity_maps_3d(as.double(data$radius %or3d% rep(NA_real_, nrow(data))))
@@ -74,7 +69,7 @@ GeomSphere3D <- ggplot2::ggproto("GeomSphere3D", ggplot2::Geom,
 # Filled spheres without an edge colour are analytic quadrics; spheres drawn
 # as wireframes or with edges keep the icosphere mesh, whose edges they show.
 emit_spheres_3d <- function(data, params, panel_params) {
-  unit <- check_unit_3d(params$radius.unit, "radius.unit")
+  unit <- check_choice_3d(params$radius.unit, c("data", "mm"), "radius.unit")
   radius <- as.double(data$radius %or3d% rep(NA_real_, nrow(data)))
   space <- ifelse(is.finite(radius), unit, "model")
   maps <- identity_maps_3d(ifelse(space == "model", glyph_default_radius_3d, radius))
@@ -157,7 +152,7 @@ geom_sphere_3d <- function(mapping = NULL, data = NULL, stat = "identity", posit
                            radius.unit = "data", detail = 2L, shade = TRUE,
                            na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSphere3D, mapping, data, stat, position,
-    c(list(radius.unit = check_unit_3d(radius.unit, "radius.unit"), detail = check_detail_3d(detail),
+    c(list(radius.unit = check_choice_3d(radius.unit, c("data", "mm"), "radius.unit"), detail = check_detail_3d(detail),
       shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 
@@ -196,7 +191,7 @@ GeomGlyph3D <- ggplot2::ggproto("GeomGlyph3D", ggplot2::Geom,
 )
 
 emit_glyphs_3d <- function(data, params, panel_params) {
-  unit <- check_unit_3d(params$size.unit, "size.unit")
+  unit <- check_choice_3d(params$size.unit, c("data", "mm"), "size.unit")
   mesh <- glyph_mesh_3d(params$glyph, params$detail)
   if (unit == "data") {
     maps <- normalise_maps_3d(glyph_data_maps_3d(data), panel_params)
@@ -257,7 +252,7 @@ geom_glyph_3d <- function(mapping = NULL, data = NULL, stat = "identity", positi
                           na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   glyph_mesh_3d(glyph, detail)
   make_layer_3d(GeomGlyph3D, mapping, data, stat, position,
-    c(list(glyph = glyph, size.unit = check_unit_3d(size.unit, "size.unit"), detail = check_detail_3d(detail),
+    c(list(glyph = glyph, size.unit = check_choice_3d(size.unit, c("data", "mm"), "size.unit"), detail = check_detail_3d(detail),
       shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes)
 }
 

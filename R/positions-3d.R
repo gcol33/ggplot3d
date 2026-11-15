@@ -95,13 +95,6 @@ Position3D <- ggplot2::ggproto("Position3D", ggplot2::Position,
   extents = NULL
 )
 
-check_axis_3d <- function(axis, choices) {
-  if (!is.character(axis) || length(axis) != 1L || !axis %in% choices) {
-    stop("axis must be one of ", paste0('"', choices, '"', collapse = ", "), ".", call. = FALSE)
-  }
-  axis
-}
-
 check_flag_3d <- function(value, name) {
   if (!is.logical(value) || length(value) != 1L || is.na(value)) stop(name, " must be TRUE or FALSE.", call. = FALSE)
   value
@@ -162,7 +155,7 @@ position_fill_3d <- function(axis = "z", vjust = 1, reverse = FALSE) {
 }
 
 stack_position_3d <- function(axis, vjust, reverse, fill) {
-  axis <- check_axis_3d(axis, c("z", "x", "y"))
+  axis <- check_choice_3d(axis, c("z", "x", "y"), "axis")
   if (!is.numeric(vjust) || length(vjust) != 1L || !is.finite(vjust)) stop("vjust must be a finite number.", call. = FALSE)
   ggplot2::ggproto(NULL, if (fill) PositionFill3D else PositionStack3D,
     axis = axis, vjust = vjust, reverse = check_flag_3d(reverse, "reverse"))
@@ -210,7 +203,7 @@ position_dodge_3d <- function(axis = "x", width = NULL, preserve = "total", reve
   if (!is.null(width) && (!is.numeric(width) || length(width) != 1L || !is.finite(width) || width <= 0)) {
     stop("width must be NULL or a positive number.", call. = FALSE)
   }
-  ggplot2::ggproto(NULL, PositionDodge3D, axis = check_axis_3d(axis, c("x", "y")), width = width,
+  ggplot2::ggproto(NULL, PositionDodge3D, axis = check_choice_3d(axis, c("x", "y"), "axis"), width = width,
     preserve = preserve, reverse = check_flag_3d(reverse, "reverse"))
 }
 

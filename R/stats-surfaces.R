@@ -50,9 +50,7 @@ StatResidual3D <- ggplot2::ggproto("StatResidual3D", StatGeometry3D,
 
 smooth_se_mode_3d <- function(se) {
   if (is.logical(se) && length(se) == 1L && !is.na(se)) return(if (se) "surfaces" else "none")
-  if (!is.character(se) || length(se) != 1L || !se %in% c("surfaces", "band", "fill", "none"))
-    stop("se must be TRUE, FALSE, \"surfaces\", \"band\", \"fill\" or \"none\".", call. = FALSE)
-  se
+  check_choice_3d(se, c("surfaces", "band", "fill", "none"), "se", c("TRUE", "FALSE", '"surfaces"', '"band"', '"fill"', '"none"'))
 }
 
 # Returns function(xy, se, level) evaluating the fitted surface at transformed

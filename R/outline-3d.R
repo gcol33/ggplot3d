@@ -77,8 +77,7 @@ outline_3d <- function(silhouette = TRUE, crease = 30, boundary = TRUE, colour =
                        linetype = 1, alpha = 1, hidden = c("hide", "dashed", "show"), halo = NULL) {
   if (isTRUE(silhouette)) silhouette <- "auto"
   else if (isFALSE(silhouette)) silhouette <- "none"
-  if (!is.character(silhouette) || length(silhouette) != 1L || !silhouette %in% c("auto", "none", "smooth", "mesh"))
-    stop("silhouette must be TRUE, FALSE, \"smooth\" or \"mesh\".", call. = FALSE)
+  check_choice_3d(silhouette, c("auto", "none", "smooth", "mesh"), "silhouette", c("TRUE", "FALSE", '"smooth"', '"mesh"'))
   if (!is.null(crease)) crease <- mesh_number_3d(crease, "crease", function(x) is.finite(x) && x >= 0 && x <= 180, "an angle between 0 and 180")
   if (!is.logical(boundary) || length(boundary) != 1L || is.na(boundary)) stop("boundary must be TRUE or FALSE.", call. = FALSE)
   linewidth <- mesh_number_3d(linewidth, "linewidth", function(x) is.finite(x) && x >= 0, "nonnegative")

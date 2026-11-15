@@ -100,17 +100,6 @@ model_scale_3d <- function(panel_params) {
   aspect / max(aspect)
 }
 
-cross_3d <- function(a, b) {
-  cbind(a[, 2L] * b[, 3L] - a[, 3L] * b[, 2L],
-        a[, 3L] * b[, 1L] - a[, 1L] * b[, 3L],
-        a[, 1L] * b[, 2L] - a[, 2L] * b[, 1L])
-}
-
-unit_rows_3d <- function(m) {
-  length <- sqrt(rowSums(m^2))
-  m / ifelse(length > 0, length, 1)
-}
-
 # Points along each edge, as an array of edges x points x 3. A nonzero
 # curvature bends the edge into a circular arc in the plane spanned by the
 # chord and the horizontal direction perpendicular to it (the x direction for
@@ -126,9 +115,9 @@ edge_points_3d <- function(start, end, curvature, n) {
   out <- array(0, c(m, steps, 3L))
   for (k in seq_len(steps)) out[, k, ] <- start + chord * t[k]
   if (curvature == 0) return(out)
-  side <- cross_3d(chord, matrix(c(0, 0, 1), m, 3L, byrow = TRUE))
+  side <- cross_rows_3d(chord, matrix(c(0, 0, 1), m, 3L, byrow = TRUE))
   vertical <- sqrt(rowSums(side^2)) <= 1e-9 * pmax(length, 1e-300)
-  side[vertical, ] <- cross_3d(chord[vertical, , drop = FALSE], matrix(rep(c(1, 0, 0), each = sum(vertical)), ncol = 3L))
+  side[vertical, ] <- cross_rows_3d(chord[vertical, , drop = FALSE], matrix(rep(c(1, 0, 0), each = sum(vertical)), ncol = 3L))
   bend <- unit_rows_3d(side) * sign(curvature)
   along <- unit_rows_3d(chord)
   half <- length / 2
@@ -158,13 +147,13 @@ tube_mesh_3d <- function(path, radius, sides) {
   first <- matrix(tangent[, 1L, ], m, 3L)
   seed <- matrix(c(0, 0, 1), m, 3L, byrow = TRUE)
   seed[abs(first[, 3L]) > 0.9, ] <- matrix(c(1, 0, 0), 1L, 3L)[rep(1L, sum(abs(first[, 3L]) > 0.9)), ]
-  normal <- unit_rows_3d(cross_3d(first, seed))
+  normal <- unit_rows_3d(cross_rows_3d(first, seed))
   angles <- 2 * pi * (seq_len(sides) - 1L) / sides
   vertices <- array(0, c(m, steps, sides, 3L))
   for (k in seq_len(steps)) {
     t <- matrix(tangent[, k, ], m, 3L)
     if (k > 1L) normal <- unit_rows_3d(normal - rowSums(normal * t) * t)
-    binormal <- cross_3d(t, normal)
+    binormal <- cross_rows_3d(t, normal)
     for (j in seq_len(sides)) {
       vertices[, k, j, ] <- matrix(path[, k, ], m, 3L) + radius * (cos(angles[j]) * normal + sin(angles[j]) * binormal)
     }

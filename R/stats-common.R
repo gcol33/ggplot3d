@@ -259,10 +259,8 @@ surface_normals_3d <- function(data, lattice = surface_lattice_3d(data)) {
     }, numeric(nrow(key)))
   }
   u <- matrix(tangent(1L), ncol = 3L); v <- matrix(tangent(2L), ncol = 3L)
-  normal <- cbind(u[, 2L] * v[, 3L] - u[, 3L] * v[, 2L],
-                  u[, 3L] * v[, 1L] - u[, 1L] * v[, 3L],
-                  u[, 1L] * v[, 2L] - u[, 2L] * v[, 1L])
-  normal <- normal * ifelse(normal[, 3L] < 0, -1, 1) / sqrt(rowSums(normal^2))
+  normal <- cross_rows_3d(u, v)
+  normal <- unit_rows_3d(normal * ifelse(normal[, 3L] < 0, -1, 1), NaN)
   data[c("nx", "ny", "nz")] <- as.data.frame(normal)
   data
 }

@@ -12,7 +12,7 @@ sphere_slerp_3d <- function(X, Y, s) {
   den <- ifelse(small, 1, sin(theta))
   out <- ifelse(small, 1 - s, sin((1 - s) * theta) / den) * X +
     ifelse(small, s, sin(s * theta) / den) * Y
-  out / sqrt(rowSums(out^2))
+  unit_rows_3d(out)
 }
 
 lonlat_xyz_3d <- function(lon, lat) {
