@@ -29,8 +29,10 @@
 #' carry only luminance; [coord_3d()] warns when the plot has one. With the
 #' vector and hybrid backends the two images are drawn as monochrome passes
 #' composited with a multiply blend (grid group compositing, R 4.2 or later)
-#' when the graphics device supports it, such as the ragg, Cairo, svg and pdf
-#' devices. Otherwise, and always with the raster backend, both images are
+#' when the graphics device supports it, such as the ragg, Cairo and svg
+#' devices. R's own [pdf()][grDevices::pdf()] device writes only about 16 kB of
+#' a group's content, too little for a scene, so it is treated as one without
+#' blending. Otherwise, and always with the raster backend, both images are
 #' rendered offscreen at the backend's `dpi` with ragg and composited per
 #' colour channel into one image; on a white background this matches the
 #' blended result.
@@ -45,7 +47,7 @@
 #' @seealso [coord_3d()], [facet_views_3d()], whose views each become a stereo
 #'   pair.
 #' @examples
-#' d <- expand.grid(x = seq(-1, 1, length.out = 25), y = seq(-1, 1, length.out = 25))
+#' d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))
 #' d$z <- exp(-3 * (d$x^2 + d$y^2))
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "grey85", colour = "grey30", linewidth = 0.2)
@@ -141,12 +143,8 @@ stereo_panel_children_3d <- function(x, stereo) {
     anaglyph = list(anaglyph_grob_3d(eyes, stereo, x$panel_params$coord_params$backend)))
 }
 
-anaglyph_blend_available_3d <- function() {
-  getRversion() >= "4.2.0" && "multiply" %in% grDevices::dev.capabilities()$compositing
-}
-
 anaglyph_grob_3d <- function(eyes, stereo, backend) {
-  if (!identical(backend$type, "raster") && anaglyph_blend_available_3d()) {
+  if (!identical(backend$type, "raster") && grid_capabilities_3d()$group_multiply) {
     eyes$left$ink <- stereo$filters[, "left"]
     eyes$right$ink <- stereo$filters[, "right"]
     # The right image is isolated in its own group, so it multiplies the left

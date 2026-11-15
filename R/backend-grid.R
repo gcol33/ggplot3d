@@ -1,12 +1,17 @@
 utils::globalVariables(c("grid_clip_paths_cpp", "grid_stroke_intervals_cpp"))
 
+# Group compositing is used only where a group can hold a whole scene: R's
+# own pdf() device writes at most about 16 kB of a group's content and drops
+# the rest, while the stream keeps the length of the full content.
 grid_capabilities_3d <- function() {
   caps <- grDevices::dev.capabilities()
+  groups <- getRversion() >= "4.2.0" && !identical(names(grDevices::dev.cur()), "pdf")
   list(vector = TRUE, clipping_paths = isTRUE(caps$clippingPaths),
        masks = length(caps$masks) > 0L && !all(is.na(caps$masks)),
        mask_type = if ("alpha" %in% caps$masks) "alpha" else if ("luminance" %in% caps$masks) "luminance" else NULL,
-       group_atop = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "atop" %in% caps$compositing,
-       group_over = getRversion() >= "4.2.0" && "alpha" %in% caps$masks && "over" %in% caps$compositing,
+       group_atop = groups && "alpha" %in% caps$masks && "atop" %in% caps$compositing,
+       group_over = groups && "alpha" %in% caps$masks && "over" %in% caps$compositing,
+       group_multiply = groups && "multiply" %in% caps$compositing,
        gradients = getRversion() >= "4.1.0" && "LinearGradient" %in% caps$patterns,
        dash_phase = "physical segmented strokes", raster = FALSE)
 }

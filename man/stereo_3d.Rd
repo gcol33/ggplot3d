@@ -62,7 +62,7 @@ blended result.
 \code{\link[=view_3d]{view_3d()}} shows the plot from the central camera, without stereo.
 }
 \examples{
-d <- expand.grid(x = seq(-1, 1, length.out = 25), y = seq(-1, 1, length.out = 25))
+d <- expand.grid(x = seq(-1, 1, length.out = 15), y = seq(-1, 1, length.out = 15))
 d$z <- exp(-3 * (d$x^2 + d$y^2))
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", colour = "grey30", linewidth = 0.2)

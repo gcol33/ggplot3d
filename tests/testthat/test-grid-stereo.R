@@ -159,9 +159,10 @@ test_that("anaglyphs blend two monochrome passes where the device can multiply",
   expect_equal(group$dst$ink, stereo_3d()$filters[, "left"])
 })
 
-test_that("anaglyphs composite per channel without device blending and with the raster backend", {
+test_that("anaglyphs composite per channel without usable device blending and with the raster backend", {
   skip_if_not_installed("ragg")
   for (case in list(list(device = function(path) grDevices::pdf(path, 6, 6), backend = backend_3d("raster", dpi = 40)),
+                    list(device = function(path) grDevices::pdf(path, 6, 6), backend = backend_3d("vector", dpi = 40)),
                     list(device = function(path) grDevices::postscript(path, width = 6, height = 6), backend = backend_3d("vector", dpi = 40)))) {
     p <- stereo_plot(stereo_3d("anaglyph", separation = 6), backend = case$backend)
     panel <- stereo_drawn(p, case$device)[[1L]]
