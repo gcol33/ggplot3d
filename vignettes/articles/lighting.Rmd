@@ -39,17 +39,15 @@ hill <- ggplot(d, aes(x, y, z = z, fill = z)) +
 
 ## Colour that survives shading
 
-By default the light multiplies the fill: a face at a grazing angle is a
-darker version of its colour, and a dark yellow no longer looks like the
-yellow in the legend. `light_3d(mode = "lightness")` moves only the OKLab
-lightness of the fill and keeps its hue, so the colour stays recognisable
-against its key. A face at the `neutral` angle to the light keeps its
-colour exactly.
+By default the light moves only the OKLab lightness of the fill and keeps
+its hue: faces turned toward the light get lighter, faces turned away get
+darker, and a face at the `neutral` angle to the light keeps its colour
+exactly, so the colour stays recognisable against its key.
 
 ```{r lightness}
 hill + scale_fill_distiller(palette = "Spectral",
     guide = guide_colourbar_3d(along = NULL, shading_range = TRUE)) +
-  coord_3d(light = light_3d(light_directional(), mode = "lightness"))
+  coord_3d()
 ```
 
 The colourbar now shows each value from shadow (left) to full light
@@ -57,6 +55,13 @@ The colourbar now shows each value from shadow (left) to full light
 changes lightness with value, such as viridis, loses the most under
 shading, since shading changes lightness too; a diverging or isoluminant
 palette leaves lightness free for the shape.
+
+`light_3d(mode = "multiply")` scales the fill by the light instead, as
+matplotlib and rgl do. It can only darken, so a face at a grazing angle is a
+darker version of its colour and a dark yellow no longer looks like the
+yellow in the legend; and since the default light comes from near the
+viewer, the faces that face the camera all get nearly the same light and
+blend together.
 
 `"tone"` moves the colour toward a shadow and a highlight colour instead,
 and `"overlay"` and `"soft"` are the blend modes of matplotlib's

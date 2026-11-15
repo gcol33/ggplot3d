@@ -72,22 +72,24 @@ test_that("textures paint over the fill, and outside the image only the fill sho
   expect_equal(out[50, 65, ], c(255, 0, 0))
 })
 
-test_that("lit textures darken alike in raster and vector output", {
+test_that("lit textures shade alike in raster and vector output", {
   skip_if_not_installed("ragg")
   skip_if_not_installed("png")
   packet <- texture_square_packet(texture_3d(matrix(c("white", "#C08040"), 1L), interpolate = FALSE))
   packet$styles$shade <- TRUE
-  light <- light_3d(light_directional(c(1, 0, 1), space = "data"))
   viewport <- new_scene_viewport(40, 40, dpi = 100 * 25.4 / 40)
-  raster <- image_channels(raster_scene_3d(packet, texture_top_camera(), viewport, 1L, light = light)$image)
-  path <- tempfile(fileext = ".png")
-  ragg::agg_png(path, 100L, 100L, res = viewport$dpi, background = "grey50")
-  grid::grid.draw(render_scene_grid(scene_compile(packet, texture_top_camera(), viewport), viewport, light = light))
-  grDevices::dev.off()
-  vector <- image_channels(path)
-  for (at in list(c(50, 35), c(50, 65))) {
-    expect_lt(raster[at[1L], at[2L], 1L], 250)
-    expect_lte(max(abs(vector[at[1L], at[2L], ] - raster[at[1L], at[2L], ])), 6)
+  for (mode in c("multiply", "lightness")) {
+    light <- light_3d(light_directional(c(1, 0, 1), space = "data"), mode = mode)
+    raster <- image_channels(raster_scene_3d(packet, texture_top_camera(), viewport, 1L, light = light)$image)
+    path <- tempfile(fileext = ".png")
+    ragg::agg_png(path, 100L, 100L, res = viewport$dpi, background = "grey50")
+    grid::grid.draw(render_scene_grid(scene_compile(packet, texture_top_camera(), viewport), viewport, light = light))
+    grDevices::dev.off()
+    vector <- image_channels(path)
+    for (at in list(c(50, 35), c(50, 65))) {
+      if (mode == "multiply") expect_lt(raster[at[1L], at[2L], 1L], 250)
+      expect_lte(max(abs(vector[at[1L], at[2L], ] - raster[at[1L], at[2L], ])), 6)
+    }
   }
 })
 

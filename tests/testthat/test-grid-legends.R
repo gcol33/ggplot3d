@@ -112,7 +112,7 @@ test_that("axis colourbars match expressions and support distinct scale transfor
 test_that("lit legend keys use the scene light response and retain unshaded keys", {
   skip_on_cran()
   d <- data.frame(x = 1:2, y = 1:2, z = c(1, 2), group = c("a", "b"))
-  light <- light_3d(light_directional(intensity = 0.6), ambient = 0.2)
+  light <- light_3d(light_directional(intensity = 0.6), ambient = 0.2, mode = "multiply")
   make <- function(lit = TRUE, shade = TRUE, range = TRUE) {
     ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = group)) + geom_col_3d(shade = shade) +
       ggplot2::guides(fill = guide_legend_3d(lit = lit, shading_range = range)) + coord_3d(light = light)

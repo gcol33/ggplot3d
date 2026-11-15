@@ -143,7 +143,7 @@ test_that("a legend-box colourbar shows value by light with the face transfer", 
   }
   reversed <- guide_grobs(transfer_surface(light, guide_colourbar_3d(along = NULL, shading_range = c(0, 90), nbin = 5)),
     "shaded-colourbar-3d")[[1L]]$shading_colours
-  multiply <- guide_grobs(transfer_surface(light_3d(), guide_colourbar_3d(along = NULL, shading_range = c(0, 90), nbin = 5)),
+  multiply <- guide_grobs(transfer_surface(light_3d(mode = "multiply"), guide_colourbar_3d(along = NULL, shading_range = c(0, 90), nbin = 5)),
     "shaded-colourbar-3d")[[1L]]$shading_colours
   expect_false(identical(reversed, multiply))
   expect_true(all(col2rgb(multiply[, 24L])[1L, ] <= col2rgb(multiply[, 1L])[1L, ]))

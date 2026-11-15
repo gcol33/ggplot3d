@@ -1,5 +1,10 @@
 # ggplot3d 0.0.0.9000
 
+* `light_3d()` defaults to `mode = "lightness"`: shading lightens faces turned
+  toward the light as well as darkening faces turned away, so the faces that
+  face the camera no longer blend together under the default light, which
+  comes from near the viewer. `mode = "multiply"` gives the previous shading.
+
 * The exported API follows one name per concept (`dev_notes/11-api-naming.md`):
   - `export_3d()` writes SVG, TikZ (`.tex`) and Asymptote (`.asy`) through its
     format registry and accepts `format` without `file`; `save_svg_3d()` and

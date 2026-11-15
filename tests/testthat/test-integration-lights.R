@@ -19,7 +19,7 @@ test_that("one directional light without specular is the Lambert formula", {
   base <- rbind(c(0.5, 0.2, 0.1), c(0.5, 0.2, 0.1), c(0.9, 0.9, 0.9))
   camera <- list(right = c(1, 0, 0), up = c(0, 1, 0), forward = c(0, 0, -1), ray = c(0, 0, -1), model_scale = c(1, 1, 1),
                  eye = c(0, 0, 5), distance = 5)
-  light <- light_3d(light_directional(c(0, 0.6, 0.8), intensity = 0.7), ambient = 0.3)
+  light <- light_3d(light_directional(c(0, 0.6, 0.8), intensity = 0.7), ambient = 0.3, mode = "multiply")
   out <- shade_linear_3d(base, normal, camera, light)
   b <- 0.3 + 0.7 * pmax(0, c(0.8, 0, 0.8))
   expect_equal(out, base * b)

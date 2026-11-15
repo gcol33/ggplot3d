@@ -69,7 +69,7 @@ test_that("lit Gaussian smooth surfaces match raster along every shared triangle
     geom_surface_3d(shading = "smooth", colour = NA) + ggplot2::scale_fill_viridis_c() + coord_3d()
   packet <- stats_scene(p)$packet
   for (dpi in c(110, 300)) {
-    out <- smooth_paint_compare(packet, dpi = dpi, mm = 101.6, camera = new_camera_3d(), light = light_3d(), inset = 4L)
+    out <- smooth_paint_compare(packet, dpi = dpi, mm = 101.6, camera = new_camera_3d(), light = light_3d(mode = "multiply"), inset = 4L)
     edges <- smooth_shared_edge_pixels(out$scene, nrow(out$difference)) & out$inside
     expect_gt(sum(edges), 1000L)
     expect_lte(max(out$difference[edges]), 5 + 1e-8)

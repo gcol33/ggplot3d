@@ -1,5 +1,5 @@
 npr_camera <- function() key_camera_3d(coord_3d()$camera)
-npr_swatch <- function(colour, x, material, light = light_3d(light_directional(), ambient = 0.35)) {
+npr_swatch <- function(colour, x, material, light = light_3d(light_directional(), ambient = 0.35, mode = "multiply")) {
   n <- length(x)
   shade_swatch_cpp(linear_rgb_3d(rep(colour, n)), as.double(x), rep(1L, n),
     kernel_materials_3d(material_table_3d(material)), resolved_light_3d(light, npr_camera()))

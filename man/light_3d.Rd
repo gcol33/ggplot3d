@@ -7,7 +7,7 @@
 light_3d(
   ...,
   ambient = 0.35,
-  mode = "multiply",
+  mode = "lightness",
   range = NULL,
   neutral = 45,
   shadow_colour = "#1d2b53",
@@ -49,9 +49,13 @@ face colours. Without light sources the scene has one directional light,
 \details{
 \code{mode} sets how the light changes a face colour. \code{"multiply"} scales the
 colour by the ambient and diffuse light and \code{"tint"} scales its distance
-from white; both darken every channel, so a shaded fill no longer matches
-its legend key. The signed modes keep the colour readable against its key
-(Szafir et al. 2016; Kovesi 2015). Each light gives a level in [-1, 1]
+from white; both only darken, so a shaded fill no longer matches its legend
+key, and with the default light, which comes from near the viewer, the
+faces that face the camera all receive almost the same light. The signed
+modes darken faces turned from the light and lighten faces turned toward
+it, which keeps the colour readable against its key (Szafir et al. 2016;
+Kovesi 2015) and separates the faces that face the camera; the default is
+the signed mode \code{"lightness"}. Each light gives a level in [-1, 1]
 from the angle between the normal and the light: 0 at \code{neutral} degrees,
 1 facing the light and -1 facing away, linear in the cosine on each side
 (ggcube's \code{ramp_smooth()}). The levels are averaged over the lights,

@@ -103,9 +103,13 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'
 #' `mode` sets how the light changes a face colour. `"multiply"` scales the
 #' colour by the ambient and diffuse light and `"tint"` scales its distance
-#' from white; both darken every channel, so a shaded fill no longer matches
-#' its legend key. The signed modes keep the colour readable against its key
-#' (Szafir et al. 2016; Kovesi 2015). Each light gives a level in \[-1, 1\]
+#' from white; both only darken, so a shaded fill no longer matches its legend
+#' key, and with the default light, which comes from near the viewer, the
+#' faces that face the camera all receive almost the same light. The signed
+#' modes darken faces turned from the light and lighten faces turned toward
+#' it, which keeps the colour readable against its key (Szafir et al. 2016;
+#' Kovesi 2015) and separates the faces that face the camera; the default is
+#' the signed mode `"lightness"`. Each light gives a level in \[-1, 1\]
 #' from the angle between the normal and the light: 0 at `neutral` degrees,
 #' 1 facing the light and -1 facing away, linear in the cosine on each side
 #' (ggcube's `ramp_smooth()`). The levels are averaged over the lights,
@@ -162,7 +166,7 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   ggplot2::scale_fill_distiller(palette = "Spectral") +
 #'   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
 #' @export
-light_3d <- function(..., ambient = 0.35, mode = "multiply", range = NULL, neutral = 45,
+light_3d <- function(..., ambient = 0.35, mode = "lightness", range = NULL, neutral = 45,
                      shadow_colour = "#1d2b53", highlight_colour = "#fff1d6") {
   lights <- list(...)
   if (!length(lights)) lights <- list(light_directional())
