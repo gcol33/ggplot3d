@@ -14,3 +14,5 @@ Account: R Bugzilla, gilles.colling051@gmail.com, created by Martin Maechler on 
 Both reproduced on R 4.6.1 (Windows 11); the code is unchanged in trunk as of devPS.c's 2026-08-31 revision. Neither patch has been tested in a rebuilt R.
 
 Effect on ggplot3d: 19324 crashed the `R CMD check` examples, which all go to one standard PDF device. 19323 breaks any group with more than about 16 kB of content drawn on `pdf()`.
+
+Handled in ggplot3d (81f927c): quadric runs are painted as exact clipped geometry, without one clipping path per run; `grid_capabilities_3d()$large_definitions` is FALSE on `pdf()`, and there clipping paths replace masks and group compositing is off. Check: every help example rendered to `pdf(compress = FALSE)` with each stream's `/Length` compared to its content, 0 of 142 topics truncated, no crash. Once R fixes both, `large_definitions` can be gated on the R version that carries the fix.
