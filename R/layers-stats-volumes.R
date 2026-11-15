@@ -87,7 +87,6 @@ probability_levels_3d <- function(p) {
 #'
 #'   Doi and Koide (1991), An Efficient Method of Triangulating
 #'   Equi-Valued Surfaces by Using Tetrahedral Cells. IEICE E74-D, 214-224.
-#'   <https://globals.ieice.org/en_transactions/information/10.1587/e74-d_1_214/_p>
 #'
 #'   Ju, Losasso, Schaefer and Warren (2002). Dual contouring of Hermite data.
 #'   ACM Transactions on Graphics 21, 339-346. \doi{10.1145/566654.566586}

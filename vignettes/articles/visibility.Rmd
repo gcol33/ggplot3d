@@ -110,6 +110,6 @@ The layer adapter accepts `occlusion = "overlay"` for geometry intended to be dr
 
 * Bénard, P. and Hertzmann, A. (2019). Line Drawings from 3D Models: A Tutorial. Foundations and Trends in Computer Graphics and Vision 11, 1-159. [doi:10.1561/0600000075](https://doi.org/10.1561/0600000075).
 
-* Appel, A., Rohlf, F. J. and Stein, A. J. (1979). The Haloed Line Effect for Hidden Line Elimination. SIGGRAPH '79. [history.siggraph.org](https://history.siggraph.org/?p=104577).
+* Appel, A., Rohlf, F. J. and Stein, A. J. (1979). The Haloed Line Effect for Hidden Line Elimination. SIGGRAPH '79. [history.siggraph.org](https://history.siggraph.org/learning/the-haloed-line-effect-for-hidden-line-elimination-by-appel-rohlf-and-stein/).
 
 * Nehab, D. (2020). Converting Stroked Primitives to Filled Primitives. ACM Transactions on Graphics 39(4). [doi:10.1145/3386569.3392392](https://doi.org/10.1145/3386569.3392392).

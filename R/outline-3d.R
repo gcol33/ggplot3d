@@ -46,7 +46,7 @@ utils::globalVariables("outline_lines_cpp")
 #'   [geom_surface_3d()], [geom_mesh_3d()] and the surface stats.
 #' @references Appel, Rohlf and Stein (1979). The haloed line effect for
 #'   hidden line elimination. SIGGRAPH '79.
-#'   \url{https://history.siggraph.org/?p=104577}
+#'   \doi{10.1145/800249.807437}
 #'
 #'   Bénard and Hertzmann (2019). Line drawings from 3D models: a
 #'   tutorial. Foundations and Trends in Computer Graphics and Vision 11,
