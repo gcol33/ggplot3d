@@ -198,7 +198,7 @@ check_positive_3d <- function(x, name, zero = FALSE) {
 #' @param centres Ball centres as a three-column matrix or data frame.
 #' @return A `ggplot3d_sdf` function of `x`, `y` and `z`.
 #' @references Quilez, I. Distance functions.
-#'   iquilezles.org/articles/distfunctions
+#'   <https://iquilezles.org/articles/distfunctions/>
 #'
 #'   Wyvill, McPheeters and Wyvill (1986). Data structure for soft objects.
 #'   The Visual Computer 2, 227-234. \doi{10.1007/BF01900346}
@@ -299,9 +299,9 @@ sdf_metaballs <- function(centres, radius = 1) {
 #'   order, or a 3 x 3 rotation matrix.
 #' @param scale Positive uniform scale factor.
 #' @return A `ggplot3d_sdf` function of `x`, `y` and `z`.
-#' @references Quilez, I. Smooth minimum. iquilezles.org/articles/smin
+#' @references Quilez, I. Smooth minimum. <https://iquilezles.org/articles/smin/>
 #'
-#'   Quilez, I. Interior SDFs. iquilezles.org/articles/interiordistance
+#'   Quilez, I. Interior SDFs. <https://iquilezles.org/articles/interiordistance/>
 #' @export
 #' @examples
 #' cut <- sdf_box(size = c(1.6, 1.6, 1.6), radius = 0.1) - sdf_sphere(radius = 1)

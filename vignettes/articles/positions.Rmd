@@ -15,11 +15,11 @@ docs_setup(legend = "bottom")
 
 Position adjustments separate marks that share coordinates and arrange groups within each data cell. This article uses repeated observations and grouped columns to show jitter, dodging and stacking, including labels that follow the adjusted positions. Installation and three-dimensional mappings are covered in [Get started](ggplot3d.html).
 
-1. Identify which rows share a position and map their groups.
+1. **Map** the groups that share a position with `aes(group = )`.
 
-2. Choose a position adjustment for the geometry.
+2. **Adjust** the geometry with a position such as `position_dodge_3d()` or `position_stack_3d()`.
 
-3. Apply the same adjustment to associated labels.
+3. **Label** the adjusted marks by giving `geom_text_3d()` the same position.
 
 ## Example
 

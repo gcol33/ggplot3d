@@ -17,13 +17,13 @@ has_av <- requireNamespace("av", quietly = TRUE)
 
 Camera motion shows a fixed scene from several directions. Data animation changes the observations or geometry between states. This article renders both kinds of animation with `animate_3d()` and ends by opening the same plot in the interactive viewer. Installation is covered in [Get started](ggplot3d.html). Frames are drawn with [ragg](https://ragg.r-lib.org/), and MP4 output needs [av](https://docs.ropensci.org/av/).
 
-1. Build the scene with `coord_3d()`.
+1. **Build** the scene with `coord_3d()`.
 
-2. Move the camera with `animate_3d()` and a camera path such as `orbit_3d()`.
+2. **Move** the camera with `animate_3d()` and a camera path such as `orbit_3d()`.
 
-3. Interpolate data states with `animate_3d(time = )` and `tween_3d()`.
+3. **Interpolate** data states with `animate_3d(time = )` and `tween_3d()`.
 
-4. Explore the plot with `view_3d()`.
+4. **Explore** the plot with `view_3d()`.
 
 ## Example
 
@@ -86,6 +86,9 @@ the page dimensions in inches.
 pages <- animate_3d(p, frames = 3, azimuth = c(-60, 0, 60),
   format = "pdf", backend = "vector", width = 600, height = 450,
   dpi = 100, progress = FALSE)
+```
+
+```{r pdf-views-check, include = FALSE}
 stopifnot(file.exists(pages$file), file.info(pages$file)$size > 0)
 ```
 

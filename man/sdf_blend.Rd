@@ -74,7 +74,7 @@ ggplot2::ggplot() +
   scale_z_continuous(limits = c(-1, 1)) + coord_3d()
 }
 \references{
-Quilez, I. Smooth minimum. iquilezles.org/articles/smin
+Quilez, I. Smooth minimum. \url{https://iquilezles.org/articles/smin/}
 
-Quilez, I. Interior SDFs. iquilezles.org/articles/interiordistance
+Quilez, I. Interior SDFs. \url{https://iquilezles.org/articles/interiordistance/}
 }

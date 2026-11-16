@@ -15,11 +15,11 @@ docs_setup(legend = "bottom")
 
 Intervals show supplied lower and upper bounds around a position. They can describe measurement uncertainty, variation among observations or uncertainty in a summary, depending on how the bounds were computed. This article draws intervals on three axes and summarises petal lengths by species. Installation is covered in [Get started](ggplot3d.html).
 
-1. Map the centre and both bounds for each interval axis.
+1. **Map** the centre and both bounds of each interval axis in `aes()`.
 
-2. Choose capped bars, point ranges or boxes.
+2. **Draw** capped bars, point ranges or boxes with `geom_errorbar_3d()`, `geom_pointrange_3d()` or `geom_crossbar_3d()`.
 
-3. Compute grouped summaries when the input contains repeated observations.
+3. **Summarise** repeated observations with `stat_summary_3d()`.
 
 ## Example
 
@@ -87,9 +87,8 @@ flowers + stat_summary_3d(fun.data = quartiles, geom = "crossbar",
 
 An explicit group mapping separates summaries that share a position. Discrete colour and fill mappings also define groups. Mapping a different group to every observation prevents pooling; a standard error then cannot be estimated from within-cell variation. Summaries use scale-transformed values, so applying a logarithmic scale changes the quantity being averaged. Compute summaries in original units before plotting when that is the intended quantity.
 
-Mixed singleton and repeated cells can currently produce a column-binding
-error in the summary stat. For such data, prepare the summary table first,
-assigning bounds only where the chosen summary is defined.
+A cell with a single observation has no standard error. Its mean is drawn as
+a point without bounds.
 
 ### Preparing a summary table
 

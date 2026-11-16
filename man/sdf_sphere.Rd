@@ -76,7 +76,7 @@ ggplot2::ggplot() +
 }
 \references{
 Quilez, I. Distance functions.
-iquilezles.org/articles/distfunctions
+\url{https://iquilezles.org/articles/distfunctions/}
 
 Wyvill, McPheeters and Wyvill (1986). Data structure for soft objects.
 The Visual Computer 2, 227-234. \doi{10.1007/BF01900346}

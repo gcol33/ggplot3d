@@ -15,11 +15,11 @@ docs_setup(legend = "bottom")
 
 Axes and legends connect the displayed geometry to the variables in a table. This article labels a height surface, places its colourbar beside the z axis and adjusts the surrounding panes and grids. It assumes the mappings introduced in [Get started](ggplot3d.html). [Camera and framing](camera.html) explains the view angles used here.
 
-1. Set the breaks and labels on each position scale.
+1. **Label** the axes with the position scales and `guide_axis_3d()`.
 
-2. Choose axis guides and a colour guide.
+2. **Align** a colourbar with the z axis with `guide_colourbar_3d()`.
 
-3. Style the panel with theme elements.
+3. **Style** the panes and grids with `theme()`.
 
 ## Example
 

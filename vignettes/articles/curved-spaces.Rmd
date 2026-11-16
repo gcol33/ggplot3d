@@ -100,6 +100,9 @@ speed <- 0.5
 boost <- lorentz_boost_3d(rapidity = atanh(speed), direction = c(1, 0, 0))
 event <- boost %*% c(0, 0, 0, 1)
 event
+```
+
+```{r boost-check, include = FALSE}
 stopifnot(isTRUE(all.equal(event[4], 1 / sqrt(1 - speed^2))))
 ```
 

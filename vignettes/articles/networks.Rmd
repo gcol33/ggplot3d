@@ -16,11 +16,11 @@ has_igraph <- requireNamespace("igraph", quietly = TRUE)
 
 A network drawn in three dimensions has room to separate nodes that a flat layout would pile together, and a third axis can carry a layer or a level of a hierarchy. This article draws an igraph network from a 3D layout, a multilayer network on stacked planes, and a dendrogram standing upright on the edge of a heat map. Installation is covered in [Get started](ggplot3d.html); the network examples need [igraph](https://r.igraph.org/).
 
-1. Pass an igraph object to `ggplot()` with a three-dimensional layout.
+1. **Pass** an igraph object to `ggplot()` with a three-dimensional layout.
 
-2. Draw it with `geom_edge_3d()` and `geom_node_3d()`.
+2. **Draw** it with `geom_edge_3d()` and `geom_node_3d()`.
 
-3. Stack layers with `stat_layers_3d()`, or stand a tree on a plane with `stat_dendrogram_3d()`.
+3. **Stack** layers with `stat_layers_3d()`, or stand a tree on a plane with `stat_dendrogram_3d()`.
 
 ```{r packages, message = FALSE}
 library(ggplot2)

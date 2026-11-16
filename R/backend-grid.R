@@ -246,8 +246,9 @@ seam_underlay_3d <- function(x, y, id, fill) {
     rule = "winding", gp = grid::gpar(fill = colours, col = NA)))
 }
 
-# Rings `id` (consecutive vertices, ids 1..n) rewound counter-clockwise, so a
-# nonzero-winding compound path of them fills their union.
+# Rings `id` rewound counter-clockwise, so a nonzero-winding compound path of
+# them fills their union. Each ring's vertices sit in consecutive rows, in
+# order around the ring.
 counter_clockwise_3d <- function(x, y, id) {
   i <- seq_along(id)
   first <- match(id, id); last <- length(id) + 1L - match(id, rev(id))
