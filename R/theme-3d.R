@@ -56,7 +56,26 @@ register_theme_3d <- function() {
   invisible(NULL)
 }
 
-element_3d <- function(name, theme) ggplot2::calc_element(name, theme)
+# Resolved theme elements, memoised per theme and element tree: calc_element()
+# walks the inheritance tree on every call, and one panel resolves the same
+# names against the same few themes many times. Keys are object addresses; an
+# entry holds a reference to the theme and tree it is keyed on, so neither can
+# be freed and its address reused while the entry exists.
+.element_cache_3d <- new.env(parent = emptyenv())
+
+element_3d <- function(name, theme) {
+  tree <- ggplot2::get_element_tree()
+  key <- paste(rlang::obj_address(theme), rlang::obj_address(tree))
+  entry <- .element_cache_3d[[key]]
+  if (is.null(entry)) {
+    if (length(.element_cache_3d) >= 32L) rm(list = ls(.element_cache_3d, all.names = TRUE), envir = .element_cache_3d)
+    entry <- list(theme = theme, tree = tree, elements = new.env(parent = emptyenv()))
+    assign(key, entry, envir = .element_cache_3d)
+  }
+  if (!exists(name, envir = entry$elements, inherits = FALSE))
+    assign(name, ggplot2::calc_element(name, theme), envir = entry$elements)
+  get(name, envir = entry$elements, inherits = FALSE)
+}
 
 visible_element_3d <- function(element) !is.null(element) && !inherits(element, "element_blank")
 

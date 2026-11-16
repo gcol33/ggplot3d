@@ -179,8 +179,12 @@ hopf_points_3d <- function(lon,lat,t) {
 
 StatHopfFibre3D <- ggplot2::ggproto("StatHopfFibre3D",ggplot2::Stat,
   required_aes=c("lon","lat"),dropped_aes=c("lon","lat"),
-  compute_group=function(data,scales,n=64L,what="fibres") {
+  compute_group=function(data,scales,n=64L,what="fibres",radius=.025) {
     if(any(!is.finite(data$lon))||any(!is.finite(data$lat))||any(abs(data$lat)>90)) stop("Hopf longitude and latitude must be finite, with latitude in [-90,90].",call.=FALSE)
+    # Base points and fibre paths (radius 0) are drawn in grey25 unless
+    # coloured; tubes and tori, like other solids, have no edge colour unless
+    # one is given.
+    if((what=="base"||(what=="fibres"&&radius==0))&&is.null(data$colour)) data$colour <- "grey25"
     blocks <- lapply(seq_len(nrow(data)),function(i) {
       if(what=="base") {
         out <- data[i,,drop=FALSE]; xyz <- lonlat_xyz_3d(out$lon,out$lat)
@@ -205,7 +209,7 @@ StatHopfFibre3D <- ggplot2::ggproto("StatHopfFibre3D",ggplot2::Stat,
 )
 
 GeomHopfFibre3D <- ggplot2::ggproto("GeomHopfFibre3D",ggplot2::Geom,
-  required_aes=c("x","y","z"),default_aes=local({a <- solid_defaults_3d(); a$colour <- "grey25"; a$size <- 1.5; a$shape <- 19; a}),draw_key=ggplot2::draw_key_polygon)
+  required_aes=c("x","y","z"),default_aes=local({a <- solid_defaults_3d(); a$size <- 1.5; a$shape <- 19; a}),draw_key=ggplot2::draw_key_polygon)
 
 # The geodesic tube of angular radius r about a great circle X(t) is the
 # torus cos(r) X(t) + sin(r) (cos(phi) c + sin(phi) d), with (c, d) an

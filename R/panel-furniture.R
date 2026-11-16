@@ -213,6 +213,33 @@ furniture_partitions_3d <- function(camera, viewport, frame = FrameBox) {
   stats::setNames(partitions, vapply(panes, `[[`, character(1), "name"))
 }
 
+# The reserve r (mm on top, right, bottom, left) at which the guides just fit,
+# r = needed(r), where needed(r) is the reserve the guides take when the box
+# is fitted inside reserve r. While the axis edges stay the same, needed is
+# smooth and close to affine on each side, so each side takes a secant step on
+# the residual needed(r) - r. The first step, and a side whose residual does
+# not fall as r grows past it, take the mean of r and needed(r), which
+# contracts whenever needed changes more slowly than r. Stops once no side
+# moves by `tol` or more, at the larger of r and needed(r), so no guide
+# overhangs the panel.
+guide_reserve_fixed_point_3d <- function(needed, reserve, tol = 0.01, evaluations = 16L) {
+  x <- reserve; previous <- NULL
+  for (i in seq_len(evaluations)) {
+    gx <- needed(x); f <- gx - x
+    if (max(abs(f)) < tol) return(pmax(gx, x))
+    step <- (gx + x) / 2
+    if (!is.null(previous)) {
+      slope <- (f - previous$f) / (x - previous$x)
+      secant <- x - f / slope
+      ok <- is.finite(secant) & slope < 0 & abs(secant - x) <= 8 * abs(f)
+      step[ok] <- secant[ok]
+    }
+    previous <- list(x = x, f = f)
+    x <- step
+  }
+  pmax(needed(x), x)
+}
+
 # Shared guide reserve and magnification for panels drawn at one physical size.
 panel_group_fit_3d <- function(groups, viewport, mode) {
   fits <- lapply(groups, function(panel) measure_guides_3d(panel$params, panel$theme, viewport))
@@ -224,13 +251,13 @@ panel_group_fit_3d <- function(groups, viewport, mode) {
     new_scene_viewport(width, height, viewport$dpi)
   }
   fitted <- inner(reserve)
-  if (mode == "view") for (iteration in seq_len(16L)) {
-    reserves <- Map(function(panel, measured) view_guide_reserve_3d(panel$params, measured, fitted), groups, fits)
-    next_reserve <- Reduce(pmax, reserves)
-    difference <- max(abs(next_reserve - reserve))
-    reserve <- if (difference < 0.01) pmax(next_reserve, reserve) else (next_reserve + reserve) / 2
+  if (mode == "view") {
+    needed <- function(reserve) {
+      fitted <- inner(reserve)
+      Reduce(pmax, Map(function(panel, measured) view_guide_reserve_3d(panel$params, measured, fitted), groups, fits))
+    }
+    reserve <- guide_reserve_fixed_point_3d(needed, reserve)
     fitted <- inner(reserve)
-    if (difference < 0.01) break
   }
   magnification <- min(vapply(groups, function(panel) {
     camera <- frame_camera_3d(panel$params$camera, fitted, mode, frame_of_3d(panel$params)$bounds())
@@ -487,32 +514,36 @@ panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list
 # the colour that paints each kind as attribute.
 furniture_styles_3d <- function(kinds, materials) {
   n <- length(kinds)
-  styles <- data.frame(style_id = seq_len(n), colour = rep(NA_character_, n), fill = rep(NA_character_, n),
-    linewidth = rep(0, n), linetype = rep("solid", n), label = rep("", n), fontsize = rep(0, n),
-    family = rep("", n), fontface = rep(1, n), .anchor = rep(FALSE, n))
+  elements <- lapply(materials, `[[`, "element")
+  styled <- !vapply(elements, is.null, logical(1))
+  texted <- styled & !vapply(materials, function(m) is.null(m$text), logical(1))
+  field <- function(name, default, rows = styled, value = function(el) el[[name]] %or3d% default) {
+    out <- rep(default, n)
+    if (any(rows)) out[rows] <- unlist(lapply(elements[rows], value), use.names = FALSE)
+    out
+  }
+  colour <- field("colour", NA_character_)
+  fill <- field("fill", NA_character_)
+  face <- function(el) {
+    face <- el$face %or3d% 1
+    if (is.numeric(face)) face else match(face, c("plain", "bold", "italic", "bold.italic"), nomatch = 1L)
+  }
+  styles <- data.frame(style_id = seq_len(n), colour = colour, fill = fill,
+    linewidth = field("linewidth", 0),
+    linetype = field("linetype", "solid", value = function(el) as.character(el$linetype %or3d% 1)),
+    label = rep("", n), fontsize = field("size", 0, texted, function(el) el$size %or3d% 11),
+    family = field("family", "", texted), fontface = field("face", 1, texted, face),
+    .anchor = vapply(materials, function(m) isTRUE(m$anchor), logical(1)))
+  if (any(texted)) styles$label[texted] <- vapply(materials[texted], function(m) m$text$label, character(1))
+  # Opacity of the colour that paints each kind; colours are stored opaque.
+  chosen <- ifelse(kinds == "faces", fill, colour)
   opacity <- rep(1, n)
-  for (i in seq_len(n)) {
-    m <- materials[[i]]; el <- m$element
-    styles$.anchor[i] <- m$anchor
-    if (is.null(el)) next
-    styles$colour[i] <- el$colour %or3d% NA_character_
-    styles$fill[i] <- el$fill %or3d% NA_character_
-    styles$linewidth[i] <- el$linewidth %or3d% 0
-    styles$linetype[i] <- as.character(el$linetype %or3d% 1)
-    if (!is.null(m$text)) {
-      styles$label[i] <- m$text$label
-      styles$fontsize[i] <- el$size %or3d% 11
-      styles$family[i] <- el$family %or3d% ""
-      face <- el$face %or3d% 1
-      styles$fontface[i] <- if (is.numeric(face)) face else match(face, c("plain", "bold", "italic", "bold.italic"), nomatch = 1L)
-    }
-    chosen <- if (kinds[i] == "faces") styles$fill[i] else styles$colour[i]
-    rgba <- grDevices::col2rgb(chosen, alpha = TRUE)
-    opacity[i] <- rgba[4L, 1L] / 255
-    for (key in c("colour", "fill")) if (!is.na(styles[[key]][i])) {
-      rgb <- grDevices::col2rgb(styles[[key]][i])
-      styles[[key]][i] <- grDevices::rgb(rgb[1L], rgb[2L], rgb[3L], maxColorValue = 255)
-    }
+  opacity[styled] <- grDevices::col2rgb(chosen[styled], alpha = TRUE)[4L, ] / 255
+  for (key in c("colour", "fill")) {
+    rows <- !is.na(styles[[key]])
+    if (!any(rows)) next
+    rgb <- grDevices::col2rgb(styles[[key]][rows])
+    styles[[key]][rows] <- grDevices::rgb(rgb[1L, ], rgb[2L, ], rgb[3L, ], maxColorValue = 255)
   }
   attr(styles, "opacity") <- opacity
   styles

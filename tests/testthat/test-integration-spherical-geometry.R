@@ -78,6 +78,21 @@ test_that("Hopf paths tubes tori and matching bases emit valid packets", {
   expect_true(all(is.finite(unlist(packet$vertices))))
 })
 
+test_that("Hopf tubes have no edge colour by default; paths and base points are grey25", {
+  d <- data.frame(lon=c(0,120),lat=c(0,0),id=factor(1:2))
+  colours <- function(...) unique(ggplot2::layer_data(ggplot2::ggplot(d,ggplot2::aes(lon=lon,lat=lat))+
+    stat_hopf_fibre_3d(n=8,sides=4,...)+coord_spherical_geometry_3d())$colour)
+  expect_identical(colours(),NA)
+  expect_identical(colours(what="torus"),NA)
+  expect_identical(colours(radius=0),"grey25")
+  expect_identical(colours(what="base"),"grey25")
+  expect_identical(colours(colour="red"),"red")
+  tubes <- stats_scene(ggplot2::ggplot(d,ggplot2::aes(lon=lon,lat=lat,fill=id))+
+    stat_hopf_fibre_3d(n=8,sides=4)+coord_spherical_geometry_3d())$packet
+  expect_gt(length(tubes$faces$offset),0)
+  expect_length(tubes$polylines$offset,0)
+})
+
 test_that("SO4 schedules animate spherical fibres", {
   skip_on_cran()
   p <- ggplot2::ggplot(data.frame(lon=0,lat=0),ggplot2::aes(lon=lon,lat=lat))+

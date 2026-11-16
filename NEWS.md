@@ -1,5 +1,13 @@
 # ggplot3d 0.0.0.9000
 
+* `stat_hopf_fibre_3d()` tubes and tori have no edge colour by default, like
+  other solids; fibre paths (`radius = 0`) and base points stay grey25. The
+  default grey stroked every tube triangle and hid the fill.
+* Faster panels: the guide reserve of `frame = "view"` converges in a few
+  secant steps instead of running to its iteration cap, theme elements are
+  resolved once per theme, and furniture styles are built in one pass, which
+  takes about 90 ms off every plot.
+
 * `edges_3d()` draws mesh lines over a surface: the edges of its grid cells,
   without the diagonals that split them into triangles (the polygons of a
   mesh), every n-th line with `every`, or every triangle edge. Surface and
