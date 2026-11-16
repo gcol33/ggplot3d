@@ -118,7 +118,8 @@ geom_polygon_3d <- function(mapping = NULL, data = NULL, stat = "identity", posi
 #' @param mapping Additional aesthetic mappings.
 #' @param ... Fixed aesthetics and rendering parameters, such as
 #'   `clip_planes`, a list of [clip_plane_3d()] planes that replaces the
-#'   coordinate system's planes for this layer.
+#'   coordinate system's planes for this layer, or `cast_shadow = FALSE`,
+#'   which keeps the layer out of the shadows of [shadow_3d()].
 #' @param occlusion `"depth"` (default) sorts the layer into the scene by
 #'   depth; `"overlay"` draws it over the scene.
 #' @param shade Whether to shade faces.

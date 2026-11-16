@@ -10,7 +10,9 @@
 #'
 #' Strokes cast ribbons of their drawn width and points cast discs of their
 #' drawn radius, both measured where the caster lies. Text casts no shadow,
-#' and neither do ray-traced layers. A pane receives shadows only when the
+#' and neither do ray-traced layers. Every 3D layer casts by default; a layer
+#' given `cast_shadow = FALSE`, such as `geom_point_3d(cast_shadow = FALSE)`,
+#' casts none. A pane receives shadows only when the
 #' light reaches it from inside the box, and only while it faces away from
 #' the camera, as panes drawn behind the data do. The shadows are vector
 #' geometry in every backend: the raster and hybrid backends draw them with
@@ -412,17 +414,20 @@ shadow_part_3d <- function(packet, plane, towards, partition, spec, camera, basi
     list(group = group, vertex = packet$corners$vertex[tab$offset[rows][group] + sequence(tab$count[rows]) - 1L])
   }
   styles_of <- function(tab) packet$styles[match(tab$style_id, packet$styles$style_id), , drop = FALSE]
+  casts <- function(s) as.logical(style_value_3d(s, "cast_shadow", TRUE))
   points <- list(); counts <- integer()
   add <- function(p, count) { points[[length(points) + 1L]] <<- p; counts <<- c(counts, count) }
   faces <- packet$faces
-  filled <- which(!is.na(style_value_3d(styles_of(faces), "fill", NA_character_)) & faces$opacity > 0)
+  s <- styles_of(faces)
+  filled <- which(!is.na(style_value_3d(s, "fill", NA_character_)) & faces$opacity > 0 & casts(s))
   if (length(filled)) {
     ring <- corners_of(faces, filled)
     add(onto(xyz[ring$vertex, , drop = FALSE]), faces$count[filled])
   }
   normal <- numeric(3); normal[k] <- 1
   lines <- packet$polylines
-  drawn <- which(!is.na(style_value_3d(styles_of(lines), "colour", NA_character_)) & lines$opacity > 0 & lines$width_mm > 0)
+  s <- styles_of(lines)
+  drawn <- which(!is.na(style_value_3d(s, "colour", NA_character_)) & lines$opacity > 0 & lines$width_mm > 0 & casts(s))
   if (length(drawn)) {
     path <- corners_of(lines, drawn)
     caster <- xyz[path$vertex, , drop = FALSE]
@@ -447,7 +452,7 @@ shadow_part_3d <- function(packet, plane, towards, partition, spec, camera, basi
   if (length(markers$offset)) {
     s <- styles_of(markers)
     visible <- which((!is.na(style_value_3d(s, "colour", NA_character_)) | !is.na(style_value_3d(s, "fill", NA_character_))) &
-      markers$opacity > 0)
+      markers$opacity > 0 & casts(s))
     if (length(visible)) {
       centre <- xyz[packet$corners$vertex[markers$offset[visible]], , drop = FALSE]
       footprint <- markers$footprint_id[visible]

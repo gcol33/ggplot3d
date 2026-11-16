@@ -1,5 +1,9 @@
 # ggplot3d 0.0.0.9000
 
+* Every 3D layer takes `cast_shadow`. A layer given `cast_shadow = FALSE`
+  stays out of the shadows of `shadow_3d()`, while the other layers keep
+  theirs. Layers cast by default.
+
 * `shadow_3d()` films are drawn over the grid lines of the pane they lie on,
   so a shadow is never broken up by grid lines. Panes and the planes they
   carry are painted by layer, then coplanar role (fill, stroke, marker),

@@ -20,7 +20,8 @@ layer_3d(
 
 \item{...}{Fixed aesthetics and rendering parameters, such as
 \code{clip_planes}, a list of \code{\link[=clip_plane_3d]{clip_plane_3d()}} planes that replaces the
-coordinate system's planes for this layer.}
+coordinate system's planes for this layer, or \code{cast_shadow = FALSE},
+which keeps the layer out of the shadows of \code{\link[=shadow_3d]{shadow_3d()}}.}
 
 \item{occlusion}{\code{"depth"} (default) sorts the layer into the scene by
 depth; \code{"overlay"} draws it over the scene.}

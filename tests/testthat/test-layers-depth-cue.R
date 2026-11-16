@@ -103,6 +103,21 @@ test_that("a shadow film lies over the pane fill and the grid lines and is one c
   expect_length(films, 2L)
 })
 
+test_that("a layer with cast_shadow = FALSE casts no shadow while the others still do", {
+  d <- data.frame(x = c(.3, .6, .5), y = c(.3, .4, .7), z = c(.5, .6, .8))
+  base <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + unit_limits_3d() + coord_3d(shadow = shadow_3d())
+  sheets <- function(p) {
+    scene <- drawn_panel_3d(p)$scene
+    rows <- shadow_fragments_3d(scene)
+    unique(scene$styles$sheet[match(scene$fragments$style_id[rows], scene$styles$style_id)])
+  }
+  expect_length(sheets(base + geom_point_3d(size = 4) + geom_path_3d(colour = "blue")), 2L)
+  expect_length(sheets(base + geom_point_3d(size = 4, cast_shadow = FALSE) + geom_path_3d(colour = "blue")), 1L)
+  expect_length(sheets(base + geom_point_3d(size = 4, cast_shadow = FALSE)), 0L)
+  expect_length(sheets(base + layer_3d(ggplot2::geom_point(size = 4), cast_shadow = FALSE) + geom_path_3d()), 1L)
+  expect_error(ggplot2::ggplotGrob(base + geom_point_3d(cast_shadow = NA)), "cast_shadow must be TRUE or FALSE")
+})
+
 test_that("raster and hybrid panels draw the shadow film with the furniture", {
   skip_on_cran()
   d <- data.frame(x = c(.3, .6), y = c(.3, .6), z = c(.6, .8))
