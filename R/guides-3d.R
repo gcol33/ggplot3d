@@ -159,7 +159,7 @@ setup_guides_3d <- function(panel_params, guides, theme, scales = NULL, mappings
       minor <- if (is.function(view$break_positions_minor)) view$break_positions_minor() else numeric()
       result[[name]] <- list(axis = axis, secondary = j > 1L, discrete = isTRUE(view$is_discrete()),
         position = position[keep], labels = labels[keep], minor = minor[is.finite(minor) & minor >= 0 & minor <= 1],
-        title = title, params = params, theme = theme + (params$theme %or3d% ggplot2::theme()))
+        title = title, params = params, theme = if (is.null(params$theme)) theme else theme + params$theme)
     }
   }
   panel_params$axis_guides <- frame_of_3d(panel_params)$guides(result, panel_params)
