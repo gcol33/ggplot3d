@@ -1,9 +1,9 @@
 ---
-title: "Lighting and surface styles"
+title: "Lighting and styling surfaces"
 description: "Control surface shading, use lighting presets and materials, and show the shading range in legends."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Lighting and surface styles}
+  %\VignetteIndexEntry{Lighting and styling surfaces}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ A lit surface shows its orientation through brightness. When fill represents
 data, its legend needs to account for the colour changes caused by lighting.
 This article lights a height surface and uses shaded colour guides to read it.
 Installation is covered in [Get started](ggplot3d.html); the multi-panel
-examples use patchwork to arrange the views.
+examples use patchwork to arrange the views. [Styling axes, legends and panes](guides-themes.html) covers guide placement and panel furniture.
 
 ```{r setup}
 library(ggplot3d)

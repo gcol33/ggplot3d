@@ -19,7 +19,7 @@ mesh_point_owner_3d <- function(m, points) {
   })
 }
 
-#' Intrinsic geometry on meshes
+#' Measure distances and paths along mesh surfaces
 #'
 #' Distances, shortest paths and polar charts measured along a triangulated
 #' surface rather than through space. The verbs take a [mesh_3d()] corner

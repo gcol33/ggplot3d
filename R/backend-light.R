@@ -77,16 +77,18 @@ kernel_materials_3d <- function(materials) {
   if (is.null(materials) || !nrow(materials)) {
     return(list(ambient = numeric(), diffuse = numeric(), specular = numeric(), shininess = numeric(),
                 specular_colour = numeric(), back = matrix(numeric(), 0L, 3L), style = numeric(), steps = numeric(),
-                bands = numeric(), breaks = numeric(), a = matrix(numeric(), 0L, 4L), b = matrix(numeric(), 0L, 4L)))
+                bands = numeric(), breaks = numeric(), a = matrix(numeric(), 0L, 4L), b = matrix(numeric(), 0L, 4L),
+                roughness = numeric(), metallic = numeric(), transmission = numeric(), ior = numeric(),
+                emission = matrix(numeric(), 0L, 3L)))
   }
   n <- nrow(materials)
   back <- matrix(NA_real_, n, 3L)
   given <- !is.na(materials$back)
   if (any(given)) back[given, ] <- linear_rgb_3d(materials$back[given])
-  column <- function(name, default) if (is.null(materials[[name]])) rep(default, n) else materials[[name]]
+  column <- function(name, default) if (is.null(materials[[name]])) rep(default, length.out = n) else materials[[name]]
   style <- match(column("style", "standard"), material_styles_3d) - 1L
   bands <- as.double(column("bands", 3L))
-  breaks <- column("breaks", rep(list(numeric()), n))
+  breaks <- column("breaks", list(numeric()))
   count <- lengths(breaks)
   a <- b <- matrix(0, n, 4L)
   gooch <- style == 2L
@@ -100,12 +102,17 @@ kernel_materials_3d <- function(materials) {
     a[i, ] <- cosines[1:4]; b[i, ] <- cosines[5:8]
   }
   normals <- style == 3L
+  emission <- matrix(0, n, 3L)
+  emitting <- !is.na(column("emission", NA_character_))
+  if (any(emitting)) emission[emitting, ] <- linear_rgb_3d(materials$emission[emitting]) * column("emission_strength", 1)[emitting]
   bands[normals] <- match(column("normal_space", "model")[normals], c("model", "camera", "light")) - 1
   list(ambient = as.double(materials$ambient), diffuse = as.double(materials$diffuse),
        specular = as.double(materials$specular), shininess = as.double(materials$shininess),
        specular_colour = as.double(materials$specular_colour), back = back, style = as.double(style),
        steps = as.double(column("specular_steps", FALSE)), bands = bands,
-       breaks = as.double(ifelse(style == 1L, count, 0L)), a = a, b = b)
+       breaks = as.double(ifelse(style == 1L, count, 0L)), a = a, b = b,
+       roughness = as.double(column("roughness", 1)), metallic = as.double(column("metallic", 0)),
+       transmission = as.double(column("transmission", 0)), ior = as.double(column("ior", 1.5)), emission = emission)
 }
 
 # Kernel material index of each style row: its material_id, 0 for none.

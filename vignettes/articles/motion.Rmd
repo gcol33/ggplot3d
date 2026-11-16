@@ -1,9 +1,9 @@
 ---
-title: "Camera animation and interaction"
+title: "Animating cameras and data"
 description: "Render camera moves and camera paths, tween points and surfaces between data states, and hand the scene to the interactive viewer."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Camera animation and interaction}
+  %\VignetteIndexEntry{Animating cameras and data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,7 +15,7 @@ has_ragg <- requireNamespace("ragg", quietly = TRUE)
 has_av <- requireNamespace("av", quietly = TRUE)
 ```
 
-Camera motion shows a fixed scene from several directions. Data animation changes the observations or geometry between states. This article renders both kinds of animation with `animate_3d()` and ends by opening the same plot in the interactive viewer. Installation is covered in [Get started](ggplot3d.html). Frames are drawn with [ragg](https://ragg.r-lib.org/), and MP4 output needs [av](https://docs.ropensci.org/av/).
+Camera motion shows a fixed scene from several directions. Data animation changes the observations or geometry between states. This article renders both kinds of animation with `animate_3d()` and ends by opening the same plot in the interactive viewer. Installation is covered in [Get started](ggplot3d.html). Frames are drawn with [ragg](https://ragg.r-lib.org/), and MP4 output needs [av](https://docs.ropensci.org/av/). [Choosing camera views](camera.html) introduces static framing; [Viewing plots interactively](viewer.html) covers browser controls.
 
 1. **Build** the scene with `coord_3d()`.
 
@@ -113,7 +113,7 @@ rising
 docs_animation("rising")
 ```
 
-Frames use the raster backend by default. `backend = "vector"` draws each frame with the exact vector scene backend described in [Visibility](visibility.html), at a higher cost per frame.
+Frames use the raster backend by default. `backend = "vector"` draws each frame with the exact vector scene backend described in [How overlapping geometry is drawn](visibility.html), at a higher cost per frame.
 
 ### Camera paths
 
@@ -229,7 +229,7 @@ The transitions of [gganimate](https://gganimate.com/reference/transition_time.h
 view_3d(p, width = 560, height = 420)
 ```
 
-[Interactive viewing](viewer.html) covers tooltips, selection, Shiny inputs, linked panels and crosstalk.
+[Viewing plots interactively](viewer.html) covers tooltips, selection, Shiny inputs, linked panels and crosstalk.
 
 ## Camera conventions
 

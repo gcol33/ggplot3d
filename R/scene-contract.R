@@ -137,6 +137,9 @@ scene_table <- function(x, schema, defaults, name, optional = character()) {
 #' @param materials Data frame of surface materials with contiguous integer
 #'   material_id keys and columns ambient, diffuse, specular, shininess,
 #'   specular_colour and back (a colour or NA), as made by [material_3d()].
+#'   Optional physical columns are roughness, metallic, transmission, ior,
+#'   emission (colour or NA) and emission_strength; absent columns have the
+#'   matte defaults of [material_3d()].
 #'   A style's optional integer material_id (NA for the default material)
 #'   refers to it. The engine reads neither; the shading kernel does.
 #' @param panel_id Positive integer panel identifier.
@@ -351,6 +354,16 @@ validate_scene_materials_3d <- function(materials, styles) {
                    all(materials$shininess > 0) && all(materials$specular_colour <= 1) &&
                    (is.character(materials$back) || all(is.na(materials$back))),
                  "materials need nonnegative ambient, diffuse, specular, positive shininess, specular_colour in [0, 1] and back")
+    for (name in intersect(c("roughness", "metallic", "transmission", "ior", "emission_strength"), names(materials))) {
+      value <- materials[[name]]
+      scene_assert(is.numeric(value) && all(is.finite(value) & value >= 0), paste("materials", name, "must be finite and nonnegative"))
+      if (name %in% c("roughness", "metallic", "transmission")) scene_assert(all(value <= 1), paste("materials", name, "must lie in [0, 1]"))
+      if (name == "ior") scene_assert(all(value > 0), "materials ior must be positive")
+    }
+    if (!is.null(materials$emission)) {
+      scene_assert(is.character(materials$emission), "materials emission must contain colours or NA")
+      for (colour in materials$emission[!is.na(materials$emission)]) check_light_colour_3d(colour, "materials emission")
+    }
   }
   id <- styles$material_id
   scene_assert(is.null(id) || (is.numeric(id) && all(is.na(id) | (id >= 1 & id <= nrow(materials) & id == trunc(id)))),

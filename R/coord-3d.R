@@ -24,17 +24,29 @@
 #'   which adds every depth-tested layer with faces, paths or points. Text
 #'   stays vector graphics, placed by the image's visibility.
 #' @param antialias Positive integer supersampling factor.
-#' @param samples Path-tracing samples per pixel added by each render.
-#' @param bounces Maximum diffuse surface interactions per path.
+#' @param samples Maximum path-tracing samples per pixel added by each render.
+#' @param bounces Maximum surface or medium scattering interactions per path.
 #' @param seed Nonnegative integer seed for pixel and sample indexed randomness.
 #' @param aperture Thin-lens radius in aspect-scaled model units; zero is a pinhole.
 #' @param focus Focal-plane distance along the camera forward axis, in model
 #'   units. NULL focuses on the camera target.
-#' @param light_radius Angular radius of the distant light in degrees.
+#' @param light_radius Angular radius of each directional or head light in degrees.
 #' @param progressive Accumulate samples across redraws of the same scene.
 #'   Changes to geometry, camera, lighting or image dimensions reset accumulation.
 #' @param batch_size Samples per native batch; accumulation is independent of
 #'   batch size and worker count. R can interrupt between batches.
+#' @param noise_threshold Nonnegative relative standard-error target. Zero
+#'   disables adaptive sampling; positive values stop converged pixels after
+#'   `min_samples`. Coverage is tested with absolute standard error. Dark
+#'   channels use a linear-radiance floor of 0.001. Adaptive stopping is an
+#'   estimate and can introduce stopping bias.
+#' @param min_samples Positive minimum sample count before adaptive stopping.
+#'   At least two samples per independent half buffer are required.
+#' @param denoise Apply native nonlinearly weighted first-order regression
+#'   using independent colour, albedo, normal and depth half buffers.
+#' @param exposure Exposure adjustment in stops, applied in linear light.
+#' @param tone `"clip"`, `"aces"` (Narkowicz fit), or `"agx"` (the
+#'   Rec.2020 AgX transform with a polynomial contrast approximation).
 #' @param geometry Intrinsic geometry for the raymarch backend; see [geodesic_3d()].
 #' @param observer Observer coordinates in that geometry's chart.
 #' @param facing Orthonormal 3 by 3 matrix whose columns are the camera's right,
@@ -54,9 +66,16 @@
 #'   one thread per hardware thread, at most two when `_R_CHECK_LIMIT_CORES_`
 #'   is set. The image does not depend on the thread count.
 #'
-#' The native path tracer uses diffuse materials, a bounding-volume hierarchy,
-#' cosine-weighted reflection sampling and Russian roulette. The ambient light
-#' is a uniform environment; the diffuse light is a sampled distant disk.
+#' The native path tracer uses [material_3d()] BSDFs, a bounding-volume hierarchy,
+#' Owen-scrambled Sobol samples, next-event light sampling with power-heuristic
+#' multiple importance sampling and Russian roulette. Ambient light is a
+#' uniform environment; directional lights are sampled distant disks. Point,
+#' head, hemisphere, image environments and emissive triangles contribute.
+#' Directional and point intensities retain the Lambert convention of the
+#' other backends (incident irradiance is pi times intensity).
+#' Absorption volumes use delta tracking for scattering and ratio tracking
+#' for shadow transmittance, with conservative per-cell extinction majorants.
+#' Isovolumes intersect the trilinear field as a surface. MIP is unavailable.
 #' Points and paths use the solid conversion of [export_3d()], and SDF layers
 #' use the shared sphere tracer. Furniture and text remain vector graphics.
 #'
@@ -71,12 +90,33 @@
 #' are opaque. See [geodesic_3d()] for charts and numerical accuracy details.
 #' @references Pharr, Jakob and Humphreys (2023). Physically Based Rendering,
 #'   fourth edition. <https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing>
+#'
+#'   Veach (1997). Robust Monte Carlo methods for light transport simulation.
+#'   Chapter 9. \url{https://graphics.stanford.edu/papers/veach_thesis/}
+#'   Veach and Guibas (1995). Optimally combining sampling techniques for
+#'   Monte Carlo rendering. \doi{10.1145/218380.218498}
+#'
+#'   Burley (2020). Practical hash-based Owen scrambling. JCGT 9(4).
+#'   \url{https://jcgt.org/published/0009/04/01/}
+#'
+#'   Bitterli et al. (2016). Nonlinearly weighted first-order regression for
+#'   denoising Monte Carlo renderings. \doi{10.1111/cgf.12954}
+#'
+#'   Novak et al. (2014). Residual ratio tracking for estimating attenuation
+#'   in participating media. \doi{10.1145/2661229.2661292}
+#'
+#'   Narkowicz (2016). ACES filmic tone mapping curve.
+#'   \url{https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/}
+#'
+#'   Three.js AgX tone-mapping implementation, adapted from Filament.
+#'   \url{https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderChunk/tonemapping_pars_fragment.glsl.js}
 #' @return A backend configuration for coord_3d().
 #' @examples
 #' backend_3d("vector")
 #' backend_3d("raster", dpi = 144, antialias = 2)
 #' backend_3d("raster", blend = "srgb")
 #' backend_3d("pathtrace", samples = 8, seed = 1)
+#' backend_3d("pathtrace", samples = 16, noise_threshold = 0.05, denoise = TRUE, tone = "agx")
 #' d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
 #' d$z <- sin(pi * d$x) * cos(pi * d$y)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
@@ -92,14 +132,16 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
                        focus = NULL, light_radius = 5, progressive = FALSE, batch_size = 8L,
                        geometry = "e3", observer = c(0, 0, 0), facing = diag(3), fov = 70,
                        max_distance = 10, tolerance = 1e-5, max_steps = 2048L,
-                       quotient = NULL, light_size = 0.1, rasterise = "marked") {
+                       quotient = NULL, light_size = 0.1, rasterise = "marked", noise_threshold = 0,
+                       min_samples = 16L, denoise = FALSE, exposure = 0, tone = "clip") {
   stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
             is.finite(antialias), antialias >= 1, antialias == trunc(antialias))
   result <- list(type = match.arg(type, c("vector", "raster", "hybrid", "pathtrace", "raymarch", "plotter")), dpi = dpi, antialias = as.integer(antialias),
        blend = match.arg(blend, c("linear", "srgb")))
   if (result$type == "hybrid") result$rasterise <- match.arg(rasterise, c("marked", "surfaces", "all"))
   if (result$type == "pathtrace") result <- c(result,
-    pathtrace_settings_3d(samples, bounces, seed, aperture, focus, light_radius, progressive, batch_size))
+    pathtrace_settings_3d(samples, bounces, seed, aperture, focus, light_radius, progressive, batch_size,
+      noise_threshold, min_samples, denoise, exposure, tone))
   if (result$type == "raymarch") result <- c(result,
     thurston_settings_3d(geometry, observer, facing, fov, max_distance, tolerance, max_steps, quotient, light_size))
   result

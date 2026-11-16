@@ -1,4 +1,4 @@
-# Interactive viewing
+# Viewing plots interactively
 
 [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
 opens a plot in an interactive browser widget with orbit controls,
@@ -8,6 +8,9 @@ the R packages [htmlwidgets](https://www.htmlwidgets.org/) and
 surrounding plot elements. This article builds a viewer and links its
 selections to a filter. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Embedding plots in
+reports](https://gillescolling.com/ggplot3d/articles/documents.md)
+embeds the viewer in knitr and Quarto output.
 
 ``` r
 
@@ -212,8 +215,9 @@ is hidden only when its anchor is clipped. Geometry, mapped colours and
 lighting are transferred once; camera interaction runs in the browser.
 
 Stereo plots use their central camera in the viewer. Static eye pairs
-and anaglyphs are covered in [Camera and
-framing](https://gillescolling.com/ggplot3d/articles/camera.md). Use
-[Documents](https://gillescolling.com/ggplot3d/articles/documents.md) to
+and anaglyphs are covered in [Choosing camera
+views](https://gillescolling.com/ggplot3d/articles/camera.md). Use
+[Embedding plots in
+reports](https://gillescolling.com/ggplot3d/articles/documents.md) to
 switch between an HTML viewer and a static figure from the same knitr or
 Quarto chunk.

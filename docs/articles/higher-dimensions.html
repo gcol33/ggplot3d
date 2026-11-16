@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Four dimensions, tilings and honeycombs • ggplot3d</title>
+<title>Projecting four dimensions and drawing tilings • ggplot3d</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Four dimensions, tilings and honeycombs">
+<meta property="og:title" content="Projecting four dimensions and drawing tilings">
 <meta name="description" content="Project and rotate four-dimensional data, cut 4D meshes with a hyperplane, run a grand tour, and draw regular tilings and honeycombs.">
 <meta property="og:description" content="Project and rotate four-dimensional data, cut 4D meshes with a hyperplane, run a grand tour, and draw regular tilings and honeycombs.">
 <meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg">
@@ -35,6 +35,8 @@
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+.navbar .dropdown-menu .dropdown-item,
+.navbar .dropdown-menu .dropdown-header { color: var(--bs-body-color); }
 @media (max-width: 991.98px) {
   .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
   .navbar .dropdown-menu { max-height: none; overflow: visible; }
@@ -94,46 +96,56 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
-    <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
-    <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
-    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
-    <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Building plots</h6></li>
+    <li><a class="dropdown-item" href="../articles/data-preparation.html">Preparing data for 3D layers</a></li>
+    <li><a class="dropdown-item" href="../articles/layers.html">Choosing layers for observations and grids</a></li>
+    <li><a class="dropdown-item" href="../articles/z-scale.html">Scaling heights and facet ranges</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Building surfaces and solids</a></li>
     <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
-    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
     <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
-    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
-    <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
-    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
-    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
-    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
-    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
-    <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
-    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
-    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
-    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
-    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
-    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
-    <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
-    <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
-    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
-    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
-    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
-    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
-    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
-    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
-    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
-    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
-    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Data types</h6></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Plotting angles and compositions</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Plotting maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Reading and measuring meshes</a></li>
+    <li><a class="dropdown-item" href="../articles/scans.html">Reading 3D scans and point clouds</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Drawing arrows and streamlines</a></li>
+    <li><a class="dropdown-item" href="../articles/field-slices.html">Slicing fields and point densities</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Drawing networks and trees</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
-    <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
-    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Appearance</h6></li>
+    <li><a class="dropdown-item" href="../articles/camera.html">Choosing camera views</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Styling axes, legends and panes</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and styling surfaces</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Output and sharing</h6></li>
+    <li><a class="dropdown-item" href="../articles/backends.html">Choosing rendering and image formats</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Rendering volumes and traced surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/path-tracing.html">Rendering materials with path tracing</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Embedding plots in reports</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Viewing plots interactively</a></li>
+    <li><a class="dropdown-item" href="../articles/motion.html">Animating cameras and data</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Scientific examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/gallery.html">Drawing common charts in 3D</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Drawing ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Drawing tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Drawing molecular structures</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Plotting colour gamuts in Lab coordinates</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Mathematical examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Constructing and reconstructing surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/pde.html">Animating differential-equation solutions</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Projecting four dimensions and drawing tilings</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Plotting curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Drawing complex functions, knots and surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Viewing Thurston geometries from inside</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Internals and extensions</h6></li>
+    <li><a class="dropdown-item" href="../articles/visibility.html">How overlapping geometry is drawn</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Writing a geometry extension</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -163,7 +175,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.svg" class="logo" alt=""><h1>Four dimensions, tilings and honeycombs</h1>
+      <img src="../logo.svg" class="logo" alt=""><h1>Projecting four dimensions and drawing tilings</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/gcol33/ggplot3d/blob/HEAD/vignettes/articles/higher-dimensions.Rmd" class="external-link"><code>vignettes/articles/higher-dimensions.Rmd</code></a></small>
@@ -179,7 +191,7 @@ hyperplane and drawing the three-dimensional section. Regular tilings
 and honeycombs fill the plane and space with copies of one polygon or
 polyhedron, and are generated by reflections in the same way.
 Installation is covered in <a href="ggplot3d.html">Get started</a>, and
-<a href="motion.html">Camera animation and interaction</a> introduces
+<a href="motion.html">Animating cameras and data</a> introduces
 <code><a href="../reference/animate_3d.html">animate_3d()</a></code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
@@ -254,137 +266,137 @@ copies of the cube separate.</p>
       <rect x="80.47" y="8.47" width="307.06" height="307.06" style="stroke-width: 1.65; stroke: none;"/>
     </g>
     <defs>
-      <clipPath id="f2-cpMTM0LjE1fDM2NC4yN3wxNi40NHwyOTcuODU=">
-        <rect x="134.15" y="16.44" width="230.12" height="281.41"/>
+      <clipPath id="f2-cpMTM0LjE1fDM2NC4yNnwxNi40NHwyOTkuMDY=">
+        <rect x="134.15" y="16.44" width="230.11" height="282.62"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f2-cpMTM0LjE1fDM2NC4yN3wxNi40NHwyOTcuODU=)">
-      <polyline points="138.46,241.82 138.46,96.56 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="147.99,233.56 147.99,88.31 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="157.52,225.31 157.52,80.05 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="167.05,217.06 167.05,71.80 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="176.58,208.80 176.58,63.55 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="186.11,200.55 186.11,55.29 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="195.64,192.30 195.64,47.04 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="205.17,184.05 205.17,38.79 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="214.70,175.79 214.70,30.53 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="138.46,241.82 138.46,96.56 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="157.52,225.31 157.52,80.05 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="176.58,208.80 176.58,63.55 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="195.64,192.30 195.64,47.04 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="214.70,175.79 214.70,30.53 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,238.52 218.51,165.89 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,222.01 218.51,149.38 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,205.50 218.51,132.87 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,189.00 218.51,116.37 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,172.49 218.51,99.86 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,155.98 218.51,83.36 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,139.48 218.51,66.85 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,122.97 218.51,50.34 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,106.46 218.51,33.84 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,238.52 218.51,165.89 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,205.50 218.51,132.87 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,172.49 218.51,99.86 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,139.48 218.51,66.85 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.65,106.46 218.51,33.84 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="230.32,175.90 230.32,30.64 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="242.48,179.41 242.48,34.15 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="254.65,182.92 254.65,37.66 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="266.81,186.43 266.81,41.18 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="278.97,189.95 278.97,44.69 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="291.14,193.46 291.14,48.20 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="303.30,196.97 303.30,51.71 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="315.47,200.48 315.47,55.22 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="327.63,203.99 327.63,58.73 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="339.79,207.50 339.79,62.24 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="351.96,211.01 351.96,65.76 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="242.48,179.41 242.48,34.15 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="266.81,186.43 266.81,41.18 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="291.14,193.46 291.14,48.20 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="315.47,200.48 315.47,55.22 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="339.79,207.50 339.79,62.24 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,165.89 363.77,207.82 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,149.38 363.77,191.31 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,132.87 363.77,174.81 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,116.37 363.77,158.30 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,99.86 363.77,141.79 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,83.36 363.77,125.29 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,66.85 363.77,108.78 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,50.34 363.77,92.27 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,33.84 363.77,75.77 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,165.89 363.77,207.82 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,132.87 363.77,174.81 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,99.86 363.77,141.79 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,66.85 363.77,108.78 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,33.84 363.77,75.77 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="146.45,248.53 230.32,175.90 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="158.62,252.04 242.48,179.41 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="170.78,255.55 254.65,182.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="182.95,259.06 266.81,186.43 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="195.11,262.57 278.97,189.95 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="207.27,266.09 291.14,193.46 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="219.44,269.60 303.30,196.97 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="231.60,273.11 315.47,200.48 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="243.77,276.62 327.63,203.99 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="255.93,280.13 339.79,207.50 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="268.09,283.64 351.96,211.01 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="158.62,252.04 242.48,179.41 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="182.95,259.06 266.81,186.43 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="207.27,266.09 291.14,193.46 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="231.60,273.11 315.47,200.48 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="255.93,280.13 339.79,207.50 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="138.46,241.82 283.71,283.75 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="147.99,233.56 293.24,275.50 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="157.52,225.31 302.77,267.24 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="167.05,217.06 312.30,258.99 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="176.58,208.80 321.83,250.74 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="186.11,200.55 331.36,242.48 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="195.64,192.30 340.89,234.23 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="205.17,184.05 350.42,225.98 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="214.70,175.79 359.95,217.72 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="138.46,241.82 283.71,283.75 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="157.52,225.31 302.77,267.24 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="176.58,208.80 321.83,250.74 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="195.64,192.30 340.89,234.23 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="214.70,175.79 359.95,217.72 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.51,172.49 363.77,214.42 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
-      <polyline points="134.65,245.12 218.51,172.49 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
-      <polyline points="218.51,172.49 218.51,27.23 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
-      <circle cx="221.30" cy="171.10" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="267.95" cy="184.56" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="306.70" cy="195.75" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="353.35" cy="209.22" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="221.30" cy="39.04" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="267.95" cy="52.51" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="145.06" cy="237.12" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="306.70" cy="63.70" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="191.71" cy="250.59" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="353.35" cy="77.16" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="230.46" cy="261.77" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="277.11" cy="275.24" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="145.06" cy="105.07" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="191.71" cy="118.54" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="230.46" cy="129.72" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
-      <circle cx="277.11" cy="143.19" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+    <g clip-path="url(#f2-cpMTM0LjE1fDM2NC4yNnwxNi40NHwyOTkuMDY=)">
+      <polyline points="138.46,242.42 138.46,97.17 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="147.99,234.17 147.99,88.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="157.52,225.91 157.52,80.67 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="167.05,217.66 167.05,72.41 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="176.58,209.41 176.58,64.16 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="186.11,201.16 186.11,55.91 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="195.64,192.90 195.64,47.66 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="205.17,184.65 205.17,39.40 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="214.70,176.40 214.70,31.15 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="138.46,242.42 138.46,97.17 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="157.52,225.91 157.52,80.67 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="176.58,209.41 176.58,64.16 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="195.64,192.90 195.64,47.66 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="214.70,176.40 214.70,31.15 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,239.12 218.51,166.49 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,222.61 218.51,149.99 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,206.11 218.51,133.48 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,189.60 218.51,116.98 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,173.10 218.51,100.47 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,156.59 218.51,83.97 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,140.09 218.51,67.46 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,123.58 218.51,50.96 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,107.07 218.51,34.45 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,239.12 218.51,166.49 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,206.11 218.51,133.48 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,173.10 218.51,100.47 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,140.09 218.51,67.46 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,107.07 218.51,34.45 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="230.32,176.51 230.32,31.26 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="242.48,180.02 242.48,34.77 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="254.65,183.53 254.65,38.28 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="266.81,187.04 266.81,41.79 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="278.97,190.55 278.97,45.30 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="291.13,194.06 291.13,48.81 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="303.30,197.57 303.30,52.32 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="315.46,201.08 315.46,55.84 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="327.62,204.59 327.62,59.35 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="339.79,208.11 339.79,62.86 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="351.95,211.62 351.95,66.37 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="242.48,180.02 242.48,34.77 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="266.81,187.04 266.81,41.79 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="291.13,194.06 291.13,48.81 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="315.46,201.08 315.46,55.84 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="339.79,208.11 339.79,62.86 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,166.49 363.76,208.42 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,149.99 363.76,191.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,133.48 363.76,175.41 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,116.98 363.76,158.91 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,100.47 363.76,142.40 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,83.97 363.76,125.90 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,67.46 363.76,109.39 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,50.96 363.76,92.89 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,34.45 363.76,76.38 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,166.49 363.76,208.42 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,133.48 363.76,175.41 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,100.47 363.76,142.40 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,67.46 363.76,109.39 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,34.45 363.76,76.38 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="146.46,249.13 230.32,176.51 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="158.62,252.64 242.48,180.02 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="170.79,256.15 254.65,183.53 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="182.95,259.66 266.81,187.04 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="195.11,263.17 278.97,190.55 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="207.28,266.69 291.13,194.06 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="219.44,270.20 303.30,197.57 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="231.60,273.71 315.46,201.08 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="243.76,277.22 327.62,204.59 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="255.93,280.73 339.79,208.11 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="268.09,284.24 351.95,211.62 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="158.62,252.64 242.48,180.02 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="182.95,259.66 266.81,187.04 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="207.28,266.69 291.13,194.06 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="231.60,273.71 315.46,201.08 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="255.93,280.73 339.79,208.11 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="138.46,242.42 283.71,284.35 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="147.99,234.17 293.24,276.10 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="157.52,225.91 302.77,267.84 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="167.05,217.66 312.30,259.59 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="176.58,209.41 321.83,251.34 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="186.11,201.16 331.36,243.09 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="195.64,192.90 340.89,234.83 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="205.17,184.65 350.42,226.58 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="214.70,176.40 359.95,218.33 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="138.46,242.42 283.71,284.35 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="157.52,225.91 302.77,267.84 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="176.58,209.41 321.83,251.34 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="195.64,192.90 340.89,234.83 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="214.70,176.40 359.95,218.33 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.51,173.10 363.76,215.03 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <polyline points="134.65,245.72 218.51,173.10 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <polyline points="218.51,173.10 218.51,27.85 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <circle cx="221.30" cy="171.70" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="267.95" cy="185.17" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="306.69" cy="196.35" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="353.34" cy="209.82" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="221.30" cy="39.66" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="267.95" cy="53.12" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="145.07" cy="237.72" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="306.69" cy="64.31" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="191.72" cy="251.19" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="353.34" cy="77.78" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="230.46" cy="262.37" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="277.11" cy="275.84" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="145.07" cy="105.68" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="191.72" cy="119.15" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="230.46" cy="130.33" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
+      <circle cx="277.11" cy="143.80" r="3.75" style="stroke-width: 1.10; stroke: #2E6F9E; fill: #2E6F9E;"/>
     </g>
     <g clip-path="url(#f2-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
-      <text x="154.85" y="269.96" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-1.0</text>
-      <text x="203.68" y="283.40" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
-      <text x="228.01" y="290.42" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.5</text>
-      <text x="252.34" y="297.44" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
-      <text transform="translate(195.81,305.78) rotate(16)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">x</text>
-      <text x="294.85" y="301.47" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-1.0</text>
-      <text x="313.91" y="284.97" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.5</text>
-      <text x="332.00" y="267.34" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
-      <text x="351.06" y="250.83" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.5</text>
-      <text x="370.12" y="234.33" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
-      <text transform="translate(353.37,287.15) rotate(-41)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">y</text>
-      <text x="118.47" y="243.38" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-1.0</text>
-      <text x="118.47" y="210.37" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.5</text>
-      <text x="120.73" y="177.36" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
-      <text x="120.73" y="144.34" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.5</text>
-      <text x="120.73" y="111.33" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
-      <text transform="translate(100.61,172.49) rotate(-90)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">z</text>
+      <text x="154.86" y="270.56" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-1.0</text>
+      <text x="203.68" y="284.00" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
+      <text x="228.01" y="291.02" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.5</text>
+      <text x="252.34" y="298.04" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
+      <text transform="translate(195.82,306.38) rotate(16)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">x</text>
+      <text x="294.84" y="302.07" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-1.0</text>
+      <text x="313.90" y="285.57" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.5</text>
+      <text x="331.99" y="267.94" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
+      <text x="351.05" y="251.43" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.5</text>
+      <text x="370.11" y="234.93" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
+      <text transform="translate(353.36,287.75) rotate(-41)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">y</text>
+      <text x="118.47" y="243.99" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-1.0</text>
+      <text x="118.47" y="210.97" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.5</text>
+      <text x="120.74" y="177.96" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
+      <text x="120.74" y="144.95" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.5</text>
+      <text x="120.74" y="111.94" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
+      <text transform="translate(100.61,173.10) rotate(-90)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">z</text>
     </g>
   </g>
 </svg>
@@ -483,113 +495,113 @@ four vertices.</p>
       <rect x="80.47" y="8.47" width="307.06" height="307.06" style="stroke-width: 1.65; stroke: none;"/>
     </g>
     <defs>
-      <clipPath id="f3-cpMTMwLjE4fDM3OS41NnwxNi40NHwyOTAuNDc=">
-        <rect x="130.18" y="16.44" width="249.38" height="274.03"/>
+      <clipPath id="f3-cpMTMwLjQyfDM3OS41NnwxNi40NHwyOTAuNDc=">
+        <rect x="130.42" y="16.44" width="249.14" height="274.03"/>
       </clipPath>
     </defs>
-    <g clip-path="url(#f3-cpMTMwLjE4fDM3OS41NnwxNi40NHwyOTAuNDc=)">
-      <polyline points="138.54,242.40 138.54,89.81 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="149.98,232.49 149.98,79.91 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="161.42,222.58 161.42,70.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="172.86,212.68 172.86,60.09 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="184.30,202.77 184.30,50.18 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="195.74,192.86 195.74,40.27 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="207.18,182.95 207.18,30.36 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.62,173.04 218.62,20.46 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="138.54,242.40 138.54,89.81 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="161.42,222.58 161.42,70.00 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="184.30,202.77 184.30,50.18 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="207.18,182.95 207.18,30.36 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,238.93 222.63,162.64 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,219.12 222.63,142.82 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,199.30 222.63,123.01 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,179.48 222.63,103.19 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,159.67 222.63,83.37 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,139.85 222.63,63.56 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,120.03 222.63,43.74 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,100.22 222.63,23.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,219.12 222.63,142.82 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,179.48 222.63,103.19 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,139.85 222.63,63.56 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="134.53,100.22 222.63,23.92 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="229.56,171.58 229.56,18.99 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="249.38,177.30 249.38,24.71 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="269.20,183.02 269.20,30.43 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="289.01,188.74 289.01,36.15 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="308.83,194.46 308.83,41.87 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="328.65,200.18 328.65,47.59 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="348.46,205.90 348.46,53.31 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="368.28,211.62 368.28,59.03 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="229.56,171.58 229.56,18.99 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="269.20,183.02 269.20,30.43 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="308.83,194.46 308.83,41.87 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="348.46,205.90 348.46,53.31 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,162.64 375.21,206.69 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,142.82 375.21,186.87 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,123.01 375.21,167.05 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,103.19 375.21,147.24 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,83.37 375.21,127.42 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,63.56 375.21,107.60 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,43.74 375.21,87.79 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,23.92 375.21,67.97 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,142.82 375.21,186.87 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,103.19 375.21,147.24 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,63.56 375.21,107.60 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,23.92 375.21,67.97 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="141.47,247.87 229.56,171.58 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="161.28,253.59 249.38,177.30 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="181.10,259.31 269.20,183.02 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="200.92,265.03 289.01,188.74 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="220.73,270.75 308.83,194.46 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="240.55,276.47 328.65,200.18 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="260.37,282.19 348.46,205.90 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="280.18,287.91 368.28,211.62 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="141.47,247.87 229.56,171.58 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="181.10,259.31 269.20,183.02 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="220.73,270.75 308.83,194.46 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="260.37,282.19 348.46,205.90 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="138.54,242.40 291.12,286.45 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="149.98,232.49 302.56,276.54 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="161.42,222.58 314.01,266.63 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="172.86,212.68 325.45,256.72 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="184.30,202.77 336.89,246.82 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="195.74,192.86 348.33,236.91 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="207.18,182.95 359.77,227.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="218.62,173.04 371.21,217.09 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="138.54,242.40 291.12,286.45 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="161.42,222.58 314.01,266.63 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="184.30,202.77 336.89,246.82 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="207.18,182.95 359.77,227.00 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
-      <polyline points="222.63,169.58 375.21,213.62 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
-      <polyline points="134.53,245.87 222.63,169.58 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
-      <polyline points="222.63,169.58 222.63,16.99 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
-      <path d="M 145.47 98.75 L 145.47 237.47 L 225.56 29.39 ZM 145.47 237.47 L 284.19 138.80 L 225.56 29.39 Z" style="fill-rule: nonzero; fill: #468144; stroke-width: 0.75; stroke: none;"/>
-      <path class="preserve-color" d="M 145.47 98.75 L 145.47 237.47 L 225.56 29.39 Z" style="fill-rule: nonzero; fill: #235E22; stroke-width: 0.75; stroke: none;"/>
-      <path class="preserve-color" d="M 145.47 237.47 L 284.19 138.80 L 225.56 29.39 Z" style="fill-rule: nonzero; fill: #69A566; stroke-width: 0.75; stroke: none;"/>
-      <polygon class="preserve-color" points="145.47,98.75 145.47,237.47 225.56,29.39 " style="stroke-width: 0.64; stroke: none; fill: #235E22;"/>
-      <polygon class="preserve-color" points="145.47,237.47 284.19,138.80 225.56,29.39 " style="stroke-width: 0.64; stroke: none; fill: #69A566;"/>
-      <path class="preserve-color" d="M 145.47 98.75 L 284.19 138.80 L 225.56 29.39 ZM 145.47 98.75 L 145.47 237.47 L 284.19 138.80 Z" style="fill-rule: nonzero; fill: #559153; stroke-width: 0.75; stroke: none;"/>
-      <path class="preserve-color" d="M 145.47 98.75 L 284.19 138.80 L 225.56 29.39 Z" style="fill-rule: nonzero; fill: #5C985A; stroke-width: 0.75; stroke: none;"/>
-      <path class="preserve-color" d="M 145.47 98.75 L 145.47 237.47 L 284.19 138.80 Z" style="fill-rule: nonzero; fill: #4F8A4C; stroke-width: 0.75; stroke: none;"/>
-      <polygon class="preserve-color" points="145.47,98.75 284.19,138.80 225.56,29.39 " style="stroke-width: 0.64; stroke: none; fill: #5C985A;"/>
-      <polygon class="preserve-color" points="145.47,98.75 145.47,237.47 284.19,138.80 " style="stroke-width: 0.64; stroke: none; fill: #4F8A4C;"/>
+    <g clip-path="url(#f3-cpMTMwLjQyfDM3OS41NnwxNi40NHwyOTAuNDc=)">
+      <polyline points="138.66,242.40 138.66,89.81 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="150.10,232.49 150.10,79.91 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="161.54,222.58 161.54,70.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="172.98,212.68 172.98,60.09 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="184.42,202.77 184.42,50.18 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="195.86,192.86 195.86,40.27 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="207.30,182.95 207.30,30.36 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.74,173.04 218.74,20.46 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="138.66,242.40 138.66,89.81 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="161.54,222.58 161.54,70.00 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="184.42,202.77 184.42,50.18 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="207.30,182.95 207.30,30.36 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,238.93 222.75,162.64 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,219.12 222.75,142.82 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,199.30 222.75,123.01 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,179.48 222.75,103.19 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,159.67 222.75,83.37 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,139.85 222.75,63.56 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,120.03 222.75,43.74 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,100.22 222.75,23.92 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,219.12 222.75,142.82 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,179.48 222.75,103.19 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,139.85 222.75,63.56 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="134.65,100.22 222.75,23.92 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="229.68,171.58 229.68,18.99 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="249.50,177.30 249.50,24.71 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="269.32,183.02 269.32,30.43 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="289.13,188.74 289.13,36.15 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="308.95,194.46 308.95,41.87 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="328.77,200.18 328.77,47.59 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="348.58,205.90 348.58,53.31 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="368.40,211.62 368.40,59.03 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="229.68,171.58 229.68,18.99 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="269.32,183.02 269.32,30.43 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="308.95,194.46 308.95,41.87 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="348.58,205.90 348.58,53.31 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,162.64 375.33,206.69 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,142.82 375.33,186.87 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,123.01 375.33,167.05 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,103.19 375.33,147.24 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,83.37 375.33,127.42 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,63.56 375.33,107.61 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,43.74 375.33,87.79 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,23.92 375.33,67.97 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,142.82 375.33,186.87 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,103.19 375.33,147.24 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,63.56 375.33,107.61 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,23.92 375.33,67.97 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="141.59,247.87 229.68,171.58 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="161.40,253.59 249.50,177.30 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="181.22,259.31 269.32,183.02 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="201.04,265.03 289.13,188.74 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="220.85,270.75 308.95,194.46 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="240.67,276.47 328.77,200.18 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="260.49,282.19 348.58,205.90 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="280.30,287.91 368.40,211.62 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="141.59,247.87 229.68,171.58 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="181.22,259.31 269.32,183.02 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="220.85,270.75 308.95,194.46 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="260.49,282.19 348.58,205.90 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="138.66,242.40 291.24,286.45 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="150.10,232.49 302.68,276.54 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="161.54,222.58 314.12,266.63 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="172.98,212.68 325.57,256.72 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="184.42,202.77 337.01,246.82 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="195.86,192.86 348.45,236.91 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="207.30,182.95 359.89,227.00 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="218.74,173.04 371.33,217.09 " style="stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="138.66,242.40 291.24,286.45 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="161.54,222.58 314.12,266.63 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="184.42,202.77 337.01,246.82 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="207.30,182.95 359.89,227.00 " style="stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;"/>
+      <polyline points="222.75,169.58 375.33,213.62 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <polyline points="134.65,245.87 222.75,169.58 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <polyline points="222.75,169.58 222.75,16.99 " style="stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;"/>
+      <path d="M 145.59 98.75 L 145.59 237.47 L 225.68 29.39 ZM 145.59 237.47 L 284.31 138.80 L 225.68 29.39 Z" style="fill-rule: nonzero; fill: #468144; stroke-width: 0.75; stroke: none;"/>
+      <path class="preserve-color" d="M 145.59 98.75 L 145.59 237.47 L 225.68 29.39 Z" style="fill-rule: nonzero; fill: #235E22; stroke-width: 0.75; stroke: none;"/>
+      <path class="preserve-color" d="M 145.59 237.47 L 284.31 138.80 L 225.68 29.39 Z" style="fill-rule: nonzero; fill: #69A566; stroke-width: 0.75; stroke: none;"/>
+      <polygon class="preserve-color" points="145.59,98.75 145.59,237.47 225.68,29.39 " style="stroke-width: 0.64; stroke: none; fill: #235E22;"/>
+      <polygon class="preserve-color" points="145.59,237.47 284.31,138.80 225.68,29.39 " style="stroke-width: 0.64; stroke: none; fill: #69A566;"/>
+      <path class="preserve-color" d="M 145.59 98.75 L 284.31 138.80 L 225.68 29.39 ZM 145.59 98.75 L 145.59 237.47 L 284.31 138.80 Z" style="fill-rule: nonzero; fill: #559153; stroke-width: 0.75; stroke: none;"/>
+      <path class="preserve-color" d="M 145.59 98.75 L 284.31 138.80 L 225.68 29.39 Z" style="fill-rule: nonzero; fill: #5C985A; stroke-width: 0.75; stroke: none;"/>
+      <path class="preserve-color" d="M 145.59 98.75 L 145.59 237.47 L 284.31 138.80 Z" style="fill-rule: nonzero; fill: #4F8A4C; stroke-width: 0.75; stroke: none;"/>
+      <polygon class="preserve-color" points="145.59,98.75 284.31,138.80 225.68,29.39 " style="stroke-width: 0.64; stroke: none; fill: #5C985A;"/>
+      <polygon class="preserve-color" points="145.59,98.75 145.59,237.47 284.31,138.80 " style="stroke-width: 0.64; stroke: none; fill: #4F8A4C;"/>
     </g>
     <g clip-path="url(#f3-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
-      <text x="137.87" y="265.18" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
-      <text x="177.51" y="276.62" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.2</text>
-      <text x="217.14" y="288.07" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.4</text>
-      <text x="256.77" y="299.51" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.6</text>
-      <text transform="translate(199.71,306.38) rotate(16)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">x</text>
-      <text x="301.28" y="303.05" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
-      <text x="324.17" y="283.23" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.2</text>
-      <text x="347.05" y="263.42" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.4</text>
-      <text x="369.93" y="243.60" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.6</text>
-      <text transform="translate(360.76,285.94) rotate(-41)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">y</text>
-      <text x="118.35" y="223.98" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.6</text>
-      <text x="118.35" y="184.35" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.4</text>
-      <text x="118.35" y="144.72" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.2</text>
-      <text x="120.62" y="105.08" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
-      <text transform="translate(100.49,169.58) rotate(-90)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">z</text>
+      <text x="137.99" y="265.18" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
+      <text x="177.63" y="276.62" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.2</text>
+      <text x="217.26" y="288.06" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.4</text>
+      <text x="256.89" y="299.51" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.6</text>
+      <text transform="translate(199.83,306.38) rotate(16)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">x</text>
+      <text x="301.40" y="303.05" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
+      <text x="324.29" y="283.23" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.2</text>
+      <text x="347.17" y="263.42" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.4</text>
+      <text x="370.05" y="243.60" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.6</text>
+      <text transform="translate(360.88,285.94) rotate(-41)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">y</text>
+      <text x="118.47" y="223.98" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.6</text>
+      <text x="118.47" y="184.35" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.4</text>
+      <text x="118.47" y="144.72" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">-0.2</text>
+      <text x="120.74" y="105.08" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">0.0</text>
+      <text transform="translate(100.61,169.58) rotate(-90)" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">z</text>
     </g>
   </g>
 </svg>
@@ -901,8 +913,8 @@ cells up to a hyperbolic <code>radius</code> from the centre.</p>
   </g>
 </svg>
 </div></p>
-<p><a href="curved-spaces.html">Curved spaces and spacetime</a> shows
-the coordinate systems for drawing other data in hyperbolic and
+<p><a href="curved-spaces.html">Plotting curved spaces and spacetime</a>
+shows the coordinate systems for drawing other data in hyperbolic and
 spherical space.</p>
 </div>
 <div class="section level2">

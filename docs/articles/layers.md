@@ -1,4 +1,4 @@
-# Layers
+# Choosing layers for observations and grids
 
 A geom draws a shape from mapped data. A stat computes new values or
 geometry before drawing. This article gives small examples of the geoms
@@ -6,12 +6,12 @@ and stats that draw data rows: points, paths, gridded surfaces, columns,
 distributions, intervals and reference geometry. Installation is covered
 in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
-[Surfaces, solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
+[Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
 covers meshes, function and fitted surfaces, level surfaces, hulls,
-solid glyphs and sweeps. [Vector
-fields](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
-covers arrows and streamlines, and [Implicit
+solid glyphs and sweeps. [Drawing arrows and
+streamlines](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
+covers arrows and streamlines, and [Constructing and reconstructing
 surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md)
 covers reconstruction from point clouds.
 
@@ -486,10 +486,9 @@ ggplot(iris, aes(Species, y = 0, z = Petal.Length)) +
 ![Mean petal length with one-standard-error point ranges for each iris
 species.](layers_files/figure-html/summary-intervals-1.svg)
 
-Summary tables containing cells with a single observation can currently
-fail with `numbers of columns of arguments do not match`. For those
-tables, compute the summaries first and pass their bounds to an interval
-layer.
+A cell with a single observation contributes its mean as a point with no
+standard-error bounds. Compute a summary table first when its bounds
+need to be inspected or reused before plotting.
 
 [Displaying intervals and
 summaries](https://gillescolling.com/ggplot3d/articles/intervals.md)
@@ -647,6 +646,11 @@ for the plane conventions.
 
 ## Positions
 
+[Positioning groups and
+observations](https://gillescolling.com/ggplot3d/articles/positions.md)
+develops jitter, aligned labels, dodging and stacking as a complete
+workflow.
+
 Position adjustments move data before drawing, as in ggplot2.
 [`position_nudge_3d()`](https://gillescolling.com/ggplot3d/reference/position_nudge_3d.md)
 shifts by a fixed amount along x, y or z,
@@ -690,10 +694,9 @@ floor.](layers_files/figure-html/project-1.svg)
 
 ## Adapting a layer
 
-[Positioning groups and
-observations](https://gillescolling.com/ggplot3d/articles/positions.md)
-develops grouped columns, aligned labels and proportions from these
-position adjustments.
+[Writing a geometry
+extension](https://gillescolling.com/ggplot3d/articles/extending.md)
+shows how to register and draw a new geometry.
 
 The layer adapter equips a registered ggplot2 geom with
 three-dimensional scene emission. Extension authors register an emitter

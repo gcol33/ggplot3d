@@ -1,9 +1,9 @@
 ---
-title: "Extending ggplot3d"
+title: "Writing a geometry extension"
 description: "Write a new geom for coord_3d(): the scene packet it emits, how positions are normalised, and how register_geom_3d() connects it to the scene."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Extending ggplot3d}
+  %\VignetteIndexEntry{Writing a geometry extension}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup()
 ```
 
-Every layer drawn in `coord_3d()` hands its geometry to the panel's scene as a scene packet: typed tables of vertices, faces, polylines, markers and text. The scene merges the packets of all layers and resolves visibility across them, so a new geom only describes its geometry and never draws anything itself. This article writes a geom that draws one triangle per group of three rows. It assumes familiarity with [ggproto](https://ggplot2-book.org/ext-springs.html) extensions; [Visibility](visibility.html) explains what the scene does with the packets.
+Every layer drawn in `coord_3d()` hands its geometry to the panel's scene as a scene packet: typed tables of vertices, faces, polylines, markers and text. The scene merges the packets of all layers and resolves visibility across them, so a new geom only describes its geometry and never draws anything itself. This article writes a geom that draws one triangle per group of three rows. It assumes familiarity with [ggproto](https://ggplot2-book.org/ext-springs.html) extensions; [How overlapping geometry is drawn](visibility.html) explains what the scene does with the packets.
 
 1. **Define** the geom with `ggplot2::ggproto()`.
 
@@ -88,6 +88,6 @@ The triangle depth-sorts with the panel's grid lines and back walls like any bui
 
 ## Where next
 
-* [Visibility](visibility.html): how packets from all layers are ordered and split.
+* [How overlapping geometry is drawn](visibility.html): how packets from all layers are ordered and split.
 
-* [Meshes and intrinsic geometry](meshes.html): build mesh data that `geom_mesh_3d()` draws without a new geom.
+* [Reading and measuring meshes](meshes.html): build mesh data that `geom_mesh_3d()` draws without a new geom.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/layers-glyph.R
 \name{geom_sphere_3d}
 \alias{geom_sphere_3d}
-\title{Spheres}
+\title{Draw spheres at observed positions}
 \usage{
 geom_sphere_3d(
   mapping = NULL,
@@ -15,7 +15,8 @@ geom_sphere_3d(
   shade = TRUE,
   na.rm = FALSE,
   show.legend = NA,
-  inherit.aes = TRUE
+  inherit.aes = TRUE,
+  material = NULL
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ geom_sphere_3d(
 that show their edges.}
 
 \item{shade}{Whether to apply lighting.}
+
+\item{material}{Surface response made with \code{\link[=material_3d]{material_3d()}}.}
 }
 \value{
 A ggplot2 layer.

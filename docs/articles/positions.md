@@ -7,11 +7,16 @@ labels that follow the adjusted positions. Installation and
 three-dimensional mappings are covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 
-1.  Identify which rows share a position and map their groups.
+1.  **Map** the groups that share a position with `aes(group = )`.
 
-2.  Choose a position adjustment for the geometry.
+2.  **Adjust** the geometry with a position such as
+    [`position_dodge_3d()`](https://gillescolling.com/ggplot3d/reference/position_dodge_3d.md)
+    or
+    [`position_stack_3d()`](https://gillescolling.com/ggplot3d/reference/position_stack_3d.md).
 
-3.  Apply the same adjustment to associated labels.
+3.  **Label** the adjusted marks by giving
+    [`geom_text_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
+    the same position.
 
 ## Example
 
@@ -134,8 +139,8 @@ groups A and B.](positions_files/figure-html/fill-1.svg)
 Stacking requires a shared zero baseline and a linear continuous scale
 along the stacking axis. Positions operate after scale transformation: a
 nudge of one on a base-ten log scale multiplies the original coordinate
-by ten. [The z
-scale](https://gillescolling.com/ggplot3d/articles/z-scale.md) explains
+by ten. [Scaling heights and facet
+ranges](https://gillescolling.com/ggplot3d/articles/z-scale.md) explains
 transformations and limits.
 
 ## Projecting onto panes
@@ -150,5 +155,6 @@ marginal plots.
 
 Position support depends on the geometry. The layer’s help page lists
 supported adjustments; an unsupported combination reports an error.
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.md) includes
+[Choosing layers for observations and
+grids](https://gillescolling.com/ggplot3d/articles/layers.md) includes
 examples of columns, bands and area walls that can be stacked.

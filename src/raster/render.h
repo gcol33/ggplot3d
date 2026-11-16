@@ -529,6 +529,10 @@ static inline double srgb_decode(double v) {return v<=0.04045 ? v/12.92:std::pow
 static inline double srgb_encode(double v) {return v<=0.0031308 ? 12.92*v:1.055*std::pow(v,1/2.4)-0.055;}
 static inline Colour linear_colour(const Colour& c) {return {srgb_decode(c.r),srgb_decode(c.g),srgb_decode(c.b),c.a};}
 
+} }
+#include "gaussian.h"
+namespace ggplot3d { namespace raster {
+
 // Composites the absorption volumes between camera depths a and b of ray i.
 // The integral is premultiplied linear light; an sRGB compositing space
 // receives its encoded straight colour, premultiplied again.
@@ -599,7 +603,8 @@ static inline void coverage_of(const Traced* t,std::size_t i,const std::vector<S
 static inline SampleResult composite_sample(const Shapes& shapes,const Fragment* f,std::size_t k,
                                             std::vector<Index>& painted,
                                             const Traced* traced,std::size_t ray,bool linear,
-                                            std::vector<Step>* steps) {
+                                            std::vector<Step>* steps,const GaussianTiles& gaussians,
+                                            std::size_t begin,std::size_t end,double x,double y) {
   const Scene& scene=shapes.scene;
   SampleResult out; painted.clear();
   if(steps) steps->clear();
@@ -608,6 +613,24 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
   const double surface=trace ? traced->depth[ray]:R_PosInf;
   double cursor=trace ? traced->near:R_PosInf;
   bool opaque=false;
+  auto splats_until=[&](double until) {
+    while(begin<end && !opaque && out.colour.a<1-1e-4) {
+      const auto& g=gaussians.footprints[gaussians.indices[begin]];
+      double z=g.projected.z;if(z>until)break;++begin;
+      double alpha=g.alpha(x,y);if(alpha<=0)continue;
+      if(trace) {
+        if(surface+tolerance<z){traced_medium(*traced,ray,cursor,surface,linear,out,steps);
+          traced_surface(*traced,ray,out,steps);opaque=true;break;}
+        traced_medium(*traced,ray,cursor,z,linear,out,steps);cursor=std::max(cursor,z);
+      }
+      double weight=(1-out.colour.a)*alpha;
+      out.colour.r+=weight*g.colour.r;out.colour.g+=weight*g.colour.g;out.colour.b+=weight*g.colour.b;out.colour.a+=weight;
+      if(++out.peels==1)out.depth=z;
+      if(steps)steps->push_back({z,out.colour.a,0,0,0,0,false});
+      if(alpha==1){out.opaque_depth=z;opaque=true;}
+    }
+    if(!gaussians.footprints.empty() && out.colour.a>=1-1e-4)opaque=true;
+  };
   Index previous=-1; double previous_z=R_NegInf;
   for(std::size_t j=0;j<k;++j) {
     const Item& item=scene.items[f[j].item];
@@ -618,6 +641,9 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
       if(prev.kind==item.kind && prev.row==item.row) continue;
       if(!before(scene,previous,previous_z,f[j].item,f[j].z)) continue;
     }
+    int partition=scene.table(item.kind).partition[item.row];
+    if(partition<=1)splats_until(partition==1 ? f[j].z:R_PosInf);
+    if(opaque)break;
     if(trace) {
       int partition=scene.table(item.kind).partition[item.row];
       if(partition<=1) {
@@ -646,6 +672,7 @@ static inline SampleResult composite_sample(const Shapes& shapes,const Fragment*
     if(c.a==1) {out.opaque_depth=f[j].z;opaque=true;break;}
     previous=f[j].item; previous_z=f[j].z;
   }
+  if(!opaque)splats_until(R_PosInf);
   if(trace && !opaque) {
     traced_medium(*traced,ray,cursor,std::min(surface,traced->far),linear,out,steps);
     if(std::isfinite(surface)) traced_surface(*traced,ray,out,steps);
@@ -807,8 +834,10 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
                                const BoundsIndex<Paint>& paint_index,
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
                                bool retained,const Traced& traced,bool keep_buffers,
-                               const HaloJoins& joins,TileScratch& s,Buffers& out,int& passes) {
-  if(tile_count==0 && !traced.active) return;
+                               const HaloJoins& joins,TileScratch& s,Buffers& out,int& passes,
+                               const GaussianTiles& gaussians,std::size_t gaussian_begin,std::size_t gaussian_end) {
+  const bool has_gaussians=gaussian_begin<gaussian_end;
+  if(tile_count==0 && !traced.active && !has_gaussians) return;
   const Scene& scene=shapes.scene;
   const auto& line=scene.packet.polylines;
   const double tolerance=scene.projection.resolved.tolerance;
@@ -876,7 +905,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       }
     }
   }
-  if(s.fragments.empty() && !traced.active) return;
+  if(s.fragments.empty() && !traced.active && !has_gaussians) return;
   s.start.assign(n+1,0);
   for(const auto& f:s.fragments) ++s.start[f.sample+1];
   for(std::size_t k=0;k<n;++k) s.start[k+1]+=s.start[k];
@@ -887,7 +916,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
   }
   s.results.assign(n,SampleResult());
   for(std::size_t k=0;k<n;++k) {
-    if(s.start[k]==s.start[k+1] && !traced.active) continue;
+    if(s.start[k]==s.start[k+1] && !traced.active && !has_gaussians) continue;
     Fragment* f=s.ordered.data()+s.start[k];
     std::size_t count=s.start[k+1]-s.start[k],kept=0;
     for(std::size_t j=0;j<count;++j)
@@ -900,7 +929,9 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
     const int sx=sx0+static_cast<int>(k%tw),sy=sy0+static_cast<int>(k/tw);
     const bool centre=keep_buffers && sx%canvas.aa==canvas.aa/2 && sy%canvas.aa==canvas.aa/2;
     s.results[k]=composite_sample(shapes,f,kept,s.painted,
-      &traced,traced.active ? traced.ray(sx,sy):0,canvas.linear,centre ? &s.steps:nullptr);
+      &traced,traced.active ? traced.ray(sx,sy):0,canvas.linear,centre ? &s.steps:nullptr,
+      gaussians,gaussian_begin,gaussian_end,(canvas.origin_x+(sx+.5)*canvas.dx)/canvas.pixel_x,
+      (canvas.origin_y+(sy+.5)*canvas.dy)/canvas.pixel_y);
     passes=std::max(passes,s.results[k].peels);
   }
   const int aa=canvas.aa;
@@ -1052,7 +1083,7 @@ static inline Rcpp::List canvas_info(SEXP pointer,Rcpp::List colours,Rcpp::List 
 // in linear light and are encoded for an sRGB compositing space.
 static inline Traced traced_of(Rcpp::List input,const Canvas& canvas) {
   Traced t;
-  if(input.size()==0) return t;
+  if(!input.containsElementNamed("depth")) return t;
   t.active=true; t.h=canvas.h;
   const std::size_t n=static_cast<std::size_t>(canvas.w)*canvas.h;
   Rcpp::NumericVector depth=input["depth"];
@@ -1266,6 +1297,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   buffers.traced.assign(pixels,0);buffers.coverage.assign(pixels,R_PosInf);
   int tiles=canvas.tiles_x*canvas.tiles_y;
   threads=thread_count(threads,tiles);
+  const GaussianTiles gaussians(traced_input.containsElementNamed("splats") ? Rcpp::List(traced_input["splats"]):Rcpp::List(),
+    scene.projection,canvas,threads);
   std::vector<TileScratch> scratch(threads);
   std::vector<int> worker_passes(threads,0);
   const HaloJoins joins(scene.packet);
@@ -1275,7 +1308,8 @@ static inline Rcpp::List draw(SEXP pointer,Rcpp::List colours,Rcpp::List dashes,
   parallel_tiles(tiles,threads,[&](int worker,int tile) {
     int tx=tile%canvas.tiles_x,ty=tile/canvas.tiles_x;
     render_tile(shapes,canvas,spans,paint_index,tile_items.data()+tile_start[tile],tile_start[tile+1]-tile_start[tile],
-      tx,ty,retained,traced,keep_buffers,joins,scratch[worker],buffers,worker_passes[worker]);
+      tx,ty,retained,traced,keep_buffers,joins,scratch[worker],buffers,worker_passes[worker],
+      gaussians,gaussians.start[tile],gaussians.start[tile+1]);
   });
   scratch.clear();
   buffers.passes=*std::max_element(worker_passes.begin(),worker_passes.end());

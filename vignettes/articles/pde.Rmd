@@ -1,9 +1,9 @@
 ---
-title: "Linear and nonlinear PDEs"
+title: "Animating differential-equation solutions"
 description: "Exact solutions of eight partial differential equations and a numerical magnetohydrodynamic solution drawn as surfaces that change over time with animate_3d()."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Linear and nonlinear PDEs}
+  %\VignetteIndexEntry{Animating differential-equation solutions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,7 @@ docs_setup()
 has_ragg <- requireNamespace("ragg", quietly = TRUE)
 ```
 
-This article draws exact solutions of eight partial differential equations (PDEs). The transport, heat, wave and Laplace equations are the four linear PDEs with explicit solution formulas that Evans (2010) treats first. The Kadomtsev–Petviashvili, sine-Gordon, Fisher–KPP and nonlinear Schrödinger equations are four well-known nonlinear PDEs; for them no general solution formula exists, but particular solutions can be written in closed form. Each solution is evaluated on a grid of positions and times, drawn as a surface, and rendered one frame per time with `animate_3d()`. A final example solves incompressible magnetohydrodynamics numerically and draws the computed current density through the same plotting pipeline. Installation is covered in [Get started](ggplot3d.html).
+This article draws exact solutions of eight partial differential equations (PDEs). The transport, heat, wave and Laplace equations are the four linear PDEs with explicit solution formulas that Evans (2010) treats first. The Kadomtsev–Petviashvili, sine-Gordon, Fisher–KPP and nonlinear Schrödinger equations are four well-known nonlinear PDEs; for them no general solution formula exists, but particular solutions can be written in closed form. Each solution is evaluated on a grid of positions and times, drawn as a surface, and rendered one frame per time with `animate_3d()`. A final example solves incompressible magnetohydrodynamics numerically and draws the computed current density through the same plotting pipeline. Installation is covered in [Get started](ggplot3d.html). [Animating cameras and data](motion.html) explains frame timing and animation output.
 
 1. **Define** the solution $u(x, y, t)$ and a data frame with one row per time.
 
@@ -410,9 +410,9 @@ docs_animation("mhd")
 
 ## Where next
 
-- [Camera animation and interaction](motion.html): camera paths, MP4 output and the interactive viewer.
+- [Animating cameras and data](motion.html): camera paths, MP4 output and the interactive viewer.
 
-- [Layers](layers.html): the layers used here and their aesthetics.
+- [Choosing layers for observations and grids](layers.html): the layers used here and their aesthetics.
 
 ## References
 

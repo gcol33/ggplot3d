@@ -4,7 +4,7 @@ GeomPlane3D <- ggplot2::ggproto("GeomPlane3D", ggplot2::Geom,
   draw_key = ggplot2::draw_key_polygon
 )
 
-#' Reference planes
+#' Draw reference planes through a 3D panel
 #'
 #' Draws planes through the panel box: planes of constant x, y or z, the
 #' three-dimensional counterparts of [ggplot2::geom_hline()] and

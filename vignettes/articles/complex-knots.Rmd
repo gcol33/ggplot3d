@@ -1,9 +1,9 @@
 ---
-title: "Complex functions, knots and immersed surfaces"
+title: "Drawing complex functions, knots and surfaces"
 description: "Domain colouring on the Riemann sphere, Riemann surfaces of inverse functions, Möbius maps, torus knots and immersed surfaces with their self-intersections."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Complex functions, knots and immersed surfaces}
+  %\VignetteIndexEntry{Drawing complex functions, knots and surfaces}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup()
 ```
 
-A complex function of a complex variable maps a plane to a plane, which needs four real dimensions to graph. Colour can carry two of them, and a surface over the plane or the sphere carries the rest. Knots and immersed surfaces are curves and surfaces whose shape in space is the subject. This article draws each with a dedicated stat. Installation is covered in [Get started](ggplot3d.html), and [Surfaces, solids and fields](surfaces-solids.html) covers parametric surfaces in general.
+A complex function of a complex variable maps a plane to a plane, which needs four real dimensions to graph. Colour can carry two of them, and a surface over the plane or the sphere carries the rest. Knots and immersed surfaces are curves and surfaces whose shape in space is the subject. This article draws each with a dedicated stat. Installation is covered in [Get started](ggplot3d.html), and [Building surfaces and solids](surfaces-solids.html) covers parametric surfaces in general.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -66,7 +66,7 @@ ggplot() +
   coord_3d(aspect = "data")
 ```
 
-[Gallery](gallery.html#parametric-curves) builds the same trefoil from a data frame with `geom_tube_3d()`.
+[Drawing common charts in 3D](gallery.html#parametric-curves) builds the same trefoil from a data frame with `geom_tube_3d()`.
 
 ## Immersed surfaces
 
@@ -79,7 +79,7 @@ klein <- ggplot() +
 klein
 ```
 
-The scene resolves each crossing exactly, so the faces in front cover the ones behind on both sides of the self-intersection. [Meshes and intrinsic geometry](meshes.html#where-a-mesh-crosses-itself) draws the crossing curve itself with `stat_self_intersection_3d()`.
+The scene resolves each crossing exactly, so the faces in front cover the ones behind on both sides of the self-intersection. [Reading and measuring meshes](meshes.html#where-a-mesh-crosses-itself) draws the crossing curve itself with `stat_self_intersection_3d()`.
 
 ## References
 

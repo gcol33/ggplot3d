@@ -24,7 +24,9 @@ geom_volume_3d(
   samples = 256L,
   levels = NULL,
   show.legend = NA,
-  inherit.aes = TRUE
+  inherit.aes = TRUE,
+  g = 0,
+  material = NULL
 )
 ```
 
@@ -59,6 +61,15 @@ geom_volume_3d(
 
   Isovalue for `mode = "iso"`; defaults to the scalar-range midpoint.
 
+- g:
+
+  Henyey-Greenstein scattering asymmetry in (-1, 1), used by the path
+  tracer. Zero is isotropic; positive values favour forward scattering.
+
+- material:
+
+  Surface material for path-traced isovolumes.
+
 ## Value
 
 A ggplot2 layer.
@@ -71,11 +82,22 @@ grid cell, including roots between equal-sign cell endpoints, and use
 its analytic gradient. These modes are independent of the absorption
 sampling count.
 
+In the path tracer, `opacity` gives extinction and `colours` gives
+single-scattering albedo in linear RGB. Absorption mode is a
+heterogeneous participating medium. MIP requires the raster backend.
+
 ## References
 
 Max (1995). Optical models for direct volume rendering. IEEE
 Transactions on Visualization and Computer Graphics 1, 99-108.
 [doi:10.1109/2945.468400](https://doi.org/10.1109/2945.468400)
+
+Henyey and Greenstein (1941). Diffuse radiation in the Galaxy.
+[doi:10.1086/144246](https://doi.org/10.1086/144246)
+
+Novak et al. (2014). Residual ratio tracking for estimating attenuation
+in participating media.
+[doi:10.1145/2661229.2661292](https://doi.org/10.1145/2661229.2661292)
 
 ## Examples
 

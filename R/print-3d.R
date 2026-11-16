@@ -1,4 +1,4 @@
-#' Physical solids for 3D printing
+#' Configure physical models for 3D printing
 #'
 #' Maps the panel box into a millimetre bounding box with a uniform scale,
 #' keeping its aspect, then applies physical feature dimensions. Strokes use

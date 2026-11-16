@@ -1,9 +1,9 @@
 ---
-title: "Surfaces, solids and fields"
+title: "Building surfaces and solids"
 description: "Worked examples of indexed meshes, function and fitted surfaces, density surfaces, level surfaces, hulls, solid glyphs and sweeps along curves."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Surfaces, solids and fields}
+  %\VignetteIndexEntry{Building surfaces and solids}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,7 @@ docs_setup(raster3d = 3e4)
 ```
 
 
-These layers build geometry from a model, a function, a field or a shape. This article gives a small example of each. Installation is covered in [Get started](ggplot3d.html). [Layers](layers.html) covers points, paths, surfaces from gridded data, columns, distributions and intervals. [Vector fields](vector-fields.html) covers arrows and streamlines, and [Implicit surfaces](implicit-surfaces.html) covers reconstruction from point clouds.
+These layers build geometry from a model, a function, a field or a shape. This article gives a small example of each. Installation is covered in [Get started](ggplot3d.html). [Choosing layers for observations and grids](layers.html) covers points, paths, surfaces from gridded data, columns, distributions and intervals. [Drawing arrows and streamlines](vector-fields.html) covers arrows and streamlines, and [Constructing and reconstructing surfaces](implicit-surfaces.html) covers reconstruction from point clouds.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -105,7 +105,7 @@ ggplot() +
   coord_3d(aspect = "data")
 ```
 
-[Meshes and intrinsic geometry](meshes.html#geodesics-on-a-parametric-surface) draws geodesics on this torus, and [Complex functions, knots and immersed surfaces](complex-knots.html) uses parametric surfaces that pass through themselves.
+[Reading and measuring meshes](meshes.html#geodesics-on-a-parametric-surface) draws geodesics on this torus, and [Drawing complex functions, knots and surfaces](complex-knots.html) uses parametric surfaces that pass through themselves.
 
 ## Density surfaces and ridges
 
@@ -175,6 +175,8 @@ ggplot(field, aes(x, y, z = z, value = value)) +
 ```
 
 `stat_slice_3d(slice = sdf_plane(...))` cuts along an oblique plane, and `geom_density_slice_3d()` slices the density of a point cloud estimated on the fly.
+
+[Slicing fields and point densities](field-slices.html) works through both operations, with grid checks, missing values and bandwidth comparisons.
 
 ## Where two surfaces meet
 

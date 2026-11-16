@@ -12,6 +12,7 @@ raymarch_payload_3d <- function(spec, params, panel_params) {
   if (params$occlusion != "depth" || length(params$clip_planes))
     stop("Ray-marched layers require depth occlusion and the panel clipping box.", call. = FALSE)
   spec$ranges <- panel_params$ranges[c("x", "y", "z")]
+  spec$material <- params$material
   packet <- new_scene_packet(panel_id = panel_params$panel_id)
   attr(packet, "raymarch") <- spec
   attr(packet, "model_space") <- TRUE
@@ -28,7 +29,7 @@ emit_raymarch_3d <- function(data, params, panel_params) {
   raymarch_payload_3d(spec, params, panel_params)
 }
 
-register_geom_3d(GeomRaymarch3D, emit_raymarch_3d, parameters = list(ray_spec = NULL))
+register_geom_3d(GeomRaymarch3D, emit_raymarch_3d, parameters = list(ray_spec = NULL, material = NULL))
 
 raymarch_sdf_layer_3d <- function(mapping, data, fun, tolerance, max_steps, extra, show.legend, inherit.aes) {
   if (!inherits(fun, "ggplot3d_sdf")) stop("render = 'trace' requires a ggplot3d_sdf.", call. = FALSE)

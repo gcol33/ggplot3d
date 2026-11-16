@@ -1,9 +1,9 @@
 ---
-title: "Ray marching and volumes"
+title: "Rendering volumes and traced surfaces"
 description: "Trace signed distance surfaces, integrate scalar volumes and accumulate seeded path-traced images."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Ray marching and volumes}
+  %\VignetteIndexEntry{Rendering volumes and traced surfaces}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,7 +16,7 @@ docs_setup()
 Ray marching evaluates a field along each viewing ray to find a surface or
 accumulate colour through a volume. This article renders both kinds of field,
 combines them with other layers and adds diffuse light transport with the
-native path tracer. Installation is covered in [Get started](ggplot3d.html).
+native path tracer. Installation is covered in [Get started](ggplot3d.html). [Slicing fields and point densities](field-slices.html) inspects field values on selected planes.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -28,7 +28,7 @@ library(ggplot3d)
 A signed distance function (SDF) gives negative values inside a shape, zero
 on its surface and positive values outside. Build a sphere with a cylindrical
 hole by subtracting a capsule, a cylinder with rounded ends. The constructors
-and shape algebra are described in [Implicit surfaces](implicit-surfaces.html).
+and shape algebra are described in [Constructing and reconstructing surfaces](implicit-surfaces.html).
 
 ```{r distance-shape}
 ball <- sdf_sphere(radius = 0.8)
@@ -220,7 +220,7 @@ scalar volumes require the raster, vector or hybrid backends described above.
 
 ## Where next
 
-* [Output backends](backends.html): choose resolution and save an image.
+* [Choosing rendering and image formats](backends.html): choose resolution and save an image.
 
-* [Inside the Thurston geometries](thurston-geometries.html): follow curved
+* [Viewing Thurston geometries from inside](thurston-geometries.html): follow curved
   viewing rays from an observer inside a geometry.

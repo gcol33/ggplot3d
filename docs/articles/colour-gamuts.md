@@ -1,4 +1,4 @@
-# Colour gamuts in Lab coordinates
+# Plotting colour gamuts in Lab coordinates
 
 A colour gamut is the set of colours available in a colour space or
 device. Lab is a colour space defined by the International Commission on
@@ -7,7 +7,9 @@ b. [`convertColor()`](https://rdrr.io/r/grDevices/convertColor.html)
 maps sampled standard RGB (sRGB) colours into Lab;
 [`stat_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
 draws their convex hull, and every hull vertex keeps the colour of its
-sample.
+sample. [Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#convex-hulls)
+introduces convex hulls.
 
 This example builds the hull from sampled colours and explains the
 limits of that approximation. Installation is covered in [Get

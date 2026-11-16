@@ -1,9 +1,9 @@
 ---
-title: "Curvilinear and compositional frames"
+title: "Plotting angles and compositions"
 description: "Place data in cylindrical, spherical, globe, ternary prism and quaternary simplex coordinates instead of a box."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Curvilinear and compositional frames}
+  %\VignetteIndexEntry{Plotting angles and compositions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup()
 ```
 
-Coordinate frames place data according to their meaning. Monthly measurements can follow a circle, directions can lie on a sphere, and three- or four-part mixtures occupy a triangle or tetrahedron. This article draws examples in each frame, including a globe for geographic coordinates. Installation is covered in [Get started](ggplot3d.html), and [Camera and framing](camera.html) covers their shared camera arguments.
+Coordinate frames place data according to their meaning. Monthly measurements can follow a circle, directions can lie on a sphere, and three- or four-part mixtures occupy a triangle or tetrahedron. This article draws examples in each frame, including a globe for geographic coordinates. Installation is covered in [Get started](ggplot3d.html), and [Choosing camera views](camera.html) covers their shared camera arguments. [Plotting curved spaces and spacetime](curved-spaces.html) covers intrinsic spherical and hyperbolic geometry.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -57,7 +57,7 @@ ggplot(route, aes(lon, lat, z = height)) +
   coord_globe_3d(centre = c(-150, 35))
 ```
 
-[Maps and spatial data](spatial.html) draws rasters and simple features on a flat map with a third dimension.
+[Plotting maps and spatial data](spatial.html) draws rasters and simple features on a flat map with a third dimension.
 
 ## Ternary prisms
 
@@ -84,6 +84,6 @@ ggplot(mix, aes(a = a, b = b, c = c, d = d)) +
 
 ## Where next
 
-* [Camera and framing](camera.html): view angles, projections and stable bounds.
+* [Choosing camera views](camera.html): view angles, projections and stable bounds.
 
-* [Curved spaces and spacetime](curved-spaces.html): spherical, hyperbolic and Minkowski geometry.
+* [Plotting curved spaces and spacetime](curved-spaces.html): spherical, hyperbolic and Minkowski geometry.

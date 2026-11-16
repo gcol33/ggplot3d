@@ -1,4 +1,4 @@
-#' Images for textured faces
+#' Prepare images for surface textures
 #'
 #' Wraps an image so that surface layers can drape it over their faces and
 #' [annotation_raster_3d()] can lay it on a plane. Texture coordinates `u`
@@ -22,8 +22,8 @@
 #' @param image A `nativeRaster` (such as `png::readPNG(native = TRUE)`), a
 #'   raster or matrix of colours, a numeric matrix of grey levels or a numeric
 #'   array of grey, grey and alpha, RGB or RGBA channels in \[0, 1\] (such as
-#'   `png::readPNG()`), or the path of a PNG file (needs png). Row one is the
-#'   top of the image.
+#'   `png::readPNG()`), or the path or raw bytes of a PNG file (needs png) or
+#'   JPEG file (needs jpeg). Row one is the top of the image.
 #' @param interpolate Whether to interpolate between pixels (bilinear and
 #'   mipmapped sampling) or to show them as sharp squares, as
 #'   [grid::rasterGrob()] does.
@@ -96,10 +96,10 @@ texture_native_3d <- function(image) {
     return(image)
   }
   if (is.character(image) && length(image) == 1L && is.null(dim(image))) {
-    rlang::check_installed("png", reason = "to read a PNG texture.")
     if (!file.exists(image)) stop("Texture file not found: ", image, call. = FALSE)
-    return(png::readPNG(image, native = TRUE))
+    return(texture_decode_3d(readBin(image, "raw", file.size(image))))
   }
+  if (is.raw(image)) return(texture_decode_3d(image))
   if (inherits(image, "raster") || (is.character(image) && length(dim(image)) == 2L)) {
     colours <- as.matrix(image)
     rgba <- matrix(as.vector(colour_channels_3d(t(colours), alpha = TRUE)), 4L)
@@ -117,7 +117,20 @@ texture_native_3d <- function(image) {
     rgba <- round(255 * rbind(rgb[[1L]], rgb[[2L]], rgb[[3L]], alpha))
     return(texture_pack_3d(rgba, h, w))
   }
-  stop("A texture image must be a nativeRaster, a raster or colour matrix, a numeric matrix or array in [0, 1], or a PNG file path.", call. = FALSE)
+  stop("A texture image must be a nativeRaster, a raster or colour matrix, a numeric matrix or array in [0, 1], or a PNG or JPEG file path or its bytes.", call. = FALSE)
+}
+
+# An encoded PNG or JPEG image, recognised by its signature, as a nativeRaster.
+texture_decode_3d <- function(bytes) {
+  if (length(bytes) >= 8L && identical(bytes[1:8], as.raw(c(137, 80, 78, 71, 13, 10, 26, 10)))) {
+    rlang::check_installed("png", reason = "to read a PNG texture.")
+    return(png::readPNG(bytes, native = TRUE))
+  }
+  if (length(bytes) >= 3L && identical(bytes[1:3], as.raw(c(0xFF, 0xD8, 0xFF)))) {
+    rlang::check_installed("jpeg", reason = "to read a JPEG texture.")
+    return(jpeg::readJPEG(bytes, native = TRUE))
+  }
+  stop("A texture file must be a PNG or JPEG image.", call. = FALSE)
 }
 
 # 4 x n matrix of 0-255 channels (pixels row by row from the top) packed into

@@ -1,9 +1,9 @@
 ---
-title: "Inside the Thurston geometries"
+title: "Viewing Thurston geometries from inside"
 description: "Render an observer view in each of the eight Thurston geometries using intrinsic balls and geodesics."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Inside the Thurston geometries}
+  %\VignetteIndexEntry{Viewing Thurston geometries from inside}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ The ray-marching backend supports the eight homogeneous three-dimensional
 geometries studied by Thurston. This article renders an intrinsic scene in
 each space, following the construction of Coulon, Matsumoto, Segerman and
 Trettel [2022](https://arxiv.org/abs/2010.15801). Installation is covered in
-[Get started](ggplot3d.html).
+[Get started](ggplot3d.html). [Plotting curved spaces and spacetime](curved-spaces.html) introduces the exterior coordinate views.
 
 ```{r packages, message = FALSE}
 library(ggplot2)

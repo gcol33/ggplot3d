@@ -1,9 +1,9 @@
 ---
-title: "Ordination biplots"
+title: "Drawing ordination biplots"
 description: "Draw site scores, variable arrows and grouped regions from principal-component and ecological ordinations."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Ordination biplots}
+  %\VignetteIndexEntry{Drawing ordination biplots}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(legend = "right", fig.width = 7, fig.height = 5)
 ```
 
-An ordination places observations on a small set of axes computed from their measured variables. A biplot draws the observations and variable directions in the same view. `biplot_3d()` composes site points, solid-headed quiver arrows and optional group regions.
+An ordination places observations on a small set of axes computed from their measured variables. A biplot draws the observations and variable directions in the same view. `biplot_3d()` composes site points, solid-headed quiver arrows and optional group regions. [Drawing tensor glyphs](tensors.html) explains how matrix-valued observations define oriented shapes.
 
 The examples use iris measurements to draw principal-component scores, match
 groups by identifier and display ecological ordination scores. Installation

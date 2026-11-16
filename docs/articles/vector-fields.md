@@ -1,10 +1,13 @@
-# Vector fields
+# Drawing arrows and streamlines
 
 A vector field assigns a direction and magnitude to each position in
 space. This article draws arrows at sampled positions, then integrates
 curves through the field and gives those curves thickness. Installation
 is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Slicing fields and point
+densities](https://gillescolling.com/ggplot3d/articles/field-slices.md)
+shows sections through scalar-valued fields.
 
 1.  **Map** the position and vector components with
     [`geom_quiver_3d()`](https://gillescolling.com/ggplot3d/reference/geom_quiver_3d.md).
@@ -184,8 +187,8 @@ flow + stat_streamline_3d(aes(fill = after_stat(norm)), geom = "tube",
 magnitude.](vector-fields_files/figure-html/streamtubes-1.svg)
 
 Tube faces retain the mean computed values of their corners. The
-[Surfaces, solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#tubes-ribbons-and-sweeps)
+[Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#tubes-ribbons-and-sweeps)
 article shows tube radii, ribbons and custom cross-sections on supplied
 paths.
 
@@ -218,13 +221,13 @@ points to trace that field away from its stationary centre.
 
 ## Where next
 
-- [Surfaces, solids and
-  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
+- [Building surfaces and
+  solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
   solid glyphs and sweeps along supplied curves.
 
-- [Camera animation and
-  interaction](https://gillescolling.com/ggplot3d/articles/motion.md):
-  move the camera or tween data between states.
+- [Animating cameras and
+  data](https://gillescolling.com/ggplot3d/articles/motion.md): move the
+  camera or tween data between states.
 
 - [geom_quiver_3d()](https://gillescolling.com/ggplot3d/reference/geom_quiver_3d.md):
   head, shaft, scale and pivot arguments.

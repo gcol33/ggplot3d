@@ -53,12 +53,14 @@ packet_from_quadrics_3d <- function(data, rows, kind, transform, params, panel_p
                                     radius_ratio = 1, cap_0 = 1L, cap_1 = 1L) {
   if (!length(rows)) return(new_scene_packet(panel_id = panel_params$panel_id))
   material <- styles_3d(data, rows, rep("faces", length(rows)), params)
+  if (!is.null(params$material)) material$styles$material_id <- 1L
   quadrics <- c(list(layer_id = data$.layer[rows], source_row = as.integer(data$.source[rows]),
     style_id = material$index, partition = rep.int(if (identical(params$occlusion, "overlay")) 2L else 1L, length(rows)),
     opacity = material$opacity, kind = rep_len(as.integer(kind), length(rows))), transform,
     list(radius_ratio = rep_len(as.double(radius_ratio), length(rows)),
       cap_0 = rep_len(as.integer(cap_0), length(rows)), cap_1 = rep_len(as.integer(cap_1), length(rows))))
-  new_scene_packet(quadrics = quadrics, styles = material$styles, panel_id = panel_params$panel_id)
+  new_scene_packet(quadrics = quadrics, styles = material$styles, panel_id = panel_params$panel_id,
+    materials = material_table_3d(params$material))
 }
 
 # Places quadrics and returns a packet in model space, as

@@ -1,4 +1,4 @@
-# Spheres
+# Draw spheres at observed positions
 
 Draws one solid sphere per row, centred on x, y, z. Spheres are analytic
 quadrics in the panel scene (Sigg et al. 2006): the vector backend draws
@@ -24,7 +24,8 @@ geom_sphere_3d(
   shade = TRUE,
   na.rm = FALSE,
   show.legend = NA,
-  inherit.aes = TRUE
+  inherit.aes = TRUE,
+  material = NULL
 )
 ```
 
@@ -46,6 +47,11 @@ geom_sphere_3d(
 - shade:
 
   Whether to apply lighting.
+
+- material:
+
+  Surface response made with
+  [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md).
 
 ## Value
 

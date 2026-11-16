@@ -1,4 +1,4 @@
-# Curved spaces and spacetime
+# Plotting curved spaces and spacetime
 
 Ordinary plots assume flat space, where straight lines are the shortest
 paths and parallel lines never meet. Spherical and hyperbolic space
@@ -8,8 +8,8 @@ them with coordinate systems that keep their own geometry: geodesics
 stay geodesics, and an isometry of the space moves the data without
 distorting it. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
-[Inside the Thurston
-geometries](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md)
+[Viewing Thurston geometries from
+inside](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md)
 renders the view from inside these spaces with the ray-marching backend.
 
 ``` r
@@ -178,7 +178,6 @@ event
 #> [2,] 0.0000000
 #> [3,] 0.0000000
 #> [4,] 1.1547005
-stopifnot(isTRUE(all.equal(event[4], 1 / sqrt(1 - speed^2))))
 ```
 
 ## Black holes

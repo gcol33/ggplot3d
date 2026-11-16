@@ -1,9 +1,9 @@
 ---
-title: "Documents"
+title: "Embedding plots in reports"
 description: "Use knitr and Quarto to choose HTML viewers or static figures, supply alt text and compose panels."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Documents}
+  %\VignetteIndexEntry{Embedding plots in reports}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ This article uses knitr's output switching, supplies accessible descriptions
 and arranges plots on a page. Quarto's R engine uses the same chunk options.
 Installation is covered in [Get started](ggplot3d.html); HTML viewers also
 need [htmlwidgets](https://www.htmlwidgets.org/) and
-[svglite](https://svglite.r-lib.org/), described in [Interactive viewing](viewer.html).
+[svglite](https://svglite.r-lib.org/), described in [Viewing plots interactively](viewer.html). [Choosing rendering and image formats](backends.html) explains the static rendering choices.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -74,7 +74,7 @@ An SVG figure stores each face of a surface as its own path, so a finely
 meshed surface can weigh several megabytes in an HTML page. The chunk option
 `raster3d` draws the data of such a plot into one embedded image with
 `backend_3d("hybrid", rasterise = "all")`, described in
-[Output backends](backends.html); axes, panes, grid lines and text stay
+[Choosing rendering and image formats](backends.html); axes, panes, grid lines and text stay
 vector graphics, so a stylesheet can still recolour them. `raster3d = TRUE`
 does this for every plot of the chunk. A number is a file size in bytes: the
 chunk draws the vector figure first, redraws it with the embedded image only
@@ -160,6 +160,6 @@ path <- tempfile(fileext = ".png")
 ggsave(path, raster, width = 6, height = 4, dpi = 144)
 ```
 
-[Output backends](backends.html) explains the rendering choices.
+[Choosing rendering and image formats](backends.html) explains the rendering choices.
 [Exporting plots and scenes](export.html) writes model files and native SVG,
 TikZ or Asymptote output.

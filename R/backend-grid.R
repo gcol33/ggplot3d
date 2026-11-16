@@ -43,6 +43,7 @@ makeContent.scene_panel_grob <- function(x) {
   x$panel_params$coord_params$light <- panel_lights_3d(x$panel_params$coord_params$light, x$panel_params)
   x$packets <- lapply(x$packets, light_material_packet_3d, x$panel_params$coord_params$light)
   outer <- panel_outer_viewport_3d(x$panel_params)
+  if (any(vapply(x$packets, function(p) length(attr(p, "splats")) > 0L, logical(1)))) outer$dpi <- backend$dpi
   if (identical(backend$type, "raymarch")) {
     rendered <- render_thurston_panel_3d(x, outer, backend)
     background <- ggplot2::element_render(x$theme, "panel.background")
@@ -78,7 +79,8 @@ makeContent.scene_panel_grob <- function(x) {
     result <- render_raster_panel_3d(x, furniture, backend)
     scene <- result$scene
     rendered <- result$grob
-  } else if (identical(backend$type, "hybrid") || length(raster_traced_specs_3d(x$packets))) {
+  } else if (identical(backend$type, "hybrid") || (!identical(backend$type, "plotter") &&
+      (length(raster_traced_specs_3d(x$packets)) || any(vapply(x$packets, function(p) length(attr(p, "splats")) > 0L, logical(1)))))) {
     result <- render_hybrid_panel_3d(x, furniture, backend)
     scene <- result$scene
     rendered <- result$grob

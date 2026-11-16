@@ -54,6 +54,7 @@ Suggests:
     htmltools,
     htmlwidgets,
     igraph,
+    jpeg,
     jsonlite,
     knitr,
     lidR,
@@ -119,6 +120,7 @@ Collate:
     'frame-globe.R'
     'frame-simplex.R'
     'ggplot3d-package.R'
+    'gltf-readers.R'
     'glyph-instancing.R'
     'guides-3d.R'
     'guides-colour.R'
@@ -159,6 +161,7 @@ Collate:
     'layers-spatial.R'
     'layers-sweep.R'
     'layers-spherical-geometry.R'
+    'layers-splat.R'
     'layers-stats-bins.R'
     'layers-stats-ellipsoid.R'
     'layers-stats-surfaces.R'
@@ -171,6 +174,7 @@ Collate:
     'layers-volume.R'
     'layers-voxel.R'
     'layout-3d.R'
+    'light-environment.R'
     'lights-3d.R'
     'mesh-geodesic.R'
     'mesh-processing.R'
@@ -178,6 +182,8 @@ Collate:
     'motion-trail.R'
     'outline-3d.R'
     'panel-furniture.R'
+    'pathtrace-tone.R'
+    'point-readers.R'
     'positions-3d.R'
     'positions-project.R'
     'print-3d.R'

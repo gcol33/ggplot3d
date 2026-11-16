@@ -68,7 +68,7 @@ emit_voxels_3d <- function(data, params, panel_params) {
 register_geom_3d(GeomVoxel3D, emit_voxels_3d,
   parameters = list(height = NULL, greedy = TRUE), tween = "row")
 
-#' Voxels
+#' Draw voxel cells on a three-dimensional lattice
 #'
 #' Draws one box per row, centred on x, y, z. Box sizes are `width`, `depth`
 #' and `height` along x, y and z, by default the smallest spacing between

@@ -1,12 +1,12 @@
-# Meshes and intrinsic geometry
+# Reading and measuring meshes
 
 A triangle mesh stores a surface as vertices and the faces between them.
 This article reads a mesh from a file, cleans up a mesh extracted from
 data, colours it by curvature, and measures distances along the surface
 instead of through space. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md);
-[Surfaces, solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#indexed-meshes)
+[Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#indexed-meshes)
 introduces
 [`mesh_3d()`](https://gillescolling.com/ggplot3d/reference/mesh_3d.md)
 and
@@ -254,7 +254,7 @@ ggplot(crossing) + geom_mesh_3d(fill = "grey80") +
 ![Two grey triangles passing through each other, with their red line of
 intersection.](meshes_files/figure-html/self-intersection-1.svg)
 
-[Complex functions, knots and immersed
+[Drawing complex functions, knots and
 surfaces](https://gillescolling.com/ggplot3d/articles/complex-knots.md)
 uses the same stat on surfaces that cannot be embedded in space without
 crossing.

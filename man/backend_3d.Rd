@@ -26,7 +26,12 @@ backend_3d(
   max_steps = 2048L,
   quotient = NULL,
   light_size = 0.1,
-  rasterise = "marked"
+  rasterise = "marked",
+  noise_threshold = 0,
+  min_samples = 16L,
+  denoise = FALSE,
+  exposure = 0,
+  tone = "clip"
 )
 }
 \arguments{
@@ -58,9 +63,9 @@ translucent paint and averages antialiasing samples: \code{"linear"} light,
 encoded to sRGB after averaging, or \code{"srgb"}, which matches the
 compositing of vector graphics devices.}
 
-\item{samples}{Path-tracing samples per pixel added by each render.}
+\item{samples}{Maximum path-tracing samples per pixel added by each render.}
 
-\item{bounces}{Maximum diffuse surface interactions per path.}
+\item{bounces}{Maximum surface or medium scattering interactions per path.}
 
 \item{seed}{Nonnegative integer seed for pixel and sample indexed randomness.}
 
@@ -69,7 +74,7 @@ compositing of vector graphics devices.}
 \item{focus}{Focal-plane distance along the camera forward axis, in model
 units. NULL focuses on the camera target.}
 
-\item{light_radius}{Angular radius of the distant light in degrees.}
+\item{light_radius}{Angular radius of each directional or head light in degrees.}
 
 \item{progressive}{Accumulate samples across redraws of the same scene.
 Changes to geometry, camera, lighting or image dimensions reset accumulation.}
@@ -101,6 +106,23 @@ the layers created with \code{raster = TRUE}; \code{"surfaces"}, which adds ever
 depth-tested layer that draws faces or analytic quadrics; or \code{"all"},
 which adds every depth-tested layer with faces, paths or points. Text
 stays vector graphics, placed by the image's visibility.}
+
+\item{noise_threshold}{Nonnegative relative standard-error target. Zero
+disables adaptive sampling; positive values stop converged pixels after
+\code{min_samples}. Coverage is tested with absolute standard error. Dark
+channels use a linear-radiance floor of 0.001. Adaptive stopping is an
+estimate and can introduce stopping bias.}
+
+\item{min_samples}{Positive minimum sample count before adaptive stopping.
+At least two samples per independent half buffer are required.}
+
+\item{denoise}{Apply native nonlinearly weighted first-order regression
+using independent colour, albedo, normal and depth half buffers.}
+
+\item{exposure}{Exposure adjustment in stops, applied in linear light.}
+
+\item{tone}{\code{"clip"}, \code{"aces"} (Narkowicz fit), or \code{"agx"} (the
+Rec.2020 AgX transform with a polynomial contrast approximation).}
 }
 \value{
 A backend configuration for coord_3d().
@@ -114,9 +136,16 @@ of worker threads is the option \code{ggplot3d.threads}; the default \code{0} us
 one thread per hardware thread, at most two when \verb{_R_CHECK_LIMIT_CORES_}
 is set. The image does not depend on the thread count.
 
-The native path tracer uses diffuse materials, a bounding-volume hierarchy,
-cosine-weighted reflection sampling and Russian roulette. The ambient light
-is a uniform environment; the diffuse light is a sampled distant disk.
+The native path tracer uses \code{\link[=material_3d]{material_3d()}} BSDFs, a bounding-volume hierarchy,
+Owen-scrambled Sobol samples, next-event light sampling with power-heuristic
+multiple importance sampling and Russian roulette. Ambient light is a
+uniform environment; directional lights are sampled distant disks. Point,
+head, hemisphere, image environments and emissive triangles contribute.
+Directional and point intensities retain the Lambert convention of the
+other backends (incident irradiance is pi times intensity).
+Absorption volumes use delta tracking for scattering and ratio tracking
+for shadow transmittance, with conservative per-cell extinction majorants.
+Isovolumes intersect the trilinear field as a surface. MIP is unavailable.
 Points and paths use the solid conversion of \code{\link[=export_3d]{export_3d()}}, and SDF layers
 use the shared sphere tracer. Furniture and text remain vector graphics.
 
@@ -135,6 +164,7 @@ backend_3d("vector")
 backend_3d("raster", dpi = 144, antialias = 2)
 backend_3d("raster", blend = "srgb")
 backend_3d("pathtrace", samples = 8, seed = 1)
+backend_3d("pathtrace", samples = 16, noise_threshold = 0.05, denoise = TRUE, tone = "agx")
 d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
 d$z <- sin(pi * d$x) * cos(pi * d$y)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
@@ -148,4 +178,24 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 \references{
 Pharr, Jakob and Humphreys (2023). Physically Based Rendering,
 fourth edition. \url{https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing}
+
+Veach (1997). Robust Monte Carlo methods for light transport simulation.
+Chapter 9. \url{https://graphics.stanford.edu/papers/veach_thesis/}
+Veach and Guibas (1995). Optimally combining sampling techniques for
+Monte Carlo rendering. \doi{10.1145/218380.218498}
+
+Burley (2020). Practical hash-based Owen scrambling. JCGT 9(4).
+\url{https://jcgt.org/published/0009/04/01/}
+
+Bitterli et al. (2016). Nonlinearly weighted first-order regression for
+denoising Monte Carlo renderings. \doi{10.1111/cgf.12954}
+
+Novak et al. (2014). Residual ratio tracking for estimating attenuation
+in participating media. \doi{10.1145/2661229.2661292}
+
+Narkowicz (2016). ACES filmic tone mapping curve.
+\url{https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/}
+
+Three.js AgX tone-mapping implementation, adapted from Filament.
+\url{https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderChunk/tonemapping_pars_fragment.glsl.js}
 }

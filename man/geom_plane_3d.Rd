@@ -2,7 +2,7 @@
 % Please edit documentation in R/layers-plane.R
 \name{geom_plane_3d}
 \alias{geom_plane_3d}
-\title{Reference planes}
+\title{Draw reference planes through a 3D panel}
 \usage{
 geom_plane_3d(
   mapping = NULL,

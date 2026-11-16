@@ -1,4 +1,4 @@
-#' Clipping planes
+#' Define clipping planes for layers and panels
 #'
 #' A clipping plane cuts the layers of a 3D panel and keeps the half-space its
 #' normal points into. Give a list of them to `coord_3d(clip_planes = )` to cut

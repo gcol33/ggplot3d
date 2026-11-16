@@ -128,7 +128,7 @@ The slices lie on z, so the 2D layers keep x and y; `coord_3d(up = "y")` stands 
 
 ## Reference lines and annotations
 
-`geom_hline()` and `geom_vline()` draw lines on the floor, here at x = 0 and y = 0. `annotate_3d()` adds z positions to the arguments of `annotate()`. Here it labels the highest point of the cloud. [Layers](layers.html#reference-lines-and-dimensions) shows arbitrary reference lines, brackets and dimension lines.
+`geom_hline()` and `geom_vline()` draw lines on the floor, here at x = 0 and y = 0. `annotate_3d()` adds z positions to the arguments of `annotate()`. Here it labels the highest point of the cloud. [Choosing layers for observations and grids](layers.html#reference-lines-and-dimensions) shows arbitrary reference lines, brackets and dimension lines.
 
 ```{r annotations, fig.alt="Forty dark points in a box, two grey lines crossing at x = 0 and y = 0 at height zero, and a white label reading highest next to the top point."}
 top <- cloud[which.max(cloud$z), ]
@@ -253,7 +253,7 @@ base <- s + geom_surface_3d(fill = "grey85")
   (base + coord_3d(azimuth = 120, elevation = 55))
 ```
 
-[Camera and framing](camera.html) describes the angles. [The z scale](z-scale.html) shows facets with fixed and free z ranges.
+[Choosing camera views](camera.html) describes the angles. [Scaling heights and facet ranges](z-scale.html) shows facets with fixed and free z ranges.
 
 ## Titles and captions
 
@@ -274,8 +274,8 @@ across / side + plot_annotation(title = "Profile at y = 0")
 
 ## Where next
 
-* [Layers](layers.html) and [Surfaces, solids and fields](surfaces-solids.html): every three-dimensional geom and stat.
+* [Choosing layers for observations and grids](layers.html) and [Building surfaces and solids](surfaces-solids.html): every three-dimensional geom and stat.
 
-* [Visibility](visibility.html): how overlapping layers are sorted by depth.
+* [How overlapping geometry is drawn](visibility.html): how overlapping layers are sorted by depth.
 
-* [Camera and framing](camera.html): set the view and keep its bounds stable.
+* [Choosing camera views](camera.html): set the view and keep its bounds stable.

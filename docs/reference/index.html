@@ -14,6 +14,8 @@
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+.navbar .dropdown-menu .dropdown-item,
+.navbar .dropdown-menu .dropdown-header { color: var(--bs-body-color); }
 @media (max-width: 991.98px) {
   .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
   .navbar .dropdown-menu { max-height: none; overflow: visible; }
@@ -69,46 +71,56 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
-    <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
-    <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
-    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
-    <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Building plots</h6></li>
+    <li><a class="dropdown-item" href="../articles/data-preparation.html">Preparing data for 3D layers</a></li>
+    <li><a class="dropdown-item" href="../articles/layers.html">Choosing layers for observations and grids</a></li>
+    <li><a class="dropdown-item" href="../articles/z-scale.html">Scaling heights and facet ranges</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Building surfaces and solids</a></li>
     <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
-    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
     <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
-    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
-    <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
-    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
-    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
-    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
-    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
-    <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
-    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
-    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
-    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
-    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
-    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
-    <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
-    <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
-    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
-    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
-    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
-    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
-    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
-    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
-    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
-    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
-    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Data types</h6></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Plotting angles and compositions</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Plotting maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Reading and measuring meshes</a></li>
+    <li><a class="dropdown-item" href="../articles/scans.html">Reading 3D scans and point clouds</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Drawing arrows and streamlines</a></li>
+    <li><a class="dropdown-item" href="../articles/field-slices.html">Slicing fields and point densities</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Drawing networks and trees</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
-    <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
-    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Appearance</h6></li>
+    <li><a class="dropdown-item" href="../articles/camera.html">Choosing camera views</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Styling axes, legends and panes</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and styling surfaces</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Output and sharing</h6></li>
+    <li><a class="dropdown-item" href="../articles/backends.html">Choosing rendering and image formats</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Rendering volumes and traced surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/path-tracing.html">Rendering materials with path tracing</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Embedding plots in reports</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Viewing plots interactively</a></li>
+    <li><a class="dropdown-item" href="../articles/motion.html">Animating cameras and data</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Scientific examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/gallery.html">Drawing common charts in 3D</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Drawing ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Drawing tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Drawing molecular structures</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Plotting colour gamuts in Lab coordinates</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Mathematical examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Constructing and reconstructing surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/pde.html">Animating differential-equation solutions</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Projecting four dimensions and drawing tilings</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Plotting curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Drawing complex functions, knots and surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Viewing Thurston geometries from inside</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Internals and extensions</h6></li>
+    <li><a class="dropdown-item" href="../articles/visibility.html">How overlapping geometry is drawn</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Writing a geometry extension</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -131,9 +143,9 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
     </div>
 
     <div class="section level2">
-      <h2 id="coordinates-and-lighting">Coordinates and lighting<a class="anchor" aria-label="anchor" href="#coordinates-and-lighting"></a></h2>
+      <h2 id="coordinates-and-camera-views">Coordinates and camera views<a class="anchor" aria-label="anchor" href="#coordinates-and-camera-views"></a></h2>
 
-
+      <div class="section-desc"><p>Set the plotting box, projection and viewing direction. See <a href="../articles/camera.html">Choosing camera views</a>.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -167,50 +179,8 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Stereo output for 3D panels</dd>
-
-        <dt>
-
-          <code><a href="light_3d.html">light_3d()</a></code>
-
-        </dt>
-        <dd>Lighting for a 3D scene</dd>
-
-        <dt>
-
-          <code><a href="light_directional.html">light_directional()</a></code> <code><a href="light_directional.html">light_point()</a></code> <code><a href="light_directional.html">light_head()</a></code> <code><a href="light_directional.html">light_hemisphere()</a></code>
-
-        </dt>
-        <dd>Lights for a 3D scene</dd>
-
-        <dt>
-
-          <code><a href="material_3d.html">material_3d()</a></code>
-
-        </dt>
-        <dd>Surface materials</dd>
-
-        <dt>
-
-          <code><a href="shadow_3d.html">shadow_3d()</a></code>
-
-        </dt>
-        <dd>Planar cast shadows</dd>
-
-        <dt>
-
-          <code><a href="depth_cue_3d.html">depth_cue_3d()</a></code>
-
-        </dt>
-        <dd>Depth cues: fog, line width and eye-dome lighting</dd>
-
-        <dt>
-
-          <code><a href="clip_plane_3d.html">clip_plane_3d()</a></code>
-
-        </dt>
-        <dd>Clipping planes</dd>
       </dl></div><div class="section level2">
-      <h2 id="curvilinear-and-compositional-frames">Curvilinear and compositional frames<a class="anchor" aria-label="anchor" href="#curvilinear-and-compositional-frames"></a></h2>
+      <h2 id="angles-geographic-coordinates-and-compositions">Angles, geographic coordinates and compositions<a class="anchor" aria-label="anchor" href="#angles-geographic-coordinates-and-compositions"></a></h2>
 
 
 
@@ -254,7 +224,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
         </dt>
         <dd>Quaternary simplex coordinates</dd>
       </dl></div><div class="section level2">
-      <h2 id="z-position-scales">Z position scales<a class="anchor" aria-label="anchor" href="#z-position-scales"></a></h2>
+      <h2 id="height-scales">Height scales<a class="anchor" aria-label="anchor" href="#height-scales"></a></h2>
 
 
 
@@ -277,7 +247,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
         </dt>
         <dd>Set z scale limits</dd>
       </dl></div><div class="section level2">
-      <h2 id="point-path-and-polygon-layers">Point, path and polygon layers<a class="anchor" aria-label="anchor" href="#point-path-and-polygon-layers"></a></h2>
+      <h2 id="points-paths-polygons-and-labels">Points, paths, polygons and labels<a class="anchor" aria-label="anchor" href="#points-paths-polygons-and-labels"></a></h2>
 
 
 
@@ -309,13 +279,6 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         <dt>
 
-          <code><a href="geom_boxplot_3d.html">geom_boxplot_3d()</a></code> <code><a href="geom_boxplot_3d.html">geom_violin_3d()</a></code>
-
-        </dt>
-        <dd>Boxplots and violins standing on an x/y plane</dd>
-
-        <dt>
-
           <code><a href="geom_area_3d.html">geom_area_3d()</a></code> <code><a href="geom_area_3d.html">geom_waterfall_3d()</a></code>
 
         </dt>
@@ -330,31 +293,33 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         <dt>
 
-          <code><a href="geom_quiver_3d.html">geom_quiver_3d()</a></code> <code><a href="geom_quiver_3d.html">geom_cone_3d()</a></code>
-
-        </dt>
-        <dd>Vector fields with solid cone heads</dd>
-
-        <dt>
-
           <code><a href="geom_rug_3d.html">geom_rug_3d()</a></code>
 
         </dt>
         <dd>Rug ticks on the walls of the panel box</dd>
+      </dl></div><div class="section level2">
+      <h2 id="reference-geometry-and-clipping">Reference geometry and clipping<a class="anchor" aria-label="anchor" href="#reference-geometry-and-clipping"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="annotate_3d.html">annotate_3d()</a></code>
+
+        </dt>
+        <dd>Annotations with a height</dd>
 
         <dt>
 
           <code><a href="geom_plane_3d.html">geom_plane_3d()</a></code>
 
         </dt>
-        <dd>Reference planes</dd>
-
-        <dt>
-
-          <code><a href="annotate_3d.html">annotate_3d()</a></code>
-
-        </dt>
-        <dd>Annotations with a height</dd>
+        <dd>Draw reference planes through a 3D panel</dd>
 
         <dt>
 
@@ -369,10 +334,17 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Brackets and dimension lines between two points</dd>
+
+        <dt>
+
+          <code><a href="clip_plane_3d.html">clip_plane_3d()</a></code>
+
+        </dt>
+        <dd>Define clipping planes for layers and panels</dd>
       </dl></div><div class="section level2">
-      <h2 id="interval-layers">Interval layers<a class="anchor" aria-label="anchor" href="#interval-layers"></a></h2>
+      <h2 id="intervals-and-summaries">Intervals and summaries<a class="anchor" aria-label="anchor" href="#intervals-and-summaries"></a></h2>
 
-
+      <div class="section-desc"><p>Draw supplied bounds or summarise repeated observations. See <a href="../articles/intervals.html">Displaying intervals and summaries</a>.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -400,7 +372,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
         </dt>
         <dd>Summarise one axis at each position on the other two</dd>
       </dl></div><div class="section level2">
-      <h2 id="surface-and-solid-layers">Surface and solid layers<a class="anchor" aria-label="anchor" href="#surface-and-solid-layers"></a></h2>
+      <h2 id="columns-bins-and-voxels">Columns, bins and voxels<a class="anchor" aria-label="anchor" href="#columns-bins-and-voxels"></a></h2>
 
 
 
@@ -410,48 +382,6 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
 
       <dl><dt>
-
-          <code><a href="geom_surface_3d.html">geom_surface_3d()</a></code> <code><a href="geom_surface_3d.html">stat_surface_3d()</a></code>
-
-        </dt>
-        <dd>Triangulated surfaces in three dimensions</dd>
-
-        <dt>
-
-          <code><a href="geom_contour_3d.html">geom_contour_3d()</a></code> <code><a href="geom_contour_3d.html">geom_contour_filled_3d()</a></code>
-
-        </dt>
-        <dd>Contours following a triangulated surface or a horizontal plane</dd>
-
-        <dt>
-
-          <code><a href="geom_mesh_3d.html">geom_mesh_3d()</a></code>
-
-        </dt>
-        <dd>Draw an external triangle or polygon mesh</dd>
-
-        <dt>
-
-          <code><a href="outline_3d.html">outline_3d()</a></code>
-
-        </dt>
-        <dd>Feature lines of surfaces and meshes</dd>
-
-        <dt>
-
-          <code><a href="edges_3d.html">edges_3d()</a></code>
-
-        </dt>
-        <dd>Mesh lines over surfaces</dd>
-
-        <dt>
-
-          <code><a href="hatch_3d.html">hatch_3d()</a></code>
-
-        </dt>
-        <dd>Hatching of surfaces and meshes</dd>
-
-        <dt>
 
           <code><a href="geom_col_3d.html">geom_col_3d()</a></code> <code><a href="geom_col_3d.html">geom_bar_3d()</a></code> <code><a href="geom_col_3d.html">stat_count_3d()</a></code>
 
@@ -484,7 +414,225 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
           <code><a href="geom_voxel_3d.html">geom_voxel_3d()</a></code>
 
         </dt>
-        <dd>Voxels</dd>
+        <dd>Draw voxel cells on a three-dimensional lattice</dd>
+
+        <dt>
+
+          <code><a href="stat_bin_3d.html">stat_bin_3d()</a></code>
+
+        </dt>
+        <dd>Three-dimensional bin counts</dd>
+      </dl></div><div class="section level2">
+      <h2 id="surfaces-meshes-and-point-clouds">Surfaces, meshes and point clouds<a class="anchor" aria-label="anchor" href="#surfaces-meshes-and-point-clouds"></a></h2>
+
+      <div class="section-desc"><p>Construct surfaces, read meshes and point clouds, and measure along mesh surfaces. See <a href="../articles/meshes.html">Reading and measuring meshes</a> and <a href="../articles/scans.html">Reading 3D scans and point clouds</a>.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="geom_surface_3d.html">geom_surface_3d()</a></code> <code><a href="geom_surface_3d.html">stat_surface_3d()</a></code>
+
+        </dt>
+        <dd>Triangulated surfaces in three dimensions</dd>
+
+        <dt>
+
+          <code><a href="geom_contour_3d.html">geom_contour_3d()</a></code> <code><a href="geom_contour_3d.html">geom_contour_filled_3d()</a></code>
+
+        </dt>
+        <dd>Contours following a triangulated surface or a horizontal plane</dd>
+
+        <dt>
+
+          <code><a href="geom_mesh_3d.html">geom_mesh_3d()</a></code>
+
+        </dt>
+        <dd>Draw an external triangle or polygon mesh</dd>
+
+        <dt>
+
+          <code><a href="mesh_3d.html">mesh_3d()</a></code>
+
+        </dt>
+        <dd>Fortify an indexed three-dimensional mesh</dd>
+
+        <dt>
+
+          <code><a href="read_mesh_3d.html">read_mesh_3d()</a></code>
+
+        </dt>
+        <dd>Read a triangle or polygon mesh file</dd>
+
+        <dt>
+
+          <code><a href="read_points_3d.html">read_points_3d()</a></code>
+
+        </dt>
+        <dd>Read a point cloud file</dd>
+
+        <dt>
+
+          <code><a href="geom_splat_3d.html">geom_splat_3d()</a></code>
+
+        </dt>
+        <dd>Gaussian splats in three dimensions</dd>
+
+        <dt>
+
+          <code><a href="mesh_processing.html">mesh_normals()</a></code> <code><a href="mesh_processing.html">mesh_curvature()</a></code> <code><a href="mesh_processing.html">mesh_subdivide()</a></code> <code><a href="mesh_processing.html">mesh_smooth()</a></code> <code><a href="mesh_processing.html">mesh_decimate()</a></code> <code><a href="mesh_processing.html">mesh_remesh()</a></code>
+
+        </dt>
+        <dd>Smooth, refine and simplify triangle meshes</dd>
+
+        <dt>
+
+          <code><a href="mesh_geodesic.html">mesh_geodesic_distance()</a></code> <code><a href="mesh_geodesic.html">mesh_logmap()</a></code> <code><a href="mesh_geodesic.html">mesh_geodesic_path()</a></code>
+
+        </dt>
+        <dd>Measure distances and paths along mesh surfaces</dd>
+
+        <dt>
+
+          <code><a href="reexports.html">reexports</a></code> <code><a href="reexports.html">fortify</a></code>
+
+        </dt>
+        <dd>Objects exported from other packages</dd>
+
+        <dt>
+
+          <code><a href="stat_parametric_geodesic_3d.html">stat_parametric_geodesic_3d()</a></code>
+
+        </dt>
+        <dd>Geodesics on parametric surfaces</dd>
+
+        <dt>
+
+          <code><a href="stat_geodesic_distance_3d.html">stat_geodesic_distance_3d()</a></code> <code><a href="stat_geodesic_distance_3d.html">stat_logmap_3d()</a></code> <code><a href="stat_geodesic_distance_3d.html">stat_geodesic_path_3d()</a></code>
+
+        </dt>
+        <dd>Geodesic distance, log map and shortest paths on a mesh</dd>
+      </dl></div><div class="section level2">
+      <h2 id="function-surfaces-and-fitted-models">Function surfaces and fitted models<a class="anchor" aria-label="anchor" href="#function-surfaces-and-fitted-models"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="stat_function_3d.html">stat_function_3d()</a></code> <code><a href="stat_function_3d.html">geom_function_3d()</a></code>
+
+        </dt>
+        <dd>Sample a bivariate function in three dimensions</dd>
+
+        <dt>
+
+          <code><a href="stat_smooth_3d.html">stat_smooth_3d()</a></code> <code><a href="stat_smooth_3d.html">geom_smooth_3d()</a></code>
+
+        </dt>
+        <dd>Fit a bivariate response surface</dd>
+
+        <dt>
+
+          <code><a href="stat_residual_3d.html">stat_residual_3d()</a></code> <code><a href="stat_residual_3d.html">geom_residual_3d()</a></code>
+
+        </dt>
+        <dd>Residuals from a fitted surface</dd>
+      </dl></div><div class="section level2">
+      <h2 id="distributions-densities-and-hulls">Distributions, densities and hulls<a class="anchor" aria-label="anchor" href="#distributions-densities-and-hulls"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="geom_boxplot_3d.html">geom_boxplot_3d()</a></code> <code><a href="geom_boxplot_3d.html">geom_violin_3d()</a></code>
+
+        </dt>
+        <dd>Boxplots and violins standing on an x/y plane</dd>
+
+        <dt>
+
+          <code><a href="stat_density_2d_3d.html">stat_density_2d_3d()</a></code>
+
+        </dt>
+        <dd>Bivariate kernel density as a height surface</dd>
+
+        <dt>
+
+          <code><a href="stat_ridgeline_3d.html">stat_ridgeline_3d()</a></code> <code><a href="stat_ridgeline_3d.html">geom_ridgeline_3d()</a></code>
+
+        </dt>
+        <dd>Grouped one-dimensional density ridges</dd>
+
+        <dt>
+
+          <code><a href="stat_density_3d.html">stat_density_3d()</a></code> <code><a href="stat_density_3d.html">geom_isodensity_3d()</a></code>
+
+        </dt>
+        <dd>Trivariate density isosurfaces</dd>
+
+        <dt>
+
+          <code><a href="stat_ellipsoid_3d.html">stat_ellipsoid_3d()</a></code>
+
+        </dt>
+        <dd>Covariance and confidence ellipsoids</dd>
+
+        <dt>
+
+          <code><a href="stat_hull_3d.html">stat_hull_3d()</a></code> <code><a href="stat_hull_3d.html">geom_hull_3d()</a></code>
+
+        </dt>
+        <dd>Convex hulls in three dimensions</dd>
+
+        <dt>
+
+          <code><a href="stat_alpha_shape_3d.html">stat_alpha_shape_3d()</a></code> <code><a href="stat_alpha_shape_3d.html">geom_alpha_shape_3d()</a></code>
+
+        </dt>
+        <dd>Alpha shapes of point clouds</dd>
+
+        <dt>
+
+          <code><a href="biplot_3d.html">biplot_3d()</a></code>
+
+        </dt>
+        <dd>Compose a three-axis ordination biplot</dd>
+      </dl></div><div class="section level2">
+      <h2 id="scalar-fields-slices-and-implicit-surfaces">Scalar fields, slices and implicit surfaces<a class="anchor" aria-label="anchor" href="#scalar-fields-slices-and-implicit-surfaces"></a></h2>
+
+      <div class="section-desc"><p>Extract level surfaces or inspect field values on planes. See <a href="../articles/field-slices.html">Slicing fields and point densities</a>.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="stat_isosurface_3d.html">stat_isosurface_3d()</a></code> <code><a href="stat_isosurface_3d.html">geom_isosurface_3d()</a></code>
+
+        </dt>
+        <dd>Level surfaces of a gridded scalar field</dd>
+
+        <dt>
+
+          <code><a href="stat_isofunction_3d.html">stat_isofunction_3d()</a></code> <code><a href="stat_isofunction_3d.html">geom_isofunction_3d()</a></code>
+
+        </dt>
+        <dd>Level surfaces of a trivariate function</dd>
 
         <dt>
 
@@ -495,17 +643,61 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         <dt>
 
-          <code><a href="geom_tube_3d.html">geom_tube_3d()</a></code> <code><a href="geom_tube_3d.html">geom_ribbon_3d()</a></code>
+          <code><a href="stat_slice_3d.html">stat_slice_3d()</a></code> <code><a href="stat_slice_3d.html">geom_slice_3d()</a></code> <code><a href="stat_slice_3d.html">stat_density_slice_3d()</a></code> <code><a href="stat_slice_3d.html">geom_density_slice_3d()</a></code>
 
         </dt>
-        <dd>Tubes and ribbons along curves</dd>
+        <dd>Planar slices through a gridded scalar field</dd>
 
         <dt>
+
+          <code><a href="stat_slice_contour_3d.html">stat_slice_contour_3d()</a></code> <code><a href="stat_slice_contour_3d.html">geom_slice_contour_3d()</a></code>
+
+        </dt>
+        <dd>Contour lines on slices through a gridded scalar field</dd>
+
+        <dt>
+
+          <code><a href="stat_isocurve_3d.html">stat_isocurve_3d()</a></code> <code><a href="stat_isocurve_3d.html">geom_isocurve_3d()</a></code>
+
+        </dt>
+        <dd>Intersection curves of two implicit surfaces</dd>
+
+        <dt>
+
+          <code><a href="stat_implicit_fit_3d.html">stat_implicit_fit_3d()</a></code>
+
+        </dt>
+        <dd>Implicit surfaces fitted to point clouds</dd>
+
+        <dt>
+
+          <code><a href="sdf_sphere.html">sdf_sphere()</a></code> <code><a href="sdf_sphere.html">sdf_box()</a></code> <code><a href="sdf_sphere.html">sdf_torus()</a></code> <code><a href="sdf_sphere.html">sdf_capsule()</a></code> <code><a href="sdf_sphere.html">sdf_plane()</a></code> <code><a href="sdf_sphere.html">sdf_gyroid()</a></code> <code><a href="sdf_sphere.html">sdf_metaballs()</a></code>
+
+        </dt>
+        <dd>Signed distance functions</dd>
+
+        <dt>
+
+          <code><a href="sdf_blend.html">sdf_blend()</a></code> <code><a href="sdf_blend.html">sdf_offset()</a></code> <code><a href="sdf_blend.html">sdf_shell()</a></code> <code><a href="sdf_blend.html">sdf_transform()</a></code> <code><a href="sdf_blend.html">Ops(<i>&lt;ggplot3d_sdf&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Combine and transform signed distance functions</dd>
+      </dl></div><div class="section level2">
+      <h2 id="solid-glyphs-parametric-surfaces-and-sweeps">Solid glyphs, parametric surfaces and sweeps<a class="anchor" aria-label="anchor" href="#solid-glyphs-parametric-surfaces-and-sweeps"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="geom_sphere_3d.html">geom_sphere_3d()</a></code>
 
         </dt>
-        <dd>Spheres</dd>
+        <dd>Draw spheres at observed positions</dd>
 
         <dt>
 
@@ -523,26 +715,70 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         <dt>
 
-          <code><a href="stat_ellipsoid_3d.html">stat_ellipsoid_3d()</a></code>
-
-        </dt>
-        <dd>Covariance and confidence ellipsoids</dd>
-
-        <dt>
-
-          <code><a href="biplot_3d.html">biplot_3d()</a></code>
-
-        </dt>
-        <dd>Compose a three-axis ordination biplot</dd>
-
-        <dt>
-
           <code><a href="geom_glyph_3d.html">geom_glyph_3d()</a></code>
 
         </dt>
         <dd>One solid glyph per observation</dd>
+
+        <dt>
+
+          <code><a href="stat_parametric_3d.html">stat_parametric_3d()</a></code> <code><a href="stat_parametric_3d.html">geom_parametric_3d()</a></code>
+
+        </dt>
+        <dd>Parametric surfaces</dd>
+
+        <dt>
+
+          <code><a href="geom_tube_3d.html">geom_tube_3d()</a></code> <code><a href="geom_tube_3d.html">geom_ribbon_3d()</a></code>
+
+        </dt>
+        <dd>Tubes and ribbons along curves</dd>
+
+        <dt>
+
+          <code><a href="stat_sweep_3d.html">stat_sweep_3d()</a></code> <code><a href="stat_sweep_3d.html">geom_sweep_3d()</a></code>
+
+        </dt>
+        <dd>Sweep a profile along a curve</dd>
+
+        <dt>
+
+          <code><a href="stat_revolve_3d.html">stat_revolve_3d()</a></code> <code><a href="stat_revolve_3d.html">geom_revolve_3d()</a></code>
+
+        </dt>
+        <dd>Surfaces of revolution</dd>
+
+        <dt>
+
+          <code><a href="stat_spline_3d.html">stat_spline_3d()</a></code>
+
+        </dt>
+        <dd>Smooth curves through points</dd>
       </dl></div><div class="section level2">
-      <h2 id="network-and-tree-layers">Network and tree layers<a class="anchor" aria-label="anchor" href="#network-and-tree-layers"></a></h2>
+      <h2 id="vector-fields-and-streamlines">Vector fields and streamlines<a class="anchor" aria-label="anchor" href="#vector-fields-and-streamlines"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="geom_quiver_3d.html">geom_quiver_3d()</a></code> <code><a href="geom_quiver_3d.html">geom_cone_3d()</a></code>
+
+        </dt>
+        <dd>Vector fields with solid cone heads</dd>
+
+        <dt>
+
+          <code><a href="stat_streamline_3d.html">stat_streamline_3d()</a></code>
+
+        </dt>
+        <dd>Integrate streamlines and streamtubes through a vector field</dd>
+      </dl></div><div class="section level2">
+      <h2 id="networks-trees-and-molecules">Networks, trees and molecules<a class="anchor" aria-label="anchor" href="#networks-trees-and-molecules"></a></h2>
 
 
 
@@ -585,10 +821,17 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Dendrograms on a plane</dd>
+
+        <dt>
+
+          <code><a href="fortify.pdb.html">fortify(<i>&lt;pdb&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Fortify molecular atoms and bonds</dd>
       </dl></div><div class="section level2">
-      <h2 id="spatial-data">Spatial data<a class="anchor" aria-label="anchor" href="#spatial-data"></a></h2>
+      <h2 id="spatial-data-and-map-annotations">Spatial data and map annotations<a class="anchor" aria-label="anchor" href="#spatial-data-and-map-annotations"></a></h2>
 
-
+      <div class="section-desc"><p>Plot spatial objects and scale bars. For north arrows, see <a href="guide_triad_3d.html">orientation guides</a>.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -622,8 +865,15 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Flow arcs between two points</dd>
+
+        <dt>
+
+          <code><a href="annotation_scale_3d.html">annotation_scale_3d()</a></code>
+
+        </dt>
+        <dd>A scale bar lying in a coordinate plane</dd>
       </dl></div><div class="section level2">
-      <h2 id="-d-plots-on-planes">2D plots on planes<a class="anchor" aria-label="anchor" href="#-d-plots-on-planes"></a></h2>
+      <h2 id="images-and-plots-on-planes">Images and plots on planes<a class="anchor" aria-label="anchor" href="#images-and-plots-on-planes"></a></h2>
 
 
 
@@ -645,22 +895,13 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Small multiples on parallel planes</dd>
-      </dl></div><div class="section level2">
-      <h2 id="images-and-textures">Images and textures<a class="anchor" aria-label="anchor" href="#images-and-textures"></a></h2>
 
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
+        <dt>
 
           <code><a href="texture_3d.html">texture_3d()</a></code>
 
         </dt>
-        <dd>Images for textured faces</dd>
+        <dd>Prepare images for surface textures</dd>
 
         <dt>
 
@@ -676,335 +917,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
         </dt>
         <dd>Rasters on planes</dd>
       </dl></div><div class="section level2">
-      <h2 id="statistical-layers">Statistical layers<a class="anchor" aria-label="anchor" href="#statistical-layers"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="stat_function_3d.html">stat_function_3d()</a></code> <code><a href="stat_function_3d.html">geom_function_3d()</a></code>
-
-        </dt>
-        <dd>Sample a bivariate function in three dimensions</dd>
-
-        <dt>
-
-          <code><a href="stat_smooth_3d.html">stat_smooth_3d()</a></code> <code><a href="stat_smooth_3d.html">geom_smooth_3d()</a></code>
-
-        </dt>
-        <dd>Fit a bivariate response surface</dd>
-
-        <dt>
-
-          <code><a href="stat_residual_3d.html">stat_residual_3d()</a></code> <code><a href="stat_residual_3d.html">geom_residual_3d()</a></code>
-
-        </dt>
-        <dd>Residuals from a fitted surface</dd>
-
-        <dt>
-
-          <code><a href="stat_ridgeline_3d.html">stat_ridgeline_3d()</a></code> <code><a href="stat_ridgeline_3d.html">geom_ridgeline_3d()</a></code>
-
-        </dt>
-        <dd>Grouped one-dimensional density ridges</dd>
-
-        <dt>
-
-          <code><a href="stat_isosurface_3d.html">stat_isosurface_3d()</a></code> <code><a href="stat_isosurface_3d.html">geom_isosurface_3d()</a></code>
-
-        </dt>
-        <dd>Level surfaces of a gridded scalar field</dd>
-
-        <dt>
-
-          <code><a href="stat_isofunction_3d.html">stat_isofunction_3d()</a></code> <code><a href="stat_isofunction_3d.html">geom_isofunction_3d()</a></code>
-
-        </dt>
-        <dd>Level surfaces of a trivariate function</dd>
-
-        <dt>
-
-          <code><a href="stat_density_3d.html">stat_density_3d()</a></code> <code><a href="stat_density_3d.html">geom_isodensity_3d()</a></code>
-
-        </dt>
-        <dd>Trivariate density isosurfaces</dd>
-
-        <dt>
-
-          <code><a href="stat_slice_3d.html">stat_slice_3d()</a></code> <code><a href="stat_slice_3d.html">geom_slice_3d()</a></code> <code><a href="stat_slice_3d.html">stat_density_slice_3d()</a></code> <code><a href="stat_slice_3d.html">geom_density_slice_3d()</a></code>
-
-        </dt>
-        <dd>Planar slices through a gridded scalar field</dd>
-
-        <dt>
-
-          <code><a href="stat_slice_contour_3d.html">stat_slice_contour_3d()</a></code> <code><a href="stat_slice_contour_3d.html">geom_slice_contour_3d()</a></code>
-
-        </dt>
-        <dd>Contour lines on slices through a gridded scalar field</dd>
-
-        <dt>
-
-          <code><a href="stat_isocurve_3d.html">stat_isocurve_3d()</a></code> <code><a href="stat_isocurve_3d.html">geom_isocurve_3d()</a></code>
-
-        </dt>
-        <dd>Intersection curves of two implicit surfaces</dd>
-
-        <dt>
-
-          <code><a href="stat_hull_3d.html">stat_hull_3d()</a></code> <code><a href="stat_hull_3d.html">geom_hull_3d()</a></code>
-
-        </dt>
-        <dd>Convex hulls in three dimensions</dd>
-
-        <dt>
-
-          <code><a href="stat_alpha_shape_3d.html">stat_alpha_shape_3d()</a></code> <code><a href="stat_alpha_shape_3d.html">geom_alpha_shape_3d()</a></code>
-
-        </dt>
-        <dd>Alpha shapes of point clouds</dd>
-
-        <dt>
-
-          <code><a href="stat_parametric_3d.html">stat_parametric_3d()</a></code> <code><a href="stat_parametric_3d.html">geom_parametric_3d()</a></code>
-
-        </dt>
-        <dd>Parametric surfaces</dd>
-
-        <dt>
-
-          <code><a href="stat_sweep_3d.html">stat_sweep_3d()</a></code> <code><a href="stat_sweep_3d.html">geom_sweep_3d()</a></code>
-
-        </dt>
-        <dd>Sweep a profile along a curve</dd>
-
-        <dt>
-
-          <code><a href="stat_revolve_3d.html">stat_revolve_3d()</a></code> <code><a href="stat_revolve_3d.html">geom_revolve_3d()</a></code>
-
-        </dt>
-        <dd>Surfaces of revolution</dd>
-      </dl></div><div class="section level2">
-      <h2 id="statistical-computations">Statistical computations<a class="anchor" aria-label="anchor" href="#statistical-computations"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="geom_surface_3d.html">geom_surface_3d()</a></code> <code><a href="geom_surface_3d.html">stat_surface_3d()</a></code>
-
-        </dt>
-        <dd>Triangulated surfaces in three dimensions</dd>
-
-        <dt>
-
-          <code><a href="geom_col_3d.html">geom_col_3d()</a></code> <code><a href="geom_col_3d.html">geom_bar_3d()</a></code> <code><a href="geom_col_3d.html">stat_count_3d()</a></code>
-
-        </dt>
-        <dd>Columns and counts on an x/y lattice</dd>
-
-        <dt>
-
-          <code><a href="stat_bin_2d_3d.html">stat_bin_2d_3d()</a></code> <code><a href="stat_bin_2d_3d.html">geom_histogram_3d()</a></code> <code><a href="stat_bin_2d_3d.html">stat_summary_2d_3d()</a></code>
-
-        </dt>
-        <dd>Two-dimensional bins drawn as columns</dd>
-
-        <dt>
-
-          <code><a href="geom_hex_3d.html">geom_hex_3d()</a></code> <code><a href="geom_hex_3d.html">stat_bin_hex_3d()</a></code> <code><a href="geom_hex_3d.html">stat_summary_hex_3d()</a></code>
-
-        </dt>
-        <dd>Hexagonal bins drawn as prisms</dd>
-
-        <dt>
-
-          <code><a href="stat_bin_3d.html">stat_bin_3d()</a></code>
-
-        </dt>
-        <dd>Three-dimensional bin counts</dd>
-
-        <dt>
-
-          <code><a href="stat_function_3d.html">stat_function_3d()</a></code> <code><a href="stat_function_3d.html">geom_function_3d()</a></code>
-
-        </dt>
-        <dd>Sample a bivariate function in three dimensions</dd>
-
-        <dt>
-
-          <code><a href="stat_smooth_3d.html">stat_smooth_3d()</a></code> <code><a href="stat_smooth_3d.html">geom_smooth_3d()</a></code>
-
-        </dt>
-        <dd>Fit a bivariate response surface</dd>
-
-        <dt>
-
-          <code><a href="stat_residual_3d.html">stat_residual_3d()</a></code> <code><a href="stat_residual_3d.html">geom_residual_3d()</a></code>
-
-        </dt>
-        <dd>Residuals from a fitted surface</dd>
-
-        <dt>
-
-          <code><a href="stat_density_2d_3d.html">stat_density_2d_3d()</a></code>
-
-        </dt>
-        <dd>Bivariate kernel density as a height surface</dd>
-
-        <dt>
-
-          <code><a href="stat_ridgeline_3d.html">stat_ridgeline_3d()</a></code> <code><a href="stat_ridgeline_3d.html">geom_ridgeline_3d()</a></code>
-
-        </dt>
-        <dd>Grouped one-dimensional density ridges</dd>
-
-        <dt>
-
-          <code><a href="stat_isosurface_3d.html">stat_isosurface_3d()</a></code> <code><a href="stat_isosurface_3d.html">geom_isosurface_3d()</a></code>
-
-        </dt>
-        <dd>Level surfaces of a gridded scalar field</dd>
-
-        <dt>
-
-          <code><a href="stat_isofunction_3d.html">stat_isofunction_3d()</a></code> <code><a href="stat_isofunction_3d.html">geom_isofunction_3d()</a></code>
-
-        </dt>
-        <dd>Level surfaces of a trivariate function</dd>
-
-        <dt>
-
-          <code><a href="stat_density_3d.html">stat_density_3d()</a></code> <code><a href="stat_density_3d.html">geom_isodensity_3d()</a></code>
-
-        </dt>
-        <dd>Trivariate density isosurfaces</dd>
-
-        <dt>
-
-          <code><a href="stat_slice_3d.html">stat_slice_3d()</a></code> <code><a href="stat_slice_3d.html">geom_slice_3d()</a></code> <code><a href="stat_slice_3d.html">stat_density_slice_3d()</a></code> <code><a href="stat_slice_3d.html">geom_density_slice_3d()</a></code>
-
-        </dt>
-        <dd>Planar slices through a gridded scalar field</dd>
-
-        <dt>
-
-          <code><a href="stat_slice_contour_3d.html">stat_slice_contour_3d()</a></code> <code><a href="stat_slice_contour_3d.html">geom_slice_contour_3d()</a></code>
-
-        </dt>
-        <dd>Contour lines on slices through a gridded scalar field</dd>
-
-        <dt>
-
-          <code><a href="stat_isocurve_3d.html">stat_isocurve_3d()</a></code> <code><a href="stat_isocurve_3d.html">geom_isocurve_3d()</a></code>
-
-        </dt>
-        <dd>Intersection curves of two implicit surfaces</dd>
-
-        <dt>
-
-          <code><a href="stat_hull_3d.html">stat_hull_3d()</a></code> <code><a href="stat_hull_3d.html">geom_hull_3d()</a></code>
-
-        </dt>
-        <dd>Convex hulls in three dimensions</dd>
-
-        <dt>
-
-          <code><a href="stat_alpha_shape_3d.html">stat_alpha_shape_3d()</a></code> <code><a href="stat_alpha_shape_3d.html">geom_alpha_shape_3d()</a></code>
-
-        </dt>
-        <dd>Alpha shapes of point clouds</dd>
-
-        <dt>
-
-          <code><a href="stat_implicit_fit_3d.html">stat_implicit_fit_3d()</a></code>
-
-        </dt>
-        <dd>Implicit surfaces fitted to point clouds</dd>
-
-        <dt>
-
-          <code><a href="stat_parametric_3d.html">stat_parametric_3d()</a></code> <code><a href="stat_parametric_3d.html">geom_parametric_3d()</a></code>
-
-        </dt>
-        <dd>Parametric surfaces</dd>
-
-        <dt>
-
-          <code><a href="stat_parametric_geodesic_3d.html">stat_parametric_geodesic_3d()</a></code>
-
-        </dt>
-        <dd>Geodesics on parametric surfaces</dd>
-
-        <dt>
-
-          <code><a href="stat_geodesic_distance_3d.html">stat_geodesic_distance_3d()</a></code> <code><a href="stat_geodesic_distance_3d.html">stat_logmap_3d()</a></code> <code><a href="stat_geodesic_distance_3d.html">stat_geodesic_path_3d()</a></code>
-
-        </dt>
-        <dd>Geodesic distance, log map and shortest paths on a mesh</dd>
-
-        <dt>
-
-          <code><a href="stat_sweep_3d.html">stat_sweep_3d()</a></code> <code><a href="stat_sweep_3d.html">geom_sweep_3d()</a></code>
-
-        </dt>
-        <dd>Sweep a profile along a curve</dd>
-
-        <dt>
-
-          <code><a href="stat_streamline_3d.html">stat_streamline_3d()</a></code>
-
-        </dt>
-        <dd>Integrate streamlines and streamtubes through a vector field</dd>
-
-        <dt>
-
-          <code><a href="stat_revolve_3d.html">stat_revolve_3d()</a></code> <code><a href="stat_revolve_3d.html">geom_revolve_3d()</a></code>
-
-        </dt>
-        <dd>Surfaces of revolution</dd>
-
-        <dt>
-
-          <code><a href="stat_spline_3d.html">stat_spline_3d()</a></code>
-
-        </dt>
-        <dd>Smooth curves through points</dd>
-      </dl></div><div class="section level2">
-      <h2 id="signed-distance-functions">Signed distance functions<a class="anchor" aria-label="anchor" href="#signed-distance-functions"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="sdf_sphere.html">sdf_sphere()</a></code> <code><a href="sdf_sphere.html">sdf_box()</a></code> <code><a href="sdf_sphere.html">sdf_torus()</a></code> <code><a href="sdf_sphere.html">sdf_capsule()</a></code> <code><a href="sdf_sphere.html">sdf_plane()</a></code> <code><a href="sdf_sphere.html">sdf_gyroid()</a></code> <code><a href="sdf_sphere.html">sdf_metaballs()</a></code>
-
-        </dt>
-        <dd>Signed distance functions</dd>
-
-        <dt>
-
-          <code><a href="sdf_blend.html">sdf_blend()</a></code> <code><a href="sdf_blend.html">sdf_offset()</a></code> <code><a href="sdf_blend.html">sdf_shell()</a></code> <code><a href="sdf_blend.html">sdf_transform()</a></code> <code><a href="sdf_blend.html">Ops(<i>&lt;ggplot3d_sdf&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Combine and transform signed distance functions</dd>
-      </dl></div><div class="section level2">
-      <h2 id="positions">Positions<a class="anchor" aria-label="anchor" href="#positions"></a></h2>
+      <h2 id="position-adjustments">Position adjustments<a class="anchor" aria-label="anchor" href="#position-adjustments"></a></h2>
 
 
 
@@ -1048,7 +961,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
         </dt>
         <dd>Stack or fill intervals along an axis</dd>
       </dl></div><div class="section level2">
-      <h2 id="guides-and-themes">Guides and themes<a class="anchor" aria-label="anchor" href="#guides-and-themes"></a></h2>
+      <h2 id="axes-legends-and-orientation">Axes, legends and orientation<a class="anchor" aria-label="anchor" href="#axes-legends-and-orientation"></a></h2>
 
 
 
@@ -1077,17 +990,75 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Colour guides that show the scene's shading</dd>
+      </dl></div><div class="section level2">
+      <h2 id="lighting-and-surface-appearance">Lighting and surface appearance<a class="anchor" aria-label="anchor" href="#lighting-and-surface-appearance"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="light_3d.html">light_3d()</a></code>
+
+        </dt>
+        <dd>Lighting for a 3D scene</dd>
 
         <dt>
 
-          <code><a href="annotation_scale_3d.html">annotation_scale_3d()</a></code>
+          <code><a href="light_directional.html">light_environment()</a></code> <code><a href="light_directional.html">light_directional()</a></code> <code><a href="light_directional.html">light_point()</a></code> <code><a href="light_directional.html">light_head()</a></code> <code><a href="light_directional.html">light_hemisphere()</a></code>
 
         </dt>
-        <dd>A scale bar lying in a coordinate plane</dd>
+        <dd>Lights for a 3D scene</dd>
+
+        <dt>
+
+          <code><a href="material_3d.html">material_3d()</a></code>
+
+        </dt>
+        <dd>Surface materials</dd>
+
+        <dt>
+
+          <code><a href="shadow_3d.html">shadow_3d()</a></code>
+
+        </dt>
+        <dd>Planar cast shadows</dd>
+
+        <dt>
+
+          <code><a href="depth_cue_3d.html">depth_cue_3d()</a></code>
+
+        </dt>
+        <dd>Depth cues: fog, line width and eye-dome lighting</dd>
+
+        <dt>
+
+          <code><a href="outline_3d.html">outline_3d()</a></code>
+
+        </dt>
+        <dd>Feature lines of surfaces and meshes</dd>
+
+        <dt>
+
+          <code><a href="edges_3d.html">edges_3d()</a></code>
+
+        </dt>
+        <dd>Mesh lines over surfaces</dd>
+
+        <dt>
+
+          <code><a href="hatch_3d.html">hatch_3d()</a></code>
+
+        </dt>
+        <dd>Hatching of surfaces and meshes</dd>
       </dl></div><div class="section level2">
-      <h2 id="output-backends">Output backends<a class="anchor" aria-label="anchor" href="#output-backends"></a></h2>
+      <h2 id="rendering-and-accessible-descriptions">Rendering and accessible descriptions<a class="anchor" aria-label="anchor" href="#rendering-and-accessible-descriptions"></a></h2>
 
-
+      <div class="section-desc"><p>Choose scene rendering and describe the resulting figure. See <a href="../articles/documents.html">Embedding plots in reports</a>.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -1103,26 +1074,44 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         <dt>
 
-          <code><a href="annotation_thurston_3d.html">annotation_thurston_3d()</a></code>
+          <code><a href="get_alt_text_3d.html">get_alt_text_3d</a></code>
 
         </dt>
-        <dd>Draw an intrinsic ball, tube, or half-space</dd>
+        <dd>Describe a three-dimensional plot for a document</dd>
+      </dl></div><div class="section level2">
+      <h2 id="interactive-viewing-and-shiny">Interactive viewing and Shiny<a class="anchor" aria-label="anchor" href="#interactive-viewing-and-shiny"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="view_3d.html">view_3d()</a></code>
+
+        </dt>
+        <dd>Explore a plot with orbit controls, tooltips and selection</dd>
 
         <dt>
 
-          <code><a href="geodesic_3d.html">geodesic_3d()</a></code>
+          <code><a href="view_3d-shiny.html">view3dOutput()</a></code> <code><a href="view_3d-shiny.html">renderView3d()</a></code>
 
         </dt>
-        <dd>Follow a geodesic in a Thurston geometry</dd>
+        <dd>Shiny bindings for the interactive 3D viewer</dd>
+      </dl></div><div class="section level2">
+      <h2 id="animation-and-camera-paths">Animation and camera paths<a class="anchor" aria-label="anchor" href="#animation-and-camera-paths"></a></h2>
 
-        <dt>
 
-          <code><a href="thurston_portal_3d.html">thurston_portal_3d()</a></code>
 
-        </dt>
-        <dd>Pair a face of a Thurston fundamental domain</dd>
+      <dl></dl></div><div class="section level2">
 
-        <dt>
+
+
+
+      <dl><dt>
 
           <code><a href="animate_3d.html">animate_3d()</a></code>
 
@@ -1138,42 +1127,12 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         <dt>
 
-          <code><a href="view_3d.html">view_3d()</a></code>
-
-        </dt>
-        <dd>Explore a plot with orbit controls, tooltips and selection</dd>
-
-        <dt>
-
-          <code><a href="view_3d-shiny.html">view3dOutput()</a></code> <code><a href="view_3d-shiny.html">renderView3d()</a></code>
-
-        </dt>
-        <dd>Shiny bindings for the interactive 3D viewer</dd>
-
-        <dt>
-
-          <code><a href="get_alt_text_3d.html">get_alt_text_3d</a></code>
-
-        </dt>
-        <dd>Describe a three-dimensional plot for a document</dd>
-      </dl></div><div class="section level2">
-      <h2 id="camera-paths">Camera paths<a class="anchor" aria-label="anchor" href="#camera-paths"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
           <code><a href="camera_path_3d.html">camera_path_3d()</a></code> <code><a href="camera_path_3d.html">orbit_3d()</a></code> <code><a href="camera_path_3d.html">fly_through_3d()</a></code> <code><a href="camera_path_3d.html">dolly_zoom_3d()</a></code>
 
         </dt>
         <dd>Camera paths through keyframes</dd>
       </dl></div><div class="section level2">
-      <h2 id="export-to-d-software">Export to 3D software<a class="anchor" aria-label="anchor" href="#export-to-d-software"></a></h2>
+      <h2 id="export-and-d-printing">Export and 3D printing<a class="anchor" aria-label="anchor" href="#export-and-d-printing"></a></h2>
 
 
 
@@ -1194,7 +1153,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
           <code><a href="print_3d.html">print_3d()</a></code>
 
         </dt>
-        <dd>Physical solids for 3D printing</dd>
+        <dd>Configure physical models for 3D printing</dd>
 
         <dt>
 
@@ -1210,7 +1169,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
         </dt>
         <dd>Convert a 3D panel to a rayrender scene</dd>
       </dl></div><div class="section level2">
-      <h2 id="mesh-input-and-extension-api">Mesh input and extension API<a class="anchor" aria-label="anchor" href="#mesh-input-and-extension-api"></a></h2>
+      <h2 id="four-dimensions-tilings-and-honeycombs">Four dimensions, tilings and honeycombs<a class="anchor" aria-label="anchor" href="#four-dimensions-tilings-and-honeycombs"></a></h2>
 
 
 
@@ -1220,115 +1179,6 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
 
       <dl><dt>
-
-          <code><a href="mesh_3d.html">mesh_3d()</a></code>
-
-        </dt>
-        <dd>Fortify an indexed three-dimensional mesh</dd>
-
-        <dt>
-
-          <code><a href="read_mesh_3d.html">read_mesh_3d()</a></code>
-
-        </dt>
-        <dd>Read a triangle or polygon mesh file</dd>
-
-        <dt>
-
-          <code><a href="mesh_processing.html">mesh_normals()</a></code> <code><a href="mesh_processing.html">mesh_curvature()</a></code> <code><a href="mesh_processing.html">mesh_subdivide()</a></code> <code><a href="mesh_processing.html">mesh_smooth()</a></code> <code><a href="mesh_processing.html">mesh_decimate()</a></code> <code><a href="mesh_processing.html">mesh_remesh()</a></code>
-
-        </dt>
-        <dd>Mesh processing</dd>
-
-        <dt>
-
-          <code><a href="mesh_geodesic.html">mesh_geodesic_distance()</a></code> <code><a href="mesh_geodesic.html">mesh_logmap()</a></code> <code><a href="mesh_geodesic.html">mesh_geodesic_path()</a></code>
-
-        </dt>
-        <dd>Intrinsic geometry on meshes</dd>
-
-        <dt>
-
-          <code><a href="reexports.html">reexports</a></code> <code><a href="reexports.html">fortify</a></code>
-
-        </dt>
-        <dd>Objects exported from other packages</dd>
-
-        <dt>
-
-          <code><a href="fortify.pdb.html">fortify(<i>&lt;pdb&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Fortify molecular atoms and bonds</dd>
-
-        <dt>
-
-          <code><a href="layer_3d.html">layer_3d()</a></code>
-
-        </dt>
-        <dd>Adapt a registered ggplot2 layer to three dimensions</dd>
-
-        <dt>
-
-          <code><a href="register_geom_3d.html">register_geom_3d()</a></code>
-
-        </dt>
-        <dd>Register a geometry emitter</dd>
-
-        <dt>
-
-          <code><a href="new_scene_packet.html">new_scene_packet()</a></code>
-
-        </dt>
-        <dd>Construct a 3D geometry packet</dd>
-
-        <dt>
-
-          <code><a href="normalise_homogeneous_3d.html">normalise_homogeneous_3d()</a></code>
-
-        </dt>
-        <dd>Normalise homogeneous positions to the panel box</dd>
-      </dl></div><div class="section level2">
-      <h2 id="spherical-geometry-and-observers">Spherical geometry and observers<a class="anchor" aria-label="anchor" href="#spherical-geometry-and-observers"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="coord_spherical_geometry_3d.html">coord_spherical_geometry_3d()</a></code>
-
-        </dt>
-        <dd>Spherical geometry in stereographic and gnomonic charts</dd>
-
-        <dt>
-
-          <code><a href="stat_hopf_fibre_3d.html">stat_hopf_fibre_3d()</a></code>
-
-        </dt>
-        <dd>Hopf fibres, latitude tori and their spherical base</dd>
-      </dl></div><div class="section level2">
-      <h2 id="tilings-and-honeycombs">Tilings and honeycombs<a class="anchor" aria-label="anchor" href="#tilings-and-honeycombs"></a></h2>
-
-
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="stat_tiling_3d.html">stat_tiling_3d()</a></code> <code><a href="stat_tiling_3d.html">stat_honeycomb_3d()</a></code>
-
-        </dt>
-        <dd>Regular tilings and honeycombs from Coxeter reflections</dd>
-
-        <dt>
 
           <code><a href="stat_project_3d.html">stat_project_3d()</a></code>
 
@@ -1355,10 +1205,17 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Hyperplane sections of four-dimensional tetrahedral meshes</dd>
+
+        <dt>
+
+          <code><a href="stat_tiling_3d.html">stat_tiling_3d()</a></code> <code><a href="stat_tiling_3d.html">stat_honeycomb_3d()</a></code>
+
+        </dt>
+        <dd>Regular tilings and honeycombs from Coxeter reflections</dd>
       </dl></div><div class="section level2">
-      <h2 id="hyperbolic-geometry-and-data">Hyperbolic geometry and data<a class="anchor" aria-label="anchor" href="#hyperbolic-geometry-and-data"></a></h2>
+      <h2 id="spherical-and-hyperbolic-geometry">Spherical and hyperbolic geometry<a class="anchor" aria-label="anchor" href="#spherical-and-hyperbolic-geometry"></a></h2>
 
-
+      <div class="section-desc"><p>Intrinsic curved-space coordinates and layouts. Longitude and latitude coordinates are listed under angles and geographic coordinates.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -1366,6 +1223,20 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
 
       <dl><dt>
+
+          <code><a href="coord_spherical_geometry_3d.html">coord_spherical_geometry_3d()</a></code>
+
+        </dt>
+        <dd>Spherical geometry in stereographic and gnomonic charts</dd>
+
+        <dt>
+
+          <code><a href="stat_hopf_fibre_3d.html">stat_hopf_fibre_3d()</a></code>
+
+        </dt>
+        <dd>Hopf fibres, latitude tori and their spherical base</dd>
+
+        <dt>
 
           <code><a href="coord_hyperbolic_3d.html">coord_hyperbolic_3d()</a></code>
 
@@ -1386,7 +1257,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
         </dt>
         <dd>Focus paths for a hyperbolic embedding</dd>
       </dl></div><div class="section level2">
-      <h2 id="relativity">Relativity<a class="anchor" aria-label="anchor" href="#relativity"></a></h2>
+      <h2 id="spacetime-and-relativity">Spacetime and relativity<a class="anchor" aria-label="anchor" href="#spacetime-and-relativity"></a></h2>
 
 
 
@@ -1396,6 +1267,13 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
 
       <dl><dt>
+
+          <code><a href="coord_spacetime_3d.html">coord_spacetime_3d()</a></code>
+
+        </dt>
+        <dd>Finite Minkowski spacetime coordinates</dd>
+
+        <dt>
 
           <code><a href="stat_light_cone_3d.html">stat_light_cone_3d()</a></code>
 
@@ -1422,15 +1300,8 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Lorentz boosts in canonical coordinates</dd>
-
-        <dt>
-
-          <code><a href="coord_spacetime_3d.html">coord_spacetime_3d()</a></code>
-
-        </dt>
-        <dd>Finite Minkowski spacetime coordinates</dd>
       </dl></div><div class="section level2">
-      <h2 id="complex-analysis">Complex analysis<a class="anchor" aria-label="anchor" href="#complex-analysis"></a></h2>
+      <h2 id="complex-functions-knots-and-immersed-surfaces">Complex functions, knots and immersed surfaces<a class="anchor" aria-label="anchor" href="#complex-functions-knots-and-immersed-surfaces"></a></h2>
 
 
 
@@ -1459,22 +1330,13 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         </dt>
         <dd>Riemann surfaces parametrised by an inverse function</dd>
-      </dl></div><div class="section level2">
-      <h2 id="immersed-surfaces-and-knots">Immersed surfaces and knots<a class="anchor" aria-label="anchor" href="#immersed-surfaces-and-knots"></a></h2>
 
+        <dt>
 
-
-      <dl></dl></div><div class="section level2">
-
-
-
-
-      <dl><dt>
-
-          <code><a href="stat_self_intersection_3d.html">stat_self_intersection_3d()</a></code>
+          <code><a href="stat_knot_3d.html">stat_knot_3d()</a></code>
 
         </dt>
-        <dd>Transverse intersection curves of a triangle mesh</dd>
+        <dd>Torus knots and knot tubes</dd>
 
         <dt>
 
@@ -1485,10 +1347,77 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
         <dt>
 
-          <code><a href="stat_knot_3d.html">stat_knot_3d()</a></code>
+          <code><a href="stat_self_intersection_3d.html">stat_self_intersection_3d()</a></code>
 
         </dt>
-        <dd>Torus knots and knot tubes</dd>
+        <dd>Transverse intersection curves of a triangle mesh</dd>
+      </dl></div><div class="section level2">
+      <h2 id="thurston-geometry-and-observer-views">Thurston geometry and observer views<a class="anchor" aria-label="anchor" href="#thurston-geometry-and-observer-views"></a></h2>
+
+      <div class="section-desc"><p>Place intrinsic objects and observers inside homogeneous spaces. See <a href="../articles/thurston-geometries.html">Viewing Thurston geometries from inside</a>.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="annotation_thurston_3d.html">annotation_thurston_3d()</a></code>
+
+        </dt>
+        <dd>Draw an intrinsic ball, tube, or half-space</dd>
+
+        <dt>
+
+          <code><a href="geodesic_3d.html">geodesic_3d()</a></code>
+
+        </dt>
+        <dd>Follow a geodesic in a Thurston geometry</dd>
+
+        <dt>
+
+          <code><a href="thurston_portal_3d.html">thurston_portal_3d()</a></code>
+
+        </dt>
+        <dd>Pair a face of a Thurston fundamental domain</dd>
+      </dl></div><div class="section level2">
+      <h2 id="geometry-extension-api">Geometry extension API<a class="anchor" aria-label="anchor" href="#geometry-extension-api"></a></h2>
+
+      <div class="section-desc"><p>Emit geometry into a shared panel scene. See <a href="../articles/extending.html">Writing a geometry extension</a>.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="layer_3d.html">layer_3d()</a></code>
+
+        </dt>
+        <dd>Adapt a registered ggplot2 layer to three dimensions</dd>
+
+        <dt>
+
+          <code><a href="register_geom_3d.html">register_geom_3d()</a></code>
+
+        </dt>
+        <dd>Register a geometry emitter</dd>
+
+        <dt>
+
+          <code><a href="new_scene_packet.html">new_scene_packet()</a></code>
+
+        </dt>
+        <dd>Construct a 3D geometry packet</dd>
+
+        <dt>
+
+          <code><a href="normalise_homogeneous_3d.html">normalise_homogeneous_3d()</a></code>
+
+        </dt>
+        <dd>Normalise homogeneous positions to the panel box</dd>
       </dl></div><div class="section level2">
       <h2 id="package">Package<a class="anchor" aria-label="anchor" href="#package"></a></h2>
 

@@ -1,9 +1,9 @@
 ---
-title: "Molecular ball-and-stick views"
+title: "Drawing molecular structures"
 description: "Read molecular coordinates, attach bonds by atom identifier and draw atoms and bonds in three dimensions."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Molecular ball-and-stick views}
+  %\VignetteIndexEntry{Drawing molecular structures}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(legend = "right", fig.width = 6, fig.height = 5)
 ```
 
-[bio3d](https://www.thegrantlab.org/bio3d/) reads Protein Data Bank coordinate files into `pdb` objects. `fortify()` turns their atom records into a table and attaches bond endpoints for `geom_edge_3d()`. Each atom retains its serial number, element and coordinate in angstroms.
+[bio3d](https://www.thegrantlab.org/bio3d/) reads Protein Data Bank coordinate files into `pdb` objects. `fortify()` turns their atom records into a table and attaches bond endpoints for `geom_edge_3d()`. Each atom retains its serial number, element and coordinate in angstroms. [Drawing networks and trees](networks.html) covers other data with nodes and edges.
 
 This water molecule has explicitly specified connectivity. Bond endpoints refer to atom serial numbers, and can be supplied independently of the order of the atom records.
 

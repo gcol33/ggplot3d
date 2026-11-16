@@ -17,6 +17,8 @@ three.js (`DirectionalLight`, `PointLight`, `HemisphereLight`).
 ## Usage
 
 ``` r
+light_environment(image, intensity = 1, rotation = 0, space = "data")
+
 light_directional(
   direction = c(-1, 1, 2),
   space = "camera",
@@ -45,22 +47,31 @@ light_hemisphere(
 
 ## Arguments
 
-- direction:
+- image:
 
-  Direction from a surface toward the light, or the sky direction of a
-  hemisphere light.
+  Linear RGB array with dimensions height by width by 3, or a Radiance
+  RGBE `.hdr` or sRGB `.png` path. PNG input needs package png.
+
+- intensity:
+
+  Nonnegative multiplier of the light colour.
+
+- rotation:
+
+  Environment rotation about the up axis, in degrees.
 
 - space:
 
   `"camera"` or `"data"`.
 
+- direction:
+
+  Direction from a surface toward the light, or the sky direction of a
+  hemisphere light.
+
 - colour, sky, ground:
 
   Light colours.
-
-- intensity:
-
-  Nonnegative multiplier of the light colour.
 
 - position:
 
@@ -86,7 +97,12 @@ falloff never depends on the other geometry in the panel. `light_head()`
 is a directional light that shines from the eye, like MATLAB's
 `camlight headlight`. `light_hemisphere()` adds an ambient term that
 blends from `ground` to `sky` as the normal turns from `-direction` to
-`direction` (three.js `HemisphereLight`).
+`direction` (three.js `HemisphereLight`). `light_environment()` supplies
+an equirectangular radiance map. The first row is the north pole;
+columns run around the up axis from positive x toward positive y.
+Rotation is in degrees about that axis. The path tracer samples the map
+by luminance and solid angle. Other backends use its
+solid-angle-weighted mean as ambient illumination.
 
 In `space = "camera"`, x points right, y up and z toward the viewer, and
 positions are relative to the camera target in panel units. In

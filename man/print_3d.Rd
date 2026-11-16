@@ -2,7 +2,7 @@
 % Please edit documentation in R/print-3d.R
 \name{print_3d}
 \alias{print_3d}
-\title{Physical solids for 3D printing}
+\title{Configure physical models for 3D printing}
 \usage{
 print_3d(
   size_mm = c(100, 100, 60),

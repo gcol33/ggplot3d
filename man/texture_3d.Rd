@@ -2,7 +2,7 @@
 % Please edit documentation in R/textures.R
 \name{texture_3d}
 \alias{texture_3d}
-\title{Images for textured faces}
+\title{Prepare images for surface textures}
 \usage{
 texture_3d(image, interpolate = TRUE, extent = NULL)
 }
@@ -10,8 +10,8 @@ texture_3d(image, interpolate = TRUE, extent = NULL)
 \item{image}{A \code{nativeRaster} (such as \code{png::readPNG(native = TRUE)}), a
 raster or matrix of colours, a numeric matrix of grey levels or a numeric
 array of grey, grey and alpha, RGB or RGBA channels in [0, 1] (such as
-\code{png::readPNG()}), or the path of a PNG file (needs png). Row one is the
-top of the image.}
+\code{png::readPNG()}), or the path or raw bytes of a PNG file (needs png) or
+JPEG file (needs jpeg). Row one is the top of the image.}
 
 \item{interpolate}{Whether to interpolate between pixels (bilinear and
 mipmapped sampling) or to show them as sharp squares, as

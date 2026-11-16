@@ -1,4 +1,4 @@
-# Linear and nonlinear PDEs
+# Animating differential-equation solutions
 
 This article draws exact solutions of eight partial differential
 equations (PDEs). The transport, heat, wave and Laplace equations are
@@ -14,6 +14,9 @@ A final example solves incompressible magnetohydrodynamics numerically
 and draws the computed current density through the same plotting
 pipeline. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Animating cameras and
+data](https://gillescolling.com/ggplot3d/articles/motion.md) explains
+frame timing and animation output.
 
 1.  **Define** the solution $`u(x, y, t)`$ and a data frame with one row
     per time.
@@ -614,11 +617,12 @@ valleys.](pde_files/figure-html/mhd-show-2.gif)
 
 ## Where next
 
-- [Camera animation and
-  interaction](https://gillescolling.com/ggplot3d/articles/motion.md):
-  camera paths, MP4 output and the interactive viewer.
+- [Animating cameras and
+  data](https://gillescolling.com/ggplot3d/articles/motion.md): camera
+  paths, MP4 output and the interactive viewer.
 
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md): the
+- [Choosing layers for observations and
+  grids](https://gillescolling.com/ggplot3d/articles/layers.md): the
   layers used here and their aesthetics.
 
 ## References

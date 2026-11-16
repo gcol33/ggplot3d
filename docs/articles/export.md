@@ -108,9 +108,9 @@ STL requires tube paths and mesh points because it stores triangles
 only. Exporting a surface to STL transfers its triangles; closing the
 entire model for manufacturing is a separate modelling step. Traced SDF
 and volume layers produce images in the plot. Use their mesh-producing
-surface counterparts when exporting model geometry, as shown in [Ray
-marching and
-volumes](https://gillescolling.com/ggplot3d/articles/ray-marching.md).
+surface counterparts when exporting model geometry, as shown in
+[Rendering volumes and traced
+surfaces](https://gillescolling.com/ggplot3d/articles/ray-marching.md).
 
 ## Animated glTF
 
@@ -148,8 +148,8 @@ motion$frame_count
 ```
 
 Keep a projection type fixed within an animation. Camera paths and frame
-timing are described in [Camera animation and
-interaction](https://gillescolling.com/ggplot3d/articles/motion.md).
+timing are described in [Animating cameras and
+data](https://gillescolling.com/ggplot3d/articles/motion.md).
 
 ## rgl meshes and scenes
 
@@ -198,8 +198,8 @@ nrow(scene)
 
 Setting `render = TRUE` passes the scene and plot camera to rayrender’s
 renderer. Additional arguments control that render. The native path
-tracer in [Ray marching and
-volumes](https://gillescolling.com/ggplot3d/articles/ray-marching.md)
+tracer in [Rendering volumes and traced
+surfaces](https://gillescolling.com/ggplot3d/articles/ray-marching.md)
 provides diffuse rendering directly within a ggplot panel.
 
 ## Semantic SVG
@@ -233,9 +233,9 @@ Motor-car scatterplot with weight, mpg and horsepower axes.
 
 Open the SVG directly in a browser or embed it as an HTML object to
 retain its interaction. An SVG displayed through an image element
-supplies a static preview. [Interactive
-viewing](https://gillescolling.com/ggplot3d/articles/viewer.md) provides
-a camera you can rotate.
+supplies a static preview. [Viewing plots
+interactively](https://gillescolling.com/ggplot3d/articles/viewer.md)
+provides a camera you can rotate.
 
 ## TikZ
 
@@ -281,8 +281,8 @@ The PRC setting requests embedded 3D content in PDF. Compile with
 `asy -tex pdflatex -f pdf cars.asy` and install the TeX packages media9
 and ocgx2. A PDF reader with PRC support supplies the interactive view.
 For a static PDF or ordinary SVG through an R graphics device, use
-[Output
-backends](https://gillescolling.com/ggplot3d/articles/backends.md). \##
+[Choosing rendering and image
+formats](https://gillescolling.com/ggplot3d/articles/backends.md). \##
 3D printing
 
 [`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md)

@@ -1,9 +1,9 @@
 ---
-title: "Gallery"
+title: "Drawing common charts in 3D"
 description: "Worked plots of solid curves, distributions, covariance ellipsoids, streamtubes, cutaways and contour terraces alongside familiar charts."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Gallery}
+  %\VignetteIndexEntry{Drawing common charts in 3D}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup()
 ```
 
-This article draws familiar charts and solid geometry from small datasets. Each example gives the data and the code that draws it. [Layers](layers.html) explains the data layers, and [Vector fields](vector-fields.html) develops the streamtube example. Installation is covered in [Get started](ggplot3d.html).
+This article draws familiar charts and solid geometry from small datasets. Each example gives the data and the code that draws it. [Choosing layers for observations and grids](layers.html) explains the data layers, and [Drawing arrows and streamlines](vector-fields.html) develops the streamtube example. Installation is covered in [Get started](ggplot3d.html). [Preparing data for 3D layers](data-preparation.html) shows how to organise your own input tables.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -22,7 +22,7 @@ library(ggplot3d)
 
 ## Domain recipes
 
-[Tensor glyphs](tensors.html) draw symmetric tensors as ellipsoids or superquadrics. [Ordination biplots](ordination.html) combine site scores, variable arrows and group regions. [Molecular ball-and-stick views](molecules.html) draw atoms and bonds from bio3d records. [Colour gamuts in Lab coordinates](colour-gamuts.html) place sampled colours and their convex hull in Lab coordinates.
+[Drawing tensor glyphs](tensors.html) draw symmetric tensors as ellipsoids or superquadrics. [Drawing ordination biplots](ordination.html) combine site scores, variable arrows and group regions. [Drawing molecular structures](molecules.html) draw atoms and bonds from bio3d records. [Plotting colour gamuts in Lab coordinates](colour-gamuts.html) place sampled colours and their convex hull in Lab coordinates.
 
 ## Parametric curves
 
@@ -41,7 +41,7 @@ ggplot(knot, aes(x, y, z = z)) +
   coord_3d(aspect = "data")
 ```
 
-At each of the three crossings, the strand nearer the camera is drawn over the other. [Surfaces, solids and fields](surfaces-solids.html#tubes-ribbons-and-sweeps) shows ribbons and custom cross-sections along curves.
+At each of the three crossings, the strand nearer the camera is drawn over the other. [Building surfaces and solids](surfaces-solids.html#tubes-ribbons-and-sweeps) shows ribbons and custom cross-sections along curves.
 
 ## Solid violins
 
@@ -77,7 +77,7 @@ ggplot(iris, aes(Sepal.Length, Sepal.Width, z = Petal.Length,
 
 The data ellipsoids describe variation among flowers. Confidence ellipsoids
 for the species means use the standard-error kind, as shown in
-[Surfaces, solids and fields](surfaces-solids.html#spheres-ellipsoids-and-glyphs).
+[Building surfaces and solids](surfaces-solids.html#spheres-ellipsoids-and-glyphs).
 
 ## Streamtubes
 
@@ -113,7 +113,7 @@ ggplot() + geom_isofunction_3d(fun = shell, n = 24, fill = "#2A7A7A") +
     clip_planes = list(clip_plane_3d(c(-1, 0, 0), c(x = 0), cap = TRUE)))
 ```
 
-[Implicit surfaces](implicit-surfaces.html) shows how to construct shapes
+[Constructing and reconstructing surfaces](implicit-surfaces.html) shows how to construct shapes
 from functions and reconstruct them from point samples.
 
 ## Functions of two variables
@@ -323,8 +323,8 @@ and contour maps placed on the floor below a surface.
 
 ## Where next
 
-* [Layers](layers.html) and [Surfaces, solids and fields](surfaces-solids.html): a minimal example of every geom and stat.
+* [Choosing layers for observations and grids](layers.html) and [Building surfaces and solids](surfaces-solids.html): a minimal example of every geom and stat.
 
-* [Camera and framing](camera.html): change the viewing angles used above.
+* [Choosing camera views](camera.html): change the viewing angles used above.
 
-* [Visibility](visibility.html): how overlapping geometry is ordered.
+* [How overlapping geometry is drawn](visibility.html): how overlapping geometry is ordered.

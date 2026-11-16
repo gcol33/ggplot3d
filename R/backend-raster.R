@@ -182,6 +182,7 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
     ids <- unlist(lapply(packet[primitive_kinds_3d], `[[`, "primitive_id"), use.names = FALSE)
     input <- raster_traced_input_3d(traced, camera, viewport, canvas, prepared$camera, light, max(c(0L, ids)))
   }
+  input$splats <- attr(packet, "splats") %or3d% list()
   result <- raster_draw_cpp(prepared$pointer, colours, dashes,
     as.integer(pixels[1L]), as.integer(pixels[2L]), as.integer(antialias), id_pass,
     raster_threads_3d(), buffers, blend == "linear", input)

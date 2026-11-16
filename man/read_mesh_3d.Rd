@@ -7,21 +7,27 @@
 read_mesh_3d(path)
 }
 \arguments{
-\item{path}{Path to a \code{.obj}, \code{.stl} or \code{.ply} file.}
+\item{path}{Path to a \code{.obj}, \code{.stl}, \code{.ply}, \code{.gltf} or \code{.glb} file.}
 }
 \value{
 A keyed corner data frame of class ggplot3d_mesh.
 }
 \description{
-Reads Wavefront OBJ, STL and PLY files into a \code{\link[=mesh_3d]{mesh_3d()}} corner table. The
-reader is chosen by file extension from a registry of native parsers.
+Reads Wavefront OBJ, STL, PLY and glTF 2.0 (\code{.gltf}, \code{.glb}) files into a
+\code{\link[=mesh_3d]{mesh_3d()}} corner table. The reader is chosen by file extension from a
+registry of native parsers. Scans from phone and tablet LiDAR apps
+(Polycam, Scaniverse, 3d Scanner App) export these formats; point clouds
+without faces are read by \code{\link[=read_points_3d]{read_points_3d()}}.
 }
 \details{
 \itemize{
-\item OBJ (ASCII): \code{v} vertices and \code{f} faces of any size, with \code{v/vt/vn}
+\item OBJ (ASCII): \code{v} vertices (with optional red, green and blue vertex colours), \code{vt}
+texture coordinates and \code{f} faces of any size, with \code{v/vt/vn}
 references, negative (relative) indices and \verb{\\} line continuation;
-\code{o} and \code{g} names become the face attribute \code{group}. Other statements are
-ignored.
+\code{o} and \code{g} names become the face attribute \code{group}, \code{usemtl} names the
+face attribute \code{material}. Materials from \code{mtllib} files give the face
+attribute \code{face_colour} (from \code{Kd} and \code{d}) and the texture image
+(\code{map_Kd}). Other statements are ignored.
 \item STL (ASCII or binary): every facet is a triangle; vertices with exactly
 equal coordinates are welded. A file whose size is 84 bytes plus 50 bytes
 per triangle counted in its header is read as binary, whatever its first
@@ -31,8 +37,27 @@ properties of every scalar type; \code{vertex} x, y, z and \code{face}
 \code{vertex_indices} (or \code{vertex_index}). Vertex \code{red}, \code{green}, \code{blue} (and
 \code{alpha}) become the vertex attribute \code{vertex_colour}, face colours the
 face attribute \code{face_colour}; other scalar vertex properties are kept as
-vertex attributes.
+vertex attributes. Face \code{texcoord} lists (six numbers per triangle) give
+texture coordinates; the image named by a \verb{comment TextureFile} header
+line is the texture.
+\item glTF 2.0 (JSON \code{.gltf} with external or embedded buffers, binary
+\code{.glb}): triangle, strip and fan primitives of every mesh in the default
+scene, placed by their node transforms. \code{COLOR_0} (times the base colour
+factor) becomes \code{vertex_colour}, the base colour factor alone
+\code{face_colour}, the material name \code{material}; \code{TEXCOORD_n} and the base
+colour texture give the texture. glTF colours are linear and are encoded
+to sRGB.
 }
+
+A textured mesh carries its image as the attribute \code{"texture"} (a
+\code{\link[=texture_3d]{texture_3d()}} with extent \code{c(0, 1, 0, 1)}) and its texture coordinates as
+\code{.texture_u} and \code{.texture_v} corner columns; \code{\link[=geom_mesh_3d]{geom_mesh_3d()}} drapes it
+when the mesh is the layer's data. Several images are packed into one
+atlas, one above the other, and their texture coordinates are clamped to
+the unit square. PNG textures need png, JPEG textures jpeg.
+
+glTF positions are y-up by specification, and most scanning apps export
+y-up OBJ and PLY files as well; draw them with \code{coord_3d(up = "y")}.
 }
 \examples{
 path <- tempfile(fileext = ".obj")
@@ -41,7 +66,12 @@ m <- read_mesh_3d(path)
 ggplot2::ggplot() + geom_mesh_3d(data = m) + coord_3d()
 }
 \references{
-Wavefront OBJ: \url{https://paulbourke.net/dataformats/obj/}.
+Wavefront OBJ and MTL: \url{https://paulbourke.net/dataformats/obj/},
+\url{https://paulbourke.net/dataformats/mtl/}.
 PLY (Turk): \url{https://paulbourke.net/dataformats/ply/}.
 STL: \url{https://en.wikipedia.org/wiki/STL_(file_format)}.
+glTF 2.0 (Khronos Group): \url{https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html}.
+}
+\seealso{
+\code{\link[=read_points_3d]{read_points_3d()}} for point clouds, \code{\link[=geom_mesh_3d]{geom_mesh_3d()}}.
 }

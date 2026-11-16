@@ -8,7 +8,7 @@
 \alias{mesh_smooth}
 \alias{mesh_decimate}
 \alias{mesh_remesh}
-\title{Mesh processing}
+\title{Smooth, refine and simplify triangle meshes}
 \usage{
 mesh_normals(m, crease = 30)
 

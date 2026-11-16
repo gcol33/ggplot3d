@@ -135,7 +135,7 @@ mesh_number_3d <- function(x, name, test = function(x) TRUE, message = "a finite
   as.double(x)
 }
 
-#' Mesh processing
+#' Smooth, refine and simplify triangle meshes
 #'
 #' Verbs on a [mesh_3d()] corner table (also an rgl `mesh3d` or any data frame
 #' with x, y, z, `.face`, `.corner` and `.vertex`, optionally split into parts

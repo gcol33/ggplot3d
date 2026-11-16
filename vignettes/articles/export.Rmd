@@ -106,7 +106,7 @@ Exporting a surface to STL transfers its triangles; closing the entire model
 for manufacturing is a separate modelling step. Traced SDF and volume layers
 produce images in the plot. Use their mesh-producing surface counterparts
 when exporting model geometry, as shown in
-[Ray marching and volumes](ray-marching.html).
+[Rendering volumes and traced surfaces](ray-marching.html).
 
 ## Animated glTF
 
@@ -138,7 +138,7 @@ motion$frame_count
 ```
 
 Keep a projection type fixed within an animation. Camera paths and frame
-timing are described in [Camera animation and interaction](motion.html).
+timing are described in [Animating cameras and data](motion.html).
 
 ## rgl meshes and scenes
 
@@ -178,7 +178,7 @@ nrow(scene)
 
 Setting `render = TRUE` passes the scene and plot camera to rayrender's
 renderer. Additional arguments control that render. The native path tracer
-in [Ray marching and volumes](ray-marching.html) provides diffuse rendering
+in [Rendering volumes and traced surfaces](ray-marching.html) provides diffuse rendering
 directly within a ggplot panel.
 
 ## Semantic SVG
@@ -215,7 +215,7 @@ htmltools::tags$object(data = uri, type = "image/svg+xml",
 
 Open the SVG directly in a browser or embed it as an HTML object to retain
 its interaction. An SVG displayed through an image element supplies a static
-preview. [Interactive viewing](viewer.html) provides a camera you can rotate.
+preview. [Viewing plots interactively](viewer.html) provides a camera you can rotate.
 
 ## TikZ
 
@@ -248,7 +248,7 @@ The PRC setting requests embedded 3D content in PDF. Compile with
 `asy -tex pdflatex -f pdf cars.asy` and install the TeX packages media9 and
 ocgx2. A PDF reader with PRC support supplies the interactive view.
 For a static PDF or ordinary SVG through an R graphics device, use
-[Output backends](backends.html).
+[Choosing rendering and image formats](backends.html).
 ## 3D printing
 
 `print_3d()` maps the panel box into a physical bounding box in millimetres,

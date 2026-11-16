@@ -1,9 +1,9 @@
 ---
-title: "Layers"
+title: "Choosing layers for observations and grids"
 description: "Worked examples of points, paths, gridded surfaces, columns, distributions, intervals and reference geometry."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Layers}
+  %\VignetteIndexEntry{Choosing layers for observations and grids}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(raster3d = 3e4)
 ```
 
-A geom draws a shape from mapped data. A stat computes new values or geometry before drawing. This article gives small examples of the geoms and stats that draw data rows: points, paths, gridded surfaces, columns, distributions, intervals and reference geometry. Installation is covered in [Get started](ggplot3d.html). [Surfaces, solids and fields](surfaces-solids.html) covers meshes, function and fitted surfaces, level surfaces, hulls, solid glyphs and sweeps. [Vector fields](vector-fields.html) covers arrows and streamlines, and [Implicit surfaces](implicit-surfaces.html) covers reconstruction from point clouds.
+A geom draws a shape from mapped data. A stat computes new values or geometry before drawing. This article gives small examples of the geoms and stats that draw data rows: points, paths, gridded surfaces, columns, distributions, intervals and reference geometry. Installation is covered in [Get started](ggplot3d.html). [Building surfaces and solids](surfaces-solids.html) covers meshes, function and fitted surfaces, level surfaces, hulls, solid glyphs and sweeps. [Drawing arrows and streamlines](vector-fields.html) covers arrows and streamlines, and [Constructing and reconstructing surfaces](implicit-surfaces.html) covers reconstruction from point clouds.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -283,9 +283,9 @@ ggplot(iris, aes(Species, y = 0, z = Petal.Length)) +
   coord_3d()
 ```
 
-Summary tables containing cells with a single observation can currently fail
-with `numbers of columns of arguments do not match`. For those tables,
-compute the summaries first and pass their bounds to an interval layer.
+A cell with a single observation contributes its mean as a point with no
+standard-error bounds. Compute a summary table first when its bounds need
+to be inspected or reused before plotting.
 
 [Displaying intervals and summaries](intervals.html) explains the meaning of
 the bounds, grouping and precomputed summary tables.
@@ -377,6 +377,8 @@ The coordinate's clipping planes apply to every layer. A layer's own plane list 
 
 ## Positions
 
+[Positioning groups and observations](positions.html) develops jitter, aligned labels, dodging and stacking as a complete workflow.
+
 Position adjustments move data before drawing, as in ggplot2. `position_nudge_3d()` shifts by a fixed amount along x, y or z, `position_jitter_3d()` adds random noise along all three axes, and `position_dodge_3d()` places groups side by side within a cell. Ten repeated observations at each of nine positions overlap exactly until they are jittered.
 
 ```{r jitter, fig.alt="Repeated observations at nine positions spread into small clouds by three-dimensional jitter."}
@@ -400,8 +402,7 @@ ggplot(cloud, aes(x, y, z = z)) +
 
 ## Adapting a layer
 
-[Positioning groups and observations](positions.html) develops grouped columns,
-aligned labels and proportions from these position adjustments.
+[Writing a geometry extension](extending.html) shows how to register and draw a new geometry.
 
 The layer adapter equips a registered ggplot2 geom with three-dimensional scene emission. Extension authors register an emitter to describe how another geom produces geometry. The registration help page describes the callback arguments.
 

@@ -5,7 +5,7 @@
 \alias{mesh_geodesic_distance}
 \alias{mesh_logmap}
 \alias{mesh_geodesic_path}
-\title{Intrinsic geometry on meshes}
+\title{Measure distances and paths along mesh surfaces}
 \usage{
 mesh_geodesic_distance(
   m,

@@ -1,9 +1,9 @@
 ---
-title: "Implicit surfaces"
+title: "Constructing and reconstructing surfaces"
 description: "Draw level sets from functions, reconstruct surfaces from point clouds and triangulate scattered height measurements."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Implicit surfaces}
+  %\VignetteIndexEntry{Constructing and reconstructing surfaces}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,10 +13,7 @@ source("../setup.R")
 docs_setup(fig.height = 5)
 ```
 
-```{r packages, message=FALSE}
-library(ggplot2)
-library(ggplot3d)
-```
+Construct a surface from a function or reconstruct one from measured points. This article draws algebraic level sets, combines signed distance shapes and reconstructs scattered samples. Installation is covered in [Get started](ggplot3d.html); [Building surfaces and solids](surfaces-solids.html) introduces the surface layers and [Rendering volumes and traced surfaces](ray-marching.html) evaluates distance shapes along viewing rays.
 
 An implicit surface is the set of points where a function of x, y and z
 takes one value. `geom_isofunction_3d()` samples the function on a grid over
@@ -25,8 +22,12 @@ grid edge towards the level along that edge, so the vertices of a coarse grid
 still lie close to the function's zero set.
 
 Point clouds can also supply a surface through an alpha shape or a fitted
-implicit function. The reconstruction examples below use small samples;
-installation is covered in [Get started](ggplot3d.html).
+implicit function. The reconstruction examples below use small samples.
+
+```{r packages, message=FALSE}
+library(ggplot2)
+library(ggplot3d)
+```
 
 ```{r box}
 cube <- function(k) list(xlim(-k, k), ylim(-k, k), scale_z_continuous(limits = c(-k, k)))

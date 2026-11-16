@@ -2,7 +2,7 @@
 % Please edit documentation in R/layers-voxel.R
 \name{geom_voxel_3d}
 \alias{geom_voxel_3d}
-\title{Voxels}
+\title{Draw voxel cells on a three-dimensional lattice}
 \usage{
 geom_voxel_3d(
   mapping = NULL,

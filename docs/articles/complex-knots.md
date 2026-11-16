@@ -1,4 +1,4 @@
-# Complex functions, knots and immersed surfaces
+# Drawing complex functions, knots and surfaces
 
 A complex function of a complex variable maps a plane to a plane, which
 needs four real dimensions to graph. Colour can carry two of them, and a
@@ -7,8 +7,8 @@ immersed surfaces are curves and surfaces whose shape in space is the
 subject. This article draws each with a dedicated stat. Installation is
 covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md), and
-[Surfaces, solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
+[Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
 covers parametric surfaces in general.
 
 ``` r
@@ -103,7 +103,8 @@ ggplot() +
 ![A trefoil knot drawn as a tube winding twice around and three times
 through a torus.](complex-knots_files/figure-html/knot-1.svg)
 
-[Gallery](https://gillescolling.com/ggplot3d/articles/gallery.html#parametric-curves)
+[Drawing common charts in
+3D](https://gillescolling.com/ggplot3d/articles/gallery.html#parametric-curves)
 builds the same trefoil from a data frame with
 [`geom_tube_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md).
 
@@ -129,9 +130,9 @@ figure-eight cross-section that passes through
 itself.](complex-knots_files/figure-html/klein-1.svg)
 
 The scene resolves each crossing exactly, so the faces in front cover
-the ones behind on both sides of the self-intersection. [Meshes and
-intrinsic
-geometry](https://gillescolling.com/ggplot3d/articles/meshes.html#where-a-mesh-crosses-itself)
+the ones behind on both sides of the self-intersection. [Reading and
+measuring
+meshes](https://gillescolling.com/ggplot3d/articles/meshes.html#where-a-mesh-crosses-itself)
 draws the crossing curve itself with
 [`stat_self_intersection_3d()`](https://gillescolling.com/ggplot3d/reference/stat_self_intersection_3d.md).
 

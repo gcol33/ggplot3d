@@ -1,9 +1,9 @@
 ---
-title: "Visibility"
+title: "How overlapping geometry is drawn"
 description: "Explain how overlapping faces, lines and marks are ordered and clipped within a three-dimensional panel."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Visibility}
+  %\VignetteIndexEntry{How overlapping geometry is drawn}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup()
 ```
 
-Visibility determines which parts of three-dimensional geometry can be seen from a camera. This article explains overlapping surfaces, drawing order and finite-width strokes. Installation is covered in [Get started](ggplot3d.html).
+Visibility determines which parts of three-dimensional geometry can be seen from a camera. This article explains overlapping surfaces, drawing order and finite-width strokes. Installation is covered in [Get started](ggplot3d.html). [Lighting and styling surfaces](lighting.html) shows how to configure surface outlines and hidden lines.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -49,7 +49,7 @@ The vector renderer uses this ordering and localized splitting to draw the scene
 
 Splitting inserts vertices where geometry crosses a dividing plane. The resulting pieces preserve the represented surface. The classical hidden-surface method of Newell, Newell and Sancha [1972](https://doi.org/10.1145/800193.569954) and the spatial partitioning method of Fuchs, Kedem and Naylor [1980](https://doi.org/10.1145/800250.807481) establish related approaches to obtaining a visible drawing order.
 
-Localized splitting limits the extra geometry to relationships that need it, though a dense collection of interpenetrating shapes may still require many pieces. Choose the raster backend in [Output backends](backends.html) when the intended output is a fixed-size image of dense geometry.
+Localized splitting limits the extra geometry to relationships that need it, though a dense collection of interpenetrating shapes may still require many pieces. Choose the raster backend in [Choosing rendering and image formats](backends.html) when the intended output is a fixed-size image of dense geometry.
 
 ## Strokes and marks
 

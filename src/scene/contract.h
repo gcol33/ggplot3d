@@ -8,6 +8,9 @@
 namespace ggplot3d {
 
 inline constexpr int scene_schema_version = 2;
+struct PhysicalMaterial {
+  double roughness = 1, metallic = 0, transmission = 0, ior = 1.5;
+};
 using Index = std::int32_t;
 enum class Kind : Index { face = 1, polyline = 2, marker = 3, text = 4, quadric = 5 };
 enum class QuadricKind : Index { sphere = 1, cylinder = 2, cone = 3 };

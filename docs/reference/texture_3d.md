@@ -1,4 +1,4 @@
-# Images for textured faces
+# Prepare images for surface textures
 
 Wraps an image so that surface layers can drape it over their faces and
 [`annotation_raster_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_raster_3d.md)
@@ -22,7 +22,8 @@ texture_3d(image, interpolate = TRUE, extent = NULL)
   matrix of colours, a numeric matrix of grey levels or a numeric array
   of grey, grey and alpha, RGB or RGBA channels in \[0, 1\] (such as
   [`png::readPNG()`](https://rdrr.io/pkg/png/man/readPNG.html)), or the
-  path of a PNG file (needs png). Row one is the top of the image.
+  path or raw bytes of a PNG file (needs png) or JPEG file (needs jpeg).
+  Row one is the top of the image.
 
 - interpolate:
 

@@ -1,4 +1,4 @@
-# Maps and spatial data
+# Plotting maps and spatial data
 
 A map has two coordinates, and a third axis can carry a value measured
 at each place: terrain height, a count per region, a time stamp.
@@ -11,6 +11,9 @@ markers, paths, flat polygons or prisms, and
 frames of points. All four packages are optional. Installation is
 covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Plotting angles and
+compositions](https://gillescolling.com/ggplot3d/articles/frames.html#a-globe)
+places longitude and latitude on a globe.
 
 Planar drawing needs planar coordinates. Data in longitude and latitude
 are reprojected to the coordinate reference system (CRS) given by
@@ -96,8 +99,9 @@ ggplot(nc) +
 tallest prisms around the
 cities.](spatial_files/figure-html/prisms-1.svg)
 
-Prisms of detailed outlines can contain many faces. [Output
-backends](https://gillescolling.com/ggplot3d/articles/backends.md)
+Prisms of detailed outlines can contain many faces. [Choosing rendering
+and image
+formats](https://gillescolling.com/ggplot3d/articles/backends.md)
 explains how to render them at a chosen image resolution. Plain
 [`ggplot2::geom_sf()`](https://ggplot2.tidyverse.org/reference/ggsf.html)
 layers are drawn the same way inside
@@ -222,8 +226,9 @@ ggplot(points, aes(x, y, z = z, colour = z)) +
 ground.](spatial_files/figure-html/lidar-1.svg)
 
 For dense clouds, `geom_point_3d(render = "splat")` with the raster
-backend draws the points as depth-tested spheres (see [Output
-backends](https://gillescolling.com/ggplot3d/articles/backends.md)).
+backend draws the points as depth-tested spheres (see [Choosing
+rendering and image
+formats](https://gillescolling.com/ggplot3d/articles/backends.md)).
 
 ## The space-time cube
 

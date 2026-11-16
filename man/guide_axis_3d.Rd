@@ -120,6 +120,6 @@ Danisch S, Krumbiegel J (2021). Makie.jl: Flexible high-performance data
 visualization for Julia. Journal of Open Source Software 6(65), 3349.
 }
 \seealso{
-\href{https://gillescolling.com/ggplot3d/articles/guides-themes.html}{Axes, legends and pane styling}
+\href{https://gillescolling.com/ggplot3d/articles/guides-themes.html}{Styling axes, legends and panes}
 for scale breaks, colourbars and panel theme elements.
 }

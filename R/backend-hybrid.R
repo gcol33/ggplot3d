@@ -75,6 +75,10 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   styled <- identical(backend$type, "hybrid") &
     vapply(x$packets, function(p) any(p$styles$raster %in% TRUE) || hybrid_rasterised_packet_3d(p, rasterise), logical(1))
   rasterised <- traced | styled
+  splats <- vapply(x$packets, function(p) length(attr(p, "splats")) > 0L, logical(1))
+  if (any(splats)) rasterised <- rasterised | splats |
+    vapply(x$packets, function(p) hybrid_imageable_packet_3d(p) &&
+      any(vapply(p[c("faces", "quadrics", "markers", "polylines")], function(t) length(t$partition) > 0L, logical(1))), logical(1))
   if (identical(backend$type, "hybrid") && any(unlist(lapply(x$packets[rasterised], packet_partitions_3d)) == 0L))
     rasterised <- rasterised | vapply(x$packets, function(p)
       any(packet_partitions_3d(p) == 0L) && hybrid_imageable_packet_3d(p), logical(1))
@@ -127,7 +131,8 @@ render_hybrid_panel_3d <- function(x, furniture, backend) {
   front <- pass(c(0L, 2L), TRUE, "scene-hybrid-front-3d")
   children <- c(list(behind, raster_image_grob_3d(result), front), raster_text_3d(result, raster_packet))
   layers <- unlist(lapply(x$packets[rasterised], function(p)
-    attr(p, "raymarch")$layer_id %or3d% unique(unlist(lapply(p[primitive_kinds_3d], `[[`, "layer_id")))))
+    attr(p, "raymarch")$layer_id %or3d% c(vapply(attr(p, "splats"), `[[`, integer(1), "layer_id"),
+      unique(unlist(lapply(p[primitive_kinds_3d], `[[`, "layer_id"))))))
   capabilities <- utils::modifyList(grid_capabilities_3d(), list(raster = TRUE, image_layers = sort(unique(as.integer(layers)))))
   grob <- grid::gTree(children = do.call(grid::gList, children), raster_result = result,
     occlusion = occlusion, capabilities = capabilities, name = "scene-hybrid-3d")

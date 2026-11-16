@@ -1,9 +1,12 @@
-# Visibility
+# How overlapping geometry is drawn
 
 Visibility determines which parts of three-dimensional geometry can be
 seen from a camera. This article explains overlapping surfaces, drawing
 order and finite-width strokes. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Lighting and styling
+surfaces](https://gillescolling.com/ggplot3d/articles/lighting.md) shows
+how to configure surface outlines and hidden lines.
 
 ``` r
 
@@ -71,8 +74,9 @@ approaches to obtaining a visible drawing order.
 
 Localized splitting limits the extra geometry to relationships that need
 it, though a dense collection of interpenetrating shapes may still
-require many pieces. Choose the raster backend in [Output
-backends](https://gillescolling.com/ggplot3d/articles/backends.md) when
+require many pieces. Choose the raster backend in [Choosing rendering
+and image
+formats](https://gillescolling.com/ggplot3d/articles/backends.md) when
 the intended output is a fixed-size image of dense geometry.
 
 ## Strokes and marks

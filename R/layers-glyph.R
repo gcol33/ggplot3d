@@ -99,10 +99,10 @@ emit_spheres_3d <- function(data, params, panel_params) {
   packet
 }
 
-register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = "data", detail = 2L),
+register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = "data", detail = 2L, material = NULL),
   tween = "row")
 
-#' Spheres
+#' Draw spheres at observed positions
 #'
 #' Draws one solid sphere per row, centred on x, y, z. Spheres are analytic
 #' quadrics in the panel scene (Sigg et al. 2006): the vector backend draws
@@ -132,6 +132,7 @@ register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = 
 #'
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param radius.unit Unit of the `radius` aesthetic: `"data"` or `"mm"`.
+#' @param material Surface response made with [material_3d()].
 #' @param detail Subdivision level, from 0 to 6, of the icosphere of spheres
 #'   that show their edges.
 #' @param shade Whether to apply lighting.
@@ -150,10 +151,10 @@ register_geom_3d(GeomSphere3D, emit_spheres_3d, parameters = list(radius.unit = 
 #' @export
 geom_sphere_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
                            radius.unit = "data", detail = 2L, shade = TRUE,
-                           na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
+                           na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, material = NULL) {
   make_layer_3d(GeomSphere3D, mapping, data, stat, position,
     c(list(radius.unit = check_choice_3d(radius.unit, c("data", "mm"), "radius.unit"), detail = check_detail_3d(detail),
-      shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+      shade = shade, na.rm = na.rm, material = material_argument_3d(material)), list(...)), show.legend, inherit.aes)
 }
 
 # Glyphs ----------------------------------------------------------------------

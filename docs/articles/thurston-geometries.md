@@ -1,4 +1,4 @@
-# Inside the Thurston geometries
+# Viewing Thurston geometries from inside
 
 An in-space view follows light rays from an observer inside a geometry.
 The ray-marching backend supports the eight homogeneous
@@ -7,6 +7,9 @@ an intrinsic scene in each space, following the construction of Coulon,
 Matsumoto, Segerman and Trettel
 [2022](https://arxiv.org/abs/2010.15801). Installation is covered in
 [Get started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Plotting curved spaces and
+spacetime](https://gillescolling.com/ggplot3d/articles/curved-spaces.md)
+introduces the exterior coordinate views.
 
 ``` r
 

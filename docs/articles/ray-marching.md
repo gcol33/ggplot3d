@@ -1,10 +1,13 @@
-# Ray marching and volumes
+# Rendering volumes and traced surfaces
 
 Ray marching evaluates a field along each viewing ray to find a surface
 or accumulate colour through a volume. This article renders both kinds
 of field, combines them with other layers and adds diffuse light
 transport with the native path tracer. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Slicing fields and point
+densities](https://gillescolling.com/ggplot3d/articles/field-slices.md)
+inspects field values on selected planes.
 
 ``` r
 
@@ -17,7 +20,8 @@ library(ggplot3d)
 A signed distance function (SDF) gives negative values inside a shape,
 zero on its surface and positive values outside. Build a sphere with a
 cylindrical hole by subtracting a capsule, a cylinder with rounded ends.
-The constructors and shape algebra are described in [Implicit
+The constructors and shape algebra are described in [Constructing and
+reconstructing
 surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md).
 
 ``` r
@@ -268,10 +272,10 @@ backends described above.
 
 ## Where next
 
-- [Output
-  backends](https://gillescolling.com/ggplot3d/articles/backends.md):
+- [Choosing rendering and image
+  formats](https://gillescolling.com/ggplot3d/articles/backends.md):
   choose resolution and save an image.
 
-- [Inside the Thurston
-  geometries](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md):
+- [Viewing Thurston geometries from
+  inside](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md):
   follow curved viewing rays from an observer inside a geometry.

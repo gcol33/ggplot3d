@@ -1,4 +1,4 @@
-# Reference planes
+# Draw reference planes through a 3D panel
 
 Draws planes through the panel box: planes of constant x, y or z, the
 three-dimensional counterparts of

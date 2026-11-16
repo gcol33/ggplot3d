@@ -220,8 +220,9 @@ draw lines on the floor, here at x = 0 and y = 0.
 [`annotate_3d()`](https://gillescolling.com/ggplot3d/reference/annotate_3d.md)
 adds z positions to the arguments of
 [`annotate()`](https://ggplot2.tidyverse.org/reference/annotate.html).
-Here it labels the highest point of the cloud.
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.html#reference-lines-and-dimensions)
+Here it labels the highest point of the cloud. [Choosing layers for
+observations and
+grids](https://gillescolling.com/ggplot3d/articles/layers.html#reference-lines-and-dimensions)
 shows arbitrary reference lines, brackets and dimension lines.
 
 ``` r
@@ -429,10 +430,10 @@ base <- s + geom_surface_3d(fill = "grey85")
 from a higher camera on the opposite
 side.](combining-2d-3d_files/figure-html/two-plots-1.svg)
 
-[Camera and
-framing](https://gillescolling.com/ggplot3d/articles/camera.md)
-describes the angles. [The z
-scale](https://gillescolling.com/ggplot3d/articles/z-scale.md) shows
+[Choosing camera
+views](https://gillescolling.com/ggplot3d/articles/camera.md) describes
+the angles. [Scaling heights and facet
+ranges](https://gillescolling.com/ggplot3d/articles/z-scale.md) shows
 facets with fixed and free z ranges.
 
 ## Titles and captions
@@ -469,14 +470,16 @@ overall title Profile at y =
 
 ## Where next
 
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md) and
-  [Surfaces, solids and
-  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
+- [Choosing layers for observations and
+  grids](https://gillescolling.com/ggplot3d/articles/layers.md) and
+  [Building surfaces and
+  solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
   every three-dimensional geom and stat.
 
-- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
-  how overlapping layers are sorted by depth.
+- [How overlapping geometry is
+  drawn](https://gillescolling.com/ggplot3d/articles/visibility.md): how
+  overlapping layers are sorted by depth.
 
-- [Camera and
-  framing](https://gillescolling.com/ggplot3d/articles/camera.md): set
-  the view and keep its bounds stable.
+- [Choosing camera
+  views](https://gillescolling.com/ggplot3d/articles/camera.md): set the
+  view and keep its bounds stable.

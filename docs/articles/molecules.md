@@ -1,4 +1,4 @@
-# Molecular ball-and-stick views
+# Drawing molecular structures
 
 [bio3d](https://www.thegrantlab.org/bio3d/) reads Protein Data Bank
 coordinate files into `pdb` objects.
@@ -6,7 +6,9 @@ coordinate files into `pdb` objects.
 turns their atom records into a table and attaches bond endpoints for
 [`geom_edge_3d()`](https://gillescolling.com/ggplot3d/reference/geom_edge_3d.md).
 Each atom retains its serial number, element and coordinate in
-angstroms.
+angstroms. [Drawing networks and
+trees](https://gillescolling.com/ggplot3d/articles/networks.md) covers
+other data with nodes and edges.
 
 This water molecule has explicitly specified connectivity. Bond
 endpoints refer to atom serial numbers, and can be supplied

@@ -139,7 +139,7 @@
   // their selection state inside the instance record.
   const LAYOUTS = {
     [FACE]: [['aPos', 3, 'f32'], ['aNormal', 3, 'f32'], ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'],
-      ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32'], ['aStyle', 4, 'f32'], ['aStyleA', 4, 'f32'], ['aStyleB', 4, 'f32'], ['aTexture', 4, 'f32']],
+      ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32'], ['aStyle', 4, 'f32'], ['aStyleA', 4, 'f32'], ['aStyleB', 4, 'f32'], ['aTexture', 4, 'f32'], ['aEmission', 3, 'f32']],
     [STROKE]: [['aA', 3, 'f32'], ['aB', 3, 'f32'], ['aCorner', 4, 'f32'], ['aWidth', 1, 'f32'],
       ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8']],
     [MARKER]: [['aPos', 3, 'f32'], ['aOffset', 2, 'f32'], ['aLocal', 2, 'f32'], ['aShape', 3, 'f32'],
@@ -149,7 +149,7 @@
     [TEXT]: [['aPos', 3, 'f32'], ['aCorner', 2, 'f32'], ['aBox', 4, 'f32'], ['aAngle', 1, 'f32'], ['aId', 1, 'u32']],
     [QUADRIC]: [['aBox0', 4, 'f32'], ['aBox1', 4, 'f32'], ['aBox2', 4, 'f32'], ['aBox3', 4, 'f32'],
       ['aLocal0', 4, 'f32'], ['aLocal1', 4, 'f32'], ['aLocal2', 4, 'f32'], ['aLocal3', 4, 'f32'], ['aShape', 4, 'f32'],
-      ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'], ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32'], ['aState', 1, 'f32']]
+      ['aColour', 4, 'u8n'], ['aId', 1, 'u32'], ['aFlags', 4, 'u8'], ['aMaterial', 4, 'f32'], ['aMaterial2', 4, 'f32'], ['aState', 1, 'f32'], ['aEmission', 3, 'f32']]
   };
   const STREAMS = {[FACE]: ['aState'], [STROKE]: ['aState', 'aDashStart'], [MARKER]: ['aState'], [TEXT]: ['aState'], [DISC]: [], [QUADRIC]: []};
 
@@ -227,6 +227,7 @@
     [FACE]: [`
       in vec3 aPos; in vec3 aNormal; in vec4 aColour; in uint aId; in vec4 aFlags; in float aState;
       in vec4 aMaterial; in vec4 aMaterial2; in vec4 aStyle; in vec4 aStyleA; in vec4 aStyleB; in vec4 aTexture;
+      in vec3 aEmission; flat out vec3 vEmission;
       ${VARYINGS}
       out vec3 vNormal; out vec3 vLinear; flat out float vShade; flat out vec4 vMaterial; flat out vec4 vMaterial2;
       flat out vec4 vStyle; flat out vec4 vStyleA; flat out vec4 vStyleB;
@@ -238,6 +239,7 @@
         float d; vec4 p = project(aPos, d);
         gl_Position = clipPosition(p.xy, p.z, p.w);
         vNormal = aNormal/uScale; vLinear = toLinear(aColour.rgb); vShade = aFlags.x;
+        vEmission = aEmission;
         vMaterial = aMaterial; vMaterial2 = aMaterial2; vStyle = aStyle; vStyleA = aStyleA; vStyleB = aStyleB; vUv = aTexture.xy; vLayer = aTexture.zw;
         vColour = vec4(aColour.rgb, aColour.a*aState); vModel = aPos; vId = aId; vClip = aFlags.y;
         // Vertex lighting (Gouraud 1971): the lit colour at each corner,
@@ -250,6 +252,7 @@
         }
       }`, `
       uniform float uLight, uPerspective; uniform vec3 uRay; uniform highp sampler2DArray uTextures;
+      flat in vec3 vEmission;
       in vec3 vNormal; in vec3 vLinear; flat in float vShade; flat in vec4 vMaterial; flat in vec4 vMaterial2;
       flat in vec4 vStyle; flat in vec4 vStyleA; flat in vec4 vStyleB;
       in vec2 vUv; flat in vec2 vLayer;
@@ -270,6 +273,7 @@
           vec3 v = uViewer > 0.0 ? normalize(-uViewer*0.5*length(uScale)*uForward-q) : uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
           l = clamp(shade(normalize(vNormal), q, v, l, vMaterial, vMaterial2, vStyle, vStyleA, vStyleB), 0.0, 1.0);
         }
+        l += vEmission;
         emit(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a*a));
       }`],
     [STROKE]: [`
@@ -385,6 +389,7 @@
     in vec4 aBox0; in vec4 aBox1; in vec4 aBox2; in vec4 aBox3;
     in vec4 aLocal0; in vec4 aLocal1; in vec4 aLocal2; in vec4 aLocal3;
     in vec4 aShape; in vec4 aColour; in uint aId; in vec4 aFlags; in vec4 aMaterial; in vec4 aMaterial2; in float aState;
+    in vec3 aEmission; flat out vec3 vEmission;
     ${VARYINGS}
     flat out mat4 vToLocal; flat out vec4 vShape; flat out vec3 vLinear; flat out float vShade;
     flat out vec4 vMaterial; flat out vec4 vMaterial2;
@@ -408,10 +413,12 @@
       vColour = vec4(aColour.rgb, aColour.a*aState); vLinear = toLinear(aColour.rgb); vShade = aFlags.x;
       vToLocal = mat4(aLocal0, aLocal1, aLocal2, aLocal3); vShape = aShape;
       vMaterial = aMaterial; vMaterial2 = aMaterial2;
+      vEmission = aEmission;
     }`, `
     uniform float uLight, uPerspective, uNear, uFar, uBase, uRatio; uniform vec3 uRay; uniform vec2 uOrigin, uInner;
     uniform mat3 uFrame; uniform int uSide;
     flat in mat4 vToLocal; flat in vec4 vShape; flat in vec3 vLinear; flat in float vShade;
+    flat in vec3 vEmission;
     flat in vec4 vMaterial; flat in vec4 vMaterial2;
     ${QUADRIC_CAST}
     SHADE_GLSL
@@ -463,6 +470,7 @@
           l = clamp(shade(normalize(n), q, v, l, vMaterial, vMaterial2, vec4(0.0), vec4(0.0), vec4(0.0)), 0.0, 1.0);
         }
       }
+      l += vEmission;
       emitAt(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a), m, gl_FragDepth);
     }`];
   SHADERS[DISC] = SHADERS[MARKER];
@@ -848,6 +856,7 @@
         p.points.forEach((v, j) => V.add({aPos: v, aNormal: (p.normals && p.normals[j]) || p.normal,
           aColour: p.colours && p.colours[j] ? p.colours[j].concat(p.colour[3]) : p.colour, aId: id, aFlags: [shade, clip, p.material.vertex ? 1 : 0, 0],
           aMaterial: material, aMaterial2: material2, aStyle: style, aStyleA: styleA, aStyleB: styleB,
+          aEmission: p.material.emission || [0, 0, 0],
           aTexture: layer >= 0 && p.uvs && p.uvs[j] ? p.uvs[j].concat([layer, under]) : [0, 0, -1, 0]}));
         for (let j = 1; j < p.points.length-1; j++) E.push(p.vertexStart, p.vertexStart+j, p.vertexStart+j+1);
       } else if (p.kind === STROKE && !['blank', '0'].includes(String(p.material.linetype))) {
@@ -870,7 +879,7 @@
         V.add({aBox0: b.slice(0, 4), aBox1: b.slice(4, 8), aBox2: b.slice(8, 12), aBox3: b.slice(12, 16),
           aLocal0: l.slice(0, 4), aLocal1: l.slice(4, 8), aLocal2: l.slice(8, 12), aLocal3: l.slice(12, 16), aShape: p.shape,
           aColour: p.colour, aId: id, aFlags: [p.material.shade ? 1 : 0, clip, 0, 0], aState: [1],
-          aMaterial: p.material.material || [1, 1, 0, 10], aMaterial2: p.material.material2 || [1, -1, 0, 0]});
+          aMaterial: p.material.material || [1, 1, 0, 10], aMaterial2: p.material.material2 || [1, -1, 0, 0], aEmission: p.material.emission || [0, 0, 0]});
         E.push(p.vertexStart);
       } else if (p.kind === MARKER || p.kind === DISC) {
         markerGeometry(p, V, E, id, clip);

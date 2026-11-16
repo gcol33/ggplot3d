@@ -1,4 +1,4 @@
-# Curvilinear and compositional frames
+# Plotting angles and compositions
 
 Coordinate frames place data according to their meaning. Monthly
 measurements can follow a circle, directions can lie on a sphere, and
@@ -6,9 +6,11 @@ three- or four-part mixtures occupy a triangle or tetrahedron. This
 article draws examples in each frame, including a globe for geographic
 coordinates. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md), and
-[Camera and
-framing](https://gillescolling.com/ggplot3d/articles/camera.md) covers
-their shared camera arguments.
+[Choosing camera
+views](https://gillescolling.com/ggplot3d/articles/camera.md) covers
+their shared camera arguments. [Plotting curved spaces and
+spacetime](https://gillescolling.com/ggplot3d/articles/curved-spaces.md)
+covers intrinsic spherical and hyperbolic geometry.
 
 ``` r
 
@@ -77,7 +79,7 @@ ggplot(route, aes(lon, lat, z = height)) +
 ![A globe centred on the North Pacific with a red route from New York to
 Tokyo.](frames_files/figure-html/globe-1.svg)
 
-[Maps and spatial
+[Plotting maps and spatial
 data](https://gillescolling.com/ggplot3d/articles/spatial.md) draws
 rasters and simple features on a flat map with a third dimension.
 
@@ -123,10 +125,10 @@ tetrahedron.](frames_files/figure-html/simplex-1.svg)
 
 ## Where next
 
-- [Camera and
-  framing](https://gillescolling.com/ggplot3d/articles/camera.md): view
+- [Choosing camera
+  views](https://gillescolling.com/ggplot3d/articles/camera.md): view
   angles, projections and stable bounds.
 
-- [Curved spaces and
+- [Plotting curved spaces and
   spacetime](https://gillescolling.com/ggplot3d/articles/curved-spaces.md):
   spherical, hyperbolic and Minkowski geometry.

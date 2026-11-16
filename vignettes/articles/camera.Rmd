@@ -1,9 +1,9 @@
 ---
-title: "Camera and framing"
+title: "Choosing camera views"
 description: "Set camera angles, projection, framing and stereo output for static scenes."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Camera and framing}
+  %\VignetteIndexEntry{Choosing camera views}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup()
 ```
 
-Camera controls choose the direction from which a scene is viewed. Framing controls the bounds used to fit that view on the page. Installation is covered in [Get started](ggplot3d.html).
+Camera controls choose the direction from which a scene is viewed. Framing controls the bounds used to fit that view on the page. Installation is covered in [Get started](ggplot3d.html). Use [Animating cameras and data](motion.html) for moving views and [Styling axes, legends and panes](guides-themes.html) for the surrounding guides.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -123,6 +123,6 @@ p + coord_3d(stereo = stereo_3d("anaglyph", separation = 5),
 Vector and hybrid output use device multiply compositing when available.
 Raster output composites the two eye images per channel; devices without
 multiply support also use that raster composite and require ragg.
-[Interactive viewing](viewer.html) uses the central camera in a browser.
+[Viewing plots interactively](viewer.html) uses the central camera in a browser.
 Intrinsic stereo needs separately configured observers and orientations for
-each eye in [Inside the Thurston geometries](thurston-geometries.html).
+each eye in [Viewing Thurston geometries from inside](thurston-geometries.html).

@@ -1,9 +1,9 @@
 ---
-title: "Output backends"
+title: "Choosing rendering and image formats"
 description: "Choose vector, raster, hybrid or traced rendering and save figures at the intended resolution."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Output backends}
+  %\VignetteIndexEntry{Choosing rendering and image formats}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup()
 ```
 
-A backend turns scene geometry into drawing commands or pixels. This article shows how to select one and save its output. Installation is covered in [Get started](ggplot3d.html).
+A backend turns scene geometry into drawing commands or pixels. This article shows how to select one and save its output. Installation is covered in [Get started](ggplot3d.html). Continue with [Embedding plots in reports](documents.html) for documents or [Exporting plots and scenes](export.html) for model files.
 
 1. **Choose** rendering with `backend_3d()`.
 
@@ -102,13 +102,13 @@ ggplot(d, aes(x, y, z = z)) +
 ## Traced fields and lighting
 
 Traced signed distance surfaces and scalar volumes become image layers in
-raster, vector and hybrid panels. [Ray marching and volumes](ray-marching.html)
+raster, vector and hybrid panels. [Rendering volumes and traced surfaces](ray-marching.html)
 shows their depth compositing and the native seeded path tracer. The path
 tracer samples diffuse light transport across meshes and traced surfaces,
 with vector axes and text around the image.
 
 The intrinsic ray-marching backend places an observer inside a geometry.
-[Inside the Thurston geometries](thurston-geometries.html) explains its
+[Viewing Thurston geometries from inside](thurston-geometries.html) explains its
 observer and orientation controls.
 
 ## Choosing output
@@ -122,8 +122,8 @@ observer and orientation controls.
 | Diffuse interreflection and soft shadows | Pathtrace | PNG or PDF |
 | Insert a figure into a slide | Either | PNG, PDF or SVG as supported |
 
-Visibility is resolved across each panel's layers. [Visibility](visibility.html) explains the geometric ordering used for vector output and the role of finite stroke width.
+Visibility is resolved across each panel's layers. [How overlapping geometry is drawn](visibility.html) explains the geometric ordering used for vector output and the role of finite stroke width.
 
 [Exporting plots and scenes](export.html) covers editable semantic SVG, code
-for typesetting and model files for 3D software. [Interactive viewing](viewer.html)
+for typesetting and model files for 3D software. [Viewing plots interactively](viewer.html)
 shows orbit controls, picking and linked selection in a browser.

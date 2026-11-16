@@ -1,9 +1,9 @@
 ---
-title: "Vector fields"
+title: "Drawing arrows and streamlines"
 description: "Draw vector arrows, magnitude-scaled cones, integrated streamlines and solid streamtubes from a gridded field."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vector fields}
+  %\VignetteIndexEntry{Drawing arrows and streamlines}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,7 +16,7 @@ docs_setup(legend = "right")
 A vector field assigns a direction and magnitude to each position in space.
 This article draws arrows at sampled positions, then integrates curves through
 the field and gives those curves thickness. Installation is covered in
-[Get started](ggplot3d.html).
+[Get started](ggplot3d.html). [Slicing fields and point densities](field-slices.html) shows sections through scalar-valued fields.
 
 1. **Map** the position and vector components with `geom_quiver_3d()`.
 
@@ -151,7 +151,7 @@ flow + stat_streamline_3d(aes(fill = after_stat(norm)), geom = "tube",
 ```
 
 Tube faces retain the mean computed values of their corners. The
-[Surfaces, solids and fields](surfaces-solids.html#tubes-ribbons-and-sweeps) article shows tube radii,
+[Building surfaces and solids](surfaces-solids.html#tubes-ribbons-and-sweeps) article shows tube radii,
 ribbons and custom cross-sections on supplied paths.
 
 ### Evenly spaced curves in a slice
@@ -179,9 +179,9 @@ points to trace that field away from its stationary centre.
 
 ## Where next
 
-* [Surfaces, solids and fields](surfaces-solids.html): solid glyphs and sweeps along supplied curves.
+* [Building surfaces and solids](surfaces-solids.html): solid glyphs and sweeps along supplied curves.
 
-* [Camera animation and interaction](motion.html): move the camera or tween
+* [Animating cameras and data](motion.html): move the camera or tween
   data between states.
 * [geom_quiver_3d()](../reference/geom_quiver_3d.html): head, shaft, scale and pivot arguments.
 

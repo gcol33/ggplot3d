@@ -29,7 +29,7 @@ emit_volume_3d <- function(data, params, panel_params) {
   for (axis in c("x", "y", "z")) data[[axis]] <- data[[axis]] * diff(panel_params$ranges[[axis]]) + panel_params$ranges[[axis]][1L]
   field <- stats_scalar_grid_3d(data)
   spec <- c(list(kind = "volume", mode = match(params$mode, c("absorption", "mip", "iso")) - 1L,
-    samples = params$samples, level = params$levels %or3d% mean(range(field$value))), field,
+    samples = params$samples, g = params$g %or3d% 0, level = params$levels %or3d% mean(range(field$value))), field,
     volume_transfer_3d(field, params$opacity, params$colours))
   spec$layer_id <- data$.layer[1L]
   if (length(spec$level) != 1L || !is.finite(spec$level)) stop("levels must be one finite number.", call. = FALSE)
@@ -37,7 +37,7 @@ emit_volume_3d <- function(data, params, panel_params) {
 }
 
 register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
-  parameters = list(mode = "absorption", opacity = c(0, 1), colours = c("#132B43", "#56B1F7"), samples = 256L, levels = NULL))
+  parameters = list(mode = "absorption", opacity = c(0, 1), colours = c("#132B43", "#56B1F7"), samples = 256L, levels = NULL, g = 0, material = NULL))
 
 #' Ray-marched scalar volumes
 #'
@@ -66,10 +66,22 @@ register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
 #' @param samples Number of integration steps across the volume diagonal.
 #'   Grid-cell boundaries also split integration intervals.
 #' @param levels Isovalue for `mode = "iso"`; defaults to the scalar-range midpoint.
+#' @param g Henyey-Greenstein scattering asymmetry in (-1, 1), used by the
+#'   path tracer. Zero is isotropic; positive values favour forward scattering.
+#' @param material Surface material for path-traced isovolumes.
+#' @details In the path tracer, `opacity` gives extinction and `colours`
+#'   gives single-scattering albedo in linear RGB. Absorption mode is a
+#'   heterogeneous participating medium. MIP requires the raster backend.
 #' @return A ggplot2 layer.
 #' @references Max (1995). Optical models for direct volume rendering.
 #'   IEEE Transactions on Visualization and Computer Graphics 1, 99-108.
 #'   \doi{10.1109/2945.468400}
+#'
+#'   Henyey and Greenstein (1941). Diffuse radiation in the Galaxy.
+#'   \doi{10.1086/144246}
+#'
+#'   Novak et al. (2014). Residual ratio tracking for estimating attenuation
+#'   in participating media. \doi{10.1145/2661229.2661292}
 #' @export
 #' @examples
 #' a <- seq(-1, 1, length.out = 8)
@@ -80,10 +92,12 @@ register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
 #'   coord_3d(backend = backend_3d("raster", dpi = 60))
 geom_volume_3d <- function(mapping = NULL, data = NULL, ..., mode = c("absorption", "mip", "iso"),
                            opacity = c(0, 1), colours = c("#132B43", "#56B1F7"), samples = 256L,
-                           levels = NULL, show.legend = NA, inherit.aes = TRUE) {
+                           levels = NULL, show.legend = NA, inherit.aes = TRUE, g = 0, material = NULL) {
   if (!is.numeric(samples) || length(samples) != 1L || !is.finite(samples) || samples < 1 ||
       samples != trunc(samples) || samples > .Machine$integer.max) stop("samples must be a positive integer.", call. = FALSE)
+  if (!is.numeric(g) || length(g) != 1L || !is.finite(g) || abs(g) >= 1) stop("g must lie in (-1, 1).", call. = FALSE)
+  material <- material_argument_3d(material)
   make_layer_3d(GeomVolume3D, mapping, data, "identity", "identity",
     stats_params_3d(list(mode = match.arg(mode), opacity = opacity, colours = colours,
-      samples = as.integer(samples), levels = levels), list(...)), show.legend, inherit.aes)
+      samples = as.integer(samples), levels = levels, g = g, material = material), list(...)), show.legend, inherit.aes)
 }

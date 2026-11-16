@@ -5,13 +5,13 @@ ggplot3d adds three-dimensional layers and a z position scale to
 plots from data and aesthetic mappings. This tutorial assumes basic R
 and data frames. It ends with a surface, observations and a saved plot.
 
-1.  Map positions with
+1.  **Map** positions with
     [`aes()`](https://ggplot2.tidyverse.org/reference/aes.html).
 
-2.  Draw a surface with
+2.  **Draw** a surface with
     [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md).
 
-3.  Save the plot with
+3.  **Save** the plot with
     [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
 
 ## Installation
@@ -51,8 +51,8 @@ p
 axes.](ggplot3d_files/figure-html/points-1.svg)
 
 The z axis labels the height column. The camera projects these three
-positions onto the plotting page. Change its angles in [Camera and
-framing](https://gillescolling.com/ggplot3d/articles/camera.md).
+positions onto the plotting page. Change its angles in [Choosing camera
+views](https://gillescolling.com/ggplot3d/articles/camera.md).
 
 ## Adding a surface
 
@@ -77,10 +77,10 @@ p
 heights.](ggplot3d_files/figure-html/surface-1.svg)
 
 Grid neighbours form triangles. Surface pieces cover observations
-wherever they lie in front of them.
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.md) also
-shows columns and contours, and [Surfaces, solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
+wherever they lie in front of them. [Choosing layers for observations
+and grids](https://gillescolling.com/ggplot3d/articles/layers.md) also
+shows columns and contours, and [Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
 shows meshes and statistical surfaces.
 
 ## Reading another table
@@ -132,8 +132,8 @@ mapping.](ggplot3d_files/figure-html/corrected-1.svg)
 
 The default backend draws vector geometry. The file extension selects
 the graphics device. Use the raster backend for a scene rendered into
-pixels; [Output
-backends](https://gillescolling.com/ggplot3d/articles/backends.md)
+pixels; [Choosing rendering and image
+formats](https://gillescolling.com/ggplot3d/articles/backends.md)
 explains resolution and device requirements.
 
 ``` r
@@ -144,20 +144,36 @@ ggsave(path, p, width = 5, height = 4.5)
 
 ## Where next
 
-- [The z scale](https://gillescolling.com/ggplot3d/articles/z-scale.md):
+- [Preparing data for 3D
+  layers](https://gillescolling.com/ggplot3d/articles/data-preparation.md):
+  read coordinate tables, join attributes and check surface grids.
+
+- [Choosing layers for observations and
+  grids](https://gillescolling.com/ggplot3d/articles/layers.md): select
+  geometry for your measurements.
+
+- [Scaling heights and facet
+  ranges](https://gillescolling.com/ggplot3d/articles/z-scale.md):
   transform heights and control ranges across facets.
 
-- [Axes, legends and pane
-  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.md):
+- [Styling axes, legends and
+  panes](https://gillescolling.com/ggplot3d/articles/guides-themes.md):
   label the plot and adjust its panes.
 
-- [Camera and
-  framing](https://gillescolling.com/ggplot3d/articles/camera.md): set
-  the view and keep its bounds stable.
+- [Choosing camera
+  views](https://gillescolling.com/ggplot3d/articles/camera.md): set the
+  view and keep its bounds stable.
 
-- [Output
-  backends](https://gillescolling.com/ggplot3d/articles/backends.md):
+- [Choosing rendering and image
+  formats](https://gillescolling.com/ggplot3d/articles/backends.md):
   choose rendering and save an image.
 
-- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
+- [How overlapping geometry is
+  drawn](https://gillescolling.com/ggplot3d/articles/visibility.md):
   understand overlapping geometry.
+
+The [article
+index](https://gillescolling.com/ggplot3d/articles/index.md) groups
+further guides by building plots, data types, appearance, output and
+sharing, scientific examples, mathematical examples, and internals and
+extensions.

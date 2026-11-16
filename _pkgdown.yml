@@ -21,6 +21,8 @@ template:
       </script>
       <style>
       .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+      .navbar .dropdown-menu .dropdown-item,
+      .navbar .dropdown-menu .dropdown-header { color: var(--bs-body-color); }
       @media (max-width: 991.98px) {
         .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
         .navbar .dropdown-menu { max-height: none; overflow: visible; }
@@ -87,26 +89,21 @@ navbar:
       href: https://github.com/gcol33/ggplot3d
       aria-label: GitHub
 reference:
-- title: Coordinates and lighting
+- title: Coordinates and camera views
+  desc: Set the plotting box, projection and viewing direction. See [Choosing camera views](../articles/camera.html).
   contents:
   - coord_3d
   - camera_3d
   - facet_views_3d
   - stereo_3d
-  - light_3d
-  - light_directional
-  - material_3d
-  - shadow_3d
-  - depth_cue_3d
-  - clip_plane_3d
-- title: Curvilinear and compositional frames
+- title: Angles, geographic coordinates and compositions
   contents:
   - coord_cylindrical_3d
   - coord_spherical_3d
   - coord_globe_3d
   - coord_ternary_3d
   - coord_simplex_3d
-- title: Z position scales
+- title: Height scales
   contents:
   - scale_z_continuous
   - scale_z_discrete
@@ -117,7 +114,7 @@ reference:
   - scale_z_datetime
   - scale_z_time
   - zlim
-- title: Point, path and polygon layers
+- title: Points, paths, polygons and labels
   contents:
   - geom_point_3d
   - geom_path_3d
@@ -126,17 +123,19 @@ reference:
   - geom_label_3d
   - geom_polygon_3d
   - geom_band_3d
-  - geom_boxplot_3d
   - geom_area_3d
   - geom_dropline_3d
-  - geom_quiver_3d
   - geom_rug_3d
-  - geom_plane_3d
+- title: Reference geometry and clipping
+  contents:
   - annotate_3d
+  - geom_plane_3d
   - geom_refline_3d
   - geom_abline_3d
   - geom_bracket_3d
-- title: Interval layers
+  - clip_plane_3d
+- title: Intervals and summaries
+  desc: Draw supplied bounds or summarise repeated observations. See [Displaying intervals and summaries](../articles/intervals.html).
   contents:
   - geom_errorbar_3d
   - geom_linerange_3d
@@ -144,31 +143,96 @@ reference:
   - geom_crossbar_3d
   - geom_stem_3d
   - stat_summary_3d
-- title: Surface and solid layers
+- title: Columns, bins and voxels
   contents:
-  - geom_surface_3d
-  - geom_contour_3d
-  - geom_contour_filled_3d
-  - geom_mesh_3d
-  - outline_3d
-  - edges_3d
-  - hatch_3d
   - geom_col_3d
   - geom_bar_3d
   - geom_histogram_3d
   - geom_hex_3d
   - geom_extrude_3d
   - geom_voxel_3d
+  - stat_count_3d
+  - stat_bin_2d_3d
+  - stat_summary_2d_3d
+  - stat_bin_hex_3d
+  - stat_summary_hex_3d
+  - stat_bin_3d
+- title: Surfaces, meshes and point clouds
+  desc: Construct surfaces, read meshes and point clouds, and measure along mesh surfaces. See [Reading and measuring meshes](../articles/meshes.html) and [Reading 3D scans and point clouds](../articles/scans.html).
+  contents:
+  - geom_surface_3d
+  - stat_surface_3d
+  - geom_contour_3d
+  - geom_contour_filled_3d
+  - geom_mesh_3d
+  - mesh_3d
+  - read_mesh_3d
+  - read_points_3d
+  - geom_splat_3d
+  - mesh_processing
+  - mesh_geodesic
+  - fortify
+  - stat_parametric_geodesic_3d
+  - stat_geodesic_distance_3d
+- title: Function surfaces and fitted models
+  contents:
+  - geom_function_3d
+  - stat_function_3d
+  - geom_smooth_3d
+  - stat_smooth_3d
+  - geom_residual_3d
+  - stat_residual_3d
+- title: Distributions, densities and hulls
+  contents:
+  - geom_boxplot_3d
+  - stat_density_2d_3d
+  - geom_ridgeline_3d
+  - stat_ridgeline_3d
+  - geom_isodensity_3d
+  - stat_density_3d
+  - stat_ellipsoid_3d
+  - geom_hull_3d
+  - stat_hull_3d
+  - geom_alpha_shape_3d
+  - stat_alpha_shape_3d
+  - biplot_3d
+- title: Scalar fields, slices and implicit surfaces
+  desc: Extract level surfaces or inspect field values on planes. See [Slicing fields and point densities](../articles/field-slices.html).
+  contents:
+  - geom_isosurface_3d
+  - stat_isosurface_3d
+  - geom_isofunction_3d
+  - stat_isofunction_3d
   - geom_volume_3d
-  - geom_tube_3d
-  - geom_ribbon_3d
+  - geom_slice_3d
+  - stat_slice_3d
+  - geom_slice_contour_3d
+  - stat_slice_contour_3d
+  - geom_isocurve_3d
+  - stat_isocurve_3d
+  - stat_implicit_fit_3d
+  - sdf_sphere
+  - sdf_blend
+- title: Solid glyphs, parametric surfaces and sweeps
+  contents:
   - geom_sphere_3d
   - geom_ellipsoid_3d
   - geom_tensor_3d
-  - stat_ellipsoid_3d
-  - biplot_3d
   - geom_glyph_3d
-- title: Network and tree layers
+  - geom_parametric_3d
+  - stat_parametric_3d
+  - geom_tube_3d
+  - geom_ribbon_3d
+  - geom_sweep_3d
+  - stat_sweep_3d
+  - geom_revolve_3d
+  - stat_revolve_3d
+  - stat_spline_3d
+- title: Vector fields and streamlines
+  contents:
+  - geom_quiver_3d
+  - stat_streamline_3d
+- title: Networks, trees and molecules
   contents:
   - geom_edge_3d
   - geom_node_3d
@@ -176,73 +240,23 @@ reference:
   - get_edges_3d
   - stat_layers_3d
   - stat_dendrogram_3d
-- title: Spatial data
+  - fortify.pdb
+- title: Spatial data and map annotations
+  desc: Plot spatial objects and scale bars. For north arrows, see [orientation guides](guide_triad_3d.html).
   contents:
   - geom_spatraster_3d
   - geom_sf_3d
   - stat_profile_3d
   - geom_arc_3d
-- title: 2D plots on planes
+  - annotation_scale_3d
+- title: Images and plots on planes
   contents:
   - annotation_plot_3d
   - facet_slices_3d
-- title: Images and textures
-  contents:
   - texture_3d
   - annotation_raster_3d
   - geom_raster_3d
-- title: Statistical layers
-  contents:
-  - geom_function_3d
-  - geom_smooth_3d
-  - geom_residual_3d
-  - geom_ridgeline_3d
-  - geom_isosurface_3d
-  - geom_isofunction_3d
-  - geom_isodensity_3d
-  - geom_slice_3d
-  - geom_slice_contour_3d
-  - geom_isocurve_3d
-  - geom_hull_3d
-  - geom_alpha_shape_3d
-  - geom_parametric_3d
-  - geom_sweep_3d
-  - geom_revolve_3d
-- title: Statistical computations
-  contents:
-  - stat_surface_3d
-  - stat_count_3d
-  - stat_bin_2d_3d
-  - stat_summary_2d_3d
-  - stat_bin_hex_3d
-  - stat_summary_hex_3d
-  - stat_bin_3d
-  - stat_function_3d
-  - stat_smooth_3d
-  - stat_residual_3d
-  - stat_density_2d_3d
-  - stat_ridgeline_3d
-  - stat_isosurface_3d
-  - stat_isofunction_3d
-  - stat_density_3d
-  - stat_slice_3d
-  - stat_slice_contour_3d
-  - stat_isocurve_3d
-  - stat_hull_3d
-  - stat_alpha_shape_3d
-  - stat_implicit_fit_3d
-  - stat_parametric_3d
-  - stat_parametric_geodesic_3d
-  - stat_geodesic_distance_3d
-  - stat_sweep_3d
-  - stat_streamline_3d
-  - stat_revolve_3d
-  - stat_spline_3d
-- title: Signed distance functions
-  contents:
-  - sdf_sphere
-  - sdf_blend
-- title: Positions
+- title: Position adjustments
   contents:
   - position_nudge_3d
   - position_jitter_3d
@@ -250,131 +264,153 @@ reference:
   - position_project_3d
   - position_stack_3d
   - position_fill_3d
-- title: Guides and themes
+- title: Axes, legends and orientation
   contents:
   - guide_axis_3d
   - guide_triad_3d
+  - annotation_north_3d
   - guide_colourbar_3d
   - guide_legend_3d
   - guide_coloursteps_3d
   - guide_bins_3d
-  - annotation_north_3d
-  - annotation_scale_3d
-- title: Output backends
+- title: Lighting and surface appearance
+  contents:
+  - light_3d
+  - light_directional
+  - material_3d
+  - shadow_3d
+  - depth_cue_3d
+  - outline_3d
+  - edges_3d
+  - hatch_3d
+- title: Rendering and accessible descriptions
+  desc: Choose scene rendering and describe the resulting figure. See [Embedding plots in reports](../articles/documents.html).
   contents:
   - backend_3d
-  - annotation_thurston_3d
-  - geodesic_3d
-  - thurston_portal_3d
-  - animate_3d
-  - tween_3d
+  - get_alt_text_3d
+- title: Interactive viewing and Shiny
+  contents:
   - view_3d
   - view3dOutput
   - renderView3d
-  - get_alt_text_3d
-- title: Camera paths
+- title: Animation and camera paths
   contents:
+  - animate_3d
+  - tween_3d
   - camera_path_3d
   - orbit_3d
   - fly_through_3d
   - dolly_zoom_3d
-- title: Export to 3D software
+- title: Export and 3D printing
   contents:
   - export_3d
   - print_3d
   - rgl-bridge-3d
   - as_rayrender_3d
-- title: Mesh input and extension API
+- title: Four dimensions, tilings and honeycombs
   contents:
-  - mesh_3d
-  - read_mesh_3d
-  - mesh_processing
-  - mesh_geodesic
-  - fortify
-  - fortify.pdb
-  - layer_3d
-  - register_geom_3d
-  - new_scene_packet
-  - normalise_homogeneous_3d
-- title: Spherical geometry and observers
-  contents:
-  - coord_spherical_geometry_3d
-  - stat_hopf_fibre_3d
-- title: Tilings and honeycombs
-  contents:
-  - stat_tiling_3d
   - stat_project_3d
   - rotate_4d
   - grand_tour_3d
   - stat_section_4d
+  - stat_tiling_3d
   - stat_honeycomb_3d
-- title: Hyperbolic geometry and data
+- title: Spherical and hyperbolic geometry
+  desc: Intrinsic curved-space coordinates and layouts. Longitude and latitude coordinates are listed under angles
+    and geographic coordinates.
   contents:
+  - coord_spherical_geometry_3d
+  - stat_hopf_fibre_3d
   - coord_hyperbolic_3d
   - stat_tree_hyperbolic_3d
   - hyperbolic_focus_3d
-- title: Relativity
+- title: Spacetime and relativity
   contents:
+  - coord_spacetime_3d
   - stat_light_cone_3d
   - stat_embedding_3d
   - stat_geodesic_ode_3d
   - lorentz_boost_3d
-  - coord_spacetime_3d
-- title: Complex analysis
+- title: Complex functions, knots and immersed surfaces
   contents:
   - mobius_3d
   - stat_riemann_sphere_3d
   - stat_riemann_surface_3d
-- title: Immersed surfaces and knots
-  contents:
-  - stat_self_intersection_3d
-  - stat_immersed_3d
   - stat_knot_3d
-- title: Package
-  contents: ggplot3d-package
-articles:
-- title: Concepts
-  navbar: Concepts
+  - stat_immersed_3d
+  - stat_self_intersection_3d
+- title: Thurston geometry and observer views
+  desc: Place intrinsic objects and observers inside homogeneous spaces. See [Viewing Thurston geometries from inside](../articles/thurston-geometries.html).
   contents:
-  - articles/z-scale
+  - annotation_thurston_3d
+  - geodesic_3d
+  - thurston_portal_3d
+- title: Geometry extension API
+  desc: Emit geometry into a shared panel scene. See [Writing a geometry extension](../articles/extending.html).
+  contents:
+  - layer_3d
+  - register_geom_3d
+  - new_scene_packet
+  - normalise_homogeneous_3d
+- title: Package
+  contents:
+  - ggplot3d-package
+articles:
+- title: Building plots
+  navbar: Building plots
+  contents:
+  - articles/data-preparation
   - articles/layers
+  - articles/z-scale
   - articles/surfaces-solids
-- title: Workflows
-  navbar: Workflows
+  - articles/positions
+  - articles/intervals
+  - articles/combining-2d-3d
+- title: Data types
+  navbar: Data types
+  contents:
+  - articles/frames
+  - articles/spatial
+  - articles/meshes
+  - articles/scans
+  - articles/vector-fields
+  - articles/field-slices
+  - articles/networks
+- title: Appearance
+  navbar: Appearance
   contents:
   - articles/camera
-  - articles/positions
   - articles/guides-themes
-  - articles/intervals
-  - articles/frames
-  - articles/backends
   - articles/lighting
+- title: Output and sharing
+  navbar: Output and sharing
+  contents:
+  - articles/backends
   - articles/ray-marching
-  - articles/viewer
-  - articles/export
-  - articles/motion
-  - articles/combining-2d-3d
+  - articles/path-tracing
   - articles/documents
-  - articles/spatial
-  - articles/networks
-  - articles/meshes
-  - articles/vector-fields
-- title: Examples
-  navbar: Examples
+  - articles/viewer
+  - articles/motion
+  - articles/export
+- title: Scientific examples
+  navbar: Scientific examples
   contents:
   - articles/gallery
-  - articles/pde
+  - articles/ordination
+  - articles/tensors
+  - articles/molecules
+  - articles/colour-gamuts
+- title: Mathematical examples
+  navbar: Mathematical examples
+  contents:
   - articles/implicit-surfaces
+  - articles/pde
   - articles/higher-dimensions
   - articles/curved-spaces
   - articles/complex-knots
   - articles/thurston-geometries
-  - articles/tensors
-  - articles/ordination
-  - articles/molecules
-  - articles/colour-gamuts
-- title: Background
-  navbar: Background
+- title: Internals and extensions
+  navbar: Internals and extensions
   contents:
   - articles/visibility
   - articles/extending

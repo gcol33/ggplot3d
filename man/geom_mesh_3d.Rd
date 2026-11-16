@@ -121,7 +121,8 @@ Draw an external triangle or polygon mesh
 }
 \details{
 Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
-POLYGON Z or TIN Z objects. With \code{shading = "flat"} a numeric vertex fill
+POLYGON Z or TIN Z objects. A textured mesh from \code{\link[=read_mesh_3d]{read_mesh_3d()}} given
+as the layer's data drapes its image unless \code{texture} is supplied. With \code{shading = "flat"} a numeric vertex fill
 is averaged per face before colour scaling, and every material must be
 constant within each face. With \code{shading = "smooth"} the fill stays per
 vertex, numeric or given as colours such as \code{fill = I(hex)}, and each face

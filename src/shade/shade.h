@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include "../scene/contract.h"
 
 // Local illumination of one surface point in linear light (Blinn-Phong:
 // Phong 1975, Blinn 1977) with colour transfers. Every vector is in one model
@@ -248,8 +249,9 @@ struct Lights {
 // Strengths of the ambient, diffuse and specular terms, the specular exponent
 // and colour reflectance, an optional colour for the back side of faces, and
 // the style with its parameters (see the locals above).
-struct Material {
+struct Material : PhysicalMaterial {
   real ambient = 1, diffuse = 1, specular = 0, shininess = 10, specular_colour = 1;
+  vec3 emission{0, 0, 0};
   bool has_back = false;
   vec3 back{0, 0, 0};
   real style = 0, steps = 0, bands = 0, breaks = 0;
@@ -287,7 +289,7 @@ static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, cons
     GGPLOT3D_LIGHT_SUM
   }
   GGPLOT3D_LIGHT_FINISH
-  return col * clamp(occlusion, 0.0, 1.0);
+  return col * clamp(occlusion, 0.0, 1.0) + m.emission;
 }
 
 static inline real transfer(real linear, real brightness, bool multiply) {

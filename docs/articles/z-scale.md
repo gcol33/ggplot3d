@@ -1,10 +1,15 @@
-# The z scale
+# Scaling heights and facet ranges
 
 The z scale maps heights from data units into panel positions and
 controls their transformations, categories, limits and facets. Set
 `coord_3d(z_scales = "free")` for separate z ranges across facets.
 ggplot2 facets have no z scale. Installation is covered in [Get
-started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md). For
+repeated camera views, see [Choosing camera
+views](https://gillescolling.com/ggplot3d/articles/camera.md);
+[Combining 2D and 3D
+graphics](https://gillescolling.com/ggplot3d/articles/combining-2d-3d.html#small-multiples-in-depth)
+stacks two-dimensional panels in depth.
 
 ``` r
 
@@ -111,8 +116,8 @@ hundred.](z-scale_files/figure-html/limits-1.svg)
 The shorthand
 [`zlim()`](https://gillescolling.com/ggplot3d/reference/zlim.md)
 supplies scale limits in original data units. Coordinate limits also use
-original units. [Surfaces, solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
+original units. [Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
 explains the transformed units used by statistical surfaces.
 
 ## Facets
@@ -156,7 +161,7 @@ ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
 ![Three points with a Height axis title and a blue z
 axis.](z-scale_files/figure-html/guide-1.svg)
 
-[Axes, legends and pane
-styling](https://gillescolling.com/ggplot3d/articles/guides-themes.md)
+[Styling axes, legends and
+panes](https://gillescolling.com/ggplot3d/articles/guides-themes.md)
 shows edge-following labels, a colourbar aligned with height and theme
 elements for individual panes.

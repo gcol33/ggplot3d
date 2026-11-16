@@ -1,14 +1,15 @@
-# Surfaces, solids and fields
+# Building surfaces and solids
 
 These layers build geometry from a model, a function, a field or a
 shape. This article gives a small example of each. Installation is
 covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.md) covers
+[Choosing layers for observations and
+grids](https://gillescolling.com/ggplot3d/articles/layers.md) covers
 points, paths, surfaces from gridded data, columns, distributions and
-intervals. [Vector
-fields](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
-covers arrows and streamlines, and [Implicit
+intervals. [Drawing arrows and
+streamlines](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
+covers arrows and streamlines, and [Constructing and reconstructing
 surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md)
 covers reconstruction from point clouds.
 
@@ -167,10 +168,9 @@ ggplot() +
 ![A blue torus sampled from its parametric
 formula.](surfaces-solids_files/figure-html/parametric-1.svg)
 
-[Meshes and intrinsic
-geometry](https://gillescolling.com/ggplot3d/articles/meshes.html#geodesics-on-a-parametric-surface)
-draws geodesics on this torus, and [Complex functions, knots and
-immersed
+[Reading and measuring
+meshes](https://gillescolling.com/ggplot3d/articles/meshes.html#geodesics-on-a-parametric-surface)
+draws geodesics on this torus, and [Drawing complex functions, knots and
 surfaces](https://gillescolling.com/ggplot3d/articles/complex-knots.md)
 uses parametric surfaces that pass through themselves.
 
@@ -293,6 +293,11 @@ it.](surfaces-solids_files/figure-html/slice-1.svg)
 `stat_slice_3d(slice = sdf_plane(...))` cuts along an oblique plane, and
 [`geom_density_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
 slices the density of a point cloud estimated on the fly.
+
+[Slicing fields and point
+densities](https://gillescolling.com/ggplot3d/articles/field-slices.md)
+works through both operations, with grid checks, missing values and
+bandwidth comparisons.
 
 ## Where two surfaces meet
 

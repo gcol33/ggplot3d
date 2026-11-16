@@ -1,4 +1,4 @@
-# Extending ggplot3d
+# Writing a geometry extension
 
 Every layer drawn in
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
@@ -8,8 +8,9 @@ packets of all layers and resolves visibility across them, so a new geom
 only describes its geometry and never draws anything itself. This
 article writes a geom that draws one triangle per group of three rows.
 It assumes familiarity with
-[ggproto](https://ggplot2-book.org/ext-springs.html) extensions;
-[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md)
+[ggproto](https://ggplot2-book.org/ext-springs.html) extensions; [How
+overlapping geometry is
+drawn](https://gillescolling.com/ggplot3d/articles/visibility.md)
 explains what the scene does with the packets.
 
 1.  **Define** the geom with
@@ -445,11 +446,12 @@ where the two intersect.
 
 ## Where next
 
-- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
-  how packets from all layers are ordered and split.
+- [How overlapping geometry is
+  drawn](https://gillescolling.com/ggplot3d/articles/visibility.md): how
+  packets from all layers are ordered and split.
 
-- [Meshes and intrinsic
-  geometry](https://gillescolling.com/ggplot3d/articles/meshes.md):
-  build mesh data that
+- [Reading and measuring
+  meshes](https://gillescolling.com/ggplot3d/articles/meshes.md): build
+  mesh data that
   [`geom_mesh_3d()`](https://gillescolling.com/ggplot3d/reference/geom_mesh_3d.md)
   draws without a new geom.

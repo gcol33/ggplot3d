@@ -1,12 +1,16 @@
-# Gallery
+# Drawing common charts in 3D
 
 This article draws familiar charts and solid geometry from small
 datasets. Each example gives the data and the code that draws it.
-[Layers](https://gillescolling.com/ggplot3d/articles/layers.md) explains
-the data layers, and [Vector
-fields](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
+[Choosing layers for observations and
+grids](https://gillescolling.com/ggplot3d/articles/layers.md) explains
+the data layers, and [Drawing arrows and
+streamlines](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
 develops the streamtube example. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Preparing data for 3D
+layers](https://gillescolling.com/ggplot3d/articles/data-preparation.md)
+shows how to organise your own input tables.
 
 ``` r
 
@@ -16,13 +20,14 @@ library(ggplot3d)
 
 ## Domain recipes
 
-[Tensor glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md)
-draw symmetric tensors as ellipsoids or superquadrics. [Ordination
+[Drawing tensor
+glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md) draw
+symmetric tensors as ellipsoids or superquadrics. [Drawing ordination
 biplots](https://gillescolling.com/ggplot3d/articles/ordination.md)
-combine site scores, variable arrows and group regions. [Molecular
-ball-and-stick
-views](https://gillescolling.com/ggplot3d/articles/molecules.md) draw
-atoms and bonds from bio3d records. [Colour gamuts in Lab
+combine site scores, variable arrows and group regions. [Drawing
+molecular
+structures](https://gillescolling.com/ggplot3d/articles/molecules.md)
+draw atoms and bonds from bio3d records. [Plotting colour gamuts in Lab
 coordinates](https://gillescolling.com/ggplot3d/articles/colour-gamuts.md)
 place sampled colours and their convex hull in Lab coordinates.
 
@@ -48,8 +53,8 @@ ggplot(knot, aes(x, y, z = z)) +
 times.](gallery_files/figure-html/knot-1.svg)
 
 At each of the three crossings, the strand nearer the camera is drawn
-over the other. [Surfaces, solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#tubes-ribbons-and-sweeps)
+over the other. [Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#tubes-ribbons-and-sweeps)
 shows ribbons and custom cross-sections along curves.
 
 ## Solid violins
@@ -95,8 +100,8 @@ visible.](gallery_files/figure-html/covariance-1.svg)
 
 The data ellipsoids describe variation among flowers. Confidence
 ellipsoids for the species means use the standard-error kind, as shown
-in [Surfaces, solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#spheres-ellipsoids-and-glyphs).
+in [Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#spheres-ellipsoids-and-glyphs).
 
 ## Streamtubes
 
@@ -140,7 +145,7 @@ ggplot() + geom_isofunction_3d(fun = shell, n = 24, fill = "#2A7A7A") +
 ![A hollow sphere cut in half, with an annular cap around its visible
 inner cavity.](gallery_files/figure-html/cutaway-1.svg)
 
-[Implicit
+[Constructing and reconstructing
 surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md)
 shows how to construct shapes from functions and reconstruct them from
 point samples.
@@ -512,14 +517,16 @@ surface.
 
 ## Where next
 
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md) and
-  [Surfaces, solids and
-  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
+- [Choosing layers for observations and
+  grids](https://gillescolling.com/ggplot3d/articles/layers.md) and
+  [Building surfaces and
+  solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
   a minimal example of every geom and stat.
 
-- [Camera and
-  framing](https://gillescolling.com/ggplot3d/articles/camera.md):
-  change the viewing angles used above.
+- [Choosing camera
+  views](https://gillescolling.com/ggplot3d/articles/camera.md): change
+  the viewing angles used above.
 
-- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
-  how overlapping geometry is ordered.
+- [How overlapping geometry is
+  drawn](https://gillescolling.com/ggplot3d/articles/visibility.md): how
+  overlapping geometry is ordered.

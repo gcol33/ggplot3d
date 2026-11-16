@@ -699,17 +699,14 @@ merge_scene_packets <- function(packets, panel_id) {
                    style_count = as.integer(totals[["style"]])), tables,
               list(styles = material, materials = merge_materials_3d(packets)))
   class(result) <- "ggplot3d_scene_packet"
+  splats <- unlist(lapply(packets, attr, "splats"), recursive = FALSE)
+  if (length(splats)) attr(result, "splats") <- splats
   validate_scene_packet(result)
   result
 }
 
 merge_materials_3d <- function(packets) {
-  tables <- Filter(nrow, lapply(packets, `[[`, "materials"))
-  if (!length(tables)) return(data.frame(material_id = integer()))
-  out <- do.call(rbind, tables)
-  out$material_id <- seq_len(nrow(out))
-  rownames(out) <- NULL
-  out
+  bind_material_tables_3d(lapply(packets, `[[`, "materials"))
 }
 
 collect_scene_layers <- function(panel, panel_params, theme) {

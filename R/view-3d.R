@@ -250,6 +250,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
   packets <- resolve_draw_packets_3d(selected$packets, furniture$camera, furniture$viewport)
   packets <- resolve_glyph_packets_3d(packets, furniture$camera, furniture$viewport)
   packet <- merge_scene_packets(packets, params$panel_id)
+  packet <- splat_points_packet_3d(packet, furniture$camera, furniture$viewport)
   furniture_view <- view_packet_3d(all_furniture$packet, params$camera$pre)
   furniture_view$materials <- view_furniture_tags_3d(frame, all_furniture, furniture_view$materials)
   axes <- lapply(names(params$axis_guides), function(name) {
@@ -501,6 +502,7 @@ view_materials_3d <- function(materials, styles, table) {
     materials[[i]]$style <- c(kernel$style[k], kernel$steps[k], kernel$bands[k], kernel$breaks[k])
     materials[[i]]$style_a <- kernel$a[k, ]
     materials[[i]]$style_b <- kernel$b[k, ]
+    materials[[i]]$emission <- kernel$emission[k, ]
     materials[[i]]$vertex <- identical(table$lighting[k], "vertex")
   }
   materials
@@ -511,6 +513,8 @@ view_materials_3d <- function(materials, styles, table) {
 # colour transfer as uTransfer = (transfer id, range, neutral cosine).
 view_lights_3d <- function(light) {
   if (is.null(light)) return(NULL)
+  for (environment in Filter(function(l) l$kind == light_kinds_3d[["environment"]], light$lights)) light$ambient <- light$ambient + environment_mean_3d(environment, light$linear)
+  light$lights <- Filter(function(l) l$kind != light_kinds_3d[["environment"]], light$lights)
   if (length(light$lights) > view_max_lights_3d) warning("view_3d() shows the first ", view_max_lights_3d, " lights.", call. = FALSE)
   linear <- light$linear %or3d% TRUE
   transfer <- transfer_settings_3d(light)

@@ -1,4 +1,4 @@
-light_kinds_3d <- c(directional = 1L, point = 2L, head = 3L, hemisphere = 4L)
+light_kinds_3d <- c(directional = 1L, point = 2L, head = 3L, hemisphere = 4L, environment = 5L)
 
 check_light_colour_3d <- function(colour, name) {
   if (length(colour) != 1L || is.na(colour) || inherits(try(grDevices::col2rgb(colour), silent = TRUE), "try-error"))
@@ -48,6 +48,11 @@ new_light_3d <- function(kind, vector = c(0, 0, 1), space = "camera", colour = "
 #' MATLAB's `camlight headlight`. `light_hemisphere()` adds an ambient term
 #' that blends from `ground` to `sky` as the normal turns from `-direction` to
 #' `direction` (three.js `HemisphereLight`).
+#' `light_environment()` supplies an equirectangular radiance map. The first
+#' row is the north pole; columns run around the up axis from positive x
+#' toward positive y. Rotation is in degrees about that axis. The path tracer
+#' samples the map by luminance and solid angle. Other backends use its
+#' solid-angle-weighted mean as ambient illumination.
 #'
 #' In `space = "camera"`, x points right, y up and z toward the viewer, and
 #' positions are relative to the camera target in panel units. In
@@ -172,7 +177,7 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' [guide_colourbar_3d()], [guide_coloursteps_3d()], [guide_bins_3d()] and
 #' [guide_legend_3d()] show the shaded colours of a key.
 #' @param ... Lights made with [light_directional()], [light_point()],
-#'   [light_head()] or [light_hemisphere()]. None gives the lights of
+#'   [light_head()], [light_hemisphere()] or [light_environment()]. None gives the lights of
 #'   `preset`.
 #' @param ambient Uniform ambient light: a nonnegative strength (a grey) or
 #'   one colour. NULL takes the preset's.
@@ -202,9 +207,8 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   eye (infinitely far under orthographic projection).
 #' @param preset Starting lighting: `"default"`, `"contrast"`, `"shade"`,
 #'   `"headlight"`, `"soft"` or `"studio"`.
-#' @return A lighting configuration for [coord_3d()]. The backends that take
-#'   one directional light (the path tracer and the raymarch backend) use the
-#'   first directional light.
+#' @return A lighting configuration for [coord_3d()]. The path tracer takes
+#'   every light. The intrinsic raymarch backend takes the first directional light.
 #' @references Szafir, Sarikaya, Gleicher (2016). Lightness constancy in
 #'   surface visualization. IEEE TVCG 22, 2107-2121.
 #'   \doi{10.1109/TVCG.2015.2500240}
@@ -250,6 +254,7 @@ light_3d <- function(..., ambient = NULL, mode = NULL, range = NULL, neutral = N
   primary <- Filter(function(l) l$kind == light_kinds_3d[["directional"]], lights)
   primary <- if (length(primary)) primary[[1L]] else NULL
   structure(list(lights = unname(lights), ambient = check_ambient_3d(ambient %or3d% preset$ambient, linear),
+    ambient_linear = check_ambient_3d(ambient %or3d% preset$ambient, TRUE),
     mode = mode, range = as.double(range), neutral = as.double(neutral),
     shadow = check_light_colour_3d(shadow_colour, "shadow_colour"),
     highlight = check_light_colour_3d(highlight_colour, "highlight_colour"), linear = linear, material = material,
@@ -275,7 +280,7 @@ light_rgb_3d <- function(colour, intensity, linear = TRUE) {
 }
 
 # The luminance of the ambient term, for the backends that take one ambient
-# strength (path tracer, curved-space raymarcher).
+# strength (curved-space raymarcher).
 ambient_level_3d <- function(light) sum(light$ambient * c(0.2126, 0.7152, 0.0722))
 
 # An ImageScaled point of Mathematica as a camera-space direction toward the
@@ -369,7 +374,29 @@ as_lights_3d <- function(light) {
 #' Styles need a light: with `coord_3d(light = NULL)` faces keep their fill.
 #' In the path tracer, illustrative surfaces return the shared kernel's
 #' colour at the hit point and terminate the path, including indirect hits.
-#' @param type Preset: `"matte"`, `"satin"`, `"shiny"` or `"metal"`.
+#' The path tracer uses Lambert diffuse, GGX visible-normal microfacet
+#' reflection and dielectric transmission. GGX alpha is roughness squared.
+#' Dielectrics use exact Fresnel reflection; metals use a coloured Schlick
+#' Fresnel term. A reciprocal multiple-scattering lobe restores the masked
+#' energy of rough metals. Zero roughness gives ideal reflection/refraction.
+#' The matte default has no specular lobe. Explicit physical parameters enable
+#' the dielectric specular lobe unless `specular` is supplied.
+#'
+#' In vector, raster and viewer output, explicitly supplied physical parameters
+#' map to Blinn-Phong: shininess is `2 / roughness^4 - 2`, bounded to
+#' \[0.000001, 1000000\], diffuse strength is
+#' `(1 - metallic) * (1 - transmission)`, and specular colour interpolates
+#' from white to the fill with metallic. Explicit legacy strengths and
+#' shininess take precedence. These backends add emission in linear light;
+#' transmission reduces diffuse reflection and does not refract geometry.
+#' Existing presets retain their Blinn-Phong coefficients.
+#' @param type Preset: `"matte"`, `"satin"`, `"shiny"`, `"metal"`, `"glass"` or `"mirror"`.
+#' @param roughness GGX roughness in \[0, 1\]; NULL derives it from the preset.
+#' @param metallic Metal fraction in \[0, 1\]; NULL takes the preset.
+#' @param transmission Dielectric transmission fraction in \[0, 1\]; NULL takes the preset.
+#' @param ior Positive index of refraction relative to air, default 1.5.
+#' @param emission NULL or an emitted colour, decoded from sRGB.
+#' @param emission_strength Nonnegative multiplier of linear emitted radiance.
 #' @param ambient,diffuse,specular Nonnegative strengths; NULL keeps the preset.
 #' @param shininess Positive specular exponent; NULL keeps the preset.
 #' @param specular_colour Specular colour reflectance in \[0, 1\]; NULL keeps
@@ -392,6 +419,19 @@ as_lights_3d <- function(light) {
 #'   Gooch, Gooch, Shirley, Cohen (1998). A non-photorealistic
 #'   lighting model for automatic technical illustration. SIGGRAPH '98,
 #'   447-452. \doi{10.1145/280814.280950}
+#'
+#'   Burley (2012, 2015). Physically-based shading at Disney; Extending the
+#'   Disney BRDF to a BSDF. SIGGRAPH courses.
+#'   \url{https://disneyanimation.com/publications/physically-based-shading-at-disney/}
+#'
+#'   Walter et al. (2007). Microfacet models for refraction through rough
+#'   surfaces. \doi{10.2312/EGWR/EGSR07/195-206}
+#'
+#'   Heitz (2018). Sampling the GGX distribution of visible normals. JCGT 7(4).
+#'   \url{https://jcgt.org/published/0007/04/01/}
+#'
+#'   Kulla and Conty (2017). Revisiting physically based shading at Imageworks.
+#'   \url{https://blog.selfshadow.com/publications/s2017-shading-course/}
 #' @examples
 #' material_3d("shiny")
 #' material_3d("satin", lighting = "vertex")
@@ -411,16 +451,35 @@ as_lights_3d <- function(light) {
 material_3d <- function(type = "matte", ambient = NULL, diffuse = NULL, specular = NULL, shininess = NULL,
                         specular_colour = NULL, back = NULL, style = "standard", bands = 3L, breaks = NULL,
                         specular_steps = NULL, cool = "#0000AA", warm = "#AAAA00", alpha = 0.2, beta = 0.6,
-                        normal_space = "model", lighting = "pixel") {
+                        normal_space = "model", lighting = "pixel", roughness = NULL, metallic = NULL,
+                        transmission = NULL, ior = 1.5, emission = NULL, emission_strength = 1) {
   presets <- list(matte = c(1, 1, 0, 10, 1), satin = c(1, 1, 0.15, 30, 1), shiny = c(1, 0.75, 0.9, 20, 1),
-                  metal = c(1, 0.375, 1, 25, 0.5))
-  value <- presets[[match.arg(type, names(presets))]]
+                  metal = c(1, 0.375, 1, 25, 0.5), glass = c(1, 0, 1, 1000, 1), mirror = c(1, 0, 1, 1000, 0))
+  type <- match.arg(type, names(presets))
+  value <- presets[[type]]
   names(value) <- c("ambient", "diffuse", "specular", "shininess", "specular_colour")
   given <- list(ambient = ambient, diffuse = diffuse, specular = specular, shininess = shininess, specular_colour = specular_colour)
   for (name in names(given)) if (!is.null(given[[name]])) value[[name]] <- check_light_number_3d(given[[name]], name)
   if (value[["shininess"]] <= 0) stop("shininess must be positive.", call. = FALSE)
   if (value[["specular_colour"]] > 1) stop("specular_colour must lie in [0, 1].", call. = FALSE)
   if (!is.null(back)) back <- check_light_colour_3d(back, "back")
+  physical <- !is.null(roughness) || !is.null(metallic) || !is.null(transmission) || type %in% c("glass", "mirror")
+  roughness <- roughness %or3d% if (type %in% c("glass", "mirror")) 0 else if (type == "matte") 1 else (2 / (value[["shininess"]] + 2))^0.25
+  metallic <- metallic %or3d% as.double(type %in% c("metal", "mirror"))
+  transmission <- transmission %or3d% as.double(type == "glass")
+  for (name in c("roughness", "metallic", "transmission")) {
+    x <- check_light_number_3d(get(name), name)
+    if (x > 1) stop(name, " must lie in [0, 1].", call. = FALSE)
+  }
+  ior <- check_positive_3d(ior, "ior")
+  emission_strength <- check_light_number_3d(emission_strength, "emission_strength")
+  if (!is.null(emission)) emission <- check_light_colour_3d(emission, "emission")
+  if (physical) {
+    if (is.null(shininess)) value[["shininess"]] <- max(1e-6, min(1e6, 2 / max(roughness^4, 1e-6) - 2))
+    if (is.null(specular)) value[["specular"]] <- 1
+    if (is.null(specular_colour)) value[["specular_colour"]] <- 1 - metallic
+    if (is.null(diffuse)) value[["diffuse"]] <- (1 - metallic) * (1 - transmission)
+  }
   style <- match.arg(style, material_styles_3d)
   if (!is.numeric(bands) || length(bands) != 1L || !is.finite(bands) || bands < 2 || bands != round(bands))
     stop("bands must be a whole number of at least two.", call. = FALSE)
@@ -434,7 +493,9 @@ material_3d <- function(type = "matte", ambient = NULL, diffuse = NULL, specular
     breaks = if (is.null(breaks)) numeric() else as.double(breaks), specular_steps = specular_steps,
     cool = check_light_colour_3d(cool, "cool"), warm = check_light_colour_3d(warm, "warm"), alpha = alpha, beta = beta,
     normal_space = match.arg(normal_space, c("model", "camera", "light")),
-    lighting = match.arg(lighting, c("pixel", "vertex")))), class = "ggplot3d_material")
+    lighting = match.arg(lighting, c("pixel", "vertex")), roughness = roughness, metallic = metallic,
+    transmission = transmission, ior = ior, emission = emission %or3d% NA_character_,
+    emission_strength = emission_strength)), class = "ggplot3d_material")
 }
 
 # Material styles in the order of the kernel's style ids (src/shade/shade.h),
@@ -450,8 +511,29 @@ material_table_3d <- function(material) {
     style = material$style %or3d% "standard", bands = material$bands %or3d% 3L, specular_steps = material$specular_steps %or3d% FALSE,
     cool = material$cool %or3d% "#0000AA", warm = material$warm %or3d% "#AAAA00", alpha = material$alpha %or3d% 0.2,
     beta = material$beta %or3d% 0.6, normal_space = material$normal_space %or3d% "model",
-    lighting = material$lighting %or3d% "pixel")
+    lighting = material$lighting %or3d% "pixel", roughness = material$roughness %or3d% 1,
+    metallic = material$metallic %or3d% 0, transmission = material$transmission %or3d% 0,
+    ior = material$ior %or3d% 1.5, emission = material$emission %or3d% NA_character_,
+    emission_strength = material$emission_strength %or3d% 1)
   out$breaks <- I(list(material$breaks %or3d% numeric()))
+  out
+}
+
+bind_material_tables_3d <- function(tables) {
+  tables <- Filter(nrow, tables)
+  if (!length(tables)) return(data.frame(material_id = integer()))
+  columns <- unique(unlist(lapply(tables, names), use.names = FALSE))
+  defaults <- material_table_3d(material_3d())
+  tables <- lapply(tables, function(table) {
+    for (name in setdiff(columns, names(table))) {
+      value <- defaults[[name]]
+      if (is.null(value)) value <- Filter(function(x) !is.null(x[[name]]), tables)[[1L]][[name]][NA_integer_]
+      table[[name]] <- if (is.list(value)) I(rep(value, length.out = nrow(table))) else rep(value, length.out = nrow(table))
+    }
+    table[columns]
+  })
+  out <- do.call(rbind, tables)
+  out$material_id <- seq_len(nrow(out)); rownames(out) <- NULL
   out
 }
 
@@ -491,8 +573,12 @@ panel_lights_3d <- function(light, panel_params) {
 # Lights as the shading kernel reads them (src/shade/read.h): vectors in
 # aspect-scaled model space, colours times intensity in linear light (encoded
 # with linear = FALSE).
-resolved_light_3d <- function(light, camera) {
+resolved_light_3d <- function(light, camera, pathtrace = FALSE) {
   light <- as_lights_3d(light)
+  environments <- Filter(function(l) l$kind == light_kinds_3d[["environment"]], light$lights)
+  light$lights <- Filter(function(l) l$kind != light_kinds_3d[["environment"]], light$lights)
+  if (pathtrace) light$ambient <- light$ambient_linear %or3d% light$ambient
+  if (!pathtrace) for (environment in environments) light$ambient <- light$ambient + environment_mean_3d(environment, light$linear)
   scale <- camera$model_scale
   camera_axes <- function(v) camera$right * v[1L] + camera$up * v[2L] - camera$forward * v[3L]
   vectors <- lapply(light$lights, function(l) {
@@ -505,10 +591,11 @@ resolved_light_3d <- function(light, camera) {
     v <- if (l$space == "camera") camera_axes(v) else v * scale
     v / sqrt(sum(v^2))
   })
-  linear <- light$linear %or3d% TRUE
+  linear <- if (pathtrace) TRUE else light$linear %or3d% TRUE
   colour <- function(name) t(vapply(light$lights, function(l) light_rgb_3d(l[[name]], l$intensity, linear), numeric(3)))
   n <- length(light$lights)
-  c(list(kind = vapply(light$lights, `[[`, integer(1), "kind"),
+  c(list(environment = lapply(environments, resolved_environment_3d, camera = camera),
+    kind = vapply(light$lights, `[[`, integer(1), "kind"),
     vector = if (n) do.call(rbind, vectors) else matrix(numeric(), 0L, 3L),
     colour = if (n) colour("colour") else matrix(numeric(), 0L, 3L),
     ground = if (n) colour("ground") else matrix(numeric(), 0L, 3L),
@@ -535,15 +622,7 @@ light_material_packet_3d <- function(packet, light) {
   id <- styles$material_id %or3d% rep(NA_integer_, nrow(styles))
   take <- style_value_3d(styles, "shade", FALSE) %in% TRUE & is.na(id)
   if (!any(take)) return(packet)
-  row <- material_table_3d(material)
-  materials <- packet$materials
-  row$material_id <- nrow(materials) + 1L
-  if (nrow(materials)) {
-    for (name in setdiff(names(row), names(materials))) materials[[name]] <- rep(row[[name]], nrow(materials))
-    for (name in setdiff(names(materials), names(row))) row[[name]] <- materials[[name]][NA_integer_]
-    row <- rbind(materials, row[names(materials)])
-  }
-  rownames(row) <- NULL
+  row <- bind_material_tables_3d(list(packet$materials, material_table_3d(material)))
   packet$materials <- row
   id[take] <- row$material_id[nrow(row)]
   packet$styles$material_id <- as.integer(id)

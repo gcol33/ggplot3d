@@ -1,19 +1,22 @@
-# Axes, legends and pane styling
+# Styling axes, legends and panes
 
 Axes and legends connect the displayed geometry to the variables in a
 table. This article labels a height surface, places its colourbar beside
 the z axis and adjusts the surrounding panes and grids. It assumes the
 mappings introduced in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
-[Camera and
-framing](https://gillescolling.com/ggplot3d/articles/camera.md) explains
+[Choosing camera
+views](https://gillescolling.com/ggplot3d/articles/camera.md) explains
 the view angles used here.
 
-1.  Set the breaks and labels on each position scale.
+1.  **Label** the axes with the position scales and
+    [`guide_axis_3d()`](https://gillescolling.com/ggplot3d/reference/guide_axis_3d.md).
 
-2.  Choose axis guides and a colour guide.
+2.  **Align** a colourbar with the z axis with
+    [`guide_colourbar_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md).
 
-3.  Style the panel with theme elements.
+3.  **Style** the panes and grids with
+    [`theme()`](https://ggplot2.tidyverse.org/reference/theme.html).
 
 ## Example
 
@@ -93,8 +96,8 @@ colours.](guides-themes_files/figure-html/legend-1.svg)
 Discrete fills use
 [guide_legend_3d()](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md).
 Binned scales use the colour-step or bin guides from the same family.
-[Lighting and surface
-styles](https://gillescolling.com/ggplot3d/articles/lighting.html#legends-that-show-the-shading)
+[Lighting and styling
+surfaces](https://gillescolling.com/ggplot3d/articles/lighting.html#legends-that-show-the-shading)
 demonstrates their keys and the lighting controls.
 
 ### Styling panes and grids
@@ -152,8 +155,8 @@ ggplot(points, aes(x, y, z = z)) +
 origin.](guides-themes_files/figure-html/origin-1.svg)
 
 Use `guide_axis_3d(position = "origin")` on an individual axis to move
-only that guide. [The z
-scale](https://gillescolling.com/ggplot3d/articles/z-scale.md) covers
-transformed breaks and facet ranges, and
-[Documents](https://gillescolling.com/ggplot3d/articles/documents.html#accessible-descriptions)
+only that guide. [Scaling heights and facet
+ranges](https://gillescolling.com/ggplot3d/articles/z-scale.md) covers
+transformed breaks and facet ranges, and [Embedding plots in
+reports](https://gillescolling.com/ggplot3d/articles/documents.html#accessible-descriptions)
 shows how to add a description of the finished figure.

@@ -1,9 +1,9 @@
 ---
-title: "Interactive viewing"
+title: "Viewing plots interactively"
 description: "Explore WebGL 2 scenes with tooltips, picking, selection, linked cameras and crosstalk filters."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Interactive viewing}
+  %\VignetteIndexEntry{Viewing plots interactively}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -18,7 +18,7 @@ tooltips and selection. It uses WebGL 2, the browser graphics API, and the
 R packages [htmlwidgets](https://www.htmlwidgets.org/) and
 [svglite](https://svglite.r-lib.org/) to display the scene and its surrounding
 plot elements. This article builds a viewer and links its selections to a
-filter. Installation is covered in [Get started](ggplot3d.html).
+filter. Installation is covered in [Get started](ggplot3d.html). [Embedding plots in reports](documents.html) embeds the viewer in knitr and Quarto output.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -195,6 +195,6 @@ hidden only when its anchor is clipped. Geometry, mapped colours and lighting ar
 transferred once; camera interaction runs in the browser.
 
 Stereo plots use their central camera in the viewer. Static eye pairs and
-anaglyphs are covered in [Camera and framing](camera.html). Use
-[Documents](documents.html) to switch between an HTML viewer and a static
+anaglyphs are covered in [Choosing camera views](camera.html). Use
+[Embedding plots in reports](documents.html) to switch between an HTML viewer and a static
 figure from the same knitr or Quarto chunk.

@@ -1,4 +1,4 @@
-# Mesh processing
+# Smooth, refine and simplify triangle meshes
 
 Verbs on a
 [`mesh_3d()`](https://gillescolling.com/ggplot3d/reference/mesh_3d.md)

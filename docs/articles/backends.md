@@ -1,14 +1,19 @@
-# Output backends
+# Choosing rendering and image formats
 
 A backend turns scene geometry into drawing commands or pixels. This
 article shows how to select one and save its output. Installation is
 covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+Continue with [Embedding plots in
+reports](https://gillescolling.com/ggplot3d/articles/documents.md) for
+documents or [Exporting plots and
+scenes](https://gillescolling.com/ggplot3d/articles/export.md) for model
+files.
 
-1.  Choose rendering with
+1.  **Choose** rendering with
     [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md).
 
-2.  Save the resulting plot with
+2.  **Save** the resulting plot with
     [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
 
 ``` r
@@ -68,7 +73,6 @@ print(vector_plot)
 grDevices::dev.off()
 #> devSVG 
 #>      2
-stopifnot(file.info(path)$size > 0)
 ```
 
 ### Raster rendering
@@ -123,15 +127,15 @@ paths.](backends_files/figure-html/hybrid-1.svg)
 ## Traced fields and lighting
 
 Traced signed distance surfaces and scalar volumes become image layers
-in raster, vector and hybrid panels. [Ray marching and
-volumes](https://gillescolling.com/ggplot3d/articles/ray-marching.md)
+in raster, vector and hybrid panels. [Rendering volumes and traced
+surfaces](https://gillescolling.com/ggplot3d/articles/ray-marching.md)
 shows their depth compositing and the native seeded path tracer. The
 path tracer samples diffuse light transport across meshes and traced
 surfaces, with vector axes and text around the image.
 
 The intrinsic ray-marching backend places an observer inside a geometry.
-[Inside the Thurston
-geometries](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md)
+[Viewing Thurston geometries from
+inside](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md)
 explains its observer and orientation controls.
 
 ## Choosing output
@@ -145,14 +149,15 @@ explains its observer and orientation controls.
 | Diffuse interreflection and soft shadows | Pathtrace | PNG or PDF |
 | Insert a figure into a slide | Either | PNG, PDF or SVG as supported |
 
-Visibility is resolved across each panel’s layers.
-[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md)
+Visibility is resolved across each panel’s layers. [How overlapping
+geometry is
+drawn](https://gillescolling.com/ggplot3d/articles/visibility.md)
 explains the geometric ordering used for vector output and the role of
 finite stroke width.
 
 [Exporting plots and
 scenes](https://gillescolling.com/ggplot3d/articles/export.md) covers
 editable semantic SVG, code for typesetting and model files for 3D
-software. [Interactive
-viewing](https://gillescolling.com/ggplot3d/articles/viewer.md) shows
-orbit controls, picking and linked selection in a browser.
+software. [Viewing plots
+interactively](https://gillescolling.com/ggplot3d/articles/viewer.md)
+shows orbit controls, picking and linked selection in a browser.

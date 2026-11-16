@@ -6,13 +6,21 @@ uncertainty in a summary, depending on how the bounds were computed.
 This article draws intervals on three axes and summarises petal lengths
 by species. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+[Positioning groups and
+observations](https://gillescolling.com/ggplot3d/articles/positions.md)
+separates groups sharing a position.
 
-1.  Map the centre and both bounds for each interval axis.
+1.  **Map** the centre and both bounds of each interval axis in
+    [`aes()`](https://ggplot2.tidyverse.org/reference/aes.html).
 
-2.  Choose capped bars, point ranges or boxes.
+2.  **Draw** capped bars, point ranges or boxes with
+    [`geom_errorbar_3d()`](https://gillescolling.com/ggplot3d/reference/geom_errorbar_3d.md),
+    [`geom_pointrange_3d()`](https://gillescolling.com/ggplot3d/reference/geom_errorbar_3d.md)
+    or
+    [`geom_crossbar_3d()`](https://gillescolling.com/ggplot3d/reference/geom_errorbar_3d.md).
 
-3.  Compute grouped summaries when the input contains repeated
-    observations.
+3.  **Summarise** repeated observations with
+    [`stat_summary_3d()`](https://gillescolling.com/ggplot3d/reference/stat_summary_3d.md).
 
 ## Example
 
@@ -122,10 +130,8 @@ scale-transformed values, so applying a logarithmic scale changes the
 quantity being averaged. Compute summaries in original units before
 plotting when that is the intended quantity.
 
-Mixed singleton and repeated cells can currently produce a
-column-binding error in the summary stat. For such data, prepare the
-summary table first, assigning bounds only where the chosen summary is
-defined.
+A cell with a single observation has no standard error. Its mean is
+drawn as a point without bounds.
 
 ### Preparing a summary table
 
@@ -166,8 +172,8 @@ ranges.](intervals_files/figure-html/precomputed-1.svg)
 [Positioning groups and
 observations](https://gillescolling.com/ggplot3d/articles/positions.md)
 shows how to separate groups within a cell. For fitted-mean uncertainty
-and observation-to-fit segments, use the model examples in [Surfaces,
-solids and
-fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#function-and-fitted-surfaces).
+and observation-to-fit segments, use the model examples in [Building
+surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#function-and-fitted-surfaces).
 Its ellipsoid examples describe three-dimensional spread and uncertainty
 in a mean.

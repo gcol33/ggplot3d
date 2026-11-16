@@ -1,9 +1,9 @@
 ---
-title: "Axes, legends and pane styling"
+title: "Styling axes, legends and panes"
 description: "Choose axis labels, align a colourbar with height, and style the panes and grids of a three-dimensional plot."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Axes, legends and pane styling}
+  %\VignetteIndexEntry{Styling axes, legends and panes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(legend = "bottom")
 ```
 
-Axes and legends connect the displayed geometry to the variables in a table. This article labels a height surface, places its colourbar beside the z axis and adjusts the surrounding panes and grids. It assumes the mappings introduced in [Get started](ggplot3d.html). [Camera and framing](camera.html) explains the view angles used here.
+Axes and legends connect the displayed geometry to the variables in a table. This article labels a height surface, places its colourbar beside the z axis and adjusts the surrounding panes and grids. It assumes the mappings introduced in [Get started](ggplot3d.html). [Choosing camera views](camera.html) explains the view angles used here.
 
 1. **Label** the axes with the position scales and `guide_axis_3d()`.
 
@@ -65,7 +65,7 @@ p + scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E",
   coord_3d()
 ```
 
-Discrete fills use [guide_legend_3d()](../reference/guide_colourbar_3d.html). Binned scales use the colour-step or bin guides from the same family. [Lighting and surface styles](lighting.html#legends-that-show-the-shading) demonstrates their keys and the lighting controls.
+Discrete fills use [guide_legend_3d()](../reference/guide_colourbar_3d.html). Binned scales use the colour-step or bin guides from the same family. [Lighting and styling surfaces](lighting.html#legends-that-show-the-shading) demonstrates their keys and the lighting controls.
 
 ### Styling panes and grids
 
@@ -106,4 +106,4 @@ ggplot(points, aes(x, y, z = z)) +
            panes = character(), box = "none")
 ```
 
-Use `guide_axis_3d(position = "origin")` on an individual axis to move only that guide. [The z scale](z-scale.html) covers transformed breaks and facet ranges, and [Documents](documents.html#accessible-descriptions) shows how to add a description of the finished figure.
+Use `guide_axis_3d(position = "origin")` on an individual axis to move only that guide. [Scaling heights and facet ranges](z-scale.html) covers transformed breaks and facet ranges, and [Embedding plots in reports](documents.html#accessible-descriptions) shows how to add a description of the finished figure.

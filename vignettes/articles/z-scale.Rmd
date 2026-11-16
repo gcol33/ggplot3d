@@ -1,9 +1,9 @@
 ---
-title: "The z scale"
+title: "Scaling heights and facet ranges"
 description: "Transform heights, label categories and dates, and control limits and z ranges across facets."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{The z scale}
+  %\VignetteIndexEntry{Scaling heights and facet ranges}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup()
 ```
 
-The z scale maps heights from data units into panel positions and controls their transformations, categories, limits and facets. Set `coord_3d(z_scales = "free")` for separate z ranges across facets. ggplot2 facets have no z scale. Installation is covered in [Get started](ggplot3d.html).
+The z scale maps heights from data units into panel positions and controls their transformations, categories, limits and facets. Set `coord_3d(z_scales = "free")` for separate z ranges across facets. ggplot2 facets have no z scale. Installation is covered in [Get started](ggplot3d.html). For repeated camera views, see [Choosing camera views](camera.html); [Combining 2D and 3D graphics](combining-2d-3d.html#small-multiples-in-depth) stacks two-dimensional panels in depth.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -76,7 +76,7 @@ ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
   coord_3d(zlim = c(0, 100))
 ```
 
-The shorthand `zlim()` supplies scale limits in original data units. Coordinate limits also use original units. [Surfaces, solids and fields](surfaces-solids.html) explains the transformed units used by statistical surfaces.
+The shorthand `zlim()` supplies scale limits in original data units. Coordinate limits also use original units. [Building surfaces and solids](surfaces-solids.html) explains the transformed units used by statistical surfaces.
 
 ## Facets
 
@@ -103,5 +103,5 @@ ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
   coord_3d() + theme(axis.title.z = element_text(colour = "#2E6F9E"))
 ```
 
-[Axes, legends and pane styling](guides-themes.html) shows edge-following
+[Styling axes, legends and panes](guides-themes.html) shows edge-following
 labels, a colourbar aligned with height and theme elements for individual panes.

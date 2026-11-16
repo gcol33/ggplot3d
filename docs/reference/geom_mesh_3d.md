@@ -180,13 +180,16 @@ A ggplot2 layer.
 ## Details
 
 Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
-POLYGON Z or TIN Z objects. With `shading = "flat"` a numeric vertex
-fill is averaged per face before colour scaling, and every material must
-be constant within each face. With `shading = "smooth"` the fill stays
-per vertex, numeric or given as colours such as `fill = I(hex)`, and
-each face interpolates its corner colours in linear light;
-`shade = FALSE` shows the vertex colours exactly. A discrete fill splits
-the rows into groups, so `group = 1` keeps one mesh.
+POLYGON Z or TIN Z objects. A textured mesh from
+[`read_mesh_3d()`](https://gillescolling.com/ggplot3d/reference/read_mesh_3d.md)
+given as the layer's data drapes its image unless `texture` is supplied.
+With `shading = "flat"` a numeric vertex fill is averaged per face
+before colour scaling, and every material must be constant within each
+face. With `shading = "smooth"` the fill stays per vertex, numeric or
+given as colours such as `fill = I(hex)`, and each face interpolates its
+corner colours in linear light; `shade = FALSE` shows the vertex colours
+exactly. A discrete fill splits the rows into groups, so `group = 1`
+keeps one mesh.
 
 The mesh parameters run the [mesh
 processing](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)

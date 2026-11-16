@@ -2,7 +2,7 @@
 % Please edit documentation in R/clip-planes.R
 \name{clip_plane_3d}
 \alias{clip_plane_3d}
-\title{Clipping planes}
+\title{Define clipping planes for layers and panels}
 \usage{
 clip_plane_3d(normal, point = NULL, cap = FALSE)
 }

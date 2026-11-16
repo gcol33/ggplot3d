@@ -102,6 +102,10 @@ new_scene_packet(
   keys and columns ambient, diffuse, specular, shininess,
   specular_colour and back (a colour or NA), as made by
   [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md).
+  Optional physical columns are roughness, metallic, transmission, ior,
+  emission (colour or NA) and emission_strength; absent columns have the
+  matte defaults of
+  [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md).
   A style's optional integer material_id (NA for the default material)
   refers to it. The engine reads neither; the shading kernel does.
 

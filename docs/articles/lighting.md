@@ -1,11 +1,14 @@
-# Lighting and surface styles
+# Lighting and styling surfaces
 
 A lit surface shows its orientation through brightness. When fill
 represents data, its legend needs to account for the colour changes
 caused by lighting. This article lights a height surface and uses shaded
 colour guides to read it. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md); the
-multi-panel examples use patchwork to arrange the views.
+multi-panel examples use patchwork to arrange the views. [Styling axes,
+legends and
+panes](https://gillescolling.com/ggplot3d/articles/guides-themes.md)
+covers guide placement and panel furniture.
 
 ``` r
 

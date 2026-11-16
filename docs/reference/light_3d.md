@@ -33,9 +33,10 @@ light_3d(
   Lights made with
   [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
   [`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
-  [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+  [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
+  [`light_hemisphere()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
   or
-  [`light_hemisphere()`](https://gillescolling.com/ggplot3d/reference/light_directional.md).
+  [`light_environment()`](https://gillescolling.com/ggplot3d/reference/light_directional.md).
   None gives the lights of `preset`.
 
 - ambient:
@@ -98,8 +99,8 @@ light_3d(
 
 A lighting configuration for
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
-The backends that take one directional light (the path tracer and the
-raymarch backend) use the first directional light.
+The path tracer takes every light. The intrinsic raymarch backend takes
+the first directional light.
 
 ## Details
 

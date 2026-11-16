@@ -20,7 +20,7 @@ light_3d(
 }
 \arguments{
 \item{...}{Lights made with \code{\link[=light_directional]{light_directional()}}, \code{\link[=light_point]{light_point()}},
-\code{\link[=light_head]{light_head()}} or \code{\link[=light_hemisphere]{light_hemisphere()}}. None gives the lights of
+\code{\link[=light_head]{light_head()}}, \code{\link[=light_hemisphere]{light_hemisphere()}} or \code{\link[=light_environment]{light_environment()}}. None gives the lights of
 \code{preset}.}
 
 \item{ambient}{Uniform ambient light: a nonnegative strength (a grey) or
@@ -61,9 +61,8 @@ eye (infinitely far under orthographic projection).}
 \code{"headlight"}, \code{"soft"} or \code{"studio"}.}
 }
 \value{
-A lighting configuration for \code{\link[=coord_3d]{coord_3d()}}. The backends that take
-one directional light (the path tracer and the raymarch backend) use the
-first directional light.
+A lighting configuration for \code{\link[=coord_3d]{coord_3d()}}. The path tracer takes
+every light. The intrinsic raymarch backend takes the first directional light.
 }
 \description{
 Combines light sources with an ambient term and sets how the light changes

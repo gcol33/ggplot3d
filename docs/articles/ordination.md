@@ -1,11 +1,13 @@
-# Ordination biplots
+# Drawing ordination biplots
 
 An ordination places observations on a small set of axes computed from
 their measured variables. A biplot draws the observations and variable
 directions in the same view.
 [`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
 composes site points, solid-headed quiver arrows and optional group
-regions.
+regions. [Drawing tensor
+glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md) explains
+how matrix-valued observations define oriented shapes.
 
 The examples use iris measurements to draw principal-component scores,
 match groups by identifier and display ecological ordination scores.

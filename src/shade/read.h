@@ -47,10 +47,14 @@ static inline std::vector<Material> read_materials(const Rcpp::List& x) {
     shininess = x["shininess"], reflectance = x["specular_colour"];
   Rcpp::NumericMatrix back = x["back"], a = x["a"], b = x["b"];
   Rcpp::NumericVector style = x["style"], steps = x["steps"], bands = x["bands"], breaks = x["breaks"];
+  Rcpp::NumericVector roughness = x["roughness"], metallic = x["metallic"], transmission = x["transmission"], ior = x["ior"];
+  Rcpp::NumericMatrix emission = x["emission"];
   for (R_xlen_t i = 0; i < ambient.size(); ++i) {
     Material m;
     m.ambient = ambient[i]; m.diffuse = diffuse[i]; m.specular = specular[i];
     m.shininess = shininess[i]; m.specular_colour = reflectance[i];
+    m.roughness = roughness[i]; m.metallic = metallic[i]; m.transmission = transmission[i]; m.ior = ior[i];
+    m.emission = row3(emission, i);
     m.has_back = std::isfinite(back(i, 0) + back(i, 1) + back(i, 2));
     if (m.has_back) m.back = row3(back, i);
     m.style = style[i]; m.steps = steps[i]; m.bands = bands[i]; m.breaks = breaks[i];

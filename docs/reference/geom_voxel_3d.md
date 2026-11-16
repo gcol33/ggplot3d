@@ -1,4 +1,4 @@
-# Voxels
+# Draw voxel cells on a three-dimensional lattice
 
 Draws one box per row, centred on x, y, z. Box sizes are `width`,
 `depth` and `height` along x, y and z, by default the smallest spacing

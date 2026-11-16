@@ -1,6 +1,8 @@
 #include "raymarch/kernel.h"
 #include "raymarch/volume.h"
 #include "raymarch/path.h"
+#include "raymarch/film.h"
+#include "raymarch/hdr.h"
 #include "raymarch/thurston-scene.h"
 using namespace ggplot3d::raymarch;
 
@@ -164,6 +166,7 @@ Rcpp::List raymarch_volume_cpp(Rcpp::List inputs,Rcpp::NumericMatrix origins,Rcp
 struct PathContext {
   ggplot3d::engine::Projection projection;
   TraceScene scene;
+  std::vector<PathPixel> film;int width=0,height=0,issued=0;
   PathContext(Rcpp::List mesh,Rcpp::List fields,Rcpp::List camera,Rcpp::List viewport):
     projection(ggplot3d::engine::read_camera(camera),ggplot3d::Viewport{Rcpp::as<double>(viewport["width_mm"]),Rcpp::as<double>(viewport["height_mm"]),Rcpp::as<double>(viewport["dpi"])}),
     scene(mesh,fields,projection.scale,projection.camera.clip_data){}
@@ -175,28 +178,68 @@ SEXP raymarch_path_prepare_cpp(Rcpp::List mesh,Rcpp::List fields,Rcpp::List came
 }
 
 // [[Rcpp::export(rng = false)]]
-Rcpp::NumericMatrix raymarch_path_cpp(SEXP pointer,int width,int height,Rcpp::NumericVector extent,
-  Rcpp::List settings,Rcpp::NumericVector illumination,int start,int samples,Rcpp::NumericMatrix previous,int threads) {
+void raymarch_path_cpp(SEXP pointer,int width,int height,Rcpp::NumericVector extent,
+  Rcpp::List settings,Rcpp::List illumination,int start,int samples,int threads) {
   Rcpp::XPtr<PathContext> ctx(pointer);require(ctx.get()!=nullptr,"Invalid path-trace scene");
   require(width>0 && height>0 && double(width)*height<=std::numeric_limits<int>::max() && extent.size()==4,"Invalid path-trace dimensions");
   std::size_t n=std::size_t(width)*height;
-  require(previous.nrow()==int(n) && previous.ncol()==4 && start>=0 && samples>0 && double(start)+samples<=std::numeric_limits<int>::max(),"Invalid progressive accumulation");
-  require(illumination.size()==5,"Invalid path-trace lighting");
+  require(start>=0 && samples>0 && double(start)+samples<=std::numeric_limits<int>::max(),"Invalid progressive accumulation");
   int bounces=Rcpp::as<int>(settings["bounces"]);double aperture=Rcpp::as<double>(settings["aperture"]),focus=Rcpp::as<double>(settings["focus"]);
   double epsilon=Rcpp::as<double>(settings["epsilon"]),angle=Rcpp::as<double>(settings["light_radius"])*ggplot3d::engine::pi/180;
   require(bounces>0 && aperture>=0 && focus>0 && epsilon>0 && angle>=0 && angle<ggplot3d::engine::pi/2,"Invalid path-trace controls");
   std::uint64_t seed=Rcpp::as<double>(settings["seed"]);
-  PathLight light{unit({illumination[0],illumination[1],illumination[2]}),illumination[3],illumination[4],std::cos(angle)};
-  std::vector<std::array<double,4>> sums(n);for(std::size_t i=0;i<n;++i)for(int k=0;k<4;++k)sums[i][k]=previous(i,k);
+  PathLights light(ctx->scene,illumination,ctx->projection,Rcpp::as<double>(settings["light_radius"]));
+  double threshold=Rcpp::as<double>(settings["noise_threshold"]);int minimum=Rcpp::as<int>(settings["min_samples"]);
+  int estimator=settings.containsElementNamed("estimator") ? Rcpp::as<int>(settings["estimator"]):0;
+  require(std::isfinite(threshold) && threshold>=0 && minimum>0 && estimator>=0 && estimator<=2,"Invalid sampling controls");
+  if(start==0){ctx->film.assign(n,PathPixel{});ctx->width=width;ctx->height=height;ctx->issued=0;}
+  require(ctx->width==width && ctx->height==height && ctx->issued==start,"Progressive image state does not match sample offset");
+  for(const auto& m:ctx->scene.materials)if(m.metallic>0 && m.roughness>0){ggx_energy();break;}
   ggplot3d::engine::parallel_blocks((n+63)/64,threads==0 ? std::max(1u,std::thread::hardware_concurrency()):threads,[&](std::size_t block){
     for(std::size_t i=block*64;i<std::min(n,(block+1)*64);++i) {
       int x=i/height,y=i%height;
-      for(int s=start;s<start+samples;++s){Sampler rng(seed,i,s);
+      auto& pixel=ctx->film[i];if(pixel.stopped)continue;
+      for(int s=0;s<samples;++s){Sampler rng(seed,i,pixel.count);
         double px=extent[0]+(x+rng.next())*(extent[2]-extent[0])/width,py=extent[3]-(y+rng.next())*(extent[3]-extent[1])/height;
         Ray ray=lens_ray(ctx->projection,px,py,aperture,focus,rng);
-        auto value=path_sample(ctx->scene,ray,light,bounces,rng,epsilon);for(int k=0;k<4;++k)sums[i][k]+=value[k];
+        auto value=path_sample(ctx->scene,ray,light,bounces,rng,epsilon,estimator);pixel.add(value);
+        if(pixel.converged(threshold,minimum)){pixel.stopped=true;break;}
       }
     }
   });
-  Rcpp::NumericMatrix out(n,4);for(std::size_t i=0;i<n;++i)for(int k=0;k<4;++k)out(i,k)=sums[i][k];return out;
+  ctx->issued=start+samples;
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List raymarch_path_finish_cpp(SEXP pointer,bool denoise) {
+  Rcpp::XPtr<PathContext> ctx(pointer);require(ctx.get()!=nullptr && !ctx->film.empty(),"Invalid path-trace film");
+  return finish_film(ctx->film,ctx->width,ctx->height,denoise);
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericVector raymarch_hdr_cpp(std::string path) {return read_hdr(path);}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericMatrix raymarch_sampler_cpp(int samples,int dimensions,int seed) {
+  require(samples>0 && dimensions>0 && seed>=0,"Invalid sampler dimensions");Rcpp::NumericMatrix out(samples,dimensions);
+  for(int s=0;s<samples;++s){Sampler rng(seed,0,s);for(int d=0;d<dimensions;++d)out(s,d)=rng.next();}return out;
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::List raymarch_bsdf_cpp(Rcpp::List material,Rcpp::NumericVector colour,Rcpp::NumericVector view,int samples,int seed) {
+  require(colour.size()==3 && view.size()==3 && samples>0 && seed>=0,"Invalid BSDF probe");
+  auto materials=ggplot3d::shade::read_materials(material);require(materials.size()==2,"BSDF probe needs one material");
+  Vec3 v=unit({view[0],view[1],view[2]});require(v[2]>0,"BSDF probe view must face the surface");
+  Bsdf bsdf(materials[1],{colour[0],colour[1],colour[2]},{0,0,1},v,true);if(materials[1].metallic>0)ggx_energy();
+  Rcpp::NumericMatrix weight(samples,3),direction(samples,3),value(samples,3);Rcpp::NumericVector pdf(samples);Rcpp::LogicalVector delta(samples);
+  for(int s=0;s<samples;++s){Sampler rng(seed,0,s);auto sample=bsdf.sample(rng);auto evaluation=bsdf.evaluate(sample.direction);
+    pdf[s]=sample.pdf;delta[s]=sample.delta;for(int k=0;k<3;++k){weight(s,k)=sample.weight[k];direction(s,k)=sample.direction[k];value(s,k)=evaluation.f[k];}}
+  return Rcpp::List::create(Rcpp::Named("weight")=weight,Rcpp::Named("direction")=direction,Rcpp::Named("pdf")=pdf,Rcpp::Named("delta")=delta,Rcpp::Named("value")=value);
+}
+
+// [[Rcpp::export(rng = false)]]
+Rcpp::NumericMatrix raymarch_medium_cpp(Rcpp::List input,Rcpp::NumericVector origin,Rcpp::NumericVector direction,double distance,int samples,int seed) {
+  require(origin.size()==3 && direction.size()==3 && distance>0 && samples>0 && seed>=0,"Invalid medium probe");
+  TracedVolume volume(input,{1,1,1});Ray ray{{origin[0],origin[1],origin[2]},unit({direction[0],direction[1],direction[2]}),0,distance};
+  Rcpp::NumericMatrix out(samples,2);for(int s=0;s<samples;++s){Sampler rng(seed,0,s);out(s,0)=volume.track(ray,rng,false);rng.stream(0,1);out(s,1)=std::isinf(volume.track(ray,rng,true)) ? 1:0;}return out;
 }

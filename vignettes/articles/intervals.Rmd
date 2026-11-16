@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(legend = "bottom")
 ```
 
-Intervals show supplied lower and upper bounds around a position. They can describe measurement uncertainty, variation among observations or uncertainty in a summary, depending on how the bounds were computed. This article draws intervals on three axes and summarises petal lengths by species. Installation is covered in [Get started](ggplot3d.html).
+Intervals show supplied lower and upper bounds around a position. They can describe measurement uncertainty, variation among observations or uncertainty in a summary, depending on how the bounds were computed. This article draws intervals on three axes and summarises petal lengths by species. Installation is covered in [Get started](ggplot3d.html). [Positioning groups and observations](positions.html) separates groups sharing a position.
 
 1. **Map** the centre and both bounds of each interval axis in `aes()`.
 
@@ -114,4 +114,4 @@ ggplot(summary_table, aes(species, y = 0, z = mean,
   labs(z = "Petal length (cm)", y = NULL) + coord_3d()
 ```
 
-[Positioning groups and observations](positions.html) shows how to separate groups within a cell. For fitted-mean uncertainty and observation-to-fit segments, use the model examples in [Surfaces, solids and fields](surfaces-solids.html#function-and-fitted-surfaces). Its ellipsoid examples describe three-dimensional spread and uncertainty in a mean.
+[Positioning groups and observations](positions.html) shows how to separate groups within a cell. For fitted-mean uncertainty and observation-to-fit segments, use the model examples in [Building surfaces and solids](surfaces-solids.html#function-and-fitted-surfaces). Its ellipsoid examples describe three-dimensional spread and uncertainty in a mean.

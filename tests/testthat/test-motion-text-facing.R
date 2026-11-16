@@ -13,13 +13,12 @@ test_that("viewer outline buffers follow camera movement and match static geomet
       b$eval(paste0("window.uploaded = []; const el = document.getElementById('text-follow');",
         "const gl = el.querySelector('canvas').getContext('webgl2');",
         "const upload = gl.bufferSubData.bind(gl); gl.bufferSubData = (target, offset, bytes) => {",
-        "if (bytes instanceof Uint8Array) { const d = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);",
-        "for (let i=0; i<bytes.length; i+=132) uploaded.push([0,4,8].map(k => d.getFloat32(i+k, true))); }",
+        "if (bytes instanceof Uint8Array) uploaded.push(Array.from(bytes));",
         "return upload(target, offset, bytes); };"))
       for (azimuth in c(-25, 75)) {
         actual <- b$eval(sprintf(paste0("uploaded = []; el.ggplot3d.setCamera({azimuth: %f});",
           "el.ggplot3d.redraw(); uploaded.slice();"), azimuth))
-        actual <- matrix(unlist(actual), ncol = 3L, byrow = TRUE)
+        bytes <- as.raw(unlist(actual))
         camera <- s$camera
         camera$azimuth <- azimuth
         camera$zoom <- camera$zoom * w$x$panels[[1L]]$framing$zoom_scale
@@ -27,6 +26,9 @@ test_that("viewer outline buffers follow camera movement and match static geomet
         viewport <- new_scene_viewport(vp$width_mm, vp$height_mm, vp$dpi)
         packet <- resolve_glyph_packets_3d(list(s$packet), camera, viewport)[[1L]]
         xyz <- scene_vertices_xyz_3d(packet$vertices)[packet$corners$vertex, , drop = FALSE]
+        stride <- length(bytes) / nrow(xyz)
+        expect_equal(stride %% 4, 0)
+        actual <- t(matrix(readBin(bytes, numeric(), n = length(bytes) / 4, size = 4, endian = "little"), nrow = stride / 4)[1:3, , drop = FALSE])
         expect_equal(unname(actual), unname(xyz), tolerance = 2e-6)
         hits <- viewer_hits(b, "text-follow", step = 4)
         expect_gt(length(hits), 0L)

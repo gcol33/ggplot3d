@@ -36,7 +36,8 @@ ggplot3d supports:
   and facets.
 - Vector drawing and raster rendering from the same scene geometry.
 
-[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html)
+[How overlapping geometry is
+drawn](https://gillescolling.com/ggplot3d/articles/visibility.html)
 explains how overlapping geometry is ordered and split.
 
 ## Installation
@@ -154,36 +155,50 @@ Start with [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.html) to
 create and save a plot.
 
-- [The z
-  scale](https://gillescolling.com/ggplot3d/articles/z-scale.html):
+The [article
+index](https://gillescolling.com/ggplot3d/articles/index.html) groups
+guides by building plots, data types, appearance, output and sharing,
+scientific examples, mathematical examples, and internals and
+extensions.
+
+- [Preparing data for 3D
+  layers](https://gillescolling.com/ggplot3d/articles/data-preparation.html):
+  coordinate tables, joins, grouped paths and matrix grids.
+- [Scaling heights and facet
+  ranges](https://gillescolling.com/ggplot3d/articles/z-scale.html):
   transformations, categories, limits and facets.
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.html):
+- [Choosing layers for observations and
+  grids](https://gillescolling.com/ggplot3d/articles/layers.html):
   points, paths, gridded surfaces, columns, distributions and intervals.
-- [Surfaces, solids and
-  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html):
+- [Building surfaces and
+  solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html):
   meshes, fitted and level surfaces, hulls, solid glyphs and sweeps.
-- [Camera and
-  framing](https://gillescolling.com/ggplot3d/articles/camera.html):
-  view angles, projections and plot bounds.
+- [Choosing camera
+  views](https://gillescolling.com/ggplot3d/articles/camera.html): view
+  angles, projections and plot bounds.
 - [Positioning groups and
   observations](https://gillescolling.com/ggplot3d/articles/positions.html):
   jitter, dodge, stack and align labels.
-- [Axes, legends and pane
-  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.html):
+- [Styling axes, legends and
+  panes](https://gillescolling.com/ggplot3d/articles/guides-themes.html):
   labels, colourbars and panel styling.
 - [Displaying intervals and
   summaries](https://gillescolling.com/ggplot3d/articles/intervals.html):
   supplied bounds and grouped summaries.
-- [Output
-  backends](https://gillescolling.com/ggplot3d/articles/backends.html):
+- [Slicing fields and point
+  densities](https://gillescolling.com/ggplot3d/articles/field-slices.html):
+  axis-aligned and oblique sections, contours and density bandwidths.
+- [Choosing rendering and image
+  formats](https://gillescolling.com/ggplot3d/articles/backends.html):
   vector, raster and hybrid rendering, including PDF output.
-- [Lighting and surface
-  styles](https://gillescolling.com/ggplot3d/articles/lighting.html):
+- [Lighting and styling
+  surfaces](https://gillescolling.com/ggplot3d/articles/lighting.html):
   light presets, materials and shaded legends.
-- [Camera animation and
-  interaction](https://gillescolling.com/ggplot3d/articles/motion.html):
-  camera paths and changing data.
-- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html):
+- [Animating cameras and
+  data](https://gillescolling.com/ggplot3d/articles/motion.html): camera
+  paths and changing data.
+- [How overlapping geometry is
+  drawn](https://gillescolling.com/ggplot3d/articles/visibility.html):
   how the scene resolves overlapping geometry.
 
 Function help is available in R, for example `?coord_3d` and

@@ -97,10 +97,10 @@ grouped +
   coord_3d()
 ```
 
-Stacking requires a shared zero baseline and a linear continuous scale along the stacking axis. Positions operate after scale transformation: a nudge of one on a base-ten log scale multiplies the original coordinate by ten. [The z scale](z-scale.html) explains transformations and limits.
+Stacking requires a shared zero baseline and a linear continuous scale along the stacking axis. Positions operate after scale transformation: a nudge of one on a base-ten log scale multiplies the original coordinate by ten. [Scaling heights and facet ranges](z-scale.html) explains transformations and limits.
 
 ## Projecting onto panes
 
 To show a cloud's margins, use [position_project_3d()](../reference/position_project_3d.html). It projects the layer onto a chosen pane or a plane at a data value. [Combining 2D and 3D graphics](combining-2d-3d.html#projecting-points-onto-the-floor-and-walls) works through floor and wall projections, including two-dimensional marginal plots.
 
-Position support depends on the geometry. The layer's help page lists supported adjustments; an unsupported combination reports an error. [Layers](layers.html) includes examples of columns, bands and area walls that can be stacked.
+Position support depends on the geometry. The layer's help page lists supported adjustments; an unsupported combination reports an error. [Choosing layers for observations and grids](layers.html) includes examples of columns, bands and area walls that can be stacked.

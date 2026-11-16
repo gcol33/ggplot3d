@@ -1,9 +1,14 @@
-# Camera and framing
+# Choosing camera views
 
 Camera controls choose the direction from which a scene is viewed.
 Framing controls the bounds used to fit that view on the page.
 Installation is covered in [Get
-started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md). Use
+[Animating cameras and
+data](https://gillescolling.com/ggplot3d/articles/motion.md) for moving
+views and [Styling axes, legends and
+panes](https://gillescolling.com/ggplot3d/articles/guides-themes.md) for
+the surrounding guides.
 
 ``` r
 
@@ -180,9 +185,9 @@ glasses.](camera_files/figure-html/stereo-anaglyph-1.svg)
 Vector and hybrid output use device multiply compositing when available.
 Raster output composites the two eye images per channel; devices without
 multiply support also use that raster composite and require ragg.
-[Interactive
-viewing](https://gillescolling.com/ggplot3d/articles/viewer.md) uses the
-central camera in a browser. Intrinsic stereo needs separately
-configured observers and orientations for each eye in [Inside the
-Thurston
-geometries](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md).
+[Viewing plots
+interactively](https://gillescolling.com/ggplot3d/articles/viewer.md)
+uses the central camera in a browser. Intrinsic stereo needs separately
+configured observers and orientations for each eye in [Viewing Thurston
+geometries from
+inside](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md).

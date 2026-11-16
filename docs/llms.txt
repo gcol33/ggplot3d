@@ -25,7 +25,8 @@ ggplot3d supports:
   and facets.
 - Vector drawing and raster rendering from the same scene geometry.
 
-[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html)
+[How overlapping geometry is
+drawn](https://gillescolling.com/ggplot3d/articles/visibility.html)
 explains how overlapping geometry is ordered and split.
 
 ## Installation
@@ -157,36 +158,50 @@ Start with [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.html) to
 create and save a plot.
 
-- [The z
-  scale](https://gillescolling.com/ggplot3d/articles/z-scale.html):
+The [article
+index](https://gillescolling.com/ggplot3d/articles/index.html) groups
+guides by building plots, data types, appearance, output and sharing,
+scientific examples, mathematical examples, and internals and
+extensions.
+
+- [Preparing data for 3D
+  layers](https://gillescolling.com/ggplot3d/articles/data-preparation.html):
+  coordinate tables, joins, grouped paths and matrix grids.
+- [Scaling heights and facet
+  ranges](https://gillescolling.com/ggplot3d/articles/z-scale.html):
   transformations, categories, limits and facets.
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.html):
+- [Choosing layers for observations and
+  grids](https://gillescolling.com/ggplot3d/articles/layers.html):
   points, paths, gridded surfaces, columns, distributions and intervals.
-- [Surfaces, solids and
-  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html):
+- [Building surfaces and
+  solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html):
   meshes, fitted and level surfaces, hulls, solid glyphs and sweeps.
-- [Camera and
-  framing](https://gillescolling.com/ggplot3d/articles/camera.html):
-  view angles, projections and plot bounds.
+- [Choosing camera
+  views](https://gillescolling.com/ggplot3d/articles/camera.html): view
+  angles, projections and plot bounds.
 - [Positioning groups and
   observations](https://gillescolling.com/ggplot3d/articles/positions.html):
   jitter, dodge, stack and align labels.
-- [Axes, legends and pane
-  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.html):
+- [Styling axes, legends and
+  panes](https://gillescolling.com/ggplot3d/articles/guides-themes.html):
   labels, colourbars and panel styling.
 - [Displaying intervals and
   summaries](https://gillescolling.com/ggplot3d/articles/intervals.html):
   supplied bounds and grouped summaries.
-- [Output
-  backends](https://gillescolling.com/ggplot3d/articles/backends.html):
+- [Slicing fields and point
+  densities](https://gillescolling.com/ggplot3d/articles/field-slices.html):
+  axis-aligned and oblique sections, contours and density bandwidths.
+- [Choosing rendering and image
+  formats](https://gillescolling.com/ggplot3d/articles/backends.html):
   vector, raster and hybrid rendering, including PDF output.
-- [Lighting and surface
-  styles](https://gillescolling.com/ggplot3d/articles/lighting.html):
+- [Lighting and styling
+  surfaces](https://gillescolling.com/ggplot3d/articles/lighting.html):
   light presets, materials and shaded legends.
-- [Camera animation and
-  interaction](https://gillescolling.com/ggplot3d/articles/motion.html):
-  camera paths and changing data.
-- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html):
+- [Animating cameras and
+  data](https://gillescolling.com/ggplot3d/articles/motion.html): camera
+  paths and changing data.
+- [How overlapping geometry is
+  drawn](https://gillescolling.com/ggplot3d/articles/visibility.html):
   how the scene resolves overlapping geometry.
 
 Function help is available in R, for example
@@ -254,7 +269,10 @@ Download the citation as
 
 # Package index
 
-## Coordinates and lighting
+## Coordinates and camera views
+
+Set the plotting box, projection and viewing direction. See [Choosing
+camera views](https://gillescolling.com/ggplot3d/articles/camera.md).
 
 - [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
   : Exact three-dimensional panel coordinates
@@ -264,23 +282,8 @@ Download the citation as
   : Show one 3D scene from several views
 - [`stereo_3d()`](https://gillescolling.com/ggplot3d/reference/stereo_3d.md)
   : Stereo output for 3D panels
-- [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
-  : Lighting for a 3D scene
-- [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  [`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  [`light_hemisphere()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  : Lights for a 3D scene
-- [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md)
-  : Surface materials
-- [`shadow_3d()`](https://gillescolling.com/ggplot3d/reference/shadow_3d.md)
-  : Planar cast shadows
-- [`depth_cue_3d()`](https://gillescolling.com/ggplot3d/reference/depth_cue_3d.md)
-  : Depth cues: fog, line width and eye-dome lighting
-- [`clip_plane_3d()`](https://gillescolling.com/ggplot3d/reference/clip_plane_3d.md)
-  : Clipping planes
 
-## Curvilinear and compositional frames
+## Angles, geographic coordinates and compositions
 
 - [`coord_cylindrical_3d()`](https://gillescolling.com/ggplot3d/reference/coord_cylindrical_3d.md)
   : Cylindrical three-dimensional coordinates
@@ -293,7 +296,7 @@ Download the citation as
 - [`coord_simplex_3d()`](https://gillescolling.com/ggplot3d/reference/coord_simplex_3d.md)
   : Quaternary simplex coordinates
 
-## Z position scales
+## Height scales
 
 - [`scale_z_continuous()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
   [`scale_z_discrete()`](https://gillescolling.com/ggplot3d/reference/scale_z_continuous.md)
@@ -307,7 +310,7 @@ Download the citation as
 - [`zlim()`](https://gillescolling.com/ggplot3d/reference/zlim.md) : Set
   z scale limits
 
-## Point, path and polygon layers
+## Points, paths, polygons and labels
 
 - [`geom_point_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
   [`geom_path_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md)
@@ -321,30 +324,33 @@ Download the citation as
   : Labels with boxes and labels that repel each other
 - [`geom_band_3d()`](https://gillescolling.com/ggplot3d/reference/geom_band_3d.md)
   : Draw a three-dimensional ribbon or wall
-- [`geom_boxplot_3d()`](https://gillescolling.com/ggplot3d/reference/geom_boxplot_3d.md)
-  [`geom_violin_3d()`](https://gillescolling.com/ggplot3d/reference/geom_boxplot_3d.md)
-  : Boxplots and violins standing on an x/y plane
 - [`geom_area_3d()`](https://gillescolling.com/ggplot3d/reference/geom_area_3d.md)
   [`geom_waterfall_3d()`](https://gillescolling.com/ggplot3d/reference/geom_area_3d.md)
   : Filled area walls and waterfall curtains
 - [`geom_dropline_3d()`](https://gillescolling.com/ggplot3d/reference/geom_dropline_3d.md)
   : Drop segments from points to a box face
-- [`geom_quiver_3d()`](https://gillescolling.com/ggplot3d/reference/geom_quiver_3d.md)
-  [`geom_cone_3d()`](https://gillescolling.com/ggplot3d/reference/geom_quiver_3d.md)
-  : Vector fields with solid cone heads
 - [`geom_rug_3d()`](https://gillescolling.com/ggplot3d/reference/geom_rug_3d.md)
   : Rug ticks on the walls of the panel box
-- [`geom_plane_3d()`](https://gillescolling.com/ggplot3d/reference/geom_plane_3d.md)
-  : Reference planes
+
+## Reference geometry and clipping
+
 - [`annotate_3d()`](https://gillescolling.com/ggplot3d/reference/annotate_3d.md)
   : Annotations with a height
+- [`geom_plane_3d()`](https://gillescolling.com/ggplot3d/reference/geom_plane_3d.md)
+  : Draw reference planes through a 3D panel
 - [`geom_refline_3d()`](https://gillescolling.com/ggplot3d/reference/geom_refline_3d.md)
   [`geom_abline_3d()`](https://gillescolling.com/ggplot3d/reference/geom_refline_3d.md)
   : Reference lines through the panel box
 - [`geom_bracket_3d()`](https://gillescolling.com/ggplot3d/reference/geom_bracket_3d.md)
   : Brackets and dimension lines between two points
+- [`clip_plane_3d()`](https://gillescolling.com/ggplot3d/reference/clip_plane_3d.md)
+  : Define clipping planes for layers and panels
 
-## Interval layers
+## Intervals and summaries
+
+Draw supplied bounds or summarise repeated observations. See [Displaying
+intervals and
+summaries](https://gillescolling.com/ggplot3d/articles/intervals.md).
 
 - [`geom_errorbar_3d()`](https://gillescolling.com/ggplot3d/reference/geom_errorbar_3d.md)
   [`geom_linerange_3d()`](https://gillescolling.com/ggplot3d/reference/geom_errorbar_3d.md)
@@ -357,22 +363,8 @@ Download the citation as
 - [`stat_summary_3d()`](https://gillescolling.com/ggplot3d/reference/stat_summary_3d.md)
   : Summarise one axis at each position on the other two
 
-## Surface and solid layers
+## Columns, bins and voxels
 
-- [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md)
-  [`stat_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md)
-  : Triangulated surfaces in three dimensions
-- [`geom_contour_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
-  [`geom_contour_filled_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
-  : Contours following a triangulated surface or a horizontal plane
-- [`geom_mesh_3d()`](https://gillescolling.com/ggplot3d/reference/geom_mesh_3d.md)
-  : Draw an external triangle or polygon mesh
-- [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md)
-  : Feature lines of surfaces and meshes
-- [`edges_3d()`](https://gillescolling.com/ggplot3d/reference/edges_3d.md)
-  : Mesh lines over surfaces
-- [`hatch_3d()`](https://gillescolling.com/ggplot3d/reference/hatch_3d.md)
-  : Hatching of surfaces and meshes
 - [`geom_col_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
   [`geom_bar_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
   [`stat_count_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
@@ -388,199 +380,118 @@ Download the citation as
 - [`geom_extrude_3d()`](https://gillescolling.com/ggplot3d/reference/geom_extrude_3d.md)
   : Extrude polygon rings along z
 - [`geom_voxel_3d()`](https://gillescolling.com/ggplot3d/reference/geom_voxel_3d.md)
-  : Voxels
-- [`geom_volume_3d()`](https://gillescolling.com/ggplot3d/reference/geom_volume_3d.md)
-  : Ray-marched scalar volumes
-- [`geom_tube_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md)
-  [`geom_ribbon_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md)
-  : Tubes and ribbons along curves
-- [`geom_sphere_3d()`](https://gillescolling.com/ggplot3d/reference/geom_sphere_3d.md)
-  : Spheres
-- [`geom_ellipsoid_3d()`](https://gillescolling.com/ggplot3d/reference/geom_ellipsoid_3d.md)
-  : Ellipsoids
-- [`geom_tensor_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tensor_3d.md)
-  : Symmetric tensor glyphs
-- [`stat_ellipsoid_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ellipsoid_3d.md)
-  : Covariance and confidence ellipsoids
-- [`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
-  : Compose a three-axis ordination biplot
-- [`geom_glyph_3d()`](https://gillescolling.com/ggplot3d/reference/geom_glyph_3d.md)
-  : One solid glyph per observation
+  : Draw voxel cells on a three-dimensional lattice
+- [`stat_bin_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_3d.md)
+  : Three-dimensional bin counts
 
-## Network and tree layers
+## Surfaces, meshes and point clouds
 
-- [`geom_edge_3d()`](https://gillescolling.com/ggplot3d/reference/geom_edge_3d.md)
-  [`geom_node_3d()`](https://gillescolling.com/ggplot3d/reference/geom_edge_3d.md)
-  : Network edges and nodes
-- [`fortify(`*`<igraph>`*`)`](https://gillescolling.com/ggplot3d/reference/fortify.igraph.md)
-  : Fortify a graph for three-dimensional plotting
-- [`get_edges_3d()`](https://gillescolling.com/ggplot3d/reference/get_edges_3d.md)
-  : Edge table of a fortified graph
-- [`stat_layers_3d()`](https://gillescolling.com/ggplot3d/reference/stat_layers_3d.md)
-  : Multilayer networks
-- [`stat_dendrogram_3d()`](https://gillescolling.com/ggplot3d/reference/stat_dendrogram_3d.md)
-  : Dendrograms on a plane
-
-## Spatial data
-
-- [`geom_spatraster_3d()`](https://gillescolling.com/ggplot3d/reference/geom_spatraster_3d.md)
-  : Rasters as height surfaces
-- [`geom_sf_3d()`](https://gillescolling.com/ggplot3d/reference/geom_sf_3d.md)
-  : Simple features in three dimensions
-- [`stat_profile_3d()`](https://gillescolling.com/ggplot3d/reference/stat_profile_3d.md)
-  : Cross-sections of a surface along a line
-- [`geom_arc_3d()`](https://gillescolling.com/ggplot3d/reference/geom_arc_3d.md)
-  : Flow arcs between two points
-
-## 2D plots on planes
-
-- [`annotation_plot_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_plot_3d.md)
-  : A two-dimensional plot on a plane of the panel box
-- [`facet_slices_3d()`](https://gillescolling.com/ggplot3d/reference/facet_slices_3d.md)
-  : Small multiples on parallel planes
-
-## Images and textures
-
-- [`texture_3d()`](https://gillescolling.com/ggplot3d/reference/texture_3d.md)
-  : Images for textured faces
-- [`annotation_raster_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_raster_3d.md)
-  : An image on a plane of the panel
-- [`geom_raster_3d()`](https://gillescolling.com/ggplot3d/reference/geom_raster_3d.md)
-  : Rasters on planes
-
-## Statistical layers
-
-- [`stat_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
-  [`geom_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
-  : Sample a bivariate function in three dimensions
-- [`stat_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
-  [`geom_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
-  : Fit a bivariate response surface
-- [`stat_residual_3d()`](https://gillescolling.com/ggplot3d/reference/stat_residual_3d.md)
-  [`geom_residual_3d()`](https://gillescolling.com/ggplot3d/reference/stat_residual_3d.md)
-  : Residuals from a fitted surface
-- [`stat_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
-  [`geom_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
-  : Grouped one-dimensional density ridges
-- [`stat_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
-  [`geom_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
-  : Level surfaces of a gridded scalar field
-- [`stat_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
-  [`geom_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
-  : Level surfaces of a trivariate function
-- [`stat_density_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
-  [`geom_isodensity_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
-  : Trivariate density isosurfaces
-- [`stat_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
-  [`geom_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
-  [`stat_density_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
-  [`geom_density_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
-  : Planar slices through a gridded scalar field
-- [`stat_slice_contour_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_contour_3d.md)
-  [`geom_slice_contour_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_contour_3d.md)
-  : Contour lines on slices through a gridded scalar field
-- [`stat_isocurve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isocurve_3d.md)
-  [`geom_isocurve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isocurve_3d.md)
-  : Intersection curves of two implicit surfaces
-- [`stat_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
-  [`geom_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
-  : Convex hulls in three dimensions
-- [`stat_alpha_shape_3d()`](https://gillescolling.com/ggplot3d/reference/stat_alpha_shape_3d.md)
-  [`geom_alpha_shape_3d()`](https://gillescolling.com/ggplot3d/reference/stat_alpha_shape_3d.md)
-  : Alpha shapes of point clouds
-- [`stat_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md)
-  [`geom_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md)
-  : Parametric surfaces
-- [`stat_sweep_3d()`](https://gillescolling.com/ggplot3d/reference/stat_sweep_3d.md)
-  [`geom_sweep_3d()`](https://gillescolling.com/ggplot3d/reference/stat_sweep_3d.md)
-  : Sweep a profile along a curve
-- [`stat_revolve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_revolve_3d.md)
-  [`geom_revolve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_revolve_3d.md)
-  : Surfaces of revolution
-
-## Statistical computations
+Construct surfaces, read meshes and point clouds, and measure along mesh
+surfaces. See [Reading and measuring
+meshes](https://gillescolling.com/ggplot3d/articles/meshes.md) and
+[Reading 3D scans and point
+clouds](https://gillescolling.com/ggplot3d/articles/scans.md).
 
 - [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md)
   [`stat_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md)
   : Triangulated surfaces in three dimensions
-- [`geom_col_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
-  [`geom_bar_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
-  [`stat_count_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)
-  : Columns and counts on an x/y lattice
-- [`stat_bin_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_2d_3d.md)
-  [`geom_histogram_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_2d_3d.md)
-  [`stat_summary_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_2d_3d.md)
-  : Two-dimensional bins drawn as columns
-- [`geom_hex_3d()`](https://gillescolling.com/ggplot3d/reference/geom_hex_3d.md)
-  [`stat_bin_hex_3d()`](https://gillescolling.com/ggplot3d/reference/geom_hex_3d.md)
-  [`stat_summary_hex_3d()`](https://gillescolling.com/ggplot3d/reference/geom_hex_3d.md)
-  : Hexagonal bins drawn as prisms
-- [`stat_bin_3d()`](https://gillescolling.com/ggplot3d/reference/stat_bin_3d.md)
-  : Three-dimensional bin counts
-- [`stat_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
-  [`geom_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
-  : Sample a bivariate function in three dimensions
-- [`stat_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
-  [`geom_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
-  : Fit a bivariate response surface
-- [`stat_residual_3d()`](https://gillescolling.com/ggplot3d/reference/stat_residual_3d.md)
-  [`geom_residual_3d()`](https://gillescolling.com/ggplot3d/reference/stat_residual_3d.md)
-  : Residuals from a fitted surface
-- [`stat_density_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_2d_3d.md)
-  : Bivariate kernel density as a height surface
-- [`stat_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
-  [`geom_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
-  : Grouped one-dimensional density ridges
-- [`stat_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
-  [`geom_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
-  : Level surfaces of a gridded scalar field
-- [`stat_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
-  [`geom_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
-  : Level surfaces of a trivariate function
-- [`stat_density_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
-  [`geom_isodensity_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
-  : Trivariate density isosurfaces
-- [`stat_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
-  [`geom_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
-  [`stat_density_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
-  [`geom_density_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
-  : Planar slices through a gridded scalar field
-- [`stat_slice_contour_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_contour_3d.md)
-  [`geom_slice_contour_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_contour_3d.md)
-  : Contour lines on slices through a gridded scalar field
-- [`stat_isocurve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isocurve_3d.md)
-  [`geom_isocurve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isocurve_3d.md)
-  : Intersection curves of two implicit surfaces
-- [`stat_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
-  [`geom_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
-  : Convex hulls in three dimensions
-- [`stat_alpha_shape_3d()`](https://gillescolling.com/ggplot3d/reference/stat_alpha_shape_3d.md)
-  [`geom_alpha_shape_3d()`](https://gillescolling.com/ggplot3d/reference/stat_alpha_shape_3d.md)
-  : Alpha shapes of point clouds
-- [`stat_implicit_fit_3d()`](https://gillescolling.com/ggplot3d/reference/stat_implicit_fit_3d.md)
-  : Implicit surfaces fitted to point clouds
-- [`stat_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md)
-  [`geom_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md)
-  : Parametric surfaces
+- [`geom_contour_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
+  [`geom_contour_filled_3d()`](https://gillescolling.com/ggplot3d/reference/geom_contour_3d.md)
+  : Contours following a triangulated surface or a horizontal plane
+- [`geom_mesh_3d()`](https://gillescolling.com/ggplot3d/reference/geom_mesh_3d.md)
+  : Draw an external triangle or polygon mesh
+- [`mesh_3d()`](https://gillescolling.com/ggplot3d/reference/mesh_3d.md)
+  : Fortify an indexed three-dimensional mesh
+- [`read_mesh_3d()`](https://gillescolling.com/ggplot3d/reference/read_mesh_3d.md)
+  : Read a triangle or polygon mesh file
+- [`read_points_3d()`](https://gillescolling.com/ggplot3d/reference/read_points_3d.md)
+  : Read a point cloud file
+- [`geom_splat_3d()`](https://gillescolling.com/ggplot3d/reference/geom_splat_3d.md)
+  : Gaussian splats in three dimensions
+- [`mesh_normals()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
+  [`mesh_curvature()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
+  [`mesh_subdivide()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
+  [`mesh_smooth()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
+  [`mesh_decimate()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
+  [`mesh_remesh()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
+  : Smooth, refine and simplify triangle meshes
+- [`mesh_geodesic_distance()`](https://gillescolling.com/ggplot3d/reference/mesh_geodesic.md)
+  [`mesh_logmap()`](https://gillescolling.com/ggplot3d/reference/mesh_geodesic.md)
+  [`mesh_geodesic_path()`](https://gillescolling.com/ggplot3d/reference/mesh_geodesic.md)
+  : Measure distances and paths along mesh surfaces
+- [`reexports`](https://gillescolling.com/ggplot3d/reference/reexports.md)
+  [`fortify`](https://gillescolling.com/ggplot3d/reference/reexports.md)
+  : Objects exported from other packages
 - [`stat_parametric_geodesic_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_geodesic_3d.md)
   : Geodesics on parametric surfaces
 - [`stat_geodesic_distance_3d()`](https://gillescolling.com/ggplot3d/reference/stat_geodesic_distance_3d.md)
   [`stat_logmap_3d()`](https://gillescolling.com/ggplot3d/reference/stat_geodesic_distance_3d.md)
   [`stat_geodesic_path_3d()`](https://gillescolling.com/ggplot3d/reference/stat_geodesic_distance_3d.md)
   : Geodesic distance, log map and shortest paths on a mesh
-- [`stat_sweep_3d()`](https://gillescolling.com/ggplot3d/reference/stat_sweep_3d.md)
-  [`geom_sweep_3d()`](https://gillescolling.com/ggplot3d/reference/stat_sweep_3d.md)
-  : Sweep a profile along a curve
-- [`stat_streamline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_streamline_3d.md)
-  : Integrate streamlines and streamtubes through a vector field
-- [`stat_revolve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_revolve_3d.md)
-  [`geom_revolve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_revolve_3d.md)
-  : Surfaces of revolution
-- [`stat_spline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_spline_3d.md)
-  : Smooth curves through points
 
-## Signed distance functions
+## Function surfaces and fitted models
 
+- [`stat_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
+  [`geom_function_3d()`](https://gillescolling.com/ggplot3d/reference/stat_function_3d.md)
+  : Sample a bivariate function in three dimensions
+- [`stat_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
+  [`geom_smooth_3d()`](https://gillescolling.com/ggplot3d/reference/stat_smooth_3d.md)
+  : Fit a bivariate response surface
+- [`stat_residual_3d()`](https://gillescolling.com/ggplot3d/reference/stat_residual_3d.md)
+  [`geom_residual_3d()`](https://gillescolling.com/ggplot3d/reference/stat_residual_3d.md)
+  : Residuals from a fitted surface
+
+## Distributions, densities and hulls
+
+- [`geom_boxplot_3d()`](https://gillescolling.com/ggplot3d/reference/geom_boxplot_3d.md)
+  [`geom_violin_3d()`](https://gillescolling.com/ggplot3d/reference/geom_boxplot_3d.md)
+  : Boxplots and violins standing on an x/y plane
+- [`stat_density_2d_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_2d_3d.md)
+  : Bivariate kernel density as a height surface
+- [`stat_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
+  [`geom_ridgeline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ridgeline_3d.md)
+  : Grouped one-dimensional density ridges
+- [`stat_density_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
+  [`geom_isodensity_3d()`](https://gillescolling.com/ggplot3d/reference/stat_density_3d.md)
+  : Trivariate density isosurfaces
+- [`stat_ellipsoid_3d()`](https://gillescolling.com/ggplot3d/reference/stat_ellipsoid_3d.md)
+  : Covariance and confidence ellipsoids
+- [`stat_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
+  [`geom_hull_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hull_3d.md)
+  : Convex hulls in three dimensions
+- [`stat_alpha_shape_3d()`](https://gillescolling.com/ggplot3d/reference/stat_alpha_shape_3d.md)
+  [`geom_alpha_shape_3d()`](https://gillescolling.com/ggplot3d/reference/stat_alpha_shape_3d.md)
+  : Alpha shapes of point clouds
+- [`biplot_3d()`](https://gillescolling.com/ggplot3d/reference/biplot_3d.md)
+  : Compose a three-axis ordination biplot
+
+## Scalar fields, slices and implicit surfaces
+
+Extract level surfaces or inspect field values on planes. See [Slicing
+fields and point
+densities](https://gillescolling.com/ggplot3d/articles/field-slices.md).
+
+- [`stat_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
+  [`geom_isosurface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isosurface_3d.md)
+  : Level surfaces of a gridded scalar field
+- [`stat_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
+  [`geom_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
+  : Level surfaces of a trivariate function
+- [`geom_volume_3d()`](https://gillescolling.com/ggplot3d/reference/geom_volume_3d.md)
+  : Ray-marched scalar volumes
+- [`stat_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
+  [`geom_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
+  [`stat_density_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
+  [`geom_density_slice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_3d.md)
+  : Planar slices through a gridded scalar field
+- [`stat_slice_contour_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_contour_3d.md)
+  [`geom_slice_contour_3d()`](https://gillescolling.com/ggplot3d/reference/stat_slice_contour_3d.md)
+  : Contour lines on slices through a gridded scalar field
+- [`stat_isocurve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isocurve_3d.md)
+  [`geom_isocurve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isocurve_3d.md)
+  : Intersection curves of two implicit surfaces
+- [`stat_implicit_fit_3d()`](https://gillescolling.com/ggplot3d/reference/stat_implicit_fit_3d.md)
+  : Implicit surfaces fitted to point clouds
 - [`sdf_sphere()`](https://gillescolling.com/ggplot3d/reference/sdf_sphere.md)
   [`sdf_box()`](https://gillescolling.com/ggplot3d/reference/sdf_sphere.md)
   [`sdf_torus()`](https://gillescolling.com/ggplot3d/reference/sdf_sphere.md)
@@ -596,7 +507,85 @@ Download the citation as
   [`Ops(`*`<ggplot3d_sdf>`*`)`](https://gillescolling.com/ggplot3d/reference/sdf_blend.md)
   : Combine and transform signed distance functions
 
-## Positions
+## Solid glyphs, parametric surfaces and sweeps
+
+- [`geom_sphere_3d()`](https://gillescolling.com/ggplot3d/reference/geom_sphere_3d.md)
+  : Draw spheres at observed positions
+- [`geom_ellipsoid_3d()`](https://gillescolling.com/ggplot3d/reference/geom_ellipsoid_3d.md)
+  : Ellipsoids
+- [`geom_tensor_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tensor_3d.md)
+  : Symmetric tensor glyphs
+- [`geom_glyph_3d()`](https://gillescolling.com/ggplot3d/reference/geom_glyph_3d.md)
+  : One solid glyph per observation
+- [`stat_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md)
+  [`geom_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md)
+  : Parametric surfaces
+- [`geom_tube_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md)
+  [`geom_ribbon_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md)
+  : Tubes and ribbons along curves
+- [`stat_sweep_3d()`](https://gillescolling.com/ggplot3d/reference/stat_sweep_3d.md)
+  [`geom_sweep_3d()`](https://gillescolling.com/ggplot3d/reference/stat_sweep_3d.md)
+  : Sweep a profile along a curve
+- [`stat_revolve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_revolve_3d.md)
+  [`geom_revolve_3d()`](https://gillescolling.com/ggplot3d/reference/stat_revolve_3d.md)
+  : Surfaces of revolution
+- [`stat_spline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_spline_3d.md)
+  : Smooth curves through points
+
+## Vector fields and streamlines
+
+- [`geom_quiver_3d()`](https://gillescolling.com/ggplot3d/reference/geom_quiver_3d.md)
+  [`geom_cone_3d()`](https://gillescolling.com/ggplot3d/reference/geom_quiver_3d.md)
+  : Vector fields with solid cone heads
+- [`stat_streamline_3d()`](https://gillescolling.com/ggplot3d/reference/stat_streamline_3d.md)
+  : Integrate streamlines and streamtubes through a vector field
+
+## Networks, trees and molecules
+
+- [`geom_edge_3d()`](https://gillescolling.com/ggplot3d/reference/geom_edge_3d.md)
+  [`geom_node_3d()`](https://gillescolling.com/ggplot3d/reference/geom_edge_3d.md)
+  : Network edges and nodes
+- [`fortify(`*`<igraph>`*`)`](https://gillescolling.com/ggplot3d/reference/fortify.igraph.md)
+  : Fortify a graph for three-dimensional plotting
+- [`get_edges_3d()`](https://gillescolling.com/ggplot3d/reference/get_edges_3d.md)
+  : Edge table of a fortified graph
+- [`stat_layers_3d()`](https://gillescolling.com/ggplot3d/reference/stat_layers_3d.md)
+  : Multilayer networks
+- [`stat_dendrogram_3d()`](https://gillescolling.com/ggplot3d/reference/stat_dendrogram_3d.md)
+  : Dendrograms on a plane
+- [`fortify(`*`<pdb>`*`)`](https://gillescolling.com/ggplot3d/reference/fortify.pdb.md)
+  : Fortify molecular atoms and bonds
+
+## Spatial data and map annotations
+
+Plot spatial objects and scale bars. For north arrows, see [orientation
+guides](https://gillescolling.com/ggplot3d/reference/guide_triad_3d.md).
+
+- [`geom_spatraster_3d()`](https://gillescolling.com/ggplot3d/reference/geom_spatraster_3d.md)
+  : Rasters as height surfaces
+- [`geom_sf_3d()`](https://gillescolling.com/ggplot3d/reference/geom_sf_3d.md)
+  : Simple features in three dimensions
+- [`stat_profile_3d()`](https://gillescolling.com/ggplot3d/reference/stat_profile_3d.md)
+  : Cross-sections of a surface along a line
+- [`geom_arc_3d()`](https://gillescolling.com/ggplot3d/reference/geom_arc_3d.md)
+  : Flow arcs between two points
+- [`annotation_scale_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_scale_3d.md)
+  : A scale bar lying in a coordinate plane
+
+## Images and plots on planes
+
+- [`annotation_plot_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_plot_3d.md)
+  : A two-dimensional plot on a plane of the panel box
+- [`facet_slices_3d()`](https://gillescolling.com/ggplot3d/reference/facet_slices_3d.md)
+  : Small multiples on parallel planes
+- [`texture_3d()`](https://gillescolling.com/ggplot3d/reference/texture_3d.md)
+  : Prepare images for surface textures
+- [`annotation_raster_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_raster_3d.md)
+  : An image on a plane of the panel
+- [`geom_raster_3d()`](https://gillescolling.com/ggplot3d/reference/geom_raster_3d.md)
+  : Rasters on planes
+
+## Position adjustments
 
 - [`position_nudge_3d()`](https://gillescolling.com/ggplot3d/reference/position_nudge_3d.md)
   : Nudge all three position families
@@ -610,7 +599,7 @@ Download the citation as
   [`position_fill_3d()`](https://gillescolling.com/ggplot3d/reference/position_stack_3d.md)
   : Stack or fill intervals along an axis
 
-## Guides and themes
+## Axes, legends and orientation
 
 - [`guide_axis_3d()`](https://gillescolling.com/ggplot3d/reference/guide_axis_3d.md)
   : Position guides for three-dimensional axes
@@ -622,94 +611,75 @@ Download the citation as
   [`guide_legend_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
   [`guide_bins_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
   : Colour guides that show the scene's shading
-- [`annotation_scale_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_scale_3d.md)
-  : A scale bar lying in a coordinate plane
 
-## Output backends
+## Lighting and surface appearance
+
+- [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
+  : Lighting for a 3D scene
+- [`light_environment()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+  [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+  [`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+  [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+  [`light_hemisphere()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+  : Lights for a 3D scene
+- [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md)
+  : Surface materials
+- [`shadow_3d()`](https://gillescolling.com/ggplot3d/reference/shadow_3d.md)
+  : Planar cast shadows
+- [`depth_cue_3d()`](https://gillescolling.com/ggplot3d/reference/depth_cue_3d.md)
+  : Depth cues: fog, line width and eye-dome lighting
+- [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md)
+  : Feature lines of surfaces and meshes
+- [`edges_3d()`](https://gillescolling.com/ggplot3d/reference/edges_3d.md)
+  : Mesh lines over surfaces
+- [`hatch_3d()`](https://gillescolling.com/ggplot3d/reference/hatch_3d.md)
+  : Hatching of surfaces and meshes
+
+## Rendering and accessible descriptions
+
+Choose scene rendering and describe the resulting figure. See [Embedding
+plots in
+reports](https://gillescolling.com/ggplot3d/articles/documents.md).
 
 - [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md)
   : Select a 3D rendering backend
-- [`annotation_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_thurston_3d.md)
-  : Draw an intrinsic ball, tube, or half-space
-- [`geodesic_3d()`](https://gillescolling.com/ggplot3d/reference/geodesic_3d.md)
-  : Follow a geodesic in a Thurston geometry
-- [`thurston_portal_3d()`](https://gillescolling.com/ggplot3d/reference/thurston_portal_3d.md)
-  : Pair a face of a Thurston fundamental domain
-- [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
-  : Render a camera path or data that change over time
-- [`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md)
-  : Interpolate built layer data between animation states
+- [`get_alt_text_3d`](https://gillescolling.com/ggplot3d/reference/get_alt_text_3d.md)
+  : Describe a three-dimensional plot for a document
+
+## Interactive viewing and Shiny
+
 - [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md)
   : Explore a plot with orbit controls, tooltips and selection
 - [`view3dOutput()`](https://gillescolling.com/ggplot3d/reference/view_3d-shiny.md)
   [`renderView3d()`](https://gillescolling.com/ggplot3d/reference/view_3d-shiny.md)
   : Shiny bindings for the interactive 3D viewer
-- [`get_alt_text_3d`](https://gillescolling.com/ggplot3d/reference/get_alt_text_3d.md)
-  : Describe a three-dimensional plot for a document
 
-## Camera paths
+## Animation and camera paths
 
+- [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
+  : Render a camera path or data that change over time
+- [`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md)
+  : Interpolate built layer data between animation states
 - [`camera_path_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
   [`orbit_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
   [`fly_through_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
   [`dolly_zoom_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md)
   : Camera paths through keyframes
 
-## Export to 3D software
+## Export and 3D printing
 
 - [`export_3d()`](https://gillescolling.com/ggplot3d/reference/export_3d.md)
   : Export a plot to a 3D model, vector or source-code file
 - [`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md)
-  : Physical solids for 3D printing
+  : Configure physical models for 3D printing
 - [`as.mesh3d(`*`<ggplot3d>`*`)`](https://gillescolling.com/ggplot3d/reference/rgl-bridge-3d.md)
   [`plot3d(`*`<ggplot3d>`*`)`](https://gillescolling.com/ggplot3d/reference/rgl-bridge-3d.md)
   : Convert a 3D panel to an rgl mesh or rgl scene
 - [`as_rayrender_3d()`](https://gillescolling.com/ggplot3d/reference/as_rayrender_3d.md)
   : Convert a 3D panel to a rayrender scene
 
-## Mesh input and extension API
+## Four dimensions, tilings and honeycombs
 
-- [`mesh_3d()`](https://gillescolling.com/ggplot3d/reference/mesh_3d.md)
-  : Fortify an indexed three-dimensional mesh
-- [`read_mesh_3d()`](https://gillescolling.com/ggplot3d/reference/read_mesh_3d.md)
-  : Read a triangle or polygon mesh file
-- [`mesh_normals()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
-  [`mesh_curvature()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
-  [`mesh_subdivide()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
-  [`mesh_smooth()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
-  [`mesh_decimate()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
-  [`mesh_remesh()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md)
-  : Mesh processing
-- [`mesh_geodesic_distance()`](https://gillescolling.com/ggplot3d/reference/mesh_geodesic.md)
-  [`mesh_logmap()`](https://gillescolling.com/ggplot3d/reference/mesh_geodesic.md)
-  [`mesh_geodesic_path()`](https://gillescolling.com/ggplot3d/reference/mesh_geodesic.md)
-  : Intrinsic geometry on meshes
-- [`reexports`](https://gillescolling.com/ggplot3d/reference/reexports.md)
-  [`fortify`](https://gillescolling.com/ggplot3d/reference/reexports.md)
-  : Objects exported from other packages
-- [`fortify(`*`<pdb>`*`)`](https://gillescolling.com/ggplot3d/reference/fortify.pdb.md)
-  : Fortify molecular atoms and bonds
-- [`layer_3d()`](https://gillescolling.com/ggplot3d/reference/layer_3d.md)
-  : Adapt a registered ggplot2 layer to three dimensions
-- [`register_geom_3d()`](https://gillescolling.com/ggplot3d/reference/register_geom_3d.md)
-  : Register a geometry emitter
-- [`new_scene_packet()`](https://gillescolling.com/ggplot3d/reference/new_scene_packet.md)
-  : Construct a 3D geometry packet
-- [`normalise_homogeneous_3d()`](https://gillescolling.com/ggplot3d/reference/normalise_homogeneous_3d.md)
-  : Normalise homogeneous positions to the panel box
-
-## Spherical geometry and observers
-
-- [`coord_spherical_geometry_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spherical_geometry_3d.md)
-  : Spherical geometry in stereographic and gnomonic charts
-- [`stat_hopf_fibre_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hopf_fibre_3d.md)
-  : Hopf fibres, latitude tori and their spherical base
-
-## Tilings and honeycombs
-
-- [`stat_tiling_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.md)
-  [`stat_honeycomb_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.md)
-  : Regular tilings and honeycombs from Coxeter reflections
 - [`stat_project_3d()`](https://gillescolling.com/ggplot3d/reference/stat_project_3d.md)
   : Project four-dimensional and higher-dimensional data into three
   dimensions
@@ -719,9 +689,19 @@ Download the citation as
   : Grand tours of three-dimensional projections
 - [`stat_section_4d()`](https://gillescolling.com/ggplot3d/reference/stat_section_4d.md)
   : Hyperplane sections of four-dimensional tetrahedral meshes
+- [`stat_tiling_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.md)
+  [`stat_honeycomb_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tiling_3d.md)
+  : Regular tilings and honeycombs from Coxeter reflections
 
-## Hyperbolic geometry and data
+## Spherical and hyperbolic geometry
 
+Intrinsic curved-space coordinates and layouts. Longitude and latitude
+coordinates are listed under angles and geographic coordinates.
+
+- [`coord_spherical_geometry_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spherical_geometry_3d.md)
+  : Spherical geometry in stereographic and gnomonic charts
+- [`stat_hopf_fibre_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hopf_fibre_3d.md)
+  : Hopf fibres, latitude tori and their spherical base
 - [`coord_hyperbolic_3d()`](https://gillescolling.com/ggplot3d/reference/coord_hyperbolic_3d.md)
   : Finite hyperbolic ball and sheet coordinates
 - [`stat_tree_hyperbolic_3d()`](https://gillescolling.com/ggplot3d/reference/stat_tree_hyperbolic_3d.md)
@@ -729,8 +709,10 @@ Download the citation as
 - [`hyperbolic_focus_3d()`](https://gillescolling.com/ggplot3d/reference/hyperbolic_focus_3d.md)
   : Focus paths for a hyperbolic embedding
 
-## Relativity
+## Spacetime and relativity
 
+- [`coord_spacetime_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spacetime_3d.md)
+  : Finite Minkowski spacetime coordinates
 - [`stat_light_cone_3d()`](https://gillescolling.com/ggplot3d/reference/stat_light_cone_3d.md)
   : Light cones and surfaces of constant spacetime interval
 - [`stat_embedding_3d()`](https://gillescolling.com/ggplot3d/reference/stat_embedding_3d.md)
@@ -739,10 +721,8 @@ Download the citation as
   : Equatorial Schwarzschild spacetime geodesics
 - [`lorentz_boost_3d()`](https://gillescolling.com/ggplot3d/reference/lorentz_boost_3d.md)
   : Lorentz boosts in canonical coordinates
-- [`coord_spacetime_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spacetime_3d.md)
-  : Finite Minkowski spacetime coordinates
 
-## Complex analysis
+## Complex functions, knots and immersed surfaces
 
 - [`mobius_3d()`](https://gillescolling.com/ggplot3d/reference/mobius_3d.md)
   : Mobius transformations of complex numbers, spheres and half-space
@@ -750,15 +730,39 @@ Download the citation as
   : Domain colouring on the Riemann sphere
 - [`stat_riemann_surface_3d()`](https://gillescolling.com/ggplot3d/reference/stat_riemann_surface_3d.md)
   : Riemann surfaces parametrised by an inverse function
-
-## Immersed surfaces and knots
-
-- [`stat_self_intersection_3d()`](https://gillescolling.com/ggplot3d/reference/stat_self_intersection_3d.md)
-  : Transverse intersection curves of a triangle mesh
-- [`stat_immersed_3d()`](https://gillescolling.com/ggplot3d/reference/stat_immersed_3d.md)
-  : Immersed surface examples
 - [`stat_knot_3d()`](https://gillescolling.com/ggplot3d/reference/stat_knot_3d.md)
   : Torus knots and knot tubes
+- [`stat_immersed_3d()`](https://gillescolling.com/ggplot3d/reference/stat_immersed_3d.md)
+  : Immersed surface examples
+- [`stat_self_intersection_3d()`](https://gillescolling.com/ggplot3d/reference/stat_self_intersection_3d.md)
+  : Transverse intersection curves of a triangle mesh
+
+## Thurston geometry and observer views
+
+Place intrinsic objects and observers inside homogeneous spaces. See
+[Viewing Thurston geometries from
+inside](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md).
+
+- [`annotation_thurston_3d()`](https://gillescolling.com/ggplot3d/reference/annotation_thurston_3d.md)
+  : Draw an intrinsic ball, tube, or half-space
+- [`geodesic_3d()`](https://gillescolling.com/ggplot3d/reference/geodesic_3d.md)
+  : Follow a geodesic in a Thurston geometry
+- [`thurston_portal_3d()`](https://gillescolling.com/ggplot3d/reference/thurston_portal_3d.md)
+  : Pair a face of a Thurston fundamental domain
+
+## Geometry extension API
+
+Emit geometry into a shared panel scene. See [Writing a geometry
+extension](https://gillescolling.com/ggplot3d/articles/extending.md).
+
+- [`layer_3d()`](https://gillescolling.com/ggplot3d/reference/layer_3d.md)
+  : Adapt a registered ggplot2 layer to three dimensions
+- [`register_geom_3d()`](https://gillescolling.com/ggplot3d/reference/register_geom_3d.md)
+  : Register a geometry emitter
+- [`new_scene_packet()`](https://gillescolling.com/ggplot3d/reference/new_scene_packet.md)
+  : Construct a 3D geometry packet
+- [`normalise_homogeneous_3d()`](https://gillescolling.com/ggplot3d/reference/normalise_homogeneous_3d.md)
+  : Normalise homogeneous positions to the panel box
 
 ## Package
 
@@ -768,32 +772,32 @@ Download the citation as
 
 # Articles
 
-### Concepts
+### Building plots
 
-- [The z scale](https://gillescolling.com/ggplot3d/articles/z-scale.md):
+- [Preparing data for 3D
+  layers](https://gillescolling.com/ggplot3d/articles/data-preparation.md):
 
-  Transform heights, label categories and dates, and control limits and
-  z ranges across facets.
+  Read coordinate tables, join attributes by identifier, order grouped
+  paths and convert a height matrix to a checked surface grid.
 
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.md):
+- [Choosing layers for observations and
+  grids](https://gillescolling.com/ggplot3d/articles/layers.md):
 
   Worked examples of points, paths, gridded surfaces, columns,
   distributions, intervals and reference geometry.
 
-- [Surfaces, solids and
-  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
+- [Scaling heights and facet
+  ranges](https://gillescolling.com/ggplot3d/articles/z-scale.md):
+
+  Transform heights, label categories and dates, and control limits and
+  z ranges across facets.
+
+- [Building surfaces and
+  solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md):
 
   Worked examples of indexed meshes, function and fitted surfaces,
   density surfaces, level surfaces, hulls, solid glyphs and sweeps along
   curves.
-
-### Workflows
-
-- [Camera and
-  framing](https://gillescolling.com/ggplot3d/articles/camera.md):
-
-  Set camera angles, projection, framing and stereo output for static
-  scenes.
 
 - [Positioning groups and
   observations](https://gillescolling.com/ggplot3d/articles/positions.md):
@@ -801,59 +805,11 @@ Download the citation as
   Separate overlapping observations, align grouped columns and labels,
   and display stacked totals or proportions.
 
-- [Axes, legends and pane
-  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.md):
-
-  Choose axis labels, align a colourbar with height, and style the panes
-  and grids of a three-dimensional plot.
-
 - [Displaying intervals and
   summaries](https://gillescolling.com/ggplot3d/articles/intervals.md):
 
   Plot supplied bounds on three axes and compute grouped means, standard
   errors and quantile ranges.
-
-- [Curvilinear and compositional
-  frames](https://gillescolling.com/ggplot3d/articles/frames.md):
-
-  Place data in cylindrical, spherical, globe, ternary prism and
-  quaternary simplex coordinates instead of a box.
-
-- [Output
-  backends](https://gillescolling.com/ggplot3d/articles/backends.md):
-
-  Choose vector, raster, hybrid or traced rendering and save figures at
-  the intended resolution.
-
-- [Lighting and surface
-  styles](https://gillescolling.com/ggplot3d/articles/lighting.md):
-
-  Control surface shading, use lighting presets and materials, and show
-  the shading range in legends.
-
-- [Ray marching and
-  volumes](https://gillescolling.com/ggplot3d/articles/ray-marching.md):
-
-  Trace signed distance surfaces, integrate scalar volumes and
-  accumulate seeded path-traced images.
-
-- [Interactive
-  viewing](https://gillescolling.com/ggplot3d/articles/viewer.md):
-
-  Explore WebGL 2 scenes with tooltips, picking, selection, linked
-  cameras and crosstalk filters.
-
-- [Exporting plots and
-  scenes](https://gillescolling.com/ggplot3d/articles/export.md):
-
-  Write model files, animated glTF, semantic SVG, TikZ and Asymptote, or
-  pass scenes to rgl and rayrender.
-
-- [Camera animation and
-  interaction](https://gillescolling.com/ggplot3d/articles/motion.md):
-
-  Render camera moves and camera paths, tween points and surfaces
-  between data states, and hand the scene to the interactive viewer.
 
 - [Combining 2D and 3D
   graphics](https://gillescolling.com/ggplot3d/articles/combining-2d-3d.md):
@@ -861,114 +817,198 @@ Download the citation as
   Place ggplot2 panels on walls, stack slices in depth, draw terraced
   contours and arrange 2D and 3D plots.
 
-- [Documents](https://gillescolling.com/ggplot3d/articles/documents.md):
+### Data types
 
-  Use knitr and Quarto to choose HTML viewers or static figures, supply
-  alt text and compose panels.
+- [Plotting angles and
+  compositions](https://gillescolling.com/ggplot3d/articles/frames.md):
 
-- [Maps and spatial
+  Place data in cylindrical, spherical, globe, ternary prism and
+  quaternary simplex coordinates instead of a box.
+
+- [Plotting maps and spatial
   data](https://gillescolling.com/ggplot3d/articles/spatial.md):
 
   Draw raster terrain, simple features and XYZ geometry, prism maps,
   profiles, flow arcs and space-time paths.
 
-- [Networks and
+- [Reading and measuring
+  meshes](https://gillescolling.com/ggplot3d/articles/meshes.md):
+
+  Read mesh files, smooth, subdivide and simplify triangle meshes,
+  measure curvature, and draw geodesic distances, paths and log maps.
+
+- [Reading 3D scans and point
+  clouds](https://gillescolling.com/ggplot3d/articles/scans.md):
+
+  Read textured meshes and point clouds from phone LiDAR apps,
+  photogrammetry and airborne laser scanning, draw them, and rebuild a
+  surface from points.
+
+- [Drawing arrows and
+  streamlines](https://gillescolling.com/ggplot3d/articles/vector-fields.md):
+
+  Draw vector arrows, magnitude-scaled cones, integrated streamlines and
+  solid streamtubes from a gridded field.
+
+- [Slicing fields and point
+  densities](https://gillescolling.com/ggplot3d/articles/field-slices.md):
+
+  Inspect gridded values on axis-aligned and oblique planes, add
+  contours, and compare bandwidths for slices of a point-cloud density.
+
+- [Drawing networks and
   trees](https://gillescolling.com/ggplot3d/articles/networks.md):
 
   Draw igraph networks in three dimensions, multilayer networks on
   stacked planes, and dendrograms standing beside a heat map.
 
-- [Meshes and intrinsic
-  geometry](https://gillescolling.com/ggplot3d/articles/meshes.md):
+### Appearance
 
-  Read mesh files, smooth, subdivide and simplify triangle meshes,
-  measure curvature, and draw geodesic distances, paths and log maps.
+- [Choosing camera
+  views](https://gillescolling.com/ggplot3d/articles/camera.md):
 
-- [Vector
-  fields](https://gillescolling.com/ggplot3d/articles/vector-fields.md):
+  Set camera angles, projection, framing and stereo output for static
+  scenes.
 
-  Draw vector arrows, magnitude-scaled cones, integrated streamlines and
-  solid streamtubes from a gridded field.
+- [Styling axes, legends and
+  panes](https://gillescolling.com/ggplot3d/articles/guides-themes.md):
 
-### Examples
+  Choose axis labels, align a colourbar with height, and style the panes
+  and grids of a three-dimensional plot.
 
-- [Gallery](https://gillescolling.com/ggplot3d/articles/gallery.md):
+- [Lighting and styling
+  surfaces](https://gillescolling.com/ggplot3d/articles/lighting.md):
+
+  Control surface shading, use lighting presets and materials, and show
+  the shading range in legends.
+
+### Output and sharing
+
+- [Choosing rendering and image
+  formats](https://gillescolling.com/ggplot3d/articles/backends.md):
+
+  Choose vector, raster, hybrid or traced rendering and save figures at
+  the intended resolution.
+
+- [Rendering volumes and traced
+  surfaces](https://gillescolling.com/ggplot3d/articles/ray-marching.md):
+
+  Trace signed distance surfaces, integrate scalar volumes and
+  accumulate seeded path-traced images.
+
+- [Rendering materials with path
+  tracing](https://gillescolling.com/ggplot3d/articles/path-tracing.md):
+
+  Render rough metals, glass, image lighting and participating media
+  with the native path tracer.
+
+- [Embedding plots in
+  reports](https://gillescolling.com/ggplot3d/articles/documents.md):
+
+  Use knitr and Quarto to choose HTML viewers or static figures, supply
+  alt text and compose panels.
+
+- [Viewing plots
+  interactively](https://gillescolling.com/ggplot3d/articles/viewer.md):
+
+  Explore WebGL 2 scenes with tooltips, picking, selection, linked
+  cameras and crosstalk filters.
+
+- [Animating cameras and
+  data](https://gillescolling.com/ggplot3d/articles/motion.md):
+
+  Render camera moves and camera paths, tween points and surfaces
+  between data states, and hand the scene to the interactive viewer.
+
+- [Exporting plots and
+  scenes](https://gillescolling.com/ggplot3d/articles/export.md):
+
+  Write model files, animated glTF, semantic SVG, TikZ and Asymptote, or
+  pass scenes to rgl and rayrender.
+
+### Scientific examples
+
+- [Drawing common charts in
+  3D](https://gillescolling.com/ggplot3d/articles/gallery.md):
 
   Worked plots of solid curves, distributions, covariance ellipsoids,
   streamtubes, cutaways and contour terraces alongside familiar charts.
 
-- [Linear and nonlinear
-  PDEs](https://gillescolling.com/ggplot3d/articles/pde.md):
+- [Drawing ordination
+  biplots](https://gillescolling.com/ggplot3d/articles/ordination.md):
 
-  Exact solutions of eight partial differential equations and a
-  numerical magnetohydrodynamic solution drawn as surfaces that change
-  over time with animate_3d().
+  Draw site scores, variable arrows and grouped regions from
+  principal-component and ecological ordinations.
 
-- [Implicit
+- [Drawing tensor
+  glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md):
+
+  Map symmetric positive semidefinite matrices to oriented ellipsoid or
+  superquadric glyphs.
+
+- [Drawing molecular
+  structures](https://gillescolling.com/ggplot3d/articles/molecules.md):
+
+  Read molecular coordinates, attach bonds by atom identifier and draw
+  atoms and bonds in three dimensions.
+
+- [Plotting colour gamuts in Lab
+  coordinates](https://gillescolling.com/ggplot3d/articles/colour-gamuts.md):
+
+  Sample sRGB colours in Lab coordinates and display their convex hull
+  with interpolated vertex colours.
+
+### Mathematical examples
+
+- [Constructing and reconstructing
   surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md):
 
   Draw level sets from functions, reconstruct surfaces from point clouds
   and triangulate scattered height measurements.
 
-- [Four dimensions, tilings and
-  honeycombs](https://gillescolling.com/ggplot3d/articles/higher-dimensions.md):
+- [Animating differential-equation
+  solutions](https://gillescolling.com/ggplot3d/articles/pde.md):
+
+  Exact solutions of eight partial differential equations and a
+  numerical magnetohydrodynamic solution drawn as surfaces that change
+  over time with animate_3d().
+
+- [Projecting four dimensions and drawing
+  tilings](https://gillescolling.com/ggplot3d/articles/higher-dimensions.md):
 
   Project and rotate four-dimensional data, cut 4D meshes with a
   hyperplane, run a grand tour, and draw regular tilings and honeycombs.
 
-- [Curved spaces and
+- [Plotting curved spaces and
   spacetime](https://gillescolling.com/ggplot3d/articles/curved-spaces.md):
 
   Draw data in spherical and hyperbolic geometry, the Hopf fibration,
   hyperbolic tree layouts, light cones, Lorentz boosts and Schwarzschild
   geodesics.
 
-- [Complex functions, knots and immersed
+- [Drawing complex functions, knots and
   surfaces](https://gillescolling.com/ggplot3d/articles/complex-knots.md):
 
   Domain colouring on the Riemann sphere, Riemann surfaces of inverse
   functions, Möbius maps, torus knots and immersed surfaces with their
   self-intersections.
 
-- [Inside the Thurston
-  geometries](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md):
+- [Viewing Thurston geometries from
+  inside](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md):
 
   Render an observer view in each of the eight Thurston geometries using
   intrinsic balls and geodesics.
 
-- [Tensor
-  glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md):
+### Internals and extensions
 
-  Map symmetric positive semidefinite matrices to oriented ellipsoid or
-  superquadric glyphs.
-
-- [Ordination
-  biplots](https://gillescolling.com/ggplot3d/articles/ordination.md):
-
-  Draw site scores, variable arrows and grouped regions from
-  principal-component and ecological ordinations.
-
-- [Molecular ball-and-stick
-  views](https://gillescolling.com/ggplot3d/articles/molecules.md):
-
-  Read molecular coordinates, attach bonds by atom identifier and draw
-  atoms and bonds in three dimensions.
-
-- [Colour gamuts in Lab
-  coordinates](https://gillescolling.com/ggplot3d/articles/colour-gamuts.md):
-
-  Sample sRGB colours in Lab coordinates and display their convex hull
-  with interpolated vertex colours.
-
-### Background
-
-- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
+- [How overlapping geometry is
+  drawn](https://gillescolling.com/ggplot3d/articles/visibility.md):
 
   Explain how overlapping faces, lines and marks are ordered and clipped
   within a three-dimensional panel.
 
-- [Extending
-  ggplot3d](https://gillescolling.com/ggplot3d/articles/extending.md):
+- [Writing a geometry
+  extension](https://gillescolling.com/ggplot3d/articles/extending.md):
 
   Write a new geom for coord_3d(): the scene packet it emits, how
   positions are normalised, and how register_geom_3d() connects it to

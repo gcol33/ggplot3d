@@ -14,6 +14,8 @@
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+.navbar .dropdown-menu .dropdown-item,
+.navbar .dropdown-menu .dropdown-header { color: var(--bs-body-color); }
 @media (max-width: 991.98px) {
   .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
   .navbar .dropdown-menu { max-height: none; overflow: visible; }
@@ -69,46 +71,56 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
-    <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
-    <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
-    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
-    <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Building plots</h6></li>
+    <li><a class="dropdown-item" href="../articles/data-preparation.html">Preparing data for 3D layers</a></li>
+    <li><a class="dropdown-item" href="../articles/layers.html">Choosing layers for observations and grids</a></li>
+    <li><a class="dropdown-item" href="../articles/z-scale.html">Scaling heights and facet ranges</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Building surfaces and solids</a></li>
     <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
-    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
     <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
-    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
-    <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
-    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
-    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
-    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
-    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
-    <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
-    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
-    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
-    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
-    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
-    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
-    <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
-    <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
-    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
-    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
-    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
-    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
-    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
-    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
-    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
-    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
-    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Data types</h6></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Plotting angles and compositions</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Plotting maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Reading and measuring meshes</a></li>
+    <li><a class="dropdown-item" href="../articles/scans.html">Reading 3D scans and point clouds</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Drawing arrows and streamlines</a></li>
+    <li><a class="dropdown-item" href="../articles/field-slices.html">Slicing fields and point densities</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Drawing networks and trees</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
-    <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
-    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Appearance</h6></li>
+    <li><a class="dropdown-item" href="../articles/camera.html">Choosing camera views</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Styling axes, legends and panes</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and styling surfaces</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Output and sharing</h6></li>
+    <li><a class="dropdown-item" href="../articles/backends.html">Choosing rendering and image formats</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Rendering volumes and traced surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/path-tracing.html">Rendering materials with path tracing</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Embedding plots in reports</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Viewing plots interactively</a></li>
+    <li><a class="dropdown-item" href="../articles/motion.html">Animating cameras and data</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Scientific examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/gallery.html">Drawing common charts in 3D</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Drawing ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Drawing tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Drawing molecular structures</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Plotting colour gamuts in Lab coordinates</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Mathematical examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Constructing and reconstructing surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/pde.html">Animating differential-equation solutions</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Projecting four dimensions and drawing tilings</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Plotting curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Drawing complex functions, knots and surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Viewing Thurston geometries from inside</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Internals and extensions</h6></li>
+    <li><a class="dropdown-item" href="../articles/visibility.html">How overlapping geometry is drawn</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Writing a geometry extension</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -131,89 +143,112 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
     </div>
 
     <div class="section ">
-      <h3>Concepts</h3>
+      <h3>Building plots</h3>
       <div class="section-desc"></div>
 
-      <dl><dt><a href="z-scale.html">The z scale</a></dt>
-        <dd><p>Transform heights, label categories and dates, and control limits and z ranges across facets.</p>
-        </dd><dt><a href="layers.html">Layers</a></dt>
+      <dl><dt><a href="data-preparation.html">Preparing data for 3D layers</a></dt>
+        <dd><p>Read coordinate tables, join attributes by identifier, order grouped paths and convert a height matrix to a checked surface grid.</p>
+        </dd><dt><a href="layers.html">Choosing layers for observations and grids</a></dt>
         <dd><p>Worked examples of points, paths, gridded surfaces, columns, distributions, intervals and reference geometry.</p>
-        </dd><dt><a href="surfaces-solids.html">Surfaces, solids and fields</a></dt>
+        </dd><dt><a href="z-scale.html">Scaling heights and facet ranges</a></dt>
+        <dd><p>Transform heights, label categories and dates, and control limits and z ranges across facets.</p>
+        </dd><dt><a href="surfaces-solids.html">Building surfaces and solids</a></dt>
         <dd><p>Worked examples of indexed meshes, function and fitted surfaces, density surfaces, level surfaces, hulls, solid glyphs and sweeps along curves.</p>
-      </dd></dl></div>
-    <div class="section ">
-      <h3>Workflows</h3>
-      <div class="section-desc"></div>
-
-      <dl><dt><a href="camera.html">Camera and framing</a></dt>
-        <dd><p>Set camera angles, projection, framing and stereo output for static scenes.</p>
         </dd><dt><a href="positions.html">Positioning groups and observations</a></dt>
         <dd><p>Separate overlapping observations, align grouped columns and labels, and display stacked totals or proportions.</p>
-        </dd><dt><a href="guides-themes.html">Axes, legends and pane styling</a></dt>
-        <dd><p>Choose axis labels, align a colourbar with height, and style the panes and grids of a three-dimensional plot.</p>
         </dd><dt><a href="intervals.html">Displaying intervals and summaries</a></dt>
         <dd><p>Plot supplied bounds on three axes and compute grouped means, standard errors and quantile ranges.</p>
-        </dd><dt><a href="frames.html">Curvilinear and compositional frames</a></dt>
-        <dd><p>Place data in cylindrical, spherical, globe, ternary prism and quaternary simplex coordinates instead of a box.</p>
-        </dd><dt><a href="backends.html">Output backends</a></dt>
-        <dd><p>Choose vector, raster, hybrid or traced rendering and save figures at the intended resolution.</p>
-        </dd><dt><a href="lighting.html">Lighting and surface styles</a></dt>
-        <dd><p>Control surface shading, use lighting presets and materials, and show the shading range in legends.</p>
-        </dd><dt><a href="ray-marching.html">Ray marching and volumes</a></dt>
-        <dd><p>Trace signed distance surfaces, integrate scalar volumes and accumulate seeded path-traced images.</p>
-        </dd><dt><a href="viewer.html">Interactive viewing</a></dt>
-        <dd><p>Explore WebGL 2 scenes with tooltips, picking, selection, linked cameras and crosstalk filters.</p>
-        </dd><dt><a href="export.html">Exporting plots and scenes</a></dt>
-        <dd><p>Write model files, animated glTF, semantic SVG, TikZ and Asymptote, or pass scenes to rgl and rayrender.</p>
-        </dd><dt><a href="motion.html">Camera animation and interaction</a></dt>
-        <dd><p>Render camera moves and camera paths, tween points and surfaces between data states, and hand the scene to the interactive viewer.</p>
         </dd><dt><a href="combining-2d-3d.html">Combining 2D and 3D graphics</a></dt>
         <dd><p>Place ggplot2 panels on walls, stack slices in depth, draw terraced contours and arrange 2D and 3D plots.</p>
-        </dd><dt><a href="documents.html">Documents</a></dt>
-        <dd><p>Use knitr and Quarto to choose HTML viewers or static figures, supply alt text and compose panels.</p>
-        </dd><dt><a href="spatial.html">Maps and spatial data</a></dt>
-        <dd><p>Draw raster terrain, simple features and XYZ geometry, prism maps, profiles, flow arcs and space-time paths.</p>
-        </dd><dt><a href="networks.html">Networks and trees</a></dt>
-        <dd><p>Draw igraph networks in three dimensions, multilayer networks on stacked planes, and dendrograms standing beside a heat map.</p>
-        </dd><dt><a href="meshes.html">Meshes and intrinsic geometry</a></dt>
-        <dd><p>Read mesh files, smooth, subdivide and simplify triangle meshes, measure curvature, and draw geodesic distances, paths and log maps.</p>
-        </dd><dt><a href="vector-fields.html">Vector fields</a></dt>
-        <dd><p>Draw vector arrows, magnitude-scaled cones, integrated streamlines and solid streamtubes from a gridded field.</p>
       </dd></dl></div>
     <div class="section ">
-      <h3>Examples</h3>
+      <h3>Data types</h3>
       <div class="section-desc"></div>
 
-      <dl><dt><a href="gallery.html">Gallery</a></dt>
+      <dl><dt><a href="frames.html">Plotting angles and compositions</a></dt>
+        <dd><p>Place data in cylindrical, spherical, globe, ternary prism and quaternary simplex coordinates instead of a box.</p>
+        </dd><dt><a href="spatial.html">Plotting maps and spatial data</a></dt>
+        <dd><p>Draw raster terrain, simple features and XYZ geometry, prism maps, profiles, flow arcs and space-time paths.</p>
+        </dd><dt><a href="meshes.html">Reading and measuring meshes</a></dt>
+        <dd><p>Read mesh files, smooth, subdivide and simplify triangle meshes, measure curvature, and draw geodesic distances, paths and log maps.</p>
+        </dd><dt><a href="scans.html">Reading 3D scans and point clouds</a></dt>
+        <dd><p>Read textured meshes and point clouds from phone LiDAR apps, photogrammetry and airborne laser scanning, draw them, and rebuild a surface from points.</p>
+        </dd><dt><a href="vector-fields.html">Drawing arrows and streamlines</a></dt>
+        <dd><p>Draw vector arrows, magnitude-scaled cones, integrated streamlines and solid streamtubes from a gridded field.</p>
+        </dd><dt><a href="field-slices.html">Slicing fields and point densities</a></dt>
+        <dd><p>Inspect gridded values on axis-aligned and oblique planes, add contours, and compare bandwidths for slices of a point-cloud density.</p>
+        </dd><dt><a href="networks.html">Drawing networks and trees</a></dt>
+        <dd><p>Draw igraph networks in three dimensions, multilayer networks on stacked planes, and dendrograms standing beside a heat map.</p>
+      </dd></dl></div>
+    <div class="section ">
+      <h3>Appearance</h3>
+      <div class="section-desc"></div>
+
+      <dl><dt><a href="camera.html">Choosing camera views</a></dt>
+        <dd><p>Set camera angles, projection, framing and stereo output for static scenes.</p>
+        </dd><dt><a href="guides-themes.html">Styling axes, legends and panes</a></dt>
+        <dd><p>Choose axis labels, align a colourbar with height, and style the panes and grids of a three-dimensional plot.</p>
+        </dd><dt><a href="lighting.html">Lighting and styling surfaces</a></dt>
+        <dd><p>Control surface shading, use lighting presets and materials, and show the shading range in legends.</p>
+      </dd></dl></div>
+    <div class="section ">
+      <h3>Output and sharing</h3>
+      <div class="section-desc"></div>
+
+      <dl><dt><a href="backends.html">Choosing rendering and image formats</a></dt>
+        <dd><p>Choose vector, raster, hybrid or traced rendering and save figures at the intended resolution.</p>
+        </dd><dt><a href="ray-marching.html">Rendering volumes and traced surfaces</a></dt>
+        <dd><p>Trace signed distance surfaces, integrate scalar volumes and accumulate seeded path-traced images.</p>
+        </dd><dt><a href="path-tracing.html">Rendering materials with path tracing</a></dt>
+        <dd><p>Render rough metals, glass, image lighting and participating media with the native path tracer.</p>
+        </dd><dt><a href="documents.html">Embedding plots in reports</a></dt>
+        <dd><p>Use knitr and Quarto to choose HTML viewers or static figures, supply alt text and compose panels.</p>
+        </dd><dt><a href="viewer.html">Viewing plots interactively</a></dt>
+        <dd><p>Explore WebGL 2 scenes with tooltips, picking, selection, linked cameras and crosstalk filters.</p>
+        </dd><dt><a href="motion.html">Animating cameras and data</a></dt>
+        <dd><p>Render camera moves and camera paths, tween points and surfaces between data states, and hand the scene to the interactive viewer.</p>
+        </dd><dt><a href="export.html">Exporting plots and scenes</a></dt>
+        <dd><p>Write model files, animated glTF, semantic SVG, TikZ and Asymptote, or pass scenes to rgl and rayrender.</p>
+      </dd></dl></div>
+    <div class="section ">
+      <h3>Scientific examples</h3>
+      <div class="section-desc"></div>
+
+      <dl><dt><a href="gallery.html">Drawing common charts in 3D</a></dt>
         <dd><p>Worked plots of solid curves, distributions, covariance ellipsoids, streamtubes, cutaways and contour terraces alongside familiar charts.</p>
-        </dd><dt><a href="pde.html">Linear and nonlinear PDEs</a></dt>
-        <dd><p>Exact solutions of eight partial differential equations and a numerical magnetohydrodynamic solution drawn as surfaces that change over time with animate_3d().</p>
-        </dd><dt><a href="implicit-surfaces.html">Implicit surfaces</a></dt>
-        <dd><p>Draw level sets from functions, reconstruct surfaces from point clouds and triangulate scattered height measurements.</p>
-        </dd><dt><a href="higher-dimensions.html">Four dimensions, tilings and honeycombs</a></dt>
-        <dd><p>Project and rotate four-dimensional data, cut 4D meshes with a hyperplane, run a grand tour, and draw regular tilings and honeycombs.</p>
-        </dd><dt><a href="curved-spaces.html">Curved spaces and spacetime</a></dt>
-        <dd><p>Draw data in spherical and hyperbolic geometry, the Hopf fibration, hyperbolic tree layouts, light cones, Lorentz boosts and Schwarzschild geodesics.</p>
-        </dd><dt><a href="complex-knots.html">Complex functions, knots and immersed surfaces</a></dt>
-        <dd><p>Domain colouring on the Riemann sphere, Riemann surfaces of inverse functions, Möbius maps, torus knots and immersed surfaces with their self-intersections.</p>
-        </dd><dt><a href="thurston-geometries.html">Inside the Thurston geometries</a></dt>
-        <dd><p>Render an observer view in each of the eight Thurston geometries using intrinsic balls and geodesics.</p>
-        </dd><dt><a href="tensors.html">Tensor glyphs</a></dt>
-        <dd><p>Map symmetric positive semidefinite matrices to oriented ellipsoid or superquadric glyphs.</p>
-        </dd><dt><a href="ordination.html">Ordination biplots</a></dt>
+        </dd><dt><a href="ordination.html">Drawing ordination biplots</a></dt>
         <dd><p>Draw site scores, variable arrows and grouped regions from principal-component and ecological ordinations.</p>
-        </dd><dt><a href="molecules.html">Molecular ball-and-stick views</a></dt>
+        </dd><dt><a href="tensors.html">Drawing tensor glyphs</a></dt>
+        <dd><p>Map symmetric positive semidefinite matrices to oriented ellipsoid or superquadric glyphs.</p>
+        </dd><dt><a href="molecules.html">Drawing molecular structures</a></dt>
         <dd><p>Read molecular coordinates, attach bonds by atom identifier and draw atoms and bonds in three dimensions.</p>
-        </dd><dt><a href="colour-gamuts.html">Colour gamuts in Lab coordinates</a></dt>
+        </dd><dt><a href="colour-gamuts.html">Plotting colour gamuts in Lab coordinates</a></dt>
         <dd><p>Sample sRGB colours in Lab coordinates and display their convex hull with interpolated vertex colours.</p>
       </dd></dl></div>
     <div class="section ">
-      <h3>Background</h3>
+      <h3>Mathematical examples</h3>
       <div class="section-desc"></div>
 
-      <dl><dt><a href="visibility.html">Visibility</a></dt>
+      <dl><dt><a href="implicit-surfaces.html">Constructing and reconstructing surfaces</a></dt>
+        <dd><p>Draw level sets from functions, reconstruct surfaces from point clouds and triangulate scattered height measurements.</p>
+        </dd><dt><a href="pde.html">Animating differential-equation solutions</a></dt>
+        <dd><p>Exact solutions of eight partial differential equations and a numerical magnetohydrodynamic solution drawn as surfaces that change over time with animate_3d().</p>
+        </dd><dt><a href="higher-dimensions.html">Projecting four dimensions and drawing tilings</a></dt>
+        <dd><p>Project and rotate four-dimensional data, cut 4D meshes with a hyperplane, run a grand tour, and draw regular tilings and honeycombs.</p>
+        </dd><dt><a href="curved-spaces.html">Plotting curved spaces and spacetime</a></dt>
+        <dd><p>Draw data in spherical and hyperbolic geometry, the Hopf fibration, hyperbolic tree layouts, light cones, Lorentz boosts and Schwarzschild geodesics.</p>
+        </dd><dt><a href="complex-knots.html">Drawing complex functions, knots and surfaces</a></dt>
+        <dd><p>Domain colouring on the Riemann sphere, Riemann surfaces of inverse functions, Möbius maps, torus knots and immersed surfaces with their self-intersections.</p>
+        </dd><dt><a href="thurston-geometries.html">Viewing Thurston geometries from inside</a></dt>
+        <dd><p>Render an observer view in each of the eight Thurston geometries using intrinsic balls and geodesics.</p>
+      </dd></dl></div>
+    <div class="section ">
+      <h3>Internals and extensions</h3>
+      <div class="section-desc"></div>
+
+      <dl><dt><a href="visibility.html">How overlapping geometry is drawn</a></dt>
         <dd><p>Explain how overlapping faces, lines and marks are ordered and clipped within a three-dimensional panel.</p>
-        </dd><dt><a href="extending.html">Extending ggplot3d</a></dt>
+        </dd><dt><a href="extending.html">Writing a geometry extension</a></dt>
         <dd><p>Write a new geom for coord_3d(): the scene packet it emits, how positions are normalised, and how register_geom_3d() connects it to the scene.</p>
       </dd></dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,9 +1,9 @@
 ---
-title: "Colour gamuts in Lab coordinates"
+title: "Plotting colour gamuts in Lab coordinates"
 description: "Sample sRGB colours in Lab coordinates and display their convex hull with interpolated vertex colours."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Colour gamuts in Lab coordinates}
+  %\VignetteIndexEntry{Plotting colour gamuts in Lab coordinates}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(legend = "right", fig.width = 7, fig.height = 5)
 ```
 
-A colour gamut is the set of colours available in a colour space or device. Lab is a colour space defined by the International Commission on Illumination (CIE), with lightness L and two chromatic coordinates a and b. `convertColor()` maps sampled standard RGB (sRGB) colours into Lab; `stat_hull_3d()` draws their convex hull, and every hull vertex keeps the colour of its sample.
+A colour gamut is the set of colours available in a colour space or device. Lab is a colour space defined by the International Commission on Illumination (CIE), with lightness L and two chromatic coordinates a and b. `convertColor()` maps sampled standard RGB (sRGB) colours into Lab; `stat_hull_3d()` draws their convex hull, and every hull vertex keeps the colour of its sample. [Building surfaces and solids](surfaces-solids.html#convex-hulls) introduces convex hulls.
 
 This example builds the hull from sampled colours and explains the limits of
 that approximation. Installation is covered in [Get started](ggplot3d.html).

@@ -234,7 +234,8 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 #'   `coord_3d(edges = )`, FALSE draws none.
 #' @inheritParams geom_surface_3d
 #' @details Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
-#'   POLYGON Z or TIN Z objects. With `shading = "flat"` a numeric vertex fill
+#'   POLYGON Z or TIN Z objects. A textured mesh from [read_mesh_3d()] given
+#'   as the layer's data drapes its image unless `texture` is supplied. With `shading = "flat"` a numeric vertex fill
 #'   is averaged per face before colour scaling, and every material must be
 #'   constant within each face. With `shading = "smooth"` the fill stays per
 #'   vertex, numeric or given as colours such as `fill = I(hex)`, and each face
@@ -267,6 +268,7 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
     data <- mesh_3d(vertices %or3d% data, faces)
   }
   texture <- texture_argument_3d(texture)
+  if (is.null(texture) && inherits(data, "ggplot3d_mesh")) texture <- attr(data, "texture")
   if (inherits(data, "mesh3d")) {
     image <- data$material$texture
     if (is.null(texture) && is.character(image) && length(image) == 1L && !is.na(image) && nzchar(image))

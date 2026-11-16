@@ -47,7 +47,7 @@ p <- ggplot(observations, aes(east, north, z = height)) +
 p
 ```
 
-The z axis labels the height column. The camera projects these three positions onto the plotting page. Change its angles in [Camera and framing](camera.html).
+The z axis labels the height column. The camera projects these three positions onto the plotting page. Change its angles in [Choosing camera views](camera.html).
 
 ## Adding a surface
 
@@ -64,7 +64,7 @@ p <- ggplot(surface, aes(east, north, z = height)) +
 p
 ```
 
-Grid neighbours form triangles. Surface pieces cover observations wherever they lie in front of them. [Layers](layers.html) also shows columns and contours, and [Surfaces, solids and fields](surfaces-solids.html) shows meshes and statistical surfaces.
+Grid neighbours form triangles. Surface pieces cover observations wherever they lie in front of them. [Choosing layers for observations and grids](layers.html) also shows columns and contours, and [Building surfaces and solids](surfaces-solids.html) shows meshes and statistical surfaces.
 
 ## Reading another table
 
@@ -95,7 +95,7 @@ ggplot(surface, aes(east, north, z = height)) +
 
 ## Saving the plot
 
-The default backend draws vector geometry. The file extension selects the graphics device. Use the raster backend for a scene rendered into pixels; [Output backends](backends.html) explains resolution and device requirements.
+The default backend draws vector geometry. The file extension selects the graphics device. Use the raster backend for a scene rendered into pixels; [Choosing rendering and image formats](backends.html) explains resolution and device requirements.
 
 ```{r save}
 path <- tempfile(fileext = ".pdf")
@@ -104,12 +104,18 @@ ggsave(path, p, width = 5, height = 4.5)
 
 ## Where next
 
-* [The z scale](z-scale.html): transform heights and control ranges across facets.
+* [Preparing data for 3D layers](data-preparation.html): read coordinate tables, join attributes and check surface grids.
 
-* [Axes, legends and pane styling](guides-themes.html): label the plot and adjust its panes.
+* [Choosing layers for observations and grids](layers.html): select geometry for your measurements.
 
-* [Camera and framing](camera.html): set the view and keep its bounds stable.
+* [Scaling heights and facet ranges](z-scale.html): transform heights and control ranges across facets.
 
-* [Output backends](backends.html): choose rendering and save an image.
+* [Styling axes, legends and panes](guides-themes.html): label the plot and adjust its panes.
 
-* [Visibility](visibility.html): understand overlapping geometry.
+* [Choosing camera views](camera.html): set the view and keep its bounds stable.
+
+* [Choosing rendering and image formats](backends.html): choose rendering and save an image.
+
+* [How overlapping geometry is drawn](visibility.html): understand overlapping geometry.
+
+The [article index](index.html) groups further guides by building plots, data types, appearance, output and sharing, scientific examples, mathematical examples, and internals and extensions.

@@ -27,7 +27,12 @@ backend_3d(
   max_steps = 2048L,
   quotient = NULL,
   light_size = 0.1,
-  rasterise = "marked"
+  rasterise = "marked",
+  noise_threshold = 0,
+  min_samples = 16L,
+  denoise = FALSE,
+  exposure = 0,
+  tone = "clip"
 )
 ```
 
@@ -76,11 +81,11 @@ backend_3d(
 
 - samples:
 
-  Path-tracing samples per pixel added by each render.
+  Maximum path-tracing samples per pixel added by each render.
 
 - bounces:
 
-  Maximum diffuse surface interactions per path.
+  Maximum surface or medium scattering interactions per path.
 
 - seed:
 
@@ -97,7 +102,7 @@ backend_3d(
 
 - light_radius:
 
-  Angular radius of the distant light in degrees.
+  Angular radius of each directional or head light in degrees.
 
 - progressive:
 
@@ -157,21 +162,57 @@ backend_3d(
   which adds every depth-tested layer with faces, paths or points. Text
   stays vector graphics, placed by the image's visibility.
 
+- noise_threshold:
+
+  Nonnegative relative standard-error target. Zero disables adaptive
+  sampling; positive values stop converged pixels after `min_samples`.
+  Coverage is tested with absolute standard error. Dark channels use a
+  linear-radiance floor of 0.001. Adaptive stopping is an estimate and
+  can introduce stopping bias.
+
+- min_samples:
+
+  Positive minimum sample count before adaptive stopping. At least two
+  samples per independent half buffer are required.
+
+- denoise:
+
+  Apply native nonlinearly weighted first-order regression using
+  independent colour, albedo, normal and depth half buffers.
+
+- exposure:
+
+  Exposure adjustment in stops, applied in linear light.
+
+- tone:
+
+  `"clip"`, `"aces"` (Narkowicz fit), or `"agx"` (the Rec.2020 AgX
+  transform with a polynomial contrast approximation).
+
 ## Value
 
 A backend configuration for coord_3d().
 
 ## Details
 
-The raster backend renders 64-pixel tiles in parallel. The number of
+The raster backend renders 16-pixel tiles in parallel. The number of
 worker threads is the option `ggplot3d.threads`; the default `0` uses
 one thread per hardware thread, at most two when `_R_CHECK_LIMIT_CORES_`
 is set. The image does not depend on the thread count.
 
-The native path tracer uses diffuse materials, a bounding-volume
-hierarchy, cosine-weighted reflection sampling and Russian roulette. The
-ambient light is a uniform environment; the diffuse light is a sampled
-distant disk. Points and paths use the solid conversion of
+The native path tracer uses
+[`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md)
+BSDFs, a bounding-volume hierarchy, Owen-scrambled Sobol samples,
+next-event light sampling with power-heuristic multiple importance
+sampling and Russian roulette. Ambient light is a uniform environment;
+directional lights are sampled distant disks. Point, head, hemisphere,
+image environments and emissive triangles contribute. Directional and
+point intensities retain the Lambert convention of the other backends
+(incident irradiance is pi times intensity). Absorption volumes use
+delta tracking for scattering and ratio tracking for shadow
+transmittance, with conservative per-cell extinction majorants.
+Isovolumes intersect the trilinear field as a surface. MIP is
+unavailable. Points and paths use the solid conversion of
 [`export_3d()`](https://gillescolling.com/ggplot3d/reference/export_3d.md),
 and SDF layers use the shared sphere tracer. Furniture and text remain
 vector graphics.
@@ -198,6 +239,29 @@ Pharr, Jakob and Humphreys (2023). Physically Based Rendering, fourth
 edition.
 <https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing>
 
+Veach (1997). Robust Monte Carlo methods for light transport simulation.
+Chapter 9. <https://graphics.stanford.edu/papers/veach_thesis/> Veach
+and Guibas (1995). Optimally combining sampling techniques for Monte
+Carlo rendering.
+[doi:10.1145/218380.218498](https://doi.org/10.1145/218380.218498)
+
+Burley (2020). Practical hash-based Owen scrambling. JCGT 9(4).
+<https://jcgt.org/published/0009/04/01/>
+
+Bitterli et al. (2016). Nonlinearly weighted first-order regression for
+denoising Monte Carlo renderings.
+[doi:10.1111/cgf.12954](https://doi.org/10.1111/cgf.12954)
+
+Novak et al. (2014). Residual ratio tracking for estimating attenuation
+in participating media.
+[doi:10.1145/2661229.2661292](https://doi.org/10.1145/2661229.2661292)
+
+Narkowicz (2016). ACES filmic tone mapping curve.
+<https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/>
+
+Three.js AgX tone-mapping implementation, adapted from Filament.
+<https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderChunk/tonemapping_pars_fragment.glsl.js>
+
 ## Examples
 
 ``` r
@@ -205,6 +269,7 @@ backend_3d("vector")
 backend_3d("raster", dpi = 144, antialias = 2)
 backend_3d("raster", blend = "srgb")
 backend_3d("pathtrace", samples = 8, seed = 1)
+backend_3d("pathtrace", samples = 16, noise_threshold = 0.05, denoise = TRUE, tone = "agx")
 d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
 d$z <- sin(pi * d$x) * cos(pi * d$y)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +

@@ -1,9 +1,9 @@
 ---
-title: "Tensor glyphs"
+title: "Drawing tensor glyphs"
 description: "Map symmetric positive semidefinite matrices to oriented ellipsoid or superquadric glyphs."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Tensor glyphs}
+  %\VignetteIndexEntry{Drawing tensor glyphs}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(legend = "right", fig.width = 7, fig.height = 4)
 ```
 
-A symmetric tensor is a matrix whose eigenvectors give three perpendicular directions and whose eigenvalues give their magnitudes. `geom_tensor_3d()` draws one tensor at each position. It accepts symmetric positive semidefinite matrices in a list-column.
+A symmetric tensor is a matrix whose eigenvectors give three perpendicular directions and whose eigenvalues give their magnitudes. `geom_tensor_3d()` draws one tensor at each position. It accepts symmetric positive semidefinite matrices in a list-column. [Building surfaces and solids](surfaces-solids.html#spheres-ellipsoids-and-glyphs) covers covariance ellipsoids and other solid glyphs.
 
 This example draws three tensor shapes and rotates one of them. Installation
 is covered in [Get started](ggplot3d.html).

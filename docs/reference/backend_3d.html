@@ -14,6 +14,8 @@
 })();
 </script><style>
 .navbar .dropdown-menu { max-height: calc(100vh - 5rem); }
+.navbar .dropdown-menu .dropdown-item,
+.navbar .dropdown-menu .dropdown-header { color: var(--bs-body-color); }
 @media (max-width: 991.98px) {
   .navbar-collapse { max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
   .navbar .dropdown-menu { max-height: none; overflow: visible; }
@@ -69,46 +71,56 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Concepts</h6></li>
-    <li><a class="dropdown-item" href="../articles/z-scale.html">The z scale</a></li>
-    <li><a class="dropdown-item" href="../articles/layers.html">Layers</a></li>
-    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Surfaces, solids and fields</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
-    <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Building plots</h6></li>
+    <li><a class="dropdown-item" href="../articles/data-preparation.html">Preparing data for 3D layers</a></li>
+    <li><a class="dropdown-item" href="../articles/layers.html">Choosing layers for observations and grids</a></li>
+    <li><a class="dropdown-item" href="../articles/z-scale.html">Scaling heights and facet ranges</a></li>
+    <li><a class="dropdown-item" href="../articles/surfaces-solids.html">Building surfaces and solids</a></li>
     <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
-    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
     <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
-    <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
-    <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
-    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
-    <li><a class="dropdown-item" href="../articles/ray-marching.html">Ray marching and volumes</a></li>
-    <li><a class="dropdown-item" href="../articles/viewer.html">Interactive viewing</a></li>
-    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
-    <li><a class="dropdown-item" href="../articles/motion.html">Camera animation and interaction</a></li>
     <li><a class="dropdown-item" href="../articles/combining-2d-3d.html">Combining 2D and 3D graphics</a></li>
-    <li><a class="dropdown-item" href="../articles/documents.html">Documents</a></li>
-    <li><a class="dropdown-item" href="../articles/spatial.html">Maps and spatial data</a></li>
-    <li><a class="dropdown-item" href="../articles/networks.html">Networks and trees</a></li>
-    <li><a class="dropdown-item" href="../articles/meshes.html">Meshes and intrinsic geometry</a></li>
-    <li><a class="dropdown-item" href="../articles/vector-fields.html">Vector fields</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Examples</h6></li>
-    <li><a class="dropdown-item" href="../articles/gallery.html">Gallery</a></li>
-    <li><a class="dropdown-item" href="../articles/pde.html">Linear and nonlinear PDEs</a></li>
-    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Implicit surfaces</a></li>
-    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Four dimensions, tilings and honeycombs</a></li>
-    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Curved spaces and spacetime</a></li>
-    <li><a class="dropdown-item" href="../articles/complex-knots.html">Complex functions, knots and immersed surfaces</a></li>
-    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Inside the Thurston geometries</a></li>
-    <li><a class="dropdown-item" href="../articles/tensors.html">Tensor glyphs</a></li>
-    <li><a class="dropdown-item" href="../articles/ordination.html">Ordination biplots</a></li>
-    <li><a class="dropdown-item" href="../articles/molecules.html">Molecular ball-and-stick views</a></li>
-    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Colour gamuts in Lab coordinates</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Data types</h6></li>
+    <li><a class="dropdown-item" href="../articles/frames.html">Plotting angles and compositions</a></li>
+    <li><a class="dropdown-item" href="../articles/spatial.html">Plotting maps and spatial data</a></li>
+    <li><a class="dropdown-item" href="../articles/meshes.html">Reading and measuring meshes</a></li>
+    <li><a class="dropdown-item" href="../articles/scans.html">Reading 3D scans and point clouds</a></li>
+    <li><a class="dropdown-item" href="../articles/vector-fields.html">Drawing arrows and streamlines</a></li>
+    <li><a class="dropdown-item" href="../articles/field-slices.html">Slicing fields and point densities</a></li>
+    <li><a class="dropdown-item" href="../articles/networks.html">Drawing networks and trees</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Background</h6></li>
-    <li><a class="dropdown-item" href="../articles/visibility.html">Visibility</a></li>
-    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggplot3d</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Appearance</h6></li>
+    <li><a class="dropdown-item" href="../articles/camera.html">Choosing camera views</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Styling axes, legends and panes</a></li>
+    <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and styling surfaces</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Output and sharing</h6></li>
+    <li><a class="dropdown-item" href="../articles/backends.html">Choosing rendering and image formats</a></li>
+    <li><a class="dropdown-item" href="../articles/ray-marching.html">Rendering volumes and traced surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/path-tracing.html">Rendering materials with path tracing</a></li>
+    <li><a class="dropdown-item" href="../articles/documents.html">Embedding plots in reports</a></li>
+    <li><a class="dropdown-item" href="../articles/viewer.html">Viewing plots interactively</a></li>
+    <li><a class="dropdown-item" href="../articles/motion.html">Animating cameras and data</a></li>
+    <li><a class="dropdown-item" href="../articles/export.html">Exporting plots and scenes</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Scientific examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/gallery.html">Drawing common charts in 3D</a></li>
+    <li><a class="dropdown-item" href="../articles/ordination.html">Drawing ordination biplots</a></li>
+    <li><a class="dropdown-item" href="../articles/tensors.html">Drawing tensor glyphs</a></li>
+    <li><a class="dropdown-item" href="../articles/molecules.html">Drawing molecular structures</a></li>
+    <li><a class="dropdown-item" href="../articles/colour-gamuts.html">Plotting colour gamuts in Lab coordinates</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Mathematical examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/implicit-surfaces.html">Constructing and reconstructing surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/pde.html">Animating differential-equation solutions</a></li>
+    <li><a class="dropdown-item" href="../articles/higher-dimensions.html">Projecting four dimensions and drawing tilings</a></li>
+    <li><a class="dropdown-item" href="../articles/curved-spaces.html">Plotting curved spaces and spacetime</a></li>
+    <li><a class="dropdown-item" href="../articles/complex-knots.html">Drawing complex functions, knots and surfaces</a></li>
+    <li><a class="dropdown-item" href="../articles/thurston-geometries.html">Viewing Thurston geometries from inside</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Internals and extensions</h6></li>
+    <li><a class="dropdown-item" href="../articles/visibility.html">How overlapping geometry is drawn</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Writing a geometry extension</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -160,7 +172,12 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 <span>  max_steps <span class="op">=</span> <span class="fl">2048L</span>,</span>
 <span>  quotient <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  light_size <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  rasterise <span class="op">=</span> <span class="st">"marked"</span></span>
+<span>  rasterise <span class="op">=</span> <span class="st">"marked"</span>,</span>
+<span>  noise_threshold <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_samples <span class="op">=</span> <span class="fl">16L</span>,</span>
+<span>  denoise <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  exposure <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  tone <span class="op">=</span> <span class="st">"clip"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -205,11 +222,11 @@ compositing of vector graphics devices.</p></dd>
 
 
 <dt id="arg-samples">samples<a class="anchor" aria-label="anchor" href="#arg-samples"></a></dt>
-<dd><p>Path-tracing samples per pixel added by each render.</p></dd>
+<dd><p>Maximum path-tracing samples per pixel added by each render.</p></dd>
 
 
 <dt id="arg-bounces">bounces<a class="anchor" aria-label="anchor" href="#arg-bounces"></a></dt>
-<dd><p>Maximum diffuse surface interactions per path.</p></dd>
+<dd><p>Maximum surface or medium scattering interactions per path.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -226,7 +243,7 @@ units. NULL focuses on the camera target.</p></dd>
 
 
 <dt id="arg-light-radius">light_radius<a class="anchor" aria-label="anchor" href="#arg-light-radius"></a></dt>
-<dd><p>Angular radius of the distant light in degrees.</p></dd>
+<dd><p>Angular radius of each directional or head light in degrees.</p></dd>
 
 
 <dt id="arg-progressive">progressive<a class="anchor" aria-label="anchor" href="#arg-progressive"></a></dt>
@@ -283,6 +300,33 @@ depth-tested layer that draws faces or analytic quadrics; or <code>"all"</code>,
 which adds every depth-tested layer with faces, paths or points. Text
 stays vector graphics, placed by the image's visibility.</p></dd>
 
+
+<dt id="arg-noise-threshold">noise_threshold<a class="anchor" aria-label="anchor" href="#arg-noise-threshold"></a></dt>
+<dd><p>Nonnegative relative standard-error target. Zero
+disables adaptive sampling; positive values stop converged pixels after
+<code>min_samples</code>. Coverage is tested with absolute standard error. Dark
+channels use a linear-radiance floor of 0.001. Adaptive stopping is an
+estimate and can introduce stopping bias.</p></dd>
+
+
+<dt id="arg-min-samples">min_samples<a class="anchor" aria-label="anchor" href="#arg-min-samples"></a></dt>
+<dd><p>Positive minimum sample count before adaptive stopping.
+At least two samples per independent half buffer are required.</p></dd>
+
+
+<dt id="arg-denoise">denoise<a class="anchor" aria-label="anchor" href="#arg-denoise"></a></dt>
+<dd><p>Apply native nonlinearly weighted first-order regression
+using independent colour, albedo, normal and depth half buffers.</p></dd>
+
+
+<dt id="arg-exposure">exposure<a class="anchor" aria-label="anchor" href="#arg-exposure"></a></dt>
+<dd><p>Exposure adjustment in stops, applied in linear light.</p></dd>
+
+
+<dt id="arg-tone">tone<a class="anchor" aria-label="anchor" href="#arg-tone"></a></dt>
+<dd><p><code>"clip"</code>, <code>"aces"</code> (Narkowicz fit), or <code>"agx"</code> (the
+Rec.2020 AgX transform with a polynomial contrast approximation).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -290,13 +334,20 @@ stays vector graphics, placed by the image's visibility.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The raster backend renders 64-pixel tiles in parallel. The number
+    <p>The raster backend renders 16-pixel tiles in parallel. The number
 of worker threads is the option <code>ggplot3d.threads</code>; the default <code>0</code> uses
 one thread per hardware thread, at most two when <code>_R_CHECK_LIMIT_CORES_</code>
 is set. The image does not depend on the thread count.</p>
-<p>The native path tracer uses diffuse materials, a bounding-volume hierarchy,
-cosine-weighted reflection sampling and Russian roulette. The ambient light
-is a uniform environment; the diffuse light is a sampled distant disk.
+<p>The native path tracer uses <code><a href="material_3d.html">material_3d()</a></code> BSDFs, a bounding-volume hierarchy,
+Owen-scrambled Sobol samples, next-event light sampling with power-heuristic
+multiple importance sampling and Russian roulette. Ambient light is a
+uniform environment; directional lights are sampled distant disks. Point,
+head, hemisphere, image environments and emissive triangles contribute.
+Directional and point intensities retain the Lambert convention of the
+other backends (incident irradiance is pi times intensity).
+Absorption volumes use delta tracking for scattering and ratio tracking
+for shadow transmittance, with conservative per-cell extinction majorants.
+Isovolumes intersect the trilinear field as a surface. MIP is unavailable.
 Points and paths use the solid conversion of <code><a href="export_3d.html">export_3d()</a></code>, and SDF layers
 use the shared sphere tracer. Furniture and text remain vector graphics.</p>
 <p>The raymarch backend traces geodesics from an observer inside the geometry.
@@ -313,6 +364,20 @@ are opaque. See <code><a href="geodesic_3d.html">geodesic_3d()</a></code> for ch
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Pharr, Jakob and Humphreys (2023). Physically Based Rendering,
 fourth edition. <a href="https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing" class="external-link">https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/Path_Tracing</a></p>
+<p>Veach (1997). Robust Monte Carlo methods for light transport simulation.
+Chapter 9. <a href="https://graphics.stanford.edu/papers/veach_thesis/" class="external-link">https://graphics.stanford.edu/papers/veach_thesis/</a>
+Veach and Guibas (1995). Optimally combining sampling techniques for
+Monte Carlo rendering. <a href="https://doi.org/10.1145/218380.218498" class="external-link">doi:10.1145/218380.218498</a></p>
+<p>Burley (2020). Practical hash-based Owen scrambling. JCGT 9(4).
+<a href="https://jcgt.org/published/0009/04/01/" class="external-link">https://jcgt.org/published/0009/04/01/</a></p>
+<p>Bitterli et al. (2016). Nonlinearly weighted first-order regression for
+denoising Monte Carlo renderings. <a href="https://doi.org/10.1111/cgf.12954" class="external-link">doi:10.1111/cgf.12954</a></p>
+<p>Novak et al. (2014). Residual ratio tracking for estimating attenuation
+in participating media. <a href="https://doi.org/10.1145/2661229.2661292" class="external-link">doi:10.1145/2661229.2661292</a></p>
+<p>Narkowicz (2016). ACES filmic tone mapping curve.
+<a href="https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/" class="external-link">https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/</a></p>
+<p>Three.js AgX tone-mapping implementation, adapted from Filament.
+<a href="https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderChunk/tonemapping_pars_fragment.glsl.js" class="external-link">https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderChunk/tonemapping_pars_fragment.glsl.js</a></p>
     </div>
 
     <div class="section level2">
@@ -321,6 +386,7 @@ fourth edition. <a href="https://pbr-book.org/4ed/Light_Transport_I_Surface_Refl
 <span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"raster"</span>, dpi <span class="op">=</span> <span class="fl">144</span>, antialias <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"raster"</span>, blend <span class="op">=</span> <span class="st">"srgb"</span><span class="op">)</span></span>
 <span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"pathtrace"</span>, samples <span class="op">=</span> <span class="fl">8</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu">backend_3d</span><span class="op">(</span><span class="st">"pathtrace"</span>, samples <span class="op">=</span> <span class="fl">16</span>, noise_threshold <span class="op">=</span> <span class="fl">0.05</span>, denoise <span class="op">=</span> <span class="cn">TRUE</span>, tone <span class="op">=</span> <span class="st">"agx"</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">40</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">40</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">d</span><span class="op">$</span><span class="va">z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">sin</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">x</span><span class="op">)</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html" class="external-link">cos</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">d</span><span class="op">$</span><span class="va">y</span><span class="op">)</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>

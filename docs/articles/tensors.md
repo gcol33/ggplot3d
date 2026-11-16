@@ -1,10 +1,12 @@
-# Tensor glyphs
+# Drawing tensor glyphs
 
 A symmetric tensor is a matrix whose eigenvectors give three
 perpendicular directions and whose eigenvalues give their magnitudes.
 [`geom_tensor_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tensor_3d.md)
 draws one tensor at each position. It accepts symmetric positive
-semidefinite matrices in a list-column.
+semidefinite matrices in a list-column. [Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html#spheres-ellipsoids-and-glyphs)
+covers covariance ellipsoids and other solid glyphs.
 
 This example draws three tensor shapes and rotates one of them.
 Installation is covered in [Get

@@ -1,4 +1,4 @@
-# Camera animation and interaction
+# Animating cameras and data
 
 Camera motion shows a fixed scene from several directions. Data
 animation changes the observations or geometry between states. This
@@ -8,20 +8,24 @@ and ends by opening the same plot in the interactive viewer.
 Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 Frames are drawn with [ragg](https://ragg.r-lib.org/), and MP4 output
-needs [av](https://docs.ropensci.org/av/).
+needs [av](https://docs.ropensci.org/av/). [Choosing camera
+views](https://gillescolling.com/ggplot3d/articles/camera.md) introduces
+static framing; [Viewing plots
+interactively](https://gillescolling.com/ggplot3d/articles/viewer.md)
+covers browser controls.
 
-1.  Build the scene with
+1.  **Build** the scene with
     [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
 
-2.  Move the camera with
+2.  **Move** the camera with
     [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
     and a camera path such as
     [`orbit_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md).
 
-3.  Interpolate data states with `animate_3d(time = )` and
+3.  **Interpolate** data states with `animate_3d(time = )` and
     [`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md).
 
-4.  Explore the plot with
+4.  **Explore** the plot with
     [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md).
 
 ## Example
@@ -103,7 +107,6 @@ dpi gives the page dimensions in inches.
 pages <- animate_3d(p, frames = 3, azimuth = c(-60, 0, 60),
   format = "pdf", backend = "vector", width = 600, height = 450,
   dpi = 100, progress = FALSE)
-stopifnot(file.exists(pages$file), file.info(pages$file)$size > 0)
 ```
 
 For an image sequence, a file name such as `turn-%03d.svg` supplies the
@@ -138,9 +141,10 @@ The blue surface turning a quarter circle while the camera rises from a
 low view to a view from above.
 
 Frames use the raster backend by default. `backend = "vector"` draws
-each frame with the exact vector scene backend described in
-[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md),
-at a higher cost per frame.
+each frame with the exact vector scene backend described in [How
+overlapping geometry is
+drawn](https://gillescolling.com/ggplot3d/articles/visibility.md), at a
+higher cost per frame.
 
 ### Camera paths
 
@@ -349,9 +353,9 @@ call for the current view back into the plot code.
 view_3d(p, width = 560, height = 420)
 ```
 
-[Interactive
-viewing](https://gillescolling.com/ggplot3d/articles/viewer.md) covers
-tooltips, selection, Shiny inputs, linked panels and crosstalk.
+[Viewing plots
+interactively](https://gillescolling.com/ggplot3d/articles/viewer.md)
+covers tooltips, selection, Shiny inputs, linked panels and crosstalk.
 
 ## Camera conventions
 

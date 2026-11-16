@@ -138,8 +138,8 @@ visualization for Julia. Journal of Open Source Software 6(65), 3349.
 
 ## See also
 
-[Axes, legends and pane
-styling](https://gillescolling.com/ggplot3d/articles/guides-themes.html)
+[Styling axes, legends and
+panes](https://gillescolling.com/ggplot3d/articles/guides-themes.html)
 for scale breaks, colourbars and panel theme elements.
 
 ## Examples

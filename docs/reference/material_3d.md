@@ -34,7 +34,13 @@ material_3d(
   alpha = 0.2,
   beta = 0.6,
   normal_space = "model",
-  lighting = "pixel"
+  lighting = "pixel",
+  roughness = NULL,
+  metallic = NULL,
+  transmission = NULL,
+  ior = 1.5,
+  emission = NULL,
+  emission_strength = 1
 )
 ```
 
@@ -42,7 +48,8 @@ material_3d(
 
 - type:
 
-  Preset: `"matte"`, `"satin"`, `"shiny"` or `"metal"`.
+  Preset: `"matte"`, `"satin"`, `"shiny"`, `"metal"`, `"glass"` or
+  `"mirror"`.
 
 - ambient, diffuse, specular:
 
@@ -93,6 +100,30 @@ material_3d(
 
   `"pixel"` or `"vertex"`.
 
+- roughness:
+
+  GGX roughness in \[0, 1\]; NULL derives it from the preset.
+
+- metallic:
+
+  Metal fraction in \[0, 1\]; NULL takes the preset.
+
+- transmission:
+
+  Dielectric transmission fraction in \[0, 1\]; NULL takes the preset.
+
+- ior:
+
+  Positive index of refraction relative to air, default 1.5.
+
+- emission:
+
+  NULL or an emitted colour, decoded from sRGB.
+
+- emission_strength:
+
+  Nonnegative multiplier of linear emitted radiance.
+
 ## Value
 
 A material for the `material` argument of the surface layers.
@@ -136,7 +167,23 @@ kernel in the vector and raster backends and the viewer:
 Styles need a light: with `coord_3d(light = NULL)` faces keep their
 fill. In the path tracer, illustrative surfaces return the shared
 kernel's colour at the hit point and terminate the path, including
-indirect hits.
+indirect hits. The path tracer uses Lambert diffuse, GGX visible-normal
+microfacet reflection and dielectric transmission. GGX alpha is
+roughness squared. Dielectrics use exact Fresnel reflection; metals use
+a coloured Schlick Fresnel term. A reciprocal multiple-scattering lobe
+restores the masked energy of rough metals. Zero roughness gives ideal
+reflection/refraction. The matte default has no specular lobe. Explicit
+physical parameters enable the dielectric specular lobe unless
+`specular` is supplied.
+
+In vector, raster and viewer output, explicitly supplied physical
+parameters map to Blinn-Phong: shininess is `2 / roughness^4 - 2`,
+bounded to \[0.000001, 1000000\], diffuse strength is
+`(1 - metallic) * (1 - transmission)`, and specular colour interpolates
+from white to the fill with metallic. Explicit legacy strengths and
+shininess take precedence. These backends add emission in linear light;
+transmission reduces diffuse reflection and does not refract geometry.
+Existing presets retain their Blinn-Phong coefficients.
 
 ## References
 
@@ -147,6 +194,21 @@ on Computers C-20, 623-629.
 Gooch, Gooch, Shirley, Cohen (1998). A non-photorealistic lighting model
 for automatic technical illustration. SIGGRAPH '98, 447-452.
 [doi:10.1145/280814.280950](https://doi.org/10.1145/280814.280950)
+
+Burley (2012, 2015). Physically-based shading at Disney; Extending the
+Disney BRDF to a BSDF. SIGGRAPH courses.
+<https://disneyanimation.com/publications/physically-based-shading-at-disney/>
+
+Walter et al. (2007). Microfacet models for refraction through rough
+surfaces.
+[doi:10.2312/EGWR/EGSR07/195-206](https://doi.org/10.2312/EGWR/EGSR07/195-206)
+
+Heitz (2018). Sampling the GGX distribution of visible normals. JCGT
+7(4). <https://jcgt.org/published/0007/04/01/>
+
+Kulla and Conty (2017). Revisiting physically based shading at
+Imageworks.
+<https://blog.selfshadow.com/publications/s2017-shading-course/>
 
 ## Examples
 

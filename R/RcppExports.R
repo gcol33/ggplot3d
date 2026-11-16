@@ -129,6 +129,18 @@ quadric_mesh_cpp <- function(packet, segments) {
     .Call(`_ggplot3d_quadric_mesh_cpp`, packet, segments)
 }
 
+splat_covariance_cpp <- function(scales, quaternion, stretch) {
+    .Call(`_ggplot3d_splat_covariance_cpp`, scales, quaternion, stretch)
+}
+
+splat_resolve_cpp <- function(input, camera, viewport) {
+    .Call(`_ggplot3d_splat_resolve_cpp`, input, camera, viewport)
+}
+
+splat_project_cpp <- function(input, camera, viewport) {
+    .Call(`_ggplot3d_splat_project_cpp`, input, camera, viewport)
+}
+
 raster_ambient_cpp <- function(scene, context) {
     invisible(.Call(`_ggplot3d_raster_ambient_cpp`, scene, context))
 }
@@ -181,8 +193,28 @@ raymarch_path_prepare_cpp <- function(mesh, fields, camera, viewport) {
     .Call(`_ggplot3d_raymarch_path_prepare_cpp`, mesh, fields, camera, viewport)
 }
 
-raymarch_path_cpp <- function(pointer, width, height, extent, settings, illumination, start, samples, previous, threads) {
-    .Call(`_ggplot3d_raymarch_path_cpp`, pointer, width, height, extent, settings, illumination, start, samples, previous, threads)
+raymarch_path_cpp <- function(pointer, width, height, extent, settings, illumination, start, samples, threads) {
+    invisible(.Call(`_ggplot3d_raymarch_path_cpp`, pointer, width, height, extent, settings, illumination, start, samples, threads))
+}
+
+raymarch_path_finish_cpp <- function(pointer, denoise) {
+    .Call(`_ggplot3d_raymarch_path_finish_cpp`, pointer, denoise)
+}
+
+raymarch_hdr_cpp <- function(path) {
+    .Call(`_ggplot3d_raymarch_hdr_cpp`, path)
+}
+
+raymarch_sampler_cpp <- function(samples, dimensions, seed) {
+    .Call(`_ggplot3d_raymarch_sampler_cpp`, samples, dimensions, seed)
+}
+
+raymarch_bsdf_cpp <- function(material, colour, view, samples, seed) {
+    .Call(`_ggplot3d_raymarch_bsdf_cpp`, material, colour, view, samples, seed)
+}
+
+raymarch_medium_cpp <- function(input, origin, direction, distance, samples, seed) {
+    .Call(`_ggplot3d_raymarch_medium_cpp`, input, origin, direction, distance, samples, seed)
 }
 
 geometry_delaunay_cpp <- function(xy) {

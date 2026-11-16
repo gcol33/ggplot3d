@@ -1,10 +1,15 @@
-# Implicit surfaces
+# Constructing and reconstructing surfaces
 
-``` r
-
-library(ggplot2)
-library(ggplot3d)
-```
+Construct a surface from a function or reconstruct one from measured
+points. This article draws algebraic level sets, combines signed
+distance shapes and reconstructs scattered samples. Installation is
+covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md);
+[Building surfaces and
+solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.md)
+introduces the surface layers and [Rendering volumes and traced
+surfaces](https://gillescolling.com/ggplot3d/articles/ray-marching.md)
+evaluates distance shapes along viewing rays.
 
 An implicit surface is the set of points where a function of x, y and z
 takes one value.
@@ -16,8 +21,13 @@ function’s zero set.
 
 Point clouds can also supply a surface through an alpha shape or a
 fitted implicit function. The reconstruction examples below use small
-samples; installation is covered in [Get
-started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+samples.
+
+``` r
+
+library(ggplot2)
+library(ggplot3d)
+```
 
 ``` r
 

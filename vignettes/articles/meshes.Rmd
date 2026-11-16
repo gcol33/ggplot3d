@@ -1,9 +1,9 @@
 ---
-title: "Meshes and intrinsic geometry"
+title: "Reading and measuring meshes"
 description: "Read mesh files, smooth, subdivide and simplify triangle meshes, measure curvature, and draw geodesic distances, paths and log maps."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Meshes and intrinsic geometry}
+  %\VignetteIndexEntry{Reading and measuring meshes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(legend = "right")
 ```
 
-A triangle mesh stores a surface as vertices and the faces between them. This article reads a mesh from a file, cleans up a mesh extracted from data, colours it by curvature, and measures distances along the surface instead of through space. Installation is covered in [Get started](ggplot3d.html); [Surfaces, solids and fields](surfaces-solids.html#indexed-meshes) introduces `mesh_3d()` and `geom_mesh_3d()`.
+A triangle mesh stores a surface as vertices and the faces between them. This article reads a mesh from a file, cleans up a mesh extracted from data, colours it by curvature, and measures distances along the surface instead of through space. Installation is covered in [Get started](ggplot3d.html); [Building surfaces and solids](surfaces-solids.html#indexed-meshes) introduces `mesh_3d()` and `geom_mesh_3d()`.
 
 1. **Read** a file with `read_mesh_3d()`.
 
@@ -150,7 +150,7 @@ ggplot(crossing) + geom_mesh_3d(fill = "grey80") +
   stat_self_intersection_3d(colour = "#B5342B", linewidth = 1) + coord_3d()
 ```
 
-[Complex functions, knots and immersed surfaces](complex-knots.html) uses the same stat on surfaces that cannot be embedded in space without crossing.
+[Drawing complex functions, knots and surfaces](complex-knots.html) uses the same stat on surfaces that cannot be embedded in space without crossing.
 
 ## References
 
