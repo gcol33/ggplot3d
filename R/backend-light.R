@@ -44,10 +44,18 @@ camera_perspective_3d <- function(camera) {
   !is.null(camera$projection) && camera$projection[4L, 4L] == 0
 }
 
-# The viewing direction as the shading kernel reads it.
-kernel_view_3d <- function(camera) {
-  list(perspective = camera_perspective_3d(camera), eye = as.double(camera$eye %or3d% c(0, 0, 0)),
-       toward = view_toward_3d(camera))
+# The viewing direction as the shading kernel reads it. A lighting with a
+# `viewer` distance (light_3d()) places the eye of the specular term on the
+# view axis at that many radii of the sphere around the panel box from the
+# camera target, OpenGL's local viewer; otherwise the camera's eye is used.
+kernel_view_3d <- function(camera, light = NULL) {
+  toward <- view_toward_3d(camera)
+  if (!is.null(light$viewer)) {
+    target <- camera$eye + camera$distance * camera$ray
+    radius <- 0.5 * sqrt(sum(camera$model_scale^2))
+    return(list(perspective = TRUE, eye = as.double(target + toward * light$viewer * radius), toward = toward))
+  }
+  list(perspective = camera_perspective_3d(camera), eye = as.double(camera$eye %or3d% c(0, 0, 0)), toward = toward)
 }
 
 # The materials table of a packet as the shading kernel reads it, back
@@ -114,7 +122,7 @@ shade_linear_3d <- function(linear, normal, camera, light, position = NULL, mate
   if (is.null(position)) position <- matrix(camera$eye + camera$distance * camera$ray, n, 3L, byrow = TRUE)
   position[!is.finite(position)] <- 0
   shade_cpp(normal, position, linear, as.integer(material %or3d% integer(n)), kernel_materials_3d(materials),
-            resolved_light_3d(light, camera), kernel_view_3d(camera), light$occlusion)
+            resolved_light_3d(light, camera), kernel_view_3d(camera, light), light$occlusion)
 }
 
 # Model-space centroids of compiled fragments `rows`.

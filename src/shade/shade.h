@@ -300,7 +300,9 @@ static inline real transfer(real linear, real brightness, bool multiply) {
 // ks, shininess), material2 = (specular colour reflectance, back colour, or a
 // negative red for none), style = (style, quantised specular, bands or normal
 // frame, explicit breaks), pa and pb the style parameters, uTransfer =
-// (transfer, r0, r1, neutral cosine) and uEncoded the encoded-arithmetic flag.
+// (transfer, r0, r1, neutral cosine), uEncoded the encoded-arithmetic flag and
+// uViewer the local viewer distance in radii of the box sphere (0 for none),
+// which the callers read when they form the view direction.
 static inline std::string shade_glsl(int max_lights) {
   std::string terms;
 #define GGPLOT3D_TERM(id, name, ...) terms += "case " #id ": { " GGPLOT3D_STRINGIFY(__VA_ARGS__) " } break; ";
@@ -309,7 +311,7 @@ static inline std::string shade_glsl(int max_lights) {
   const std::string count = std::to_string(max_lights);
   return std::string("#define real float\n") +
     "uniform int uLightCount, uLightKind[" + count + "]; uniform vec3 uLightVector[" + count + "], uLightColour[" + count +
-    "], uLightGround[" + count + "]; uniform float uLightFalloff[" + count + "]; uniform vec3 uAmbient; uniform float uEncoded;\n"
+    "], uLightGround[" + count + "]; uniform float uLightFalloff[" + count + "]; uniform vec3 uAmbient; uniform float uEncoded, uViewer;\n"
     "uniform vec4 uTransfer; uniform vec3 uToneShadow, uToneHighlight, uFrameScale, uFrameRight, uFrameUp, uFrameToward;\n"
     GGPLOT3D_XSTRINGIFY(GGPLOT3D_SHADE_FUNCTIONS()) "\n"
     "vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, vec4 material, vec4 material2, vec4 style, vec4 pa, vec4 pb) {\n"

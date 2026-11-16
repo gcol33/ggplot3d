@@ -14,6 +14,7 @@ light_3d(
   highlight_colour = "#fff1d6",
   linear = NULL,
   material = NULL,
+  viewer = NULL,
   preset = "default"
 )
 }
@@ -49,6 +50,13 @@ preset's when \code{mode} is the preset's mode, else 45.}
 NULL for the preset's (plain Lambert reflection when the preset has
 none).}
 
+\item{viewer}{NULL, or the distance of the eye that the specular
+highlight is computed for, in radii of the sphere around the panel box,
+measured from the camera target along the view axis (OpenGL's local
+viewer; rgl places it at \code{1 / sin(fov / 2)}). A near eye draws a
+highlight out along a surface. NULL takes the preset's, else the camera's
+eye (infinitely far under orthographic projection).}
+
 \item{preset}{Starting lighting: \code{"default"}, \code{"ggcube"},
 \code{"matplotlib"}, \code{"rgl"}, \code{"plotly"} or \code{"mathematica"}.}
 }
@@ -77,8 +85,9 @@ scaled by \code{0.65 + 0.35 * cos} with the light at \code{LightSource(azdeg = 2
 \item \code{"rgl"}: rgl's default \code{light3d(theta = 0, phi = 15)}, a white light 15
 degrees above the eye, with rgl's default material (no ambient
 reflection, white specular, shininess 50) lit at the vertices
-(\code{lighting = "vertex"}) on encoded values, as desktop rgl's fixed-function
-OpenGL does.
+(\code{lighting = "vertex"}) on encoded values, with OpenGL's local viewer at
+rgl's default eye distance (\verb{viewer = 1 / sin(15 degrees)}, for its
+30-degree field of view), as desktop rgl's fixed-function OpenGL does.
 \item \code{"plotly"}: plotly's surface lighting defaults: ambient 0.8, diffuse
 0.8, the light at \verb{lightposition = (10, 10000, 0)}, which its shader
 takes in camera coordinates (straight above the viewer), and specular

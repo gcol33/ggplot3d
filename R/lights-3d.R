@@ -117,8 +117,9 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' - `"rgl"`: rgl's default `light3d(theta = 0, phi = 15)`, a white light 15
 #'   degrees above the eye, with rgl's default material (no ambient
 #'   reflection, white specular, shininess 50) lit at the vertices
-#'   (`lighting = "vertex"`) on encoded values, as desktop rgl's fixed-function
-#'   OpenGL does.
+#'   (`lighting = "vertex"`) on encoded values, with OpenGL's local viewer at
+#'   rgl's default eye distance (`viewer = 1 / sin(15 degrees)`, for its
+#'   30-degree field of view), as desktop rgl's fixed-function OpenGL does.
 #' - `"plotly"`: plotly's surface lighting defaults: ambient 0.8, diffuse
 #'   0.8, the light at `lightposition = (10, 10000, 0)`, which its shader
 #'   takes in camera coordinates (straight above the viewer), and specular
@@ -193,6 +194,12 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' @param material A [material_3d()] for the shaded layers that set none, or
 #'   NULL for the preset's (plain Lambert reflection when the preset has
 #'   none).
+#' @param viewer NULL, or the distance of the eye that the specular
+#'   highlight is computed for, in radii of the sphere around the panel box,
+#'   measured from the camera target along the view axis (OpenGL's local
+#'   viewer; rgl places it at `1 / sin(fov / 2)`). A near eye draws a
+#'   highlight out along a surface. NULL takes the preset's, else the camera's
+#'   eye (infinitely far under orthographic projection).
 #' @param preset Starting lighting: `"default"`, `"ggcube"`,
 #'   `"matplotlib"`, `"rgl"`, `"plotly"` or `"mathematica"`.
 #' @return A lighting configuration for [coord_3d()]. The backends that take
@@ -221,7 +228,7 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' @export
 light_3d <- function(..., ambient = NULL, mode = NULL, range = NULL, neutral = NULL,
                      shadow_colour = "#1d2b53", highlight_colour = "#fff1d6", linear = NULL, material = NULL,
-                     preset = "default") {
+                     viewer = NULL, preset = "default") {
   preset <- light_presets_3d[[match.arg(preset, names(light_presets_3d))]]()
   lights <- list(...)
   if (!length(lights)) lights <- preset$lights
@@ -237,12 +244,16 @@ light_3d <- function(..., ambient = NULL, mode = NULL, range = NULL, neutral = N
   linear <- linear %or3d% preset$linear %or3d% TRUE
   if (!is.logical(linear) || length(linear) != 1L || is.na(linear)) stop("linear must be TRUE or FALSE.", call. = FALSE)
   material <- material_argument_3d(material %or3d% preset$material)
+  viewer <- viewer %or3d% preset$viewer
+  if (!is.null(viewer) && (!is.numeric(viewer) || length(viewer) != 1L || !is.finite(viewer) || viewer <= 1))
+    stop("viewer must be NULL or one distance greater than 1.", call. = FALSE)
   primary <- Filter(function(l) l$kind == light_kinds_3d[["directional"]], lights)
   primary <- if (length(primary)) primary[[1L]] else NULL
   structure(list(lights = unname(lights), ambient = check_ambient_3d(ambient %or3d% preset$ambient, linear),
     mode = mode, range = as.double(range), neutral = as.double(neutral),
     shadow = check_light_colour_3d(shadow_colour, "shadow_colour"),
     highlight = check_light_colour_3d(highlight_colour, "highlight_colour"), linear = linear, material = material,
+    viewer = if (is.null(viewer)) NULL else as.double(viewer),
     direction = if (is.null(primary)) c(0, 0, 1) else primary$vector,
     space = if (is.null(primary)) "camera" else primary$space,
     diffuse = if (is.null(primary)) 0 else primary$intensity), class = "ggplot3d_lights")
@@ -285,7 +296,7 @@ light_presets_3d <- list(
       space = "data", intensity = 1)), ambient = 0, mode = "value", range = c(-0.7, 0), neutral = 0)
   },
   rgl = function() list(lights = list(light_directional(c(0, sinpi(15 / 180), cospi(15 / 180)), intensity = 1)),
-    ambient = 0, mode = "multiply", linear = FALSE,
+    ambient = 0, mode = "multiply", linear = FALSE, viewer = 1 / sinpi(15 / 180),
     material = material_3d(ambient = 0, diffuse = 1, specular = 1, shininess = 50, specular_colour = 1, lighting = "vertex")),
   plotly = function() list(lights = list(light_directional(c(10, 10000, 0), intensity = 0.8)),
     ambient = 0.8, mode = "multiply", linear = FALSE,

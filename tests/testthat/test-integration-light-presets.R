@@ -131,3 +131,17 @@ test_that("the viewer receives the encoded flag and vertex lighting", {
   expect_true(materials[[1L]]$vertex)
   expect_match(shade_glsl_cpp(8L), "uEncoded", fixed = TRUE)
 })
+
+test_that("a viewer distance places the specular eye on the view axis", {
+  viewport <- new_scene_viewport(80, 80, dpi = 100)
+  camera <- scene_compile(new_scene_packet(), new_camera_3d(), viewport)$camera
+  far <- kernel_view_3d(camera, light_3d())
+  expect_false(far$perspective)
+  near <- kernel_view_3d(camera, light_3d(viewer = 2))
+  expect_true(near$perspective)
+  target <- camera$eye + camera$distance * camera$ray
+  expect_equal(sqrt(sum((near$eye - target)^2)), 2 * 0.5 * sqrt(sum(camera$model_scale^2)))
+  expect_equal(light_3d(preset = "rgl")$viewer, 1 / sinpi(15 / 180))
+  expect_error(light_3d(viewer = 0.5), "viewer")
+  expect_equal(view_lights_3d(light_3d(viewer = 3))$viewer, 3)
+})

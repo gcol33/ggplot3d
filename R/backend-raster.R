@@ -17,7 +17,7 @@ raster_quadric_colours_3d <- function(packet, prepared, light) {
     base[!is.finite(base)] <- 0
     attr(rgba, "smooth") <- list(base = base, lit = lit, material = material_index_3d(styles),
       materials = kernel_materials_3d(packet$materials), lights = resolved_light_3d(light, prepared$camera),
-      view = kernel_view_3d(prepared$camera))
+      view = kernel_view_3d(prepared$camera, light))
   }
   rgba
 }
@@ -47,7 +47,7 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
           lit = lit, normal = face_shading_normals_3d(fragments, seq_along(colour), prepared$camera, styles),
           material = material_index_3d(styles), materials = kernel_materials_3d(packet$materials),
           lights = if (!is.null(light)) resolved_light_3d(light, prepared$camera),
-          view = kernel_view_3d(prepared$camera))
+          view = kernel_view_3d(prepared$camera, light))
         smooth$normal[!is.finite(smooth$normal)] <- 0
         smooth$base[!is.finite(smooth$base)] <- 0
         if (!is.null(attr(packet, "face_clip"))) smooth$clip <- attr(packet, "face_clip")

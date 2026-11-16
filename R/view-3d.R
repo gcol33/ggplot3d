@@ -519,7 +519,7 @@ view_lights_3d <- function(light) {
       falloff = l$falloff)),
     ambient = rep_len(light$ambient, 3L), mode = light$mode, direction = light$direction, space = light$space,
     diffuse = light$diffuse, transfer = c(transfer$transfer, transfer$range, transfer$neutral),
-    encoded = transfer$encoded, shadow = transfer$shadow, highlight = transfer$highlight)
+    encoded = transfer$encoded, viewer = light$viewer %or3d% 0, shadow = transfer$shadow, highlight = transfer$highlight)
 }
 
 # A numeric column as a base64 typed array: little-endian float32 for

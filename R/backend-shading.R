@@ -118,7 +118,7 @@ fragment_vertex_linear_3d <- function(scene, rows, styles, attributes, light) {
     shading = list(base = base, normal = normal, position = position, accessibility = accessibility,
       depth = if (camera_perspective_3d(scene$camera)) scene$vertices$depth[index] else rep(1, length(index)),
       lit = lit_face, material = material_index_3d(styles), materials = kernel_materials_3d(scene$materials),
-      lights = if (any(lit)) resolved_light_3d(light, scene$camera), view = kernel_view_3d(scene$camera)))
+      lights = if (any(lit)) resolved_light_3d(light, scene$camera), view = kernel_view_3d(scene$camera, light)))
 }
 
 # How the vector backend paints smooth faces: "auto" draws adjacent varied

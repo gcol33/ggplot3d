@@ -244,7 +244,7 @@
         // interpolated over the face in place of per-sample shading.
         if (aFlags.z > 0.5 && vShade > 0.5 && uLight > 0.5 && aTexture.z < 0.0 && dot(vNormal, vNormal) > 0.0) {
           vec3 q = (aPos-uTarget)*uScale;
-          vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
+          vec3 v = uViewer > 0.0 ? normalize(-uViewer*0.5*length(uScale)*uForward-q) : uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
           vLinear = clamp(shade(normalize(vNormal), q, v, clamp(vLinear, 0.0, 1.0), aMaterial, aMaterial2, aStyle, aStyleA, aStyleB), 0.0, 1.0);
           vShade = 0.0;
         }
@@ -267,7 +267,7 @@
         }
         if (vShade > 0.5 && uLight > 0.5 && dot(vNormal, vNormal) > 0.0) {
           vec3 q = (vModel-uTarget)*uScale;
-          vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
+          vec3 v = uViewer > 0.0 ? normalize(-uViewer*0.5*length(uScale)*uForward-q) : uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
           l = clamp(shade(normalize(vNormal), q, v, l, vMaterial, vMaterial2, vStyle, vStyleA, vStyleB), 0.0, 1.0);
         }
         emit(vec4(clamp(toSrgb(l), 0.0, 1.0), vColour.a*a));
@@ -459,7 +459,7 @@
         vec3 n = (g*vToLocal).xyz/uScale;
         if (dot(n, n) > 0.0) {
           vec3 q = (m-uTarget)*uScale;
-          vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
+          vec3 v = uViewer > 0.0 ? normalize(-uViewer*0.5*length(uScale)*uForward-q) : uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
           l = clamp(shade(normalize(n), q, v, l, vMaterial, vMaterial2, vec4(0.0), vec4(0.0), vec4(0.0)), 0.0, 1.0);
         }
       }
@@ -1230,7 +1230,7 @@
           gl.uniform1iv(prog.uniform('uLightKind'), kind); gl.uniform3fv(prog.uniform('uLightVector'), vector);
           gl.uniform3fv(prog.uniform('uLightColour'), colour); gl.uniform3fv(prog.uniform('uLightGround'), ground);
           gl.uniform1fv(prog.uniform('uLightFalloff'), falloff);
-          set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray); set1('uEncoded', light.encoded || 0);
+          set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray); set1('uEncoded', light.encoded || 0); set1('uViewer', light.viewer || 0);
           gl.uniform4fv(prog.uniform('uTransfer'), arr(light.transfer)); set3('uToneShadow', arr(light.shadow)); set3('uToneHighlight', arr(light.highlight));
           set3('uFrameScale', b.scale); set3('uFrameRight', b.orthoRight); set3('uFrameUp', b.orthoUp); set3('uFrameToward', b.forward.map(x => -x));
         }
