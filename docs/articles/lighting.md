@@ -64,6 +64,40 @@ hill + scale_fill_viridis_b(guide = guide_coloursteps_3d()) +
 azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic
 projection.](lighting_files/figure-html/tone-1.svg)
 
+## The lighting of other packages
+
+Each 3D package lights a surface in its own way, and a figure redrawn
+from one of them can keep its look with `light_3d(preset = )`. ggcube
+moves the HSV value of the fill toward black or white; matplotlib only
+darkens, by up to 70 percent; rgl puts a white headlight highlight on
+faces lit at their corners; plotly lights from above the viewer with a
+strong ambient term; and Mathematica tints the surface with four
+coloured lights, which suits light fills. Any argument given with a
+preset replaces the preset’s value.
+
+``` r
+
+presets <- c("default", "ggcube", "matplotlib", "rgl", "plotly", "mathematica")
+panels <- lapply(presets, function(preset) {
+  ggplot(d, aes(x, y, z = z)) +
+    geom_surface_3d(fill = if (preset == "mathematica") "grey85" else "#2E6F9E",
+                    shading = "smooth", colour = NA) +
+    coord_3d(light = light_3d(preset = preset), panes = character(),
+             axes = character(), box = "none") +
+    ggtitle(preset)
+})
+patchwork::wrap_plots(panels, ncol = 3)
+```
+
+![Six copies of a blue surface with two peaks, lit as in ggplot3d,
+ggcube, matplotlib, rgl, plotly and, on a light grey fill,
+Mathematica.](lighting_files/figure-html/presets-1.svg)
+
+A highlight shows the shape of a single-colour surface best, but it
+mixes white into the fill. `material_3d("satin")` keeps it faint, and
+`light_3d(material = )` gives every shaded layer without its own
+material that one.
+
 ## Illustrative styles
 
 `material_3d(style = )` changes how a face responds to the light. Toon

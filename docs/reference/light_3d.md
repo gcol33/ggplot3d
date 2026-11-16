@@ -1,8 +1,8 @@
 # Lighting for a 3D scene
 
 Combines light sources with an ambient term and sets how the light
-changes face colours. Without light sources the scene has one
-directional light,
+changes face colours. Without light sources the scene has the lights of
+`preset`; the default preset has one directional light,
 [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
 from the upper left of the camera. See
 [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md)
@@ -13,12 +13,15 @@ for specular highlights.
 ``` r
 light_3d(
   ...,
-  ambient = 0.35,
-  mode = "lightness",
+  ambient = NULL,
+  mode = NULL,
   range = NULL,
-  neutral = 45,
+  neutral = NULL,
   shadow_colour = "#1d2b53",
-  highlight_colour = "#fff1d6"
+  highlight_colour = "#fff1d6",
+  linear = NULL,
+  material = NULL,
+  preset = "default"
 )
 ```
 
@@ -32,34 +35,54 @@ light_3d(
   [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
   or
   [`light_hemisphere()`](https://gillescolling.com/ggplot3d/reference/light_directional.md).
-  None gives one
-  [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md).
+  None gives the lights of `preset`.
 
 - ambient:
 
-  Nonnegative strength of the uniform ambient light.
+  Uniform ambient light: a nonnegative strength (a grey) or one colour.
+  NULL takes the preset's.
 
 - mode:
 
   Colour operation: `"multiply"`, `"tint"`, `"lightness"`, `"tone"`,
-  `"overlay"` or `"soft"`.
+  `"overlay"`, `"soft"` or `"value"`. NULL takes the preset's.
 
 - range:
 
   Moves at full shadow and full highlight, `c(shadow, highlight)` with
   `-1 <= shadow <= 0 <= highlight <= 1`: fractions of the way to black
-  and white in OKLab lightness for `"lightness"`, to the tone colours
-  for `"tone"`, blend strengths for `"overlay"` and `"soft"`. NULL takes
-  `c(-0.45, 0.3)` for `"lightness"` and `c(-0.6, 0.6)` otherwise.
+  and white in OKLab lightness for `"lightness"` and in HSV value for
+  `"value"`, to the tone colours for `"tone"`, blend strengths for
+  `"overlay"` and `"soft"`. NULL takes the preset's when `mode` is the
+  preset's mode, else `c(-0.45, 0.3)` for `"lightness"` and
+  `c(-0.6, 0.6)` otherwise.
 
 - neutral:
 
   Angle in degrees, in \[0, 180), between the normal and the light at
-  which a signed mode leaves the colour unchanged.
+  which a signed mode leaves the colour unchanged. NULL takes the
+  preset's when `mode` is the preset's mode, else 45.
 
 - shadow_colour, highlight_colour:
 
   Tone colours of `"tone"`.
+
+- linear:
+
+  Whether `"multiply"` and `"tint"` work in linear light (`TRUE`) or on
+  encoded sRGB values (`FALSE`). NULL takes the preset's.
+
+- material:
+
+  A
+  [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md)
+  for the shaded layers that set none, or NULL for the preset's (plain
+  Lambert reflection when the preset has none).
+
+- preset:
+
+  Starting lighting: `"default"`, `"ggcube"`, `"matplotlib"`, `"rgl"`,
+  `"plotly"` or `"mathematica"`.
 
 ## Value
 
@@ -69,6 +92,43 @@ The backends that take one directional light (the path tracer and the
 raymarch backend) use the first directional light.
 
 ## Details
+
+`preset` starts from the lighting of another package; every argument
+given explicitly replaces the preset's value, and lights given in `...`
+replace its lights.
+
+- `"default"`: one
+  [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
+  ambient 0.35, `mode = "lightness"`, `range = c(-0.45, 0.4)`,
+  `neutral = 60`.
+
+- `"ggcube"`: ggcube's `light()`: a light along `c(-0.5, 0, 1)` in the
+  data axes and its `"hsv"` mode at `contrast = 1`, i.e.
+  `mode = "value"`, `range = c(-1, 1)`, `neutral = 90`.
+
+- `"matplotlib"`: the shading of matplotlib's `plot_surface()`: the
+  colour scaled by `0.65 + 0.35 * cos` with the light at
+  `LightSource(azdeg = 225, altdeg = 19.4712)` in the data axes, i.e.
+  `mode = "value"`, `range = c(-0.7, 0)`, `neutral = 0`.
+
+- `"rgl"`: rgl's default `light3d(theta = 0, phi = 15)`, a white light
+  15 degrees above the eye, with rgl's default material (no ambient
+  reflection, white specular, shininess 50) lit at the vertices
+  (`lighting = "vertex"`) on encoded values, as desktop rgl's
+  fixed-function OpenGL does.
+
+- `"plotly"`: plotly's surface lighting defaults: ambient 0.8, diffuse
+  0.8, the light at `lightposition = (10, 10000, 0)`, which its shader
+  takes in camera coordinates (straight above the viewer), and specular
+  0.05 with roughness 0.5 approximated by a Blinn exponent of 6, on
+  encoded values.
+
+- `"mathematica"`: Mathematica's `Lighting -> Automatic`: ambient
+  `RGBColor[0.4, 0.2, 0.2]` and four coloured directional lights fixed
+  to the image, shining from `ImageScaled` points `{2, 0, 2}`,
+  `{2, 2, 3}`, `{0, 2, 2}` and `{0, 0, 2}` toward its centre, on encoded
+  values. It suits light fills; Mathematica itself switches to white
+  lights when a colour function is given.
 
 `mode` sets how the light changes a face colour. `"multiply"` scales the
 colour by the ambient and diffuse light and `"tint"` scales its distance
@@ -97,6 +157,17 @@ material's diffuse strength. A level of 0 leaves the colour unchanged.
 - `"overlay"` and `"soft"` are matplotlib's `LightSource` blend modes on
   the encoded colour, with an intensity of
   `0.5 + level * abs(range) / 2`.
+
+- `"value"` scales the HSV value of the encoded colour toward 0 by up to
+  the fraction `abs(range[1])` in shadow and moves it toward 1 by up to
+  `range[2]` in light, keeping hue and saturation (ggcube's `"hsv"`
+  mode).
+
+`multiply` and `tint` work in linear light. With `linear = FALSE` they
+work on the encoded sRGB values instead, with the light colours and
+ambient taken as encoded values too and the light reaching a face capped
+at 1, as the fixed-function OpenGL pipeline, rgl, plotly and Mathematica
+do; the result is darker in the half shadow.
 
 Specular highlights of
 [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md)
@@ -132,4 +203,7 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
   geom_surface_3d(shading = "smooth", colour = NA) +
   ggplot2::scale_fill_distiller(palette = "Spectral") +
   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
+  coord_3d(light = light_3d(preset = "mathematica"))
 ```

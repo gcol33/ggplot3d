@@ -9,8 +9,10 @@ relative to `dull` so that `"matte"` reproduces plain Lambert shading.
 The specular highlight is Blinn's (1977) halfway term
 `specular * max(0, n . h)^shininess`; its colour moves from white to the
 face colour as `specular_colour` goes from 1 to 0 (MATLAB's
-`SpecularColorReflectance`). `back` colours the back side of faces, the
-side a face's normal points away from; NULL lights both sides alike.
+`SpecularColorReflectance`). `"satin"` adds a faint highlight (specular
+0.15, shininess 30) that shows the shape of a single-colour surface
+without washing out its colour. `back` colours the back side of faces,
+the side a face's normal points away from; NULL lights both sides alike.
 
 ## Usage
 
@@ -31,7 +33,8 @@ material_3d(
   warm = "#AAAA00",
   alpha = 0.2,
   beta = 0.6,
-  normal_space = "model"
+  normal_space = "model",
+  lighting = "pixel"
 )
 ```
 
@@ -39,7 +42,7 @@ material_3d(
 
 - type:
 
-  Preset: `"matte"`, `"shiny"` or `"metal"`.
+  Preset: `"matte"`, `"satin"`, `"shiny"` or `"metal"`.
 
 - ambient, diffuse, specular:
 
@@ -86,11 +89,22 @@ material_3d(
 
   Frame of the normal colours: `"model"`, `"camera"` or `"light"`.
 
+- lighting:
+
+  `"pixel"` or `"vertex"`.
+
 ## Value
 
 A material for the `material` argument of the surface layers.
 
 ## Details
+
+`lighting` sets where the light is evaluated on faces with corner
+normals (`shading = "smooth"`): at every sample from the interpolated
+normal (`"pixel"`, Phong 1975), or at the corners with the lit colours
+interpolated between them (`"vertex"`, Gouraud 1971), as the
+fixed-function OpenGL pipeline and desktop rgl do. Vertex lighting turns
+a sharp highlight into streaks along the mesh lines that catch it.
 
 `style` selects an illustrative response, computed by the same shading
 kernel in the vector and raster backends and the viewer:
@@ -126,6 +140,10 @@ indirect hits.
 
 ## References
 
+Gouraud (1971). Continuous shading of curved surfaces. IEEE Transactions
+on Computers C-20, 623-629.
+[doi:10.1109/T-C.1971.223313](https://doi.org/10.1109/T-C.1971.223313)
+
 Gooch, Gooch, Shirley, Cohen (1998). A non-photorealistic lighting model
 for automatic technical illustration. SIGGRAPH '98, 447-452.
 [doi:10.1145/280814.280950](https://doi.org/10.1145/280814.280950)
@@ -134,6 +152,7 @@ for automatic technical illustration. SIGGRAPH '98, 447-452.
 
 ``` r
 material_3d("shiny")
+material_3d("satin", lighting = "vertex")
 material_3d("metal", back = "grey40")
 material_3d(style = "toon", breaks = c(40, 75))
 d <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
