@@ -231,13 +231,23 @@
       out vec3 vNormal; out vec3 vLinear; flat out float vShade; flat out vec4 vMaterial; flat out vec4 vMaterial2;
       flat out vec4 vStyle; flat out vec4 vStyleA; flat out vec4 vStyleB;
       out vec2 vUv; flat out vec2 vLayer;
+      uniform float uLight; uniform vec3 uRay;
       ${COLOUR_SPACE}
+      SHADE_GLSL
       void main() {
         float d; vec4 p = project(aPos, d);
         gl_Position = clipPosition(p.xy, p.z, p.w);
         vNormal = aNormal/uScale; vLinear = toLinear(aColour.rgb); vShade = aFlags.x;
         vMaterial = aMaterial; vMaterial2 = aMaterial2; vStyle = aStyle; vStyleA = aStyleA; vStyleB = aStyleB; vUv = aTexture.xy; vLayer = aTexture.zw;
         vColour = vec4(aColour.rgb, aColour.a*aState); vModel = aPos; vId = aId; vClip = aFlags.y;
+        // Vertex lighting (Gouraud 1971): the lit colour at each corner,
+        // interpolated over the face in place of per-sample shading.
+        if (aFlags.z > 0.5 && vShade > 0.5 && uLight > 0.5 && aTexture.z < 0.0 && dot(vNormal, vNormal) > 0.0) {
+          vec3 q = (aPos-uTarget)*uScale;
+          vec3 v = uPerspective > 0.5 ? normalize(-uDistance*uForward-q) : -uRay;
+          vLinear = clamp(shade(normalize(vNormal), q, v, clamp(vLinear, 0.0, 1.0), aMaterial, aMaterial2, aStyle, aStyleA, aStyleB), 0.0, 1.0);
+          vShade = 0.0;
+        }
       }`, `
       uniform float uLight, uPerspective; uniform vec3 uRay; uniform highp sampler2DArray uTextures;
       in vec3 vNormal; in vec3 vLinear; flat in float vShade; flat in vec4 vMaterial; flat in vec4 vMaterial2;
@@ -465,7 +475,7 @@
   function compile(gl, kind, mode) {
     const header = '#version 300 es\nprecision highp float;\nprecision highp int;\n' + (mode === true ? '#define PICK\n' : '') +
       (mode === 'depth' ? '#define DEPTH\n' : '') + (INSTANCED.has(kind) ? '#define INSTANCED\n' : '');
-    return shaderProgram(gl, header+PROJECT+SHADERS[kind][0], header+FRAGMENT+SHADERS[kind][1].replace('SHADE_GLSL', shadeGlsl),
+    return shaderProgram(gl, header+PROJECT+SHADERS[kind][0].replace('SHADE_GLSL', shadeGlsl), header+FRAGMENT+SHADERS[kind][1].replace('SHADE_GLSL', shadeGlsl),
       LAYOUTS[kind].concat(STREAMS[kind].map(n => [n])).map(a => a[0]));
   }
   function shaderProgram(gl, vertex, fragment, attributes = []) {
@@ -836,7 +846,7 @@
         const layer = p.material.texture >= 0 ? p.material.texture : -1, under = p.material.fill[3] > 0 ? 1 : 0;
         const style = p.material.style || [0, 0, 0, 0], styleA = p.material.style_a || [0, 0, 0, 0], styleB = p.material.style_b || [0, 0, 0, 0];
         p.points.forEach((v, j) => V.add({aPos: v, aNormal: (p.normals && p.normals[j]) || p.normal,
-          aColour: p.colours && p.colours[j] ? p.colours[j].concat(p.colour[3]) : p.colour, aId: id, aFlags: [shade, clip, 0, 0],
+          aColour: p.colours && p.colours[j] ? p.colours[j].concat(p.colour[3]) : p.colour, aId: id, aFlags: [shade, clip, p.material.vertex ? 1 : 0, 0],
           aMaterial: material, aMaterial2: material2, aStyle: style, aStyleA: styleA, aStyleB: styleB,
           aTexture: layer >= 0 && p.uvs && p.uvs[j] ? p.uvs[j].concat([layer, under]) : [0, 0, -1, 0]}));
         for (let j = 1; j < p.points.length-1; j++) E.push(p.vertexStart, p.vertexStart+j, p.vertexStart+j+1);
@@ -1220,7 +1230,7 @@
           gl.uniform1iv(prog.uniform('uLightKind'), kind); gl.uniform3fv(prog.uniform('uLightVector'), vector);
           gl.uniform3fv(prog.uniform('uLightColour'), colour); gl.uniform3fv(prog.uniform('uLightGround'), ground);
           gl.uniform1fv(prog.uniform('uLightFalloff'), falloff);
-          set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray);
+          set3('uAmbient', arr(light.ambient)); set3('uRay', b.ray); set1('uEncoded', light.encoded || 0);
           gl.uniform4fv(prog.uniform('uTransfer'), arr(light.transfer)); set3('uToneShadow', arr(light.shadow)); set3('uToneHighlight', arr(light.highlight));
           set3('uFrameScale', b.scale); set3('uFrameRight', b.orthoRight); set3('uFrameUp', b.orthoUp); set3('uFrameToward', b.forward.map(x => -x));
         }

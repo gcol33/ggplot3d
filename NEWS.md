@@ -17,6 +17,25 @@
   toward the light as well as darkening faces turned away, so the faces that
   face the camera no longer blend together under the default light, which
   comes from near the viewer. `mode = "multiply"` gives the previous shading.
+  The default range is `c(-0.45, 0.4)` around a neutral angle of 60 degrees.
+
+* `light_3d(preset = )` starts from the lighting of ggcube, matplotlib, rgl,
+  plotly or Mathematica; the first four are checked against renders from the
+  package and against plotly's shader source and the shading functions of
+  ggcube and matplotlib, Mathematica's follows its documented
+  `Lighting -> Automatic` values. Explicit arguments replace the preset's
+  values. To carry
+  them, `light_3d()` gains `mode = "value"` (HSV value moved toward 0 or 1,
+  ggcube's `"hsv"` mode and matplotlib's surface shading), `linear = FALSE`
+  (multiply and tint on encoded sRGB values with the light capped at 1, as
+  fixed-function OpenGL, rgl, plotly and Mathematica compute), a coloured
+  `ambient`, and a default `material` for shaded layers that set none.
+
+* `material_3d(lighting = "vertex")` lights smooth faces at their corners and
+  interpolates the lit colours (Gouraud 1971), in every backend and the
+  viewer; it gives desktop rgl's highlight streaks. `material_3d("satin")`
+  adds a faint highlight (specular 0.15, shininess 30) that shows the shape
+  of a single-colour surface without washing out its colour.
 
 * The exported API follows one name per concept (`dev_notes/11-api-naming.md`):
   - `export_3d()` writes SVG, TikZ (`.tex`) and Asymptote (`.asy`) through its

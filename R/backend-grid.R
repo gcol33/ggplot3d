@@ -40,6 +40,7 @@ makeContent.scene_panel_grob <- function(x) {
     return(grid::setChildren(x, do.call(grid::gList, stereo_panel_children_3d(x, stereo))))
   }
   x$panel_params$coord_params$light <- panel_lights_3d(x$panel_params$coord_params$light, x$panel_params)
+  x$packets <- lapply(x$packets, light_material_packet_3d, x$panel_params$coord_params$light)
   outer <- panel_outer_viewport_3d(x$panel_params)
   if (identical(backend$type, "raymarch")) {
     rendered <- render_thurston_panel_3d(x, outer, backend)
@@ -57,6 +58,11 @@ makeContent.scene_panel_grob <- function(x) {
     light <- x$panel_params$coord_params$light
     x$panel_params$coord_params$light <- ambient_light_3d(
       merge_scene_packets(x$packets, x$panel_params$panel_id), furniture$camera, furniture$viewport, light)
+  }
+  if (!backend$type %in% c("pathtrace", "plotter") && !is.null(x$panel_params$coord_params$light) &&
+      any(vapply(x$packets, function(p) any(p$materials$lighting %in% "vertex"), logical(1)))) {
+    resolved <- scene_compile(new_scene_packet(), furniture$camera, furniture$viewport)$camera
+    x$packets <- lapply(x$packets, vertex_lit_packet_3d, resolved, x$panel_params$coord_params$light, furniture$camera$pre)
   }
   if (identical(backend$type, "pathtrace")) {
     result <- render_pathtrace_panel_3d(x, furniture, backend)

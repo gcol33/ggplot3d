@@ -83,8 +83,9 @@
 // spot), nb (number of toon bands, or the normal frame: 0 model, 1 camera,
 // 2 light), nk (number of explicit toon breaks), pa, pb (Gooch cool colour
 // and alpha, warm colour and beta; or the toon break cosines). Lights: tm
-// (transfer: 0 multiply, 1 tint, 2 lightness, 3 tone, 4 overlay, 5 soft),
-// r0, r1 (moves at full shadow and full highlight), c0 (neutral cosine),
+// (transfer: 0 multiply, 1 tint, 2 lightness, 3 tone, 4 overlay, 5 soft,
+// 6 value), r0, r1 (moves at full shadow and full highlight), c0 (neutral
+// cosine), ge (1 when multiply and tint work on encoded sRGB values),
 // tsh, thi (tone endpoint colours), fs, fr, fu, ft (model scale and camera
 // right, up and toward axes). xs is a fixed light value in [-1, 1] that
 // replaces n . L for every light when it is at least -1 (swatch sampling),
@@ -124,12 +125,18 @@
 
 // The lit colour from the base colour b. Standard and toon styles pass the
 // ambient and diffuse sums, weighted by ka and kd, through the transfer:
-// multiply scales b, tint scales its distance from white; the signed
+// multiply scales b, tint scales its distance from white, both in linear
+// light or, when ge is set, on the encoded sRGB values, with the light
+// reaching the face capped at 1 per channel (plotly's surface shader) and the
+// specular term added there too (the fixed-function OpenGL pipeline); the signed
 // transfers move b by the level (weighted mean over the lights, scaled by
 // kd): OKLab lightness toward 0 or 1 by up to the fraction r0 (shadow) or r1
 // (highlight), an OKLab mix toward the tone colours by those fractions, or
 // matplotlib's overlay and soft-light blends of the encoded colour with an
-// intensity of 0.5 plus half the move; a move within 1e-7 of zero keeps b
+// intensity of 0.5 plus half the move, or the HSV value of the encoded colour
+// scaled toward 0 or moved toward 1 with hue and saturation kept (ggcube's
+// "hsv" mode; matplotlib's surface shading is its shadow side); a move within
+// 1e-7 of zero keeps b
 // exactly. Gooch blends the cool and warm colours (each plus alpha or beta
 // times b) by the mean of (1 + n . L) / 2 (Gooch et al. 1998). The specular
 // sum adds a highlight whose colour moves from white toward b as sc goes from
@@ -137,7 +144,9 @@
 // in encoded sRGB and take no light.
 #define GGPLOT3D_LIGHT_FINISH \
   vec3 lit = amb * ka + dif * kd; \
-  vec3 sc3 = mix(b, vec3(1.0, 1.0, 1.0), sc); \
+  bool enc = ge > 0.5 && tm < 1.5 && st < 1.5; \
+  vec3 bb = enc ? shade_encode(b) : b;   if (enc) lit = vec3(min(lit.x, 1.0), min(lit.y, 1.0), min(lit.z, 1.0)); \
+  vec3 sc3 = mix(bb, vec3(1.0, 1.0, 1.0), sc); \
   real level = wsum > 0.0 ? clamp(kd * lsum / wsum, -1.0, 1.0) : 0.0; \
   real move = level < 0.0 ? -level * r0 : level * r1; \
   vec3 col = b; \
@@ -157,9 +166,15 @@
     if (st > 1.5) { \
       real t = wsum > 0.0 ? gsum / wsum : 0.5; \
       col = mix(vec3(pa.x, pa.y, pa.z) + b * pa.w, vec3(pb.x, pb.y, pb.z) + b * pb.w, t); \
-    } else if (tm < 0.5) { col = b * lit; } \
-    else if (tm < 1.5) { col = vec3(1.0, 1.0, 1.0) - (vec3(1.0, 1.0, 1.0) - b) * lit; } \
+    } else if (tm < 0.5) { col = bb * lit; } \
+    else if (tm < 1.5) { col = vec3(1.0, 1.0, 1.0) - (vec3(1.0, 1.0, 1.0) - bb) * lit; } \
     else if (abs(move) <= 1e-7) { col = b; } \
+    else if (tm > 5.5) { \
+      vec3 e = shade_encode(b); \
+      real hv = max(max(e.x, e.y), e.z); \
+      real nv = move < 0.0 ? hv * (1.0 + move) : hv + move * (1.0 - hv); \
+      col = shade_decode(hv > 0.0 ? e * (nv / hv) : vec3(nv, nv, nv)); \
+    } \
     else if (tm < 2.5) { vec3 lab = shade_oklab(b); lab.x = move < 0.0 ? lab.x * (1.0 + move) : lab.x + move * (1.0 - lab.x); col = shade_fit(lab); } \
     else if (tm < 3.5) { col = shade_fit(mix(shade_oklab(b), shade_oklab(level < 0.0 ? tsh : thi), clamp(abs(move), 0.0, 1.0))); } \
     else { \
@@ -170,6 +185,7 @@
       col = shade_decode(o); \
     } \
     col = col + sc3 * spe * ks; \
+    if (enc) col = shade_decode(vec3(max(col.x, 0.0), max(col.y, 0.0), max(col.z, 0.0))); \
   }
 
 #define GGPLOT3D_STRINGIFY(...) #__VA_ARGS__
@@ -225,7 +241,7 @@ struct Lights {
   std::vector<Light> list;
   vec3 ambient{0.35, 0.35, 0.35};
   int transfer = 0;
-  real r0 = 0, r1 = 0, neutral = 0.7071067811865476;
+  real r0 = 0, r1 = 0, neutral = 0.7071067811865476, encoded = 0;
   vec3 shadow{0, 0, 0}, highlight{1, 1, 1};
   vec3 scale{1, 1, 1}, right{1, 0, 0}, up{0, 1, 0}, toward{0, 0, 1};
 };
@@ -253,7 +269,7 @@ static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, cons
   const real ka = m.ambient, kd = m.diffuse, ks = m.specular, sh = m.shininess, sc = m.specular_colour;
   const real st = m.style, ss = m.steps, nb = m.bands, nk = m.breaks;
   const vec4 pa = m.a, pb = m.b;
-  const real tm = lights.transfer, r0 = lights.r0, r1 = lights.r1, c0 = lights.neutral;
+  const real tm = lights.transfer, r0 = lights.r0, r1 = lights.r1, c0 = lights.neutral, ge = lights.encoded;
   const vec3 tsh = lights.shadow, thi = lights.highlight;
   const vec3 fs = lights.scale, fr = lights.right, fu = lights.up, ft = lights.toward;
   vec3 amb = lights.ambient, dif(0, 0, 0), spe(0, 0, 0), l0(0, 0, 1);
@@ -284,7 +300,7 @@ static inline real transfer(real linear, real brightness, bool multiply) {
 // ks, shininess), material2 = (specular colour reflectance, back colour, or a
 // negative red for none), style = (style, quantised specular, bands or normal
 // frame, explicit breaks), pa and pb the style parameters, uTransfer =
-// (transfer, r0, r1, neutral cosine).
+// (transfer, r0, r1, neutral cosine) and uEncoded the encoded-arithmetic flag.
 static inline std::string shade_glsl(int max_lights) {
   std::string terms;
 #define GGPLOT3D_TERM(id, name, ...) terms += "case " #id ": { " GGPLOT3D_STRINGIFY(__VA_ARGS__) " } break; ";
@@ -293,14 +309,14 @@ static inline std::string shade_glsl(int max_lights) {
   const std::string count = std::to_string(max_lights);
   return std::string("#define real float\n") +
     "uniform int uLightCount, uLightKind[" + count + "]; uniform vec3 uLightVector[" + count + "], uLightColour[" + count +
-    "], uLightGround[" + count + "]; uniform float uLightFalloff[" + count + "]; uniform vec3 uAmbient;\n"
+    "], uLightGround[" + count + "]; uniform float uLightFalloff[" + count + "]; uniform vec3 uAmbient; uniform float uEncoded;\n"
     "uniform vec4 uTransfer; uniform vec3 uToneShadow, uToneHighlight, uFrameScale, uFrameRight, uFrameUp, uFrameToward;\n"
     GGPLOT3D_XSTRINGIFY(GGPLOT3D_SHADE_FUNCTIONS()) "\n"
     "vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, vec4 material, vec4 material2, vec4 style, vec4 pa, vec4 pb) {\n"
     "  if (dot(n, v) < 0.0) { n = -n; if (material2.y >= 0.0) b = material2.yzw; }\n"
     "  real ka = material.x, kd = material.y, ks = material.z, sh = material.w, sc = material2.x;\n"
     "  real st = style.x, ss = style.y, nb = style.z, nk = style.w, xs = -2.0;\n"
-    "  real tm = uTransfer.x, r0 = uTransfer.y, r1 = uTransfer.z, c0 = uTransfer.w;\n"
+    "  real tm = uTransfer.x, r0 = uTransfer.y, r1 = uTransfer.z, c0 = uTransfer.w, ge = uEncoded;\n"
     "  vec3 tsh = uToneShadow, thi = uToneHighlight, fs = uFrameScale, fr = uFrameRight, fu = uFrameUp, ft = uFrameToward;\n"
     "  vec3 amb = uAmbient, dif = vec3(0.0), spe = vec3(0.0), l0 = vec3(0.0, 0.0, 1.0);\n"
     "  real lsum = 0.0, gsum = 0.0, wsum = 0.0, wl = 0.0;\n"

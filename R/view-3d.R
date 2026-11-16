@@ -276,6 +276,7 @@ view_panel_3d <- function(selected, path = NULL, fps = 30) {
   # Automatic camera values use JSON null; finite resolved values travel separately.
   raw_camera[c("distance", "near", "far")] <- lapply(raw_camera[c("distance", "near", "far")],
     function(value) if (is.na(value) || !is.finite(value)) NULL else value)
+  packet <- light_material_packet_3d(packet, as_lights_3d(params$coord_params$light))
   list(id = params$panel_id, scene = view_packet_3d(packet, params$camera$pre), glyphs = view_glyphs_3d(packets),
     furniture = furniture_view, axes = unname(axes),
     bounds = unname(lapply(seq_len(nrow(frame$bounds())), function(i) unname(frame$bounds()[i, ]))),
@@ -486,8 +487,8 @@ view_max_lights_3d <- 8L
 
 # Kernel material of each viewer style: (ambient, diffuse, specular,
 # shininess), (specular colour reflectance, linear back colour or -1), the
-# style (id, quantised specular, bands or frame, break count) and its two
-# parameter rows.
+# style (id, quantised specular, bands or frame, break count), its two
+# parameter rows, and whether it is lit at the vertices.
 view_materials_3d <- function(materials, styles, table) {
   kernel <- kernel_materials_3d(table)
   index <- material_index_3d(styles)
@@ -500,6 +501,7 @@ view_materials_3d <- function(materials, styles, table) {
     materials[[i]]$style <- c(kernel$style[k], kernel$steps[k], kernel$bands[k], kernel$breaks[k])
     materials[[i]]$style_a <- kernel$a[k, ]
     materials[[i]]$style_b <- kernel$b[k, ]
+    materials[[i]]$vertex <- identical(table$lighting[k], "vertex")
   }
   materials
 }
@@ -510,13 +512,14 @@ view_materials_3d <- function(materials, styles, table) {
 view_lights_3d <- function(light) {
   if (is.null(light)) return(NULL)
   if (length(light$lights) > view_max_lights_3d) warning("view_3d() shows the first ", view_max_lights_3d, " lights.", call. = FALSE)
-  linear <- function(colour, intensity) unname(srgb_decode_3d(grDevices::col2rgb(colour)[, 1L] / 255) * intensity)
+  linear <- light$linear %or3d% TRUE
   transfer <- transfer_settings_3d(light)
   list(lights = lapply(light$lights, function(l) list(kind = l$kind, space = l$space, vector = l$vector,
-      colour = linear(l$colour, l$intensity), ground = linear(l$ground, l$intensity), falloff = l$falloff)),
-    ambient = rep(light$ambient, 3L), mode = light$mode, direction = light$direction, space = light$space,
+      colour = light_rgb_3d(l$colour, l$intensity, linear), ground = light_rgb_3d(l$ground, l$intensity, linear),
+      falloff = l$falloff)),
+    ambient = rep_len(light$ambient, 3L), mode = light$mode, direction = light$direction, space = light$space,
     diffuse = light$diffuse, transfer = c(transfer$transfer, transfer$range, transfer$neutral),
-    shadow = transfer$shadow, highlight = transfer$highlight)
+    encoded = transfer$encoded, shadow = transfer$shadow, highlight = transfer$highlight)
 }
 
 # A numeric column as a base64 typed array: little-endian float32 for

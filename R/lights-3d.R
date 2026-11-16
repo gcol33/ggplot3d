@@ -97,9 +97,39 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' Lighting for a 3D scene
 #'
 #' Combines light sources with an ambient term and sets how the light changes
-#' face colours. Without light sources the scene has one directional light,
-#' `light_directional()`, from the upper left of the camera. See
-#' [material_3d()] for specular highlights.
+#' face colours. Without light sources the scene has the lights of `preset`;
+#' the default preset has one directional light, `light_directional()`, from
+#' the upper left of the camera. See [material_3d()] for specular highlights.
+#'
+#' `preset` starts from the lighting of another package; every argument given
+#' explicitly replaces the preset's value, and lights given in `...` replace
+#' its lights.
+#'
+#' - `"default"`: one `light_directional()`, ambient 0.35, `mode =
+#'   "lightness"`, `range = c(-0.45, 0.4)`, `neutral = 60`.
+#' - `"ggcube"`: ggcube's `light()`: a light along `c(-0.5, 0, 1)` in the
+#'   data axes and its `"hsv"` mode at `contrast = 1`, i.e. `mode = "value"`,
+#'   `range = c(-1, 1)`, `neutral = 90`.
+#' - `"matplotlib"`: the shading of matplotlib's `plot_surface()`: the colour
+#'   scaled by `0.65 + 0.35 * cos` with the light at `LightSource(azdeg = 225,
+#'   altdeg = 19.4712)` in the data axes, i.e. `mode = "value"`, `range =
+#'   c(-0.7, 0)`, `neutral = 0`.
+#' - `"rgl"`: rgl's default `light3d(theta = 0, phi = 15)`, a white light 15
+#'   degrees above the eye, with rgl's default material (no ambient
+#'   reflection, white specular, shininess 50) lit at the vertices
+#'   (`lighting = "vertex"`) on encoded values, as desktop rgl's fixed-function
+#'   OpenGL does.
+#' - `"plotly"`: plotly's surface lighting defaults: ambient 0.8, diffuse
+#'   0.8, the light at `lightposition = (10, 10000, 0)`, which its shader
+#'   takes in camera coordinates (straight above the viewer), and specular
+#'   0.05 with roughness 0.5 approximated by a Blinn exponent of 6, on encoded
+#'   values.
+#' - `"mathematica"`: Mathematica's `Lighting -> Automatic`: ambient
+#'   `RGBColor[0.4, 0.2, 0.2]` and four coloured directional lights fixed to
+#'   the image, shining from `ImageScaled` points `{2, 0, 2}`, `{2, 2, 3}`,
+#'   `{0, 2, 2}` and `{0, 0, 2}` toward its centre, on encoded values. It
+#'   suits light fills; Mathematica itself switches to white lights when a
+#'   colour function is given.
 #'
 #' `mode` sets how the light changes a face colour. `"multiply"` scales the
 #' colour by the ambient and diffuse light and `"tint"` scales its distance
@@ -125,6 +155,15 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   the fractions `abs(range)`.
 #' - `"overlay"` and `"soft"` are matplotlib's `LightSource` blend modes on the
 #'   encoded colour, with an intensity of `0.5 + level * abs(range) / 2`.
+#' - `"value"` scales the HSV value of the encoded colour toward 0 by up to
+#'   the fraction `abs(range[1])` in shadow and moves it toward 1 by up to
+#'   `range[2]` in light, keeping hue and saturation (ggcube's `"hsv"` mode).
+#'
+#' `multiply` and `tint` work in linear light. With `linear = FALSE` they work
+#' on the encoded sRGB values instead, with the light colours and ambient
+#' taken as encoded values too and the light reaching a face capped at 1, as
+#' the fixed-function OpenGL pipeline, rgl, plotly and Mathematica do; the
+#' result is darker in the half shadow.
 #'
 #' Specular highlights of [material_3d()] are added on top in every mode.
 #' Lightness-monotone palettes such as viridis lose the most under shading;
@@ -132,19 +171,30 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' [guide_colourbar_3d()], [guide_coloursteps_3d()], [guide_bins_3d()] and
 #' [guide_legend_3d()] show the shaded colours of a key.
 #' @param ... Lights made with [light_directional()], [light_point()],
-#'   [light_head()] or [light_hemisphere()]. None gives one
-#'   `light_directional()`.
-#' @param ambient Nonnegative strength of the uniform ambient light.
+#'   [light_head()] or [light_hemisphere()]. None gives the lights of
+#'   `preset`.
+#' @param ambient Uniform ambient light: a nonnegative strength (a grey) or
+#'   one colour. NULL takes the preset's.
 #' @param mode Colour operation: `"multiply"`, `"tint"`, `"lightness"`,
-#'   `"tone"`, `"overlay"` or `"soft"`.
+#'   `"tone"`, `"overlay"`, `"soft"` or `"value"`. NULL takes the preset's.
 #' @param range Moves at full shadow and full highlight, `c(shadow, highlight)`
 #'   with `-1 <= shadow <= 0 <= highlight <= 1`: fractions of the way to black
-#'   and white in OKLab lightness for `"lightness"`, to the tone colours for
-#'   `"tone"`, blend strengths for `"overlay"` and `"soft"`. NULL takes
-#'   `c(-0.45, 0.3)` for `"lightness"` and `c(-0.6, 0.6)` otherwise.
+#'   and white in OKLab lightness for `"lightness"` and in HSV value for
+#'   `"value"`, to the tone colours for `"tone"`, blend strengths for
+#'   `"overlay"` and `"soft"`. NULL takes the preset's when `mode` is the
+#'   preset's mode, else `c(-0.45, 0.3)` for `"lightness"` and `c(-0.6, 0.6)`
+#'   otherwise.
 #' @param neutral Angle in degrees, in \[0, 180), between the normal and the
-#'   light at which a signed mode leaves the colour unchanged.
+#'   light at which a signed mode leaves the colour unchanged. NULL takes the
+#'   preset's when `mode` is the preset's mode, else 45.
 #' @param shadow_colour,highlight_colour Tone colours of `"tone"`.
+#' @param linear Whether `"multiply"` and `"tint"` work in linear light
+#'   (`TRUE`) or on encoded sRGB values (`FALSE`). NULL takes the preset's.
+#' @param material A [material_3d()] for the shaded layers that set none, or
+#'   NULL for the preset's (plain Lambert reflection when the preset has
+#'   none).
+#' @param preset Starting lighting: `"default"`, `"ggcube"`,
+#'   `"matplotlib"`, `"rgl"`, `"plotly"` or `"mathematica"`.
 #' @return A lighting configuration for [coord_3d()]. The backends that take
 #'   one directional light (the path tracer and the raymarch backend) use the
 #'   first directional light.
@@ -165,32 +215,91 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   geom_surface_3d(shading = "smooth", colour = NA) +
 #'   ggplot2::scale_fill_distiller(palette = "Spectral") +
 #'   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
+#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+#'   geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
+#'   coord_3d(light = light_3d(preset = "mathematica"))
 #' @export
-light_3d <- function(..., ambient = 0.35, mode = "lightness", range = NULL, neutral = 45,
-                     shadow_colour = "#1d2b53", highlight_colour = "#fff1d6") {
+light_3d <- function(..., ambient = NULL, mode = NULL, range = NULL, neutral = NULL,
+                     shadow_colour = "#1d2b53", highlight_colour = "#fff1d6", linear = NULL, material = NULL,
+                     preset = "default") {
+  preset <- light_presets_3d[[match.arg(preset, names(light_presets_3d))]]()
   lights <- list(...)
-  if (!length(lights)) lights <- list(light_directional())
+  if (!length(lights)) lights <- preset$lights
   if (!all(vapply(lights, inherits, logical(1), "ggplot3d_light"))) stop("light_3d() takes lights made with light_*().", call. = FALSE)
-  ambient <- check_light_number_3d(ambient, "ambient")
-  mode <- match.arg(mode, light_transfers_3d)
-  range <- range %or3d% if (mode == "lightness") c(-0.45, 0.3) else c(-0.6, 0.6)
+  mode <- match.arg(mode %or3d% preset$mode, light_transfers_3d)
+  if (!identical(mode, preset$mode)) preset[c("range", "neutral")] <- list(NULL)
+  range <- range %or3d% preset$range %or3d% if (mode == "lightness") c(-0.45, 0.3) else c(-0.6, 0.6)
   if (!is.numeric(range) || length(range) != 2L || any(!is.finite(range)) || range[1L] > 0 || range[2L] < 0 || any(abs(range) > 1))
     stop("range must be c(shadow, highlight) with -1 <= shadow <= 0 <= highlight <= 1.", call. = FALSE)
+  neutral <- neutral %or3d% preset$neutral %or3d% 45
   if (!is.numeric(neutral) || length(neutral) != 1L || !is.finite(neutral) || neutral < 0 || neutral >= 180)
     stop("neutral must be one angle in [0, 180) degrees.", call. = FALSE)
+  linear <- linear %or3d% preset$linear %or3d% TRUE
+  if (!is.logical(linear) || length(linear) != 1L || is.na(linear)) stop("linear must be TRUE or FALSE.", call. = FALSE)
+  material <- material_argument_3d(material %or3d% preset$material)
   primary <- Filter(function(l) l$kind == light_kinds_3d[["directional"]], lights)
   primary <- if (length(primary)) primary[[1L]] else NULL
-  structure(list(lights = unname(lights), ambient = ambient, mode = mode, range = as.double(range),
-    neutral = as.double(neutral), shadow = check_light_colour_3d(shadow_colour, "shadow_colour"),
-    highlight = check_light_colour_3d(highlight_colour, "highlight_colour"),
+  structure(list(lights = unname(lights), ambient = check_ambient_3d(ambient %or3d% preset$ambient, linear),
+    mode = mode, range = as.double(range), neutral = as.double(neutral),
+    shadow = check_light_colour_3d(shadow_colour, "shadow_colour"),
+    highlight = check_light_colour_3d(highlight_colour, "highlight_colour"), linear = linear, material = material,
     direction = if (is.null(primary)) c(0, 0, 1) else primary$vector,
     space = if (is.null(primary)) "camera" else primary$space,
     diffuse = if (is.null(primary)) 0 else primary$intensity), class = "ggplot3d_lights")
 }
 
+# The ambient term of light_3d() as three channels in the arithmetic space of
+# the transfer: a strength gives a grey, a colour its linear (or, with
+# linear = FALSE, encoded) channels.
+check_ambient_3d <- function(ambient, linear = TRUE) {
+  if (is.numeric(ambient)) return(rep(check_light_number_3d(ambient, "ambient"), 3L))
+  if (!is.character(ambient)) stop("ambient must be a nonnegative number or one colour.", call. = FALSE)
+  light_rgb_3d(check_light_colour_3d(ambient, "ambient"), 1, linear)
+}
+
+# Channels of a light colour times its intensity, linear or encoded.
+light_rgb_3d <- function(colour, intensity, linear = TRUE) {
+  rgb <- grDevices::col2rgb(colour)[, 1L] / 255
+  unname(if (linear) srgb_decode_3d(rgb) else rgb) * intensity
+}
+
+# The luminance of the ambient term, for the backends that take one ambient
+# strength (path tracer, curved-space raymarcher).
+ambient_level_3d <- function(light) sum(light$ambient * c(0.2126, 0.7152, 0.0722))
+
+# An ImageScaled point of Mathematica as a camera-space direction toward the
+# light: from the image centre {0.5, 0.5, 0.5}, x right, y up, z toward the
+# viewer.
+image_scaled_direction_3d <- function(point) point - 0.5
+
+# Lighting presets of light_3d(): each returns the lights, ambient, mode,
+# range, neutral angle, arithmetic and default material it sets.
+light_presets_3d <- list(
+  default = function() list(lights = list(light_directional()), ambient = 0.35, mode = "lightness",
+    range = c(-0.45, 0.4), neutral = 60),
+  ggcube = function() list(lights = list(light_directional(c(-0.5, 0, 1), space = "data", intensity = 1)),
+    ambient = 0, mode = "value", range = c(-1, 1), neutral = 90),
+  matplotlib = function() {
+    azimuth <- (90 - 225) * pi / 180; altitude <- 19.4712 * pi / 180
+    list(lights = list(light_directional(c(cos(azimuth) * cos(altitude), sin(azimuth) * cos(altitude), sin(altitude)),
+      space = "data", intensity = 1)), ambient = 0, mode = "value", range = c(-0.7, 0), neutral = 0)
+  },
+  rgl = function() list(lights = list(light_directional(c(0, sinpi(15 / 180), cospi(15 / 180)), intensity = 1)),
+    ambient = 0, mode = "multiply", linear = FALSE,
+    material = material_3d(ambient = 0, diffuse = 1, specular = 1, shininess = 50, specular_colour = 1, lighting = "vertex")),
+  plotly = function() list(lights = list(light_directional(c(10, 10000, 0), intensity = 0.8)),
+    ambient = 0.8, mode = "multiply", linear = FALSE,
+    material = material_3d(ambient = 1, diffuse = 1, specular = 0.05, shininess = 6, specular_colour = 1)),
+  mathematica = function() {
+    light <- function(point, r, g, b) light_directional(image_scaled_direction_3d(point), colour = grDevices::rgb(r, g, b), intensity = 1)
+    list(lights = list(light(c(2, 0, 2), 0, 0.18, 0.5), light(c(2, 2, 3), 0.18, 0.5, 0.18),
+      light(c(0, 2, 2), 0.5, 0.18, 0), light(c(0, 0, 2), 0, 0, 0.18)),
+      ambient = grDevices::rgb(0.4, 0.2, 0.2), mode = "multiply", linear = FALSE)
+  })
+
 # Colour transfers of light_3d(), in the order of the kernel's transfer ids
 # (src/shade/shade.h), starting at 0.
-light_transfers_3d <- c("multiply", "tint", "lightness", "tone", "overlay", "soft")
+light_transfers_3d <- c("multiply", "tint", "lightness", "tone", "overlay", "soft", "value")
 
 # Whether a transfer moves colours by a signed level instead of scaling them.
 signed_transfer_3d <- function(mode) !mode %in% c("multiply", "tint")
@@ -211,8 +320,17 @@ as_lights_3d <- function(light) {
 #' plain Lambert shading. The specular highlight is Blinn's (1977) halfway
 #' term `specular * max(0, n . h)^shininess`; its colour moves from white to
 #' the face colour as `specular_colour` goes from 1 to 0 (MATLAB's
-#' `SpecularColorReflectance`). `back` colours the back side of faces, the
+#' `SpecularColorReflectance`). `"satin"` adds a faint highlight (specular
+#' 0.15, shininess 30) that shows the shape of a single-colour surface
+#' without washing out its colour. `back` colours the back side of faces, the
 #' side a face's normal points away from; NULL lights both sides alike.
+#'
+#' `lighting` sets where the light is evaluated on faces with corner normals
+#' (`shading = "smooth"`): at every sample from the interpolated normal
+#' (`"pixel"`, Phong 1975), or at the corners with the lit colours
+#' interpolated between them (`"vertex"`, Gouraud 1971), as the
+#' fixed-function OpenGL pipeline and desktop rgl do. Vertex lighting turns a
+#' sharp highlight into streaks along the mesh lines that catch it.
 #'
 #' `style` selects an illustrative response, computed by the same shading
 #' kernel in the vector and raster backends and the viewer:
@@ -240,7 +358,7 @@ as_lights_3d <- function(light) {
 #' Styles need a light: with `coord_3d(light = NULL)` faces keep their fill.
 #' In the path tracer, illustrative surfaces return the shared kernel's
 #' colour at the hit point and terminate the path, including indirect hits.
-#' @param type Preset: `"matte"`, `"shiny"` or `"metal"`.
+#' @param type Preset: `"matte"`, `"satin"`, `"shiny"` or `"metal"`.
 #' @param ambient,diffuse,specular Nonnegative strengths; NULL keeps the preset.
 #' @param shininess Positive specular exponent; NULL keeps the preset.
 #' @param specular_colour Specular colour reflectance in \[0, 1\]; NULL keeps
@@ -253,14 +371,19 @@ as_lights_3d <- function(light) {
 #'   `TRUE` for toon and `FALSE` otherwise.
 #' @param cool,warm Gooch colours.
 #' @param alpha,beta Gooch weights of the fill in the cool and warm colours.
+#' @param lighting `"pixel"` or `"vertex"`.
 #' @param normal_space Frame of the normal colours: `"model"`, `"camera"` or
 #'   `"light"`.
 #' @return A material for the `material` argument of the surface layers.
-#' @references Gooch, Gooch, Shirley, Cohen (1998). A non-photorealistic
+#' @references Gouraud (1971). Continuous shading of curved surfaces. IEEE
+#'   Transactions on Computers C-20, 623-629. \doi{10.1109/T-C.1971.223313}
+#'
+#'   Gooch, Gooch, Shirley, Cohen (1998). A non-photorealistic
 #'   lighting model for automatic technical illustration. SIGGRAPH '98,
 #'   447-452. \doi{10.1145/280814.280950}
 #' @examples
 #' material_3d("shiny")
+#' material_3d("satin", lighting = "vertex")
 #' material_3d("metal", back = "grey40")
 #' material_3d(style = "toon", breaks = c(40, 75))
 #' d <- expand.grid(x = seq(-1, 1, length.out = 12), y = seq(-1, 1, length.out = 12))
@@ -277,8 +400,9 @@ as_lights_3d <- function(light) {
 material_3d <- function(type = "matte", ambient = NULL, diffuse = NULL, specular = NULL, shininess = NULL,
                         specular_colour = NULL, back = NULL, style = "standard", bands = 3L, breaks = NULL,
                         specular_steps = NULL, cool = "#0000AA", warm = "#AAAA00", alpha = 0.2, beta = 0.6,
-                        normal_space = "model") {
-  presets <- list(matte = c(1, 1, 0, 10, 1), shiny = c(1, 0.75, 0.9, 20, 1), metal = c(1, 0.375, 1, 25, 0.5))
+                        normal_space = "model", lighting = "pixel") {
+  presets <- list(matte = c(1, 1, 0, 10, 1), satin = c(1, 1, 0.15, 30, 1), shiny = c(1, 0.75, 0.9, 20, 1),
+                  metal = c(1, 0.375, 1, 25, 0.5))
   value <- presets[[match.arg(type, names(presets))]]
   names(value) <- c("ambient", "diffuse", "specular", "shininess", "specular_colour")
   given <- list(ambient = ambient, diffuse = diffuse, specular = specular, shininess = shininess, specular_colour = specular_colour)
@@ -298,7 +422,8 @@ material_3d <- function(type = "matte", ambient = NULL, diffuse = NULL, specular
   structure(c(as.list(value), list(back = back %or3d% NA_character_, style = style, bands = as.integer(bands),
     breaks = if (is.null(breaks)) numeric() else as.double(breaks), specular_steps = specular_steps,
     cool = check_light_colour_3d(cool, "cool"), warm = check_light_colour_3d(warm, "warm"), alpha = alpha, beta = beta,
-    normal_space = match.arg(normal_space, c("model", "camera", "light")))), class = "ggplot3d_material")
+    normal_space = match.arg(normal_space, c("model", "camera", "light")),
+    lighting = match.arg(lighting, c("pixel", "vertex")))), class = "ggplot3d_material")
 }
 
 # Material styles in the order of the kernel's style ids (src/shade/shade.h),
@@ -313,7 +438,8 @@ material_table_3d <- function(material) {
     shininess = material$shininess, specular_colour = material$specular_colour, back = material$back,
     style = material$style %or3d% "standard", bands = material$bands %or3d% 3L, specular_steps = material$specular_steps %or3d% FALSE,
     cool = material$cool %or3d% "#0000AA", warm = material$warm %or3d% "#AAAA00", alpha = material$alpha %or3d% 0.2,
-    beta = material$beta %or3d% 0.6, normal_space = material$normal_space %or3d% "model")
+    beta = material$beta %or3d% 0.6, normal_space = material$normal_space %or3d% "model",
+    lighting = material$lighting %or3d% "pixel")
   out$breaks <- I(list(material$breaks %or3d% numeric()))
   out
 }
@@ -352,7 +478,8 @@ panel_lights_3d <- function(light, panel_params) {
 }
 
 # Lights as the shading kernel reads them (src/shade/read.h): vectors in
-# aspect-scaled model space, colours in linear light times intensity.
+# aspect-scaled model space, colours times intensity in linear light (encoded
+# with linear = FALSE).
 resolved_light_3d <- function(light, camera) {
   light <- as_lights_3d(light)
   scale <- camera$model_scale
@@ -367,26 +494,49 @@ resolved_light_3d <- function(light, camera) {
     v <- if (l$space == "camera") camera_axes(v) else v * scale
     v / sqrt(sum(v^2))
   })
-  colour <- function(name) t(vapply(light$lights, function(l) {
-    srgb_decode_3d(grDevices::col2rgb(l[[name]])[, 1L] / 255) * l$intensity
-  }, numeric(3)))
+  linear <- light$linear %or3d% TRUE
+  colour <- function(name) t(vapply(light$lights, function(l) light_rgb_3d(l[[name]], l$intensity, linear), numeric(3)))
   n <- length(light$lights)
   c(list(kind = vapply(light$lights, `[[`, integer(1), "kind"),
     vector = if (n) do.call(rbind, vectors) else matrix(numeric(), 0L, 3L),
     colour = if (n) colour("colour") else matrix(numeric(), 0L, 3L),
     ground = if (n) colour("ground") else matrix(numeric(), 0L, 3L),
     falloff = vapply(light$lights, `[[`, numeric(1), "falloff"),
-    ambient = rep(light$ambient, 3L), frame = rbind(as.double(scale %or3d% c(1, 1, 1)), as.double(camera$right %or3d% c(1, 0, 0)),
+    ambient = rep_len(light$ambient, 3L), frame = rbind(as.double(scale %or3d% c(1, 1, 1)), as.double(camera$right %or3d% c(1, 0, 0)),
       as.double(camera$up %or3d% c(0, 1, 0)), -as.double(camera$forward %or3d% c(0, 0, -1)))), transfer_settings_3d(light))
 }
 
 # The colour transfer of lights as the kernel reads it: transfer id, range,
-# neutral cosine and linear tone colours.
+# neutral cosine, encoded-arithmetic flag and linear tone colours.
 transfer_settings_3d <- function(light) {
   linear <- function(colour) unname(srgb_decode_3d(grDevices::col2rgb(colour)[, 1L] / 255))
   list(transfer = match(light$mode, light_transfers_3d) - 1L, range = light$range %or3d% c(0, 0),
-    neutral = cospi((light$neutral %or3d% 45) / 180), shadow = linear(light$shadow %or3d% "black"),
+    neutral = cospi((light$neutral %or3d% 45) / 180), encoded = if (isFALSE(light$linear)) 1 else 0, shadow = linear(light$shadow %or3d% "black"),
     highlight = linear(light$highlight %or3d% "white"))
+}
+
+# A packet whose shaded styles without a material take the default material
+# of the lighting (light_3d(material = )), appended to its materials table.
+light_material_packet_3d <- function(packet, light) {
+  material <- light$material
+  styles <- packet$styles
+  if (is.null(material) || is.null(styles) || !nrow(styles)) return(packet)
+  id <- styles$material_id %or3d% rep(NA_integer_, nrow(styles))
+  take <- style_value_3d(styles, "shade", FALSE) %in% TRUE & is.na(id)
+  if (!any(take)) return(packet)
+  row <- material_table_3d(material)
+  materials <- packet$materials
+  row$material_id <- nrow(materials) + 1L
+  if (nrow(materials)) {
+    for (name in setdiff(names(row), names(materials))) materials[[name]] <- rep(row[[name]], nrow(materials))
+    for (name in setdiff(names(materials), names(row))) row[[name]] <- materials[[name]][NA_integer_]
+    row <- rbind(materials, row[names(materials)])
+  }
+  rownames(row) <- NULL
+  packet$materials <- row
+  id[take] <- row$material_id[nrow(row)]
+  packet$styles$material_id <- as.integer(id)
+  packet
 }
 
 material_argument_3d <- function(material) {

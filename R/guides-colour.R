@@ -98,6 +98,7 @@ key_camera_3d <- function(camera) scene_compile(new_scene_packet(), camera, new_
 # result per colour, one column per light value.
 shade_swatch_3d <- function(colour, x, light, camera, material = NULL) {
   n <- length(colour); m <- length(x)
+  material <- material %or3d% light$material
   if (!n || !m) return(matrix(character(), n, m))
   base <- linear_rgb_3d(rep(colour, m))
   lit <- shade_swatch_cpp(base, rep(as.double(x), each = n), rep(if (is.null(material)) 0L else 1L, n * m),

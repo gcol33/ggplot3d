@@ -6,34 +6,51 @@
 \usage{
 light_3d(
   ...,
-  ambient = 0.35,
-  mode = "lightness",
+  ambient = NULL,
+  mode = NULL,
   range = NULL,
-  neutral = 45,
+  neutral = NULL,
   shadow_colour = "#1d2b53",
-  highlight_colour = "#fff1d6"
+  highlight_colour = "#fff1d6",
+  linear = NULL,
+  material = NULL,
+  preset = "default"
 )
 }
 \arguments{
 \item{...}{Lights made with \code{\link[=light_directional]{light_directional()}}, \code{\link[=light_point]{light_point()}},
-\code{\link[=light_head]{light_head()}} or \code{\link[=light_hemisphere]{light_hemisphere()}}. None gives one
-\code{light_directional()}.}
+\code{\link[=light_head]{light_head()}} or \code{\link[=light_hemisphere]{light_hemisphere()}}. None gives the lights of
+\code{preset}.}
 
-\item{ambient}{Nonnegative strength of the uniform ambient light.}
+\item{ambient}{Uniform ambient light: a nonnegative strength (a grey) or
+one colour. NULL takes the preset's.}
 
 \item{mode}{Colour operation: \code{"multiply"}, \code{"tint"}, \code{"lightness"},
-\code{"tone"}, \code{"overlay"} or \code{"soft"}.}
+\code{"tone"}, \code{"overlay"}, \code{"soft"} or \code{"value"}. NULL takes the preset's.}
 
 \item{range}{Moves at full shadow and full highlight, \code{c(shadow, highlight)}
 with \verb{-1 <= shadow <= 0 <= highlight <= 1}: fractions of the way to black
-and white in OKLab lightness for \code{"lightness"}, to the tone colours for
-\code{"tone"}, blend strengths for \code{"overlay"} and \code{"soft"}. NULL takes
-\code{c(-0.45, 0.3)} for \code{"lightness"} and \code{c(-0.6, 0.6)} otherwise.}
+and white in OKLab lightness for \code{"lightness"} and in HSV value for
+\code{"value"}, to the tone colours for \code{"tone"}, blend strengths for
+\code{"overlay"} and \code{"soft"}. NULL takes the preset's when \code{mode} is the
+preset's mode, else \code{c(-0.45, 0.3)} for \code{"lightness"} and \code{c(-0.6, 0.6)}
+otherwise.}
 
 \item{neutral}{Angle in degrees, in [0, 180), between the normal and the
-light at which a signed mode leaves the colour unchanged.}
+light at which a signed mode leaves the colour unchanged. NULL takes the
+preset's when \code{mode} is the preset's mode, else 45.}
 
 \item{shadow_colour, highlight_colour}{Tone colours of \code{"tone"}.}
+
+\item{linear}{Whether \code{"multiply"} and \code{"tint"} work in linear light
+(\code{TRUE}) or on encoded sRGB values (\code{FALSE}). NULL takes the preset's.}
+
+\item{material}{A \code{\link[=material_3d]{material_3d()}} for the shaded layers that set none, or
+NULL for the preset's (plain Lambert reflection when the preset has
+none).}
+
+\item{preset}{Starting lighting: \code{"default"}, \code{"ggcube"},
+\code{"matplotlib"}, \code{"rgl"}, \code{"plotly"} or \code{"mathematica"}.}
 }
 \value{
 A lighting configuration for \code{\link[=coord_3d]{coord_3d()}}. The backends that take
@@ -42,11 +59,39 @@ first directional light.
 }
 \description{
 Combines light sources with an ambient term and sets how the light changes
-face colours. Without light sources the scene has one directional light,
-\code{light_directional()}, from the upper left of the camera. See
-\code{\link[=material_3d]{material_3d()}} for specular highlights.
+face colours. Without light sources the scene has the lights of \code{preset};
+the default preset has one directional light, \code{light_directional()}, from
+the upper left of the camera. See \code{\link[=material_3d]{material_3d()}} for specular highlights.
 }
 \details{
+\code{preset} starts from the lighting of another package; every argument given
+explicitly replaces the preset's value, and lights given in \code{...} replace
+its lights.
+\itemize{
+\item \code{"default"}: one \code{light_directional()}, ambient 0.35, \code{mode = "lightness"}, \code{range = c(-0.45, 0.4)}, \code{neutral = 60}.
+\item \code{"ggcube"}: ggcube's \code{light()}: a light along \code{c(-0.5, 0, 1)} in the
+data axes and its \code{"hsv"} mode at \code{contrast = 1}, i.e. \code{mode = "value"},
+\code{range = c(-1, 1)}, \code{neutral = 90}.
+\item \code{"matplotlib"}: the shading of matplotlib's \code{plot_surface()}: the colour
+scaled by \code{0.65 + 0.35 * cos} with the light at \code{LightSource(azdeg = 225, altdeg = 19.4712)} in the data axes, i.e. \code{mode = "value"}, \code{range = c(-0.7, 0)}, \code{neutral = 0}.
+\item \code{"rgl"}: rgl's default \code{light3d(theta = 0, phi = 15)}, a white light 15
+degrees above the eye, with rgl's default material (no ambient
+reflection, white specular, shininess 50) lit at the vertices
+(\code{lighting = "vertex"}) on encoded values, as desktop rgl's fixed-function
+OpenGL does.
+\item \code{"plotly"}: plotly's surface lighting defaults: ambient 0.8, diffuse
+0.8, the light at \verb{lightposition = (10, 10000, 0)}, which its shader
+takes in camera coordinates (straight above the viewer), and specular
+0.05 with roughness 0.5 approximated by a Blinn exponent of 6, on encoded
+values.
+\item \code{"mathematica"}: Mathematica's \code{Lighting -> Automatic}: ambient
+\code{RGBColor[0.4, 0.2, 0.2]} and four coloured directional lights fixed to
+the image, shining from \code{ImageScaled} points \verb{\{2, 0, 2\}}, \verb{\{2, 2, 3\}},
+\verb{\{0, 2, 2\}} and \verb{\{0, 0, 2\}} toward its centre, on encoded values. It
+suits light fills; Mathematica itself switches to white lights when a
+colour function is given.
+}
+
 \code{mode} sets how the light changes a face colour. \code{"multiply"} scales the
 colour by the ambient and diffuse light and \code{"tint"} scales its distance
 from white; both only darken, so a shaded fill no longer matches its legend
@@ -71,7 +116,16 @@ sRGB gamut, its chroma is reduced until it fits (ggcube's
 the fractions \code{abs(range)}.
 \item \code{"overlay"} and \code{"soft"} are matplotlib's \code{LightSource} blend modes on the
 encoded colour, with an intensity of \code{0.5 + level * abs(range) / 2}.
+\item \code{"value"} scales the HSV value of the encoded colour toward 0 by up to
+the fraction \code{abs(range[1])} in shadow and moves it toward 1 by up to
+\code{range[2]} in light, keeping hue and saturation (ggcube's \code{"hsv"} mode).
 }
+
+\code{multiply} and \code{tint} work in linear light. With \code{linear = FALSE} they work
+on the encoded sRGB values instead, with the light colours and ambient
+taken as encoded values too and the light reaching a face capped at 1, as
+the fixed-function OpenGL pipeline, rgl, plotly and Mathematica do; the
+result is darker in the half shadow.
 
 Specular highlights of \code{\link[=material_3d]{material_3d()}} are added on top in every mode.
 Lightness-monotone palettes such as viridis lose the most under shading;
@@ -87,6 +141,9 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
   geom_surface_3d(shading = "smooth", colour = NA) +
   ggplot2::scale_fill_distiller(palette = "Spectral") +
   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
+ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+  geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
+  coord_3d(light = light_3d(preset = "mathematica"))
 }
 \references{
 Szafir, Sarikaya, Gleicher (2016). Lightness constancy in

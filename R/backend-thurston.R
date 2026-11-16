@@ -131,7 +131,7 @@ thurston_scene_3d <- function(specs, viewport, backend, light) {
   hit <- raymarch_curved_cpp(fields, directions, backend, raster_threads_3d())
   light <- light %or3d% light_3d()
   cosine <- pmax(0, -rowSums(hit$normal * hit$incoming))
-  intensity <- light$ambient + light$diffuse * cosine / (hit$area + backend$light_size^2)
+  intensity <- ambient_level_3d(light) + light$diffuse * cosine / (hit$area + backend$light_size^2)
   result <- list(image = structure(matrix(0L, height, width), class = "nativeRaster"),
     width = width, height = height, extent = c(0, 0, 1, 1), intrinsic = hit)
   rgba <- cbind(pmin(hit$colour * intensity, 1), as.double(is.finite(hit$distance)))

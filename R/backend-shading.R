@@ -453,3 +453,76 @@ clamp_to_outline_3d <- function(X, corners, outer) {
   X[ok, ] <- (w[, 1L] * A + w[, 2L] * B + w[, 3L] * C)[ok, , drop = FALSE]
   X
 }
+
+# A packet whose faces with vertex-lit materials (material_3d(lighting =
+# "vertex")) carry their lit colours as corner colours and are no longer
+# shaded, so that every backend interpolates the lit corner colours in linear
+# light: Gouraud (1971) shading. Each corner is lit by the shading kernel at
+# its corner normal, or at the face normal where it has none, and at its
+# model-space position. `camera` is resolved and `pre` is the camera's
+# homogeneous pre-transform. Textured faces keep per-sample shading.
+vertex_lit_packet_3d <- function(packet, camera, light, pre = diag(4)) {
+  materials <- packet$materials
+  if (is.null(light) || is.null(materials$lighting) || !any(materials$lighting %in% "vertex")) return(packet)
+  styles <- packet$styles
+  index <- material_index_3d(styles)
+  vertex <- index > 0L & style_value_3d(styles, "shade", FALSE) %in% TRUE & panel_textures_3d(styles)$index == 0L
+  vertex[vertex] <- materials$lighting[index[vertex]] %in% "vertex"
+  faces <- packet$faces
+  owner_style <- match(faces$style_id, styles$style_id)
+  take <- which(vertex[owner_style] & faces$count >= 3L)
+  if (!length(take)) return(packet)
+  fill <- style_value_3d(styles, "fill", NA_character_)[owner_style[take]]
+  take <- take[!is.na(fill)]
+  fill <- fill[!is.na(fill)]
+  if (!length(take)) return(packet)
+  counts <- faces$count[take]
+  corner <- rep(faces$offset[take], counts) + sequence(counts) - 1L
+  owner <- rep(seq_along(take), counts)
+  pre <- matrix(as.double(pre %or3d% diag(4)), 4L, 4L)
+  xyzw <- scene_vertex_matrix_3d(packet$vertices)[packet$corners$vertex[corner], , drop = FALSE] %*% t(pre)
+  position <- sweep(xyzw[, 1:3, drop = FALSE] / xyzw[, 4L], 2L, camera$model_scale, "*")
+  edge <- function(k) position[corner_shift_3d(owner, k), , drop = FALSE]
+  a <- position; b <- edge(1L)
+  newell <- rowsum(cbind((a[, 2L] - b[, 2L]) * (a[, 3L] + b[, 3L]), (a[, 3L] - b[, 3L]) * (a[, 1L] + b[, 1L]),
+    (a[, 1L] - b[, 1L]) * (a[, 2L] + b[, 2L])), owner, reorder = FALSE)
+  newell <- unit_rows_3d(newell)
+  face_normal <- face_shading_normals_3d(list(normal_x = newell[, 1L], normal_y = newell[, 2L], normal_z = newell[, 3L]),
+    seq_along(take), camera, styles[owner_style[take], , drop = FALSE])
+  normal <- face_normal[owner, , drop = FALSE]
+  corners <- packet$corners
+  if (all(c("normal_x", "normal_y", "normal_z") %in% names(corners))) {
+    supplied <- cbind(corners$normal_x[corner], corners$normal_y[corner], corners$normal_z[corner])
+    ok <- rowSums(is.finite(supplied)) == 3L & rowSums(supplied^2) > 0
+    if (any(ok)) {
+      supplied <- supplied[ok, , drop = FALSE] %*% solve(pre[1:3, 1:3])
+      normal[ok, ] <- model_normals_3d(supplied, camera)
+    }
+  }
+  base <- linear_rgb_3d(fill)[owner, , drop = FALSE]
+  if (all(corner_colour_columns_3d %in% names(corners))) {
+    rgb <- cbind(corners$red[corner], corners$green[corner], corners$blue[corner])
+    ok <- rowSums(is.finite(rgb)) == 3L
+    base[ok, ] <- srgb_decode_3d(rgb[ok, , drop = FALSE])
+  }
+  lit <- shade_linear_3d(base, normal, camera, light, position, index[owner_style[take]][owner], materials)
+  encoded <- srgb_encode_3d(pmin(pmax(lit, 0), 1))
+  n <- length(corners$vertex)
+  for (k in seq_along(corner_colour_columns_3d)) {
+    name <- corner_colour_columns_3d[k]
+    if (is.null(corners[[name]])) corners[[name]] <- rep(NA_real_, n)
+    corners[[name]][corner] <- encoded[, k]
+  }
+  columns <- scene_table_columns(corners, scene_schemas()$corners, scene_optional_schemas()$corners, "corners")
+  packet$corners <- corners[names(columns)]
+  packet$styles$shade[vertex] <- FALSE
+  packet
+}
+
+# Index of the corner k places after each corner within its face, for corners
+# grouped by consecutive owners.
+corner_shift_3d <- function(owner, k) {
+  start <- match(owner, owner)
+  count <- tabulate(owner)[owner]
+  start + (seq_along(owner) - start + k) %% count
+}

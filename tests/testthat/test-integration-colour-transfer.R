@@ -26,7 +26,7 @@ test_that("signed transfers leave colours unchanged at the neutral angle", {
 
 test_that("lightness moves OKLab lightness by bounded fractions and keeps the hue", {
   colours <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#A6CEE3")
-  light <- light_3d(light_directional(), mode = "lightness", range = c(-0.4, 0.3))
+  light <- light_3d(light_directional(), mode = "lightness", range = c(-0.4, 0.3), neutral = 45)
   before <- oklab_ref(linear_rgb_3d(colours))
   dark <- oklab_ref(swatch_linear(colours, rep(-1, 5L), light))
   bright <- oklab_ref(swatch_linear(colours, rep(1, 5L), light))

@@ -7,8 +7,9 @@ static inline vec3 row3(const Rcpp::NumericMatrix& m, int i) {return {m(i, 0), m
 
 // Lights resolved on the R side (resolved_light_3d()): kind, vector, colour,
 // ground (rows), falloff, ambient (linear colour), transfer (a kernel transfer
-// id), range (shadow and highlight moves), neutral (cosine), shadow and
-// highlight (linear tone colours).
+// id), range (shadow and highlight moves), neutral (cosine), encoded (1 for
+// multiply and tint on encoded sRGB values), shadow and highlight (linear tone
+// colours).
 static inline Lights read_lights(const Rcpp::List& x) {
   Lights out;
   Rcpp::IntegerVector kind = x["kind"];
@@ -29,6 +30,7 @@ static inline Lights read_lights(const Rcpp::List& x) {
   out.transfer = Rcpp::as<int>(x["transfer"]);
   out.r0 = range[0]; out.r1 = range[1];
   out.neutral = Rcpp::as<double>(x["neutral"]);
+  out.encoded = x.containsElementNamed("encoded") ? Rcpp::as<double>(x["encoded"]) : 0.0;
   out.shadow = {shadow[0], shadow[1], shadow[2]};
   out.highlight = {highlight[0], highlight[1], highlight[2]};
   Rcpp::NumericMatrix frame = x["frame"];
