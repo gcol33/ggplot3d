@@ -692,6 +692,18 @@ struct Buffers {
   int passes=0;
 };
 
+// Shading state of one smooth-face fan triangle at one pixel: its light
+// (see smooth_light()), once evaluated, and the last colour computed there
+// with its input, so that samples with the same texel and fill reuse it.
+struct PixelShade {
+  shade::LightSums sums;
+  double accessibility=1;
+  bool lit=false,memo=false,continuous=false;
+  Vec3 in{0,0,0};
+  double alpha=0;
+  Colour out{};
+};
+
 struct TileScratch {
   std::vector<Fragment> fragments,ordered,merge;
   std::vector<Occluder> occluders;
@@ -700,10 +712,10 @@ struct TileScratch {
   std::vector<SampleResult> results;
   std::vector<Index> order,painted;
   std::vector<Step> steps;
-  // Smooth-face colour per tile pixel and the item and fan triangle it was
-  // shaded for: the samples of a pixel share one shading of each triangle.
-  std::vector<Index> shaded_item,shaded_fan;
-  std::vector<Colour> shaded;
+  // Shading state per tile pixel and the smooth item and fan triangle it
+  // belongs to.
+  std::vector<Index> shade_item,shade_fan;
+  std::vector<PixelShade> shades;
 };
 
 static inline std::uint32_t channel_byte(double value) {
@@ -736,6 +748,71 @@ static inline std::array<double,2> fan_uv(const Shapes& shapes,const Item& item,
   return uv;
 }
 
+// Corner attributes of fan triangle k of a smooth face blended with weights
+// w: corner colours (what 0), normals (1) or positions (2). A non-finite
+// corner makes the blend non-finite.
+static inline Vec3 fan_blend(const Scene& scene,const Index* k,const std::array<double,3>& w,int what) {
+  Vec3 out{0,0,0};
+  for(int j=0;j<3;++j) {
+    const Vec3& v=what==0 ? scene.shading[k[j]].colour:what==1 ? scene.shading[k[j]].normal:scene.shading[k[j]].position;
+    if(!std::isfinite(v[0]+v[1]+v[2])) return Vec3{NAN,NAN,NAN};
+    for(int d=0;d<3;++d) out[d]+=w[j]*v[d];
+  }
+  return out;
+}
+
+// Weights of fan triangle `fan` at (x, y) clamped to the triangle, so that a
+// point beside it (a pixel centre next to a covered edge) takes the
+// attributes of the nearest part of the face.
+static inline std::array<double,3> clamped_fan_weights(const Shapes& shapes,const Item& item,Index fan,double x,double y) {
+  auto w=fan_weights(shapes,item,fan,x,y);
+  if(w[0]<0 || w[1]<0 || w[2]<0) {
+    double total=0;
+    for(double& z:w) {z=std::max(0.0,z);total+=z;}
+    if(total>0) for(double& z:w) z/=total; else w={1.0/3,1.0/3,1.0/3};
+  }
+  return w;
+}
+
+// The light on fan triangle `fan` of a lit smooth face at (x, y): normal,
+// position and ambient accessibility interpolated perspective-correctly with
+// clamped weights. The light varies smoothly over a face, so the samples of
+// one pixel share it.
+static inline void smooth_light(const Shapes& shapes,const Item& item,Index fan,double x,double y,PixelShade& light) {
+  const Scene& scene=shapes.scene; const Smooth& sm=*shapes.smooth;
+  const Index k[3]={item.offset,item.offset+fan,item.offset+fan+1};
+  const auto w=clamped_fan_weights(shapes,item,fan,x,y);
+  Vec3 normal=fan_blend(scene,k,w,1);
+  if(!std::isfinite(normal[0]+normal[1]+normal[2]) || !(dot(normal,normal)>0)) normal=sm.normal[item.row];
+  const Vec3 position=fan_blend(scene,k,w,2);
+  const shade::vec3 p=shade::to_vec3(position);
+  const shade::vec3 n=shade::normalize(shade::to_vec3(normal)), toward=sm.view.at(p);
+  const int side=shade::dot(n,toward)<0 ? 1:0;
+  light.accessibility=scene.accessibility.empty() ? 1:0;
+  if(!scene.accessibility.empty()) for(int j=0;j<3;++j) light.accessibility+=w[j]*scene.accessibility[k[j]][side];
+  if(!std::isfinite(light.accessibility)) light.accessibility=1;
+  light.sums=shade::light_sums(n,p,toward,sm.materials[sm.material[item.row]],sm.lights);
+  light.lit=true;
+}
+
+// Whether the colour of fan triangle `fan` of a smooth face is continuous
+// over the triangle: untextured, or an interpolated texture whose corner
+// coordinates all lie in the image, so that its transparent outside never
+// reaches the triangle. A nearest-sampled texture has texel boundaries.
+static inline bool smooth_continuous(const Shapes& shapes,const Item& item,Index fan) {
+  const Scene& scene=shapes.scene; const Smooth& sm=*shapes.smooth;
+  const int texture=sm.texture.empty() ? 0:sm.texture[item.row];
+  if(texture==0) return true;
+  const Index k[3]={item.offset,item.offset+fan,item.offset+fan+1};
+  bool finite=true,inside=true;
+  for(int j=0;j<3;++j) {
+    const auto& uv=scene.shading[k[j]].uv;
+    finite=finite && std::isfinite(uv[0]);
+    inside=inside && uv[0]>=0 && uv[0]<=1 && uv[1]>=0 && uv[1]<=1;
+  }
+  return !finite || (sm.textures[texture-1].interpolate && inside);
+}
+
 // Whether a smooth face's clip rings (if any) cover the sample (x, y).
 static inline bool smooth_clip_covers(const Shapes& shapes,const Item& item,double x,double y) {
   const Smooth& sm=*shapes.smooth;
@@ -744,35 +821,19 @@ static inline bool smooth_clip_covers(const Shapes& shapes,const Item& item,doub
   return false;
 }
 
-// Colour of fan triangle `fan` of a smooth face, shaded at (x, y): corner
-// colours and normals interpolated perspective-correctly (weights a / depth
-// under perspective), the normal renormalised and lit by the shading kernel in
-// linear light, then put in the compositing space with the paint's alpha. The
-// weights are clamped to the triangle, so a point outside it (a pixel centre
-// beside a covered edge) takes the attributes of the nearest part of the face.
-// A textured face takes the texel at its perspective-correct texture
-// coordinates, filtered over the texels that a dx by dy step covers,
+// Colour of fan triangle `fan` of a smooth face at (x, y), with weights w:
+// corner colours interpolated perspective-correctly (weights a / depth under
+// perspective), lit by the shading kernel in linear light with the light of
+// its pixel, whose centre is (cx, cy), then put in the compositing space with
+// the paint's alpha. A textured face takes the texel at its perspective-correct
+// texture coordinates, filtered over the texels that a dx by dy step covers,
 // composited over its fill.
 static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const Paint& paint,Index fan,
-                                   double x,double y,double dx,double dy) {
+                                   const std::array<double,3>& w,double x,double y,double dx,double dy,
+                                   PixelShade& pixel,double cx,double cy) {
   const Scene& scene=shapes.scene; const Smooth& sm=*shapes.smooth;
   const Index k[3]={item.offset,item.offset+fan,item.offset+fan+1};
-  auto w=fan_weights(shapes,item,fan,x,y);
-  if(w[0]<0 || w[1]<0 || w[2]<0) {
-    double total=0;
-    for(double& z:w) {z=std::max(0.0,z);total+=z;}
-    if(total>0) for(double& z:w) z/=total; else w={1.0/3,1.0/3,1.0/3};
-  }
-  auto blend=[&](bool normal) {
-    Vec3 out{0,0,0};
-    for(int j=0;j<3;++j) {
-      const Vec3& v=normal ? scene.shading[k[j]].normal:scene.shading[k[j]].colour;
-      if(!std::isfinite(v[0]+v[1]+v[2])) return Vec3{NAN,NAN,NAN};
-      for(int d=0;d<3;++d) out[d]+=w[j]*v[d];
-    }
-    return out;
-  };
-  Vec3 colour=blend(false);
+  Vec3 colour=fan_blend(scene,k,w,0);
   if(!std::isfinite(colour[0]+colour[1]+colour[2])) colour=sm.base[item.row];
   double alpha=1;
   const int texture=sm.texture.empty() ? 0:sm.texture[item.row];
@@ -782,34 +843,29 @@ static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const P
     for(int j=0;j<3;++j) for(int d=0;d<2;++d) uv[d]+=w[j]*scene.shading[k[j]].uv[d];
     double footprint=0;
     if(t.interpolate) {
-      const auto u0=fan_uv(shapes,item,fan,x,y),ux=fan_uv(shapes,item,fan,x+dx,y),uy=fan_uv(shapes,item,fan,x,y+dy);
+      const auto ux=fan_uv(shapes,item,fan,x+dx,y),uy=fan_uv(shapes,item,fan,x,y+dy);
       const double width=t.levels[0].width,height=t.levels[0].height;
-      footprint=std::max(std::hypot((ux[0]-u0[0])*width,(ux[1]-u0[1])*height),
-                         std::hypot((uy[0]-u0[0])*width,(uy[1]-u0[1])*height));
+      footprint=std::max(std::hypot((ux[0]-uv[0])*width,(ux[1]-uv[1])*height),
+                         std::hypot((uy[0]-uv[0])*width,(uy[1]-uv[1])*height));
     }
     const Texel texel=t.sample(uv[0],uv[1],footprint);
     const double under=sm.fill_alpha[item.row]*(1-texel[3]);
     alpha=texel[3]+under;
     if(alpha>0) for(int d=0;d<3;++d) colour[d]=(texel[d]+under*colour[d])/alpha;
   }
+  if(pixel.memo && pixel.alpha==alpha && pixel.in[0]==colour[0] && pixel.in[1]==colour[1] && pixel.in[2]==colour[2])
+    return pixel.out;
+  pixel.in=colour; pixel.alpha=alpha;
   if(sm.lit[item.row]) {
-    Vec3 normal=blend(true);
-    if(!std::isfinite(normal[0]+normal[1]+normal[2]) || !(dot(normal,normal)>0)) normal=sm.normal[item.row];
-    Vec3 position{0,0,0};
-    for(int j=0;j<3;++j) for(int d=0;d<3;++d) position[d]+=w[j]*scene.shading[k[j]].position[d];
-    const shade::vec3 p=shade::to_vec3(position);
-    const shade::vec3 n=shade::normalize(shade::to_vec3(normal)), toward=sm.view.at(p);
-    const int side=shade::dot(n,toward)<0 ? 1:0;
-    double accessibility=scene.accessibility.empty() ? 1:0;
-    if(!scene.accessibility.empty()) for(int j=0;j<3;++j) accessibility+=w[j]*scene.accessibility[k[j]][side];
-    if(!std::isfinite(accessibility)) accessibility=1;
-    const shade::vec3 lit=shade::shade(n,p,toward,shade::to_vec3(colour),
-      sm.materials[sm.material[item.row]],sm.lights,-2,accessibility);
+    if(!pixel.lit) smooth_light(shapes,item,fan,cx,cy,pixel);
+    const shade::vec3 lit=shade::light_finish(pixel.sums,shade::to_vec3(colour),
+      sm.materials[sm.material[item.row]],sm.lights,pixel.accessibility);
     colour={lit.x,lit.y,lit.z};
   }
   Colour out{std::max(0.0,std::min(1.0,colour[0])),std::max(0.0,std::min(1.0,colour[1])),
              std::max(0.0,std::min(1.0,colour[2])),paint.colour.a*std::max(0.0,std::min(1.0,alpha))};
   if(!sm.linear) {out.r=srgb_encode(out.r);out.g=srgb_encode(out.g);out.b=srgb_encode(out.b);}
+  pixel.out=out; pixel.memo=true;
   return out;
 }
 
@@ -863,8 +919,8 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
   if(retained) s.opaque.assign(n,R_PosInf);
   const int aa=canvas.aa,pw=tw/aa;
   if(shapes.smooth && shapes.smooth->active) {
-    s.shaded_item.assign(n/(static_cast<std::size_t>(aa)*aa),-1);
-    s.shaded_fan.resize(s.shaded_item.size()); s.shaded.resize(s.shaded_item.size());
+    s.shade_item.assign(n/(static_cast<std::size_t>(aa)*aa),-1);
+    s.shade_fan.resize(s.shade_item.size()); s.shades.resize(s.shade_item.size());
   }
   s.order.assign(tile_items,tile_items+tile_count);
   std::sort(s.order.begin(),s.order.end(),[&](Index a,Index b) {
@@ -916,17 +972,25 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
                                     occluder.hides(span.partition,z,tolerance))) continue;
         Fragment fragment{i,z,local,border};
         if(!border && smooth_item) {
-          // Coverage and clipping per sample, shading once per pixel and
-          // triangle at the pixel centre (multisample antialiasing).
+          // Coverage per sample. A colour continuous over the triangle is
+          // evaluated once per pixel at its centre (multisampling); texel
+          // boundaries are resolved per sample, with the light of the pixel.
           if(!smooth_clip_covers(shapes,item,xx,yy)) continue;
           const int px=x/aa,py=y/aa;
           const std::size_t pixel=static_cast<std::size_t>(py-sy0/aa)*pw+(px-sx0/aa);
-          if(s.shaded_item[pixel]!=i || s.shaded_fan[pixel]!=hit.i) {
-            s.shaded[pixel]=smooth_colour(shapes,item,p,hit.i,canvas.origin_x+(px+.5)*canvas.pixel_x,
-              canvas.origin_y+(py+.5)*canvas.pixel_y,canvas.pixel_x,canvas.pixel_y);
-            s.shaded_item[pixel]=i; s.shaded_fan[pixel]=hit.i;
+          PixelShade& shading=s.shades[pixel];
+          if(s.shade_item[pixel]!=i || s.shade_fan[pixel]!=hit.i) {
+            s.shade_item[pixel]=i; s.shade_fan[pixel]=hit.i;
+            shading.lit=false; shading.memo=false; shading.continuous=smooth_continuous(shapes,item,hit.i);
           }
-          fragment.own=true;fragment.colour=s.shaded[pixel];
+          const double cx=canvas.origin_x+(px+.5)*canvas.pixel_x,cy=canvas.origin_y+(py+.5)*canvas.pixel_y;
+          fragment.own=true;
+          if(shading.continuous) {
+            if(!shading.memo) smooth_colour(shapes,item,p,hit.i,clamped_fan_weights(shapes,item,hit.i,cx,cy),
+              cx,cy,canvas.pixel_x,canvas.pixel_y,shading,cx,cy);
+            fragment.colour=shading.out;
+          } else fragment.colour=smooth_colour(shapes,item,p,hit.i,fan_weights(shapes,item,hit.i,xx,yy),
+              xx,yy,canvas.dx,canvas.dy,shading,cx,cy);
           if(fragment.colour.a==0) continue;
         }
         if(lit_quadric) {fragment.own=true;fragment.colour=quadric_colour(shapes,item,p,xx,yy);}

@@ -258,22 +258,29 @@ struct Material : PhysicalMaterial {
   vec4 a{0, 0, 0, 0}, b{0, 0, 0, 0};
 };
 
-// The lit colour of base colour b at unit normal n, position p, seen along v
-// (unit, toward the eye). A normal facing away from the eye is turned toward
-// it, and the back colour replaces the base colour there when the material
-// has one. A light value xs >= -1 replaces n . L (see the locals above).
-static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, const Lights& lights, real xs = -2,
-                         real occlusion = 1) {
+// The light reaching a point, before the base colour is applied: the normal
+// turned toward the eye, whether it was turned (the back side), and the sums of
+// GGPLOT3D_LIGHT_SUM over the lights. They depend on the normal, position and
+// view only, so one evaluation serves every base colour at that point.
+struct LightSums {
+  vec3 n, v, amb, dif, spe, l0;
+  real lsum = 0, gsum = 0, wsum = 0, wl = 0;
+  bool back = false;
+};
+
+// Light sums at unit normal n, position p, seen along v (unit, toward the
+// eye). A normal facing away from the eye is turned toward it. A light value
+// xs >= -1 replaces n . L (see the locals above).
+static inline LightSums light_sums(vec3 n, vec3 p, vec3 v, const Material& m, const Lights& lights, real xs = -2) {
+  LightSums s;
   if (dot(n, v) < 0) {
     n = -n;
-    if (m.has_back) b = m.back;
+    s.back = true;
   }
-  const real ka = m.ambient, kd = m.diffuse, ks = m.specular, sh = m.shininess, sc = m.specular_colour;
+  const real ks = m.specular, sh = m.shininess;
   const real st = m.style, ss = m.steps, nb = m.bands, nk = m.breaks;
   const vec4 pa = m.a, pb = m.b;
-  const real tm = lights.transfer, r0 = lights.r0, r1 = lights.r1, c0 = lights.neutral, ge = lights.encoded;
-  const vec3 tsh = lights.shadow, thi = lights.highlight;
-  const vec3 fs = lights.scale, fr = lights.right, fu = lights.up, ft = lights.toward;
+  const real c0 = lights.neutral;
   vec3 amb = lights.ambient, dif(0, 0, 0), spe(0, 0, 0), l0(0, 0, 1);
   real lsum = 0, gsum = 0, wsum = 0, wl = 0;
   for (const Light& light : lights.list) {
@@ -288,8 +295,32 @@ static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, cons
     }
     GGPLOT3D_LIGHT_SUM
   }
+  s.n = n; s.v = v; s.amb = amb; s.dif = dif; s.spe = spe; s.l0 = l0;
+  s.lsum = lsum; s.gsum = gsum; s.wsum = wsum; s.wl = wl;
+  return s;
+}
+
+// The lit colour of base colour b under light sums s. The back colour
+// replaces the base colour on the back side when the material has one.
+static inline vec3 light_finish(const LightSums& s, vec3 b, const Material& m, const Lights& lights,
+                                real occlusion = 1) {
+  if (s.back && m.has_back) b = m.back;
+  const vec3 n = s.n, v = s.v, amb = s.amb, dif = s.dif, spe = s.spe, l0 = s.l0;
+  const real lsum = s.lsum, gsum = s.gsum, wsum = s.wsum, wl = s.wl;
+  const real ka = m.ambient, kd = m.diffuse, ks = m.specular, sc = m.specular_colour;
+  const real st = m.style, nb = m.bands;
+  const vec4 pa = m.a, pb = m.b;
+  const real tm = lights.transfer, r0 = lights.r0, r1 = lights.r1, ge = lights.encoded;
+  const vec3 tsh = lights.shadow, thi = lights.highlight;
+  const vec3 fs = lights.scale, fr = lights.right, fu = lights.up, ft = lights.toward;
   GGPLOT3D_LIGHT_FINISH
   return col * clamp(occlusion, 0.0, 1.0) + m.emission;
+}
+
+// The lit colour of base colour b at unit normal n, position p, seen along v.
+static inline vec3 shade(vec3 n, vec3 p, vec3 v, vec3 b, const Material& m, const Lights& lights, real xs = -2,
+                         real occlusion = 1) {
+  return light_finish(light_sums(n, p, v, m, lights, xs), b, m, lights, occlusion);
 }
 
 static inline real transfer(real linear, real brightness, bool multiply) {
