@@ -91,8 +91,8 @@ light_3d(
 
 - preset:
 
-  Starting lighting: `"default"`, `"ggcube"`, `"matplotlib"`, `"rgl"`,
-  `"plotly"` or `"mathematica"`.
+  Starting lighting: `"default"`, `"contrast"`, `"shade"`,
+  `"headlight"`, `"soft"` or `"studio"`.
 
 ## Value
 
@@ -103,45 +103,43 @@ raymarch backend) use the first directional light.
 
 ## Details
 
-`preset` starts from the lighting of another package; every argument
-given explicitly replaces the preset's value, and lights given in `...`
-replace its lights.
+`preset` picks a starting lighting; every argument given explicitly
+replaces the preset's value, and lights given in `...` replace its
+lights. Except for the default, each preset reproduces the surface
+lighting of a widely used 3D package, named below.
 
 - `"default"`: one
   [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
   ambient 0.35, `mode = "lightness"`, `range = c(-0.45, 0.4)`,
   `neutral = 60`.
 
-- `"ggcube"`: ggcube's `light()`: a light along `c(-0.5, 0, 1)` in the
-  data axes and its `"hsv"` mode at `contrast = 1`, i.e.
-  `mode = "value"`, `range = c(-1, 1)`, `neutral = 90`.
+- `"contrast"`: the full range from black to white with a light from the
+  side: a light along `c(-0.5, 0, 1)` in the data axes,
+  `mode = "value"`, `range = c(-1, 1)`, `neutral = 90` (ggcube's
+  `light()` in its `"hsv"` mode at `contrast = 1`).
 
-- `"matplotlib"`: the shading of matplotlib's `plot_surface()`: the
-  colour scaled by `0.65 + 0.35 * cos` with the light at
-  `LightSource(azdeg = 225, altdeg = 19.4712)` in the data axes, i.e.
-  `mode = "value"`, `range = c(-0.7, 0)`, `neutral = 0`.
+- `"shade"`: darkening only, by up to 70 percent, from a low light: the
+  colour scaled by `0.65 + 0.35 * cos` with the light at azimuth 225 and
+  altitude 19.4712 degrees in the data axes, i.e. `mode = "value"`,
+  `range = c(-0.7, 0)`, `neutral = 0` (matplotlib's `plot_surface()`).
 
-- `"rgl"`: the light of a new rgl scene, a white directional light at
-  the eye (position `(0, 0, 1)` in eye coordinates, as `rgl.attrib()`
-  reports; `light3d()`'s own default is 15 degrees above the eye), with
-  rgl's default material (no ambient reflection, white specular,
-  shininess 50) lit at the vertices (`lighting = "vertex"`) on encoded
-  values, and OpenGL's local viewer at rgl's default eye distance
-  (`viewer = 1 / sin(15 degrees)`, for its 30-degree field of view), as
-  desktop rgl's fixed-function OpenGL does.
+- `"headlight"`: a white directional light at the eye with no ambient
+  reflection and a white highlight (specular 1, shininess 50) lit at the
+  vertices (`lighting = "vertex"`) on encoded values, and the eye placed
+  for the highlight at `viewer = 1 / sin(15 degrees)`, the distance of a
+  30-degree field of view (a new rgl scene, as desktop rgl's
+  fixed-function OpenGL draws it).
 
-- `"plotly"`: plotly's surface lighting defaults: ambient 0.8, diffuse
-  0.8, the light at `lightposition = (10, 10000, 0)`, which its shader
-  takes in camera coordinates (straight above the viewer), and specular
-  0.05 with roughness 0.5 approximated by a Blinn exponent of 6, on
-  encoded values.
+- `"soft"`: a strong ambient term (0.8) with diffuse 0.8 from a light
+  straight above the viewer and a faint broad highlight (specular 0.05,
+  Blinn exponent 6), on encoded values (plotly's surface lighting
+  defaults).
 
-- `"mathematica"`: Mathematica's `Lighting -> Automatic`: ambient
-  `RGBColor[0.4, 0.2, 0.2]` and four coloured directional lights fixed
-  to the image, shining from `ImageScaled` points `{2, 0, 2}`,
-  `{2, 2, 3}`, `{0, 2, 2}` and `{0, 0, 2}` toward its centre, on encoded
-  values. It suits light fills; Mathematica itself switches to white
-  lights when a colour function is given.
+- `"studio"`: ambient `rgb(0.4, 0.2, 0.2)` and four coloured directional
+  lights fixed to the image, shining toward its centre from the points
+  `(2, 0, 2)`, `(2, 2, 3)`, `(0, 2, 2)` and `(0, 0, 2)` in image-scaled
+  coordinates, on encoded values (Mathematica's
+  `Lighting -> Automatic`). It tints the surface and suits light fills.
 
 `mode` sets how the light changes a face colour. `"multiply"` scales the
 colour by the ambient and diffuse light and `"tint"` scales its distance
@@ -218,5 +216,5 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
-  coord_3d(light = light_3d(preset = "mathematica"))
+  coord_3d(light = light_3d(preset = "studio"))
 ```

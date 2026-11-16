@@ -103,8 +103,9 @@ StatFunctionRows3D <- ggplot2::ggproto("StatFunctionRows3D", StatGeometry3D,
 )
 
 stats_triangles_3d <- function(data) {
-  data <- surface_normals_3d(data)
-  triangles <- surface_triangles_3d(data, "grid", Inf)
+  lattice <- surface_lattice_3d(data)
+  data <- lattice_columns_3d(surface_normals_3d(data, lattice), lattice$i - 1L, lattice$j - 1L)
+  triangles <- surface_triangles_3d(data, "grid", Inf, lattice)
   if (!nrow(triangles)) return(data.frame())
   stats_corners_3d(data, triangles)
 }
@@ -123,12 +124,19 @@ stats_corners_3d <- function(data, triangles) {
   out
 }
 
-# Rowbinds corner tables, renumbering faces so that they stay distinct.
+# Rowbinds corner tables, renumbering faces so that they stay distinct. A
+# column missing from some pieces, such as the grid coordinates of the pieces
+# that lie on a grid, is NA in the others.
 stats_bind_faces_3d <- function(pieces) {
   pieces <- Filter(nrow, pieces)
   if (!length(pieces)) return(data.frame())
   shift <- c(0L, cumsum(vapply(pieces, nrow, integer(1)) %/% 3L))
-  for (i in seq_along(pieces)) pieces[[i]]$.face <- pieces[[i]]$.face + shift[i]
+  columns <- unique(unlist(lapply(pieces, names)))
+  for (i in seq_along(pieces)) {
+    pieces[[i]]$.face <- pieces[[i]]$.face + shift[i]
+    for (name in setdiff(columns, names(pieces[[i]]))) pieces[[i]][[name]] <- NA
+    pieces[[i]] <- pieces[[i]][columns]
+  }
   do.call(rbind, pieces)
 }
 

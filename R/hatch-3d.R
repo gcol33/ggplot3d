@@ -91,9 +91,7 @@ hatch_levels_3d <- function(darkness, cross) {
 hatch_merge_3d <- function(packet, data, faces, params, panel_params) {
   spec <- hatch_argument_3d(params$hatch)
   if (is.null(spec) || spec$space != "model" || !nrow(faces)) return(packet)
-  key <- if (!is.null(data$.vertex)) paste(data$.mesh %or3d% 1L, data$group %or3d% 1L, data$.vertex)
-    else paste(data$group %or3d% 1L, data$.source)
-  ids <- match(key, unique(key)); rows <- match(seq_len(max(ids)), ids)
+  ids <- stroke_vertex_ids_3d(data); rows <- match(seq_len(max(ids)), ids)
   xyz <- matrix(as.double(as.matrix(data[rows, c("x", "y", "z")])), ncol = 3L)
   frame <- frame_of_3d(panel_params)
   model <- if (isTRUE(frame$identity)) xyz else frame$map(xyz)
@@ -124,8 +122,10 @@ hatch_merge_3d <- function(packet, data, faces, params, panel_params) {
   merge_scene_packets(list(packet, hatching), panel_params$panel_id)
 }
 
-# Derived strokes of a packet of triangles: hatching and feature lines.
-surface_strokes_3d <- function(packet, data, faces, params, panel_params) {
+# Derived strokes of a packet of triangles: mesh lines, hatching and feature
+# lines. `cells` holds the polygon edges of a mesh split into the triangles.
+surface_strokes_3d <- function(packet, data, faces, params, panel_params, cells = NULL) {
+  packet <- edges_merge_3d(packet, data, faces, params, panel_params, cells)
   outline_merge_3d(hatch_merge_3d(packet, data, faces, params, panel_params), data, faces, params, panel_params)
 }
 

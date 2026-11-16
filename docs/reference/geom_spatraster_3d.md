@@ -45,7 +45,7 @@ geom_spatraster_3d(
 
 - wireframe:
 
-  Whether to draw triangle edges.
+  Whether to draw the cell edges without the faces.
 
 ## Value
 

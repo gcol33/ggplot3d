@@ -1,12 +1,14 @@
 # Triangulated surfaces in three dimensions
 
 Grid surfaces estimate vertex normals from height differences along each
-axis. With `shading = "flat"` lighting uses the normalised mean of each
-face's vertex normals and a numeric fill is averaged over each face.
-With `shading = "smooth"` the vertex normals are interpolated across
-each face (Phong 1975) and a fill that varies between vertices, numeric
-or given as colours such as `fill = I(hex)`, is interpolated in linear
-light (Gouraud 1971), as MATLAB's `lighting gouraud` with
+axis and split each cell along the diagonal from its corner at the
+larger x and smaller y to the corner at the smaller x and larger y, as
+rgl does. With `shading = "flat"` lighting uses the normalised mean of
+each face's vertex normals and a numeric fill is averaged over each
+face. With `shading = "smooth"` the vertex normals are interpolated
+across each face (Phong 1975) and a fill that varies between vertices,
+numeric or given as colours such as `fill = I(hex)`, is interpolated in
+linear light (Gouraud 1971), as MATLAB's `lighting gouraud` with
 `FaceColor = "interp"` and rgl's `smooth` material. A discrete fill
 splits the rows into groups, so `group = 1` keeps one surface. Binned
 fill and colour scales split faces at the scalar iso-lines, using linear
@@ -29,6 +31,7 @@ geom_surface_3d(
   wireframe = FALSE,
   hidden = "hide",
   outline = NULL,
+  edges = NULL,
   alpha_mode = "face",
   shading = "flat",
   material = NULL,
@@ -73,7 +76,9 @@ stat_surface_3d(
 
 - wireframe:
 
-  Whether to draw triangle edges.
+  Whether to draw the cell edges (the grid lines of a grid surface, the
+  triangle edges of a Delaunay surface) without the faces. A `colour`
+  strokes the same edges over the faces.
 
 - hidden:
 
@@ -82,8 +87,15 @@ stat_surface_3d(
 - outline:
 
   Feature lines from
-  [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md),
-  or NULL for none.
+  [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md);
+  NULL takes `coord_3d(outline = )`, FALSE draws none.
+
+- edges:
+
+  Mesh lines from
+  [`edges_3d()`](https://gillescolling.com/ggplot3d/reference/edges_3d.md)
+  drawn over the faces; NULL takes `coord_3d(edges = )`, FALSE draws
+  none.
 
 - alpha_mode:
 

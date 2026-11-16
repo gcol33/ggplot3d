@@ -82,7 +82,7 @@ test_that("face outlines, paths and markers become tubes, solids or primitives",
   expect_identical(modes("layer3_point"), 0L)
   surface <- glb$json$meshes[[glb_node(glb, "layer1_surface")$mesh + 1L]]
   lines <- Filter(function(p) p$mode == 1L, surface$primitives)[[1]]
-  expect_identical(length(glb_accessor(glb, lines$indices)), 2L * (2L * 5L * 6L + 25L))
+  expect_identical(length(glb_accessor(glb, lines$indices)), 2L * 2L * 5L * 6L)
   export_3d(p, file)
   glb <- read_glb(file)
   expect_identical(modes("layer2_path"), 4L)

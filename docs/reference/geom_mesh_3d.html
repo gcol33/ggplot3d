@@ -156,6 +156,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 <span>  curvature <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  crease <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  outline <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  edges <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha_mode <span class="op">=</span> <span class="st">"face"</span>,</span>
 <span>  shading <span class="op">=</span> <span class="st">"flat"</span>,</span>
 <span>  material <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -217,7 +218,13 @@ normals.</p></dd>
 
 
 <dt id="arg-outline">outline<a class="anchor" aria-label="anchor" href="#arg-outline"></a></dt>
-<dd><p>Feature lines from <code><a href="outline_3d.html">outline_3d()</a></code>, or NULL for none.</p></dd>
+<dd><p>Feature lines from <code><a href="outline_3d.html">outline_3d()</a></code>; NULL takes
+<code>coord_3d(outline = )</code>, FALSE draws none.</p></dd>
+
+
+<dt id="arg-edges">edges<a class="anchor" aria-label="anchor" href="#arg-edges"></a></dt>
+<dd><p>Mesh lines from <code><a href="edges_3d.html">edges_3d()</a></code> drawn over the faces; NULL takes
+<code>coord_3d(edges = )</code>, FALSE draws none.</p></dd>
 
 
 <dt id="arg-alpha-mode">alpha_mode<a class="anchor" aria-label="anchor" href="#arg-alpha-mode"></a></dt>

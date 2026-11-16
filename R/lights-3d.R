@@ -101,38 +101,36 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' the default preset has one directional light, `light_directional()`, from
 #' the upper left of the camera. See [material_3d()] for specular highlights.
 #'
-#' `preset` starts from the lighting of another package; every argument given
-#' explicitly replaces the preset's value, and lights given in `...` replace
-#' its lights.
+#' `preset` picks a starting lighting; every argument given explicitly
+#' replaces the preset's value, and lights given in `...` replace its lights.
+#' Except for the default, each preset reproduces the surface lighting of a
+#' widely used 3D package, named below.
 #'
 #' - `"default"`: one `light_directional()`, ambient 0.35, `mode =
 #'   "lightness"`, `range = c(-0.45, 0.4)`, `neutral = 60`.
-#' - `"ggcube"`: ggcube's `light()`: a light along `c(-0.5, 0, 1)` in the
-#'   data axes and its `"hsv"` mode at `contrast = 1`, i.e. `mode = "value"`,
-#'   `range = c(-1, 1)`, `neutral = 90`.
-#' - `"matplotlib"`: the shading of matplotlib's `plot_surface()`: the colour
-#'   scaled by `0.65 + 0.35 * cos` with the light at `LightSource(azdeg = 225,
-#'   altdeg = 19.4712)` in the data axes, i.e. `mode = "value"`, `range =
-#'   c(-0.7, 0)`, `neutral = 0`.
-#' - `"rgl"`: the light of a new rgl scene, a white directional light at the
-#'   eye (position `(0, 0, 1)` in eye coordinates, as `rgl.attrib()` reports;
-#'   `light3d()`'s own default is 15 degrees above the eye), with rgl's
-#'   default material (no ambient reflection, white specular, shininess 50)
-#'   lit at the vertices (`lighting = "vertex"`) on encoded values, and
-#'   OpenGL's local viewer at rgl's default eye distance (`viewer = 1 /
-#'   sin(15 degrees)`, for its 30-degree field of view), as desktop rgl's
-#'   fixed-function OpenGL does.
-#' - `"plotly"`: plotly's surface lighting defaults: ambient 0.8, diffuse
-#'   0.8, the light at `lightposition = (10, 10000, 0)`, which its shader
-#'   takes in camera coordinates (straight above the viewer), and specular
-#'   0.05 with roughness 0.5 approximated by a Blinn exponent of 6, on encoded
-#'   values.
-#' - `"mathematica"`: Mathematica's `Lighting -> Automatic`: ambient
-#'   `RGBColor[0.4, 0.2, 0.2]` and four coloured directional lights fixed to
-#'   the image, shining from `ImageScaled` points `{2, 0, 2}`, `{2, 2, 3}`,
-#'   `{0, 2, 2}` and `{0, 0, 2}` toward its centre, on encoded values. It
-#'   suits light fills; Mathematica itself switches to white lights when a
-#'   colour function is given.
+#' - `"contrast"`: the full range from black to white with a light from the
+#'   side: a light along `c(-0.5, 0, 1)` in the data axes, `mode = "value"`,
+#'   `range = c(-1, 1)`, `neutral = 90` (ggcube's `light()` in its `"hsv"`
+#'   mode at `contrast = 1`).
+#' - `"shade"`: darkening only, by up to 70 percent, from a low light: the
+#'   colour scaled by `0.65 + 0.35 * cos` with the light at azimuth 225 and
+#'   altitude 19.4712 degrees in the data axes, i.e. `mode = "value"`, `range
+#'   = c(-0.7, 0)`, `neutral = 0` (matplotlib's `plot_surface()`).
+#' - `"headlight"`: a white directional light at the eye with no ambient
+#'   reflection and a white highlight (specular 1, shininess 50) lit at the
+#'   vertices (`lighting = "vertex"`) on encoded values, and the eye placed for
+#'   the highlight at `viewer = 1 / sin(15 degrees)`, the distance of a
+#'   30-degree field of view (a new rgl scene, as desktop rgl's
+#'   fixed-function OpenGL draws it).
+#' - `"soft"`: a strong ambient term (0.8) with diffuse 0.8 from a light
+#'   straight above the viewer and a faint broad highlight (specular 0.05,
+#'   Blinn exponent 6), on encoded values (plotly's surface lighting
+#'   defaults).
+#' - `"studio"`: ambient `rgb(0.4, 0.2, 0.2)` and four coloured directional
+#'   lights fixed to the image, shining toward its centre from the points
+#'   `(2, 0, 2)`, `(2, 2, 3)`, `(0, 2, 2)` and `(0, 0, 2)` in image-scaled
+#'   coordinates, on encoded values (Mathematica's `Lighting -> Automatic`).
+#'   It tints the surface and suits light fills.
 #'
 #' `mode` sets how the light changes a face colour. `"multiply"` scales the
 #' colour by the ambient and diffuse light and `"tint"` scales its distance
@@ -202,8 +200,8 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   viewer; rgl places it at `1 / sin(fov / 2)`). A near eye draws a
 #'   highlight out along a surface. NULL takes the preset's, else the camera's
 #'   eye (infinitely far under orthographic projection).
-#' @param preset Starting lighting: `"default"`, `"ggcube"`,
-#'   `"matplotlib"`, `"rgl"`, `"plotly"` or `"mathematica"`.
+#' @param preset Starting lighting: `"default"`, `"contrast"`, `"shade"`,
+#'   `"headlight"`, `"soft"` or `"studio"`.
 #' @return A lighting configuration for [coord_3d()]. The backends that take
 #'   one directional light (the path tracer and the raymarch backend) use the
 #'   first directional light.
@@ -226,7 +224,7 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
-#'   coord_3d(light = light_3d(preset = "mathematica"))
+#'   coord_3d(light = light_3d(preset = "studio"))
 #' @export
 light_3d <- function(..., ambient = NULL, mode = NULL, range = NULL, neutral = NULL,
                      shadow_colour = "#1d2b53", highlight_colour = "#fff1d6", linear = NULL, material = NULL,
@@ -290,20 +288,20 @@ image_scaled_direction_3d <- function(point) point - 0.5
 light_presets_3d <- list(
   default = function() list(lights = list(light_directional()), ambient = 0.35, mode = "lightness",
     range = c(-0.45, 0.4), neutral = 60),
-  ggcube = function() list(lights = list(light_directional(c(-0.5, 0, 1), space = "data", intensity = 1)),
+  contrast = function() list(lights = list(light_directional(c(-0.5, 0, 1), space = "data", intensity = 1)),
     ambient = 0, mode = "value", range = c(-1, 1), neutral = 90),
-  matplotlib = function() {
+  shade = function() {
     azimuth <- (90 - 225) * pi / 180; altitude <- 19.4712 * pi / 180
     list(lights = list(light_directional(c(cos(azimuth) * cos(altitude), sin(azimuth) * cos(altitude), sin(altitude)),
       space = "data", intensity = 1)), ambient = 0, mode = "value", range = c(-0.7, 0), neutral = 0)
   },
-  rgl = function() list(lights = list(light_directional(c(0, 0, 1), intensity = 1)),
+  headlight = function() list(lights = list(light_directional(c(0, 0, 1), intensity = 1)),
     ambient = 0, mode = "multiply", linear = FALSE, viewer = 1 / sinpi(15 / 180),
     material = material_3d(ambient = 0, diffuse = 1, specular = 1, shininess = 50, specular_colour = 1, lighting = "vertex")),
-  plotly = function() list(lights = list(light_directional(c(10, 10000, 0), intensity = 0.8)),
+  soft = function() list(lights = list(light_directional(c(10, 10000, 0), intensity = 0.8)),
     ambient = 0.8, mode = "multiply", linear = FALSE,
     material = material_3d(ambient = 1, diffuse = 1, specular = 0.05, shininess = 6, specular_colour = 1)),
-  mathematica = function() {
+  studio = function() {
     light <- function(point, r, g, b) light_directional(image_scaled_direction_3d(point), colour = grDevices::rgb(r, g, b), intensity = 1)
     list(lights = list(light(c(2, 0, 2), 0, 0.18, 0.5), light(c(2, 2, 3), 0.18, 0.5, 0.18),
       light(c(0, 2, 2), 0.5, 0.18, 0), light(c(0, 0, 2), 0, 0, 0.18)),

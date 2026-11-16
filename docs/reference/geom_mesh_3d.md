@@ -23,6 +23,7 @@ geom_mesh_3d(
   curvature = FALSE,
   crease = NULL,
   outline = NULL,
+  edges = NULL,
   alpha_mode = "face",
   shading = "flat",
   material = NULL,
@@ -91,8 +92,15 @@ geom_mesh_3d(
 - outline:
 
   Feature lines from
-  [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md),
-  or NULL for none.
+  [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md);
+  NULL takes `coord_3d(outline = )`, FALSE draws none.
+
+- edges:
+
+  Mesh lines from
+  [`edges_3d()`](https://gillescolling.com/ggplot3d/reference/edges_3d.md)
+  drawn over the faces; NULL takes `coord_3d(edges = )`, FALSE draws
+  none.
 
 - alpha_mode:
 

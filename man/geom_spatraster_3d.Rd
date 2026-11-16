@@ -26,7 +26,7 @@ geom_spatraster_3d(
 
 \item{shade}{Whether to apply lighting.}
 
-\item{wireframe}{Whether to draw triangle edges.}
+\item{wireframe}{Whether to draw the cell edges without the faces.}
 }
 \value{
 A ggplot2 layer.

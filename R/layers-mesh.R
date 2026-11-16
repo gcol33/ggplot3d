@@ -228,7 +228,10 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 #'   [mesh_curvature()], for use with `after_stat()`.
 #' @param crease Crease angle for [mesh_normals()]; NULL keeps the input's
 #'   normals.
-#' @param outline Feature lines from [outline_3d()], or NULL for none.
+#' @param outline Feature lines from [outline_3d()]; NULL takes
+#'   `coord_3d(outline = )`, FALSE draws none.
+#' @param edges Mesh lines from [edges_3d()] drawn over the faces; NULL takes
+#'   `coord_3d(edges = )`, FALSE draws none.
 #' @inheritParams geom_surface_3d
 #' @details Data accepts mesh_3d() output, rgl mesh3d objects and projected sf
 #'   POLYGON Z or TIN Z objects. With `shading = "flat"` a numeric vertex fill
@@ -257,7 +260,7 @@ GeomMesh3D <- ggplot2::ggproto("GeomMesh3D", ggplot2::Geom,
 geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, position = "identity", ...,
                          vertices = NULL, faces = NULL, shade = TRUE, wireframe = FALSE, hidden = "hide",
                          subdivide = 0L, remesh = NULL, decimate = NULL, smooth = 0L, curvature = FALSE, crease = NULL,
-                         outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL,
+                         outline = NULL, edges = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL,
                          texture = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.null(vertices) || !is.null(faces)) {
     if (!is.null(data) && !is.null(vertices)) stop("Supply data or vertices/faces.", call. = FALSE)
@@ -272,7 +275,7 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
   }
   make_layer_3d(GeomMesh3D, mapping, data, stat, position,
     c(list(shade = shade, wireframe = wireframe, hidden = hidden, subdivide = subdivide, remesh = remesh,
-      decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, outline = outline,
+      decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, outline = outline, edges = edges,
       alpha_mode = check_choice_3d(alpha_mode, c("face", "surface"), "alpha_mode"), shading = check_choice_3d(shading, c("flat", "smooth"), "shading"), material = material_argument_3d(material),
       hatch = hatch_argument_3d(hatch), texture = texture, na.rm = na.rm), list(...)),
     material_legend_3d(material, show.legend), inherit.aes)
@@ -310,7 +313,7 @@ emit_mesh_3d <- function(data, params, panel_params) {
   }
   e <- unique_edges_3d(do.call(rbind, edges), data$.vertex, data$.mesh)
   t <- do.call(rbind, triangles)
-  surface_strokes_3d(packet_from_faces_edges_3d(data, t, e, params, panel_params), data, t, params, panel_params)
+  surface_strokes_3d(packet_from_faces_edges_3d(data, t, e, params, panel_params), data, t, params, panel_params, e)
 }
 
 # Triangles (rows of data) of the polygon face on rows r with rings given as

@@ -1,8 +1,8 @@
 test_that("surface connectivity preserves cell order, masking and face means", {
   d <- expand.grid(x = 0:2, y = 0:2)
   d$z <- d$x + 2 * d$y
-  expected <- rbind(c(1L, 2L, 5L), c(1L, 5L, 4L), c(4L, 5L, 8L), c(4L, 8L, 7L),
-                    c(2L, 3L, 6L), c(2L, 6L, 5L), c(5L, 6L, 9L), c(5L, 9L, 8L))
+  expected <- rbind(c(1L, 2L, 4L), c(2L, 5L, 4L), c(4L, 5L, 7L), c(5L, 8L, 7L),
+                    c(2L, 3L, 5L), c(3L, 6L, 5L), c(5L, 6L, 8L), c(6L, 9L, 8L))
   expect_identical(surface_triangles_3d(d, "grid", Inf), expected)
   expect_equal(nrow(surface_triangles_3d(d, "grid", 1)), 0L)
   scales <- setNames(rep(list(ggplot2::scale_x_continuous()), 3L), c("x", "y", "z"))
@@ -18,8 +18,8 @@ test_that("surface emission checks keyed materials and deduplicates wireframe ed
   d <- expand.grid(x = 0:1, y = 0:1); d$z <- 0
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_surface_3d(wireframe = TRUE) + coord_3d()
   packet <- integration_packets(p)$packet
-  expect_length(packet$polylines$primitive_id, 5L)
-  expect_equal(packet$polylines$count, rep(2L, 5L))
+  expect_length(packet$polylines$primitive_id, 4L)
+  expect_equal(packet$polylines$count, rep(2L, 4L))
   expect_length(packet$faces$primitive_id, 0L)
   d$fill <- c("red", "blue", "red", "red")
   scales <- setNames(rep(list(ggplot2::scale_x_continuous()), 3L), c("x", "y", "z"))

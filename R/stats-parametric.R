@@ -113,7 +113,7 @@ parametric_surface_3d <- function(fun, u, v, n, closed, twist, args, adaptive, t
     out$.v_vertex <- uv[rows, 2L]
   }
   out$z_mean <- face_mean(out$z)
-  out
+  lattice_columns_3d(out, (uv[rows, 1L] - u[1L]) / step[1L], (uv[rows, 2L] - v[1L]) / step[2L])
 }
 
 StatParametric3D <- ggplot2::ggproto("StatParametric3D", StatGeometry3D,

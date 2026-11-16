@@ -576,15 +576,25 @@ encoded_corner_faces_3d <- function(packet, rows, camera_scale = c(1, 1, 1), bud
   sub <- as.vector(t(small[rep(seq_len(k), n), , drop = FALSE] + rep((seq_len(n) - 1L) * m, each = k)))
   parent <- rep(face, each = k)
   keep <- setdiff(seq_along(faces$count), rows)
-  kept_corners <- unlist(lapply(keep, function(f) faces$offset[f] + seq_len(faces$count[f]) - 1L))
+  ranges <- function(offset, count) unlist(lapply(seq_along(offset), function(k) offset[k] + seq_len(count[k]) - 1L))
+  kept_corners <- ranges(faces$offset[keep], faces$count[keep])
+  # Strokes, markers and text keep their corners, after the faces' corners.
+  others <- intersect(c("polylines", "markers", "text"), names(packet))
+  other_corners <- unlist(lapply(others, function(kind) ranges(packet[[kind]]$offset, packet[[kind]]$count)))
   new_corners <- lapply(stats::setNames(names(corners), names(corners)), function(name) {
     value <- switch(name, vertex = as.integer(base + sub), source_row = rep(corners$source_row[faces$offset[parent]], each = 3L),
       red = colour[sub, 1L], green = colour[sub, 2L], blue = colour[sub, 3L], corners[[name]][rep(NA_integer_, length(sub))])
-    c(corners[[name]][kept_corners], value)
+    c(corners[[name]][kept_corners], value, corners[[name]][other_corners])
   })
   new_faces <- slice_rows_3d(as.data.frame(faces, stringsAsFactors = FALSE), c(keep, parent))
   new_faces$count <- c(faces$count[keep], rep(3L, length(parent)))
   new_faces$offset <- as.integer(cumsum(c(1L, new_faces$count))[seq_along(new_faces$count)])
+  start <- length(kept_corners) + length(sub)
+  for (kind in others) {
+    count <- packet[[kind]]$count
+    packet[[kind]]$offset <- as.integer(start + cumsum(c(1L, count))[seq_along(count)])
+    start <- start + sum(count)
+  }
   packet$faces <- as.list(new_faces)
   packet$corners <- new_corners
   renumber_primitives_3d(packet)

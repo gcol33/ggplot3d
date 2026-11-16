@@ -24,7 +24,10 @@ geometric_texture_packet <- function(packet, colours) {
         cell <- clip(cell, 4L, col / ncol(colours), -1)
         cell <- clip(cell, 5L, 1 - row / nrow(colours), 1)
         cell <- clip(cell, 5L, 1 - (row - 1L) / nrow(colours), -1)
-        cell <- unique(cell)
+        if (nrow(cell)) {
+          gap <- sqrt(rowSums((cell[, 1:3, drop = FALSE] - cell[c(nrow(cell), seq_len(nrow(cell) - 1L)), 1:3, drop = FALSE])^2))
+          cell <- cell[gap > 1e-9 * max(1, abs(cell[, 1:3])), , drop = FALSE]
+        }
         if (nrow(cell) < 3L) next
         next_row <- c(seq.int(2L, nrow(cell)), 1L)
         area <- sum(cell[, 4L] * cell[next_row, 5L] - cell[, 5L] * cell[next_row, 4L])

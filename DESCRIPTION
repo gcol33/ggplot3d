@@ -102,6 +102,7 @@ Collate:
     'clip-planes.R'
     'coord-3d.R'
     'depth-cue.R'
+    'edges-3d.R'
     'emitters.R'
     'export-3d.R'
     'export-3mf.R'

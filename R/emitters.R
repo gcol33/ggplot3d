@@ -181,7 +181,7 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
 }
 
 # Drawing parameters of the geoms that draw triangulated surfaces.
-surface_parameters_3d <- list(outline = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL, texture = NULL)
+surface_parameters_3d <- list(outline = NULL, edges = NULL, alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL, texture = NULL)
 
 # Per-corner attributes of a smooth-shaded layer: the unit vertex normals of
 # face corners and, where the fill varies within a face, the encoded sRGB fill
@@ -303,6 +303,10 @@ emit_scene_3d <- function(data, params, panel_params, layer_id) {
   params$.space_munch <- panel_params$space_munch
   params$.band_scales <- params$.key_context$band_scales
   params$clip_planes <- layer_clip_planes_3d(params$clip_planes, panel_params)
+  if ("edges" %in% names(entry$parameters)) {
+    params$edges <- layer_stroke_default_3d(params$edges, panel_params$coord_params$edges)
+    params$outline <- layer_stroke_default_3d(params$outline, panel_params$coord_params$outline)
+  }
   packet <- if (is.null(params$.project)) entry$emit(data, params, panel_params) else emit_projected_3d(entry, data, params, panel_params)
   if (inherits(packet, "grob")) return(packet)
   if (!is.null(panel_params$space_context) && !isTRUE(attr(packet, "space_mapped")) && !isTRUE(attr(packet, "model_space"))) {

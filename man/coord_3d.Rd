@@ -45,7 +45,9 @@ coord_3d(
   munch_tolerance = 0.001,
   munch_max_depth = 9L,
   shadow = NULL,
-  depth_cue = NULL
+  depth_cue = NULL,
+  edges = NULL,
+  outline = NULL
 )
 }
 \arguments{
@@ -149,6 +151,10 @@ A space reports an error when this budget cannot meet the tolerance.}
 
 \item{depth_cue}{Fog, depth-thinned strokes and eye-dome lighting from
 \code{\link[=depth_cue_3d]{depth_cue_3d()}}, or NULL for none.}
+
+\item{edges, outline}{Mesh lines from \code{\link[=edges_3d]{edges_3d()}} and feature lines from
+\code{\link[=outline_3d]{outline_3d()}} for every surface and mesh layer whose own \code{edges} or
+\code{outline} is NULL; a layer that sets \code{FALSE} draws none. NULL for none.}
 }
 \value{
 A Coord3D ggproto object.

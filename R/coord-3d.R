@@ -167,6 +167,9 @@ plot_backend_3d <- function(plot, backend) {
 #' @param shadow Planar cast shadows from [shadow_3d()], or NULL for none.
 #' @param depth_cue Fog, depth-thinned strokes and eye-dome lighting from
 #'   [depth_cue_3d()], or NULL for none.
+#' @param edges,outline Mesh lines from [edges_3d()] and feature lines from
+#'   [outline_3d()] for every surface and mesh layer whose own `edges` or
+#'   `outline` is NULL; a layer that sets `FALSE` draws none. NULL for none.
 #' @param backend Backend configuration.
 #' @param stereo Stereo output from [stereo_3d()], or NULL for one view.
 #' @param transform Optional coordinate transformations applied after
@@ -275,7 +278,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      transform = NULL, axis_lines = "box", origin = c(x = 0, y = 0, z = 0),
                      clip_planes = list(), stereo = NULL, geometry = "euclidean", model = NULL,
                      input = NULL, isometry = NULL, munch_tolerance = 1e-3, munch_max_depth = 9L,
-                     shadow = NULL, depth_cue = NULL) {
+                     shadow = NULL, depth_cue = NULL, edges = NULL, outline = NULL) {
   space_spec <- space_spec_3d(geometry, model, input, isometry, munch_tolerance, munch_max_depth)
   clip <- match.arg(clip, c("on", "off"))
   clip_planes <- check_clip_planes_3d(clip_planes)
@@ -287,6 +290,8 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
   if (!is.null(stereo) && !inherits(stereo, "ggplot3d_stereo")) stop("stereo must be NULL or a stereo_3d() configuration.", call. = FALSE)
   if (!is.null(shadow) && !inherits(shadow, "ggplot3d_shadow")) stop("shadow must be NULL or a shadow_3d() configuration.", call. = FALSE)
   if (!is.null(depth_cue) && !inherits(depth_cue, "ggplot3d_depth_cue")) stop("depth_cue must be NULL or a depth_cue_3d() configuration.", call. = FALSE)
+  if (!is.null(edges) && !inherits(edges, "ggplot3d_edges")) stop("edges must be NULL or created by edges_3d().", call. = FALSE)
+  if (!is.null(outline) && !inherits(outline, "ggplot3d_outline")) stop("outline must be NULL or created by outline_3d().", call. = FALSE)
   views <- list(azimuth = azimuth, elevation = elevation, roll = roll, distance = distance, fov = fov, zoom = zoom)
   sizes <- lengths(views)
   count <- max(1L, sizes)
@@ -307,7 +312,7 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
     clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
     config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
                   axis_lines = match.arg(axis_lines, c("box", "origin", "none")), origin = check_origin_3d(origin),
-                  light = as_lights_3d(light), shadow = shadow, depth_cue = depth_cue, backend = backend, crs = crs, clip_planes = clip_planes, stereo = stereo,
+                  light = as_lights_3d(light), shadow = shadow, depth_cue = depth_cue, edges = edges, outline = outline, backend = backend, crs = crs, clip_planes = clip_planes, stereo = stereo,
                   frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
 }
 

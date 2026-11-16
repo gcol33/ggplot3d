@@ -182,7 +182,9 @@ ggplot2 facets control x and y scales and have no z scale.</p>
 <span>  munch_tolerance <span class="op">=</span> <span class="fl">0.001</span>,</span>
 <span>  munch_max_depth <span class="op">=</span> <span class="fl">9L</span>,</span>
 <span>  shadow <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  depth_cue <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  depth_cue <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  edges <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  outline <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -357,6 +359,12 @@ A space reports an error when this budget cannot meet the tolerance.</p></dd>
 <dt id="arg-depth-cue">depth_cue<a class="anchor" aria-label="anchor" href="#arg-depth-cue"></a></dt>
 <dd><p>Fog, depth-thinned strokes and eye-dome lighting from
 <code><a href="depth_cue_3d.html">depth_cue_3d()</a></code>, or NULL for none.</p></dd>
+
+
+<dt id="arg-edges-outline">edges, outline<a class="anchor" aria-label="anchor" href="#arg-edges-outline"></a></dt>
+<dd><p>Mesh lines from <code><a href="edges_3d.html">edges_3d()</a></code> and feature lines from
+<code><a href="outline_3d.html">outline_3d()</a></code> for every surface and mesh layer whose own <code>edges</code> or
+<code>outline</code> is NULL; a layer that sets <code>FALSE</code> draws none. NULL for none.</p></dd>
 
 </dl></div>
     <div class="section level2">

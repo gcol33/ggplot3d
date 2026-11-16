@@ -57,8 +57,8 @@ viewer; rgl places it at \code{1 / sin(fov / 2)}). A near eye draws a
 highlight out along a surface. NULL takes the preset's, else the camera's
 eye (infinitely far under orthographic projection).}
 
-\item{preset}{Starting lighting: \code{"default"}, \code{"ggcube"},
-\code{"matplotlib"}, \code{"rgl"}, \code{"plotly"} or \code{"mathematica"}.}
+\item{preset}{Starting lighting: \code{"default"}, \code{"contrast"}, \code{"shade"},
+\code{"headlight"}, \code{"soft"} or \code{"studio"}.}
 }
 \value{
 A lighting configuration for \code{\link[=coord_3d]{coord_3d()}}. The backends that take
@@ -72,34 +72,34 @@ the default preset has one directional light, \code{light_directional()}, from
 the upper left of the camera. See \code{\link[=material_3d]{material_3d()}} for specular highlights.
 }
 \details{
-\code{preset} starts from the lighting of another package; every argument given
-explicitly replaces the preset's value, and lights given in \code{...} replace
-its lights.
+\code{preset} picks a starting lighting; every argument given explicitly
+replaces the preset's value, and lights given in \code{...} replace its lights.
+Except for the default, each preset reproduces the surface lighting of a
+widely used 3D package, named below.
 \itemize{
 \item \code{"default"}: one \code{light_directional()}, ambient 0.35, \code{mode = "lightness"}, \code{range = c(-0.45, 0.4)}, \code{neutral = 60}.
-\item \code{"ggcube"}: ggcube's \code{light()}: a light along \code{c(-0.5, 0, 1)} in the
-data axes and its \code{"hsv"} mode at \code{contrast = 1}, i.e. \code{mode = "value"},
-\code{range = c(-1, 1)}, \code{neutral = 90}.
-\item \code{"matplotlib"}: the shading of matplotlib's \code{plot_surface()}: the colour
-scaled by \code{0.65 + 0.35 * cos} with the light at \code{LightSource(azdeg = 225, altdeg = 19.4712)} in the data axes, i.e. \code{mode = "value"}, \code{range = c(-0.7, 0)}, \code{neutral = 0}.
-\item \code{"rgl"}: the light of a new rgl scene, a white directional light at the
-eye (position \verb{(0, 0, 1)} in eye coordinates, as \code{rgl.attrib()} reports;
-\code{light3d()}'s own default is 15 degrees above the eye), with rgl's
-default material (no ambient reflection, white specular, shininess 50)
-lit at the vertices (\code{lighting = "vertex"}) on encoded values, and
-OpenGL's local viewer at rgl's default eye distance (\verb{viewer = 1 / sin(15 degrees)}, for its 30-degree field of view), as desktop rgl's
-fixed-function OpenGL does.
-\item \code{"plotly"}: plotly's surface lighting defaults: ambient 0.8, diffuse
-0.8, the light at \verb{lightposition = (10, 10000, 0)}, which its shader
-takes in camera coordinates (straight above the viewer), and specular
-0.05 with roughness 0.5 approximated by a Blinn exponent of 6, on encoded
-values.
-\item \code{"mathematica"}: Mathematica's \code{Lighting -> Automatic}: ambient
-\code{RGBColor[0.4, 0.2, 0.2]} and four coloured directional lights fixed to
-the image, shining from \code{ImageScaled} points \verb{\{2, 0, 2\}}, \verb{\{2, 2, 3\}},
-\verb{\{0, 2, 2\}} and \verb{\{0, 0, 2\}} toward its centre, on encoded values. It
-suits light fills; Mathematica itself switches to white lights when a
-colour function is given.
+\item \code{"contrast"}: the full range from black to white with a light from the
+side: a light along \code{c(-0.5, 0, 1)} in the data axes, \code{mode = "value"},
+\code{range = c(-1, 1)}, \code{neutral = 90} (ggcube's \code{light()} in its \code{"hsv"}
+mode at \code{contrast = 1}).
+\item \code{"shade"}: darkening only, by up to 70 percent, from a low light: the
+colour scaled by \code{0.65 + 0.35 * cos} with the light at azimuth 225 and
+altitude 19.4712 degrees in the data axes, i.e. \code{mode = "value"}, \code{range = c(-0.7, 0)}, \code{neutral = 0} (matplotlib's \code{plot_surface()}).
+\item \code{"headlight"}: a white directional light at the eye with no ambient
+reflection and a white highlight (specular 1, shininess 50) lit at the
+vertices (\code{lighting = "vertex"}) on encoded values, and the eye placed for
+the highlight at \verb{viewer = 1 / sin(15 degrees)}, the distance of a
+30-degree field of view (a new rgl scene, as desktop rgl's
+fixed-function OpenGL draws it).
+\item \code{"soft"}: a strong ambient term (0.8) with diffuse 0.8 from a light
+straight above the viewer and a faint broad highlight (specular 0.05,
+Blinn exponent 6), on encoded values (plotly's surface lighting
+defaults).
+\item \code{"studio"}: ambient \code{rgb(0.4, 0.2, 0.2)} and four coloured directional
+lights fixed to the image, shining toward its centre from the points
+\verb{(2, 0, 2)}, \verb{(2, 2, 3)}, \verb{(0, 2, 2)} and \verb{(0, 0, 2)} in image-scaled
+coordinates, on encoded values (Mathematica's \code{Lighting -> Automatic}).
+It tints the surface and suits light fills.
 }
 
 \code{mode} sets how the light changes a face colour. \code{"multiply"} scales the
@@ -153,7 +153,7 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
-  coord_3d(light = light_3d(preset = "mathematica"))
+  coord_3d(light = light_3d(preset = "studio"))
 }
 \references{
 Szafir, Sarikaya, Gleicher (2016). Lightness constancy in

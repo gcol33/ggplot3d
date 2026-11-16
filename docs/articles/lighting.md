@@ -61,23 +61,25 @@ hill + scale_fill_viridis_b(guide = guide_coloursteps_3d()) +
 ![A height surface shaded toward blue shadows and warm highlights, with
 a stepped colour guide.](lighting_files/figure-html/tone-1.svg)
 
-## The lighting of other packages
+## Lighting presets
 
-Each 3D package lights a surface in its own way, and a figure redrawn
-from one of them can keep its look with `light_3d(preset = )`. ggcube
-moves the HSV value of the fill toward black or white; matplotlib only
-darkens, by up to 70 percent; rgl puts a white headlight highlight on
-faces lit at their corners; plotly lights from above the viewer with a
-strong ambient term; and Mathematica tints the surface with four
-coloured lights, which suits light fills. Any argument given with a
-preset replaces the preset’s value.
+`light_3d(preset = )` starts from a ready-made lighting. `"contrast"`
+moves the HSV value of the fill toward black or white, with a light from
+the side; `"shade"` only darkens, by up to 70 percent, from a low light;
+`"headlight"` lights from the eye and puts a white highlight where the
+surface turns toward it; `"soft"` lights from above the viewer with a
+strong ambient term; and `"studio"` tints the surface with four coloured
+lights, which suits light fills. Apart from the default, each reproduces
+the surface lighting of a widely used 3D package, named on the
+[`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
+help page. Any argument given with a preset replaces the preset’s value.
 
 ``` r
 
-presets <- c("default", "ggcube", "matplotlib", "rgl", "plotly", "mathematica")
+presets <- c("default", "contrast", "shade", "headlight", "soft", "studio")
 panels <- lapply(presets, function(preset) {
   ggplot(d, aes(x, y, z = z)) +
-    geom_surface_3d(fill = if (preset == "mathematica") "grey85" else "#2E6F9E",
+    geom_surface_3d(fill = if (preset == "studio") "grey85" else "#2E6F9E",
                     shading = "smooth", colour = NA) +
     coord_3d(light = light_3d(preset = preset), panes = character(),
              axes = character(), box = "none") +
@@ -86,13 +88,60 @@ panels <- lapply(presets, function(preset) {
 patchwork::wrap_plots(panels, ncol = 3)
 ```
 
-![Six copies of a blue surface with two peaks, lit as in ggplot3d,
-ggcube, matplotlib, rgl, plotly and, on a light grey fill,
-Mathematica.](lighting_files/figure-html/presets-1.svg)
+![Six copies of a blue surface with two peaks under the default,
+contrast, shade, headlight and soft lighting and, on a light grey fill,
+the studio lighting.](lighting_files/figure-html/presets-1.svg)
 
 A highlight mixes white into the fill to indicate surface orientation.
 `material_3d("satin")` keeps it faint, and `light_3d(material = )` gives
 every shaded layer without its own material that one.
+
+## Mesh lines, outlines and transparency
+
+Shading shows the shape of a surface, and lines drawn on it show where
+its grid runs and where it ends.
+[`edges_3d()`](https://gillescolling.com/ggplot3d/reference/edges_3d.md)
+draws the edges of the grid cells over the faces, without the diagonals
+that split each cell into triangles; `every` keeps every n-th line of a
+dense grid.
+[`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md)
+draws feature lines, among them the boundary of an open surface. Both
+are lines of the scene, hidden by nearer parts of the surface, and both
+work with any lighting. Given to
+[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
+they apply to every surface layer that sets none of its own, so one
+setting gives a whole figure its style; a layer that sets
+`edges = FALSE` or `outline = FALSE` draws none.
+
+Thin white lines with some transparency trace the grid over a dark fill.
+Dark lines every few cells with a black boundary give a light fill the
+look of a printed figure. A translucent fill (`alpha`) lets the far side
+of the surface show through, and the lines on it show which part is in
+front.
+
+``` r
+
+boundary <- outline_3d(silhouette = FALSE, crease = NULL)
+lines <- function(title, fill, ...) {
+  ggplot(d, aes(x, y, z = z)) +
+    geom_surface_3d(fill = fill, shading = "smooth", ...) +
+    ggtitle(title)
+}
+plain <- function(...) coord_3d(panes = character(), axes = character(), box = "none", ...)
+patchwork::wrap_plots(
+  lines("grid", "#2E6F9E") + plain(edges = edges_3d()),
+  lines("every third line", "grey85") +
+    plain(light = light_3d(preset = "studio"), outline = boundary,
+          edges = edges_3d(every = 3, colour = "grey15", alpha = 1, linewidth = 0.15)),
+  lines("translucent", "#2E6F9E", alpha = 0.6) +
+    plain(edges = edges_3d(), outline = outline_3d(silhouette = FALSE, crease = NULL, colour = "#16384f")),
+  nrow = 1)
+```
+
+![Three copies of the two-peaked surface: blue with a thin white grid,
+light grey under tinted lights with a dark grid every third line and a
+black boundary, and translucent blue with a white grid and a dark
+boundary.](lighting_files/figure-html/lines-1.svg)
 
 ## Illustrative styles
 

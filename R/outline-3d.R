@@ -100,16 +100,14 @@ outline_halo_mm_3d <- function(halo) {
 }
 
 # Adds the feature lines of params$outline to a packet of triangles: faces
-# holds rows of data, three per triangle. Rows share a vertex when they
-# share .mesh, group and .vertex, or group and .source without .vertex.
+# holds rows of data, three per triangle, sharing vertices as
+# stroke_vertex_ids_3d() finds them.
 outline_merge_3d <- function(packet, data, faces, params, panel_params) {
   spec <- params$outline
   if (is.null(spec)) return(packet)
   if (!inherits(spec, "ggplot3d_outline")) stop("outline must be created by outline_3d().", call. = FALSE)
   if (!nrow(faces)) return(packet)
-  key <- if (!is.null(data$.vertex)) paste(data$.mesh %or3d% 1L, data$group %or3d% 1L, data$.vertex)
-    else paste(data$group %or3d% 1L, data$.source)
-  ids <- match(key, unique(key)); rows <- match(seq_len(max(ids)), ids)
+  ids <- stroke_vertex_ids_3d(data); rows <- match(seq_len(max(ids)), ids)
   xyz <- matrix(as.double(as.matrix(data[rows, c("x", "y", "z")])), ncol = 3L)
   frame <- frame_of_3d(panel_params)
   model <- if (isTRUE(frame$identity)) xyz else frame$map(xyz)

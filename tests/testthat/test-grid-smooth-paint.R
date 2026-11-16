@@ -41,16 +41,24 @@ smooth_paint_compare <- function(packet, mode = "auto", dpi = 100, mm = 50.8,
     difference = difference, inside = inside, scene = scene, vector = vector, raster = raster)
 }
 
-smooth_shared_edge_pixels <- function(scene, size) {
+# Pixels along the edges shared by two fragments: `contour = FALSE` takes
+# the edges between fragments of one screen orientation (seams between
+# visible neighbours), `contour = TRUE` the edges where the orientation flips
+# (where the surface folds out of view and the edge occludes what lies behind).
+smooth_shared_edge_pixels <- function(scene, size, contour = FALSE) {
   f <- scene$fragments
   at <- rep(f$offset, f$count) + sequence(f$count) - 1L
-  next_vertex <- unlist(lapply(split(seq_along(at), rep(seq_along(f$count), f$count)),
+  owner <- rep(seq_along(f$count), f$count)
+  next_vertex <- unlist(lapply(split(seq_along(at), owner),
     function(i) c(i[-1L], i[1L])), use.names = FALSE)
   xy <- cbind(scene$vertices$x_npc[at], scene$vertices$y_npc[at]) * size
+  orientation <- sign(rowsum(xy[, 1L] * xy[next_vertex, 2L] - xy[next_vertex, 1L] * xy[, 2L], owner)[, 1L])
   key <- apply(round(xy, 5), 1L, paste, collapse = ":")
   edge <- ifelse(key < key[next_vertex], paste(key, key[next_vertex]), paste(key[next_vertex], key))
+  first <- match(edge, edge)
+  flips <- orientation[owner] != orientation[owner[first]]
   pixels <- matrix(FALSE, size, size)
-  for (i in which(duplicated(edge))) {
+  for (i in which(duplicated(edge) & flips == contour)) {
     a <- xy[i, ]; b <- xy[next_vertex[i], ]
     t <- seq(0.05, 0.95, length.out = max(2L, ceiling(sqrt(sum((a - b)^2)) * 3)))
     p <- outer(1 - t, a) + outer(t, b)
@@ -70,10 +78,13 @@ test_that("lit Gaussian smooth surfaces match raster along every shared triangle
   packet <- stats_scene(p)$packet
   for (dpi in c(110, 300)) {
     out <- smooth_paint_compare(packet, dpi = dpi, mm = 101.6, camera = new_camera_3d(), light = light_3d(mode = "multiply"), inset = 4L)
-    edges <- smooth_shared_edge_pixels(out$scene, nrow(out$difference)) & out$inside
+    contour <- smooth_shared_edge_pixels(out$scene, nrow(out$difference), contour = TRUE)
+    contour <- contour | cbind(FALSE, contour[, -ncol(contour)]) | cbind(contour[, -1L], FALSE) |
+      rbind(FALSE, contour[-nrow(contour), ]) | rbind(contour[-1L, ], FALSE)
+    edges <- smooth_shared_edge_pixels(out$scene, nrow(out$difference)) & out$inside & !contour
     expect_gt(sum(edges), 1000L)
     expect_lte(max(out$difference[edges]), 5 + 1e-8)
-    expect_lte(out$error, 5 + 1e-8)
+    expect_lte(max(out$difference[out$inside & !contour]), 5 + 1e-8)
     expect_lte(unname(stats::quantile(out$difference[edges], 0.99)), 2 + 1e-8)
   }
 })

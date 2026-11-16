@@ -47,7 +47,9 @@ coord_3d(
   munch_tolerance = 0.001,
   munch_max_depth = 9L,
   shadow = NULL,
-  depth_cue = NULL
+  depth_cue = NULL,
+  edges = NULL,
+  outline = NULL
 )
 ```
 
@@ -231,6 +233,15 @@ coord_3d(
   Fog, depth-thinned strokes and eye-dome lighting from
   [`depth_cue_3d()`](https://gillescolling.com/ggplot3d/reference/depth_cue_3d.md),
   or NULL for none.
+
+- edges, outline:
+
+  Mesh lines from
+  [`edges_3d()`](https://gillescolling.com/ggplot3d/reference/edges_3d.md)
+  and feature lines from
+  [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md)
+  for every surface and mesh layer whose own `edges` or `outline` is
+  NULL; a layer that sets `FALSE` draws none. NULL for none.
 
 ## Value
 

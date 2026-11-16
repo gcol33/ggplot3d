@@ -22,6 +22,7 @@ geom_mesh_3d(
   curvature = FALSE,
   crease = NULL,
   outline = NULL,
+  edges = NULL,
   alpha_mode = "face",
   shading = "flat",
   material = NULL,
@@ -58,7 +59,11 @@ edge length.}
 \item{crease}{Crease angle for \code{\link[=mesh_normals]{mesh_normals()}}; NULL keeps the input's
 normals.}
 
-\item{outline}{Feature lines from \code{\link[=outline_3d]{outline_3d()}}, or NULL for none.}
+\item{outline}{Feature lines from \code{\link[=outline_3d]{outline_3d()}}; NULL takes
+\code{coord_3d(outline = )}, FALSE draws none.}
+
+\item{edges}{Mesh lines from \code{\link[=edges_3d]{edges_3d()}} drawn over the faces; NULL takes
+\code{coord_3d(edges = )}, FALSE draws none.}
 
 \item{alpha_mode}{How a translucent surface composites.
 \code{"face"} blends every face over what lies behind it, so a surface seen

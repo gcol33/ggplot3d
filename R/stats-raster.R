@@ -62,7 +62,7 @@ StatSpatRaster3D <- ggplot2::ggproto("StatSpatRaster3D", StatGeometry3D,
     lattice <- list(i = data$.col, j = data$.row)
     triangles <- lattice_triangles_3d(lattice, data$z)
     if (!nrow(triangles)) return(data.frame())
-    data <- surface_normals_3d(data, lattice)
+    data <- lattice_columns_3d(surface_normals_3d(data, lattice), lattice$i - min(lattice$i), lattice$j - min(lattice$j))
     rows <- as.vector(t(triangles))
     out <- data[rows, , drop = FALSE]
     out$.face <- rep(seq_len(nrow(triangles)), each = 3L)
@@ -110,7 +110,7 @@ register_geom_3d(GeomSpatRaster3D, emit_stats_surface_3d, parameters = surface_p
 #' @param data A terra `SpatRaster` or a `stars` object.
 #' @param maxcell Largest number of cells drawn per layer.
 #' @param shade Whether to apply lighting.
-#' @param wireframe Whether to draw triangle edges.
+#' @param wireframe Whether to draw the cell edges without the faces.
 #' @return A ggplot2 layer.
 #' @seealso [stat_profile_3d()] for cross-sections through the surface.
 #' @examples

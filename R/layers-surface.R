@@ -1,7 +1,8 @@
 #' Triangulated surfaces in three dimensions
 #'
 #' Grid surfaces estimate vertex normals from height differences along each
-#' axis. With `shading = "flat"` lighting uses the normalised mean of each
+#' axis and split each cell along the diagonal from its corner at the larger x
+#' and smaller y to the corner at the smaller x and larger y, as rgl does. With `shading = "flat"` lighting uses the normalised mean of each
 #' face's vertex normals and a numeric fill is averaged over each face. With
 #' `shading = "smooth"` the vertex normals are interpolated across each face
 #' (Phong 1975) and a fill that varies between vertices, numeric or given as
@@ -17,9 +18,14 @@
 #' @param method Grid connectivity or Delaunay triangulation.
 #' @param max_edge Maximum triangle edge length in transformed x/y units.
 #' @param shade Whether to apply lighting.
-#' @param wireframe Whether to draw triangle edges.
+#' @param wireframe Whether to draw the cell edges (the grid lines of a grid
+#'   surface, the triangle edges of a Delaunay surface) without the faces. A
+#'   `colour` strokes the same edges over the faces.
 #' @param hidden Hidden stroke policy.
-#' @param outline Feature lines from [outline_3d()], or NULL for none.
+#' @param outline Feature lines from [outline_3d()]; NULL takes
+#'   `coord_3d(outline = )`, FALSE draws none.
+#' @param edges Mesh lines from [edges_3d()] drawn over the faces; NULL takes
+#'   `coord_3d(edges = )`, FALSE draws none.
 #' @param material Surface material from [material_3d()]: ambient, diffuse
 #'   and specular strengths, shininess, an optional back-side colour and an
 #'   illustrative style (toon, Gooch, normal colours). NULL reflects ambient
@@ -77,12 +83,12 @@
 #' @export
 geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
                              position = "identity", ..., method = "grid", max_edge = Inf,
-                             shade = TRUE, wireframe = FALSE, hidden = "hide", outline = NULL,
+                             shade = TRUE, wireframe = FALSE, hidden = "hide", outline = NULL, edges = NULL,
                              alpha_mode = "face", shading = "flat", material = NULL, hatch = NULL,
                              texture = NULL, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomSurface3D, mapping, data, stat, position,
     c(list(method = method, max_edge = max_edge, shade = shade, wireframe = wireframe,
-           hidden = hidden, outline = outline, alpha_mode = check_choice_3d(alpha_mode, c("face", "surface"), "alpha_mode"),
+           hidden = hidden, outline = outline, edges = edges, alpha_mode = check_choice_3d(alpha_mode, c("face", "surface"), "alpha_mode"),
            shading = check_choice_3d(shading, c("flat", "smooth"), "shading"), material = material_argument_3d(material), hatch = hatch_argument_3d(hatch),
            texture = texture_argument_3d(texture), na.rm = na.rm), list(...)),
     material_legend_3d(material, show.legend), inherit.aes)
@@ -112,8 +118,8 @@ lattice_triangles_3d <- function(lattice, z) {
                  grid[cbind(i + 1L, j + 1L)], grid[cbind(i, j + 1L)])
   good <- rowSums(matrix(is.finite(z[cells]), ncol = 4L)) == 4L
   cells <- cells[good, , drop = FALSE]
-  matrix(as.integer(t(cbind(cells[, c(1L, 2L, 3L), drop = FALSE],
-                            cells[, c(1L, 3L, 4L), drop = FALSE]))), ncol = 3L, byrow = TRUE)
+  matrix(as.integer(t(cbind(cells[, c(1L, 2L, 4L), drop = FALSE],
+                            cells[, c(2L, 3L, 4L), drop = FALSE]))), ncol = 3L, byrow = TRUE)
 }
 
 surface_triangles_3d <- function(data, method, max_edge, lattice = surface_lattice_3d(data)) {
@@ -150,7 +156,11 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
     if (any(vapply(scales[c("x", "y", "z")], function(s) s$is_discrete(), logical(1)))) stop("Surfaces require continuous x/y/z scales.", call. = FALSE)
     triangles <- surface_triangles_3d(data, method, max_edge)
     if (!length(triangles)) return(data.frame())
-    if (method == "grid") data <- surface_normals_3d(data)
+    if (method == "grid") {
+      data <- surface_normals_3d(data)
+      lattice <- surface_lattice_3d(data)
+      data <- lattice_columns_3d(data, lattice$i - 1L, lattice$j - 1L)
+    }
     rows <- as.vector(t(triangles))
     out <- lapply(data, `[`, rows)
     out <- structure(out, class = "data.frame", row.names = .set_row_names(length(rows)))
@@ -184,10 +194,7 @@ emit_surface_3d <- function(data, params, panel_params) {
   if (any(corner[, 1L] == corner[, 2L] | corner[, 2L] == corner[, 3L] | corner[, 1L] == corner[, 3L])) stop("Surface faces require three keyed corners.", call. = FALSE)
   check_face_materials_3d(data, as.vector(t(faces)), rep(seq_len(nrow(faces)), each = 3L), params, "Surface")
   edges <- matrix(integer(), ncol = 2L)
-  if (isTRUE(params$wireframe) || any(!is.na(data$colour))) {
-    edges <- matrix(as.vector(t(faces[, c(1L, 2L, 2L, 3L, 3L, 1L), drop = FALSE])), ncol = 2L, byrow = TRUE)
-    edges <- unique_edges_3d(edges, data$.source, data$group)
-  }
+  if (isTRUE(params$wireframe) || any(!is.na(data$colour))) edges <- surface_edges_3d(data, faces)
   surface_strokes_3d(packet_from_faces_edges_3d(data, faces, edges, params, panel_params), data, faces, params, panel_params)
 }
 

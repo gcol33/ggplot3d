@@ -223,8 +223,8 @@ eye (infinitely far under orthographic projection).</p></dd>
 
 
 <dt id="arg-preset">preset<a class="anchor" aria-label="anchor" href="#arg-preset"></a></dt>
-<dd><p>Starting lighting: <code>"default"</code>, <code>"ggcube"</code>,
-<code>"matplotlib"</code>, <code>"rgl"</code>, <code>"plotly"</code> or <code>"mathematica"</code>.</p></dd>
+<dd><p>Starting lighting: <code>"default"</code>, <code>"contrast"</code>, <code>"shade"</code>,
+<code>"headlight"</code>, <code>"soft"</code> or <code>"studio"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -235,32 +235,32 @@ first directional light.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>preset</code> starts from the lighting of another package; every argument given
-explicitly replaces the preset's value, and lights given in <code>...</code> replace
-its lights.</p><ul><li><p><code>"default"</code>: one <code><a href="light_directional.html">light_directional()</a></code>, ambient 0.35, <code>mode = "lightness"</code>, <code>range = c(-0.45, 0.4)</code>, <code>neutral = 60</code>.</p></li>
-<li><p><code>"ggcube"</code>: ggcube's <code>light()</code>: a light along <code>c(-0.5, 0, 1)</code> in the
-data axes and its <code>"hsv"</code> mode at <code>contrast = 1</code>, i.e. <code>mode = "value"</code>,
-<code>range = c(-1, 1)</code>, <code>neutral = 90</code>.</p></li>
-<li><p><code>"matplotlib"</code>: the shading of matplotlib's <code>plot_surface()</code>: the colour
-scaled by <code>0.65 + 0.35 * cos</code> with the light at <code>LightSource(azdeg = 225, altdeg = 19.4712)</code> in the data axes, i.e. <code>mode = "value"</code>, <code>range = c(-0.7, 0)</code>, <code>neutral = 0</code>.</p></li>
-<li><p><code>"rgl"</code>: the light of a new rgl scene, a white directional light at the
-eye (position <code>(0, 0, 1)</code> in eye coordinates, as <code>rgl.attrib()</code> reports;
-<code>light3d()</code>'s own default is 15 degrees above the eye), with rgl's
-default material (no ambient reflection, white specular, shininess 50)
-lit at the vertices (<code>lighting = "vertex"</code>) on encoded values, and
-OpenGL's local viewer at rgl's default eye distance (<code>viewer = 1 / sin(15 degrees)</code>, for its 30-degree field of view), as desktop rgl's
-fixed-function OpenGL does.</p></li>
-<li><p><code>"plotly"</code>: plotly's surface lighting defaults: ambient 0.8, diffuse
-0.8, the light at <code>lightposition = (10, 10000, 0)</code>, which its shader
-takes in camera coordinates (straight above the viewer), and specular
-0.05 with roughness 0.5 approximated by a Blinn exponent of 6, on encoded
-values.</p></li>
-<li><p><code>"mathematica"</code>: Mathematica's <code>Lighting -&gt; Automatic</code>: ambient
-<code>RGBColor[0.4, 0.2, 0.2]</code> and four coloured directional lights fixed to
-the image, shining from <code>ImageScaled</code> points <code>{2, 0, 2}</code>, <code>{2, 2, 3}</code>,
-<code>{0, 2, 2}</code> and <code>{0, 0, 2}</code> toward its centre, on encoded values. It
-suits light fills; Mathematica itself switches to white lights when a
-colour function is given.</p></li>
+    <p><code>preset</code> picks a starting lighting; every argument given explicitly
+replaces the preset's value, and lights given in <code>...</code> replace its lights.
+Except for the default, each preset reproduces the surface lighting of a
+widely used 3D package, named below.</p><ul><li><p><code>"default"</code>: one <code><a href="light_directional.html">light_directional()</a></code>, ambient 0.35, <code>mode = "lightness"</code>, <code>range = c(-0.45, 0.4)</code>, <code>neutral = 60</code>.</p></li>
+<li><p><code>"contrast"</code>: the full range from black to white with a light from the
+side: a light along <code>c(-0.5, 0, 1)</code> in the data axes, <code>mode = "value"</code>,
+<code>range = c(-1, 1)</code>, <code>neutral = 90</code> (ggcube's <code>light()</code> in its <code>"hsv"</code>
+mode at <code>contrast = 1</code>).</p></li>
+<li><p><code>"shade"</code>: darkening only, by up to 70 percent, from a low light: the
+colour scaled by <code>0.65 + 0.35 * cos</code> with the light at azimuth 225 and
+altitude 19.4712 degrees in the data axes, i.e. <code>mode = "value"</code>, <code>range = c(-0.7, 0)</code>, <code>neutral = 0</code> (matplotlib's <code>plot_surface()</code>).</p></li>
+<li><p><code>"headlight"</code>: a white directional light at the eye with no ambient
+reflection and a white highlight (specular 1, shininess 50) lit at the
+vertices (<code>lighting = "vertex"</code>) on encoded values, and the eye placed for
+the highlight at <code>viewer = 1 / sin(15 degrees)</code>, the distance of a
+30-degree field of view (a new rgl scene, as desktop rgl's
+fixed-function OpenGL draws it).</p></li>
+<li><p><code>"soft"</code>: a strong ambient term (0.8) with diffuse 0.8 from a light
+straight above the viewer and a faint broad highlight (specular 0.05,
+Blinn exponent 6), on encoded values (plotly's surface lighting
+defaults).</p></li>
+<li><p><code>"studio"</code>: ambient <code>rgb(0.4, 0.2, 0.2)</code> and four coloured directional
+lights fixed to the image, shining toward its centre from the points
+<code>(2, 0, 2)</code>, <code>(2, 2, 3)</code>, <code>(0, 2, 2)</code> and <code>(0, 0, 2)</code> in image-scaled
+coordinates, on encoded values (Mathematica's <code>Lighting -&gt; Automatic</code>).
+It tints the surface and suits light fills.</p></li>
 </ul><p><code>mode</code> sets how the light changes a face colour. <code>"multiply"</code> scales the
 colour by the ambient and diffuse light and <code>"tint"</code> scales its distance
 from white; both only darken, so a shaded fill no longer matches its legend
@@ -319,7 +319,7 @@ surface visualization. IEEE TVCG 22, 2107-2121.
 <span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>light <span class="op">=</span> <span class="fu">light_3d</span><span class="op">(</span><span class="fu"><a href="light_directional.html">light_directional</a></span><span class="op">(</span><span class="op">)</span>, mode <span class="op">=</span> <span class="st">"lightness"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">d</span>, <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, z <span class="op">=</span> <span class="va">z</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="geom_surface_3d.html">geom_surface_3d</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"grey85"</span>, shading <span class="op">=</span> <span class="st">"smooth"</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>light <span class="op">=</span> <span class="fu">light_3d</span><span class="op">(</span>preset <span class="op">=</span> <span class="st">"mathematica"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="coord_3d.html">coord_3d</a></span><span class="op">(</span>light <span class="op">=</span> <span class="fu">light_3d</span><span class="op">(</span>preset <span class="op">=</span> <span class="st">"studio"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

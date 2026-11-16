@@ -52,7 +52,7 @@ test_that("PLY files carry colours, faces and edges and read back", {
   expect_identical(unique(mesh$vertex_colour), "#336699FF")
   export_3d(export_surface_plot(fill = "#336699", colour = "black"), file, lines = "line")
   header <- readLines(file, n = 20L, warn = FALSE)
-  expect_true("element edge 85" %in% header)
+  expect_true("element edge 60" %in% header)
   expect_true("property uchar alpha" %in% header)
 })
 

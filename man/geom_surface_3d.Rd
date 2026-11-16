@@ -17,6 +17,7 @@ geom_surface_3d(
   wireframe = FALSE,
   hidden = "hide",
   outline = NULL,
+  edges = NULL,
   alpha_mode = "face",
   shading = "flat",
   material = NULL,
@@ -49,11 +50,17 @@ stat_surface_3d(
 
 \item{shade}{Whether to apply lighting.}
 
-\item{wireframe}{Whether to draw triangle edges.}
+\item{wireframe}{Whether to draw the cell edges (the grid lines of a grid
+surface, the triangle edges of a Delaunay surface) without the faces. A
+\code{colour} strokes the same edges over the faces.}
 
 \item{hidden}{Hidden stroke policy.}
 
-\item{outline}{Feature lines from \code{\link[=outline_3d]{outline_3d()}}, or NULL for none.}
+\item{outline}{Feature lines from \code{\link[=outline_3d]{outline_3d()}}; NULL takes
+\code{coord_3d(outline = )}, FALSE draws none.}
+
+\item{edges}{Mesh lines from \code{\link[=edges_3d]{edges_3d()}} drawn over the faces; NULL takes
+\code{coord_3d(edges = )}, FALSE draws none.}
 
 \item{alpha_mode}{How a translucent surface composites.
 \code{"face"} blends every face over what lies behind it, so a surface seen
@@ -110,7 +117,8 @@ A ggplot2 layer.
 }
 \description{
 Grid surfaces estimate vertex normals from height differences along each
-axis. With \code{shading = "flat"} lighting uses the normalised mean of each
+axis and split each cell along the diagonal from its corner at the larger x
+and smaller y to the corner at the smaller x and larger y, as rgl does. With \code{shading = "flat"} lighting uses the normalised mean of each
 face's vertex normals and a numeric fill is averaged over each face. With
 \code{shading = "smooth"} the vertex normals are interpolated across each face
 (Phong 1975) and a fill that varies between vertices, numeric or given as

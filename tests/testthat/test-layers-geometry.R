@@ -195,11 +195,11 @@ test_that("contours use shared triangle interpolation and plane overrides", {
 })
 
 test_that("filled contour polygons follow surface triangles with band attributes", {
-  d <- expand.grid(x = 0:2, y = 0:2); d$z <- d$x + d$y
-  p <- geometry_plot(d, geom_contour_filled_3d(breaks = c(1, 2, 3)))
+  d <- expand.grid(x = 0:2, y = 0:2); d$z <- d$x - d$y
+  p <- geometry_plot(d, geom_contour_filled_3d(breaks = c(-1, 0, 1)))
   s <- geometry_scene(p); b <- s$built$data[[1L]]
   expect_true(all(b$z >= b$level_low - 1e-12 & b$z <= b$level_high + 1e-12))
-  expect_equal(b$x + b$y, b$z)
+  expect_equal(b$x - b$y, b$z)
   expect_gt(length(s$packet$faces$primitive_id), 8L)
   expect_silent(validate_scene_packet(s$packet))
 })

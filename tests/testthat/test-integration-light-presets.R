@@ -2,12 +2,12 @@ preset_camera <- function() key_camera_3d(new_camera_3d())
 encoded_channels <- function(colour) grDevices::col2rgb(colour)[, 1L] / 255
 expect_channels <- function(actual, expected) expect_lt(max(abs(actual - expected)), 1.5 / 255)
 
-test_that("the value transfer reproduces matplotlib's and ggcube's shading", {
+test_that("the shade and contrast presets reproduce matplotlib's and ggcube's shading", {
   fill <- "#2E6F9E"
   x <- c(-1, -0.4, 0, 0.5, 1)
-  mpl <- shade_swatch_3d(fill, x, light_3d(preset = "matplotlib"), preset_camera())
+  mpl <- shade_swatch_3d(fill, x, light_3d(preset = "shade"), preset_camera())
   for (k in seq_along(x)) expect_channels(encoded_channels(mpl[1L, k]), encoded_channels(fill) * (0.65 + 0.35 * x[k]))
-  gg <- shade_swatch_3d(fill, x, light_3d(preset = "ggcube"), preset_camera())
+  gg <- shade_swatch_3d(fill, x, light_3d(preset = "contrast"), preset_camera())
   hsv <- grDevices::rgb2hsv(grDevices::col2rgb(fill))
   for (k in seq_along(x)) {
     v <- if (x[k] < 0) hsv[3L] * (1 + x[k]) else hsv[3L] + x[k] * (1 - hsv[3L])
@@ -38,8 +38,8 @@ test_that("a coloured ambient light tints in its own channels", {
   expect_error(light_3d(ambient = c("red", "blue")), "ambient")
 })
 
-test_that("presets set the lighting of each package and explicit arguments replace it", {
-  for (name in c("default", "ggcube", "matplotlib", "rgl", "plotly", "mathematica")) expect_s3_class(light_3d(preset = name), "ggplot3d_lights")
+test_that("presets set their lighting and explicit arguments replace it", {
+  for (name in c("default", "contrast", "shade", "headlight", "soft", "studio")) expect_s3_class(light_3d(preset = name), "ggplot3d_lights")
   default <- light_3d()
   expect_identical(default$mode, "lightness")
   expect_equal(default$range, c(-0.45, 0.4))
@@ -47,15 +47,15 @@ test_that("presets set the lighting of each package and explicit arguments repla
   tone <- light_3d(mode = "tone")
   expect_equal(tone$range, c(-0.6, 0.6))
   expect_equal(tone$neutral, 45)
-  rgl <- light_3d(preset = "rgl")
+  rgl <- light_3d(preset = "headlight")
   expect_false(rgl$linear)
   expect_identical(rgl$material$lighting, "vertex")
   expect_equal(rgl$material$shininess, 50)
-  own <- light_3d(light_head(), preset = "rgl", ambient = 0.1, material = material_3d("satin"))
+  own <- light_3d(light_head(), preset = "headlight", ambient = 0.1, material = material_3d("satin"))
   expect_equal(own$lights[[1L]]$kind, light_kinds_3d[["head"]])
   expect_equal(own$ambient, rep(0.1, 3L))
   expect_identical(own$material$lighting, "pixel")
-  expect_length(light_3d(preset = "mathematica")$lights, 4L)
+  expect_length(light_3d(preset = "studio")$lights, 4L)
   expect_error(light_3d(preset = "povray"))
 })
 
@@ -109,7 +109,7 @@ test_that("vertex-lit surfaces paint alike in raster and vector output", {
   render <- function(backend) {
     path <- tempfile(fileext = ".png")
     ragg::agg_png(path, 240L, 240L, res = 100)
-    print(p + coord_3d(light = light_3d(preset = "rgl"), backend = backend_3d(backend), panes = character(),
+    print(p + coord_3d(light = light_3d(preset = "headlight"), backend = backend_3d(backend), panes = character(),
       axes = character(), box = "none"))
     grDevices::dev.off()
     png::readPNG(path)[, , 1:3] * 255
@@ -123,7 +123,7 @@ test_that("vertex-lit surfaces paint alike in raster and vector output", {
 })
 
 test_that("the viewer receives the encoded flag and vertex lighting", {
-  light <- view_lights_3d(light_3d(preset = "rgl"))
+  light <- view_lights_3d(light_3d(preset = "headlight"))
   expect_equal(light$encoded, 1)
   expect_equal(view_lights_3d(light_3d())$encoded, 0)
   table <- material_table_3d(material_3d(lighting = "vertex"))
@@ -141,7 +141,7 @@ test_that("a viewer distance places the specular eye on the view axis", {
   expect_true(near$perspective)
   target <- camera$eye + camera$distance * camera$ray
   expect_equal(sqrt(sum((near$eye - target)^2)), 2 * 0.5 * sqrt(sum(camera$model_scale^2)))
-  expect_equal(light_3d(preset = "rgl")$viewer, 1 / sinpi(15 / 180))
+  expect_equal(light_3d(preset = "headlight")$viewer, 1 / sinpi(15 / 180))
   expect_error(light_3d(viewer = 0.5), "viewer")
   expect_equal(view_lights_3d(light_3d(viewer = 3))$viewer, 3)
 })
@@ -167,12 +167,32 @@ test_that("encoded corner colours are subdivided only for encoded vertex lightin
   packet <- stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
     geom_surface_3d(fill = "#2E6F9E", shading = "smooth", colour = NA) + coord_3d())$packet
   camera <- scene_compile(new_scene_packet(), new_camera_3d(), new_scene_viewport(80, 80, dpi = 100))$camera
-  encoded <- light_3d(preset = "rgl")
+  encoded <- light_3d(preset = "headlight")
   lit <- vertex_lit_packet_3d(light_material_packet_3d(packet, encoded), camera, encoded)
   expect_gt(length(lit$faces$count), length(packet$faces$count))
   expect_true(all(lit$faces$count == 3L))
   expect_silent(validate_scene_packet(lit))
-  linear <- light_3d(preset = "rgl", linear = TRUE)
+  linear <- light_3d(preset = "headlight", linear = TRUE)
   plain <- vertex_lit_packet_3d(light_material_packet_3d(packet, linear), camera, linear)
   expect_equal(length(plain$faces$count), length(packet$faces$count))
+})
+
+test_that("subdividing encoded corner colours keeps the strokes of the packet in place", {
+  d <- expand.grid(x = seq(-2, 2, length.out = 9), y = seq(-2, 2, length.out = 9))
+  d$z <- exp(-(d$x^2 + d$y^2) / 2)
+  packet <- stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+    geom_surface_3d(fill = "#2E6F9E", shading = "smooth", edges = edges_3d(),
+      outline = outline_3d(silhouette = FALSE, crease = NULL)) + coord_3d())$packet
+  camera <- scene_compile(new_scene_packet(), new_camera_3d(), new_scene_viewport(80, 80, dpi = 100))$camera
+  encoded <- light_3d(preset = "headlight")
+  lit <- vertex_lit_packet_3d(light_material_packet_3d(packet, encoded), camera, encoded)
+  expect_gt(length(lit$faces$count), length(packet$faces$count))
+  stroke_points <- function(p) {
+    at <- unlist(lapply(seq_along(p$polylines$offset), function(k) p$polylines$offset[k] + seq_len(p$polylines$count[k]) - 1L))
+    v <- p$corners$vertex[at]
+    cbind(p$vertices$x[v], p$vertices$y[v], p$vertices$z[v])
+  }
+  expect_equal(stroke_points(lit), stroke_points(packet))
+  expect_identical(lit$polylines$count, packet$polylines$count)
+  expect_silent(validate_scene_packet(lit))
 })

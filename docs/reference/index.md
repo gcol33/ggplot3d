@@ -115,6 +115,8 @@
   : Draw an external triangle or polygon mesh
 - [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md)
   : Feature lines of surfaces and meshes
+- [`edges_3d()`](https://gillescolling.com/ggplot3d/reference/edges_3d.md)
+  : Mesh lines over surfaces
 - [`hatch_3d()`](https://gillescolling.com/ggplot3d/reference/hatch_3d.md)
   : Hatching of surfaces and meshes
 - [`geom_col_3d()`](https://gillescolling.com/ggplot3d/reference/geom_col_3d.md)

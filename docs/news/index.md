@@ -2,6 +2,29 @@
 
 ## ggplot3d 0.0.0.9000
 
+- [`edges_3d()`](https://gillescolling.com/ggplot3d/reference/edges_3d.md)
+  draws mesh lines over a surface: the edges of its grid cells, without
+  the diagonals that split them into triangles (the polygons of a mesh),
+  every n-th line with `every`, or every triangle edge. Surface and mesh
+  layers take it as `edges`; `coord_3d(edges = , outline = )` sets mesh
+  lines and
+  [`outline_3d()`](https://gillescolling.com/ggplot3d/reference/outline_3d.md)
+  feature lines for every surface layer that sets none, and a layer’s
+  `FALSE` turns them off. A surface `colour` and `wireframe = TRUE` now
+  stroke the cell edges too, as a mesh colour strokes its polygons.
+
+- Grid surfaces split each cell along the diagonal from its corner at
+  larger x and smaller y to the corner at smaller x and larger y, as rgl
+  does. With vertex lighting (`preset = "headlight"`) the highlight then
+  runs along the triangles as in rgl instead of breaking into beads
+  across them.
+
+- Lines in the packet of a vertex-lit surface under
+  `light_3d(linear = FALSE)` (outlines, edges, a surface colour) kept
+  pointing at the corners that the subdivision of the faces had
+  replaced, so they were drawn in the wrong place or not at all; they
+  now keep their own corners.
+
 - Every 3D layer takes `cast_shadow`. A layer given
   `cast_shadow = FALSE` stays out of the shadows of
   [`shadow_3d()`](https://gillescolling.com/ggplot3d/reference/shadow_3d.md),
@@ -48,12 +71,13 @@
   previous shading. The default range is `c(-0.45, 0.4)` around a
   neutral angle of 60 degrees.
 
-- `light_3d(preset = )` starts from the lighting of ggcube, matplotlib,
-  rgl, plotly or Mathematica, each checked against a render of the same
-  surface from that package and against plotly’s shader source, the
-  shading functions of ggcube and matplotlib, and Mathematica’s
-  documented `Lighting -> Automatic` values. Explicit arguments replace
-  the preset’s values. To carry them,
+- `light_3d(preset = )` starts from a ready-made lighting: `"contrast"`,
+  `"shade"`, `"headlight"`, `"soft"` or `"studio"`. They reproduce the
+  lighting of ggcube, matplotlib, rgl, plotly and Mathematica, each
+  checked against a render of the same surface from that package and
+  against plotly’s shader source, the shading functions of ggcube and
+  matplotlib, and Mathematica’s documented `Lighting -> Automatic`
+  values. Explicit arguments replace the preset’s values. To carry them,
   [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
   gains `mode = "value"` (HSV value moved toward 0 or 1, ggcube’s
   `"hsv"` mode and matplotlib’s surface shading), `linear = FALSE`
@@ -71,9 +95,10 @@
   places the eye of the specular term at a finite distance (OpenGL’s
   local viewer). With these and the light of a new rgl scene (a
   headlight, not `light3d()`’s default 15 degrees above the eye),
-  `preset = "rgl"` draws rgl’s highlight streak. `material_3d("satin")`
-  adds a faint highlight (specular 0.15, shininess 30) that shows the
-  shape of a single-colour surface without washing out its colour.
+  `preset = "headlight"` draws rgl’s highlight streak.
+  `material_3d("satin")` adds a faint highlight (specular 0.15,
+  shininess 30) that shows the shape of a single-colour surface without
+  washing out its colour.
 
 - The exported API follows one name per concept
   (`dev_notes/11-api-naming.md`):
