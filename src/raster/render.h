@@ -700,6 +700,10 @@ struct TileScratch {
   std::vector<SampleResult> results;
   std::vector<Index> order,painted;
   std::vector<Step> steps;
+  // Smooth-face colour per tile pixel and the item and fan triangle it was
+  // shaded for: the samples of a pixel share one shading of each triangle.
+  std::vector<Index> shaded_item,shaded_fan;
+  std::vector<Colour> shaded;
 };
 
 static inline std::uint32_t channel_byte(double value) {
@@ -732,22 +736,33 @@ static inline std::array<double,2> fan_uv(const Shapes& shapes,const Item& item,
   return uv;
 }
 
-// Colour of a smooth face at the sample (x, y): corner colours and normals
-// interpolated perspective-correctly (weights a / depth under perspective),
-// the normal renormalised and lit by the shading kernel in linear light, then
-// put in the compositing space with the paint's alpha. A textured face takes
-// the texel at its perspective-correct texture coordinates, filtered over the
-// texels that one sample (dx by dy) covers, composited over its fill.
-static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const Paint& paint,const Hit& hit,
+// Whether a smooth face's clip rings (if any) cover the sample (x, y).
+static inline bool smooth_clip_covers(const Shapes& shapes,const Item& item,double x,double y) {
+  const Smooth& sm=*shapes.smooth;
+  if(sm.clip.empty()) return true;
+  for(const auto& ring:sm.clip[item.row]) if(ring.contains(x,y)) return true;
+  return false;
+}
+
+// Colour of fan triangle `fan` of a smooth face, shaded at (x, y): corner
+// colours and normals interpolated perspective-correctly (weights a / depth
+// under perspective), the normal renormalised and lit by the shading kernel in
+// linear light, then put in the compositing space with the paint's alpha. The
+// weights are clamped to the triangle, so a point outside it (a pixel centre
+// beside a covered edge) takes the attributes of the nearest part of the face.
+// A textured face takes the texel at its perspective-correct texture
+// coordinates, filtered over the texels that a dx by dy step covers,
+// composited over its fill.
+static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const Paint& paint,Index fan,
                                    double x,double y,double dx,double dy) {
   const Scene& scene=shapes.scene; const Smooth& sm=*shapes.smooth;
-  if(!sm.clip.empty()) {
-    bool inside=false;
-    for(const auto& ring:sm.clip[item.row]) if(ring.contains(x,y)) {inside=true;break;}
-    if(!inside) return Colour{};
+  const Index k[3]={item.offset,item.offset+fan,item.offset+fan+1};
+  auto w=fan_weights(shapes,item,fan,x,y);
+  if(w[0]<0 || w[1]<0 || w[2]<0) {
+    double total=0;
+    for(double& z:w) {z=std::max(0.0,z);total+=z;}
+    if(total>0) for(double& z:w) z/=total; else w={1.0/3,1.0/3,1.0/3};
   }
-  const Index k[3]={item.offset,item.offset+hit.i,item.offset+hit.i+1};
-  const auto w=fan_weights(shapes,item,hit.i,x,y);
   auto blend=[&](bool normal) {
     Vec3 out{0,0,0};
     for(int j=0;j<3;++j) {
@@ -767,10 +782,10 @@ static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const P
     for(int j=0;j<3;++j) for(int d=0;d<2;++d) uv[d]+=w[j]*scene.shading[k[j]].uv[d];
     double footprint=0;
     if(t.interpolate) {
-      const auto ux=fan_uv(shapes,item,hit.i,x+dx,y),uy=fan_uv(shapes,item,hit.i,x,y+dy);
+      const auto u0=fan_uv(shapes,item,fan,x,y),ux=fan_uv(shapes,item,fan,x+dx,y),uy=fan_uv(shapes,item,fan,x,y+dy);
       const double width=t.levels[0].width,height=t.levels[0].height;
-      footprint=std::max(std::hypot((ux[0]-uv[0])*width,(ux[1]-uv[1])*height),
-                         std::hypot((uy[0]-uv[0])*width,(uy[1]-uv[1])*height));
+      footprint=std::max(std::hypot((ux[0]-u0[0])*width,(ux[1]-u0[1])*height),
+                         std::hypot((uy[0]-u0[0])*width,(uy[1]-u0[1])*height));
     }
     const Texel texel=t.sample(uv[0],uv[1],footprint);
     const double under=sm.fill_alpha[item.row]*(1-texel[3]);
@@ -846,6 +861,11 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
   const int tw=sx1-sx0,th=sy1-sy0; const std::size_t n=static_cast<std::size_t>(tw)*th;
   s.fragments.clear(); s.occluders.assign(n,Occluder());
   if(retained) s.opaque.assign(n,R_PosInf);
+  const int aa=canvas.aa,pw=tw/aa;
+  if(shapes.smooth && shapes.smooth->active) {
+    s.shaded_item.assign(n/(static_cast<std::size_t>(aa)*aa),-1);
+    s.shaded_fan.resize(s.shaded_item.size()); s.shaded.resize(s.shaded_item.size());
+  }
   s.order.assign(tile_items,tile_items+tile_count);
   std::sort(s.order.begin(),s.order.end(),[&](Index a,Index b) {
     const Span& x=spans[a]; const Span& y=spans[b];
@@ -896,7 +916,17 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
                                     occluder.hides(span.partition,z,tolerance))) continue;
         Fragment fragment{i,z,local,border};
         if(!border && smooth_item) {
-          fragment.own=true;fragment.colour=smooth_colour(shapes,item,p,hit,xx,yy,canvas.dx,canvas.dy);
+          // Coverage and clipping per sample, shading once per pixel and
+          // triangle at the pixel centre (multisample antialiasing).
+          if(!smooth_clip_covers(shapes,item,xx,yy)) continue;
+          const int px=x/aa,py=y/aa;
+          const std::size_t pixel=static_cast<std::size_t>(py-sy0/aa)*pw+(px-sx0/aa);
+          if(s.shaded_item[pixel]!=i || s.shaded_fan[pixel]!=hit.i) {
+            s.shaded[pixel]=smooth_colour(shapes,item,p,hit.i,canvas.origin_x+(px+.5)*canvas.pixel_x,
+              canvas.origin_y+(py+.5)*canvas.pixel_y,canvas.pixel_x,canvas.pixel_y);
+            s.shaded_item[pixel]=i; s.shaded_fan[pixel]=hit.i;
+          }
+          fragment.own=true;fragment.colour=s.shaded[pixel];
           if(fragment.colour.a==0) continue;
         }
         if(lit_quadric) {fragment.own=true;fragment.colour=quadric_colour(shapes,item,p,xx,yy);}
@@ -934,7 +964,6 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
       (canvas.origin_y+(sy+.5)*canvas.dy)/canvas.pixel_y);
     passes=std::max(passes,s.results[k].peels);
   }
-  const int aa=canvas.aa;
   for(int py=sy0/aa;py<sy1/aa;++py) for(int px=sx0/aa;px<sx1/aa;++px) {
     Colour sum;
     for(int sy=0;sy<aa;++sy) for(int sx=0;sx<aa;++sx) {
