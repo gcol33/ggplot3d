@@ -145,3 +145,34 @@ test_that("a viewer distance places the specular eye on the view axis", {
   expect_error(light_3d(viewer = 0.5), "viewer")
   expect_equal(view_lights_3d(light_3d(viewer = 3))$viewer, 3)
 })
+
+test_that("colour edges flip toward the diagonal of similar colours, only on flat quads", {
+  position <- rbind(c(0, 0, 0), c(1, 0, 0), c(1, 1, 0), c(0, 0, 0), c(1, 1, 0), c(0, 1, 0))
+  vertex <- c(1L, 2L, 3L, 1L, 3L, 4L)
+  tri <- rbind(1:3, 4:6)
+  rgb <- rbind(c(0, 0, 0), c(0.5, 0.5, 0.5), c(1, 1, 1), c(0, 0, 0), c(1, 1, 1), c(0.5, 0.5, 0.5))
+  flipped <- flip_colour_edges_3d(tri, vertex, rgb, c(1L, 1L), position)
+  sets <- sort(apply(matrix(vertex[flipped], 2L), 1L, function(t) paste(sort(t), collapse = "")))
+  expect_identical(sets, c("124", "234"))
+  expect_identical(flip_colour_edges_3d(tri, vertex, rgb, c(1L, 2L), position), tri)
+  creased <- position; creased[c(3L, 5L), 3L] <- 1
+  expect_identical(flip_colour_edges_3d(tri, vertex, rgb, c(1L, 1L), creased), tri)
+  similar <- rbind(c(0.5, 0.5, 0.5), c(0, 0, 0), c(0.5, 0.5, 0.5), c(0.5, 0.5, 0.5), c(0.5, 0.5, 0.5), c(1, 1, 1))
+  expect_identical(flip_colour_edges_3d(tri, vertex, similar, c(1L, 1L), position), tri)
+})
+
+test_that("encoded corner colours are subdivided only for encoded vertex lighting", {
+  d <- expand.grid(x = seq(-2, 2, length.out = 9), y = seq(-2, 2, length.out = 9))
+  d$z <- exp(-(d$x^2 + d$y^2) / 2)
+  packet <- stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
+    geom_surface_3d(fill = "#2E6F9E", shading = "smooth", colour = NA) + coord_3d())$packet
+  camera <- scene_compile(new_scene_packet(), new_camera_3d(), new_scene_viewport(80, 80, dpi = 100))$camera
+  encoded <- light_3d(preset = "rgl")
+  lit <- vertex_lit_packet_3d(light_material_packet_3d(packet, encoded), camera, encoded)
+  expect_gt(length(lit$faces$count), length(packet$faces$count))
+  expect_true(all(lit$faces$count == 3L))
+  expect_silent(validate_scene_packet(lit))
+  linear <- light_3d(preset = "rgl", linear = TRUE)
+  plain <- vertex_lit_packet_3d(light_material_packet_3d(packet, linear), camera, linear)
+  expect_equal(length(plain$faces$count), length(packet$faces$count))
+})

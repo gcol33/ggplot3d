@@ -516,7 +516,78 @@ vertex_lit_packet_3d <- function(packet, camera, light, pre = diag(4)) {
   columns <- scene_table_columns(corners, scene_schemas()$corners, scene_optional_schemas()$corners, "corners")
   packet$corners <- corners[names(columns)]
   packet$styles$shade[vertex] <- FALSE
+  if (isFALSE(light$linear)) {
+    border <- style_value_3d(styles, "colour", NA_character_)[owner_style[take]]
+    packet <- encoded_corner_faces_3d(packet, take[is.na(border)], camera$model_scale)
+  }
   packet
+}
+
+# Faces `rows` of a packet with corner colours, split on a barycentric grid
+# so that the backends' linear-light interpolation of corner colours follows
+# the interpolation of the encoded colours, as the fixed-function OpenGL
+# pipeline interpolates the colours it lights on encoded values. Each face is
+# fanned into triangles, the shared edges are flipped toward the diagonal
+# whose corner colours differ least (flip_colour_edges_3d()), and every
+# triangle is cut into level^2 triangles,
+# with one level for all faces (so that shared edges split alike) set by the
+# largest encoded colour step along a triangle (one level per 0.1) and kept
+# within `budget` triangles.
+encoded_corner_faces_3d <- function(packet, rows, camera_scale = c(1, 1, 1), budget = 40000L) {
+  faces <- packet$faces
+  corners <- packet$corners
+  if (!length(rows) || !all(corner_colour_columns_3d %in% names(corners))) return(packet)
+  counts <- faces$count[rows]
+  rgb <- cbind(corners$red, corners$green, corners$blue)
+  fan <- counts - 2L
+  face <- rep(rows, fan)
+  step <- sequence(fan)
+  tri <- cbind(faces$offset[face], faces$offset[face] + step, faces$offset[face] + step + 1L)
+  at <- scene_vertex_matrix_3d(packet$vertices)[corners$vertex, , drop = FALSE]
+  place <- paste(signif(at[, 1L] / at[, 4L], 12), signif(at[, 2L] / at[, 4L], 12), signif(at[, 3L] / at[, 4L], 12))
+  tri <- flip_colour_edges_3d(tri, match(place, unique(place)), rgb, faces$layer_id[face],
+    sweep(at[, 1:3, drop = FALSE] / at[, 4L], 2L, camera_scale, "*"))
+  jump <- function(a, b) apply(abs(rgb[tri[, a], , drop = FALSE] - rgb[tri[, b], , drop = FALSE]), 1L, max)
+  steepest <- max(jump(1L, 2L), jump(2L, 3L), jump(1L, 3L), 0, na.rm = TRUE)
+  level <- min(ceiling(steepest / 0.1), floor(sqrt(budget / length(face))), 6L)
+  if (level < 2L) return(packet)
+  grid <- expand.grid(i = 0:level, j = 0:level)
+  grid <- grid[grid$i + grid$j <= level, ]
+  weight <- cbind(level - grid$i - grid$j, grid$i, grid$j) / level
+  at <- function(i, j) match(paste(i, j), paste(grid$i, grid$j))
+  small <- list()
+  for (i in 0:(level - 1L)) for (j in 0:(level - 1L - i)) {
+    small[[length(small) + 1L]] <- c(at(i, j), at(i + 1L, j), at(i, j + 1L))
+    if (i + j < level - 1L) small[[length(small) + 1L]] <- c(at(i + 1L, j), at(i + 1L, j + 1L), at(i, j + 1L))
+  }
+  small <- do.call(rbind, small)
+  m <- nrow(weight); k <- nrow(small); n <- nrow(tri)
+  xyzw <- scene_vertex_matrix_3d(packet$vertices)
+  mix <- function(values) {
+    out <- matrix(0, n * m, ncol(values))
+    for (c in 1:3) out <- out + weight[rep(seq_len(m), n), c] * values[tri[rep(seq_len(n), each = m), c], , drop = FALSE]
+    out
+  }
+  point <- mix(xyzw[corners$vertex, , drop = FALSE])
+  colour <- mix(rgb)
+  base <- length(packet$vertices$x)
+  packet$vertices <- lapply(stats::setNames(seq_along(packet$vertices), names(packet$vertices)),
+    function(c) c(packet$vertices[[c]], point[, c]))
+  sub <- as.vector(t(small[rep(seq_len(k), n), , drop = FALSE] + rep((seq_len(n) - 1L) * m, each = k)))
+  parent <- rep(face, each = k)
+  keep <- setdiff(seq_along(faces$count), rows)
+  kept_corners <- unlist(lapply(keep, function(f) faces$offset[f] + seq_len(faces$count[f]) - 1L))
+  new_corners <- lapply(stats::setNames(names(corners), names(corners)), function(name) {
+    value <- switch(name, vertex = as.integer(base + sub), source_row = rep(corners$source_row[faces$offset[parent]], each = 3L),
+      red = colour[sub, 1L], green = colour[sub, 2L], blue = colour[sub, 3L], corners[[name]][rep(NA_integer_, length(sub))])
+    c(corners[[name]][kept_corners], value)
+  })
+  new_faces <- slice_rows_3d(as.data.frame(faces, stringsAsFactors = FALSE), c(keep, parent))
+  new_faces$count <- c(faces$count[keep], rep(3L, length(parent)))
+  new_faces$offset <- as.integer(cumsum(c(1L, new_faces$count))[seq_along(new_faces$count)])
+  packet$faces <- as.list(new_faces)
+  packet$corners <- new_corners
+  renumber_primitives_3d(packet)
 }
 
 # Index of the corner k places after each corner within its face, for corners
@@ -525,4 +596,54 @@ corner_shift_3d <- function(owner, k) {
   start <- match(owner, owner)
   count <- tabulate(owner)[owner]
   start + (seq_along(owner) - start + k) %% count
+}
+
+# Triangles (rows of corner indices, counter-clockwise; `vertex` numbers the
+# distinct corner positions) with each edge shared by two triangles of one
+# group (layer) flipped to the other diagonal of their
+# quadrilateral when the colours at its ends differ less than at the ends of
+# the shared edge: one pass of the data-dependent triangulation of Dyn,
+# Levin and Rippa (1990) with the largest channel difference as cost, so that
+# an interpolated highlight runs along the diagonal it lies on instead of
+# zigzagging across it. Each triangle takes part in at most one flip, and a
+# flip is made only where the two triangles meet along the edge from
+# opposite sides and their model-space planes (`position`, one row per
+# corner) differ by less than `crease` degrees, so that the flip leaves the
+# surface's shape nearly unchanged.
+flip_colour_edges_3d <- function(tri, vertex, rgb, group, position, crease = 10) {
+  n <- nrow(tri)
+  if (n < 2L) return(tri)
+  v <- matrix(vertex[tri], n)
+  edge <- data.frame(t = rep(seq_len(n), 3L), e = rep(0:2, each = n))
+  a <- v[cbind(edge$t, edge$e + 1L)]; b <- v[cbind(edge$t, (edge$e + 1L) %% 3L + 1L)]
+  edge$key <- paste(group[edge$t], pmin(a, b), pmax(a, b))
+  edge$forward <- a < b
+  shared <- edge[edge$key %in% edge$key[duplicated(edge$key)], ]
+  shared <- shared[order(shared$key, !shared$forward), ]
+  if (!nrow(shared)) return(tri)
+  first <- shared[c(TRUE, FALSE), ]; second <- shared[c(FALSE, TRUE), ]
+  ok <- first$key == second$key & first$forward != second$forward & first$t != second$t
+  first <- first[ok, ]; second <- second[ok, ]
+  cost <- function(p, q) apply(abs(rgb[p, , drop = FALSE] - rgb[q, , drop = FALSE]), 1L, max)
+  # Corners of each pair: the shared edge runs a -> b in the first triangle,
+  # c and d are the corners opposite it in the first and second triangle.
+  ca <- tri[cbind(first$t, first$e + 1L)]; cb <- tri[cbind(first$t, (first$e + 1L) %% 3L + 1L)]
+  cc <- tri[cbind(first$t, (first$e + 2L) %% 3L + 1L)]; cd <- tri[cbind(second$t, (second$e + 2L) %% 3L + 1L)]
+  gain <- cost(ca, cb) - cost(cc, cd)
+  plane <- function(p, q, r) {
+    u <- position[q, , drop = FALSE] - position[p, , drop = FALSE]; w <- position[r, , drop = FALSE] - position[p, , drop = FALSE]
+    unit_rows_3d(cbind(u[, 2L] * w[, 3L] - u[, 3L] * w[, 2L], u[, 3L] * w[, 1L] - u[, 1L] * w[, 3L], u[, 1L] * w[, 2L] - u[, 2L] * w[, 1L]))
+  }
+  flat <- rowSums(plane(ca, cb, cc) * plane(cb, ca, cd)) >= cospi(crease / 180)
+  gain[!flat] <- 0
+  used <- logical(n)
+  for (i in order(-gain)) {
+    if (gain[i] <= 1e-9) break
+    s <- first$t[i]; u <- second$t[i]
+    if (used[s] || used[u]) next
+    used[s] <- used[u] <- TRUE
+    tri[s, ] <- c(cc[i], ca[i], cd[i])
+    tri[u, ] <- c(cd[i], cb[i], cc[i])
+  }
+  tri
 }

@@ -114,12 +114,14 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   scaled by `0.65 + 0.35 * cos` with the light at `LightSource(azdeg = 225,
 #'   altdeg = 19.4712)` in the data axes, i.e. `mode = "value"`, `range =
 #'   c(-0.7, 0)`, `neutral = 0`.
-#' - `"rgl"`: rgl's default `light3d(theta = 0, phi = 15)`, a white light 15
-#'   degrees above the eye, with rgl's default material (no ambient
-#'   reflection, white specular, shininess 50) lit at the vertices
-#'   (`lighting = "vertex"`) on encoded values, with OpenGL's local viewer at
-#'   rgl's default eye distance (`viewer = 1 / sin(15 degrees)`, for its
-#'   30-degree field of view), as desktop rgl's fixed-function OpenGL does.
+#' - `"rgl"`: the light of a new rgl scene, a white directional light at the
+#'   eye (position `(0, 0, 1)` in eye coordinates, as `rgl.attrib()` reports;
+#'   `light3d()`'s own default is 15 degrees above the eye), with rgl's
+#'   default material (no ambient reflection, white specular, shininess 50)
+#'   lit at the vertices (`lighting = "vertex"`) on encoded values, and
+#'   OpenGL's local viewer at rgl's default eye distance (`viewer = 1 /
+#'   sin(15 degrees)`, for its 30-degree field of view), as desktop rgl's
+#'   fixed-function OpenGL does.
 #' - `"plotly"`: plotly's surface lighting defaults: ambient 0.8, diffuse
 #'   0.8, the light at `lightposition = (10, 10000, 0)`, which its shader
 #'   takes in camera coordinates (straight above the viewer), and specular
@@ -295,7 +297,7 @@ light_presets_3d <- list(
     list(lights = list(light_directional(c(cos(azimuth) * cos(altitude), sin(azimuth) * cos(altitude), sin(altitude)),
       space = "data", intensity = 1)), ambient = 0, mode = "value", range = c(-0.7, 0), neutral = 0)
   },
-  rgl = function() list(lights = list(light_directional(c(0, sinpi(15 / 180), cospi(15 / 180)), intensity = 1)),
+  rgl = function() list(lights = list(light_directional(c(0, 0, 1), intensity = 1)),
     ambient = 0, mode = "multiply", linear = FALSE, viewer = 1 / sinpi(15 / 180),
     material = material_3d(ambient = 0, diffuse = 1, specular = 1, shininess = 50, specular_colour = 1, lighting = "vertex")),
   plotly = function() list(lights = list(light_directional(c(10, 10000, 0), intensity = 0.8)),

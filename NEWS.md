@@ -33,7 +33,13 @@
 
 * `material_3d(lighting = "vertex")` lights smooth faces at their corners and
   interpolates the lit colours (Gouraud 1971), in every backend and the
-  viewer; it gives desktop rgl's highlight streaks. `material_3d("satin")`
+  viewer. With `light_3d(linear = FALSE)` the lit corner colours are
+  interpolated as encoded values (faces split on a barycentric grid, shared
+  edges flipped toward similar colours on nearly flat quads), as OpenGL
+  interpolates them. `light_3d(viewer = )` places the eye of the specular
+  term at a finite distance (OpenGL's local viewer). With these and the
+  light of a new rgl scene (a headlight, not `light3d()`'s default 15
+  degrees above the eye), `preset = "rgl"` draws rgl's highlight streak. `material_3d("satin")`
   adds a faint highlight (specular 0.15, shininess 30) that shows the shape
   of a single-colour surface without washing out its colour.
 

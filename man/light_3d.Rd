@@ -82,12 +82,13 @@ data axes and its \code{"hsv"} mode at \code{contrast = 1}, i.e. \code{mode = "v
 \code{range = c(-1, 1)}, \code{neutral = 90}.
 \item \code{"matplotlib"}: the shading of matplotlib's \code{plot_surface()}: the colour
 scaled by \code{0.65 + 0.35 * cos} with the light at \code{LightSource(azdeg = 225, altdeg = 19.4712)} in the data axes, i.e. \code{mode = "value"}, \code{range = c(-0.7, 0)}, \code{neutral = 0}.
-\item \code{"rgl"}: rgl's default \code{light3d(theta = 0, phi = 15)}, a white light 15
-degrees above the eye, with rgl's default material (no ambient
-reflection, white specular, shininess 50) lit at the vertices
-(\code{lighting = "vertex"}) on encoded values, with OpenGL's local viewer at
-rgl's default eye distance (\verb{viewer = 1 / sin(15 degrees)}, for its
-30-degree field of view), as desktop rgl's fixed-function OpenGL does.
+\item \code{"rgl"}: the light of a new rgl scene, a white directional light at the
+eye (position \verb{(0, 0, 1)} in eye coordinates, as \code{rgl.attrib()} reports;
+\code{light3d()}'s own default is 15 degrees above the eye), with rgl's
+default material (no ambient reflection, white specular, shininess 50)
+lit at the vertices (\code{lighting = "vertex"}) on encoded values, and
+OpenGL's local viewer at rgl's default eye distance (\verb{viewer = 1 / sin(15 degrees)}, for its 30-degree field of view), as desktop rgl's
+fixed-function OpenGL does.
 \item \code{"plotly"}: plotly's surface lighting defaults: ambient 0.8, diffuse
 0.8, the light at \verb{lightposition = (10, 10000, 0)}, which its shader
 takes in camera coordinates (straight above the viewer), and specular
