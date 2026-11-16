@@ -98,7 +98,7 @@ gltf_document_3d <- function(path) {
     }
     if (is.null(json)) stop("The GLB file has no JSON chunk.", call. = FALSE)
   } else json <- rawToChar(raw[raw != as.raw(0L)])
-  doc <- json_parse_3d(sub("^﻿", "", json))
+  doc <- json_parse_3d(sub("^\ufeff", "", json))
   version <- doc$asset$version %or3d% ""
   if (!startsWith(version, "2")) stop("Only glTF 2.0 files are supported.", call. = FALSE)
   doc$.buffers <- lapply(doc$buffers, function(b) {
