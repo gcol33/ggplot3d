@@ -20,9 +20,9 @@
   The default range is `c(-0.45, 0.4)` around a neutral angle of 60 degrees.
 
 * `light_3d(preset = )` starts from the lighting of ggcube, matplotlib, rgl,
-  plotly or Mathematica; the first four are checked against renders from the
-  package and against plotly's shader source and the shading functions of
-  ggcube and matplotlib, Mathematica's follows its documented
+  plotly or Mathematica, each checked against a render of the same surface
+  from that package and against plotly's shader source, the shading
+  functions of ggcube and matplotlib, and Mathematica's documented
   `Lighting -> Automatic` values. Explicit arguments replace the preset's
   values. To carry
   them, `light_3d()` gains `mode = "value"` (HSV value moved toward 0 or 1,
