@@ -1,5 +1,6 @@
 ---
 title: "Lighting and surface styles"
+description: "Control surface shading, use lighting presets and materials, and show the shading range in legends."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Lighting and surface styles}
@@ -13,13 +14,11 @@ docs_setup(legend = "right")
 options(warn = 1)
 ```
 
-A lit surface shows its shape through brightness: faces turned toward the
-light are brighter than faces turned away. When the fill also carries data,
-the two compete for the same channel. This article goes through the ways
-ggplot3d lets shading and colour share a figure: colour modes that keep
-the fill readable, guides that show what the light does to each colour,
-illustrative surface styles, line drawings, and lighting compared across
-panels.
+A lit surface shows its orientation through brightness. When fill represents
+data, its legend needs to account for the colour changes caused by lighting.
+This article lights a height surface and uses shaded colour guides to read it.
+Installation is covered in [Get started](ggplot3d.html); the multi-panel
+examples use patchwork to arrange the views.
 
 ```{r setup}
 library(ggplot3d)
@@ -37,7 +36,7 @@ its hue: faces turned toward the light get lighter, faces turned away get
 darker, and a face at the `neutral` angle to the light keeps its colour
 exactly, so the colour stays recognisable against its key.
 
-```{r lightness}
+```{r lightness, fig.alt="A two-peaked surface coloured by height, with a colourbar showing each colour's shading range."}
 hill + scale_fill_distiller(palette = "Spectral",
     guide = guide_colourbar_3d(along = NULL, shading_range = TRUE)) +
   coord_3d()
@@ -60,7 +59,7 @@ blend together.
 and `"overlay"` and `"soft"` are the blend modes of matplotlib's
 `LightSource`.
 
-```{r tone}
+```{r tone, fig.alt="A height surface shaded toward blue shadows and warm highlights, with a stepped colour guide."}
 hill + scale_fill_viridis_b(guide = guide_coloursteps_3d()) +
   coord_3d(light = light_3d(light_directional(), mode = "tone",
     shadow_colour = "#22305a", highlight_colour = "#fff3d0"))
@@ -89,8 +88,8 @@ panels <- lapply(presets, function(preset) {
 patchwork::wrap_plots(panels, ncol = 3)
 ```
 
-A highlight shows the shape of a single-colour surface best, but it mixes
-white into the fill. `material_3d("satin")` keeps it faint, and
+A highlight mixes white into the fill to indicate surface orientation.
+`material_3d("satin")` keeps it faint, and
 `light_3d(material = )` gives every shaded layer without its own material
 that one.
 
@@ -102,7 +101,7 @@ shading quantises the response into bands, Gooch shading (Gooch et al.
 regions readable, and normal colouring encodes the orientation of each face
 as a colour.
 
-```{r styles, fig.width = 7.5, fig.height = 3.2}
+```{r styles, fig.width = 7.5, fig.height = 3.2, fig.alt="Three copies of the surface with toon bands, cool-to-warm Gooch shading and colours encoding face normals."}
 plain <- ggplot(d, aes(x, y, z = z)) +
   coord_3d(panes = character(), axes = character(), box = "none")
 toon <- plain + geom_surface_3d(fill = "tomato", colour = NA,
@@ -123,7 +122,7 @@ white fill, feature lines from `outline_3d()` and the plotter backend, which
 draws strokes only, the figure is a line drawing that an SVG device writes
 for a pen plotter.
 
-```{r hatch}
+```{r hatch, fig.alt="The two-peaked surface drawn with outlines and hatching whose density varies with the light."}
 ggplot(d, aes(x, y, z = z)) +
   geom_surface_3d(fill = "white", colour = NA, hatch = hatch_3d(angle = 0, spacing = 0.02),
     outline = outline_3d(linewidth = 0.4)) +

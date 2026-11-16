@@ -22,7 +22,7 @@ library(ggplot3d)
 
 ## Domain recipes
 
-[Tensor glyphs](tensors.html) draw symmetric tensors as ellipsoids or superquadrics. [Ordination biplots](ordination.html) combine site scores, variable arrows and group regions. [Molecular views](molecules.html) draw atoms and bonds from bio3d records. [Colour gamuts](colour-gamuts.html) place sampled colours and their convex hull in Lab coordinates.
+[Tensor glyphs](tensors.html) draw symmetric tensors as ellipsoids or superquadrics. [Ordination biplots](ordination.html) combine site scores, variable arrows and group regions. [Molecular ball-and-stick views](molecules.html) draw atoms and bonds from bio3d records. [Colour gamuts in Lab coordinates](colour-gamuts.html) place sampled colours and their convex hull in Lab coordinates.
 
 ## Parametric curves
 

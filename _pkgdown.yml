@@ -342,6 +342,9 @@ articles:
   navbar: Workflows
   contents:
   - articles/camera
+  - articles/positions
+  - articles/guides-themes
+  - articles/intervals
   - articles/frames
   - articles/backends
   - articles/lighting

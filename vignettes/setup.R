@@ -9,7 +9,8 @@ docs_setup <- function(legend = "none", ...) {
   ggplot2::theme_set(ggplot2::theme_minimal(base_size = 17) + ggplot2::theme(
     plot.background = clear, panel.background = clear,
     legend.background = clear, legend.key = clear,
-    legend.box.background = clear, legend.position = legend
+    legend.box.background = clear, legend.position = legend,
+    strip.text = ggplot2::element_text(size = ggplot2::rel(1))
   ))
   invisible()
 }

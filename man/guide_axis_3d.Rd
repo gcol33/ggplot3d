@@ -119,3 +119,7 @@ Kling M (2025). ggcube: 3D plotting with ggplot2. \code{coord_3d()} arguments
 Danisch S, Krumbiegel J (2021). Makie.jl: Flexible high-performance data
 visualization for Julia. Journal of Open Source Software 6(65), 3349.
 }
+\seealso{
+\href{https://gillescolling.com/ggplot3d/articles/guides-themes.html}{Axes, legends and pane styling}
+for scale breaks, colourbars and panel theme elements.
+}

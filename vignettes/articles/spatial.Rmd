@@ -72,7 +72,7 @@ ggplot(nc) +
            backend = backend_3d("raster", dpi = 144))
 ```
 
-Prisms of detailed outlines are many faces; the raster backend draws them in a fraction of the time the vector backend needs (see [Backends](backends.html)). Plain `ggplot2::geom_sf()` layers are drawn the same way inside `coord_3d()`; add the 3D coordinates last so they supply the plot's final coordinate system.
+Prisms of detailed outlines can contain many faces. [Output backends](backends.html) explains how to render them at a chosen image resolution. Plain `ggplot2::geom_sf()` layers are drawn the same way inside `coord_3d()`; add the 3D coordinates last so they supply the plot's final coordinate system.
 
 ## Cross-sections and fence diagrams
 
@@ -153,7 +153,7 @@ ggplot(points, aes(x, y, z = z, colour = z)) +
   coord_3d(aspect = c(1, 1, 0.45), axes = "z")
 ```
 
-For dense clouds, `geom_point_3d(render = "splat")` with the raster backend draws the points as depth-tested spheres (see [Backends](backends.html)).
+For dense clouds, `geom_point_3d(render = "splat")` with the raster backend draws the points as depth-tested spheres (see [Output backends](backends.html)).
 
 ## The space-time cube
 
@@ -189,7 +189,7 @@ The track uses the same projected coordinates as the map, `nc_m`. A track record
 ```{r scale-bar, fig.alt="The volcano surface in perspective with a 200 metre scale bar on the floor and a north arrow."}
 ggplot(volcano_grid, aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", colour = NA) +
-  annotation_scale_3d(length = 200, unit = "m") +
+  annotation_scale_3d(length = 200, unit = "m", size = 5) +
   annotation_north_3d(north = c(0, 1, 0)) +
   coord_3d(aspect = c(870, 610, 300), projection = "perspective")
 ```

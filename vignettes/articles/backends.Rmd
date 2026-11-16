@@ -15,9 +15,9 @@ docs_setup()
 
 A backend turns scene geometry into drawing commands or pixels. This article shows how to select one and save its output. Installation is covered in [Get started](ggplot3d.html).
 
-1. **Choose** rendering with `backend_3d()`.
+1. Choose rendering with `backend_3d()`.
 
-2. **Save** the resulting plot with `ggsave()`.
+2. Save the resulting plot with `ggsave()`.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -49,6 +49,18 @@ The backend describes scene rendering; the file extension selects the output dev
 ```{r vector-save}
 path <- tempfile(fileext = ".pdf")
 ggsave(path, vector_plot, width = 5, height = 4.5)
+```
+
+The standard R PDF device also draws the vector scene directly. Open the
+device, print the plot and close the device to finish the file. Smooth shading
+and textures can embed images within the vector output.
+
+```{r pdf-device}
+path <- tempfile(fileext = ".pdf")
+grDevices::pdf(path, width = 5, height = 4.5)
+print(vector_plot)
+grDevices::dev.off()
+stopifnot(file.info(path)$size > 0)
 ```
 
 ### Raster rendering

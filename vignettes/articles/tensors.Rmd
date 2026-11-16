@@ -1,5 +1,6 @@
 ---
 title: "Tensor glyphs"
+description: "Map symmetric positive semidefinite matrices to oriented ellipsoid or superquadric glyphs."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Tensor glyphs}
@@ -14,12 +15,15 @@ docs_setup(legend = "right", fig.width = 7, fig.height = 4)
 
 A symmetric tensor is a matrix whose eigenvectors give three perpendicular directions and whose eigenvalues give their magnitudes. `geom_tensor_3d()` draws one tensor at each position. It accepts symmetric positive semidefinite matrices in a list-column.
 
+This example draws three tensor shapes and rotates one of them. Installation
+is covered in [Get started](ggplot3d.html).
+
 ```{r packages, message = FALSE}
 library(ggplot2)
 library(ggplot3d)
 ```
 
-```{r tensors}
+```{r tensors, fig.alt="Three superquadric glyphs showing a tensor with one dominant direction, one with two equal dominant directions, and an isotropic tensor."}
 d <- data.frame(x = c(0, 3, 6), y = 0, z = 0,
                 shape = c("Linear", "Planar", "Isotropic"))
 d$tensor <- list(diag(c(1, 0.25, 0.25)), diag(c(1, 1, 0.25)), diag(3))
@@ -36,7 +40,7 @@ The three semi-axis lengths equal `scale` times the eigenvalues, in scale-transf
 
 Multiplying a diagonal matrix on the left by a rotation and on the right by its transpose gives the tensor in the plotting coordinates.
 
-```{r rotated}
+```{r rotated, fig.alt="The same three tensor glyphs with the first rotated forty-five degrees in the x/y plane."}
 angle <- pi / 4
 rotation <- matrix(c(cos(angle), sin(angle), 0,
                      -sin(angle), cos(angle), 0, 0, 0, 1), 3)

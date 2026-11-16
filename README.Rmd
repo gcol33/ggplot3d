@@ -46,7 +46,7 @@ ggplot3d supports:
 * Continuous, discrete and date/time z scales, including transformations and facets.
 * Vector drawing and raster rendering from the same scene geometry.
 
-[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html) explains how overlapping geometry is ordered and split. The examples below generate their figures from the package.
+[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html) explains how overlapping geometry is ordered and split.
 
 ## Installation
 
@@ -149,7 +149,12 @@ Start with [Get started](https://gillescolling.com/ggplot3d/articles/ggplot3d.ht
 * [Layers](https://gillescolling.com/ggplot3d/articles/layers.html): points, paths, gridded surfaces, columns, distributions and intervals.
 * [Surfaces, solids and fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html): meshes, fitted and level surfaces, hulls, solid glyphs and sweeps.
 * [Camera and framing](https://gillescolling.com/ggplot3d/articles/camera.html): view angles, projections and plot bounds.
-* [Output backends](https://gillescolling.com/ggplot3d/articles/backends.html): choose vector or raster rendering.
+* [Positioning groups and observations](https://gillescolling.com/ggplot3d/articles/positions.html): jitter, dodge, stack and align labels.
+* [Axes, legends and pane styling](https://gillescolling.com/ggplot3d/articles/guides-themes.html): labels, colourbars and panel styling.
+* [Displaying intervals and summaries](https://gillescolling.com/ggplot3d/articles/intervals.html): supplied bounds and grouped summaries.
+* [Output backends](https://gillescolling.com/ggplot3d/articles/backends.html): vector, raster and hybrid rendering, including PDF output.
+* [Lighting and surface styles](https://gillescolling.com/ggplot3d/articles/lighting.html): light presets, materials and shaded legends.
+* [Camera animation and interaction](https://gillescolling.com/ggplot3d/articles/motion.html): camera paths and changing data.
 * [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html): how the scene resolves overlapping geometry.
 
 Function help is available in R, for example `?coord_3d` and `?geom_surface_3d`.
@@ -180,6 +185,13 @@ MIT, see [LICENSE.md](LICENSE.md).
 
 ## Citation
 
-```{r citation, echo=FALSE, comment=""}
-print(citation("ggplot3d"), bibtex = TRUE)
+```{r citation, echo=FALSE, results="asis"}
+cit <- citation("ggplot3d")
+cat(attr(cit, "mheader"), "\n\n", sep = "")
+cat("```text\n", paste(format(cit, style = "text"), collapse = "\n\n"),
+    "\n```\n\nBibTeX:\n\n```bibtex\n",
+    paste(format(cit, style = "bibtex"), collapse = "\n\n"),
+    "\n```\n", sep = "")
 ```
+
+Download the citation as [BibTeX](https://gillescolling.com/ggplot3d/ggplot3d.bib) or [RIS](https://gillescolling.com/ggplot3d/ggplot3d.ris).

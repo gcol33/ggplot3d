@@ -1,5 +1,6 @@
 ---
 title: "Visibility"
+description: "Explain how overlapping faces, lines and marks are ordered and clipped within a three-dimensional panel."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Visibility}

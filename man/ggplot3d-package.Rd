@@ -29,6 +29,7 @@ Defaults to 10.}
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://gillescolling.com/ggplot3d/}
   \item \url{https://github.com/gcol33/ggplot3d}
   \item Report bugs at \url{https://github.com/gcol33/ggplot3d/issues}
 }

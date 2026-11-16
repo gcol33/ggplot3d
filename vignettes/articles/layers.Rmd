@@ -287,6 +287,9 @@ Summary tables containing cells with a single observation can currently fail
 with `numbers of columns of arguments do not match`. For those tables,
 compute the summaries first and pass their bounds to an interval layer.
 
+[Displaying intervals and summaries](intervals.html) explains the meaning of
+the bounds, grouping and precomputed summary tables.
+
 For supplied intervals, map both bounds of each axis. Here a small table gives three measured positions with stated x, y and z uncertainties. Cross-shaped caps extend along both perpendicular axes, so the endpoints remain visible as the camera turns.
 
 ```{r errorbars, fig.alt="Three measured positions with capped uncertainty intervals along all three axes."}
@@ -396,6 +399,9 @@ ggplot(cloud, aes(x, y, z = z)) +
 ```
 
 ## Adapting a layer
+
+[Positioning groups and observations](positions.html) develops grouped columns,
+aligned labels and proportions from these position adjustments.
 
 The layer adapter equips a registered ggplot2 geom with three-dimensional scene emission. Extension authors register an emitter to describe how another geom produces geometry. The registration help page describes the callback arguments.
 

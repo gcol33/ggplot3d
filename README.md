@@ -14,7 +14,10 @@ coverage](https://codecov.io/gh/gcol33/ggplot3d/graph/badge.svg)](https://app.co
 MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- badges: end -->
 
-<p align="center"><img src="man/figures/ggplot3d-hero.svg" alt="Height bands of the Maunga Whau volcano every 10 metres, from blue at 90 metres through beige to red at 200 metres, drawn as a flat ggplot2 contour map on the left and, with coord_3d(), draped over the shaded volcano surface on the right." width="100%"></p>
+<p align="center">
+
+<img src="man/figures/ggplot3d-hero.svg" alt="Height bands of the Maunga Whau volcano every 10 metres, from blue at 90 metres through beige to red at 200 metres, drawn as a flat ggplot2 contour map on the left and, with coord_3d(), draped over the shaded volcano surface on the right." width="100%">
+</p>
 
 ggplot3d draws three-dimensional points, paths, surfaces and solids with
 [ggplot2](https://ggplot2.tidyverse.org/).
@@ -33,9 +36,8 @@ ggplot3d supports:
   and facets.
 - Vector drawing and raster rendering from the same scene geometry.
 
-[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html) explains how overlapping geometry
-is ordered and split. The examples below generate their figures from the
-package.
+[Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html)
+explains how overlapping geometry is ordered and split.
 
 ## Installation
 
@@ -148,21 +150,41 @@ ggsave("surface.png", raster_plot, width = 5, height = 4.5, dpi = 144)
 
 ## Documentation
 
-Start with [Get started](https://gillescolling.com/ggplot3d/articles/ggplot3d.html) to create and save a
-plot.
+Start with [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.html) to
+create and save a plot.
 
-- [The z scale](https://gillescolling.com/ggplot3d/articles/z-scale.html): transformations, categories,
-  limits and facets.
-- [Layers](https://gillescolling.com/ggplot3d/articles/layers.html): points, paths, gridded surfaces,
-  columns, distributions and intervals.
-- [Surfaces, solids and fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html): meshes,
-  fitted and level surfaces, hulls, solid glyphs and sweeps.
-- [Camera and framing](https://gillescolling.com/ggplot3d/articles/camera.html): view angles, projections
-  and plot bounds.
-- [Output backends](https://gillescolling.com/ggplot3d/articles/backends.html): choose vector or raster
-  rendering.
-- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html): how the scene resolves
-  overlapping geometry.
+- [The z
+  scale](https://gillescolling.com/ggplot3d/articles/z-scale.html):
+  transformations, categories, limits and facets.
+- [Layers](https://gillescolling.com/ggplot3d/articles/layers.html):
+  points, paths, gridded surfaces, columns, distributions and intervals.
+- [Surfaces, solids and
+  fields](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html):
+  meshes, fitted and level surfaces, hulls, solid glyphs and sweeps.
+- [Camera and
+  framing](https://gillescolling.com/ggplot3d/articles/camera.html):
+  view angles, projections and plot bounds.
+- [Positioning groups and
+  observations](https://gillescolling.com/ggplot3d/articles/positions.html):
+  jitter, dodge, stack and align labels.
+- [Axes, legends and pane
+  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.html):
+  labels, colourbars and panel styling.
+- [Displaying intervals and
+  summaries](https://gillescolling.com/ggplot3d/articles/intervals.html):
+  supplied bounds and grouped summaries.
+- [Output
+  backends](https://gillescolling.com/ggplot3d/articles/backends.html):
+  vector, raster and hybrid rendering, including PDF output.
+- [Lighting and surface
+  styles](https://gillescolling.com/ggplot3d/articles/lighting.html):
+  light presets, materials and shaded legends.
+- [Camera animation and
+  interaction](https://gillescolling.com/ggplot3d/articles/motion.html):
+  camera paths and changing data.
+- [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html):
+  how the scene resolves overlapping geometry.
 
 Function help is available in R, for example `?coord_3d` and
 `?geom_surface_3d`.
@@ -201,17 +223,25 @@ MIT, see [LICENSE.md](LICENSE.md).
 
 ## Citation
 
-    To cite ggplot3d in publications, use:
+To cite ggplot3d in publications, use:
 
-      Colling G (2026). _ggplot3d: 3D Plots in the Grammar of Graphics_. R
-      package version 0.0.0.9000, <https://github.com/gcol33/ggplot3d>.
+``` text
+Colling G (2026). _ggplot3d: 3D Plots in the Grammar of Graphics_. R
+package version 0.0.0.9000, <https://github.com/gcol33/ggplot3d>.
+```
 
-    A BibTeX entry for LaTeX users is
+BibTeX:
 
-      @Manual{,
-        title = {ggplot3d: 3D Plots in the Grammar of Graphics},
-        author = {Gilles Colling},
-        year = {2026},
-        note = {R package version 0.0.0.9000},
-        url = {https://github.com/gcol33/ggplot3d},
-      }
+``` bibtex
+@Manual{,
+  title = {ggplot3d: 3D Plots in the Grammar of Graphics},
+  author = {Gilles Colling},
+  year = {2026},
+  note = {R package version 0.0.0.9000},
+  url = {https://github.com/gcol33/ggplot3d},
+}
+```
+
+Download the citation as
+[BibTeX](https://gillescolling.com/ggplot3d/ggplot3d.bib) or
+[RIS](https://gillescolling.com/ggplot3d/ggplot3d.ris).

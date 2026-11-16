@@ -54,6 +54,8 @@
 #'   projected edge; `"in_plane"` draws them into the pane, perpendicular to the
 #'   edge in three dimensions. Plane labels and ticks depth-sort with data.
 #' @return A ggplot2 guide for a three-dimensional position axis.
+#' @seealso [Axes, legends and pane styling](https://gillescolling.com/ggplot3d/articles/guides-themes.html)
+#'   for scale breaks, colourbars and panel theme elements.
 #' @references
 #' Kling M (2025). ggcube: 3D plotting with ggplot2. `coord_3d()` arguments
 #' `rotate_labels`, `scale_depth` and `title_position`.

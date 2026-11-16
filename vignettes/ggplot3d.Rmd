@@ -1,5 +1,6 @@
 ---
 title: "Get started"
+description: "Create a three-dimensional scatterplot, add a surface and save the resulting figure."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get started}
@@ -14,11 +15,11 @@ docs_setup()
 
 ggplot3d adds three-dimensional layers and a z position scale to [ggplot2](https://ggplot2.tidyverse.org/), the R package for building plots from data and aesthetic mappings. This tutorial assumes basic R and data frames. It ends with a surface, observations and a saved plot.
 
-1. **Map** positions with `aes()`.
+1. Map positions with `aes()`.
 
-2. **Draw** a surface with `geom_surface_3d()`.
+2. Draw a surface with `geom_surface_3d()`.
 
-3. **Save** the plot with `ggsave()`.
+3. Save the plot with `ggsave()`.
 
 ## Installation
 
@@ -104,6 +105,8 @@ ggsave(path, p, width = 5, height = 4.5)
 ## Where next
 
 * [The z scale](z-scale.html): transform heights and control ranges across facets.
+
+* [Axes, legends and pane styling](guides-themes.html): label the plot and adjust its panes.
 
 * [Camera and framing](camera.html): set the view and keep its bounds stable.
 

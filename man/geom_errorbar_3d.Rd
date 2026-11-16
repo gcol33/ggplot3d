@@ -130,4 +130,6 @@ ggplot2::ggplot(e, ggplot2::aes(x, y, ymin = y - 1, ymax = y + 1)) +
 \seealso{
 \code{\link[=stat_summary_3d]{stat_summary_3d()}} computes intervals from data, \code{\link[=geom_stem_3d]{geom_stem_3d()}}
 draws stems to a base value.
+\href{https://gillescolling.com/ggplot3d/articles/intervals.html}{Displaying intervals and summaries}
+shows supplied bounds and grouped summaries.
 }

@@ -1,5 +1,6 @@
 ---
 title: "Molecular ball-and-stick views"
+description: "Read molecular coordinates, attach bonds by atom identifier and draw atoms and bonds in three dimensions."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Molecular ball-and-stick views}
@@ -16,12 +17,15 @@ docs_setup(legend = "right", fig.width = 6, fig.height = 5)
 
 This water molecule has explicitly specified connectivity. Bond endpoints refer to atom serial numbers, and can be supplied independently of the order of the atom records.
 
+Installation is covered in [Get started](ggplot3d.html). The examples require
+bio3d and end by reading one of its bundled coordinate files.
+
 ```{r packages, message = FALSE}
 library(ggplot2)
 library(ggplot3d)
 ```
 
-```{r water, eval=requireNamespace("bio3d", quietly=TRUE)}
+```{r water, eval=requireNamespace("bio3d", quietly=TRUE), fig.alt="A water molecule with one oxygen atom joined by tubes to two smaller hydrogen atoms."}
 water <- bio3d::as.pdb(xyz = c(0, 0, 0, 0.96, 0, 0, -0.24, 0.93, 0),
                      eleno = c(10, 40, 90), elety = c("O", "H1", "H2"),
                      elesy = c("O", "H", "H"), resid = "HOH", verbose = FALSE)

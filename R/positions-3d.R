@@ -111,7 +111,8 @@ check_amount_3d <- function(value, name) {
 #'
 #' `position_stack_3d()` places the intervals of groups that share a cell end
 #' to end along `axis`; `position_fill_3d()` also rescales each stack to span
-#' 0 to 1. Positive and negative values stack separately. A cell is the set of
+#' 0 to 1 for positive values and 0 to -1 for negative values. Positive and
+#' negative values stack separately. A cell is the set of
 #' rows with the same position on the two other axes.
 #'
 #' Columns stack along z from a zero baseline. They stack along x or y when
@@ -128,6 +129,8 @@ check_amount_3d <- function(value, name) {
 #'   first group ends on top, as in [ggplot2::position_stack()].
 #' @return A ggplot2 position adjustment.
 #' @seealso [ggplot2::position_stack()], [position_dodge_3d()].
+#'   The [positioning article](https://gillescolling.com/ggplot3d/articles/positions.html)
+#'   demonstrates aligned columns and labels.
 #' @examples
 #' d <- expand.grid(x = 1:3, y = 1:2, part = c("a", "b", "c"))
 #' d$z <- c(1:6, 6:1, rep(2, 6))

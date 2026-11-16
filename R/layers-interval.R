@@ -303,6 +303,8 @@ crossbar_gp_3d <- function(colour, linetype, linewidth) {
 #' @return A ggplot2 layer.
 #' @seealso [stat_summary_3d()] computes intervals from data, [geom_stem_3d()]
 #'   draws stems to a base value.
+#'   [Displaying intervals and summaries](https://gillescolling.com/ggplot3d/articles/intervals.html)
+#'   shows supplied bounds and grouped summaries.
 #' @examples
 #' d <- expand.grid(x = 1:3, y = 1:2)
 #' d$z <- c(2, 3, 5, 4, 6, 5)

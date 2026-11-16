@@ -48,7 +48,8 @@ is spread evenly over the path.}
 \item{fps}{Frames per second, default 20.}
 
 \item{file}{Output path, or NULL to use \code{format}. The extension
-selects the output: \code{.gif}, \code{.mp4} or \code{.webm} (need av),
+selects the output: \code{.gif} (encoded by ggplot3d), \code{.mp4} or \code{.webm}
+(both need av),
 \code{.apng} (an animated PNG), \code{.png} or \code{.svg} (one file per frame; svg needs
 svglite) and \code{.pdf} (one page per frame). A file per frame takes its
 number from a \code{\link[=sprintf]{sprintf()}} pattern in the name, such as

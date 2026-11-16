@@ -13,7 +13,7 @@ source("../setup.R")
 docs_setup(legend = "right")
 ```
 
-Ordinary plots assume flat space, where straight lines are the shortest paths and parallel lines never meet. Spherical and hyperbolic space curve in opposite directions, and spacetime adds a time axis with its own sign in the distance formula. This article draws data in each of them with coordinate systems that keep their own geometry: geodesics stay geodesics, and an isometry of the space moves the data without distorting it. Installation is covered in [Get started](ggplot3d.html). [Thurston geometries](thurston-geometries.html) renders the view from inside these spaces with the ray-marching backend.
+Ordinary plots assume flat space, where straight lines are the shortest paths and parallel lines never meet. Spherical and hyperbolic space curve in opposite directions, and spacetime adds a time axis with its own sign in the distance formula. This article draws data in each of them with coordinate systems that keep their own geometry: geodesics stay geodesics, and an isometry of the space moves the data without distorting it. Installation is covered in [Get started](ggplot3d.html). [Inside the Thurston geometries](thurston-geometries.html) renders the view from inside these spaces with the ray-marching backend.
 
 ```{r packages, message = FALSE}
 library(ggplot2)
@@ -55,7 +55,7 @@ ggplot(base, aes(lon = lon, lat = lat, fill = id)) +
 
 Hyperbolic space has constant negative curvature: the circumference of a circle grows exponentially with its radius. `coord_hyperbolic_3d()` draws it in the Poincaré ball, where the whole space fits inside a unit ball and geodesics are arcs that meet the boundary at right angles. The six chords below join every second corner of a hexagon; drawn as geodesics, they bow toward the centre of the ball.
 
-```{r hyperbolic, fig.alt = "Six hyperbolic geodesics drawn as arcs inside the Poincare ball, with spheres of equal hyperbolic distance from the centre."}
+```{r hyperbolic, fig.width=4, fig.height=3.5, fig.alt = "Six hyperbolic geodesics drawn as arcs inside the Poincare ball, with circles of equal hyperbolic distance from the centre."}
 angle <- seq(0, 2 * pi, length.out = 7)[-7]
 ends <- c(angle, angle[c(3:6, 1:2)])
 chords <- data.frame(x = 0.7 * cos(ends), y = 0.7 * sin(ends),
@@ -66,7 +66,7 @@ ggplot(chords, aes(x, y, z = z, group = id)) +
                       distance_breaks = c(0.5, 1, 1.5))
 ```
 
-`distance_breaks` draws spheres at the given hyperbolic distances from the origin, so equal steps in distance appear ever closer together toward the rim. `inside = TRUE` with an `observer` renders the view from a point inside the space.
+`distance_breaks` draws circles at the given hyperbolic distances from the origin, so equal steps in distance appear ever closer together toward the rim. `inside = TRUE` with an `observer` renders the view from a point inside the space.
 
 ## Trees in hyperbolic space
 
@@ -93,11 +93,14 @@ ggplot() +
   coord_spacetime_3d()
 ```
 
-`interval = 1` with `sheet = "future"` draws the hyperboloid of events at proper time 1 after the origin, which is a model of hyperbolic space. `lorentz_boost_3d()` returns the matrix of a boost; a boost at half the speed of light along x moves the event at rest one unit after the origin to a time of $\gamma = 1/\sqrt{1 - 0.5^2} \approx 1.155$.
+`interval = 1` with `sheet = "future"` draws the hyperboloid of events at proper time 1 after the origin, which is a model of hyperbolic space. `lorentz_boost_3d()` takes rapidity, the inverse hyperbolic tangent of speed divided by the speed of light. For a speed of 0.5 along x in these units, the event at rest one unit after the origin moves to a time of $\gamma = 1/\sqrt{1 - 0.5^2} \approx 1.155$.
 
 ```{r boost}
-boost <- lorentz_boost_3d(0.5, c(1, 0, 0))
-boost %*% c(0, 0, 0, 1)
+speed <- 0.5
+boost <- lorentz_boost_3d(rapidity = atanh(speed), direction = c(1, 0, 0))
+event <- boost %*% c(0, 0, 0, 1)
+event
+stopifnot(isTRUE(all.equal(event[4], 1 / sqrt(1 - speed^2))))
 ```
 
 ## Black holes

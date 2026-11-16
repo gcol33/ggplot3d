@@ -24,7 +24,8 @@ A ggplot2 position adjustment.
 \description{
 \code{position_stack_3d()} places the intervals of groups that share a cell end
 to end along \code{axis}; \code{position_fill_3d()} also rescales each stack to span
-0 to 1. Positive and negative values stack separately. A cell is the set of
+0 to 1 for positive values and 0 to -1 for negative values. Positive and
+negative values stack separately. A cell is the set of
 rows with the same position on the two other axes.
 }
 \details{
@@ -54,4 +55,6 @@ ggplot2::ggplot(w, ggplot2::aes(x, y, zmin = 0, zmax = h, fill = part,
 }
 \seealso{
 \code{\link[ggplot2:position_stack]{ggplot2::position_stack()}}, \code{\link[=position_dodge_3d]{position_dodge_3d()}}.
+The \href{https://gillescolling.com/ggplot3d/articles/positions.html}{positioning article}
+demonstrates aligned columns and labels.
 }

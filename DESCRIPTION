@@ -23,7 +23,7 @@ Copyright: ggplot3d code is copyright Gilles Colling. Bundled Manifold code
     is copyright The Manifold Authors (Apache License 2.0); bundled Clipper2
     code is copyright Angus Johnson (Boost Software License 1.0). See
     inst/COPYRIGHTS for additional component notices and licenses.
-URL: https://github.com/gcol33/ggplot3d
+URL: https://gillescolling.com/ggplot3d/, https://github.com/gcol33/ggplot3d
 BugReports: https://github.com/gcol33/ggplot3d/issues
 Encoding: UTF-8
 Depends: R (>= 4.1.0)

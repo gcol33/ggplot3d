@@ -19,7 +19,8 @@
 #'   mappings are the same in each frame.
 #' @param fps Frames per second, default 20.
 #' @param file Output path, or NULL to use `format`. The extension
-#'   selects the output: `.gif`, `.mp4` or `.webm` (need av),
+#'   selects the output: `.gif` (encoded by ggplot3d), `.mp4` or `.webm`
+#'   (both need av),
 #'   `.apng` (an animated PNG), `.png` or `.svg` (one file per frame; svg needs
 #'   svglite) and `.pdf` (one page per frame). A file per frame takes its
 #'   number from a [sprintf()] pattern in the name, such as

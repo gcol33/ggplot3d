@@ -1,5 +1,6 @@
 ---
 title: "Ordination biplots"
+description: "Draw site scores, variable arrows and grouped regions from principal-component and ecological ordinations."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Ordination biplots}
@@ -14,12 +15,16 @@ docs_setup(legend = "right", fig.width = 7, fig.height = 5)
 
 An ordination places observations on a small set of axes computed from their measured variables. A biplot draws the observations and variable directions in the same view. `biplot_3d()` composes site points, solid-headed quiver arrows and optional group regions.
 
+The examples use iris measurements to draw principal-component scores, match
+groups by identifier and display ecological ordination scores. Installation
+is covered in [Get started](ggplot3d.html); the final example also requires vegan.
+
 ```{r packages, message = FALSE}
 library(ggplot2)
 library(ggplot3d)
 ```
 
-```{r iris}
+```{r iris, fig.alt="Iris flowers on three principal-component axes, with measurement arrows and ellipsoids describing the species groups."}
 fit <- prcomp(iris[1:4], scale. = TRUE)
 groups <- setNames(iris$Species, rownames(iris))
 ggplot() + biplot_3d(fit, groups = groups, region = "ellipsoid",
@@ -30,7 +35,7 @@ For `prcomp`, sites use `fit$x` and arrows use `fit$rotation`. `loading_scale` e
 
 Site identifiers are the score matrix's row names, or sequential character identifiers when row names are absent. Group membership is joined by these identifiers. A named vector or a table with `id` and `group` columns can supply membership in any order.
 
-```{r hull}
+```{r hull, fig.alt="The iris principal-component scores with a convex hull around each species, using group membership joined by identifier."}
 membership <- data.frame(id = names(groups), group = unname(groups))
 membership <- membership[rev(seq_len(nrow(membership))), ]
 ggplot() + biplot_3d(fit, groups = membership, region = "hull",
@@ -41,7 +46,7 @@ ggplot() + biplot_3d(fit, groups = membership, region = "hull",
 
 [vegan](https://vegandevs.github.io/vegan/) supplies ecological ordination methods and a `scores()` generic that applies their scaling conventions. `biplot_3d()` calls that generic for vegan fits. Pass method-specific arguments in `scores_args`, or supply a list containing `sites` and `species` score matrices directly.
 
-```{r vegan, eval=requireNamespace("vegan", quietly=TRUE)}
+```{r vegan, eval=requireNamespace("vegan", quietly=TRUE), fig.alt="An iris ordination from vegan with species groups and labelled variable arrows."}
 model <- vegan::rda(iris[1:4], scale = TRUE)
 ggplot() + biplot_3d(model, groups = groups,
                         scores_args = list(scaling = 2), label_size = 5) + coord_3d(clip = "off")
