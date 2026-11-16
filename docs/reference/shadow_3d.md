@@ -51,11 +51,13 @@ A shadow configuration for
 
 Strokes cast ribbons of their drawn width and points cast discs of their
 drawn radius, both measured where the caster lies. Text casts no shadow,
-and neither do ray-traced layers. A pane receives shadows only when the
-light reaches it from inside the box, and only while it faces away from
-the camera, as panes drawn behind the data do. The shadows are vector
-geometry in every backend: the raster and hybrid backends draw them with
-the panel furniture.
+and neither do ray-traced layers. Every 3D layer casts by default; a
+layer given `cast_shadow = FALSE`, such as
+`geom_point_3d(cast_shadow = FALSE)`, casts none. A pane receives
+shadows only when the light reaches it from inside the box, and only
+while it faces away from the camera, as panes drawn behind the data do.
+The shadows are vector geometry in every backend: the raster and hybrid
+backends draw them with the panel furniture.
 
 ## References
 

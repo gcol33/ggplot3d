@@ -30,7 +30,9 @@ layer_3d(
   Fixed aesthetics and rendering parameters, such as `clip_planes`, a
   list of
   [`clip_plane_3d()`](https://gillescolling.com/ggplot3d/reference/clip_plane_3d.md)
-  planes that replaces the coordinate system's planes for this layer.
+  planes that replaces the coordinate system's planes for this layer, or
+  `cast_shadow = FALSE`, which keeps the layer out of the shadows of
+  [`shadow_3d()`](https://gillescolling.com/ggplot3d/reference/shadow_3d.md).
 
 - occlusion:
 
