@@ -109,7 +109,7 @@ A backend configuration for coord_3d().
 Select a 3D rendering backend
 }
 \details{
-The raster backend renders 64-pixel tiles in parallel. The number
+The raster backend renders 16-pixel tiles in parallel. The number
 of worker threads is the option \code{ggplot3d.threads}; the default \code{0} uses
 one thread per hardware thread, at most two when \verb{_R_CHECK_LIMIT_CORES_}
 is set. The image does not depend on the thread count.

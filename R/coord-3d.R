@@ -49,7 +49,7 @@
 #'   translucent paint and averages antialiasing samples: `"linear"` light,
 #'   encoded to sRGB after averaging, or `"srgb"`, which matches the
 #'   compositing of vector graphics devices.
-#' @details The raster backend renders 64-pixel tiles in parallel. The number
+#' @details The raster backend renders 16-pixel tiles in parallel. The number
 #'   of worker threads is the option `ggplot3d.threads`; the default `0` uses
 #'   one thread per hardware thread, at most two when `_R_CHECK_LIMIT_CORES_`
 #'   is set. The image does not depend on the thread count.
