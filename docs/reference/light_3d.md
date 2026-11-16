@@ -21,6 +21,7 @@ light_3d(
   highlight_colour = "#fff1d6",
   linear = NULL,
   material = NULL,
+  viewer = NULL,
   preset = "default"
 )
 ```
@@ -79,6 +80,15 @@ light_3d(
   for the shaded layers that set none, or NULL for the preset's (plain
   Lambert reflection when the preset has none).
 
+- viewer:
+
+  NULL, or the distance of the eye that the specular highlight is
+  computed for, in radii of the sphere around the panel box, measured
+  from the camera target along the view axis (OpenGL's local viewer; rgl
+  places it at `1 / sin(fov / 2)`). A near eye draws a highlight out
+  along a surface. NULL takes the preset's, else the camera's eye
+  (infinitely far under orthographic projection).
+
 - preset:
 
   Starting lighting: `"default"`, `"ggcube"`, `"matplotlib"`, `"rgl"`,
@@ -111,11 +121,14 @@ replace its lights.
   `LightSource(azdeg = 225, altdeg = 19.4712)` in the data axes, i.e.
   `mode = "value"`, `range = c(-0.7, 0)`, `neutral = 0`.
 
-- `"rgl"`: rgl's default `light3d(theta = 0, phi = 15)`, a white light
-  15 degrees above the eye, with rgl's default material (no ambient
-  reflection, white specular, shininess 50) lit at the vertices
-  (`lighting = "vertex"`) on encoded values, as desktop rgl's
-  fixed-function OpenGL does.
+- `"rgl"`: the light of a new rgl scene, a white directional light at
+  the eye (position `(0, 0, 1)` in eye coordinates, as `rgl.attrib()`
+  reports; `light3d()`'s own default is 15 degrees above the eye), with
+  rgl's default material (no ambient reflection, white specular,
+  shininess 50) lit at the vertices (`lighting = "vertex"`) on encoded
+  values, and OpenGL's local viewer at rgl's default eye distance
+  (`viewer = 1 / sin(15 degrees)`, for its 30-degree field of view), as
+  desktop rgl's fixed-function OpenGL does.
 
 - `"plotly"`: plotly's surface lighting defaults: ambient 0.8, diffuse
   0.8, the light at `lightposition = (10, 10000, 0)`, which its shader
