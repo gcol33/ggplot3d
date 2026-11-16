@@ -256,9 +256,7 @@ Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::Numeric
       Rcpp::stop("Invalid smooth face accessibility arrays.");
   }
   const std::size_t pixels = static_cast<std::size_t>(width) * height;
-  std::vector<double> colour(3 * pixels, 0.0), cover(pixels, 0.0);
   std::vector<double> total(3 * pixels, 0.0), alpha_sum(pixels, 0.0);
-  std::vector<int> state(pixels, 0), owner(pixels, 0);
   struct Triangle { R_xlen_t v[3]; int face; };
   std::vector<Triangle> triangles;
   for (R_xlen_t start = 0; start < n;) {
@@ -333,97 +331,129 @@ Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::Numeric
     const int j = (k + 1) % 3, l = (k + 2) % 3;
     return ((g.x[j] - px) * (g.y[l] - py) - (g.x[l] - px) * (g.y[j] - py)) / g.area;
   };
-  constexpr int samples = 4;
-  std::vector<double> shaded(3 * pixels, 0.0);
-  std::vector<int> shaded_by(pixels, -1), hits(pixels, 0);
-  // Exact pass of one sample: the samples inside each face, composited in
-  // face order. Each row visits only the span of columns that the three edge
+  constexpr int samples = 4, count = samples * samples, band = 32;
+  // Sample s sits at (c + offset_x[s], r + offset_y[s]) in pixel (c, r), rows
+  // before columns.
+  double offset_x[count], offset_y[count];
+  for (int qy = 0; qy < samples; ++qy) for (int qx = 0; qx < samples; ++qx) {
+    offset_x[qy * samples + qx] = (qx + 0.5) / samples;
+    offset_y[qy * samples + qx] = (qy + 0.5) / samples;
+  }
+  std::vector<int> hits(pixels, 0);
+  // Each band of rows is painted on its own: every pixel's samples are
+  // composited in face order, and the samples outside every face take, at
+  // their pixel's centre, the colour and alpha of the nearest face within
+  // `reach` pixels (of equally near faces the later one). Coverage of a pixel
+  // by a triangle is tested once per sample; a sample counts for the
+  // composite only within its row span, the columns that the three edge
   // functions, linear in x along the row, leave inside, widened by a column.
-  auto paint = [&](double sx, double sy) {
+  struct Scratch {
+    std::vector<double> colour, cover;
+    std::vector<int> state, owner;
+  };
+  Scratch scratch;
+  auto paint_band = [&](int r_begin, int r_end, Scratch& s) {
+    const std::size_t band_pixels = static_cast<std::size_t>(r_end - r_begin) * width;
+    s.colour.assign(3 * count * band_pixels, 0.0); s.cover.assign(count * band_pixels, 0.0);
+    s.state.assign(count * band_pixels, 0); s.owner.assign(count * band_pixels, 0);
+    double span_lo[count], span_hi[count];
+    bool inside[count];
     for (std::size_t i = 0; i < triangles.size(); ++i) {
       const Triangle& t = triangles[i]; const Geometry& g = geometry[i];
-      if (!(std::fabs(g.area) > 1e-12)) continue;
+      if (!(std::fabs(g.area) > 1e-12) || g.r1 < r_begin || g.r0 >= r_end) continue;
       const double a = alpha[t.face - 1];
-      for (int r = g.r0; r <= g.r1; ++r) {
-        const double py = r + sy;
-        double lo = g.c0, hi = g.c1;
-        for (int k = 0; k < 3 && lo <= hi; ++k) {
-          const int j = (k + 1) % 3, l = (k + 2) % 3;
-          const double slope = (g.y[j] - g.y[l]) / g.area;
-          const double at = (g.x[j] * (g.y[l] - py) - g.x[l] * (g.y[j] - py)) / g.area;
-          if (slope > 0) lo = std::max(lo, std::floor(-at / slope - sx) - 1);
-          else if (slope < 0) hi = std::min(hi, std::ceil(-at / slope - sx) + 1);
-          else if (at < -1e-9) hi = lo - 1;
+      for (int r = std::max(g.r0, r_begin); r <= std::min(g.r1, r_end - 1); ++r) {
+        double lo_all = std::numeric_limits<double>::infinity(), hi_all = -lo_all;
+        for (int q = 0; q < count; ++q) {
+          const double sx = offset_x[q], py = r + offset_y[q];
+          double lo = g.c0, hi = g.c1;
+          for (int k = 0; k < 3 && lo <= hi; ++k) {
+            const int j = (k + 1) % 3, l = (k + 2) % 3;
+            const double slope = (g.y[j] - g.y[l]) / g.area;
+            const double at = (g.x[j] * (g.y[l] - py) - g.x[l] * (g.y[j] - py)) / g.area;
+            if (slope > 0) lo = std::max(lo, std::floor(-at / slope - sx) - 1);
+            else if (slope < 0) hi = std::min(hi, std::ceil(-at / slope - sx) + 1);
+            else if (at < -1e-9) hi = lo - 1;
+          }
+          span_lo[q] = lo; span_hi[q] = hi;
+          if (lo <= hi) { lo_all = std::min(lo_all, lo); hi_all = std::max(hi_all, hi); }
         }
-        if (!(lo <= hi)) continue;
-        for (int c = static_cast<int>(lo); c <= static_cast<int>(hi); ++c) {
-          const double px = c + sx;
-          if (weight(g, 0, px, py) < -1e-12 || weight(g, 1, px, py) < -1e-12 || weight(g, 2, px, py) < -1e-12) continue;
-          const std::size_t pixel = static_cast<std::size_t>(height - 1 - r) * width + c;
-          if (state[pixel] && owner[pixel] == t.face) continue;
-          double* src = &shaded[3 * pixel];
-          if (g.per_sample) {
-            colour_at(t, g.area, px, py, src);
-            shaded_by[pixel] = -1;
-          } else if (shaded_by[pixel] != static_cast<int>(i)) {
-            double cx = 0, cy = 0; int covered = 0;
-            for (int qy = 0; qy < samples; ++qy) for (int qx = 0; qx < samples; ++qx) {
-              const double ux = c + (qx + 0.5) / samples, uy = r + (qy + 0.5) / samples;
-              if (weight(g, 0, ux, uy) < -1e-12 || weight(g, 1, ux, uy) < -1e-12 || weight(g, 2, ux, uy) < -1e-12) continue;
-              cx += ux; cy += uy; ++covered;
+        if (!(lo_all <= hi_all)) continue;
+        for (int c = static_cast<int>(lo_all); c <= static_cast<int>(hi_all); ++c) {
+          double cx = 0, cy = 0; int covered = 0; bool any = false;
+          for (int q = 0; q < count; ++q) {
+            const double ux = c + offset_x[q], uy = r + offset_y[q];
+            const bool in = !(weight(g, 0, ux, uy) < -1e-12 || weight(g, 1, ux, uy) < -1e-12 || weight(g, 2, ux, uy) < -1e-12);
+            if (in) { cx += ux; cy += uy; ++covered; }
+            inside[q] = in && c >= span_lo[q] && c <= span_hi[q];
+            any = any || inside[q];
+          }
+          if (!any) continue;
+          const std::size_t local = static_cast<std::size_t>(r - r_begin) * width + c;
+          double shaded[3]; bool have = false;
+          for (int q = 0; q < count; ++q) {
+            if (!inside[q]) continue;
+            const std::size_t at = static_cast<std::size_t>(q) * band_pixels + local;
+            if (s.state[at] && s.owner[at] == t.face) continue;
+            double src[3];
+            if (g.per_sample) colour_at(t, g.area, c + offset_x[q], r + offset_y[q], src);
+            else {
+              if (!have) {
+                if (covered) colour_at(t, g.area, cx / covered, cy / covered, shaded);
+                else colour_at(t, g.area, c + offset_x[q], r + offset_y[q], shaded);
+                have = true;
+              }
+              for (int ch = 0; ch < 3; ++ch) src[ch] = shaded[ch];
             }
-            if (covered) colour_at(t, g.area, cx / covered, cy / covered, src);
-            else colour_at(t, g.area, px, py, src);
-            shaded_by[pixel] = static_cast<int>(i);
+            double* dst = &s.colour[3 * at];
+            if (!s.state[at]) {
+              for (int ch = 0; ch < 3; ++ch) dst[ch] = src[ch];
+              s.cover[at] = a;
+            } else {
+              const double out = a + s.cover[at] * (1 - a);
+              for (int ch = 0; ch < 3; ++ch) dst[ch] = (a * src[ch] + s.cover[at] * (1 - a) * dst[ch]) / out;
+              s.cover[at] = out;
+            }
+            s.state[at] = 1; s.owner[at] = t.face;
           }
-          double* dst = &colour[3 * pixel];
-          if (!state[pixel]) {
-            for (int ch = 0; ch < 3; ++ch) dst[ch] = src[ch];
-            cover[pixel] = a;
-          } else {
-            const double out = a + cover[pixel] * (1 - a);
-            for (int ch = 0; ch < 3; ++ch) dst[ch] = (a * src[ch] + cover[pixel] * (1 - a) * dst[ch]) / out;
-            cover[pixel] = out;
-          }
-          state[pixel] = 1; owner[pixel] = t.face;
         }
       }
     }
-  };
-  for (int sy = 0; sy < samples; ++sy) for (int sx = 0; sx < samples; ++sx) {
-    std::fill(state.begin(), state.end(), 0);
-    paint((sx + 0.5) / samples, (sy + 0.5) / samples);
-    for (std::size_t pixel = 0; pixel < pixels; ++pixel) if (state[pixel]) {
-      ++hits[pixel];
-      alpha_sum[pixel] += cover[pixel];
-      for (int ch = 0; ch < 3; ++ch) total[3 * pixel + ch] += colour[3 * pixel + ch] * cover[pixel];
-    }
-  }
-  // Samples outside every face take, at their pixel's centre, the colour and
-  // alpha of the nearest face within `reach` pixels; of equally near faces
-  // the later one.
-  std::vector<double> nearest(pixels, std::numeric_limits<double>::infinity());
-  std::fill(owner.begin(), owner.end(), -1);
-  for (std::size_t i = 0; i < triangles.size(); ++i) {
-    const Geometry& g = geometry[i];
-    if (!(std::fabs(g.area) > 1e-12)) continue;
-    for (int r = g.r0; r <= g.r1; ++r) for (int c = g.c0; c <= g.c1; ++c) {
+    for (int q = 0; q < count; ++q) for (int r = r_begin; r < r_end; ++r) for (int c = 0; c < width; ++c) {
+      const std::size_t local = static_cast<std::size_t>(r - r_begin) * width + c;
+      const std::size_t at = static_cast<std::size_t>(q) * band_pixels + local;
+      if (!s.state[at]) continue;
       const std::size_t pixel = static_cast<std::size_t>(height - 1 - r) * width + c;
-      if (hits[pixel] == samples * samples) continue;
-      double outside = 0;
-      for (int k = 0; k < 3; ++k) outside = std::max(outside, -weight(g, k, c + 0.5, r + 0.5) * std::fabs(g.area) / g.edge[k]);
-      if (outside <= reach && outside <= nearest[pixel]) { nearest[pixel] = outside; owner[pixel] = static_cast<int>(i); }
+      ++hits[pixel];
+      alpha_sum[pixel] += s.cover[at];
+      for (int ch = 0; ch < 3; ++ch) total[3 * pixel + ch] += s.colour[3 * at + ch] * s.cover[at];
     }
-  }
-  for (std::size_t pixel = 0; pixel < pixels; ++pixel) if (owner[pixel] >= 0) {
-    const int i = owner[pixel];
-    const int c = static_cast<int>(pixel % width), r = height - 1 - static_cast<int>(pixel / width);
-    double src[3];
-    colour_at(triangles[i], geometry[i].area, c + 0.5, r + 0.5, src);
-    const double m = (samples * samples - hits[pixel]) * alpha[triangles[i].face - 1];
-    alpha_sum[pixel] += m;
-    for (int ch = 0; ch < 3; ++ch) total[3 * pixel + ch] += src[ch] * m;
-  }
+    std::vector<double> nearest(band_pixels, std::numeric_limits<double>::infinity());
+    std::vector<int> owner(band_pixels, -1);
+    for (std::size_t i = 0; i < triangles.size(); ++i) {
+      const Geometry& g = geometry[i];
+      if (!(std::fabs(g.area) > 1e-12) || g.r1 < r_begin || g.r0 >= r_end) continue;
+      for (int r = std::max(g.r0, r_begin); r <= std::min(g.r1, r_end - 1); ++r) for (int c = g.c0; c <= g.c1; ++c) {
+        const std::size_t pixel = static_cast<std::size_t>(height - 1 - r) * width + c;
+        if (hits[pixel] == count) continue;
+        const std::size_t local = static_cast<std::size_t>(r - r_begin) * width + c;
+        double outside = 0;
+        for (int k = 0; k < 3; ++k) outside = std::max(outside, -weight(g, k, c + 0.5, r + 0.5) * std::fabs(g.area) / g.edge[k]);
+        if (outside <= reach && outside <= nearest[local]) { nearest[local] = outside; owner[local] = static_cast<int>(i); }
+      }
+    }
+    for (int r = r_begin; r < r_end; ++r) for (int c = 0; c < width; ++c) {
+      const int i = owner[static_cast<std::size_t>(r - r_begin) * width + c];
+      if (i < 0) continue;
+      const std::size_t pixel = static_cast<std::size_t>(height - 1 - r) * width + c;
+      double src[3];
+      colour_at(triangles[i], geometry[i].area, c + 0.5, r + 0.5, src);
+      const double m = (count - hits[pixel]) * alpha[triangles[i].face - 1];
+      alpha_sum[pixel] += m;
+      for (int ch = 0; ch < 3; ++ch) total[3 * pixel + ch] += src[ch] * m;
+    }
+  };
+  for (int r_begin = 0; r_begin < height; r_begin += band) paint_band(r_begin, std::min(height, r_begin + band), scratch);
   Rcpp::IntegerMatrix raster(height, width);
   std::uint32_t* packed = reinterpret_cast<std::uint32_t*>(INTEGER(raster));
   auto byte = [](double v) { return static_cast<std::uint32_t>(std::lround(std::min(1.0, std::max(0.0, v)) * 255)); };
