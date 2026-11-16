@@ -3,15 +3,24 @@
 <g class='svglite'>
 <defs>
   <style type='text/css'><![CDATA[
-    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
       fill: none;
-      stroke: #000000;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
       stroke-linecap: round;
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
     }
     .svglite text {
       white-space: pre;
+      fill: #3E3F3A;
     }
     .svglite g.glyphgroup path {
       fill: inherit;
@@ -19,7 +28,7 @@
     }
   ]]></style>
 </defs>
-<rect width='100%' height='100%' style='stroke: none; fill: none;'/>
+<rect class='svg-bg' width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
 <defs>
   <clipPath id='cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA='>
     <rect x='0.00' y='0.00' width='468.00' height='324.00' />
@@ -44,101 +53,101 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMTMwLjAxfDM3OS41NnwxNi40NHwyOTEuMjE=)'>
-<polyline points='137.80,243.27 137.80,89.83 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='151.23,231.64 151.23,78.21 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='164.65,220.02 164.65,66.59 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='178.07,208.40 178.07,54.96 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='191.49,196.77 191.49,43.34 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='204.91,185.15 204.91,31.71 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='218.34,173.52 218.34,20.09 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='151.23,231.64 151.23,78.21 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='178.07,208.40 178.07,54.96 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='204.91,185.15 204.91,31.71 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,243.23 222.36,166.52 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,225.97 222.36,149.25 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,208.71 222.36,131.99 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,191.44 222.36,114.73 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,174.18 222.36,97.46 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,156.92 222.36,80.20 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,139.65 222.36,62.94 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,122.39 222.36,45.67 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,105.13 222.36,28.41 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,225.97 222.36,149.25 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,191.44 222.36,114.73 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,156.92 222.36,80.20 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='133.78,122.39 222.36,45.67 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='227.68,171.57 227.68,18.14 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='244.28,176.36 244.28,22.93 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='260.89,181.16 260.89,27.72 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='277.49,185.95 277.49,32.52 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='294.10,190.75 294.10,37.31 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='310.70,195.54 310.70,42.11 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='327.31,200.33 327.31,46.90 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='343.91,205.13 343.91,51.69 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='360.52,209.92 360.52,56.49 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='227.68,171.57 227.68,18.14 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='260.89,181.16 260.89,27.72 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='294.10,190.75 294.10,37.31 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='327.31,200.33 327.31,46.90 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='360.52,209.92 360.52,56.49 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,166.52 375.80,210.81 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,149.25 375.80,193.55 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,131.99 375.80,176.28 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,114.73 375.80,159.02 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,97.46 375.80,141.76 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,80.20 375.80,124.49 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,62.94 375.80,107.23 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,45.67 375.80,89.97 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,28.41 375.80,72.70 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,149.25 375.80,193.55 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,114.73 375.80,159.02 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,80.20 375.80,124.49 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.36,45.67 375.80,89.97 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='139.09,248.29 227.68,171.57 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='155.70,253.08 244.28,176.36 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='172.30,257.88 260.89,181.16 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='188.91,262.67 277.49,185.95 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='205.51,267.46 294.10,190.75 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='222.12,272.26 310.70,195.54 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='238.72,277.05 327.31,200.33 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='255.33,281.84 343.91,205.13 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='271.93,286.64 360.52,209.92 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='139.09,248.29 227.68,171.57 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='172.30,257.88 260.89,181.16 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='205.51,267.46 294.10,190.75 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='238.72,277.05 327.31,200.33 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='271.93,286.64 360.52,209.92 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='137.80,243.27 291.24,287.56 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='151.23,231.64 304.66,275.94 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='164.65,220.02 318.08,264.31 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='178.07,208.40 331.50,252.69 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='191.49,196.77 344.93,241.06 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='204.91,185.15 358.35,229.44 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='218.34,173.52 371.77,217.82 ' style='stroke-width: 1.10; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='151.23,231.64 304.66,275.94 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='178.07,208.40 331.50,252.69 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='204.91,185.15 358.35,229.44 ' style='stroke-width: 2.19; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='137.80,243.27 137.80,89.83 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='151.23,231.64 151.23,78.21 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='164.65,220.02 164.65,66.59 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='178.07,208.40 178.07,54.96 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='191.49,196.77 191.49,43.34 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='204.91,185.15 204.91,31.71 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='218.34,173.52 218.34,20.09 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='151.23,231.64 151.23,78.21 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='178.07,208.40 178.07,54.96 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='204.91,185.15 204.91,31.71 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,243.23 222.36,166.52 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,225.97 222.36,149.25 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,208.71 222.36,131.99 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,191.44 222.36,114.73 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,174.18 222.36,97.46 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,156.92 222.36,80.20 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,139.65 222.36,62.94 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,122.39 222.36,45.67 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,105.13 222.36,28.41 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,225.97 222.36,149.25 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,191.44 222.36,114.73 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,156.92 222.36,80.20 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='133.78,122.39 222.36,45.67 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='227.68,171.57 227.68,18.14 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='244.28,176.36 244.28,22.93 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='260.89,181.16 260.89,27.72 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='277.49,185.95 277.49,32.52 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='294.10,190.75 294.10,37.31 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='310.70,195.54 310.70,42.11 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='327.31,200.33 327.31,46.90 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='343.91,205.13 343.91,51.69 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='360.52,209.92 360.52,56.49 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='227.68,171.57 227.68,18.14 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='260.89,181.16 260.89,27.72 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='294.10,190.75 294.10,37.31 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='327.31,200.33 327.31,46.90 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='360.52,209.92 360.52,56.49 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,166.52 375.80,210.81 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,149.25 375.80,193.55 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,131.99 375.80,176.28 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,114.73 375.80,159.02 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,97.46 375.80,141.76 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,80.20 375.80,124.49 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,62.94 375.80,107.23 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,45.67 375.80,89.97 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,28.41 375.80,72.70 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,149.25 375.80,193.55 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,114.73 375.80,159.02 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,80.20 375.80,124.49 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.36,45.67 375.80,89.97 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='139.09,248.29 227.68,171.57 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='155.70,253.08 244.28,176.36 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='172.30,257.88 260.89,181.16 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='188.91,262.67 277.49,185.95 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='205.51,267.46 294.10,190.75 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='222.12,272.26 310.70,195.54 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='238.72,277.05 327.31,200.33 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='255.33,281.84 343.91,205.13 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='271.93,286.64 360.52,209.92 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='139.09,248.29 227.68,171.57 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='172.30,257.88 260.89,181.16 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='205.51,267.46 294.10,190.75 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='238.72,277.05 327.31,200.33 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='271.93,286.64 360.52,209.92 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='137.80,243.27 291.24,287.56 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='151.23,231.64 304.66,275.94 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='164.65,220.02 318.08,264.31 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='178.07,208.40 331.50,252.69 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='191.49,196.77 344.93,241.06 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='204.91,185.15 358.35,229.44 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='218.34,173.52 371.77,217.82 ' style='stroke-width: 1.10; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='151.23,231.64 304.66,275.94 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='178.07,208.40 331.50,252.69 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
+<polyline points='204.91,185.15 358.35,229.44 ' style='stroke-width: 2.19; stroke: #DFD7CA; stroke-linecap: butt;' />
 <polyline points='222.36,170.04 375.80,214.33 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='133.78,246.75 222.36,170.04 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='222.36,170.04 222.36,16.60 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <image width='249.55' height='274.77' x='130.01' y='16.44' preserveAspectRatio='none' xlink:href='data:image/png;base64,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'/>
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-<text x='135.94' y='264.09' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='7.56px' lengthAdjust='spacingAndGlyphs'>0</text>
-<text x='168.86' y='274.68' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='15.12px' lengthAdjust='spacingAndGlyphs'>20</text>
-<text x='202.07' y='284.27' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='15.12px' lengthAdjust='spacingAndGlyphs'>40</text>
-<text x='235.28' y='293.86' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='15.12px' lengthAdjust='spacingAndGlyphs'>60</text>
-<text x='268.49' y='303.45' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='15.12px' lengthAdjust='spacingAndGlyphs'>80</text>
-<text transform='translate(199.67,306.38) rotate(16)' text-anchor='middle' style='font-size: 17.00px; font-family: "Arial";' textLength='8.50px' lengthAdjust='spacingAndGlyphs'>x</text>
-<text x='314.01' y='291.60' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='15.12px' lengthAdjust='spacingAndGlyphs'>20</text>
-<text x='340.86' y='268.35' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='15.12px' lengthAdjust='spacingAndGlyphs'>30</text>
-<text x='367.70' y='245.11' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='15.12px' lengthAdjust='spacingAndGlyphs'>40</text>
-<text transform='translate(359.48,284.99) rotate(-41)' text-anchor='middle' style='font-size: 17.00px; font-family: "Arial";' textLength='8.50px' lengthAdjust='spacingAndGlyphs'>y</text>
-<text x='117.97' y='230.84' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='22.69px' lengthAdjust='spacingAndGlyphs'>100</text>
-<text x='117.97' y='196.31' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='22.69px' lengthAdjust='spacingAndGlyphs'>125</text>
-<text x='117.97' y='161.78' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='22.69px' lengthAdjust='spacingAndGlyphs'>150</text>
-<text x='117.97' y='127.26' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='22.69px' lengthAdjust='spacingAndGlyphs'>175</text>
-<text transform='translate(100.49,170.04) rotate(-90)' text-anchor='middle' style='font-size: 17.00px; font-family: "Arial";' textLength='8.50px' lengthAdjust='spacingAndGlyphs'>z</text>
+<text x='135.94' y='264.09' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0</text>
+<text x='168.86' y='274.68' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>20</text>
+<text x='202.07' y='284.27' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>40</text>
+<text x='235.28' y='293.86' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>60</text>
+<text x='268.49' y='303.45' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>80</text>
+<text transform='translate(199.67,306.38) rotate(16)' text-anchor='middle' style='font-size: 1.7em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>x</text>
+<text x='314.01' y='291.60' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>20</text>
+<text x='340.86' y='268.35' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>30</text>
+<text x='367.70' y='245.11' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>40</text>
+<text transform='translate(359.48,284.99) rotate(-41)' text-anchor='middle' style='font-size: 1.7em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>y</text>
+<text x='117.97' y='230.84' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>100</text>
+<text x='117.97' y='196.31' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>125</text>
+<text x='117.97' y='161.78' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>150</text>
+<text x='117.97' y='127.26' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>175</text>
+<text transform='translate(100.49,170.04) rotate(-90)' text-anchor='middle' style='font-size: 1.7em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>z</text>
 </g>
 </g>
 </svg>

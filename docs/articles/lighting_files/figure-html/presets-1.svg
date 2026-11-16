@@ -3,15 +3,24 @@
 <g class='svglite'>
 <defs>
   <style type='text/css'><![CDATA[
-    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+    /* theme-aware-processed */
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite circle {
       fill: none;
-      stroke: #000000;
+      stroke: #3E3F3A;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite > g > rect {
+      fill: none;
+      stroke: #3E3F3A;
       stroke-linecap: round;
       stroke-linejoin: round;
       stroke-miterlimit: 10.00;
     }
     .svglite text {
       white-space: pre;
+      fill: #3E3F3A;
     }
     .svglite g.glyphgroup path {
       fill: inherit;
@@ -19,7 +28,7 @@
     }
   ]]></style>
 </defs>
-<rect width='100%' height='100%' style='stroke: none; fill: none;'/>
+<rect class='svg-bg' width='100%' height='100%' style='stroke: none; fill: #F5F6F8;'/>
 <defs>
   <clipPath id='cpMC4wMHw1NDAuMDB8MC4wMHwzNjAuMDA='>
     <rect x='0.00' y='0.00' width='540.00' height='360.00' />
@@ -125,7 +134,7 @@
 <g clip-path='url(#cpNzAuMTh8MTgxLjQ4fDUyLjI3fDE2My41Ng==)'>
 </g>
 <g clip-path='url(#cpMC4wMHw1NDAuMDB8MC4wMHwzNjAuMDA=)'>
-<text x='62.21' y='31.54' style='font-size: 20.40px; font-family: "Arial";' textLength='61.25px' lengthAdjust='spacingAndGlyphs'>default</text>
+<text x='62.21' y='31.54' style='font-size: 2.04em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>default</text>
 <rect x='206.38' y='44.30' width='127.23' height='127.23' style='stroke-width: 1.65; stroke: none;' />
 </g>
 <defs>
@@ -146,7 +155,7 @@
 <g clip-path='url(#cpMjE0LjM1fDMyNS42NXw1Mi4yN3wxNjMuNTY=)'>
 </g>
 <g clip-path='url(#cpMC4wMHw1NDAuMDB8MC4wMHwzNjAuMDA=)'>
-<text x='206.38' y='31.54' style='font-size: 20.40px; font-family: "Arial";' textLength='66.92px' lengthAdjust='spacingAndGlyphs'>ggcube</text>
+<text x='206.38' y='31.54' style='font-size: 2.04em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>ggcube</text>
 <rect x='350.55' y='44.30' width='127.23' height='127.23' style='stroke-width: 1.65; stroke: none;' />
 </g>
 <defs>
@@ -167,7 +176,7 @@
 <g clip-path='url(#cpMzU4LjUyfDQ2OS44Mnw1Mi4yN3wxNjMuNTY=)'>
 </g>
 <g clip-path='url(#cpMC4wMHw1NDAuMDB8MC4wMHwzNjAuMDA=)'>
-<text x='350.55' y='31.54' style='font-size: 20.40px; font-family: "Arial";' textLength='87.30px' lengthAdjust='spacingAndGlyphs'>matplotlib</text>
+<text x='350.55' y='31.54' style='font-size: 2.04em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>matplotlib</text>
 <rect x='62.21' y='215.83' width='127.23' height='127.23' style='stroke-width: 1.65; stroke: none;' />
 </g>
 <defs>
@@ -188,7 +197,7 @@
 <g clip-path='url(#cpNzAuMTh8MTgxLjQ4fDIyMy44MHwzMzUuMDk=)'>
 </g>
 <g clip-path='url(#cpMC4wMHw1NDAuMDB8MC4wMHwzNjAuMDA=)'>
-<text x='62.21' y='203.07' style='font-size: 20.40px; font-family: "Arial";' textLength='22.67px' lengthAdjust='spacingAndGlyphs'>rgl</text>
+<text x='62.21' y='203.07' style='font-size: 2.04em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>rgl</text>
 <rect x='206.38' y='215.83' width='127.23' height='127.23' style='stroke-width: 1.65; stroke: none;' />
 </g>
 <defs>
@@ -209,7 +218,7 @@
 <g clip-path='url(#cpMjE0LjM1fDMyNS42NXwyMjMuODB8MzM1LjA5)'>
 </g>
 <g clip-path='url(#cpMC4wMHw1NDAuMDB8MC4wMHwzNjAuMDA=)'>
-<text x='206.38' y='203.07' style='font-size: 20.40px; font-family: "Arial";' textLength='47.62px' lengthAdjust='spacingAndGlyphs'>plotly</text>
+<text x='206.38' y='203.07' style='font-size: 2.04em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>plotly</text>
 <rect x='350.55' y='215.83' width='127.23' height='127.23' style='stroke-width: 1.65; stroke: none;' />
 </g>
 <defs>
@@ -230,7 +239,7 @@
 <g clip-path='url(#cpMzU4LjUyfDQ2OS44MnwyMjMuODB8MzM1LjA5)'>
 </g>
 <g clip-path='url(#cpMC4wMHw1NDAuMDB8MC4wMHwzNjAuMDA=)'>
-<text x='350.55' y='203.07' style='font-size: 20.40px; font-family: "Arial";' textLength='116.77px' lengthAdjust='spacingAndGlyphs'>mathematica</text>
+<text x='350.55' y='203.07' style='font-size: 2.04em; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>mathematica</text>
 </g>
 </g>
 </svg>
