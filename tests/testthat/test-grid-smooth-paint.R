@@ -137,7 +137,7 @@ test_that("adjacent one-direction gradients share continuous paint on vector dev
   path <- tempfile()
   on.exit(unlink(paste0(path, c(".pdf", ".svg", "-cairo.pdf"))))
   devices <- list(pdf = function() grDevices::pdf(paste0(path, ".pdf"), 2, 2))
-  if (capabilities("cairo")) devices$cairo <- function() grDevices::cairo_pdf(paste0(path, "-cairo.pdf"), 2, 2)
+  if (cairo_devices_work()) devices$cairo <- function() grDevices::cairo_pdf(paste0(path, "-cairo.pdf"), 2, 2)
   if (requireNamespace("svglite", quietly = TRUE)) devices$svglite <- function() svglite::svglite(paste0(path, ".svg"), 2, 2)
   for (device in devices) {
     device()
@@ -230,6 +230,7 @@ test_that("forced subdivision is capped and its pieces overlap inside the face",
 
 test_that("an interpolated colour hull draws to a small vector file", {
   skip_on_cran()
+  skip_if_not(cairo_devices_work(), "cairo devices are unavailable")
   rgb <- expand.grid(r = seq(0, 1, length.out = 5), g = seq(0, 1, length.out = 5), b = seq(0, 1, length.out = 5))
   rgb <- rgb[apply(rgb == 0 | rgb == 1, 1L, any), ]
   lab <- grDevices::convertColor(as.matrix(rgb), from = "sRGB", to = "Lab", scale.in = 1)

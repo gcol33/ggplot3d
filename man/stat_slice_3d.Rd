@@ -92,6 +92,9 @@ which also sets the lattice.}
 
 \item{adjust}{Positive automatic bandwidth multiplier, scalar or one per axis.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Cuts a complete rectilinear x/y/z grid with a numeric \code{value} aesthetic
 by planes and colours each section by the field, as MATLAB's \code{slice},

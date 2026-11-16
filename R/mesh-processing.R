@@ -205,7 +205,8 @@ mesh_number_3d <- function(x, name, test = function(x) TRUE, message = "a finite
 #'   in the units of the positions.
 #' @param boundary_weight Weight of the planes that hold boundary edges.
 #' @param edge Target edge length; NULL uses the mean edge length.
-#' @return A mesh of the class of `m`.
+#' @return A mesh of the class of `m`; an rgl `mesh3d` comes back as a
+#'   `ggplot3d_mesh` data frame.
 #' @references
 #'   Thuermer and Wuethrich (1998). Computing vertex normals from polygonal
 #'   facets. Journal of Graphics Tools 3, 43-46. \doi{10.1080/10867651.1998.10487487}

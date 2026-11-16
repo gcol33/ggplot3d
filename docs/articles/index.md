@@ -4,6 +4,9 @@
 
 - [The z scale](https://gillescolling.com/ggplot3d/articles/z-scale.md):
 
+  Transform heights, label categories and dates, and control limits and
+  z ranges across facets.
+
 - [Layers](https://gillescolling.com/ggplot3d/articles/layers.md):
 
   Worked examples of points, paths, gridded surfaces, columns,
@@ -24,6 +27,24 @@
   Set camera angles, projection, framing and stereo output for static
   scenes.
 
+- [Positioning groups and
+  observations](https://gillescolling.com/ggplot3d/articles/positions.md):
+
+  Separate overlapping observations, align grouped columns and labels,
+  and display stacked totals or proportions.
+
+- [Axes, legends and pane
+  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.md):
+
+  Choose axis labels, align a colourbar with height, and style the panes
+  and grids of a three-dimensional plot.
+
+- [Displaying intervals and
+  summaries](https://gillescolling.com/ggplot3d/articles/intervals.md):
+
+  Plot supplied bounds on three axes and compute grouped means, standard
+  errors and quantile ranges.
+
 - [Curvilinear and compositional
   frames](https://gillescolling.com/ggplot3d/articles/frames.md):
 
@@ -38,6 +59,9 @@
 
 - [Lighting and surface
   styles](https://gillescolling.com/ggplot3d/articles/lighting.md):
+
+  Control surface shading, use lighting presets and materials, and show
+  the shading range in legends.
 
 - [Ray marching and
   volumes](https://gillescolling.com/ggplot3d/articles/ray-marching.md):
@@ -147,18 +171,33 @@
 - [Tensor
   glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md):
 
+  Map symmetric positive semidefinite matrices to oriented ellipsoid or
+  superquadric glyphs.
+
 - [Ordination
   biplots](https://gillescolling.com/ggplot3d/articles/ordination.md):
+
+  Draw site scores, variable arrows and grouped regions from
+  principal-component and ecological ordinations.
 
 - [Molecular ball-and-stick
   views](https://gillescolling.com/ggplot3d/articles/molecules.md):
 
+  Read molecular coordinates, attach bonds by atom identifier and draw
+  atoms and bonds in three dimensions.
+
 - [Colour gamuts in Lab
   coordinates](https://gillescolling.com/ggplot3d/articles/colour-gamuts.md):
+
+  Sample sRGB colours in Lab coordinates and display their convex hull
+  with interpolated vertex colours.
 
 ### Background
 
 - [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
+
+  Explain how overlapping faces, lines and marks are ordered and clipped
+  within a three-dimensional panel.
 
 - [Extending
   ggplot3d](https://gillescolling.com/ggplot3d/articles/extending.md):

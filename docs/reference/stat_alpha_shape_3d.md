@@ -55,6 +55,10 @@ geom_alpha_shape_3d(
   every point. (The argument is not called `alpha` because that name
   sets opacity.)
 
+## Value
+
+A ggplot2 layer.
+
 ## Details
 
 The tetrahedralisation is a native Bowyer-Watson insertion with exact

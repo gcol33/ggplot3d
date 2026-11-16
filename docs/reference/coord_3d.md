@@ -150,7 +150,8 @@ coord_3d(
 
 - frame:
 
-  Fit the current view, all azimuths at this elevation, or a sphere.
+  `"view"` (default) fits the current view, `"azimuth"` every azimuth at
+  this elevation and `"sphere"` every viewing direction.
 
 - transform:
 

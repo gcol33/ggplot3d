@@ -30,7 +30,9 @@ scale_z_time(..., position = "auto")
 \arguments{
 \item{...}{Arguments passed to the corresponding ggplot2 x scale constructor.}
 
-\item{position}{Cube edge used for the z guide.}
+\item{position}{Vertical box edge that carries the z guide: \code{"auto"}
+(default) or one of \code{"xmin-ymin"}, \code{"xmin-ymax"}, \code{"xmax-ymin"} and
+\code{"xmax-ymax"}, the x and y sides the edge stands on.}
 }
 \value{
 A ggplot2 position scale for the z aesthetic family.

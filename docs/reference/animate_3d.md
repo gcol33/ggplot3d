@@ -63,9 +63,10 @@ animate_3d(
 - file:
 
   Output path, or NULL to use `format`. The extension selects the
-  output: `.gif`, `.mp4` or `.webm` (need av), `.apng` (an animated
-  PNG), `.png` or `.svg` (one file per frame; svg needs svglite) and
-  `.pdf` (one page per frame). A file per frame takes its number from a
+  output: `.gif` (encoded by ggplot3d), `.mp4` or `.webm` (both need
+  av), `.apng` (an animated PNG), `.png` or `.svg` (one file per frame;
+  svg needs svglite) and `.pdf` (one page per frame). A file per frame
+  takes its number from a
   [`sprintf()`](https://rdrr.io/r/base/sprintf.html) pattern in the
   name, such as `"frames/turn-%03d.png"`, or else gets it appended, as
   in `turn-0001.png`. `.glb` and `.gltf` hold the first panel as an

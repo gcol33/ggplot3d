@@ -2,7 +2,7 @@
 
 Evaluates fun on transformed x/y/z scale ranges and passes the scalar
 field to the same extraction used by stat_isosurface_3d. Since fun is
-known everywhere, each vertex on a grid edge is then moved onto fun =
+known everywhere, each vertex on a grid edge is then moved towards fun =
 level by `refine` Illinois regula falsi steps inside the edge whose
 endpoints bracket the level, and vertex normals (nx, ny, nz) are central
 differences of fun at the final vertices, with steps of 1e-5 times each
@@ -164,6 +164,10 @@ geom_isofunction_3d(
 - trace_steps:
 
   Maximum sphere-tracing steps per ray.
+
+## Value
+
+A ggplot2 layer.
 
 ## Details
 

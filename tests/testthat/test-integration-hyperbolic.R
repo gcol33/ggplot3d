@@ -40,7 +40,7 @@ test_that("half-space paths truncate to the finite panel box", {
   expect_silent(validate_scene_packet(out$packet))
 })
 
-test_that("hyperbolic identity scales and radial distance guides are explicit", {
+test_that("hyperbolic identity scales and distance circles are explicit", {
   d <- data.frame(x=c(.1,.3),y=.1,z=.1)
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+coord_hyperbolic_3d(distance_breaks=c(0,1,2))
   out <- stats_scene(p)

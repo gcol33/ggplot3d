@@ -61,6 +61,9 @@ interpolant of the field is linear, and the part of that polygon below
 the level is filled, as on the box faces. Plane caps point along the
 plane normal. The plane is in transformed position coordinates.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Requires a complete rectilinear x/y/z grid with a numeric value aesthetic.
 Missing field values mask their incident cells. Coordinates are transformed

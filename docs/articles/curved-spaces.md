@@ -8,7 +8,7 @@ them with coordinate systems that keep their own geometry: geodesics
 stay geodesics, and an isometry of the space moves the data without
 distorting it. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
-[Thurston
+[Inside the Thurston
 geometries](https://gillescolling.com/ggplot3d/articles/thurston-geometries.md)
 renders the view from inside these spaces with the ray-marching backend.
 
@@ -101,10 +101,10 @@ ggplot(chords, aes(x, y, z = z, group = id)) +
 ```
 
 ![Six hyperbolic geodesics drawn as arcs inside the Poincare ball, with
-spheres of equal hyperbolic distance from the
+circles of equal hyperbolic distance from the
 centre.](curved-spaces_files/figure-html/hyperbolic-1.svg)
 
-`distance_breaks` draws spheres at the given hyperbolic distances from
+`distance_breaks` draws circles at the given hyperbolic distances from
 the origin, so equal steps in distance appear ever closer together
 toward the rim. `inside = TRUE` with an `observer` renders the view from
 a point inside the space.
@@ -162,19 +162,23 @@ point.](curved-spaces_files/figure-html/light-cone-1.svg)
 `interval = 1` with `sheet = "future"` draws the hyperboloid of events
 at proper time 1 after the origin, which is a model of hyperbolic space.
 [`lorentz_boost_3d()`](https://gillescolling.com/ggplot3d/reference/lorentz_boost_3d.md)
-returns the matrix of a boost; a boost at half the speed of light along
-x moves the event at rest one unit after the origin to a time of
+takes rapidity, the inverse hyperbolic tangent of speed divided by the
+speed of light. For a speed of 0.5 along x in these units, the event at
+rest one unit after the origin moves to a time of
 $`\gamma = 1/\sqrt{1 - 0.5^2} \approx 1.155`$.
 
 ``` r
 
-boost <- lorentz_boost_3d(0.5, c(1, 0, 0))
-boost %*% c(0, 0, 0, 1)
+speed <- 0.5
+boost <- lorentz_boost_3d(rapidity = atanh(speed), direction = c(1, 0, 0))
+event <- boost %*% c(0, 0, 0, 1)
+event
 #>           [,1]
-#> [1,] 0.5210953
+#> [1,] 0.5773503
 #> [2,] 0.0000000
 #> [3,] 0.0000000
-#> [4,] 1.1276260
+#> [4,] 1.1547005
+stopifnot(isTRUE(all.equal(event[4], 1 / sqrt(1 - speed^2))))
 ```
 
 ## Black holes

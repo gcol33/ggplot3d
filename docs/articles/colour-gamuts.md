@@ -9,6 +9,10 @@ maps sampled standard RGB (sRGB) colours into Lab;
 draws their convex hull, and every hull vertex keeps the colour of its
 sample.
 
+This example builds the hull from sampled colours and explains the
+limits of that approximation. Installation is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+
 ``` r
 
 library(ggplot2)
@@ -29,10 +33,9 @@ ggplot(gamut, aes(a, b, z = L)) +
   coord_3d(aspect = "data")
 ```
 
-![3D plot. Layers: StatsSurface (x = a, y = b, z = L, fill = I(hex),
-group = 1). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0
-degrees; orthographic
-projection.](colour-gamuts_files/figure-html/gamut-1.svg)
+![A convex hull of sampled sRGB colours in Lab coordinates, with
+lightness on the vertical axis and each vertex coloured by its
+sample.](colour-gamuts_files/figure-html/gamut-1.svg)
 
 The samples lie on the surface of the RGB cube. The conversion to Lab is
 continuous and one-to-one, so the cube’s surface maps onto the boundary

@@ -31,7 +31,9 @@ scale_z_time(..., position = "auto")
 
 - position:
 
-  Cube edge used for the z guide.
+  Vertical box edge that carries the z guide: `"auto"` (default) or one
+  of `"xmin-ymin"`, `"xmin-ymax"`, `"xmax-ymin"` and `"xmax-ymax"`, the
+  x and y sides the edge stands on.
 
 ## Value
 

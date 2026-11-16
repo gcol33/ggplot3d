@@ -161,14 +161,16 @@ A ggplot2 layer.
 
 ## Details
 
-Labels are placed on the page when the panel is drawn, after projection,
-so they never overlap whatever the camera angle. A force-directed solver
-in C++ moves the label boxes: overlapping boxes push each other apart
-along the line between their centres, every data point of the layer
-pushes boxes off its disc of radius `point.size` plus `point.padding`,
-and a spring pulls each box back until it touches its own point. Each
-step keeps part of the previous velocity, which damps oscillation. The
-solver stops once no box overlaps and the boxes are at rest.
+The repel variants place labels on the page when the panel is drawn,
+after projection, so they are separated for whatever camera angle is
+drawn. A force-directed solver in C++ moves the label boxes: overlapping
+boxes push each other apart along the line between their centres, every
+data point of the layer pushes boxes off its disc of radius `point.size`
+plus `point.padding`, and a spring pulls each box back until it touches
+its own point. Each step keeps part of the previous velocity, which
+damps oscillation. The solver stops once no box overlaps and the boxes
+are at rest, or at `max.iter` steps or `max.time` seconds, so boxes can
+still overlap where the limits or `xlim` and `ylim` leave no room.
 
 Rows with an empty or missing label are not drawn but still push labels
 away. The repelled labels and their leader lines are drawn over the

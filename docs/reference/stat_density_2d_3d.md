@@ -58,6 +58,10 @@ stat_density_2d_3d(
   contours. A flat plane is a shorthand for
   [`position_project_3d()`](https://gillescolling.com/ggplot3d/reference/position_project_3d.md).
 
+## Value
+
+A ggplot2 layer.
+
 ## Examples
 
 ``` r

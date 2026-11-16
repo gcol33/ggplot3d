@@ -124,6 +124,10 @@ geom_isodensity_3d(
   the box faces. Plane caps point along the plane normal. The plane is
   in transformed position coordinates.
 
+## Value
+
+A ggplot2 layer.
+
 ## Examples
 
 ``` r

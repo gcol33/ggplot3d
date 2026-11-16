@@ -85,6 +85,10 @@ geom_residual_3d(
   For a fitted model, a named list holding a value for each other
   predictor.
 
+## Value
+
+A ggplot2 layer.
+
 ## Computed variables
 
 - fitted:

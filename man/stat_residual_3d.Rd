@@ -58,6 +58,9 @@ geom_residual_3d(
 \item{cond}{For a fitted model, a named list holding a value for each
 other predictor.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Fits a model of z on x and y as \code{\link[=stat_smooth_3d]{stat_smooth_3d()}} does and draws a
 vertical segment from each observation to the fitted surface, the 3D

@@ -82,6 +82,10 @@ geom_slice_contour_3d(
   Level controls in transformed z units. Explicit breaks take
   precedence.
 
+## Value
+
+A ggplot2 layer.
+
 ## Examples
 
 ``` r

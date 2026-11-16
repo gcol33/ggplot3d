@@ -77,7 +77,8 @@ mesh_point_owner_3d <- function(m, points) {
 #' @param from,to Path ends, as points; rows pair up.
 #' @param max_iterations Largest number of FlipOut steps per path.
 #' @return `mesh_geodesic_distance()` and `mesh_logmap()` return the mesh of
-#'   the class of `m` with the added columns. `mesh_geodesic_path()` returns a
+#'   the class of `m` with the added columns (an rgl `mesh3d` comes back as a
+#'   `ggplot3d_mesh` data frame). `mesh_geodesic_path()` returns a
 #'   data frame of path points with columns `x`, `y`, `z`, `path` (the row of
 #'   `from` and `to`) and `s`, the arc length from the start; the attribute
 #'   `length` holds the length of each path.

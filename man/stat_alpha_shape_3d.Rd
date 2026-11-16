@@ -38,6 +38,9 @@ units. \code{NULL} uses the smallest radius at which the tetrahedra of the
 complex touch every point. (The argument is not called \code{alpha} because
 that name sets opacity.)}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Computes the Delaunay tetrahedralisation of the points and draws the
 boundary of their alpha complex (Edelsbrunner and Mucke 1994). A

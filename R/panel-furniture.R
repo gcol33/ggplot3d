@@ -115,7 +115,8 @@ frame_basis_3d <- function(camera, viewport) {
 }
 
 frame_eye_coordinates_3d <- function(xyz, camera, basis) {
-  delta <- sweep(sweep(xyz, 2L, camera$target), 2L, basis$scale, "*")
+  delta <- xyz
+  for (axis in seq_len(3L)) delta[, axis] <- (xyz[, axis] - camera$target[axis]) * basis$scale[axis]
   xy <- delta %*% basis$basis
   distance <- if (basis$perspective) basis$distance else 2 * basis$radius + 1
   cbind(x = xy[, 1L], y = xy[, 2L], depth = distance + drop(delta %*% basis$forward))
@@ -212,47 +213,48 @@ furniture_partitions_3d <- function(camera, viewport, frame = FrameBox) {
   stats::setNames(partitions, vapply(panes, `[[`, character(1), "name"))
 }
 
-panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list()) {
+# Shared guide reserve and magnification for panels drawn at one physical size.
+panel_group_fit_3d <- function(groups, viewport, mode) {
+  fits <- lapply(groups, function(panel) measure_guides_3d(panel$params, panel$theme, viewport))
+  reserve <- Reduce(pmax, lapply(fits, `[[`, "reserve"))
+  inner <- function(reserve) {
+    width <- viewport$width_mm - sum(reserve[c(2L, 4L)])
+    height <- viewport$height_mm - sum(reserve[c(1L, 3L)])
+    if (min(width, height) <= 0) stop("3D panel too small for measured axis labels and titles; enlarge the device or reduce text size.", call. = FALSE)
+    new_scene_viewport(width, height, viewport$dpi)
+  }
+  fitted <- inner(reserve)
+  if (mode == "view") for (iteration in seq_len(16L)) {
+    reserves <- Map(function(panel, measured) view_guide_reserve_3d(panel$params, measured, fitted), groups, fits)
+    next_reserve <- Reduce(pmax, reserves)
+    difference <- max(abs(next_reserve - reserve))
+    reserve <- if (difference < 0.01) pmax(next_reserve, reserve) else (next_reserve + reserve) / 2
+    fitted <- inner(reserve)
+    if (difference < 0.01) break
+  }
+  magnification <- min(vapply(groups, function(panel) {
+    camera <- frame_camera_3d(panel$params$camera, fitted, mode, frame_of_3d(panel$params)$bounds())
+    camera$zoom / panel$params$camera$zoom
+  }, numeric(1)))
+  list(fits = fits, reserve = reserve, origin = reserve[c(4L, 3L)], viewport = fitted, magnification = magnification)
+}
+
+panel_furniture_3d <- function(panel_params, theme, viewport, frame_group = list(), fit_cache = NULL) {
   frame <- frame_of_3d(panel_params)
-  bounds_of <- function(params) frame_of_3d(params)$bounds()
-  fit <- measure_guides_3d(panel_params, theme, viewport)
-  if (length(frame_group)) {
-    fits <- lapply(frame_group, function(panel) measure_guides_3d(panel$params, panel$theme, viewport))
-    fit$reserve <- Reduce(pmax, lapply(fits, `[[`, "reserve"))
-    fit$origin <- fit$reserve[c(4L, 3L)]
-    fit$viewport <- new_scene_viewport(viewport$width_mm - sum(fit$reserve[c(2L, 4L)]),
-      viewport$height_mm - sum(fit$reserve[c(1L, 3L)]), viewport$dpi)
-  }
   mode <- panel_params$coord_params$frame %or3d% "sphere"
-  camera <- frame_camera_3d(panel_params$camera, fit$viewport, mode, bounds_of(panel_params))
-  if (length(frame_group)) {
-    magnifications <- vapply(frame_group, function(panel) {
-      fitted <- frame_camera_3d(panel$params$camera, fit$viewport, mode, bounds_of(panel$params))
-      fitted$zoom / panel$params$camera$zoom
-    }, numeric(1))
-    camera$zoom <- panel_params$camera$zoom * min(magnifications)
+  groups <- if (length(frame_group)) frame_group else list(list(params = panel_params, theme = theme))
+  key <- list(groups = groups, viewport = viewport, mode = mode,
+    device = grDevices::dev.cur(), size = grDevices::dev.size("in"), gp = grid::get.gpar())
+  shared <- if (!is.null(fit_cache) && identical(fit_cache$key, key)) fit_cache$value else NULL
+  if (is.null(shared)) {
+    shared <- panel_group_fit_3d(groups, viewport, mode)
+    if (!is.null(fit_cache)) { fit_cache$key <- key; fit_cache$value <- shared }
   }
-  if (mode == "view") {
-    groups <- if (length(frame_group)) frame_group else list(list(params = panel_params, theme = theme))
-    group_fits <- lapply(groups, function(panel) measure_guides_3d(panel$params, panel$theme, viewport))
-    for (iteration in seq_len(16L)) {
-      reserves <- Map(function(panel, measured) view_guide_reserve_3d(panel$params, measured, fit$viewport), groups, group_fits)
-      reserve <- Reduce(pmax, reserves)
-      difference <- max(abs(reserve - fit$reserve))
-      fit$reserve <- if (difference < 0.01) pmax(reserve, fit$reserve) else (reserve + fit$reserve) / 2
-      fit$origin <- fit$reserve[c(4L, 3L)]
-      width <- viewport$width_mm - sum(fit$reserve[c(2L, 4L)])
-      height <- viewport$height_mm - sum(fit$reserve[c(1L, 3L)])
-      if (min(width, height) <= 0) stop("3D panel too small for measured axis labels and titles; enlarge the device or reduce text size.", call. = FALSE)
-      fit$viewport <- new_scene_viewport(width, height, viewport$dpi)
-      if (difference < 0.01) break
-    }
-    magnifications <- vapply(groups, function(panel) {
-      fitted <- frame_camera_3d(panel$params$camera, fit$viewport, mode, bounds_of(panel$params))
-      fitted$zoom / panel$params$camera$zoom
-    }, numeric(1))
-    camera$zoom <- panel_params$camera$zoom * min(magnifications)
-  }
+  own <- which(vapply(groups, function(panel) identical(panel$params, panel_params) && identical(panel$theme, theme), logical(1)))
+  fit <- if (length(own)) shared$fits[[own[1L]]] else measure_guides_3d(panel_params, theme, viewport)
+  fit[c("reserve", "origin", "viewport")] <- shared[c("reserve", "origin", "viewport")]
+  camera <- panel_params$camera
+  camera$zoom <- camera$zoom * shared$magnification
   cube <- cube_edges_3d()
   basis <- frame_basis_3d(camera, fit$viewport)
   chunks <- list(frame$map(cube$corners)); n_vertices <- 8L

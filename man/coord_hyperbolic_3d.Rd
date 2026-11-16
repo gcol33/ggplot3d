@@ -31,8 +31,9 @@ intrinsic distances are scaled by 1/sqrt(-curvature).}
 \item{centre}{A point in the input chart, or a future Lorentz isometry.
 Points are moved to the origin before display.}
 
-\item{distance_breaks}{Optional increasing nonnegative distances for a radial
-distance guide, in intrinsic units.}
+\item{distance_breaks}{Optional increasing nonnegative distances, in
+intrinsic units, drawn as labelled circles at that distance from the
+origin in the z = 0 plane.}
 
 \item{inside}{Use a first-person perspective eye at the Klein origin.}
 

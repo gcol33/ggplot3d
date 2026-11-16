@@ -129,7 +129,9 @@ here.
 [`stat_summary_3d()`](https://gillescolling.com/ggplot3d/reference/stat_summary_3d.md)
 computes intervals from data,
 [`geom_stem_3d()`](https://gillescolling.com/ggplot3d/reference/geom_stem_3d.md)
-draws stems to a base value.
+draws stems to a base value. [Displaying intervals and
+summaries](https://gillescolling.com/ggplot3d/articles/intervals.html)
+shows supplied bounds and grouped summaries.
 
 ## Examples
 

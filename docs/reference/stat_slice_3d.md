@@ -119,6 +119,10 @@ geom_density_slice_3d(
 
   Positive automatic bandwidth multiplier, scalar or one per axis.
 
+## Value
+
+A ggplot2 layer.
+
 ## Details
 
 Computed variables: `value`, the mean of the three corner values of each

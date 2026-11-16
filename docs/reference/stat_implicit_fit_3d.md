@@ -82,6 +82,10 @@ stat_implicit_fit_3d(
 
   Number of regula falsi steps per edge vertex.
 
+## Value
+
+A ggplot2 layer.
+
 ## Details
 
 `method = "rbf"` is the polyharmonic radial basis function fit of Carr

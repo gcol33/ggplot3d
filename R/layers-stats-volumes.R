@@ -97,6 +97,7 @@ probability_levels_3d <- function(p) {
 #'
 #'   Schroeder, Maynard and Geveci (2015). Flying edges: a high-performance
 #'   scalable isocontouring algorithm. IEEE LDAV, 33-40. \doi{10.1109/LDAV.2015.7348069}
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 10),
@@ -141,6 +142,7 @@ geom_isosurface_3d <- geom_from_stat_3d("stat_isosurface_3d")
 #'   composition mapped with `a`, `b`, `c` (and `d`) in isometric log-ratio
 #'   coordinates, where a Gaussian kernel respects relative scale, and maps
 #'   the surface back into the simplex. With three parts, z stays as it is.
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' set.seed(1)
@@ -175,7 +177,7 @@ geom_isodensity_3d <- geom_from_stat_3d("stat_density_3d")
 #'
 #' Evaluates fun on transformed x/y/z scale ranges and passes the scalar field
 #' to the same extraction used by stat_isosurface_3d. Since fun is known
-#' everywhere, each vertex on a grid edge is then moved onto fun = level by
+#' everywhere, each vertex on a grid edge is then moved towards fun = level by
 #' `refine` Illinois regula falsi steps inside the edge whose endpoints bracket
 #' the level, and vertex normals (nx, ny, nz) are central differences of fun at
 #' the final vertices, with steps of 1e-5 times each axis range. Vertices that
@@ -253,6 +255,7 @@ geom_isodensity_3d <- geom_from_stat_3d("stat_density_3d")
 #'
 #'   Ju, Losasso, Schaefer and Warren (2002). Dual contouring of Hermite data.
 #'   ACM Transactions on Graphics 21, 339-346. \doi{10.1145/566654.566586}
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' ggplot2::ggplot() +
@@ -335,6 +338,7 @@ check_slices_3d <- function(xslice, yslice, zslice, slice) {
 #'
 #'   PyVista. DataObjectFilters.slice_orthogonal.
 #'   <https://docs.pyvista.org/api/core/_autosummary/pyvista.dataobjectfilters.slice_orthogonal>
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 12),
@@ -388,6 +392,7 @@ geom_density_slice_3d <- geom_from_stat_3d("stat_density_slice_3d")
 #' and `slice`.
 #' @inheritParams stat_slice_3d
 #' @inheritParams geom_contour_3d
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 12),
@@ -438,6 +443,7 @@ geom_slice_contour_3d <- geom_from_stat_3d("stat_slice_contour_3d")
 #'   intersection of the linear interpolants.
 #' @references Snyder (1992). Interval analysis for computer graphics.
 #'   SIGGRAPH '92, 121-130. \doi{10.1145/133994.134024}
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' ggplot2::ggplot() +
@@ -482,6 +488,7 @@ geom_isocurve_3d <- geom_from_stat_3d("stat_isocurve_3d")
 #'   log-ratio coordinates and keeps its facets on the original points.
 #' @references Barber, Dobkin and Huhdanpaa (1996). The Quickhull Algorithm for
 #'   Convex Hulls. ACM TOMS 22, 469-483. \doi{10.1145/235815.235821}
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' d <- expand.grid(x = 0:1, y = 0:1, z = 0:1)

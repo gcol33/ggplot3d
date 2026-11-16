@@ -22,11 +22,13 @@ layer_3d(
 \code{clip_planes}, a list of \code{\link[=clip_plane_3d]{clip_plane_3d()}} planes that replaces the
 coordinate system's planes for this layer.}
 
-\item{occlusion}{Depth testing or overlay drawing.}
+\item{occlusion}{\code{"depth"} (default) sorts the layer into the scene by
+depth; \code{"overlay"} draws it over the scene.}
 
 \item{shade}{Whether to shade faces.}
 
-\item{hidden}{Hidden stroke policy.}
+\item{hidden}{Strokes behind faces: \code{"hide"} (default) removes them,
+\code{"dashed"} draws them dashed and \code{"show"} draws them solid.}
 }
 \value{
 A ggplot2 layer adapted to the 3D scene.

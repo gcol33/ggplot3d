@@ -85,6 +85,9 @@ interpolant of the field is linear, and the part of that polygon below
 the level is filled, as on the box faces. Plane caps point along the
 plane normal. The plane is in transformed position coordinates.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Evaluates an axis-aligned Gaussian product kernel on transformed x/y/z scale
 ranges. h contains Gaussian standard deviations in transformed units.

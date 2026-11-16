@@ -39,7 +39,8 @@ Larger values give a smoother distance.}
 }
 \value{
 \code{mesh_geodesic_distance()} and \code{mesh_logmap()} return the mesh of
-the class of \code{m} with the added columns. \code{mesh_geodesic_path()} returns a
+the class of \code{m} with the added columns (an rgl \code{mesh3d} comes back as a
+\code{ggplot3d_mesh} data frame). \code{mesh_geodesic_path()} returns a
 data frame of path points with columns \code{x}, \code{y}, \code{z}, \code{path} (the row of
 \code{from} and \code{to}) and \code{s}, the arc length from the start; the attribute
 \code{length} holds the length of each path.

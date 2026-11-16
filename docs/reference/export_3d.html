@@ -5,7 +5,8 @@ a separate buffer (.gltf and .bin) for Blender and the web, PLY, OBJ
 with an MTL material file, binary STL and 3MF. Faces are triangulated,
 paths become tubes or line primitives, and points become small solids or
 point primitives, all in model coordinates: the panel box scaled by the
-aspect of coord_3d(), with its longest side size long. Vector and
+aspect of coord_3d(), with its longest side size long; 3MF and STL
+written with print hold millimetre solids instead. Vector and
 source formats hold the projected plot: SVG with source rows and hover
 text, TikZ (.tex) and an Asymptote scene (.asy)."><meta property="og:description" content="Writes the scene of a plot to a file that other software opens. Model
 formats hold the scene of one panel in 3D: glTF binary (.glb) or glTF with
@@ -13,7 +14,8 @@ a separate buffer (.gltf and .bin) for Blender and the web, PLY, OBJ
 with an MTL material file, binary STL and 3MF. Faces are triangulated,
 paths become tubes or line primitives, and points become small solids or
 point primitives, all in model coordinates: the panel box scaled by the
-aspect of coord_3d(), with its longest side size long. Vector and
+aspect of coord_3d(), with its longest side size long; 3MF and STL
+written with print hold millimetre solids instead. Vector and
 source formats hold the projected plot: SVG with source rows and hover
 text, TikZ (.tex) and an Asymptote scene (.asy)."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
 (function () {
@@ -92,6 +94,9 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
+    <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
     <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
@@ -152,7 +157,8 @@ a separate buffer (<code>.gltf</code> and <code>.bin</code>) for Blender and the
 with an MTL material file, binary STL and 3MF. Faces are triangulated,
 paths become tubes or line primitives, and points become small solids or
 point primitives, all in model coordinates: the panel box scaled by the
-aspect of <code><a href="coord_3d.html">coord_3d()</a></code>, with its longest side <code>size</code> long. Vector and
+aspect of <code><a href="coord_3d.html">coord_3d()</a></code>, with its longest side <code>size</code> long; 3MF and STL
+written with <code>print</code> hold millimetre solids instead. Vector and
 source formats hold the projected plot: SVG with source rows and hover
 text, TikZ (<code>.tex</code>) and an Asymptote scene (<code>.asy</code>).</p>
     </div>
@@ -235,8 +241,8 @@ lines and points have in a plot of this size.</p></dd>
 
 
 <dt id="arg-print">print<a class="anchor" aria-label="anchor" href="#arg-print"></a></dt>
-<dd><p>Optional <code><a href="print_3d.html">print_3d()</a></code> specification for closed millimetre solids
-in STL or 3MF output.</p></dd>
+<dd><p>A <code><a href="print_3d.html">print_3d()</a></code> specification for closed millimetre solids:
+optional for STL, required for 3MF.</p></dd>
 
 
 <dt id="arg-interactive">interactive<a class="anchor" aria-label="anchor" href="#arg-interactive"></a></dt>

@@ -10,18 +10,18 @@ started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 Frames are drawn with [ragg](https://ragg.r-lib.org/), and MP4 output
 needs [av](https://docs.ropensci.org/av/).
 
-1.  **Build** the scene with
+1.  Build the scene with
     [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
 
-2.  **Move** the camera with
+2.  Move the camera with
     [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
     and a camera path such as
     [`orbit_3d()`](https://gillescolling.com/ggplot3d/reference/camera_path_3d.md).
 
-3.  **Tween** data states with `animate_3d(time = )` and
+3.  Interpolate data states with `animate_3d(time = )` and
     [`tween_3d()`](https://gillescolling.com/ggplot3d/reference/tween_3d.md).
 
-4.  **Explore** the plot with
+4.  Explore the plot with
     [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md).
 
 ## Example
@@ -72,17 +72,52 @@ axis.](motion_files/figure-html/orbit-show-1.gif)
 ![The blue surface turning a full circle about its vertical
 axis.](motion_files/figure-html/orbit-show-2.gif)
 
-Printing the result in a document embeds the movie. `orbit$file` holds
-its path, and `orbit$camera` holds one row per frame with the time and
-the camera angles used for it.
+Printing the result in a document embeds the movie. Its path is in
+`orbit$file`. The camera table contains one row per frame with its time
+and camera angles.
+
+### Choosing an output format
+
+The format chooses the file type; the backend chooses how the scene is
+drawn. With a file path, its extension selects the format. Supplying a
+format alone writes to a temporary path in the R session. When both are
+supplied, they must agree.
+
+| Format | Result | Additional rendering or encoding package |
+|----|----|----|
+| `gif` | Animated image | ragg |
+| `apng` | Animated PNG | ragg |
+| `mp4`, `webm` | Video | ragg and av |
+| `png` | Numbered image files | ragg |
+| `svg` | Numbered SVG files | svglite |
+| `pdf` | One page per frame | R’s PDF device |
+| `gltf`, `glb` | Animated model scene | See [Exporting plots and scenes](https://gillescolling.com/ggplot3d/articles/export.html#animated-gltf) |
+
+For a few views that can be inspected page by page, write a multi-page
+PDF. The vector backend retains vector geometry, with images for surface
+effects that require them. Width and height are in pixels; dividing by
+dpi gives the page dimensions in inches.
+
+``` r
+
+pages <- animate_3d(p, frames = 3, azimuth = c(-60, 0, 60),
+  format = "pdf", backend = "vector", width = 600, height = 450,
+  dpi = 100, progress = FALSE)
+stopifnot(file.exists(pages$file), file.info(pages$file)$size > 0)
+```
+
+For an image sequence, a file name such as `turn-%03d.svg` supplies the
+frame-number pattern. With both file and format omitted, the return
+value contains temporary PNG frame paths. Frames are drawn sequentially
+by default; the `workers` argument controls parallel frame rendering.
 
 ### Camera arguments over time
 
 Each camera argument accepts one value, one value per frame, or a
-function of time in seconds. Here the azimuth turns 90 degrees in three
-seconds while the elevation rises from 15 to 50 degrees, one value per
-frame. A changing elevation needs room for every viewing direction,
-which
+function of time in seconds. Here the azimuth turns at 30 degrees per
+second for three seconds while the elevation rises from 15 to 50
+degrees, one value per frame. A changing elevation needs room for every
+viewing direction, which
 [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
 reserves by framing the box as a sphere. `format = "mp4"` writes a
 video.

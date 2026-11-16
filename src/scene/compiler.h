@@ -369,6 +369,8 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       [](const Piece& a, const Piece& b) {
         if (a.source->layer_id[a.row] != b.source->layer_id[b.row])
           return a.source->layer_id[a.row] < b.source->layer_id[b.row];
+        if (a.source->role[a.row] != b.source->role[b.row])
+          return a.source->role[a.row] < b.source->role[b.row];
         return a.serial < b.serial;
       });
   for (int partition = 0; partition < 3; ++partition)

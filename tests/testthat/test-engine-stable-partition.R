@@ -37,12 +37,14 @@ stable_paint <- function(scene, n = 61L) {
   top
 }
 
-# Fragments as primitive and box-coordinate vertex sets.
+# Fragments as primitive and box-coordinate vertex sets, rounded to 1e-4 so
+# that the last bits of a cut vertex, which fused multiply-adds may change
+# from one projection to the next, do not tell two equal cuts apart.
 stable_fragments <- function(scene) {
   f <- scene$fragments; v <- scene$vertices
   vapply(seq_along(f$offset), function(i) {
     idx <- seq.int(f$offset[i], length.out = f$count[i])
-    paste(f$parent_primitive_id[i], paste(sort(sprintf("%.6f,%.6f,%.6f", v$x[idx], v$y[idx], v$z[idx])), collapse = ";"))
+    paste(f$parent_primitive_id[i], paste(sort(sprintf("%.4f,%.4f,%.4f", v$x[idx], v$y[idx], v$z[idx])), collapse = ";"))
   }, "")
 }
 
@@ -71,7 +73,7 @@ test_that("stable cuts stay in place while the camera turns", {
   overlap <- function(scenes) mapply(stable_overlap, scenes[-length(scenes)], scenes[-1L])
   cold <- overlap(frames(FALSE))
   stable <- overlap(frames(TRUE))
-  expect_true(all(stable > 0.95))
+  expect_true(all(stable > 0.95), info = paste("overlaps:", paste(round(stable, 4), collapse = " ")))
   expect_lt(max(cold), 0.3)
 })
 

@@ -2,6 +2,23 @@
 
 ## ggplot3d 0.0.0.9000
 
+- [`shadow_3d()`](https://gillescolling.com/ggplot3d/reference/shadow_3d.md)
+  films are drawn over the grid lines of the pane they lie on, so a
+  shadow is never broken up by grid lines. Panes and the planes they
+  carry are painted by layer, then coplanar role (fill, stroke, marker),
+  then emission order.
+
+- [`stat_summary_3d()`](https://gillescolling.com/ggplot3d/reference/stat_summary_3d.md)
+  no longer fails when some cells hold one observation and others
+  several. Only columns constant within every cell are carried to the
+  summary rows.
+
+- [`geom_text_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md),
+  [`geom_label_3d()`](https://gillescolling.com/ggplot3d/reference/geom_label_3d.md)
+  and the other text layers draw factor labels by their levels, as
+  [`geom_text()`](https://ggplot2.tidyverse.org/reference/geom_text.html)
+  does, instead of their integer codes.
+
 - [`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md)
   writes GIF files with its own encoder instead of gifski, which is no
   longer a suggested package. All frames share one palette from a median

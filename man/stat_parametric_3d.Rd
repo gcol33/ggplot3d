@@ -76,6 +76,9 @@ bounding-box diagonal.}
 
 \item{max_depth}{Maximum number of refinement rounds.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Evaluates \code{fun(u, v)} on a regular (u, v) grid and triangulates it with
 indexed vertices, each grid quad split along its shorter diagonal. A closed

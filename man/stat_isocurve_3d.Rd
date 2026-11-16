@@ -56,6 +56,9 @@ differ from data parameters; see \code{\link[=stat_function_3d]{stat_function_3d
 \item{refine}{Number of Newton steps per curve point; 0 keeps the
 intersection of the linear interpolants.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Traces the curve where \code{fun1 = levels[1]} and \code{fun2 = levels[2]} meet,
 inside the box of the position scales. Both functions are evaluated on an

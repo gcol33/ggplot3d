@@ -242,7 +242,7 @@ space_attributes_3d <- function(data, rows, weights) {
   }
   for (name in intersect(c("colour", "fill"), names(data))) {
     values <- matrix(data[[name]][rows], nrow(rows))
-    varying <- apply(values, 1L, function(x) !anyNA(x) && length(unique(x)) > 1L)
+    varying <- !rowSums(is.na(values)) & rowSums(values != values[, 1L]) > 0
     if (any(varying)) {
       rgba <- matrix(grDevices::col2rgb(as.vector(t(values[varying, , drop = FALSE])), alpha = TRUE), 4L)
       channels <- vapply(seq_len(4L), function(j) rowSums(matrix(rgba[j, ], ncol = ncol(rows), byrow = TRUE) * weights[varying, , drop = FALSE]), numeric(sum(varying)))
@@ -262,15 +262,54 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
   X <- space_canonical_3d(space_input_3d(data[used, , drop = FALSE], context), context)
   lookup <- match(primitives, used)
   offsets <- cumsum(c(1L, head(counts, -1L)))
-  blocks <- list(); out_kinds <- list(); out_counts <- list(); starts <- list(); ends <- list()
-  add <- function(d, xyz, kind, sizes, start = rep(TRUE, length(sizes)), end = rep(TRUE, length(sizes))) {
-    d[c("x", "y", "z")] <- as.data.frame(xyz[, 1:3, drop = FALSE])
-    d$.w <- if (ncol(xyz) == 4L) xyz[, 4L] else rep(1, nrow(d))
+  blocks <- list(); coordinates <- list(); out_kinds <- list(); out_counts <- list(); starts <- list(); ends <- list()
+  push <- function(d, xyz, kind, sizes, start = rep(TRUE, length(sizes)), end = rep(TRUE, length(sizes))) {
     blocks[[length(blocks) + 1L]] <<- d
-    out_kinds[[length(out_kinds) + 1L]] <<- rep(kind, length(sizes))
+    coordinates[[length(coordinates) + 1L]] <<- if (ncol(xyz) == 4L) xyz else cbind(xyz, 1)
+    out_kinds[[length(out_kinds) + 1L]] <<- rep_len(kind, length(sizes))
     out_counts[[length(out_counts) + 1L]] <<- sizes
     starts[[length(starts) + 1L]] <<- start
     ends[[length(ends) + 1L]] <<- end
+  }
+  # Primitives that are rows of one table (`data`, or the munched faces) are
+  # gathered while consecutive and become one block: one slice of the table
+  # and, for points still in the input chart, one call of the map.
+  pending <- NULL
+  flush <- function() {
+    if (is.null(pending)) return(invisible())
+    p <- pending; pending <<- NULL
+    xyz <- do.call(rbind, p$coordinates)
+    if (!p$mapped) xyz <- sampler$map(xyz)
+    push(slice_rows_3d(p$table, unlist(p$rows, use.names = FALSE)), xyz,
+      unlist(p$kinds, use.names = FALSE), unlist(p$sizes, use.names = FALSE))
+  }
+  defer <- function(source, table, rows, coordinates, mapped, kind, sizes) {
+    if (!is.null(pending) && !identical(pending$source, source)) flush()
+    if (is.null(pending)) pending <<- list(source = source, table = table, mapped = mapped,
+      rows = list(), coordinates = list(), kinds = list(), sizes = list())
+    k <- length(pending$rows) + 1L
+    pending$rows[[k]] <<- rows; pending$coordinates[[k]] <<- coordinates
+    pending$kinds[[k]] <<- rep(kind, length(sizes)); pending$sizes[[k]] <<- sizes
+  }
+  add <- function(...) { flush(); push(...) }
+  # Faces of a curved frame are fan-triangulated and munched in one call, then
+  # gathered face by face.
+  fan <- NULL
+  if (!sampler$projective) {
+    faces <- which(kinds == "faces" & counts >= 3L)
+    if (length(faces)) {
+      sizes <- counts[faces] - 2L
+      first <- rep(offsets[faces], sizes)
+      step <- sequence(sizes)
+      fan <- list(corners = cbind(first, first + step, first + step + 1L), faces = faces)
+      fan$mesh <- munch_triangles_3d(sampler, X[lookup[fan$corners[, 1L]], , drop = FALSE],
+        X[lookup[fan$corners[, 2L]], , drop = FALSE], X[lookup[fan$corners[, 3L]], , drop = FALSE],
+        max_level = context$max_depth)
+      fan$by_face <- split(seq_len(nrow(fan$mesh$triangles)),
+        factor(rep(faces, sizes)[fan$mesh$parent], levels = faces))
+      fan$data <- space_attributes_3d(data,
+        matrix(primitives[fan$corners[fan$mesh$point_parent, , drop = FALSE]], ncol = 3L), fan$mesh$weights)
+    }
   }
   for (i in seq_along(counts)) {
     corners <- seq.int(offsets[i], length.out = counts[i])
@@ -298,23 +337,24 @@ munch_3d <- function(data, primitives, kinds, counts, context) {
       } else add(d, path$model, kind, nrow(d))
       }
     } else if (kind == "faces" && !sampler$projective) {
-      triangles <- cbind(1L, 2:(nrow(points) - 1L), 3:nrow(points))
-      mesh <- munch_triangles_3d(sampler, points[triangles[, 1L], , drop = FALSE],
-        points[triangles[, 2L], , drop = FALSE], points[triangles[, 3L], , drop = FALSE], max_level = context$max_depth)
-      drawn <- !rowSums(is.na(matrix(mesh$model[c(mesh$triangles), 4L], ncol = 3L)))
-      if (!any(drawn)) next
-      mesh$triangles <- mesh$triangles[drawn, , drop = FALSE]
-      parent <- triangles[mesh$point_parent, , drop = FALSE]
-      d <- space_attributes_3d(data, matrix(rows[parent], ncol = 3L), mesh$weights)
-      index <- as.vector(t(mesh$triangles))
-      add(d[index, , drop = FALSE], mesh$model[index, , drop = FALSE], kind, rep.int(3L, nrow(mesh$triangles)))
+      if (counts[i] < 3L) next
+      mesh <- fan$mesh
+      triangles <- mesh$triangles[fan$by_face[[match(i, fan$faces)]], , drop = FALSE]
+      triangles <- triangles[!rowSums(is.na(matrix(mesh$model[c(triangles), 4L], ncol = 3L))), , drop = FALSE]
+      if (!nrow(triangles)) next
+      index <- as.vector(t(triangles))
+      defer("faces", fan$data, index, mesh$model[index, , drop = FALSE], TRUE, kind, rep.int(3L, nrow(triangles)))
     } else {
       keep <- if(kind %in% c("markers","text")&&space_clips_3d(context)) context$space$contains(points,context$model,context$ranges) else rep(TRUE,nrow(points))
-      if(any(keep)) add(data[rows[keep], , drop = FALSE], sampler$map(points[keep,,drop=FALSE]), kind, sum(keep))
+      if(any(keep)) defer("data", data, rows[keep], points[keep, , drop = FALSE], FALSE, kind, sum(keep))
     }
   }
+  flush()
   if(!length(blocks)) return(list(data=data[FALSE,,drop=FALSE],primitives=integer(),kinds=character(),counts=integer(),start=logical(),end=logical()))
   out <- do.call(rbind, blocks); rownames(out) <- NULL
+  xyzw <- do.call(rbind, coordinates)
+  out[c("x", "y", "z")] <- as.data.frame(xyzw[, 1:3, drop = FALSE])
+  out$.w <- xyzw[, 4L]
   list(data = out, primitives = seq_len(nrow(out)), kinds = unlist(out_kinds, use.names = FALSE),
     counts = unlist(out_counts, use.names = FALSE), start = unlist(starts), end = unlist(ends))
 }

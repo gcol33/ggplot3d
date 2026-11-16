@@ -124,6 +124,10 @@ geom_smooth_3d(
   For a fitted model, a named list holding a value for each other
   predictor.
 
+## Value
+
+A ggplot2 layer.
+
 ## Details
 
 `method` may instead be a model fitted beforehand. It is evaluated in

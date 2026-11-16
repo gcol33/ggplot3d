@@ -133,7 +133,8 @@ plot_backend_3d <- function(plot, backend) {
 #' @param target Target fractions within the expanded box.
 #' @param near,far Camera clipping distances.
 #' @param aspect Three positive model side lengths, or "data".
-#' @param frame Fit the current view, all azimuths at this elevation, or a sphere.
+#' @param frame `"view"` (default) fits the current view, `"azimuth"` every
+#'   azimuth at this elevation and `"sphere"` every viewing direction.
 #' @param xlim,ylim,zlim Coordinate zoom limits in original units.
 #' @param expand Logical scalar or named x, y, z logical vector.
 #' @param clip Rectangular viewport clipping, on or off.

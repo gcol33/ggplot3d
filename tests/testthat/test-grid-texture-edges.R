@@ -28,7 +28,7 @@ test_that("checker boundaries stay within half a pixel beside shared triangle ed
     segments <- texture_edge_segments(scene, round(c(6.5, 4.5) * dpi))
     sampling <- viewport; sampling$dpi <- texture_image_dpi_3d(viewport)
     geometric <- raster_scene_3d(geometry, new_camera_3d(), sampling, 8L, blend = "srgb")
-    for (device in c("ragg", "svglite", "pdf", "cairo")) {
+    for (device in c("ragg", "svglite", "pdf", if (cairo_devices_work()) "cairo")) {
       reference <- texture_device_image(scene, viewport, device, browser, reference = geometric)
       for (lit in c(FALSE, TRUE)) {
         painted <- scene; painted$styles$shade <- lit

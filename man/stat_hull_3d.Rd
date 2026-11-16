@@ -37,6 +37,9 @@ geom_hull_3d(
 hull of a composition mapped with \code{a}, \code{b}, \code{c} (and \code{d}) in isometric
 log-ratio coordinates and keeps its facets on the original points.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Native Quickhull assigns outside points to facets, selects the furthest point
 of an outside set, replaces visible facets by the horizon cone, and

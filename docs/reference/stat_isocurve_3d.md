@@ -86,6 +86,10 @@ geom_isocurve_3d(
   Number of Newton steps per curve point; 0 keeps the intersection of
   the linear interpolants.
 
+## Value
+
+A ggplot2 layer.
+
 ## Details
 
 A curve that lies within a single grid cell, or two curves that pass

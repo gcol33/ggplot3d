@@ -86,10 +86,9 @@ distance to the surface.
 
 ## References
 
-Quilez, I. Smooth minimum. <https://iquilezles.org/articles/smin/>
+Quilez, I. Smooth minimum. iquilezles.org/articles/smin
 
-Quilez, I. Interior SDFs.
-<https://iquilezles.org/articles/interiordistance/>
+Quilez, I. Interior SDFs. iquilezles.org/articles/interiordistance
 
 ## Examples
 

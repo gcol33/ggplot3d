@@ -34,7 +34,8 @@ layer_3d(
 
 - occlusion:
 
-  Depth testing or overlay drawing.
+  `"depth"` (default) sorts the layer into the scene by depth;
+  `"overlay"` draws it over the scene.
 
 - shade:
 
@@ -42,7 +43,8 @@ layer_3d(
 
 - hidden:
 
-  Hidden stroke policy.
+  Strokes behind faces: `"hide"` (default) removes them, `"dashed"`
+  draws them dashed and `"show"` draws them solid.
 
 ## Value
 

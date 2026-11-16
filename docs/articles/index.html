@@ -76,6 +76,9 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
+    <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
     <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
@@ -132,7 +135,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
       <div class="section-desc"></div>
 
       <dl><dt><a href="z-scale.html">The z scale</a></dt>
-        <dd>
+        <dd><p>Transform heights, label categories and dates, and control limits and z ranges across facets.</p>
         </dd><dt><a href="layers.html">Layers</a></dt>
         <dd><p>Worked examples of points, paths, gridded surfaces, columns, distributions, intervals and reference geometry.</p>
         </dd><dt><a href="surfaces-solids.html">Surfaces, solids and fields</a></dt>
@@ -144,12 +147,18 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
       <dl><dt><a href="camera.html">Camera and framing</a></dt>
         <dd><p>Set camera angles, projection, framing and stereo output for static scenes.</p>
+        </dd><dt><a href="positions.html">Positioning groups and observations</a></dt>
+        <dd><p>Separate overlapping observations, align grouped columns and labels, and display stacked totals or proportions.</p>
+        </dd><dt><a href="guides-themes.html">Axes, legends and pane styling</a></dt>
+        <dd><p>Choose axis labels, align a colourbar with height, and style the panes and grids of a three-dimensional plot.</p>
+        </dd><dt><a href="intervals.html">Displaying intervals and summaries</a></dt>
+        <dd><p>Plot supplied bounds on three axes and compute grouped means, standard errors and quantile ranges.</p>
         </dd><dt><a href="frames.html">Curvilinear and compositional frames</a></dt>
         <dd><p>Place data in cylindrical, spherical, globe, ternary prism and quaternary simplex coordinates instead of a box.</p>
         </dd><dt><a href="backends.html">Output backends</a></dt>
         <dd><p>Choose vector, raster, hybrid or traced rendering and save figures at the intended resolution.</p>
         </dd><dt><a href="lighting.html">Lighting and surface styles</a></dt>
-        <dd>
+        <dd><p>Control surface shading, use lighting presets and materials, and show the shading range in legends.</p>
         </dd><dt><a href="ray-marching.html">Ray marching and volumes</a></dt>
         <dd><p>Trace signed distance surfaces, integrate scalar volumes and accumulate seeded path-traced images.</p>
         </dd><dt><a href="viewer.html">Interactive viewing</a></dt>
@@ -190,20 +199,20 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
         </dd><dt><a href="thurston-geometries.html">Inside the Thurston geometries</a></dt>
         <dd><p>Render an observer view in each of the eight Thurston geometries using intrinsic balls and geodesics.</p>
         </dd><dt><a href="tensors.html">Tensor glyphs</a></dt>
-        <dd>
+        <dd><p>Map symmetric positive semidefinite matrices to oriented ellipsoid or superquadric glyphs.</p>
         </dd><dt><a href="ordination.html">Ordination biplots</a></dt>
-        <dd>
+        <dd><p>Draw site scores, variable arrows and grouped regions from principal-component and ecological ordinations.</p>
         </dd><dt><a href="molecules.html">Molecular ball-and-stick views</a></dt>
-        <dd>
+        <dd><p>Read molecular coordinates, attach bonds by atom identifier and draw atoms and bonds in three dimensions.</p>
         </dd><dt><a href="colour-gamuts.html">Colour gamuts in Lab coordinates</a></dt>
-        <dd>
+        <dd><p>Sample sRGB colours in Lab coordinates and display their convex hull with interpolated vertex colours.</p>
       </dd></dl></div>
     <div class="section ">
       <h3>Background</h3>
       <div class="section-desc"></div>
 
       <dl><dt><a href="visibility.html">Visibility</a></dt>
-        <dd>
+        <dd><p>Explain how overlapping faces, lines and marks are ordered and clipped within a three-dimensional panel.</p>
         </dd><dt><a href="extending.html">Extending ggplot3d</a></dt>
         <dd><p>Write a new geom for coord_3d(): the scene packet it emits, how positions are normalised, and how register_geom_3d() connects it to the scene.</p>
       </dd></dl></div>

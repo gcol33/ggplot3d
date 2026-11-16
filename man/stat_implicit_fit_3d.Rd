@@ -57,6 +57,9 @@ for \code{"poisson"}, which takes \code{"nets"} or \code{"dual"}.}
 
 \item{refine}{Number of regula falsi steps per edge vertex.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Fits a function s(x) whose zero set passes through the points and draws
 that level surface. Surface triangles face increasing s, outwards.

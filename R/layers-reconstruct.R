@@ -29,6 +29,7 @@
 #'   Shewchuk (1997). Adaptive precision floating-point arithmetic and fast
 #'   robust geometric predicates. Discrete & Computational Geometry 18,
 #'   305-363. \doi{10.1007/PL00009321}
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' set.seed(1)
@@ -134,6 +135,7 @@ geom_alpha_shape_3d <- geom_from_stat_3d("stat_alpha_shape_3d")
 #'
 #'   Kazhdan and Hoppe (2013). Screened Poisson surface reconstruction. ACM
 #'   Transactions on Graphics 32, 29. \doi{10.1145/2487228.2487237}
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' set.seed(2)

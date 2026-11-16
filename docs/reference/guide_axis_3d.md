@@ -136,6 +136,12 @@ arguments `rotate_labels`, `scale_depth` and `title_position`.
 Danisch S, Krumbiegel J (2021). Makie.jl: Flexible high-performance data
 visualization for Julia. Journal of Open Source Software 6(65), 3349.
 
+## See also
+
+[Axes, legends and pane
+styling](https://gillescolling.com/ggplot3d/articles/guides-themes.html)
+for scale breaks, colourbars and panel theme elements.
+
 ## Examples
 
 ``` r

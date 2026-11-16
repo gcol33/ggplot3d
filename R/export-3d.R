@@ -6,7 +6,8 @@
 #' with an MTL material file, binary STL and 3MF. Faces are triangulated,
 #' paths become tubes or line primitives, and points become small solids or
 #' point primitives, all in model coordinates: the panel box scaled by the
-#' aspect of [coord_3d()], with its longest side `size` long. Vector and
+#' aspect of [coord_3d()], with its longest side `size` long; 3MF and STL
+#' written with `print` hold millimetre solids instead. Vector and
 #' source formats hold the projected plot: SVG with source rows and hover
 #' text, TikZ (`.tex`) and an Asymptote scene (`.asy`).
 #' @param plot A ggplot with [coord_3d()].
@@ -31,8 +32,8 @@
 #'   default 640 each. Tubes and solids keep the size relative to the box that
 #'   lines and points have in a plot of this size.
 #' @param dpi Device resolution, default 96 dots per inch.
-#' @param print Optional [print_3d()] specification for closed millimetre solids
-#'   in STL or 3MF output.
+#' @param print A [print_3d()] specification for closed millimetre solids:
+#'   optional for STL, required for 3MF.
 #' @param interactive SVG: whether to include tooltips, keyboard focus and
 #'   linked hover highlighting for fragments of the same source row.
 #' @param standalone TikZ: whether to include a LaTeX document preamble.

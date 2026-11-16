@@ -8,7 +8,7 @@ direction onto the plane of each chosen pane (Blinn 1988) and cut to the
 pane. The shadows of one layer are painted as one translucent film, the
 union of their pieces filled once with the nonzero winding rule, so
 overlapping pieces do not darken twice. The film lies in the pane's
-plane and is drawn over the pane fill and under its grid lines.
+plane and is drawn over the pane fill and its grid lines.
 
 ## Usage
 

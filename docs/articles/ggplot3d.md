@@ -5,13 +5,13 @@ ggplot3d adds three-dimensional layers and a z position scale to
 plots from data and aesthetic mappings. This tutorial assumes basic R
 and data frames. It ends with a surface, observations and a saved plot.
 
-1.  **Map** positions with
+1.  Map positions with
     [`aes()`](https://ggplot2.tidyverse.org/reference/aes.html).
 
-2.  **Draw** a surface with
+2.  Draw a surface with
     [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md).
 
-3.  **Save** the plot with
+3.  Save the plot with
     [`ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
 
 ## Installation
@@ -146,6 +146,10 @@ ggsave(path, p, width = 5, height = 4.5)
 
 - [The z scale](https://gillescolling.com/ggplot3d/articles/z-scale.md):
   transform heights and control ranges across facets.
+
+- [Axes, legends and pane
+  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.md):
+  label the plot and adjust its panes.
 
 - [Camera and
   framing](https://gillescolling.com/ggplot3d/articles/camera.md): set

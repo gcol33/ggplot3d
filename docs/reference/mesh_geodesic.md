@@ -60,10 +60,11 @@ mesh_geodesic_path(m, from, to, max_iterations = 100000L)
 ## Value
 
 `mesh_geodesic_distance()` and `mesh_logmap()` return the mesh of the
-class of `m` with the added columns. `mesh_geodesic_path()` returns a
-data frame of path points with columns `x`, `y`, `z`, `path` (the row of
-`from` and `to`) and `s`, the arc length from the start; the attribute
-`length` holds the length of each path.
+class of `m` with the added columns (an rgl `mesh3d` comes back as a
+`ggplot3d_mesh` data frame). `mesh_geodesic_path()` returns a data frame
+of path points with columns `x`, `y`, `z`, `path` (the row of `from` and
+`to`) and `s`, the arc length from the start; the attribute `length`
+holds the length of each path.
 
 ## Details
 

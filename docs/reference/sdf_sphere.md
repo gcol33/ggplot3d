@@ -84,8 +84,7 @@ radius where the balls are apart and blends them where they meet.
 
 ## References
 
-Quilez, I. Distance functions.
-<https://iquilezles.org/articles/distfunctions/>
+Quilez, I. Distance functions. iquilezles.org/articles/distfunctions
 
 Wyvill, McPheeters and Wyvill (1986). Data structure for soft objects.
 The Visual Computer 2, 227-234.

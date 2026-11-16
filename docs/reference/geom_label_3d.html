@@ -84,6 +84,9 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
+    <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
     <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
@@ -302,14 +305,16 @@ one from R's random number generator at each draw.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Labels are placed on the page when the panel is drawn, after projection, so
-they never overlap whatever the camera angle. A force-directed solver in C++
+    <p>The repel variants place labels on the page when the panel is drawn, after
+projection, so they are separated for whatever camera angle is drawn. A force-directed solver in C++
 moves the label boxes: overlapping boxes push each other apart along the
 line between their centres, every data point of the layer pushes boxes off
 its disc of radius <code>point.size</code> plus <code>point.padding</code>, and a spring pulls each
 box back until it touches its own point. Each step keeps part of the
 previous velocity, which damps oscillation. The solver stops once no box
-overlaps and the boxes are at rest.</p>
+overlaps and the boxes are at rest, or at <code>max.iter</code> steps or <code>max.time</code>
+seconds, so boxes can still overlap where the limits or <code>xlim</code> and <code>ylim</code>
+leave no room.</p>
 <p>Rows with an empty or missing label are not drawn but still push labels
 away. The repelled labels and their leader lines are drawn over the scene,
 not hidden by surfaces in front of their points. <code><a href="animate_3d.html">animate_3d()</a></code> starts each

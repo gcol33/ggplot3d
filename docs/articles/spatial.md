@@ -96,10 +96,9 @@ ggplot(nc) +
 tallest prisms around the
 cities.](spatial_files/figure-html/prisms-1.svg)
 
-Prisms of detailed outlines are many faces; the raster backend draws
-them in a fraction of the time the vector backend needs (see
-[Backends](https://gillescolling.com/ggplot3d/articles/backends.md)).
-Plain
+Prisms of detailed outlines can contain many faces. [Output
+backends](https://gillescolling.com/ggplot3d/articles/backends.md)
+explains how to render them at a chosen image resolution. Plain
 [`ggplot2::geom_sf()`](https://ggplot2.tidyverse.org/reference/ggsf.html)
 layers are drawn the same way inside
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md);
@@ -223,8 +222,8 @@ ggplot(points, aes(x, y, z = z, colour = z)) +
 ground.](spatial_files/figure-html/lidar-1.svg)
 
 For dense clouds, `geom_point_3d(render = "splat")` with the raster
-backend draws the points as depth-tested spheres (see
-[Backends](https://gillescolling.com/ggplot3d/articles/backends.md)).
+backend draws the points as depth-tested spheres (see [Output
+backends](https://gillescolling.com/ggplot3d/articles/backends.md)).
 
 ## The space-time cube
 
@@ -280,7 +279,7 @@ coordinates in metres.
 
 ggplot(volcano_grid, aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", colour = NA) +
-  annotation_scale_3d(length = 200, unit = "m") +
+  annotation_scale_3d(length = 200, unit = "m", size = 5) +
   annotation_north_3d(north = c(0, 1, 0)) +
   coord_3d(aspect = c(870, 610, 300), projection = "perspective")
 ```

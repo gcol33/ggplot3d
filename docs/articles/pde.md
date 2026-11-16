@@ -54,12 +54,12 @@ The transport equation moves an initial profile $`g`$ at constant
 velocity $`b = (b_1, b_2)`$ without changing its shape:
 
 ``` math
-u_t + b \cdot \nabla u = 0, \qquad u(x, 0) = g(x), \qquad u(x, t) = g(x - t b).
+\begin{aligned} u_t + b \cdot \nabla u &= 0, \\ u(x, 0) &= g(x), \\ u(x, t) &= g(x - t b). \end{aligned}
 ```
 
 The profile here is a bump that is periodic in both coordinates with
 period 4,
-$`g(x, y) = \exp\{3(\cos(\pi x / 2) - 1) + 3(\cos(\pi y / 2) - 1)\}`$,
+$`g(x, y) = e^{3(\cos(\pi x / 2) - 1)}\, e^{3(\cos(\pi y / 2) - 1)}`$,
 moved along the diagonal $`b = (1, 1)`$. After $`t = 4`$ it is back at
 its start, so the 32 frames from $`t = 0`$ to $`t = 3.875`$ loop without
 a jump.
@@ -142,7 +142,7 @@ $`\omega = \sqrt{5} \pi`$; adding them a quarter period apart gives a
 pattern that turns round the centre:
 
 ``` math
-u_{tt} = \Delta u, \qquad u(x, y, t) = \sin(\pi x) \sin(2 \pi y) \cos(\omega t) + \sin(2 \pi x) \sin(\pi y) \sin(\omega t).
+\begin{aligned} u_{tt} &= \Delta u, \\ u(x, y, t) &= \sin(\pi x) \sin(2 \pi y) \cos(\omega t) \\ &\quad + \sin(2 \pi x) \sin(\pi y) \sin(\omega t). \end{aligned}
 ```
 
 The solution repeats after one period
@@ -194,7 +194,7 @@ $`2\pi`$ turns the saddle by a third of a turn, which maps it onto
 itself, so 36 frames over $`\varphi \in [0, 2\pi)`$ loop.
 
 ``` math
-\Delta u = u_{xx} + u_{yy} = 0, \qquad u(x, y) = r^3 \cos(3\theta - \varphi).
+\begin{aligned} \Delta u &= u_{xx} + u_{yy} = 0, \\ u(x, y) &= r^3 \cos(3\theta - \varphi). \end{aligned}
 ```
 
 ``` r
@@ -245,7 +245,7 @@ $`\tau = 1 + e^{\eta_1}`$ gives one line soliton, a straight crest of
 height $`k_1^2 / 2`$, and
 
 ``` math
-\tau = 1 + e^{\eta_1} + e^{\eta_2} + A_{12}\, e^{\eta_1 + \eta_2}, \qquad A_{12} = \frac{l^2}{l^2 - 1} \quad \text{for } k_1 = k_2 = 1,\ l_1 = -l_2 = l,
+\begin{aligned} \tau &= 1 + e^{\eta_1} + e^{\eta_2} + A_{12}\, e^{\eta_1 + \eta_2}, \\ A_{12} &= \dfrac{l^2}{l^2 - 1} \\ &\quad \text{for } k_1 = k_2 = 1,\ l_1 = -l_2 = l, \end{aligned}
 ```
 
 gives two line solitons that cross in an X. The solution is regular for
@@ -306,7 +306,7 @@ speed $`\omega / \sqrt{p^2 + q^2} < 1`$. Two kinks combine in closed
 form (Hirota 2004):
 
 ``` math
-u = 4 \arctan \frac{e^{\eta_1} + e^{\eta_2}}{1 + a_{12}\, e^{\eta_1 + \eta_2}}, \qquad a_{12} = \frac{(p_1 - p_2)^2 + (q_1 - q_2)^2 - (\omega_1 - \omega_2)^2}{(p_1 + p_2)^2 + (q_1 + q_2)^2 - (\omega_1 + \omega_2)^2}.
+\begin{aligned} u &= 4 \arctan \dfrac{e^{\eta_1} + e^{\eta_2}}{1 + a_{12}\, e^{\eta_1 + \eta_2}}, \\ a_{12} &= \dfrac{s_-}{s_+}, \\ s_\pm &= (p_1 \pm p_2)^2 + (q_1 \pm q_2)^2 - (\omega_1 \pm \omega_2)^2. \end{aligned}
 ```
 
 The frames use one front along the $`y`$ axis moving in $`+x`$ and one
@@ -478,7 +478,7 @@ and Grasso (2016, section 4.1), translated from their opposite bracket
 convention, are
 
 ``` math
-\psi(x,y,0)=-2\cos x+2\sin y,\qquad a(x,y,0)=2\cos x-\cos(2y).
+\begin{aligned} \psi(x,y,0)&=-2\cos x+2\sin y,\\ a(x,y,0)&=2\cos x-\cos(2y). \end{aligned}
 ```
 
 The solver uses a $`64\times64`$ grid, $`\nu=\eta=0.04`$ and time step

@@ -76,6 +76,9 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
+    <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
     <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
@@ -164,7 +167,8 @@ coordinate system's planes for this layer.</p></dd>
 
 
 <dt id="arg-occlusion">occlusion<a class="anchor" aria-label="anchor" href="#arg-occlusion"></a></dt>
-<dd><p>Depth testing or overlay drawing.</p></dd>
+<dd><p><code>"depth"</code> (default) sorts the layer into the scene by
+depth; <code>"overlay"</code> draws it over the scene.</p></dd>
 
 
 <dt id="arg-shade">shade<a class="anchor" aria-label="anchor" href="#arg-shade"></a></dt>
@@ -172,7 +176,8 @@ coordinate system's planes for this layer.</p></dd>
 
 
 <dt id="arg-hidden">hidden<a class="anchor" aria-label="anchor" href="#arg-hidden"></a></dt>
-<dd><p>Hidden stroke policy.</p></dd>
+<dd><p>Strokes behind faces: <code>"hide"</code> (default) removes them,
+<code>"dashed"</code> draws them dashed and <code>"show"</code> draws them solid.</p></dd>
 
 </dl></div>
     <div class="section level2">

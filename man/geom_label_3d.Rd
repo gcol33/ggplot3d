@@ -132,14 +132,16 @@ join a moved label to its point with a leader line, as in the ggrepel
 package's \code{geom_text_repel()} and \code{geom_label_repel()}.
 }
 \details{
-Labels are placed on the page when the panel is drawn, after projection, so
-they never overlap whatever the camera angle. A force-directed solver in C++
+The repel variants place labels on the page when the panel is drawn, after
+projection, so they are separated for whatever camera angle is drawn. A force-directed solver in C++
 moves the label boxes: overlapping boxes push each other apart along the
 line between their centres, every data point of the layer pushes boxes off
 its disc of radius \code{point.size} plus \code{point.padding}, and a spring pulls each
 box back until it touches its own point. Each step keeps part of the
 previous velocity, which damps oscillation. The solver stops once no box
-overlaps and the boxes are at rest.
+overlaps and the boxes are at rest, or at \code{max.iter} steps or \code{max.time}
+seconds, so boxes can still overlap where the limits or \code{xlim} and \code{ylim}
+leave no room.
 
 Rows with an empty or missing label are not drawn but still push labels
 away. The repelled labels and their leader lines are drawn over the scene,

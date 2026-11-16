@@ -334,8 +334,15 @@ polyline_model_3d <- function(frame, xyz, max_level = 9L) {
 # Triangles in scale space become a lattice of 4^k triangles per input, with
 # edge points on the shared canonical segment subdivision.
 triangle_lattice_3d <- function(k) {
+  name <- as.character(k)
+  if (!is.null(lattice_cache_3d[[name]])) return(lattice_cache_3d[[name]])
+  lattice_cache_3d[[name]] <- build_triangle_lattice_3d(k)
+}
+lattice_cache_3d <- new.env(parent = emptyenv())
+
+build_triangle_lattice_3d <- function(k) {
   ij <- do.call(rbind, lapply(0:k, function(i) cbind(i = i, j = 0:(k - i))))
-  key <- function(i, j) match(paste(i, j), paste(ij[, 1L], ij[, 2L]))
+  key <- function(i, j) match(i * (k + 1L) + j, ij[, 1L] * (k + 1L) + ij[, 2L])
   up <- ij[rowSums(ij) < k, , drop = FALSE]
   down <- ij[rowSums(ij) < k - 1L, , drop = FALSE]
   triangles <- rbind(cbind(key(up[, 1L], up[, 2L]), key(up[, 1L] + 1L, up[, 2L]), key(up[, 1L], up[, 2L] + 1L)),

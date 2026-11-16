@@ -375,7 +375,7 @@ struct Canvas {
   double pixel_x=1,pixel_y=1;
   int width=0,height=0,aa=1,w=0,h=0;
   bool linear=false;
-  int tile=64,tiles_x=0,tiles_y=0;
+  int tile=16,tiles_x=0,tiles_y=0;
   std::array<int,4> samples(const std::array<double,4>& b) const {
     return {static_cast<int>(std::max(0.0,std::min(static_cast<double>(w),std::ceil((b[0]-origin_x)/dx-.5)))),
       static_cast<int>(std::max(0.0,std::min(static_cast<double>(h),std::ceil((b[1]-origin_y)/dy-.5)))),
@@ -392,6 +392,27 @@ struct Span {
   int partition;
   bool lift,occluder,retained_occluder,halo=false;
 };
+
+// Conservative sample bounds of a triangle through a scanline's sample strip.
+static inline std::array<int,2> triangle_row_span(const Screen* v,const Canvas& canvas,
+                                                 double y,int first,int last) {
+  const double bottom=y-canvas.dy,top=y+canvas.dy;
+  double left=R_PosInf,right=R_NegInf;
+  auto include=[&](double x) {left=std::min(left,x);right=std::max(right,x);};
+  for(int j=0;j<3;++j) {
+    const Screen& a=v[j];const Screen& b=v[(j+1)%3];
+    if(a.y>=bottom && a.y<=top) include(a.x);
+    if(a.y==b.y) continue;
+    for(double at:{bottom,top}) if(at>=std::min(a.y,b.y) && at<=std::max(a.y,b.y)) {
+      double x=a.x+(at-a.y)/(b.y-a.y)*(b.x-a.x);
+      if(!std::isfinite(x)) return {first,last};
+      include(x);
+    }
+  }
+  if(!(left<=right)) return {first,last};
+  const auto bounds=canvas.samples({left-canvas.dx,y,right+canvas.dx,y});
+  return {std::max(first,bounds[0]),std::min(last,bounds[2])};
+}
 
 // A painted sample: the item, its depth, and whether the outline paints it.
 // A smooth face carries its own colour at the sample (`own`).
@@ -717,10 +738,13 @@ static inline Colour smooth_colour(const Shapes& shapes,const Item& item,const P
     const Texture& t=sm.textures[texture-1];
     std::array<double,2> uv{0,0};
     for(int j=0;j<3;++j) for(int d=0;d<2;++d) uv[d]+=w[j]*scene.shading[k[j]].uv[d];
-    const auto ux=fan_uv(shapes,item,hit.i,x+dx,y),uy=fan_uv(shapes,item,hit.i,x,y+dy);
-    const double width=t.levels[0].width,height=t.levels[0].height;
-    const double footprint=std::max(std::hypot((ux[0]-uv[0])*width,(ux[1]-uv[1])*height),
-                                    std::hypot((uy[0]-uv[0])*width,(uy[1]-uv[1])*height));
+    double footprint=0;
+    if(t.interpolate) {
+      const auto ux=fan_uv(shapes,item,hit.i,x+dx,y),uy=fan_uv(shapes,item,hit.i,x,y+dy);
+      const double width=t.levels[0].width,height=t.levels[0].height;
+      footprint=std::max(std::hypot((ux[0]-uv[0])*width,(ux[1]-uv[1])*height),
+                         std::hypot((uy[0]-uv[0])*width,(uy[1]-uv[1])*height));
+    }
     const Texel texel=t.sample(uv[0],uv[1],footprint);
     const double under=sm.fill_alpha[item.row]*(1-texel[3]);
     alpha=texel[3]+under;
@@ -784,6 +808,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
                                const Index* tile_items,std::size_t tile_count,int tx,int ty,
                                bool retained,const Traced& traced,bool keep_buffers,
                                const HaloJoins& joins,TileScratch& s,Buffers& out,int& passes) {
+  if(tile_count==0 && !traced.active) return;
   const Scene& scene=shapes.scene;
   const auto& line=scene.packet.polylines;
   const double tolerance=scene.projection.resolved.tolerance;
@@ -807,45 +832,51 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
     const Index line_row=item.kind==2 ? item.row:-1;
     int x0=std::max(span.samples[0],sx0),y0=std::max(span.samples[1],sy0);
     int x1=std::min(span.samples[2],sx1-1),y1=std::min(span.samples[3],sy1-1);
-    for(int y=y0;y<=y1;++y) for(int x=x0;x<=x1;++x) {
-      int local=(y-sy0)*tw+(x-sx0);
-      Occluder& occluder=s.occluders[local];
-      if(!span.lift && (line_row>=0 ? occluder.hides_line(span.partition,span.nearest,tolerance,line_row,joins):
-                        occluder.hides(span.partition,span.nearest,tolerance))) continue;
-      bool border=false;double xx=canvas.origin_x+(x+.5)*canvas.dx,yy=canvas.origin_y+(y+.5)*canvas.dy;
-      Hit hit;
-      if(span.halo) {
-        // A haloed stroke hides what lies behind it in its mask band.
-        double h=halo_depth(scene,item,xx,yy);
-        if(std::isfinite(h)) occluder.add_halo(item.row,h);
+    for(int y=y0;y<=y1;++y) {
+      const auto row=item.kind==1 && item.count==3 && !(p.outline.a>0 && p.width>0) ?
+        triangle_row_span(scene.vertices.data()+item.offset,canvas,canvas.origin_y+(y+.5)*canvas.dy,x0,x1):
+        std::array<int,2>{x0,x1};
+      for(int x=row[0];x<=row[1];++x) {
+        int local=(y-sy0)*tw+(x-sx0);
+        Occluder& occluder=s.occluders[local];
+        if(!span.lift && (line_row>=0 ? occluder.hides_line(span.partition,span.nearest,tolerance,line_row,joins):
+                          occluder.hides(span.partition,span.nearest,tolerance))) continue;
+        bool border=false;double xx=canvas.origin_x+(x+.5)*canvas.dx,yy=canvas.origin_y+(y+.5)*canvas.dy;
+        Hit hit;
+        if(span.halo) {
+          // A haloed stroke hides what lies behind it in its mask band.
+          double h=halo_depth(scene,item,xx,yy);
+          if(std::isfinite(h)) occluder.add_halo(item.row,h);
+        }
+        double z=sample(shapes,item,p,xx,yy,&border,false,span.lift,&hit);
+        if(span.retained_occluder) s.opaque[local]=std::min(s.opaque[local],z);
+        if(span.lift && std::isfinite(z)) {
+          const auto point=stroke_sample_point(scene,item,xx,yy);
+          double opaque=R_PosInf;
+          paint_index.query({point[0],point[1],point[0],point[1]},0,[&](std::size_t j) {
+            if(spans[j].retained_occluder)
+              opaque=std::min(opaque,sample(shapes,scene.items[j],shapes.paint[j],point[0],point[1]));
+          });
+          bool hidden=z>opaque+tolerance;
+          z=sample(shapes,item,p,xx,yy,&border,hidden && line.hidden[item.row]==1);
+          if(std::isfinite(z)) z=std::min(z,s.opaque[local]);
+        }
+        if(!std::isfinite(z)) continue;
+        const Colour& c=border ? p.outline:p.colour;
+        if(c.a==0 || (line_row>=0 ? occluder.hides_line(span.partition,z,tolerance,line_row,joins):
+                                    occluder.hides(span.partition,z,tolerance))) continue;
+        Fragment fragment{i,z,local,border};
+        if(!border && smooth_item) {
+          fragment.own=true;fragment.colour=smooth_colour(shapes,item,p,hit,xx,yy,canvas.dx,canvas.dy);
+          if(fragment.colour.a==0) continue;
+        }
+        if(lit_quadric) {fragment.own=true;fragment.colour=quadric_colour(shapes,item,p,xx,yy);}
+        s.fragments.push_back(fragment);
+        if(span.occluder && (fragment.own ? fragment.colour.a:c.a)==1) occluder.add(span.partition,z);
       }
-      double z=sample(shapes,item,p,xx,yy,&border,false,span.lift,&hit);
-      if(span.retained_occluder) s.opaque[local]=std::min(s.opaque[local],z);
-      if(span.lift && std::isfinite(z)) {
-        const auto point=stroke_sample_point(scene,item,xx,yy);
-        double opaque=R_PosInf;
-        paint_index.query({point[0],point[1],point[0],point[1]},0,[&](std::size_t j) {
-          if(spans[j].retained_occluder)
-            opaque=std::min(opaque,sample(shapes,scene.items[j],shapes.paint[j],point[0],point[1]));
-        });
-        bool hidden=z>opaque+tolerance;
-        z=sample(shapes,item,p,xx,yy,&border,hidden && line.hidden[item.row]==1);
-        if(std::isfinite(z)) z=std::min(z,s.opaque[local]);
-      }
-      if(!std::isfinite(z)) continue;
-      const Colour& c=border ? p.outline:p.colour;
-      if(c.a==0 || (line_row>=0 ? occluder.hides_line(span.partition,z,tolerance,line_row,joins):
-                                  occluder.hides(span.partition,z,tolerance))) continue;
-      Fragment fragment{i,z,local,border};
-      if(!border && smooth_item) {
-        fragment.own=true;fragment.colour=smooth_colour(shapes,item,p,hit,xx,yy,canvas.dx,canvas.dy);
-        if(fragment.colour.a==0) continue;
-      }
-      if(lit_quadric) {fragment.own=true;fragment.colour=quadric_colour(shapes,item,p,xx,yy);}
-      s.fragments.push_back(fragment);
-      if(span.occluder && (fragment.own ? fragment.colour.a:c.a)==1) occluder.add(span.partition,z);
     }
   }
+  if(s.fragments.empty() && !traced.active) return;
   s.start.assign(n+1,0);
   for(const auto& f:s.fragments) ++s.start[f.sample+1];
   for(std::size_t k=0;k<n;++k) s.start[k+1]+=s.start[k];
@@ -856,6 +887,7 @@ static inline void render_tile(const Shapes& shapes,const Canvas& canvas,const s
   }
   s.results.assign(n,SampleResult());
   for(std::size_t k=0;k<n;++k) {
+    if(s.start[k]==s.start[k+1] && !traced.active) continue;
     Fragment* f=s.ordered.data()+s.start[k];
     std::size_t count=s.start[k+1]-s.start[k],kept=0;
     for(std::size_t j=0;j<count;++j)

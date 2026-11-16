@@ -85,6 +85,9 @@ cut along it and the model is evaluated on the cut.}
 \item{cond}{For a fitted model, a named list holding a value for each
 other predictor.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Fits a model of z on x and y in each group and draws its predictions on an
 x/y grid. As in \code{\link[ggplot2:stat_smooth]{ggplot2::stat_smooth()}}, \code{method} is a fitting function or

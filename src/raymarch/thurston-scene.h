@@ -9,17 +9,35 @@ inline double nil_distance(const Vec3 &p) {
     return rho;
   if (rho < 1e-10)
     return z <= 2 * engine::pi ? z : 2 * engine::pi * std::sqrt(z / engine::pi - 1);
-  double lo = 0, hi = 2 * engine::pi;
-  for (int i = 0; i < 55; ++i) {
-    double phi = (lo + hi) / 2, s = std::sin(phi / 2),
-           ratio = phi < 1e-3 ? phi / 12 + std::pow(phi, 3) / 360 + std::pow(phi, 5) / 10080
-                              : (phi - std::sin(phi)) / (8 * s * s);
-    if (phi + rho * rho * ratio < z)
+  // The geodesic's turning angle phi solves phi + rho^2 r(phi) = z with
+  // r(phi) = (phi - sin phi) / (4 (1 - cos phi)), increasing on (0, 2 pi).
+  // Newton steps are kept inside a bisection bracket of the root.
+  double lo = 0, hi = 2 * engine::pi, phi = std::min(z, engine::pi);
+  for (int i = 0; i < 100; ++i) {
+    double ratio, slope;
+    if (phi < 1e-3) {
+      const double p2 = phi * phi;
+      ratio = phi * (1.0 / 12 + p2 / 360 + p2 * p2 / 10080);
+      slope = 1.0 / 12 + p2 / 120 + p2 * p2 / 2016;
+    } else {
+      const double half = std::sin(phi / 2), sine = std::sin(phi), versine = 2 * half * half;
+      ratio = (phi - sine) / (4 * versine);
+      slope = (versine * versine - (phi - sine) * sine) / (4 * versine * versine);
+    }
+    const double f = phi + rho * rho * ratio - z;
+    if (f < 0)
       lo = phi;
     else
       hi = phi;
+    double next = phi - f / (1 + rho * rho * slope);
+    if (!(next > lo && next < hi))
+      next = (lo + hi) / 2;
+    if (std::abs(next - phi) <= 1e-15 * (1 + phi) || hi - lo <= 1e-15 * (1 + phi)) {
+      phi = next;
+      break;
+    }
+    phi = next;
   }
-  double phi = (lo + hi) / 2;
   return std::hypot(phi, rho * phi / (2 * std::sin(phi / 2)));
 }
 inline double sl_distance(const Vec3 &p) {
@@ -314,7 +332,10 @@ inline CurvedHit curved_trace(Geometry g, Vec3 origin, Vec3 direction,
       }
     if (teleported)
       continue;
-    double advance = std::min(.25, far - distance);
+    // A field certifies a step along an arc of length h by its Lipschitz
+    // bound over that arc. Two arcs are tried, a quarter unit and the field's
+    // own value, and the longer certified step is taken.
+    double advance = far - distance;
     for (std::size_t i = 0; i < fields.size(); ++i) {
       const auto &field = fields[i];
       double cap = field.outside_cap(g, flow.p);
@@ -335,16 +356,22 @@ inline CurvedHit curved_trace(Geometry g, Vec3 origin, Vec3 direction,
         out.area = area_density(observer, distance);
         return out;
       }
-      double horizon = advance;
+      double chart = advance;
       if (curvature(g) == 1 && field.tape) {
         double r = product(g) ? std::hypot(flow.p[0], flow.p[1]) : norm(flow.p);
-        horizon = std::min(horizon, .5 * (engine::pi - 2 * std::atan(r)));
+        chart = std::min(chart, .5 * (engine::pi - 2 * std::atan(r)));
       }
-      advance = std::min(advance, std::abs(value) / field.bound(g, flow.p, horizon));
-      advance = std::min(advance, horizon);
+      double certified = 0;
+      for (double arc : {.25, std::abs(value)}) {
+        const double horizon = std::min(arc, chart);
+        certified = std::max(certified, std::min(horizon, std::abs(value) / field.bound(g, flow.p, horizon)));
+      }
+      advance = std::min(advance, certified);
     }
-    for (const auto &portal : portals)
-      advance = std::min(advance, std::max(0.0, -portal.value(g, flow.p)) / portal.bound(g, flow.p, advance));
+    for (const auto &portal : portals) {
+      const double horizon = std::min(advance, .25);
+      advance = std::min(horizon, std::max(0.0, -portal.value(g, flow.p)) / portal.bound(g, flow.p, horizon));
+    }
     if (!(advance > 0) || distance + advance == distance)
       break;
     local += advance;

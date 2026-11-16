@@ -12,6 +12,11 @@ This water molecule has explicitly specified connectivity. Bond
 endpoints refer to atom serial numbers, and can be supplied
 independently of the order of the atom records.
 
+Installation is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md). The
+examples require bio3d and end by reading one of its bundled coordinate
+files.
+
 ``` r
 
 library(ggplot2)
@@ -31,11 +36,8 @@ ggplot(atoms) +
                      fill = I(colour)), detail = 2) + coord_3d(aspect = "data")
 ```
 
-![3D plot. Layers: Edge (x = x, y = y, z = z, xend = xend, yend = yend,
-zend = zend); Sphere (x = x, y = y, z = z, radius = 0.4 \*
-covalent_radius, fill = I(colour)). Camera: azimuth -60 degrees,
-elevation 30 degrees, roll 0 degrees; orthographic
-projection.](molecules_files/figure-html/water-1.svg)
+![A water molecule with one oxygen atom joined by tubes to two smaller
+hydrogen atoms.](molecules_files/figure-html/water-1.svg)
 
 Atom sizes use a chosen fraction of the covalent radius; tube radius is
 measured as a fraction of the longest model-box side. `aspect = "data"`

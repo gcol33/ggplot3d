@@ -25,6 +25,7 @@ scene_panel_grob <- function(packets, panel_params, theme, underlay = list(), ov
   if (is.null(registry)) registry <- new.env(parent = emptyenv())
   if (panel_params$panel_id == 1L || is.null(registry$group)) registry$group <- new.env(parent = emptyenv())
   group <- registry$group
+  if (is.null(attr(group, "fit_cache"))) attr(group, "fit_cache") <- new.env(parent = emptyenv())
   group[[as.character(panel_params$panel_id)]] <- list(params = panel_params, theme = theme)
   grid::gTree(packets = packets, panel_params = panel_params, theme = theme,
     underlay = underlay, overlay = overlay, frame_group = group, cl = "scene_panel_grob", name = "scene-panel-3d")
@@ -49,7 +50,8 @@ makeContent.scene_panel_grob <- function(x) {
     x$inner_viewport <- x$outer_viewport <- outer
     return(grid::setChildren(x, do.call(grid::gList, c(list(background), x$underlay, list(rendered, border)))))
   }
-  furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, x$eye_group %or3d% as.list(x$frame_group))
+  furniture <- panel_furniture_3d(x$panel_params, x$theme, outer, x$eye_group %or3d% as.list(x$frame_group),
+    fit_cache = attr(x$frame_group, "fit_cache"))
   x$packets <- resolve_draw_packets_3d(x$packets, furniture$camera, furniture$viewport)
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
   furniture <- shadow_furniture_3d(furniture, x$packets, x$panel_params)
@@ -247,11 +249,13 @@ seam_underlay_3d <- function(x, y, id, fill) {
 # Rings `id` (consecutive vertices, ids 1..n) rewound counter-clockwise, so a
 # nonzero-winding compound path of them fills their union.
 counter_clockwise_3d <- function(x, y, id) {
-  nxt <- unlist(lapply(split(seq_along(id), id), function(i) c(i[-1L], i[1L])), use.names = FALSE)
-  area <- rowsum(x * y[nxt] - x[nxt] * y, id)[, 1L]
-  flip <- id %in% which(area < 0)
-  if (any(flip)) {
-    reversed <- unlist(lapply(split(which(flip), id[flip]), rev), use.names = FALSE)
+  i <- seq_along(id)
+  first <- match(id, id); last <- length(id) + 1L - match(id, rev(id))
+  nxt <- ifelse(i == last, first, i + 1L)
+  area <- rowsum(x * y[nxt] - x[nxt] * y, id, reorder = FALSE)[, 1L]
+  flip <- which(area[match(id, unique(id))] < 0)
+  if (length(flip)) {
+    reversed <- first[flip] + last[flip] - flip
     x[flip] <- x[reversed]; y[flip] <- y[reversed]
   }
   list(x = x, y = y)
@@ -518,15 +522,15 @@ face_fill_3d <- function(scene, rows, styles, light) {
 # since a piece drawn later lies in front of everything drawn before it.
 # `eligible` marks fragments that may be painted ahead; `key` identifies
 # fragments sharing one continuous underlay.
-split_underlays_3d <- function(f, runs, eligible, key = paste(f$kind, f$parent_primitive_id)) {
+split_underlays_3d <- function(f, runs, eligible, key = f$kind * 1e9 + f$parent_primitive_id) {
   out <- vector("list", length(runs))
-  run_of <- integer(length(f$kind))
-  for (i in seq_along(runs)) run_of[runs[[i]]] <- i
   rows <- unlist(runs, use.names = FALSE)
+  run <- rep.int(seq_along(runs), lengths(runs))[eligible[rows]]
   rows <- rows[eligible[rows]]
   if (!length(rows)) return(out)
-  first <- stats::ave(run_of[rows], key[rows], FUN = min)
-  later <- run_of[rows] > first
+  # Rows come in run order, so a key's first row lies in its first run.
+  first <- run[match(key[rows], key[rows])]
+  later <- run > first
   groups <- split(rows[later], first[later])
   out[as.integer(names(groups))] <- unname(groups)
   out
@@ -748,23 +752,28 @@ postpone_strokes_3d <- function(scene, order, arrowed, region_id) {
   if (!is.null(faces$coverage_opaque)) opaque_face <- opaque_face & faces$coverage_opaque
   wall[wall] <- opaque_face[src[wall]]
   if (!any(stroke[order]) || !any(wall[order])) return(list(order = order, moved = integer()))
-  centreline <- paste(src, f$parent_primitive_id, f$style_id, f$path_start_mm, f$path_end_mm, f$count, f$hidden)
-  centreline[f$mask_count == 0L] <- paste0("piece", which(f$mask_count == 0L))
+  centreline <- tuple_ids_3d(src, f$parent_primitive_id, f$style_id, f$path_start_mm, f$path_end_mm, f$count, f$hidden)
+  centreline[f$mask_count == 0L] <- -which(f$mask_count == 0L)
   n <- length(order)
   position <- integer(length(f$kind)); position[order] <- seq_len(n)
-  # The first position after each stroke fragment of a face that hides part of it.
+  # The first position after each stroke fragment of a face that hides part of
+  # it: positions sorted by primitive, then searched past the stroke's own.
   limit <- rep(n + 1L, length(f$kind))
   occ <- scene$occluders
   if (length(occ$fragment)) {
-    pairs <- data.frame(fragment = occ$fragment, key = paste(occ$kind, occ$source_index),
-      from = position[occ$fragment])
-    pairs <- pairs[pairs$from > 0L, , drop = FALSE]
-    at <- merge(pairs, data.frame(key = paste(f$kind[order], src[order]), at = seq_len(n)), by = "key")
-    at <- at[at$at > at$from, , drop = FALSE]
-    if (nrow(at)) {
-      first <- tapply(at$at, at$fragment, min)
-      limit[as.integer(names(first))] <- as.integer(first)
-    }
+    primitive <- f$kind[order] * 1e9 + src[order]
+    sorted <- order(primitive, method = "radix")
+    keys <- unique(primitive[sorted])
+    rank <- match(primitive[sorted], keys)
+    from <- position[occ$fragment]
+    wanted <- match(occ$kind * 1e9 + occ$source_index, keys)
+    ok <- which(from > 0L & !is.na(wanted))
+    next_at <- findInterval(wanted[ok] * (n + 1) + from[ok], rank * (n + 1) + sorted) + 1L
+    hit <- next_at <= n
+    hit[hit] <- rank[next_at[hit]] == wanted[ok][hit]
+    at <- sorted[next_at[hit]]; fragment <- occ$fragment[ok][hit]
+    latest_first <- order(-at)
+    limit[fragment[latest_first]] <- at[latest_first]
   }
   cls <- ifelse(stroke[order], 2L, ifelse(wall[order], 1L, 0L))
   repeat {
@@ -774,15 +783,15 @@ postpone_strokes_3d <- function(scene, order, arrowed, region_id) {
     stop <- pmin(c(other, n + 1L)[findInterval(moving, other) + 1L], limit[order[moving]])
     stop <- rev(cummin(rev(stop)))
     line <- centreline[order[moving]]
-    place <- stats::ave(stop, line, FUN = min)
-    stay <- moving[place <= stats::ave(moving, line, FUN = max)]
+    place <- group_extreme_3d(stop, line)
+    stay <- moving[place <= group_extreme_3d(moving, line, maximum = TRUE)]
     if (!length(stay)) break
     cls[stay] <- 0L
   }
   rows <- order[moving]
   at <- seq_len(n) + 0; at[moving] <- place - 0.5
   ranked <- order(place, moving)
-  paint <- paste(place, f$style_id[rows], f$opacity[rows], f$hidden[rows], region_id[rows])[ranked]
+  paint <- tuple_ids_3d(place, f$style_id[rows], f$opacity[rows], f$hidden[rows], region_id[rows])[ranked]
   run <- integer(length(moving))
   run[ranked] <- cumsum(c(TRUE, paint[-1L] != paint[-length(paint)]))
   run_at <- path_source <- path_parent <- integer(n); path_start <- numeric(n)
@@ -888,7 +897,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   path_cache <- new.env(parent = emptyenv())
-  underlay_key <- ifelse(smooth_run, paste("smooth", f$layer_id), paste(f$kind, f$parent_primitive_id))
+  underlay_key <- ifelse(smooth_run, -f$layer_id, f$kind * 1e9 + f$parent_primitive_id)
   underlay <- split_underlays_3d(f, runs, (f$kind == 5L & f$opacity >= 1) | (seam & !surface & f$opacity >= 1), underlay_key)
   geometry <- function(masks) {
     rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
@@ -898,15 +907,22 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
          x = scene$vertices$x_npc[indices], y = scene$vertices$y_npc[indices])
   }
   strokes <- masked_stroke_runs_3d(scene, runs, styles, viewport, geometry, centreline = strokes_only)
+  face_rows <- which(f$kind == 1L)
+  face_fill <- character(length(f$kind))
+  if (length(face_rows)) face_fill[face_rows] <- face_fill_3d(scene, face_rows, styles, light)
   grobs <- lapply(seq_along(runs), function(run) {
     masks <- runs[[run]]
-    run_geometry <- geometry(masks)
-    rows <- run_geometry$rows; counts <- run_geometry$counts; starts <- run_geometry$starts
-    x <- run_geometry$x; y <- run_geometry$y
-    kind <- f$kind[rows[1L]]; s <- slice_rows_3d(styles, rows)
-    gp <- material_gp_3d(s, f$opacity[rows], kind)
+    rows <- masks
+    kind <- f$kind[rows[1L]]
     clip <- NULL
-    if (f$mask_count[rows[1L]] > 0L) clip <- strokes$clips[[run]] %or3d% mask_path_3d(scene, masks)
+    if (kind != 5L) {
+      run_geometry <- geometry(masks)
+      rows <- run_geometry$rows; counts <- run_geometry$counts; starts <- run_geometry$starts
+      x <- run_geometry$x; y <- run_geometry$y
+      s <- slice_rows_3d(styles, rows)
+      gp <- material_gp_3d(s, f$opacity[rows], kind)
+      if (f$mask_count[rows[1L]] > 0L) clip <- strokes$clips[[run]] %or3d% mask_path_3d(scene, masks)
+    }
     if (strokes_only && kind %in% c(1L, 3L, 5L)) {
       g <- grid::nullGrob()
       clip <- NULL
@@ -927,7 +943,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       }
     } else if (kind == 1L) {
       later <- underlay[[run]]
-      fill <- face_fill_3d(scene, rows, styles, light)
+      fill <- face_fill[rows]
       gp$fill <- fill
       id <- rep(seq_along(counts), counts)
       if (any(smooth[rows])) {
@@ -963,7 +979,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
         n <- f$count[later]
         at <- rep(f$offset[later], n) + sequence(n) - 1L
         g <- grid::grobTree(grid::polygonGrob(scene$vertices$x_npc[at], scene$vertices$y_npc[at], id = rep(seq_along(later), n),
-          gp = grid::gpar(fill = face_fill_3d(scene, later, styles, light), col = NA)), g)
+          gp = grid::gpar(fill = face_fill[later], col = NA)), g)
       }
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]

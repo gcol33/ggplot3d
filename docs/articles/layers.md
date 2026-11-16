@@ -491,6 +491,11 @@ fail with `numbers of columns of arguments do not match`. For those
 tables, compute the summaries first and pass their bounds to an interval
 layer.
 
+[Displaying intervals and
+summaries](https://gillescolling.com/ggplot3d/articles/intervals.md)
+explains the meaning of the bounds, grouping and precomputed summary
+tables.
+
 For supplied intervals, map both bounds of each axis. Here a small table
 gives three measured positions with stated x, y and z uncertainties.
 Cross-shaped caps extend along both perpendicular axes, so the endpoints
@@ -684,6 +689,11 @@ onto the floor and the back wall, and rug ticks along the
 floor.](layers_files/figure-html/project-1.svg)
 
 ## Adapting a layer
+
+[Positioning groups and
+observations](https://gillescolling.com/ggplot3d/articles/positions.md)
+develops grouped columns, aligned labels and proportions from these
+position adjustments.
 
 The layer adapter equips a registered ggplot2 geom with
 three-dimensional scene emission. Extension authors register an emitter

@@ -76,7 +76,8 @@ mesh_remesh(m, edge = NULL, iterations = 10L)
 
 ## Value
 
-A mesh of the class of `m`.
+A mesh of the class of `m`; an rgl `mesh3d` comes back as a
+`ggplot3d_mesh` data frame.
 
 ## Details
 

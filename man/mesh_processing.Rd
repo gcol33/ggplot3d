@@ -46,7 +46,8 @@ in the units of the positions.}
 \item{edge}{Target edge length; NULL uses the mean edge length.}
 }
 \value{
-A mesh of the class of \code{m}.
+A mesh of the class of \code{m}; an rgl \code{mesh3d} comes back as a
+\code{ggplot3d_mesh} data frame.
 }
 \description{
 Verbs on a \code{\link[=mesh_3d]{mesh_3d()}} corner table (also an rgl \code{mesh3d} or any data frame

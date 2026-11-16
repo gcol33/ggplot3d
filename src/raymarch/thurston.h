@@ -462,7 +462,51 @@ inline double jacobi_area(const Geodesic &ray, double t) {
   }
   return norm(engine::cross(columns[0], columns[1]));
 }
+// Nil's Jacobi fields in closed form. The geodesic from the identity with
+// initial velocity (u0, u1, c), of any length, turns its horizontal part at
+// rate c: x + i y = t (u0 + i u1) (sinc(ct) + i cosc(ct)) and
+// z = c t + (u0^2 + u1^2) t^2 zeta(ct) / 2, with sinc(s) = sin(s) / s,
+// cosc(s) = (1 - cos(s)) / s and zeta(s) = (s - sin(s)) / s^2. Evaluated on
+// jets of the velocity, it differentiates the exponential map along the two
+// directions normal to the ray, as jacobi_area() does by integration.
+inline Jet nil_turning_jet(const Jet &s, int which) {
+  const double x = s.v;
+  double f, slope;
+  if (std::abs(x) < 1e-2) {
+    const double x2 = x * x;
+    if (which == 0) { f = 1 - x2 / 6 + x2 * x2 / 120; slope = -x / 3 + x * x2 / 30; }
+    else if (which == 1) { f = x / 2 - x * x2 / 24 + x * x2 * x2 / 720; slope = .5 - x2 / 8 + x2 * x2 / 144; }
+    else { f = x / 6 - x * x2 / 120 + x * x2 * x2 / 5040; slope = 1.0 / 6 - x2 / 40 + x2 * x2 / 1008; }
+  } else {
+    const double sine = std::sin(x), half = std::sin(x / 2), versine = 2 * half * half;
+    if (which == 0) { f = sine / x; slope = (x * std::cos(x) - sine) / (x * x); }
+    else if (which == 1) { f = versine / x; slope = (x * sine - versine) / (x * x); }
+    else { f = (x - sine) / (x * x); slope = (versine * x - 2 * (x - sine)) / (x * x * x); }
+  }
+  return unary(s, f, slope);
+}
+inline double nil_area(const Geodesic &ray, double t) {
+  Vec3 axis = std::abs(ray.initial[2]) < .9 ? Vec3{0, 0, 1} : Vec3{1, 0, 0};
+  Vec3 a = unit(engine::cross(ray.initial, axis)), b = engine::cross(ray.initial, a);
+  Jet u[3];
+  for (int j = 0; j < 3; ++j)
+    u[j] = Jet{ray.initial[j], {a[j], b[j], 0}};
+  const Jet time{t, {0, 0, 0}}, s = mul(u[2], time, 0);
+  const Jet sinc = nil_turning_jet(s, 0), cosc = nil_turning_jet(s, 1), zeta = nil_turning_jet(s, 2);
+  const Jet x = mul(time, sub(mul(u[0], sinc, 0), mul(u[1], cosc, 0), 0), 0);
+  const Jet y = mul(time, add(mul(u[1], sinc, 0), mul(u[0], cosc, 0), 0), 0);
+  const Jet horizontal = add(mul(u[0], u[0], 0), mul(u[1], u[1], 0), 0);
+  const Jet z = add(s, mul(Jet{.5 * t * t, {0, 0, 0}}, mul(horizontal, zeta, 0), 0), 0);
+  const Vec3 p{x.v, y.v, z.v};
+  const M3 to_frame = inverse(frame(ray.g, p));
+  Vec3 columns[2];
+  for (int k = 0; k < 2; ++k)
+    columns[k] = mv(to_frame, Vec3{x.d[k], y.d[k], z.d[k]});
+  return norm(engine::cross(columns[0], columns[1]));
+}
 inline double area_density(const Geodesic &ray, double t) {
+  if (ray.g == Geometry::nil)
+    return nil_area(ray, t);
   if (ray.g == Geometry::e3)
     return t * t;
   if (ray.g == Geometry::s3)

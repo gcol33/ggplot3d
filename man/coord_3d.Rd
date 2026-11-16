@@ -101,7 +101,8 @@ over the data without grid lines), or pane names \code{"xmin"} to \code{"zmax"}.
 
 \item{default}{Whether this is the default coordinate system.}
 
-\item{frame}{Fit the current view, all azimuths at this elevation, or a sphere.}
+\item{frame}{\code{"view"} (default) fits the current view, \code{"azimuth"} every
+azimuth at this elevation and \code{"sphere"} every viewing direction.}
 
 \item{transform}{Optional coordinate transformations applied after
 statistics, as a named list with entries \code{x}, \code{y} or \code{z}, each a

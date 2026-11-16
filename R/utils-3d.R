@@ -23,6 +23,27 @@ slice_rows_3d <- function(df, rows) {
   out
 }
 
+# Ids 1..k of the distinct tuples formed by equal-length vectors, numbered in
+# order of first appearance. Values are compared exactly.
+tuple_ids_3d <- function(...) {
+  id <- NULL
+  for (column in list(...)) {
+    k <- match(column, unique(column))
+    if (is.null(id)) id <- k else {
+      pair <- id * (max(k) + 1) + k
+      id <- match(pair, unique(pair))
+    }
+  }
+  id
+}
+
+# Minimum (or maximum) of x within each group of `group`, for every element.
+group_extreme_3d <- function(x, group, maximum = FALSE) {
+  o <- order(group, if (maximum) -x else x, method = "radix")
+  first <- !duplicated(group[o])
+  x[o][first][match(group, group[o][first])]
+}
+
 # A single string from `choices`. `shown` lists the accepted values in the
 # error message, which may name forms (TRUE, a mesh) handled by the caller.
 check_choice_3d <- function(value, choices, name, shown = paste0('"', choices, '"')) {

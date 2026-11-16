@@ -55,6 +55,9 @@ geom_ridgeline_3d(
 
 \item{height}{Density height multiplier in transformed z units.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Each group has a single position on the perpendicular x/y axis. Densities
 are fitted along the chosen transformed axis. base and height specify the

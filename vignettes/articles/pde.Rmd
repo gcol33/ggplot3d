@@ -39,9 +39,9 @@ Each exact animated solution below is a function `u(x, y, t)` of two space coord
 
 The transport equation moves an initial profile $g$ at constant velocity $b = (b_1, b_2)$ without changing its shape:
 
-$$u_t + b \cdot \nabla u = 0, \qquad u(x, 0) = g(x), \qquad u(x, t) = g(x - t b).$$
+$$\begin{aligned} u_t + b \cdot \nabla u &= 0, \\ u(x, 0) &= g(x), \\ u(x, t) &= g(x - t b). \end{aligned}$$
 
-The profile here is a bump that is periodic in both coordinates with period 4, $g(x, y) = \exp\{3(\cos(\pi x / 2) - 1) + 3(\cos(\pi y / 2) - 1)\}$, moved along the diagonal $b = (1, 1)$. After $t = 4$ it is back at its start, so the 32 frames from $t = 0$ to $t = 3.875$ loop without a jump.
+The profile here is a bump that is periodic in both coordinates with period 4, $g(x, y) = e^{3(\cos(\pi x / 2) - 1)}\, e^{3(\cos(\pi y / 2) - 1)}$, moved along the diagonal $b = (1, 1)$. After $t = 4$ it is back at its start, so the 32 frames from $t = 0$ to $t = 3.875$ loop without a jump.
 
 ```{r transport-data}
 transport <- function(x, y, t) {
@@ -97,7 +97,7 @@ docs_animation("heat")
 
 The wave equation describes a membrane fixed along its edges. On the unit square, each product $\sin(m \pi x) \sin(n \pi y)$ vibrates at angular frequency $\pi \sqrt{m^2 + n^2}$. The modes $(m, n) = (1, 2)$ and $(2, 1)$ share the frequency $\omega = \sqrt{5} \pi$; adding them a quarter period apart gives a pattern that turns round the centre:
 
-$$u_{tt} = \Delta u, \qquad u(x, y, t) = \sin(\pi x) \sin(2 \pi y) \cos(\omega t) + \sin(2 \pi x) \sin(\pi y) \sin(\omega t).$$
+$$\begin{aligned} u_{tt} &= \Delta u, \\ u(x, y, t) &= \sin(\pi x) \sin(2 \pi y) \cos(\omega t) \\ &\quad + \sin(2 \pi x) \sin(\pi y) \sin(\omega t). \end{aligned}$$
 
 The solution repeats after one period $T = 2 \pi / \omega = 2 / \sqrt{5}$, so 30 frames over $[0, T)$ loop.
 
@@ -130,7 +130,7 @@ docs_animation("wave")
 
 A solution of the Laplace equation is the steady state of the heat equation: it has no time derivative, and its values inside a region are fixed by its values on the boundary. The real part of any polynomial in $x + iy$ solves it. The frames below take $u = \operatorname{Re}\{e^{-i\varphi} (x + iy)^3\} = r^3 \cos(3\theta - \varphi)$ in polar coordinates $(r, \theta)$, and use the phase $\varphi$ as the frame variable `t`: every frame is an exact harmonic function, with boundary values that rotate as $\varphi$ grows. Raising $\varphi$ by $2\pi$ turns the saddle by a third of a turn, which maps it onto itself, so 36 frames over $\varphi \in [0, 2\pi)$ loop.
 
-$$\Delta u = u_{xx} + u_{yy} = 0, \qquad u(x, y) = r^3 \cos(3\theta - \varphi).$$
+$$\begin{aligned} \Delta u &= u_{xx} + u_{yy} = 0, \\ u(x, y) &= r^3 \cos(3\theta - \varphi). \end{aligned}$$
 
 ```{r laplace-data}
 laplace <- function(x, y, t) Re(exp(-1i * t) * complex(real = x, imaginary = y)^3)
@@ -162,7 +162,7 @@ $$(u_t + 6uu_x + u_{xxx})_x + 3u_{yy} = 0.$$
 
 Hirota's direct method (Hirota 2004) writes its solitons as $u = 2 (\log \tau)_{xx}$. With $\eta_i = k_i x + l_i y - \omega_i t$ and $\omega_i = (k_i^4 + 3 l_i^2) / k_i$, the function $\tau = 1 + e^{\eta_1}$ gives one line soliton, a straight crest of height $k_1^2 / 2$, and
 
-$$\tau = 1 + e^{\eta_1} + e^{\eta_2} + A_{12}\, e^{\eta_1 + \eta_2}, \qquad A_{12} = \frac{l^2}{l^2 - 1} \quad \text{for } k_1 = k_2 = 1,\ l_1 = -l_2 = l,$$
+$$\begin{aligned} \tau &= 1 + e^{\eta_1} + e^{\eta_2} + A_{12}\, e^{\eta_1 + \eta_2}, \\ A_{12} &= \dfrac{l^2}{l^2 - 1} \\ &\quad \text{for } k_1 = k_2 = 1,\ l_1 = -l_2 = l, \end{aligned}$$
 
 gives two line solitons that cross in an X. The solution is regular for $l > 1$. With $l = 1.2$ both crests travel in the $x$ direction at speed $\omega_1 / k_1 = 5.32$, and the segment where they meet is shifted forward and stands higher than either crest alone.
 
@@ -204,7 +204,7 @@ $$u_{tt} - u_{xx} - u_{yy} + \sin u = 0.$$
 
 Its kink $u = 4 \arctan e^{\eta}$, with $\eta = p x + q y - \omega t$ and $p^2 + q^2 - \omega^2 = 1$, is a front across which $u$ steps from $0$ to $2\pi$ and which moves at speed $\omega / \sqrt{p^2 + q^2} < 1$. Two kinks combine in closed form (Hirota 2004):
 
-$$u = 4 \arctan \frac{e^{\eta_1} + e^{\eta_2}}{1 + a_{12}\, e^{\eta_1 + \eta_2}}, \qquad a_{12} = \frac{(p_1 - p_2)^2 + (q_1 - q_2)^2 - (\omega_1 - \omega_2)^2}{(p_1 + p_2)^2 + (q_1 + q_2)^2 - (\omega_1 + \omega_2)^2}.$$
+$$\begin{aligned} u &= 4 \arctan \dfrac{e^{\eta_1} + e^{\eta_2}}{1 + a_{12}\, e^{\eta_1 + \eta_2}}, \\ a_{12} &= \dfrac{s_-}{s_+}, \\ s_\pm &= (p_1 \pm p_2)^2 + (q_1 \pm q_2)^2 - (\omega_1 \pm \omega_2)^2. \end{aligned}$$
 
 The frames use one front along the $y$ axis moving in $+x$ and one along the $x$ axis moving in $-y$, both at speed 0.6. The surface stands at $2\pi$ in the two opposite quadrants where exactly one of $\eta_1$, $\eta_2$ is positive and lies near 0 in the other two; the corner where the fronts cross moves along the diagonal.
 
@@ -315,7 +315,7 @@ $$
 
 Subscripts denote partial derivatives, and $\Delta=\partial_x^2+\partial_y^2$. These signs follow the curl convention in Orszag and Tang (1979). The initial data of Kraus, Tassi and Grasso (2016, section 4.1), translated from their opposite bracket convention, are
 
-$$\psi(x,y,0)=-2\cos x+2\sin y,\qquad a(x,y,0)=2\cos x-\cos(2y).$$
+$$\begin{aligned} \psi(x,y,0)&=-2\cos x+2\sin y,\\ a(x,y,0)&=2\cos x-\cos(2y). \end{aligned}$$
 
 The solver uses a $64\times64$ grid, $\nu=\eta=0.04$ and time step $0.0025$. Fourier differentiation gives spatial derivatives; products are evaluated on the physical grid. The two-thirds rule keeps only component wavenumbers $|k_x|,|k_y|<n/3$ in the initial state and every nonlinear term. The inverse Laplacian sets the mean streamfunction to zero.
 

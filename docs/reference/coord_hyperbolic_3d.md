@@ -51,8 +51,9 @@ coord_hyperbolic_3d(
 
 - distance_breaks:
 
-  Optional increasing nonnegative distances for a radial distance guide,
-  in intrinsic units.
+  Optional increasing nonnegative distances, in intrinsic units, drawn
+  as labelled circles at that distance from the origin in the z = 0
+  plane.
 
 - inside:
 

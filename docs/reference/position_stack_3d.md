@@ -2,8 +2,9 @@
 
 `position_stack_3d()` places the intervals of groups that share a cell
 end to end along `axis`; `position_fill_3d()` also rescales each stack
-to span 0 to 1. Positive and negative values stack separately. A cell is
-the set of rows with the same position on the two other axes.
+to span 0 to 1 for positive values and 0 to -1 for negative values.
+Positive and negative values stack separately. A cell is the set of rows
+with the same position on the two other axes.
 
 ## Usage
 
@@ -48,6 +49,9 @@ the transformed scale and needs a linear continuous scale on `axis`.
 
 [`ggplot2::position_stack()`](https://ggplot2.tidyverse.org/reference/position_stack.html),
 [`position_dodge_3d()`](https://gillescolling.com/ggplot3d/reference/position_dodge_3d.md).
+The [positioning
+article](https://gillescolling.com/ggplot3d/articles/positions.html)
+demonstrates aligned columns and labels.
 
 ## Examples
 

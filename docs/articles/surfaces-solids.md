@@ -1,12 +1,12 @@
 # Surfaces, solids and fields
 
-These layers build geometry from a model, a function, a field or a shape
-rather than drawing each row as a mark. This article gives a small
-example of each. Installation is covered in [Get
+These layers build geometry from a model, a function, a field or a
+shape. This article gives a small example of each. Installation is
+covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
 [Layers](https://gillescolling.com/ggplot3d/articles/layers.md) covers
 points, paths, surfaces from gridded data, columns, distributions and
-intervals, [Vector
+intervals. [Vector
 fields](https://gillescolling.com/ggplot3d/articles/vector-fields.md)
 covers arrows and streamlines, and [Implicit
 surfaces](https://gillescolling.com/ggplot3d/articles/implicit-surfaces.md)
@@ -127,10 +127,23 @@ cars_fit + geom_smooth_3d(method = model, domain = "hull", se = "fill", n = 10) 
 its predicted
 mean.](surfaces-solids_files/figure-html/smooth-se-fill-1.svg)
 
-Combining the hull domain with a closed confidence band can currently
-fail with `faces must be planar`. The separate confidence surfaces and
-standard-error fill provide the available uncertainty displays for this
-example.
+Use `se = "band"` to close the space between the confidence surfaces.
+The following band uses the same fitted model and predictor hull.
+
+``` r
+
+cars_fit + geom_smooth_3d(method = model, domain = "hull", se = "band",
+                         n = 10, fill = "#2E6F9E", alpha = 0.45) +
+  geom_point_3d(size = 1.5) + coord_3d()
+```
+
+![A translucent confidence band around the fitted fuel-consumption
+surface, restricted to the observed predictor
+hull.](surfaces-solids_files/figure-html/smooth-band-1.svg)
+
+[Displaying intervals and
+summaries](https://gillescolling.com/ggplot3d/articles/intervals.md)
+covers supplied intervals and summaries of repeated observations.
 
 ## Parametric surfaces
 

@@ -239,8 +239,9 @@ k + geom_hline(yintercept = 0, colour = "#5C6166") +
 at height zero, and a white label reading highest next to the top
 point.](combining-2d-3d_files/figure-html/annotations-1.svg)
 
-The label is a box drawn at the projected position of its point; points
-and faces in front of that position cover it.
+The label is a box drawn at the projected position of its point, over
+the whole scene, so points and faces in front of that position never
+cover it.
 
 ## Contours and densities on the floor
 

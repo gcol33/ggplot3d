@@ -109,6 +109,10 @@ geom_parametric_3d(
 
   Maximum number of refinement rounds.
 
+## Value
+
+A ggplot2 layer.
+
 ## Details
 
 With `adaptive = TRUE` each edge whose midpoint on the surface lies

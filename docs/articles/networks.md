@@ -8,16 +8,16 @@ standing upright on the edge of a heat map. Installation is covered in
 [Get started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md);
 the network examples need [igraph](https://r.igraph.org/).
 
-1.  **Pass** an igraph object to
+1.  Pass an igraph object to
     [`ggplot()`](https://ggplot2.tidyverse.org/reference/ggplot.html)
     with a three-dimensional layout.
 
-2.  **Draw** it with
+2.  Draw it with
     [`geom_edge_3d()`](https://gillescolling.com/ggplot3d/reference/geom_edge_3d.md)
     and
     [`geom_node_3d()`](https://gillescolling.com/ggplot3d/reference/geom_edge_3d.md).
 
-3.  **Stack** layers with
+3.  Stack layers with
     [`stat_layers_3d()`](https://gillescolling.com/ggplot3d/reference/stat_layers_3d.md),
     or stand a tree on a plane with
     [`stat_dendrogram_3d()`](https://gillescolling.com/ggplot3d/reference/stat_dendrogram_3d.md).
@@ -166,7 +166,7 @@ it lies on the floor of the box.
   spacetime](https://gillescolling.com/ggplot3d/articles/curved-spaces.html#trees-in-hyperbolic-space)
   lays out large trees in hyperbolic space.
 
-- [Molecular
+- [Molecular ball-and-stick
   views](https://gillescolling.com/ggplot3d/articles/molecules.md) draws
   bonds as edges between atoms.
 

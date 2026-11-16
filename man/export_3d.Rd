@@ -55,8 +55,8 @@ lines and points have in a plot of this size.}
 
 \item{dpi}{Device resolution, default 96 dots per inch.}
 
-\item{print}{Optional \code{\link[=print_3d]{print_3d()}} specification for closed millimetre solids
-in STL or 3MF output.}
+\item{print}{A \code{\link[=print_3d]{print_3d()}} specification for closed millimetre solids:
+optional for STL, required for 3MF.}
 
 \item{interactive}{SVG: whether to include tooltips, keyboard focus and
 linked hover highlighting for fragments of the same source row.}
@@ -75,7 +75,8 @@ a separate buffer (\code{.gltf} and \code{.bin}) for Blender and the web, PLY, O
 with an MTL material file, binary STL and 3MF. Faces are triangulated,
 paths become tubes or line primitives, and points become small solids or
 point primitives, all in model coordinates: the panel box scaled by the
-aspect of \code{\link[=coord_3d]{coord_3d()}}, with its longest side \code{size} long. Vector and
+aspect of \code{\link[=coord_3d]{coord_3d()}}, with its longest side \code{size} long; 3MF and STL
+written with \code{print} hold millimetre solids instead. Vector and
 source formats hold the projected plot: SVG with source rows and hover
 text, TikZ (\code{.tex}) and an Asymptote scene (\code{.asy}).
 }

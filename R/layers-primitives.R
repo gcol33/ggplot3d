@@ -119,9 +119,11 @@ geom_polygon_3d <- function(mapping = NULL, data = NULL, stat = "identity", posi
 #' @param ... Fixed aesthetics and rendering parameters, such as
 #'   `clip_planes`, a list of [clip_plane_3d()] planes that replaces the
 #'   coordinate system's planes for this layer.
-#' @param occlusion Depth testing or overlay drawing.
+#' @param occlusion `"depth"` (default) sorts the layer into the scene by
+#'   depth; `"overlay"` draws it over the scene.
 #' @param shade Whether to shade faces.
-#' @param hidden Hidden stroke policy.
+#' @param hidden Strokes behind faces: `"hide"` (default) removes them,
+#'   `"dashed"` draws them dashed and `"show"` draws them solid.
 #' @return A ggplot2 layer adapted to the 3D scene.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(2, 1, 3))

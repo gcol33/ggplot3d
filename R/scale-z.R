@@ -11,7 +11,9 @@ as_z_scale <- function(scale, position) {
 #'
 #' These scales use ggplot2 position scale transformations, limits and breaks.
 #' @param ... Arguments passed to the corresponding ggplot2 x scale constructor.
-#' @param position Cube edge used for the z guide.
+#' @param position Vertical box edge that carries the z guide: `"auto"`
+#'   (default) or one of `"xmin-ymin"`, `"xmin-ymax"`, `"xmax-ymin"` and
+#'   `"xmax-ymax"`, the x and y sides the edge stands on.
 #' @return A ggplot2 position scale for the z aesthetic family.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 2, 1), z = c(1, 10, 100))

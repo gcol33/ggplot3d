@@ -126,12 +126,15 @@ x and y.
 
 faceted <- data.frame(x = rep(1:3, 2), y = rep(c(1, 2, 1), 2),
   z = c(1, 2, 3, 20, 40, 60), site = rep(c("a", "b"), each = 3))
+overhead <- light_3d(light_directional(c(0, 0, 1), space = "data"))
 ggplot(faceted, aes(x, y, z = z)) + geom_point_3d(size = 3) +
-  facet_wrap(~site, ncol = 1) + coord_3d(z_scales = "free")
+  facet_wrap(~site, labeller = label_both) +
+  coord_3d(z_scales = "free", shadow = shadow_3d(light = overhead, alpha = 0.5))
 ```
 
-![Two vertically stacked panels with separate z ranges for groups a and
-b.](z-scale_files/figure-html/facets-1.svg)
+![Two side-by-side panels with separate z ranges, 1 to 3 for site a and
+20 to 60 for site b, each point casting a shadow straight down onto the
+floor.](z-scale_files/figure-html/facets-1.svg)
 
 Free x and y ranges remain controlled by ggplot2’s facet arguments. Use
 fixed z ranges when equal heights should occupy equal positions across
@@ -152,3 +155,8 @@ ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
 
 ![Three points with a Height axis title and a blue z
 axis.](z-scale_files/figure-html/guide-1.svg)
+
+[Axes, legends and pane
+styling](https://gillescolling.com/ggplot3d/articles/guides-themes.md)
+shows edge-following labels, a colourbar aligned with height and theme
+elements for individual panes.

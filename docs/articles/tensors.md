@@ -6,6 +6,10 @@ perpendicular directions and whose eigenvalues give their magnitudes.
 draws one tensor at each position. It accepts symmetric positive
 semidefinite matrices in a list-column.
 
+This example draws three tensor shapes and rotates one of them.
+Installation is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md).
+
 ``` r
 
 library(ggplot2)
@@ -22,10 +26,9 @@ ggplot(d, aes(x, y, z = z, tensor = tensor, fill = shape)) +
   coord_3d(aspect = "data") + theme(legend.position = "bottom")
 ```
 
-![3D plot. Layers: Tensor (x = x, y = y, z = z, tensor = tensor, fill =
-shape). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0
-degrees; orthographic
-projection.](tensors_files/figure-html/tensors-1.svg)
+![Three superquadric glyphs showing a tensor with one dominant
+direction, one with two equal dominant directions, and an isotropic
+tensor.](tensors_files/figure-html/tensors-1.svg)
 
 Kindlmann’s superquadric construction uses the relative linear and
 planar anisotropy of each tensor to choose its surface shape. `gamma`
@@ -56,10 +59,8 @@ ggplot(d, aes(x, y, z = z, tensor = tensor, fill = shape)) +
   geom_tensor_3d(glyph = "superquadric", gamma = 3) + coord_3d(aspect = "data")
 ```
 
-![3D plot. Layers: Tensor (x = x, y = y, z = z, tensor = tensor, fill =
-shape). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0
-degrees; orthographic
-projection.](tensors_files/figure-html/rotated-1.svg)
+![The same three tensor glyphs with the first rotated forty-five degrees
+in the x/y plane.](tensors_files/figure-html/rotated-1.svg)
 
 Kindlmann (2004), [Superquadric tensor
 glyphs](https://doi.org/10.2312/VisSym/VisSym04/147-154), defines the

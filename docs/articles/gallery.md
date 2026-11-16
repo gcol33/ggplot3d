@@ -20,9 +20,10 @@ library(ggplot3d)
 draw symmetric tensors as ellipsoids or superquadrics. [Ordination
 biplots](https://gillescolling.com/ggplot3d/articles/ordination.md)
 combine site scores, variable arrows and group regions. [Molecular
+ball-and-stick
 views](https://gillescolling.com/ggplot3d/articles/molecules.md) draw
-atoms and bonds from bio3d records. [Colour
-gamuts](https://gillescolling.com/ggplot3d/articles/colour-gamuts.md)
+atoms and bonds from bio3d records. [Colour gamuts in Lab
+coordinates](https://gillescolling.com/ggplot3d/articles/colour-gamuts.md)
 place sampled colours and their convex hull in Lab coordinates.
 
 ## Parametric curves

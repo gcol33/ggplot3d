@@ -93,6 +93,7 @@ geom_function_3d <- geom_from_stat_3d("stat_function_3d")
 #' @param view For a fitted model, the names of its predictors drawn on x and y.
 #' @param cond For a fitted model, a named list holding a value for each
 #'   other predictor.
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' d <- expand.grid(x = seq(-1, 1, length.out = 8), y = seq(-1, 1, length.out = 8))
@@ -150,6 +151,7 @@ geom_smooth_3d <- geom_from_stat_3d("stat_smooth_3d")
 #' }
 #' @inheritParams stat_smooth_3d
 #' @param geom Geom drawing the residuals; segments by default.
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' set.seed(1)
@@ -212,6 +214,7 @@ mapping_view_3d <- function(mapping) {
 #'   density unless fill is mapped or set, and unshaded unless `shade = TRUE`.
 #'   The density range still trains the z scale, as for contours. A flat
 #'   plane is a shorthand for [position_project_3d()].
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' ggplot2::ggplot(faithful, ggplot2::aes(eruptions, waiting)) +
@@ -245,6 +248,7 @@ stat_density_2d_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurf
 #' @param bw Bandwidth passed to stats::density.
 #' @param base Baseline in transformed z units.
 #' @param height Density height multiplier in transformed z units.
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, as.numeric(Species),

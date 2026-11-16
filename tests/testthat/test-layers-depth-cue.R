@@ -82,7 +82,7 @@ test_that("points cast discs of their drawn radius and strokes ribbons of their 
     integration_packets(p)$packet$polylines$width_mm, tolerance = 0.02)
 })
 
-test_that("a shadow film lies between the pane fill and the grid lines and is one compound path per layer", {
+test_that("a shadow film lies over the pane fill and the grid lines and is one compound path per layer", {
   d <- data.frame(x = c(.3, .6, .5), y = c(.3, .4, .7), z = c(.5, .6, .8))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 4) +
     geom_path_3d(colour = "blue") + unit_limits_3d() + coord_3d(shadow = shadow_3d(alpha = 0.5))
@@ -93,7 +93,7 @@ test_that("a shadow film lies between the pane fill and the grid lines and is on
   panes <- which(f$kind == 1L & f$layer_id == 0L & f$partition == 0L & !(seq_along(f$kind) %in% rows))
   grid_lines <- which(f$kind == 2L & f$layer_id == 0L & f$partition == 0L)
   expect_gt(min(position), max(match(panes, scene$draw_order)))
-  expect_lt(max(position), min(match(grid_lines, scene$draw_order)))
+  expect_gt(min(position), max(match(grid_lines, scene$draw_order)))
   styles <- scene$styles[match(f$style_id[rows], scene$styles$style_id), , drop = FALSE]
   expect_identical(length(unique(styles$sheet)), 2L)
   vector <- drawn$children[[which(vapply(drawn$children, function(g) identical(g$name, "scene-vector-3d"), logical(1)))]]

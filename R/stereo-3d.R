@@ -177,13 +177,14 @@ anaglyph_raster_3d <- function(eyes, filters, dpi) {
   colour <- 1 - sweep(1 - product, 2L, pmax(alpha, .Machine$double.eps), "/")
   colour[] <- pmin(1, pmax(0, colour))
   raster <- matrix(grDevices::rgb(colour[1L, ], colour[2L, ], colour[3L, ], alpha),
-    nrow = pixels[2L], ncol = pixels[1L])
+    nrow = pixels[2L], ncol = pixels[1L], byrow = TRUE)
   grid::rasterGrob(raster, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
     interpolate = TRUE, name = "scene-anaglyph-3d")
 }
 
-# RGBA (4 x pixels, in [0, 1], column-major over the image rows) of a grob
-# drawn alone on a transparent offscreen device.
+# RGBA (4 x pixels, in [0, 1], row by row from the top) of a grob drawn alone
+# on a transparent offscreen device, unpacked from the device's native raster
+# (bytes R, G, B, A from the lowest; R's NA integer is the pixel 0x80000000).
 capture_grob_rgba_3d <- function(grob, pixels, dpi) {
   current <- grDevices::dev.cur()
   capture <- ragg::agg_capture(width = pixels[1L], height = pixels[2L], units = "px", res = dpi,
@@ -195,8 +196,13 @@ capture_grob_rgba_3d <- function(grob, pixels, dpi) {
   }, add = TRUE)
   grid::grid.newpage()
   grid::grid.draw(grob)
-  image <- capture(native = FALSE)
-  grDevices::col2rgb(as.vector(image), alpha = TRUE) / 255
+  packed <- as.vector(capture(native = TRUE))
+  missing <- is.na(packed)
+  packed[missing] <- 0L
+  rgba <- rbind(bitwAnd(packed, 255L), bitwAnd(bitwShiftR(packed, 8L), 255L),
+                bitwAnd(bitwShiftR(packed, 16L), 255L), bitwShiftR(packed, 24L))
+  rgba[4L, missing] <- 128L
+  rgba / 255
 }
 
 # Colours seen through a filter: the grey level of each colour tinted from

@@ -51,6 +51,10 @@ geom_hull_3d(
   composition mapped with `a`, `b`, `c` (and `d`) in isometric log-ratio
   coordinates and keeps its facets on the original points.
 
+## Value
+
+A ggplot2 layer.
+
 ## Details
 
 The hull faces keep the rows of their corner points, so a fill given per

@@ -10,8 +10,8 @@ An implicit surface is the set of points where a function of x, y and z
 takes one value.
 [`geom_isofunction_3d()`](https://gillescolling.com/ggplot3d/reference/stat_isofunction_3d.md)
 samples the function on a grid over the position scales, extracts the
-level set and then moves every vertex onto the exact level along its
-grid edge, so a coarse grid still gives a surface that lies on the
+level set and then moves every vertex on a grid edge towards the level
+along that edge, so the vertices of a coarse grid still lie close to the
 function’s zero set.
 
 Point clouds can also supply a surface through an alpha shape or a

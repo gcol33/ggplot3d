@@ -82,6 +82,9 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Workflows</h6></li>
     <li><a class="dropdown-item" href="../articles/camera.html">Camera and framing</a></li>
+    <li><a class="dropdown-item" href="../articles/positions.html">Positioning groups and observations</a></li>
+    <li><a class="dropdown-item" href="../articles/guides-themes.html">Axes, legends and pane styling</a></li>
+    <li><a class="dropdown-item" href="../articles/intervals.html">Displaying intervals and summaries</a></li>
     <li><a class="dropdown-item" href="../articles/frames.html">Curvilinear and compositional frames</a></li>
     <li><a class="dropdown-item" href="../articles/backends.html">Output backends</a></li>
     <li><a class="dropdown-item" href="../articles/lighting.html">Lighting and surface styles</a></li>
@@ -195,7 +198,8 @@ Larger values give a smoother distance.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>mesh_geodesic_distance()</code> and <code>mesh_logmap()</code> return the mesh of
-the class of <code>m</code> with the added columns. <code>mesh_geodesic_path()</code> returns a
+the class of <code>m</code> with the added columns (an rgl <code>mesh3d</code> comes back as a
+<code>ggplot3d_mesh</code> data frame). <code>mesh_geodesic_path()</code> returns a
 data frame of path points with columns <code>x</code>, <code>y</code>, <code>z</code>, <code>path</code> (the row of
 <code>from</code> and <code>to</code>) and <code>s</code>, the arc length from the start; the attribute
 <code>length</code> holds the length of each path.</p>

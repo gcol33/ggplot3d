@@ -1,12 +1,11 @@
 # Lighting and surface styles
 
-A lit surface shows its shape through brightness: faces turned toward
-the light are brighter than faces turned away. When the fill also
-carries data, the two compete for the same channel. This article goes
-through the ways ggplot3d lets shading and colour share a figure: colour
-modes that keep the fill readable, guides that show what the light does
-to each colour, illustrative surface styles, line drawings, and lighting
-compared across panels.
+A lit surface shows its orientation through brightness. When fill
+represents data, its legend needs to account for the colour changes
+caused by lighting. This article lights a height surface and uses shaded
+colour guides to read it. Installation is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md); the
+multi-panel examples use patchwork to arrange the views.
 
 ``` r
 
@@ -32,9 +31,8 @@ hill + scale_fill_distiller(palette = "Spectral",
   coord_3d()
 ```
 
-![3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera:
-azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic
-projection.](lighting_files/figure-html/lightness-1.svg)
+![A two-peaked surface coloured by height, with a colourbar showing each
+colour's shading range.](lighting_files/figure-html/lightness-1.svg)
 
 The colourbar now shows each value from shadow (left) to full light
 (right), sampled from the same shading kernel as the faces. A palette
@@ -60,9 +58,8 @@ hill + scale_fill_viridis_b(guide = guide_coloursteps_3d()) +
     shadow_colour = "#22305a", highlight_colour = "#fff3d0"))
 ```
 
-![3D plot. Layers: Surface (x = x, y = y, z = z, fill = z). Camera:
-azimuth -60 degrees, elevation 30 degrees, roll 0 degrees; orthographic
-projection.](lighting_files/figure-html/tone-1.svg)
+![A height surface shaded toward blue shadows and warm highlights, with
+a stepped colour guide.](lighting_files/figure-html/tone-1.svg)
 
 ## The lighting of other packages
 
@@ -93,10 +90,9 @@ patchwork::wrap_plots(panels, ncol = 3)
 ggcube, matplotlib, rgl, plotly and, on a light grey fill,
 Mathematica.](lighting_files/figure-html/presets-1.svg)
 
-A highlight shows the shape of a single-colour surface best, but it
-mixes white into the fill. `material_3d("satin")` keeps it faint, and
-`light_3d(material = )` gives every shaded layer without its own
-material that one.
+A highlight mixes white into the fill to indicate surface orientation.
+`material_3d("satin")` keeps it faint, and `light_3d(material = )` gives
+every shaded layer without its own material that one.
 
 ## Illustrative styles
 
@@ -119,13 +115,9 @@ normals <- plain + geom_surface_3d(colour = NA, shading = "smooth",
 patchwork::wrap_plots(toon, gooch, normals, nrow = 1)
 ```
 
-![3D plot. Layers: Surface (x = x, y = y, z = z). Camera: azimuth -60
-degrees, elevation 30 degrees, roll 0 degrees; orthographic projection.
-3D plot. Layers: Surface (x = x, y = y, z = z). Camera: azimuth -60
-degrees, elevation 30 degrees, roll 0 degrees; orthographic projection.
-3D plot. Layers: Surface (x = x, y = y, z = z). Camera: azimuth -60
-degrees, elevation 30 degrees, roll 0 degrees; orthographic
-projection.](lighting_files/figure-html/styles-1.svg)
+![Three copies of the surface with toon bands, cool-to-warm Gooch
+shading and colours encoding face
+normals.](lighting_files/figure-html/styles-1.svg)
 
 ## Line drawings
 
@@ -146,9 +138,8 @@ ggplot(d, aes(x, y, z = z)) +
   coord_3d(backend = backend_3d("plotter"), panes = character(), box = "none")
 ```
 
-![3D plot. Layers: Surface (x = x, y = y, z = z). Camera: azimuth -60
-degrees, elevation 30 degrees, roll 0 degrees; orthographic
-projection.](lighting_files/figure-html/hatch-1.svg)
+![The two-peaked surface drawn with outlines and hatching whose density
+varies with the light.](lighting_files/figure-html/hatch-1.svg)
 
 ## Light sources, shadows and depth
 

@@ -32,6 +32,8 @@ raster output.
 
 Useful links:
 
+- <https://gillescolling.com/ggplot3d/>
+
 - <https://github.com/gcol33/ggplot3d>
 
 - Report bugs at <https://github.com/gcol33/ggplot3d/issues>

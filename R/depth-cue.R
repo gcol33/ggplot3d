@@ -6,8 +6,7 @@
 #' pane (Blinn 1988) and cut to the pane. The shadows of one layer are painted
 #' as one translucent film, the union of their pieces filled once with the
 #' nonzero winding rule, so overlapping pieces do not darken twice. The film
-#' lies in the pane's plane and is drawn over the pane fill and under its grid
-#' lines.
+#' lies in the pane's plane and is drawn over the pane fill and its grid lines.
 #'
 #' Strokes cast ribbons of their drawn width and points cast discs of their
 #' drawn radius, both measured where the caster lies. Text casts no shadow,
@@ -471,7 +470,8 @@ shadow_part_3d <- function(packet, plane, towards, partition, spec, camera, basi
   shadow <- new_scene_packet(vertices = list(x = geometry[, 1L], y = geometry[, 2L], z = geometry[, 3L]),
     corners = list(vertex = seq_len(nrow(geometry)), source_row = rep.int(0L, nrow(geometry))),
     faces = list(offset = as.integer(cumsum(c(1L, utils::head(counts, -1L)))), count = as.integer(counts),
-      layer_id = rep.int(0L, length(counts)), partition = rep.int(as.integer(partition), length(counts)),
+      layer_id = rep.int(0L, length(counts)), role = rep.int(2L, length(counts)),
+      partition = rep.int(as.integer(partition), length(counts)),
       opacity = rep(spec$alpha, length(counts))),
     styles = data.frame(style_id = 1L, fill = spec$colour, colour = NA_character_, alpha_mode = "surface",
       sheet = as.integer(layer), stringsAsFactors = FALSE),

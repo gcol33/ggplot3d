@@ -26,8 +26,7 @@ ggplot3d supports:
 - Vector drawing and raster rendering from the same scene geometry.
 
 [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html)
-explains how overlapping geometry is ordered and split. The examples
-below generate their figures from the package.
+explains how overlapping geometry is ordered and split.
 
 ## Installation
 
@@ -169,9 +168,24 @@ create and save a plot.
 - [Camera and
   framing](https://gillescolling.com/ggplot3d/articles/camera.html):
   view angles, projections and plot bounds.
+- [Positioning groups and
+  observations](https://gillescolling.com/ggplot3d/articles/positions.html):
+  jitter, dodge, stack and align labels.
+- [Axes, legends and pane
+  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.html):
+  labels, colourbars and panel styling.
+- [Displaying intervals and
+  summaries](https://gillescolling.com/ggplot3d/articles/intervals.html):
+  supplied bounds and grouped summaries.
 - [Output
   backends](https://gillescolling.com/ggplot3d/articles/backends.html):
-  choose vector or raster rendering.
+  vector, raster and hybrid rendering, including PDF output.
+- [Lighting and surface
+  styles](https://gillescolling.com/ggplot3d/articles/lighting.html):
+  light presets, materials and shaded legends.
+- [Camera animation and
+  interaction](https://gillescolling.com/ggplot3d/articles/motion.html):
+  camera paths and changing data.
 - [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.html):
   how the scene resolves overlapping geometry.
 
@@ -215,22 +229,28 @@ MIT, see [LICENSE.md](https://gillescolling.com/ggplot3d/LICENSE.md).
 
 ## Citation
 
-``` R
 To cite ggplot3d in publications, use:
 
-  Colling G (2026). _ggplot3d: 3D Plots in the Grammar of Graphics_. R
-  package version 0.0.0.9000, <https://github.com/gcol33/ggplot3d>.
-
-A BibTeX entry for LaTeX users is
-
-  @Manual{,
-    title = {ggplot3d: 3D Plots in the Grammar of Graphics},
-    author = {Gilles Colling},
-    year = {2026},
-    note = {R package version 0.0.0.9000},
-    url = {https://github.com/gcol33/ggplot3d},
-  }
+``` text
+Colling G (2026). _ggplot3d: 3D Plots in the Grammar of Graphics_. R
+package version 0.0.0.9000, <https://github.com/gcol33/ggplot3d>.
 ```
+
+BibTeX:
+
+``` bibtex
+@Manual{,
+  title = {ggplot3d: 3D Plots in the Grammar of Graphics},
+  author = {Gilles Colling},
+  year = {2026},
+  note = {R package version 0.0.0.9000},
+  url = {https://github.com/gcol33/ggplot3d},
+}
+```
+
+Download the citation as
+[BibTeX](https://gillescolling.com/ggplot3d/ggplot3d.bib) or
+[RIS](https://gillescolling.com/ggplot3d/ggplot3d.ris).
 
 # Package index
 
@@ -750,6 +770,9 @@ A BibTeX entry for LaTeX users is
 
 - [The z scale](https://gillescolling.com/ggplot3d/articles/z-scale.md):
 
+  Transform heights, label categories and dates, and control limits and
+  z ranges across facets.
+
 - [Layers](https://gillescolling.com/ggplot3d/articles/layers.md):
 
   Worked examples of points, paths, gridded surfaces, columns,
@@ -770,6 +793,24 @@ A BibTeX entry for LaTeX users is
   Set camera angles, projection, framing and stereo output for static
   scenes.
 
+- [Positioning groups and
+  observations](https://gillescolling.com/ggplot3d/articles/positions.md):
+
+  Separate overlapping observations, align grouped columns and labels,
+  and display stacked totals or proportions.
+
+- [Axes, legends and pane
+  styling](https://gillescolling.com/ggplot3d/articles/guides-themes.md):
+
+  Choose axis labels, align a colourbar with height, and style the panes
+  and grids of a three-dimensional plot.
+
+- [Displaying intervals and
+  summaries](https://gillescolling.com/ggplot3d/articles/intervals.md):
+
+  Plot supplied bounds on three axes and compute grouped means, standard
+  errors and quantile ranges.
+
 - [Curvilinear and compositional
   frames](https://gillescolling.com/ggplot3d/articles/frames.md):
 
@@ -784,6 +825,9 @@ A BibTeX entry for LaTeX users is
 
 - [Lighting and surface
   styles](https://gillescolling.com/ggplot3d/articles/lighting.md):
+
+  Control surface shading, use lighting presets and materials, and show
+  the shading range in legends.
 
 - [Ray marching and
   volumes](https://gillescolling.com/ggplot3d/articles/ray-marching.md):
@@ -893,18 +937,33 @@ A BibTeX entry for LaTeX users is
 - [Tensor
   glyphs](https://gillescolling.com/ggplot3d/articles/tensors.md):
 
+  Map symmetric positive semidefinite matrices to oriented ellipsoid or
+  superquadric glyphs.
+
 - [Ordination
   biplots](https://gillescolling.com/ggplot3d/articles/ordination.md):
+
+  Draw site scores, variable arrows and grouped regions from
+  principal-component and ecological ordinations.
 
 - [Molecular ball-and-stick
   views](https://gillescolling.com/ggplot3d/articles/molecules.md):
 
+  Read molecular coordinates, attach bonds by atom identifier and draw
+  atoms and bonds in three dimensions.
+
 - [Colour gamuts in Lab
   coordinates](https://gillescolling.com/ggplot3d/articles/colour-gamuts.md):
+
+  Sample sRGB colours in Lab coordinates and display their convex hull
+  with interpolated vertex colours.
 
 ### Background
 
 - [Visibility](https://gillescolling.com/ggplot3d/articles/visibility.md):
+
+  Explain how overlapping faces, lines and marks are ordered and clipped
+  within a three-dimensional panel.
 
 - [Extending
   ggplot3d](https://gillescolling.com/ggplot3d/articles/extending.md):

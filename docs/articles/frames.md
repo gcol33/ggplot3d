@@ -1,15 +1,14 @@
 # Curvilinear and compositional frames
 
-[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
-places x, y and z along the three edges of a box. Some data have another
-natural frame: a month is an angle on a circle, a direction is a point
-on a sphere, a location is a longitude and latitude on a globe, and a
-mixture of three or four parts sums to a whole. This article draws data
-in each of those frames. Installation is covered in [Get
+Coordinate frames place data according to their meaning. Monthly
+measurements can follow a circle, directions can lie on a sphere, and
+three- or four-part mixtures occupy a triangle or tetrahedron. This
+article draws examples in each frame, including a globe for geographic
+coordinates. Installation is covered in [Get
 started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md), and
 [Camera and
 framing](https://gillescolling.com/ggplot3d/articles/camera.md) covers
-the camera arguments that every frame shares.
+their shared camera arguments.
 
 ``` r
 
@@ -78,8 +77,9 @@ ggplot(route, aes(lon, lat, z = height)) +
 ![A globe centred on the North Pacific with a red route from New York to
 Tokyo.](frames_files/figure-html/globe-1.svg)
 
-[Spatial data](https://gillescolling.com/ggplot3d/articles/spatial.md)
-draws rasters and simple features on a flat map with a third dimension.
+[Maps and spatial
+data](https://gillescolling.com/ggplot3d/articles/spatial.md) draws
+rasters and simple features on a flat map with a third dimension.
 
 ## Ternary prisms
 
@@ -129,5 +129,4 @@ tetrahedron.](frames_files/figure-html/simplex-1.svg)
 
 - [Curved spaces and
   spacetime](https://gillescolling.com/ggplot3d/articles/curved-spaces.md):
-  spherical, hyperbolic and Minkowski geometry rather than curvilinear
-  coordinates on flat space.
+  spherical, hyperbolic and Minkowski geometry.

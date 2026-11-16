@@ -149,20 +149,38 @@ FrameHyperbolicFinite <- ggplot2::ggproto("FrameHyperbolicFinite",FrameBox,
     if(scale$is_discrete()||scale$get_transformation()$name!="identity") stop("Hyperbolic position scales must be continuous identity scales.",call.=FALSE)
     FrameBox$axis_view(scale,limits,expand,axis)
   },
+  # Ball models fill the sphere inscribed in the unit box, so the camera fits
+  # that sphere. Every direction lies within 11.25 degrees of a sample on the
+  # 15-degree lattice, so samples at radius 1/cos(11.25 degrees) enclose it.
+  bounds=function(self) {
+    if(!self$model%in%c("poincare","klein")) return(FrameBox$bounds(self))
+    polar <- seq(0,pi,length.out=13L); azimuth <- seq(0,2*pi,length.out=25L)[-25L]
+    g <- expand.grid(azimuth=azimuth,polar=polar)
+    radius <- .5/cos(pi/16)
+    unique(self$map(.5+radius*cbind(sin(g$polar)*cos(g$azimuth),sin(g$polar)*sin(g$azimuth),cos(g$polar))))
+  },
   scene_packets=function(self,panel_params,theme) {
     packets <- list()
     if(length(self$distance_breaks)) {
       breaks <- self$distance_breaks
-      r <- breaks*sqrt(-self$space$curvature)
-      X <- cbind(sinh(r),0,0,cosh(r))
       action <- panel_params$space_context$action
-      if(!is.null(action)) X <- t(solve(action,t(X)))
-      xyz <- space_model_xyz_3d(X,self$space,self$model)
-      d <- data.frame(x=xyz[,1L],y=xyz[,2L],z=xyz[,3L],group=1L,
-        colour="grey35",alpha=1,linewidth=.4,linetype=1,label=format(breaks,trim=TRUE),size=3,vjust=-.5)
+      model_xyz <- function(r,theta) {
+        X <- cbind(sinh(r)*cos(theta),sinh(r)*sin(theta),0,cosh(r))
+        if(!is.null(action)) X <- t(solve(action,t(X)))
+        space_model_xyz_3d(X,self$space,self$model)
+      }
+      r <- breaks*sqrt(-self$space$curvature)
+      theta <- seq(0,2*pi,length.out=97L)
+      rings <- do.call(rbind,lapply(which(r>0),function(i) {
+        xyz <- model_xyz(r[i],theta)
+        data.frame(x=xyz[,1L],y=xyz[,2L],z=xyz[,3L],group=i,colour="grey60",alpha=1,linewidth=.3,linetype=1)
+      }))
+      xyz <- model_xyz(r,-pi/2)
+      labels <- data.frame(x=xyz[,1L],y=xyz[,2L],z=xyz[,3L],group=seq_along(r),colour="grey30",alpha=1,
+        label=format(breaks,trim=TRUE),size=3,hjust=-.2,vjust=1.1,angle=0,family="",fontface=1,lineheight=1.2)
       ranges <- self$space$model_ranges(self$model,panel_params)
-      packets <- list(emit_model_scene_3d(d,list(.emitter="GeomPath"),panel_params,ranges),
-        emit_model_scene_3d(d,list(.emitter="GeomText"),panel_params,ranges))
+      if(!is.null(rings)) packets <- list(emit_model_scene_3d(rings,list(.emitter="GeomPath"),panel_params,ranges))
+      packets <- c(packets,list(emit_model_scene_3d(labels,list(.emitter="GeomText"),panel_params,ranges)))
     }
     if(self$model!="hyperboloid_sheet"||!length(self$references)) return(packets)
     d <- do.call(rbind,lapply(seq_along(self$references),function(i) {
@@ -189,8 +207,9 @@ FrameHyperbolicFinite <- ggplot2::ggproto("FrameHyperbolicFinite",FrameBox,
 #'   intrinsic distances are scaled by 1/sqrt(-curvature).
 #' @param centre A point in the input chart, or a future Lorentz isometry.
 #'   Points are moved to the origin before display.
-#' @param distance_breaks Optional increasing nonnegative distances for a radial
-#'   distance guide, in intrinsic units.
+#' @param distance_breaks Optional increasing nonnegative distances, in
+#'   intrinsic units, drawn as labelled circles at that distance from the
+#'   origin in the z = 0 plane.
 #' @param inside Use a first-person perspective eye at the Klein origin.
 #' @param observer Observer point in the input chart, or an isometry taking the
 #'   observer to the origin. Supply one of observer, centre or isometry.

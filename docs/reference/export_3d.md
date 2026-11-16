@@ -8,9 +8,10 @@ triangulated, paths become tubes or line primitives, and points become
 small solids or point primitives, all in model coordinates: the panel
 box scaled by the aspect of
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
-with its longest side `size` long. Vector and source formats hold the
-projected plot: SVG with source rows and hover text, TikZ (`.tex`) and
-an Asymptote scene (`.asy`).
+with its longest side `size` long; 3MF and STL written with `print` hold
+millimetre solids instead. Vector and source formats hold the projected
+plot: SVG with source rows and hover text, TikZ (`.tex`) and an
+Asymptote scene (`.asy`).
 
 ## Usage
 
@@ -90,9 +91,10 @@ export_3d(
 
 - print:
 
-  Optional
+  A
   [`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md)
-  specification for closed millimetre solids in STL or 3MF output.
+  specification for closed millimetre solids: optional for STL, required
+  for 3MF.
 
 - interactive:
 

@@ -59,6 +59,9 @@ which also sets the lattice.}
 
 \item{bins, binwidth, breaks}{Level controls in transformed z units. Explicit breaks take precedence.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Cuts the field by the planes of \code{\link[=stat_slice_3d]{stat_slice_3d()}} and traces level lines
 of the interpolated field on each section by the marching triangles of

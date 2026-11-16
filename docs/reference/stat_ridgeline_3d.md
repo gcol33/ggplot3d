@@ -78,6 +78,10 @@ geom_ridgeline_3d(
 
   Density height multiplier in transformed z units.
 
+## Value
+
+A ggplot2 layer.
+
 ## Examples
 
 ``` r

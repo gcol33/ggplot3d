@@ -7,8 +7,18 @@ colour_channels_3d <- function(colour, alpha = FALSE) {
 
 # sRGB transfer function (IEC 61966-2-1) between encoded values and linear
 # light, both in [0, 1].
-srgb_decode_3d <- function(value) ifelse(value <= 0.04045, value / 12.92, ((value + 0.055) / 1.055)^2.4)
-srgb_encode_3d <- function(value) ifelse(value <= 0.0031308, 12.92 * value, 1.055 * value^(1 / 2.4) - 0.055)
+srgb_decode_3d <- function(value) {
+  out <- value / 12.92
+  high <- which(value > 0.04045)
+  out[high] <- ((value[high] + 0.055) / 1.055)^2.4
+  out
+}
+srgb_encode_3d <- function(value) {
+  out <- 12.92 * value
+  high <- which(value > 0.0031308)
+  out[high] <- 1.055 * value[high]^(1 / 2.4) - 0.055
+  out
+}
 
 # Encoded grey of the same relative luminance (Rec. 709 primaries) as each
 # column of a 3 x n matrix of encoded sRGB values.

@@ -42,6 +42,7 @@
 #' @references Rivara (1984). Algorithms for refining triangular grids suitable
 #'   for adaptive and multigrid techniques. International Journal for
 #'   Numerical Methods in Engineering 20, 745-756. \doi{10.1002/nme.1620200412}
+#' @return A ggplot2 layer.
 #' @export
 #' @examples
 #' torus <- function(u, v) list(x = (1 + 0.4 * cos(v)) * cos(u),

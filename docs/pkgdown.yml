@@ -14,8 +14,10 @@ articles:
   articles/frames: frames.html
   articles/gallery: gallery.html
   ggplot3d: ggplot3d.html
+  articles/guides-themes: guides-themes.html
   articles/higher-dimensions: higher-dimensions.html
   articles/implicit-surfaces: implicit-surfaces.html
+  articles/intervals: intervals.html
   articles/layers: layers.html
   articles/lighting: lighting.html
   articles/meshes: meshes.html
@@ -24,6 +26,7 @@ articles:
   articles/networks: networks.html
   articles/ordination: ordination.html
   articles/pde: pde.html
+  articles/positions: positions.html
   articles/ray-marching: ray-marching.html
   articles/spatial: spatial.html
   articles/surfaces-solids: surfaces-solids.html
@@ -33,7 +36,7 @@ articles:
   articles/viewer: viewer.html
   articles/visibility: visibility.html
   articles/z-scale: z-scale.html
-last_built: 2026-11-15T17:21Z
+last_built: 2026-11-16T10:06Z
 urls:
   reference: https://gillescolling.com/ggplot3d/reference
   article: https://gillescolling.com/ggplot3d/articles

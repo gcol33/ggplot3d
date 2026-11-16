@@ -344,14 +344,14 @@ quadric_paint_3d <- function(scene, q, part, back, ring, axis, style, light, opa
 # unbounded draws its stand-in facets.
 quadric_run_grob_3d <- function(scene, rows, info, styles, light, viewport, clip_rows = rows) {
   f <- scene$fragments
-  counts <- f$count[rows]
-  indices <- rep(f$offset[rows], counts) + sequence(counts) - 1L
-  x <- scene$vertices$x_npc[indices]; y <- scene$vertices$y_npc[indices]
-  id <- rep(seq_along(rows), counts)
   q <- f$source_index[rows[1L]]; k <- match(q, info$quadric)
-  style <- styles[rows[1L], , drop = FALSE]; opacity <- f$opacity[rows[1L]]
+  style <- slice_rows_3d(styles, rows[1L]); opacity <- f$opacity[rows[1L]]
   ring <- info$ring[[k]]
   if (is.null(ring)) {
+    counts <- f$count[rows]
+    indices <- rep(f$offset[rows], counts) + sequence(counts) - 1L
+    x <- scene$vertices$x_npc[indices]; y <- scene$vertices$y_npc[indices]
+    id <- rep(seq_along(rows), counts)
     fill <- rep(style$fill, length(rows))
     if (isTRUE(style_value_3d(style, "shade", FALSE)))
       fill <- shade_fill_3d(fill, f, rows, scene$camera, light, slice_rows_3d(styles, rows), fragment_centres_3d(scene, rows), scene$materials)
@@ -368,6 +368,9 @@ quadric_run_grob_3d <- function(scene, rows, info, styles, light, viewport, clip
   clip <- list(x = scene$vertices$x_npc[indices], y = scene$vertices$y_npc[indices], id = rep(seq_along(clip_rows), counts))
   g <- clipped_path_grob_3d(ring$x, ring$y, rep(1L, length(ring$x)), clip, viewport, grid::gpar(),
     fill = paint, clip_rule = "union")
+  # The intersection has disjoint interiors and one paint over all its rings.
+  g$pathId <- NULL
+  if (length(unique(g$id)) == 1L) g$id <- NULL
   rebase_paint_3d(g, ring, viewport)
 }
 

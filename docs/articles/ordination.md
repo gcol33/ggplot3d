@@ -7,6 +7,12 @@ directions in the same view.
 composes site points, solid-headed quiver arrows and optional group
 regions.
 
+The examples use iris measurements to draw principal-component scores,
+match groups by identifier and display ecological ordination scores.
+Installation is covered in [Get
+started](https://gillescolling.com/ggplot3d/articles/ggplot3d.md); the
+final example also requires vegan.
+
 ``` r
 
 library(ggplot2)
@@ -21,13 +27,9 @@ ggplot() + biplot_3d(fit, groups = groups, region = "ellipsoid",
                         loading_scale = 2, label_size = 5) + coord_3d()
 ```
 
-![3D plot. Layers: Point (x = x, y = y, z = z, colour = .biplot_group,
-fill = .biplot_group, group = .biplot_group); Ellipsoid (x = x, y = y, z
-= z, colour = .biplot_group, fill = .biplot_group, group =
-.biplot_group); Quiver (x = x, y = y, z = z, u = u, v = v, w = w);
-ArrowLabel (x = u, y = v, z = w, xend = x, yend = y, zend = z, label =
-id). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0 degrees;
-orthographic projection.](ordination_files/figure-html/iris-1.svg)
+![Iris flowers on three principal-component axes, with measurement
+arrows and ellipsoids describing the species
+groups.](ordination_files/figure-html/iris-1.svg)
 
 For `prcomp`, sites use `fit$x` and arrows use `fit$rotation`.
 `loading_scale` explicitly multiplies the arrow vectors for display. The
@@ -47,13 +49,9 @@ ggplot() + biplot_3d(fit, groups = membership, region = "hull",
                         loading_scale = 2, label_size = 5) + coord_3d()
 ```
 
-![3D plot. Layers: Point (x = x, y = y, z = z, colour = .biplot_group,
-fill = .biplot_group, group = .biplot_group); StatsSurface (x = x, y =
-y, z = z, colour = .biplot_group, fill = .biplot_group, group =
-.biplot_group); Quiver (x = x, y = y, z = z, u = u, v = v, w = w);
-ArrowLabel (x = u, y = v, z = w, xend = x, yend = y, zend = z, label =
-id). Camera: azimuth -60 degrees, elevation 30 degrees, roll 0 degrees;
-orthographic projection.](ordination_files/figure-html/hull-1.svg)
+![The iris principal-component scores with a convex hull around each
+species, using group membership joined by
+identifier.](ordination_files/figure-html/hull-1.svg)
 
 ## Vegan scores
 
@@ -72,12 +70,8 @@ ggplot() + biplot_3d(model, groups = groups,
                         scores_args = list(scaling = 2), label_size = 5) + coord_3d(clip = "off")
 ```
 
-![3D plot. Layers: Point (x = x, y = y, z = z, colour = .biplot_group,
-fill = .biplot_group, group = .biplot_group); Quiver (x = x, y = y, z =
-z, u = u, v = v, w = w); ArrowLabel (x = u, y = v, z = w, xend = x, yend
-= y, zend = z, label = id). Camera: azimuth -60 degrees, elevation 30
-degrees, roll 0 degrees; orthographic
-projection.](ordination_files/figure-html/vegan-1.svg)
+![An iris ordination from vegan with species groups and labelled
+variable arrows.](ordination_files/figure-html/vegan-1.svg)
 
 The species arrows of this fit reach the edge of the box. `clip = "off"`
 lets their labels extend past the drawing area of the panel instead of
