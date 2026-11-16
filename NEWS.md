@@ -1,5 +1,13 @@
 # ggplot3d 0.0.0.9000
 
+* `stat_summary_3d()` no longer fails when some cells hold one observation
+  and others several. Only columns constant within every cell are carried
+  to the summary rows.
+
+* `geom_text_3d()`, `geom_label_3d()` and the other text layers draw factor
+  labels by their levels, as `geom_text()` does, instead of their integer
+  codes.
+
 * `animate_3d()` writes GIF files with its own encoder instead of gifski,
   which is no longer a suggested package. All frames share one palette from
   a median cut of their joint colours, without dithering, and pixels that

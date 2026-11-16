@@ -195,3 +195,11 @@ test_that("stat_summary_3d() summarises one axis per position on the other two",
   expect_equal(nrow(sideways), 4L)
   expect_error(stat_summary_3d(geom = "violin"), "geom must be")
 })
+
+test_that("stat_summary_3d() combines cells with one and with several observations", {
+  d <- data.frame(x = c(1, 1, 2), y = 0, z = c(1, 2, 3))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + stat_summary_3d(fun.data = ggplot2::mean_se) + coord_3d()
+  out <- expect_no_warning(stats_scene(p)$built$data[[1L]])
+  expect_equal(nrow(out), 2L)
+  expect_equal(out$z[order(out$x)], c(1.5, 3))
+})

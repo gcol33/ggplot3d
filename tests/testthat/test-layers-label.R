@@ -30,6 +30,22 @@ test_that("geom_label_3d draws padded boxes like geom_label inside coord_3d", {
   expect_length(grid::getGrob(panel, "roundrect", grep = TRUE, global = TRUE), 2L)
 })
 
+test_that("factor labels are drawn by their levels, as geom_text draws them", {
+  d <- data.frame(x = 1:2, y = 1, z = 1:2, label = factor(c("A", "B")))
+  base <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, label = label))
+  styles <- integration_packets(base + geom_text_3d() + coord_3d())$packet$styles
+  expect_type(styles$label, "character")
+  expect_setequal(styles$label, c("A", "B"))
+  skip_if_not_installed("svglite")
+  skip_if_not_installed("xml2")
+  path <- tempfile(fileext = ".svg")
+  svglite::svglite(path)
+  print(base + geom_text_3d() + coord_3d(axes = character()))
+  grDevices::dev.off()
+  doc <- xml2::xml_ns_strip(xml2::read_xml(path))
+  expect_setequal(xml2::xml_text(xml2::xml_find_all(doc, ".//text")), c("A", "B"))
+})
+
 test_that("the solver separates labels that start on one point", {
   n <- 6L
   anchors <- matrix(50, 1L, 2L)

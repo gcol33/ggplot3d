@@ -359,6 +359,8 @@ styles_3d <- function(data, rows, kinds, params, normals = NULL, sheets = NULL) 
                    hjust = 0.5, vjust = 0.5, angle = 0, stroke = 0.5)
   styles <- data.frame(style_id = seq_along(rows))
   for (name in names(defaults)) styles[[name]] <- if (name %in% names(data)) data[[name]][rows] else rep(defaults[[name]], length(rows))
+  # Classed labels (factors, dates) are drawn by their printed value, as grid's as.graphicsAnnot() does.
+  if (is.object(styles$label) && !is.list(styles$label)) styles$label <- as.character(styles$label)
   # Label boxes behind text: padding and corner radius in mm, border colour.
   for (name in intersect(c("label_padding", "label_r", "border_colour"), names(data))) styles[[name]] <- data[[name]][rows]
   styles$colour[kinds == "faces"] <- NA_character_

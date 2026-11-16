@@ -461,11 +461,14 @@ StatSummary3D <- ggplot2::ggproto("StatSummary3D", ggplot2::Stat,
   compute_panel = function(data, scales, fun = NULL, axis = "z") {
     others <- setdiff(axes_3d, axis)
     cells <- interaction(data$group, data[[others[1L]]], data[[others[2L]]], drop = TRUE, lex.order = TRUE)
-    pieces <- lapply(split(data, cells), function(d) {
+    groups <- split(data, cells)
+    # Carry only the columns constant within every cell, so all pieces share one column set.
+    constant <- Reduce(intersect, lapply(groups, function(d)
+      names(d)[vapply(d, function(column) length(unique(column)) == 1L, logical(1))]))
+    pieces <- lapply(groups, function(d) {
       values <- d[[axis]]
       summary <- fun(values[is.finite(values)])
       names(summary) <- ifelse(names(summary) %in% c("y", "ymin", "ymax"), sub("^y", axis, names(summary)), names(summary))
-      constant <- names(d)[vapply(d, function(column) length(unique(column)) == 1L, logical(1))]
       keep <- d[rep.int(1L, nrow(summary)), setdiff(constant, c(axis, names(summary))), drop = FALSE]
       cbind(keep, summary)
     })
