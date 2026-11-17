@@ -60,8 +60,8 @@ ggplot2::ggplot(pts, ggplot2::aes(x, y, z = z, colour = z)) +
   coord_3d()
 }
 \references{
-LAS Specification 1.4 R15 (ASPRS, 2019):
-\url{https://www.asprs.org/wp-content/uploads/2019/07/LAS_1_4_r15.pdf}.
+LAS Specification 1.4 (ASPRS), maintained at
+\url{https://github.com/ASPRSorg/LAS}.
 PLY (Turk): \url{https://paulbourke.net/dataformats/ply/}.
 Kerbl, Kopanas, Leimkuehler, Drettakis (2023). 3D Gaussian splatting for
 real-time radiance field rendering. ACM Transactions on Graphics 42(4),
