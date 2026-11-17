@@ -78,8 +78,6 @@
 #' p + geom_surface_3d(fill = "steelblue") + coord_3d()
 #' p + stat_surface_3d() + coord_3d()
 #' p + geom_surface_3d(ggplot2::aes(fill = z), shading = "smooth") + coord_3d()
-#' stripes <- matrix(rep(c("navy", "gold"), each = 4), 1)
-#' p + geom_surface_3d(texture = texture_3d(stripes, interpolate = FALSE)) + coord_3d()
 #' @export
 geom_surface_3d <- function(mapping = NULL, data = NULL, stat = StatSurface3D,
                              position = "identity", ..., method = "grid", max_edge = Inf,

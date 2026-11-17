@@ -144,13 +144,6 @@ geom_alpha_shape_3d <- geom_from_stat_3d("stat_alpha_shape_3d")
 #' d <- data.frame(x = p[, 1], y = p[, 2], z = 0.6 * p[, 3])
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   stat_implicit_fit_3d(n = 20, fill = "steelblue") + coord_3d()
-#'
-#' # Screened Poisson reconstruction of a noisy torus from 5000 points
-#' u <- runif(5000, 0, 2 * pi); v <- runif(5000, 0, 2 * pi)
-#' torus <- data.frame(x = (1 + 0.4 * cos(v)) * cos(u), y = (1 + 0.4 * cos(v)) * sin(u),
-#'                     z = 0.4 * sin(v) + rnorm(5000, sd = 0.005))
-#' ggplot2::ggplot(torus, ggplot2::aes(x, y, z = z)) +
-#'   stat_implicit_fit_3d(method = "poisson", depth = 6, fill = "steelblue") + coord_3d()
 stat_implicit_fit_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                                  position = "identity", ..., method = "rbf", n = 32L, k = 10L,
                                  smooth = 0, depth = 8L, screening = 4, samples_per_node = 1.5,

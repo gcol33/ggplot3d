@@ -266,9 +266,6 @@ check_edge_params_3d <- function(shape, curvature, n, radius, sides, arrow) {
 #'   g <- igraph::sample_pa(40, directed = FALSE)
 #'   ggplot2::ggplot(g, layout = igraph::layout_with_fr(g, dim = 3)) +
 #'     geom_edge_3d() + geom_node_3d(colour = "steelblue", size = 2) + coord_3d()
-#'   ggplot2::ggplot(g) +
-#'     geom_edge_3d(shape = "tube", colour = "grey60") +
-#'     geom_node_3d(ggplot2::aes(colour = igraph::degree(g)), size = 2) + coord_3d()
 #' }
 #' d <- data.frame(x = 0, y = 0, z = 0, xend = 1, yend = 1, zend = 1)
 #' ggplot2::ggplot(d) + geom_edge_3d(shape = "arc", curvature = 0.8) + coord_3d()

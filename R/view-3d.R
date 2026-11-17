@@ -95,14 +95,6 @@
 #'     geom_point_3d(size = 3) + coord_3d() + ggplot2::facet_wrap(~am)
 #'   view_3d(p, width = 720, height = 400)
 #' }
-#' if (requireNamespace("htmlwidgets", quietly = TRUE) &&
-#'     requireNamespace("crosstalk", quietly = TRUE) &&
-#'     requireNamespace("svglite", quietly = TRUE)) {
-#'   shared <- crosstalk::SharedData$new(mtcars)
-#'   p <- ggplot2::ggplot(shared$origData(), ggplot2::aes(wt, mpg, z = hp)) +
-#'     geom_point_3d() + coord_3d()
-#'   view_3d(p, data = shared)
-#' }
 #' if (requireNamespace("htmlwidgets", quietly = TRUE)) {
 #'   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
 #'     geom_point_3d(size = 3) + coord_3d()

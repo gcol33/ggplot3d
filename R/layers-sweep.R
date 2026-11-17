@@ -73,8 +73,6 @@
 #'   geom_tube_3d(radius = 0.3, closed = TRUE, spline = "catmull-rom", n = 100) + coord_3d()
 #' ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, twist = t * 20)) +
 #'   geom_ribbon_3d(width = 0.4) + coord_3d()
-#' ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, fill = t)) +
-#'   geom_tube_3d(radius = 1.5, radius.unit = "mm") + coord_3d(aspect = c(3, 1, 1))
 geom_tube_3d <- function(mapping = NULL, data = NULL, position = "identity", ..., sides = 16L, radius = NULL,
                          radius.unit = "data", cap = c("round", "flat", "none"), closed = FALSE, spline = NULL, n = 100L,
                          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {

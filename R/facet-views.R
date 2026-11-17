@@ -52,7 +52,6 @@
 #'   coord_3d()
 #' p + facet_views_3d()
 #' p + facet_views_3d(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
-#' p + facet_views_3d(c("front", "top", "right", iso = "isometric"), layout = "first_angle")
 #' p + facet_views_3d(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
 #' p + facet_views_3d(views = NULL, lights = list(
 #'   left = light_3d(light_directional(c(-1, 1, 2))),

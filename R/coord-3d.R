@@ -299,10 +299,6 @@ plot_backend_3d <- function(plot, backend) {
 #'   coord_3d(panes = c("back", "floor", "front")) +
 #'   ggplot2::theme(panel.grid.major.z.xz = ggplot2::element_blank(),
 #'     panel.pane.front = ggplot2::element_rect(fill = "#4682B41A"))
-#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
-#'   coord_3d(clip_planes = list(clip_plane_3d(c(0, 0, -1), c(z = 2.5))))
-#' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
-#'   coord_3d(stereo = stereo_3d("cross"))
 #' rotation <- diag(4)
 #' rotation[1:2, 1:2] <- matrix(c(0, 1, -1, 0), 2)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_path_3d() +

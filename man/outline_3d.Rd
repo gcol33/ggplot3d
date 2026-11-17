@@ -84,10 +84,6 @@ ggplot2::ggplot() +
   geom_mesh_3d(vertices = cube, faces = quads, fill = "grey90",
     outline = outline_3d(hidden = "dashed")) +
   coord_3d()
-ggplot2::ggplot() +
-  geom_parametric_3d(fun = torus, n = c(48, 24), closed = TRUE, fill = "white",
-    outline = outline_3d(crease = NULL, hidden = "show", halo = grid::unit(1, "mm"))) +
-  coord_3d(elevation = 30)
 }
 \references{
 Appel, Rohlf and Stein (1979). The haloed line effect for

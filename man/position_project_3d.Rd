@@ -46,7 +46,7 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 p + geom_point_3d(colour = "grey40", position = position_project_3d(c("floor", "back"))) +
   geom_point_3d(colour = "steelblue") + coord_3d()
 
-g <- expand.grid(x = seq(-2, 2, length.out = 25), y = seq(-2, 2, length.out = 25))
+g <- expand.grid(x = seq(-2, 2, length.out = 13), y = seq(-2, 2, length.out = 13))
 g$z <- exp(-g$x^2 - g$y^2)
 ggplot2::ggplot(g, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", alpha = 0.6) +

@@ -70,13 +70,6 @@
 #' tour <- c(orbit_3d(degrees = 90, duration = 2),
 #'           dolly_zoom_3d(fov = 0, duration = 2))
 #' tour
-#' p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
-#'   geom_point_3d() + coord_3d(projection = "perspective")
-#' if (requireNamespace("ragg", quietly = TRUE)) {
-#'   movie <- animate_3d(p, path = tour, fps = 4, width = 240, height = 240,
-#'                       file = tempfile(fileext = ".apng"))
-#'   movie$camera[, c("time", "azimuth", "fov", "projection")]
-#' }
 #' @export
 camera_path_3d <- function(keys, at = NULL, ease = "linear",
                            orientation = c("slerp", "squad"),
