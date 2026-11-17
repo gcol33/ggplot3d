@@ -41,7 +41,7 @@ register_theme_3d <- function() {
     axis.title.z = ggplot2::element_text(margin = ggplot2::margin(half_line / 2, half_line / 2,
       half_line / 2, half_line / 2), inherit.blank = TRUE),
     axis.minor.ticks.length.z = grid::unit(1, "pt"),
-    axis.line.origin = ggplot2::element_line(colour = "grey20", inherit.blank = TRUE),
+    axis.line.origin = ggplot2::element_line(inherit.blank = TRUE),
     panel.pane.front = ggplot2::element_rect(fill = "#7F7F7F1A", colour = NA, inherit.blank = TRUE),
     panel.zero = ggplot2::element_rect(fill = "#7F7F7F40", colour = NA, linewidth = 0.3, inherit.blank = TRUE),
     panel.zero.x = ggplot2::element_blank(),

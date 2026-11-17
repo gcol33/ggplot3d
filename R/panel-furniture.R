@@ -1112,7 +1112,9 @@ guide_typography_3d <- function(ctx, guide, m, layout) {
     points <- axis_candidate_points_3d(layout$candidate, values)
     list(base = ctx$frame$map(points), a = frame_directions_3d(ctx$frame, points, along, ctx$scale), b = frame_directions_3d(ctx$frame, points, pane, ctx$scale))
   }
-  start_mm <- if (tick_shown) m$tick_length else 0
+  # The measured tick length also holds the space panel guides reserve beside
+  # the edge, so labels clear an axis colourbar even when ticks are hidden.
+  start_mm <- m$tick_length
   if (n && visible_element_3d(m$text)) {
     if (orientation == "plane") {
       f <- pane_frame(guide$position)
@@ -1145,7 +1147,8 @@ guide_typography_3d <- function(ctx, guide, m, layout) {
         flat <- !is.finite(length) | length < 1e-6 | !tick_shown
         direction[flat, ] <- normal[flat, ]
         anchor <- if (tick_shown) major$to else major$from
-        location <- axis_label_positions_3d(anchor, direction, m, params$n.dodge, size, angle, start = 0)
+        location <- axis_label_positions_3d(anchor, direction, m, params$n.dodge, size, angle,
+          start = if (tick_shown) 0 else m$tick_length)
       } else {
         location <- axis_label_positions_3d(major$from, normal, m, params$n.dodge, size, angle, start = start_mm * factor)
       }

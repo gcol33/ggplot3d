@@ -75,6 +75,24 @@ test_that("axis colourbars use the selected position edge, colours and shared ti
   expect_equal(params$axis_guides$z$labels, plain$axis_guides$z$labels)
 })
 
+test_that("axis labels clear an axis colourbar when the theme hides ticks", {
+  p <- legend_surface() + ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d()) + ggplot2::theme_minimal()
+  panel <- motion_panels_3d(legend_render(p))[[1L]]
+  pdf(NULL); on.exit(dev.off(), add = TRUE)
+  furniture <- panel_furniture_3d(panel$panel_params, panel$theme, panel$outer_viewport)
+  project <- furniture_projector_3d(furniture)
+  frame <- furniture$overlay$frame
+  ctx <- typography_context_3d(frame, furniture$camera, furniture$viewport, project)
+  guide <- panel$panel_params$axis_guides$z
+  layout <- axis_layout_3d(frame, guide, project, project(frame$bounds()))
+  labels <- guide_typography_3d(ctx, guide, furniture$overlay$fit$metrics$z, layout)$labels
+  n <- length(guide$position)
+  normal <- rows_of_3d(layout$normals_at(guide$position), n)
+  edge <- layout$at(guide$position)[, 1:2, drop = FALSE]
+  near <- rowSums((labels$location - edge) * normal) - label_depths_3d(labels$size, normal) / 2
+  expect_true(all(near >= 2.5 - 1e-6))
+})
+
 test_that("the z axis text and title get the same default margins as x and y", {
   pdf(NULL); on.exit(dev.off(), add = TRUE)
   measure <- function(plot) {

@@ -28,6 +28,15 @@ furniture_test_rows <- function(packet, kind, i) {
   cbind(packet$vertices$x, packet$vertices$y, packet$vertices$z)[packet$corners$vertex[ids], , drop = FALSE]
 }
 
+test_that("origin axis lines take the theme's line colour", {
+  for (theme in list(ggplot2::theme_grey(), ggplot2::theme_minimal() + ggplot2::theme(line = ggplot2::element_line(colour = "red")))) {
+    for (axis in c("x", "y", "z")) {
+      expect_identical(ggplot2::calc_element(paste0("axis.line.origin.", axis), theme)$colour,
+        ggplot2::calc_element("line", theme)$colour)
+    }
+  }
+})
+
 test_that("per-plane grid elements inherit from the axis grid and remove lines from one plane only", {
   theme <- ggplot2::complete_theme()
   for (level in c("major", "minor")) for (axis in c("x", "y", "z")) for (plane in c("xy", "xz", "yz")) {

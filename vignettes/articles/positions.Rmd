@@ -54,9 +54,9 @@ ggplot(centres, aes(x, y, z = z)) +
 
 ### Comparing groups within cells
 
-Each x/y cell in the next table contains values for groups A and B. [position_dodge_3d()](../reference/position_dodge_3d.html) places those groups beside each other along x or y. An explicit shared width keeps the column and text layers aligned.
+Each x/y cell in the next table contains values for groups A and B. [position_dodge_3d()](../reference/position_dodge_3d.html) places those groups beside each other along x or y. An explicit shared width keeps the column and text layers aligned; the text layer maps half of each column's height, so its value sits inside the column.
 
-```{r dodge, fig.alt="Two labelled columns at each x/y cell, with group A and group B separated along x."}
+```{r dodge, fig.alt="Two columns at each x/y cell, with group A and group B separated along x and each column's height printed on it."}
 values <- expand.grid(x = 1:2, y = 1:2, part = c("A", "B"),
                        stringsAsFactors = FALSE)
 values$z <- c(2, 3, 4, 2, 3, 2, 2, 4)
@@ -65,7 +65,8 @@ grouped <- ggplot(values, aes(x, y, z = z, group = part))
 grouped +
   geom_col_3d(aes(fill = part), width = 0.7, depth = 0.55,
               position = dodge) +
-  geom_text_3d(aes(label = part), position = dodge, vjust = -0.5) +
+  geom_text_3d(aes(z = z / 2, label = z), colour = "white",
+               position = dodge) +
   scale_fill_manual(name = NULL, values = c(A = "#2E6F9E", B = "#9E5E0F")) +
   coord_3d()
 ```
@@ -80,7 +81,7 @@ Stacking adds the group values along an axis. [position_stack_3d()](../reference
 grouped +
   geom_col_3d(aes(fill = part), position = position_stack_3d(),
               width = 0.6, depth = 0.6) +
-  geom_text_3d(aes(label = part),
+  geom_text_3d(aes(label = part), colour = "white",
     position = position_stack_3d(vjust = 0.5)) +
   scale_fill_manual(name = NULL, values = c(A = "#2E6F9E", B = "#9E5E0F")) +
   coord_3d()

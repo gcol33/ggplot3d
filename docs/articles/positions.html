@@ -92,7 +92,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/ggplot3d.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
@@ -590,7 +590,8 @@ points.</p>
 <p>Each x/y cell in the next table contains values for groups A and B.
 <a href="../reference/position_dodge_3d.html">position_dodge_3d()</a>
 places those groups beside each other along x or y. An explicit shared
-width keeps the column and text layers aligned.</p>
+width keeps the column and text layers aligned; the text layer maps half
+of each column’s height, so its value sits inside the column.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, part <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
 <span>                       stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
@@ -600,11 +601,12 @@ width keeps the column and text layers aligned.</p>
 <span><span class="va">grouped</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/geom_col_3d.html">geom_col_3d</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">part</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.7</span>, depth <span class="op">=</span> <span class="fl">0.55</span>,</span>
 <span>              position <span class="op">=</span> <span class="va">dodge</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_text_3d</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">part</span><span class="op">)</span>, position <span class="op">=</span> <span class="va">dodge</span>, vjust <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_text_3d</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>z <span class="op">=</span> <span class="va">z</span> <span class="op">/</span> <span class="fl">2</span>, label <span class="op">=</span> <span class="va">z</span><span class="op">)</span>, colour <span class="op">=</span> <span class="st">"white"</span>,</span>
+<span>               position <span class="op">=</span> <span class="va">dodge</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>name <span class="op">=</span> <span class="cn">NULL</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>A <span class="op">=</span> <span class="st">"#2E6F9E"</span>, B <span class="op">=</span> <span class="st">"#9E5E0F"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Two labelled columns at each x/y cell, with group A and group B separated along x."><title>Two labelled columns at each x/y cell, with group A and group B separated along x.</title>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="Two columns at each x/y cell, with group A and group B separated along x and each column's height printed on it."><title>Two columns at each x/y cell, with group A and group B separated along x and each column's height printed on it.</title>
   <g class="svglite">
     <defs>
       <style type="text/css"><![CDATA[
@@ -785,14 +787,14 @@ width keeps the column and text layers aligned.</p>
       <polygon class="preserve-color" points="263.53,224.40 286.16,204.80 286.16,149.57 263.53,169.17 " style="stroke-width: 0.64; stroke: none; fill: #7A4500;"/>
       <polygon class="preserve-color" points="241.44,162.79 263.53,169.17 286.16,149.57 264.07,143.19 " style="stroke-width: 0.64; stroke: none; fill: #BD7B35;"/>
       <polygon class="preserve-color" points="241.44,218.02 263.53,224.40 263.53,169.17 241.44,162.79 " style="stroke-width: 0.64; stroke: none; fill: #AE6D26;"/>
-      <text class="preserve-color" x="241.82" y="96.24" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
-      <text class="preserve-color" x="279.69" y="107.17" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
-      <text class="preserve-color" x="216.57" y="33.72" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
-      <text class="preserve-color" x="175.43" y="124.58" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
-      <text class="preserve-color" x="304.94" y="59.23" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
-      <text class="preserve-color" x="200.68" y="104.25" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
-      <text class="preserve-color" x="263.80" y="150.09" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
-      <text class="preserve-color" x="238.55" y="115.19" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
+      <text class="preserve-color" x="241.82" y="136.03" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2</text>
+      <text class="preserve-color" x="216.57" y="101.12" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">4</text>
+      <text class="preserve-color" x="279.69" y="146.96" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2</text>
+      <text class="preserve-color" x="304.94" y="126.63" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">4</text>
+      <text class="preserve-color" x="175.43" y="164.37" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2</text>
+      <text class="preserve-color" x="200.68" y="157.85" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">3</text>
+      <text class="preserve-color" x="238.55" y="168.79" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">3</text>
+      <text class="preserve-color" x="263.80" y="189.88" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">2</text>
     </g>
     <g clip-path="url(#f4-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <text x="169.95" y="224.94" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
@@ -838,7 +840,7 @@ interval.</p>
 <code class="sourceCode R"><span><span class="va">grouped</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/geom_col_3d.html">geom_col_3d</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">part</span><span class="op">)</span>, position <span class="op">=</span> <span class="fu"><a href="../reference/position_stack_3d.html">position_stack_3d</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>              width <span class="op">=</span> <span class="fl">0.6</span>, depth <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_text_3d</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">part</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/geom_point_3d.html">geom_text_3d</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">part</span><span class="op">)</span>, colour <span class="op">=</span> <span class="st">"white"</span>,</span>
 <span>    position <span class="op">=</span> <span class="fu"><a href="../reference/position_stack_3d.html">position_stack_3d</a></span><span class="op">(</span>vjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>name <span class="op">=</span> <span class="cn">NULL</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>A <span class="op">=</span> <span class="st">"#2E6F9E"</span>, B <span class="op">=</span> <span class="st">"#9E5E0F"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -1018,14 +1020,14 @@ interval.</p>
       <polygon class="preserve-color" points="263.53,187.58 287.44,166.87 287.44,111.64 263.53,132.35 " style="stroke-width: 0.64; stroke: none; fill: #0A5481;"/>
       <polygon class="preserve-color" points="222.10,120.39 263.53,132.35 287.44,111.64 246.02,99.68 " style="stroke-width: 0.64; stroke: none; fill: #4D8DBE;"/>
       <polygon class="preserve-color" points="222.10,175.62 263.53,187.58 263.53,132.35 222.10,120.39 " style="stroke-width: 0.64; stroke: none; fill: #3F7FAF;"/>
-      <text class="preserve-color" x="225.59" y="141.29" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
-      <text class="preserve-color" x="225.59" y="86.06" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
-      <text class="preserve-color" x="294.63" y="142.81" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
-      <text class="preserve-color" x="185.73" y="166.61" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
-      <text class="preserve-color" x="294.63" y="87.58" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
-      <text class="preserve-color" x="185.73" y="120.58" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
-      <text class="preserve-color" x="254.77" y="195.74" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
-      <text class="preserve-color" x="254.77" y="149.72" text-anchor="middle" style="font-size: 1.7em; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
+      <text class="preserve-color" x="225.59" y="141.29" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
+      <text class="preserve-color" x="225.59" y="86.06" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
+      <text class="preserve-color" x="294.63" y="142.81" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
+      <text class="preserve-color" x="185.73" y="166.61" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
+      <text class="preserve-color" x="294.63" y="87.58" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
+      <text class="preserve-color" x="185.73" y="120.58" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
+      <text class="preserve-color" x="254.77" y="195.74" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">B</text>
+      <text class="preserve-color" x="254.77" y="149.72" text-anchor="middle" style="font-size: 1.7em;fill: #FFFFFF; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">A</text>
     </g>
     <g clip-path="url(#f5-cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)">
       <text x="167.00" y="224.09" text-anchor="middle" style="font-size: 1.36em;fill: #4D4D4D; font-family: &quot;Roboto&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, system-ui, sans-serif;">1.0</text>
