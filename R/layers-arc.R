@@ -35,7 +35,7 @@ geom_arc_3d <- function(mapping = NULL, data = NULL, stat = "identity", position
                         height = 0.25, n = 32L, arrow = NULL,
                         na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.numeric(height) || length(height) != 1L || !is.finite(height)) stop("height must be a finite number.", call. = FALSE)
-  if (!is.numeric(n) || length(n) != 1L || !is.finite(n) || n < 1 || n != trunc(n)) stop("n must be a positive integer.", call. = FALSE)
+  n <- check_integer_3d(n, "n", min = 1)
   params <- list(n = as.integer(n), arrow = arrow, na.rm = na.rm)
   if (!missing(height)) params$height <- height
   make_layer_3d(GeomArc3D, mapping, data, stat, position, c(params, list(...)), show.legend, inherit.aes)

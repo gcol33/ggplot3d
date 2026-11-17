@@ -120,6 +120,13 @@ unequal aspect ratios and curved frames. Glyphs remain rigid in the local
 tangent plane. \code{angle} rotates within that plane. Camera-facing geometry
 is resolved for each panel at draw time in every static backend and
 follows camera movement in the HTML viewer.
+
+Fixed aesthetics accept ggplot2 aliases such as \code{color}, \code{pch}, \code{cex},
+\code{lty}, \code{lwd}, \code{fg} and \code{bg}. Supply each aesthetic once: passing both
+\code{color} and \code{colour} is an error. Geom, stat and position strings accept
+ggplot2 names and package suffixes such as \code{"surface_3d"} and
+\code{"nudge_3d"}. Fixed-purpose reference annotations \code{\link[=geom_refline_3d]{geom_refline_3d()}}
+and \code{\link[=geom_abline_3d]{geom_abline_3d()}} use identity statistics and positioning.
 }
 \examples{
 d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(1, 2, 4),

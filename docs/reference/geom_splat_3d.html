@@ -156,6 +156,8 @@ read by <code><a href="read_points_3d.html">read_points_3d()</a></code>. Each ro
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">geom_splat_3d</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stat <span class="op">=</span> <span class="st">"identity"</span>,</span>
+<span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  sh_degree <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  show.legend <span class="op">=</span> <span class="cn">NA</span>,</span>
@@ -167,7 +169,7 @@ read by <code><a href="read_points_3d.html">read_points_3d()</a></code>. Each ro
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-mapping-data-show-legend-inherit-aes">mapping, data, ..., show.legend, inherit.aes<a class="anchor" aria-label="anchor" href="#arg-mapping-data-show-legend-inherit-aes"></a></dt>
+<dl><dt id="arg-mapping-data-stat-position-show-legend-inherit-aes">mapping, data, stat, position, ..., show.legend, inherit.aes<a class="anchor" aria-label="anchor" href="#arg-mapping-data-stat-position-show-legend-inherit-aes"></a></dt>
 <dd><p>As in <code><a href="geom_point_3d.html">geom_point_3d()</a></code>.</p></dd>
 
 
@@ -176,6 +178,10 @@ read by <code><a href="read_points_3d.html">read_points_3d()</a></code>. Each ro
 uses all available coefficients.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>A ggplot2 layer.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>size</code> is an isotropic standard deviation in data units (default 0.02).

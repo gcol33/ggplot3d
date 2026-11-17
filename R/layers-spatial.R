@@ -149,7 +149,7 @@ register_geom_3d(ggplot2::GeomSf, emit_sf_3d, aesthetics = c("height", "subgroup
 #' them, because `geom_sf()` brings its own default coordinate system.
 #' Geographic coordinates require a projected target, `coord_3d(crs = )`,
 #' which also reprojects data with other coordinate systems.
-#' @param mapping,data,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
+#' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param base Prism baseline in original z units, overridden by zmin.
 #' @param cap Prism caps to draw: both, top, bottom or none.
 #' @param shade Whether to apply lighting.
@@ -166,11 +166,11 @@ register_geom_3d(ggplot2::GeomSf, emit_sf_3d, aesthetics = c("height", "subgroup
 #'     coord_3d(crs = 32119, aspect = c(2, 1, 0.3))
 #' }
 #' @export
-geom_sf_3d <- function(mapping = NULL, data = NULL, position = "identity", ...,
+geom_sf_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
                        base = 0, cap = "both", shade = TRUE,
                        na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   cap <- match.arg(cap, c("both", "top", "bottom", "none"))
-  make_layer_3d(ggplot2::GeomSf, mapping, data, ggplot2::StatIdentity, position,
+  make_layer_3d(ggplot2::GeomSf, mapping, data, stat, position,
     c(list(base = base, cap = cap, shade = shade, na.rm = na.rm), list(...)),
     show.legend, inherit.aes, constructor = ggplot2::layer_sf)
 }

@@ -50,6 +50,8 @@ Screen-oriented tick labels remain upright on the page. Edge orientation rotates
 
 When fill and height map the same expression, [guide_colourbar_3d()](../reference/guide_colourbar_3d.html) can place the colourbar beside the z axis. The axis supplies the breaks, labels and title. Both mappings below use the column z.
 
+An explicit `title` overrides the axis title. `reverse = TRUE` reverses the colours along the axis while retaining its ticks and labels. Axis-mounted bars also accept `alpha`, axis `theme` overrides, `order` and `available_aes`; other ggplot2 guide settings require `along = NULL`. The American spellings `guide_colorbar_3d()` and `guide_colorsteps_3d()` are available.
+
 ```{r axis-colourbar, fig.alt="A height-coloured surface with its colour scale aligned to the z axis."}
 p + scale_fill_gradient(low = "#DCEAF3", high = "#2E6F9E",
       guide = guide_colourbar_3d(along = "z")) +

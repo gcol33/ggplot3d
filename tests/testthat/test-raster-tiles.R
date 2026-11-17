@@ -61,5 +61,5 @@ test_that("the thread option is validated and limited under check", {
   Sys.setenv(`_R_CHECK_LIMIT_CORES_` = "false")
   expect_identical(ggplot3d:::raster_threads_3d(), 6L)
   options(ggplot3d.threads = -1)
-  expect_error(ggplot3d:::raster_threads_3d(), "nonnegative")
+  expect_error(ggplot3d:::raster_threads_3d(), "ggplot3d.threads.*representable integer")
 })

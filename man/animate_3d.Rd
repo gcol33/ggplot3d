@@ -12,7 +12,7 @@ animate_3d(
   frames = 60L,
   fps = 20,
   file = NULL,
-  backend = c("raster", "vector"),
+  backend = "raster",
   roll = NULL,
   width = 640L,
   height = 640L,
@@ -61,8 +61,11 @@ tracks, with per-frame visibility tracks for changing geometry.
 Each glTF animation uses one projection type; export perspective and
 orthographic paths separately.}
 
-\item{backend}{Scene backend, "raster" (default) or "vector". Use "vector"
-for vector pages in SVG and PDF output.}
+\item{backend}{A \code{\link[=backend_3d]{backend_3d()}} configuration, or \code{"raster"} (default)
+or \code{"vector"}. The default uses raster settings from \code{dpi} and
+\code{antialias}; it is independent of the plot's backend. An explicit
+configuration keeps its rendering settings. Animation supports raster
+and vector backends. Use vector for vector pages in SVG and PDF output.}
 
 \item{width, height}{Frame dimensions in pixels, default 640 each.}
 

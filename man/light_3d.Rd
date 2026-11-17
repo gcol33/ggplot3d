@@ -19,8 +19,8 @@ light_3d(
 )
 }
 \arguments{
-\item{...}{Lights made with \code{\link[=light_directional]{light_directional()}}, \code{\link[=light_point]{light_point()}},
-\code{\link[=light_head]{light_head()}}, \code{\link[=light_hemisphere]{light_hemisphere()}} or \code{\link[=light_environment]{light_environment()}}. None gives the lights of
+\item{...}{Lights made with \code{\link[=light_directional_3d]{light_directional_3d()}}, \code{\link[=light_point_3d]{light_point_3d()}},
+\code{\link[=light_head_3d]{light_head_3d()}}, \code{\link[=light_hemisphere_3d]{light_hemisphere_3d()}} or \code{\link[=light_environment_3d]{light_environment_3d()}}. None gives the lights of
 \code{preset}.}
 
 \item{ambient}{Uniform ambient light: a nonnegative strength (a grey) or
@@ -67,7 +67,7 @@ every light. The intrinsic raymarch backend takes the first directional light.
 \description{
 Combines light sources with an ambient term and sets how the light changes
 face colours. Without light sources the scene has the lights of \code{preset};
-the default preset has one directional light, \code{light_directional()}, from
+the default preset has one directional light, \code{light_directional_3d()}, from
 the upper left of the camera. See \code{\link[=material_3d]{material_3d()}} for specular highlights.
 }
 \details{
@@ -76,7 +76,7 @@ replaces the preset's value, and lights given in \code{...} replace its lights.
 Except for the default, each preset reproduces the surface lighting of a
 widely used 3D package, named below.
 \itemize{
-\item \code{"default"}: one \code{light_directional()}, ambient 0.35, \code{mode = "lightness"}, \code{range = c(-0.45, 0.4)}, \code{neutral = 60}.
+\item \code{"default"}: one \code{light_directional_3d()}, ambient 0.35, \code{mode = "lightness"}, \code{range = c(-0.45, 0.4)}, \code{neutral = 60}.
 \item \code{"contrast"}: the full range from black to white with a light from the
 side: a light along \code{c(-0.5, 0, 1)} in the data axes, \code{mode = "value"},
 \code{range = c(-1, 1)}, \code{neutral = 90} (ggcube's \code{light()} in its \code{"hsv"}
@@ -143,13 +143,13 @@ isoluminant or diverging palettes combine best with relief shading.
 \code{\link[=guide_legend_3d]{guide_legend_3d()}} show the shaded colours of a key.
 }
 \examples{
-light_3d(light_head(), light_hemisphere("lightblue", "brown"), ambient = 0.1)
+light_3d(light_head_3d(), light_hemisphere_3d("lightblue", "brown"), ambient = 0.1)
 d <- expand.grid(x = seq(-2, 2, length.out = 25), y = seq(-2, 2, length.out = 25))
 d$z <- with(d, exp(-(x^2 + y^2)))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
   geom_surface_3d(shading = "smooth", colour = NA) +
   ggplot2::scale_fill_distiller(palette = "Spectral") +
-  coord_3d(light = light_3d(light_directional(), mode = "lightness"))
+  coord_3d(light = light_3d(light_directional_3d(), mode = "lightness"))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
   coord_3d(light = light_3d(preset = "studio"))

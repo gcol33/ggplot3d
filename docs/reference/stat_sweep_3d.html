@@ -197,6 +197,7 @@ in millimetres on the page with <code>radius.unit = "mm"</code>.</p>
 <span><span class="fu">geom_sweep_3d</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stat <span class="op">=</span> <span class="va">StatSweep3D</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  <span class="va">profile</span>,</span>
@@ -245,7 +246,7 @@ in millimetres on the page with <code>radius.unit = "mm"</code>.</p>
 
 <dt id="arg-normal">normal<a class="anchor" aria-label="anchor" href="#arg-normal"></a></dt>
 <dd><p>Direction the first cross section is oriented towards: the
-ribbon's surface normal, or the profile's first axis in stat_sweep_3d().</p></dd>
+strip's surface normal, or the profile's first axis in stat_sweep_3d().</p></dd>
 
 
 <dt id="arg-closed">closed<a class="anchor" aria-label="anchor" href="#arg-closed"></a></dt>
@@ -263,6 +264,12 @@ profiles of three or more points as closed.</p></dd>
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
 <dd><p>Number of spline samples.</p></dd>
+
+
+<dt id="arg-stat">stat<a class="anchor" aria-label="anchor" href="#arg-stat"></a></dt>
+<dd><p>Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is <code>stat</code>, followed by
+<code>position</code> and <code>...</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

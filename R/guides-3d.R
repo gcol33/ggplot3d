@@ -85,7 +85,8 @@ guide_axis_3d <- function(title = ggplot2::waiver(), theme = NULL, position = "a
                           label_orientation = "screen", plane = "auto", title_position = "centre",
                           depth_scale = FALSE, ticks = "outward") {
   if (!(length(position) == 1L && (position %in% c("auto", "origin", "top", "bottom", "left", "right", 1:4)))) stop("Invalid 3D axis position.", call. = FALSE)
-  if (length(n.dodge) != 1L || !is.finite(n.dodge) || n.dodge < 1 || n.dodge != trunc(n.dodge)) stop("n.dodge must be a positive integer.", call. = FALSE)
+  n.dodge <- check_integer_3d(n.dodge, "n.dodge", min = 1)
+  order <- check_integer_3d(order, "order")
   if (!inherits(angle, "waiver") && !(is.numeric(angle) && length(angle) == 1L && is.finite(angle))) stop("angle must be a finite number or waiver().", call. = FALSE)
   ggplot2::new_guide(title = title, theme = theme, position = position,
     check.overlap = check.overlap, angle = angle, n.dodge = as.integer(n.dodge),
@@ -168,8 +169,25 @@ setup_guides_3d <- function(panel_params, guides, theme, scales = NULL, mappings
     for (aesthetic in scale$aesthetics) {
       guide <- guides$guides[[aesthetic]] %or3d% scale$guide
       if (!inherits(guide, "Guide") || !is.function(guide$setup_panel_3d)) next
-      panel_params$panel_guides[[aesthetic]] <- guide$setup_panel_3d(panel_params, scale, aesthetic, mappings)
+      if (!aesthetic %in% guide$available_aes) next
+      guide <- guide$setup_panel_3d(panel_params, scale, aesthetic, mappings)
+      panel_params$panel_guides[[aesthetic]] <- guide
+      if (inherits(guide, "GuideColourbar3D")) {
+        axis <- guide$params$along
+        if (!inherits(guide$params$title, "waiver")) {
+          title <- guide$params$title
+          if (is.language(title)) title <- as.expression(title)
+          panel_params$axis_guides[[axis]]$title <- title
+        }
+        if (!is.null(guide$params$theme)) {
+          panel_params$axis_guides[[axis]]$theme <- panel_params$axis_guides[[axis]]$theme + guide$params$theme
+        }
+      }
     }
+  }
+  if (length(panel_params$panel_guides)) {
+    order <- vapply(panel_params$panel_guides, function(g) g$params$order %or3d% 0L, numeric(1))
+    panel_params$panel_guides <- panel_params$panel_guides[order(order)]
   }
   panel_params
 }

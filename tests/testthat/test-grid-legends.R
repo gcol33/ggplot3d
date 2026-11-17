@@ -75,6 +75,24 @@ test_that("axis colourbars use the selected position edge, colours and shared ti
   expect_equal(params$axis_guides$z$labels, plain$axis_guides$z$labels)
 })
 
+test_that("axis colourbars apply explicit titles, reverse, alpha and axis themes", {
+  plain <- legend_surface() + ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d(nbin = 8))
+  changed <- legend_surface() + ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d(nbin = 8,
+    title = "My title", reverse = TRUE, alpha = 0.5,
+    theme = ggplot2::theme(axis.title.z = ggplot2::element_text(colour = "red"))))
+  params <- ggplot2::ggplot_build(changed)$layout$panel_params[[1L]]
+  original <- ggplot2::ggplot_build(plain)$layout$panel_params[[1L]]
+  expect_identical(params$axis_guides$z$title, "My title")
+  expect_equal(params$axis_guides$z$labels, original$axis_guides$z$labels)
+  expect_identical(ggplot3d:::element_3d("axis.title.z", params$axis_guides$z$theme)$colour, "red")
+  a <- motion_panels_3d(legend_render(plain))[[1L]]$furniture$children[["panel-guide-3d-fill"]]
+  b <- motion_panels_3d(legend_render(changed))[[1L]]$furniture$children[["panel-guide-3d-fill"]]
+  expect_equal(a$values, rev(b$values))
+  expect_identical(scales::alpha(a$colours, 0.5), rev(b$colours))
+  hidden <- legend_surface() + ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d(title = NULL))
+  expect_null(ggplot2::ggplot_build(hidden)$layout$panel_params[[1L]]$axis_guides$z$title)
+})
+
 test_that("axis labels clear an axis colourbar when the theme hides ticks", {
   p <- legend_surface() + ggplot2::scale_fill_viridis_c(guide = guide_colourbar_3d()) + ggplot2::theme_minimal()
   panel <- motion_panels_3d(legend_render(p))[[1L]]
@@ -130,7 +148,7 @@ test_that("axis colourbars match expressions and support distinct scale transfor
 test_that("lit legend keys use the scene light response and retain unshaded keys", {
   skip_on_cran()
   d <- data.frame(x = 1:2, y = 1:2, z = c(1, 2), group = c("a", "b"))
-  light <- light_3d(light_directional(intensity = 0.6), ambient = 0.2, mode = "multiply")
+  light <- light_3d(light_directional_3d(intensity = 0.6), ambient = 0.2, mode = "multiply")
   make <- function(lit = TRUE, shade = TRUE, range = TRUE) {
     ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = group)) + geom_col_3d(shade = shade) +
       ggplot2::guides(fill = guide_legend_3d(lit = lit, shading_range = range)) + coord_3d(light = light)
@@ -146,12 +164,12 @@ test_that("lit legend keys use the scene light response and retain unshaded keys
   }
   expect_length(lit_keys(legend_render(make(lit = FALSE))), 0L)
   expect_length(lit_keys(legend_render(make(shade = FALSE))), 0L)
-  scaled <- make() + coord_3d(aspect = "data", light = light_3d(light_directional(space = "data"))) + facet_views_3d(c("front", "isometric"))
+  scaled <- make() + coord_3d(aspect = "data", light = light_3d(light_directional_3d(space = "data"))) + facet_views_3d(c("front", "isometric"))
   built <- ggplot2::ggplot_build(scaled)
   actual <- lit_keys(legend_render(scaled))[[1L]]
   camera <- scene_compile(new_scene_packet(), built$layout$panel_params[[1L]]$camera, new_scene_viewport(100, 100))$camera
   expect_equal(actual$lit_fill, shade_fill_3d(actual$base_fill, list(normal_x = 0, normal_y = 0, normal_z = 1),
-    1L, camera, light_3d(light_directional(space = "data"))))
+    1L, camera, light_3d(light_directional_3d(space = "data"))))
   expect_error(guide_legend_3d(normal = c(0, 0, 0)), "nonzero")
 })
 

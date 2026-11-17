@@ -34,6 +34,7 @@ stat_isofunction_3d(
 geom_isofunction_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatIsofunction3D,
   position = "identity",
   ...,
   fun,
@@ -114,6 +115,10 @@ backend.}
 \item{trace_tolerance}{Surface tolerance in transformed scale units.}
 
 \item{trace_steps}{Maximum sphere-tracing steps per ray.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

@@ -161,7 +161,7 @@ data per frame. Projection, visibility and lighting are evaluated per frame.</p>
 <span>  frames <span class="op">=</span> <span class="fl">60L</span>,</span>
 <span>  fps <span class="op">=</span> <span class="fl">20</span>,</span>
 <span>  file <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  backend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"raster"</span>, <span class="st">"vector"</span><span class="op">)</span>,</span>
+<span>  backend <span class="op">=</span> <span class="st">"raster"</span>,</span>
 <span>  roll <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  width <span class="op">=</span> <span class="fl">640L</span>,</span>
 <span>  height <span class="op">=</span> <span class="fl">640L</span>,</span>
@@ -225,8 +225,11 @@ orthographic paths separately.</p></dd>
 
 
 <dt id="arg-backend">backend<a class="anchor" aria-label="anchor" href="#arg-backend"></a></dt>
-<dd><p>Scene backend, "raster" (default) or "vector". Use "vector"
-for vector pages in SVG and PDF output.</p></dd>
+<dd><p>A <code><a href="backend_3d.html">backend_3d()</a></code> configuration, or <code>"raster"</code> (default)
+or <code>"vector"</code>. The default uses raster settings from <code>dpi</code> and
+<code>antialias</code>; it is independent of the plot's backend. An explicit
+configuration keeps its rendering settings. Animation supports raster
+and vector backends. Use vector for vector pages in SVG and PDF output.</p></dd>
 
 
 <dt id="arg-width-height">width, height<a class="anchor" aria-label="anchor" href="#arg-width-height"></a></dt>

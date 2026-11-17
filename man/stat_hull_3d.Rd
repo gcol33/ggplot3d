@@ -20,6 +20,7 @@ stat_hull_3d(
 geom_hull_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatHull3D,
   position = "identity",
   ...,
   space = "data",
@@ -36,6 +37,10 @@ geom_hull_3d(
 \item{space}{\code{"data"} takes the hull of the positions. \code{"ilr"} takes the
 hull of a composition mapped with \code{a}, \code{b}, \code{c} (and \code{d}) in isometric
 log-ratio coordinates and keeps its facets on the original points.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

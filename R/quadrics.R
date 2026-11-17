@@ -23,10 +23,7 @@ renumber_primitives_3d <- function(packet) {
 # Points around a quadric's circles in the inscribed meshes of exporters,
 # shadows, clipped quadrics and viewer quadrics whose image is unbounded.
 quadric_segments_3d <- function() {
-  n <- getOption("ggplot3d.quadric_segments", 32L)
-  scene_assert(is.numeric(n) && length(n) == 1L && is.finite(n) && n >= 3 && n == trunc(n),
-               "option ggplot3d.quadric_segments must be a whole number of at least 3")
-  as.integer(n)
+  check_integer_3d(getOption("ggplot3d.quadric_segments", 32L), "option ggplot3d.quadric_segments", min = 3)
 }
 
 # Transform columns of quadric rows from the 3 x 3 linear parts (box units per

@@ -2,7 +2,7 @@ register_exporter_3d("3mf", function(frames, file, options, fps) write_3mf_3d(fr
 
 # 3MF Core 1.2 with Materials and Properties 1.2.1 colour groups.
 write_3mf_3d <- function(scene, file, options) {
-  scene_assert(!is.null(scene$printing), "3MF output requires print = print_3d()")
+  scene_assert(!is.null(scene$printing), "3MF output requires print = print_spec_3d()")
   mesh <- scene$printing_mesh
   rgb <- mesh$colour;rgb[] <- pmax(0, pmin(1, rgb))
   hex <- grDevices::rgb(rgb[, 1L], rgb[, 2L], rgb[, 3L], rgb[, 4L])

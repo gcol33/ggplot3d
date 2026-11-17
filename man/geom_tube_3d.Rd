@@ -2,12 +2,13 @@
 % Please edit documentation in R/layers-sweep.R
 \name{geom_tube_3d}
 \alias{geom_tube_3d}
-\alias{geom_ribbon_3d}
-\title{Tubes and ribbons along curves}
+\alias{geom_strip_3d}
+\title{Tubes and strips along curves}
 \usage{
 geom_tube_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSweep3D,
   position = "identity",
   ...,
   sides = 16L,
@@ -22,9 +23,10 @@ geom_tube_3d(
   inherit.aes = TRUE
 )
 
-geom_ribbon_3d(
+geom_strip_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSweep3D,
   position = "identity",
   ...,
   width = NULL,
@@ -41,6 +43,10 @@ geom_ribbon_3d(
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
 
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
+
 \item{sides}{Number of points on the tube's circle.}
 
 \item{radius, width}{Cross-section size where the aesthetic is not mapped.}
@@ -56,16 +62,16 @@ geom_ribbon_3d(
 
 \item{n}{Number of spline samples.}
 
-\item{width.unit}{Unit of ribbon width, with the same choices as \code{radius.unit}.}
+\item{width.unit}{Unit of strip width, with the same choices as \code{radius.unit}.}
 
 \item{normal}{Direction the first cross section is oriented towards: the
-ribbon's surface normal, or the profile's first axis in stat_sweep_3d().}
+strip's surface normal, or the profile's first axis in stat_sweep_3d().}
 }
 \value{
 A ggplot2 layer.
 }
 \description{
-Sweeps a circle (tubes) or a line segment (ribbons) along each group's
+Sweeps a circle (tubes) or a line segment (strips) along each group's
 path in the order of the rows, in transformed position units. The cross
 section lies in the plane of a rotation-minimising frame, computed by the
 double reflection method of Wang et al. (2008), so it does not spin about
@@ -83,12 +89,12 @@ the path, drawn with exact outlines and per-sample depth (Sigg et al. 2006).
 A segment takes the colour of its first point. Translucent tubes, and tubes
 with edges, are swept meshes with \code{sides} points on each cross section.
 
-The \code{radius} (tubes) or \code{width} (ribbons) aesthetic varies the cross section
+The \code{radius} (tubes) or \code{width} (strips) aesthetic varies the cross section
 per point, and \code{twist} turns it about the curve by that many degrees.
 Without either, the size is the \code{radius} or \code{width} parameter, by default
-2\% (tubes) or 8\% (ribbons) of the diagonal of the position ranges. Tube
+2\% (tubes) or 8\% (strips) of the diagonal of the position ranges. Tube
 ends are closed with hemispheres (\code{cap = "round"}) or disks (\code{"flat"}), or
-left open (\code{"none"}). A ribbon starts with its surface normal as close to
+left open (\code{"none"}). A strip starts with its surface normal as close to
 \code{normal} as the curve allows.
 
 Numeric aesthetics such as a continuous fill are taken at every point; on
@@ -100,13 +106,13 @@ samples. Normals are angle-weighted and split where faces meet at more than
 \code{z_mean}, the height of the curve point for tubes and the mean height of a
 face for other sweeps.
 
-With \code{radius.unit = "mm"} (\code{width.unit} for ribbons) the size is measured
+With \code{radius.unit = "mm"} (\code{width.unit} for strips) the size is measured
 on the page, like a line width: the cross section is swept when the plot is
 drawn, in the box the camera sees, so a tube is round on screen whatever
 the box proportions and has its radius in millimetres at the centre of the
 view, shrinking with distance under a perspective camera, as millimetre
 spheres of \code{\link[=geom_sphere_3d]{geom_sphere_3d()}} do. Sizes then default to 1 mm (tube radius)
-and 4 mm (ribbon width), and \code{z_mean} is the height of the curve point.
+and 4 mm (strip width), and \code{z_mean} is the height of the curve point.
 Millimetre sizes need the Euclidean coordinates of \code{\link[=coord_3d]{coord_3d()}}.
 }
 \examples{
@@ -119,7 +125,7 @@ knot <- transform(knot, x = sin(u) + 2 * sin(2 * u), y = cos(u) - 2 * cos(2 * u)
 ggplot2::ggplot(knot, ggplot2::aes(x, y, z = z)) +
   geom_tube_3d(radius = 0.3, closed = TRUE, spline = "catmull-rom", n = 100) + coord_3d()
 ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, twist = t * 20)) +
-  geom_ribbon_3d(width = 0.4) + coord_3d()
+  geom_strip_3d(width = 0.4) + coord_3d()
 }
 \references{
 Wang, Juettler, Zheng and Liu (2008). Computation of rotation

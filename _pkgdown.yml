@@ -222,7 +222,7 @@ reference:
   - geom_parametric_3d
   - stat_parametric_3d
   - geom_tube_3d
-  - geom_ribbon_3d
+  - geom_strip_3d
   - geom_sweep_3d
   - stat_sweep_3d
   - geom_revolve_3d
@@ -276,7 +276,7 @@ reference:
 - title: Lighting and surface appearance
   contents:
   - light_3d
-  - light_directional
+  - light_directional_3d
   - material_3d
   - shadow_3d
   - depth_cue_3d
@@ -304,7 +304,7 @@ reference:
 - title: Export and 3D printing
   contents:
   - export_3d
-  - print_3d
+  - print_spec_3d
   - rgl-bridge-3d
   - as_rayrender_3d
 - title: Four dimensions, tilings and honeycombs
@@ -350,6 +350,7 @@ reference:
   contents:
   - layer_3d
   - register_geom_3d
+  - Space3D
   - new_scene_packet
   - normalise_homogeneous_3d
 - title: Package

@@ -4,10 +4,7 @@ utils::globalVariables(c("raymarch_sampler_cpp", "raymarch_bsdf_cpp", "raymarch_
 pathtrace_settings_3d <- function(samples, bounces, seed, aperture, focus, light_radius, progressive, batch_size,
                                   noise_threshold, min_samples, denoise, exposure, tone) {
   for (name in c("samples", "bounces", "seed", "batch_size", "min_samples")) {
-    value <- get(name)
-    if (!is.numeric(value) || length(value) != 1L || !is.finite(value) || value != trunc(value) ||
-        value < (if (name == "seed") 0 else 1) || value > .Machine$integer.max)
-      stop(name, " must be a representable ", if (name == "seed") "nonnegative" else "positive", " integer.", call. = FALSE)
+    check_integer_3d(get(name), name, min = if (name == "seed") 0 else 1)
   }
   aperture <- check_positive_3d(aperture, "aperture", zero = TRUE)
   if (!is.null(focus)) focus <- check_positive_3d(focus, "focus")
@@ -51,7 +48,7 @@ pathtrace_scene_3d <- function(packet, specs, camera, viewport, backend, light) 
   sdf <- Filter(function(s) identical(s$kind, "sdf"), fields)
   if (length(sdf)) settings$epsilon <- max(settings$epsilon, vapply(sdf, function(s)
     4 * s$tolerance * max(scale / vapply(s$ranges, diff, numeric(1))), numeric(1)))
-  light <- light %or3d% light_3d(light_directional(intensity = 0), ambient = 1)
+  light <- light %or3d% light_3d(light_directional_3d(intensity = 0), ambient = 1)
   illumination <- resolved_light_3d(light, resolved, pathtrace = TRUE)
   key <- serialize(list(mesh, fields, camera, viewport, settings, illumination, result$extent), NULL, version = 2L)
   panel <- as.character(packet$panel_id)
@@ -101,7 +98,7 @@ pathtrace_mesh_3d <- function(nodes, packet, camera, light) {
     mesh$illustrative[take] <- ifelse(packet$materials$style[id[take]] != "standard", id[take], 0L)
   }
   mesh$materials <- kernel_materials_3d(packet$materials)
-  mesh$lights <- if (is.null(light)) resolved_light_3d(light_3d(light_directional(intensity = 0), ambient = 1), camera) else resolved_light_3d(light, camera)
+  mesh$lights <- if (is.null(light)) resolved_light_3d(light_3d(light_directional_3d(intensity = 0), ambient = 1), camera) else resolved_light_3d(light, camera)
   mesh
 }
 

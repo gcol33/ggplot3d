@@ -8,6 +8,8 @@
 \description{
 Three-dimensional layers, z position scales and camera controls for ggplot2.
 Panel scenes resolve visibility across layers for vector and raster output.
+When attaching ggcube or ggrgl together with ggplot3d, use qualified calls
+such as \code{ggplot3d::coord_3d()} for names shared by the packages.
 }
 \section{Options}{
 
@@ -15,14 +17,29 @@ Panel scenes resolve visibility across layers for vector and raster output.
 \item{\code{ggplot3d.threads}}{Number of threads the scene compiler and the
 raster backend use. The default \code{0} uses every logical core; at most 2
 are used when \verb{_R_CHECK_LIMIT_CORES_} is set. The compiled scene is the
-same for every thread count.}
+same for every thread count. Accepts representable nonnegative integers;
+see \code{\link[=backend_3d]{backend_3d()}}.}
 \item{\code{ggplot3d.cache_bytes}}{Memory, in bytes, kept for recently compiled
 scenes, so that redrawing a plot at the same size and view skips the
-compiler. Defaults to 256 MiB; 0 turns the cache off.}
+compiler. Accepts one nonnegative number or \code{Inf}. Defaults to 256 MiB;
+0 turns the cache off. See \code{\link[=coord_3d]{coord_3d()}}.}
 \item{\code{ggplot3d.max.overlaps}}{Default \code{max.overlaps} of
 \code{\link[=geom_text_repel_3d]{geom_text_repel_3d()}} and \code{\link[=geom_label_repel_3d]{geom_label_repel_3d()}}: a label that
 overlaps more labels and points than this where it starts is not drawn.
-Defaults to 10.}
+Accepts one nonnegative number or \code{Inf}. Defaults to 10.}
+\item{\code{ggplot3d.vector_markers}}{Maximum markers per vector panel: one
+nonnegative whole number or \code{Inf} for unlimited. Default 50000.
+See \code{\link[=geom_point_3d]{geom_point_3d()}}.}
+\item{\code{ggplot3d.shading_tolerance}}{One positive finite number for the
+encoded sRGB tolerance of vector shading. Default \code{2 / 255}.
+See \code{\link[=geom_surface_3d]{geom_surface_3d()}}.}
+\item{\code{ggplot3d.smooth_vector}}{\code{"auto"} (default) or \code{"subdivide"}
+for smooth faces in vector output. See \code{\link[=geom_surface_3d]{geom_surface_3d()}}.}
+\item{\code{ggplot3d.smooth_dpi}}{One positive finite number for the minimum
+resolution of smooth shading images. Default 150. See \code{\link[=geom_surface_3d]{geom_surface_3d()}}.}
+\item{\code{ggplot3d.quadric_segments}}{One representable integer of at least
+3 for quadric meshes in exports and shadows. Default 32.
+See \code{\link[=geom_sphere_3d]{geom_sphere_3d()}}.}
 }
 }
 

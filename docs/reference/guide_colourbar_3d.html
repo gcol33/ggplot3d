@@ -5,13 +5,27 @@ labels and title. The colour aesthetic and that position must map the same
 expression in every layer using the colour scale. Scale transformations may
 differ: colours are evaluated at the position axis's original data values.
 With along = NULL it is an ordinary legend-box colourbar
-(ggplot2::guide_colourbar())."><meta property="og:description" content="guide_colourbar_3d() with along an axis draws a colourbar beside the
+(ggplot2::guide_colourbar()).
+An axis-mounted bar accepts title, reverse, alpha, theme, order
+and available_aes from ggplot2::guide_colourbar(). The default title
+is inherited from the position axis; an explicit title overrides it.
+reverse reverses colours along the axis, retaining the axis's ticks and
+labels. theme supplies axis theme overrides. Other arguments require
+along = NULL. The American spellings guide_colorbar_3d() and
+guide_colorsteps_3d() use the same implementations."><meta property="og:description" content="guide_colourbar_3d() with along an axis draws a colourbar beside the
 selected box edge of that position guide. The axis supplies its ticks,
 labels and title. The colour aesthetic and that position must map the same
 expression in every layer using the colour scale. Scale transformations may
 differ: colours are evaluated at the position axis's original data values.
 With along = NULL it is an ordinary legend-box colourbar
-(ggplot2::guide_colourbar())."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
+(ggplot2::guide_colourbar()).
+An axis-mounted bar accepts title, reverse, alpha, theme, order
+and available_aes from ggplot2::guide_colourbar(). The default title
+is inherited from the position axis; an explicit title overrides it.
+reverse reverses colours along the axis, retaining the axis's ticks and
+labels. theme supplies axis theme overrides. Other arguments require
+along = NULL. The American spellings guide_colorbar_3d() and
+guide_colorsteps_3d() use the same implementations."><meta property="og:image" content="https://gillescolling.com/ggplot3d/logo.svg"><script>
 (function () {
   var D = String.fromCharCode(36);
   window.MathJax = {
@@ -163,7 +177,14 @@ labels and title. The colour aesthetic and that position must map the same
 expression in every layer using the colour scale. Scale transformations may
 differ: colours are evaluated at the position axis's original data values.
 With <code>along = NULL</code> it is an ordinary legend-box colourbar
-(<code><a href="https://ggplot2.tidyverse.org/reference/guide_colourbar.html" class="external-link">ggplot2::guide_colourbar()</a></code>).</p>
+(<code><a href="https://ggplot2.tidyverse.org/reference/guide_colourbar.html" class="external-link">ggplot2::guide_colourbar()</a></code>).
+An axis-mounted bar accepts <code>title</code>, <code>reverse</code>, <code>alpha</code>, <code>theme</code>, <code>order</code>
+and <code>available_aes</code> from <code><a href="https://ggplot2.tidyverse.org/reference/guide_colourbar.html" class="external-link">ggplot2::guide_colourbar()</a></code>. The default title
+is inherited from the position axis; an explicit title overrides it.
+<code>reverse</code> reverses colours along the axis, retaining the axis's ticks and
+labels. <code>theme</code> supplies axis theme overrides. Other arguments require
+<code>along = NULL</code>. The American spellings <code>guide_colorbar_3d()</code> and
+<code>guide_colorsteps_3d()</code> use the same implementations.</p>
     </div>
 
     <div class="section level2">
@@ -177,7 +198,18 @@ With <code>along = NULL</code> it is an ordinary legend-box colourbar
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">guide_colorbar_3d</span><span class="op">(</span></span>
+<span>  along <span class="op">=</span> <span class="st">"z"</span>,</span>
+<span>  width <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">2</span>, <span class="st">"mm"</span><span class="op">)</span>,</span>
+<span>  gap <span class="op">=</span> <span class="fu">grid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="st">"mm"</span><span class="op">)</span>,</span>
+<span>  nbin <span class="op">=</span> <span class="fl">128L</span>,</span>
+<span>  shading_range <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">guide_coloursteps_3d</span><span class="op">(</span><span class="va">...</span>, shading_range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">guide_colorsteps_3d</span><span class="op">(</span><span class="va">...</span>, shading_range <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">guide_legend_3d</span><span class="op">(</span><span class="va">...</span>, lit <span class="op">=</span> <span class="cn">TRUE</span>, normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, shading_range <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>

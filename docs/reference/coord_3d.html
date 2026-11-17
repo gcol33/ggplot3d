@@ -285,11 +285,11 @@ over the data without grid lines), or pane names <code>"xmin"</code> to <code>"z
 
 <dt id="arg-light">light<a class="anchor" aria-label="anchor" href="#arg-light"></a></dt>
 <dd><p>Lighting from <code><a href="light_3d.html">light_3d()</a></code>, one light such as
-<code><a href="light_directional.html">light_point()</a></code>, or NULL for none.</p></dd>
+<code><a href="light_directional_3d.html">light_point_3d()</a></code>, or NULL for none.</p></dd>
 
 
 <dt id="arg-backend">backend<a class="anchor" aria-label="anchor" href="#arg-backend"></a></dt>
-<dd><p>Backend configuration.</p></dd>
+<dd><p>A configuration created by <code><a href="backend_3d.html">backend_3d()</a></code>.</p></dd>
 
 
 <dt id="arg-default">default<a class="anchor" aria-label="anchor" href="#arg-default"></a></dt>
@@ -337,8 +337,8 @@ that layer.</p></dd>
 
 
 <dt id="arg-geometry">geometry<a class="anchor" aria-label="anchor" href="#arg-geometry"></a></dt>
-<dd><p>Geometry of paths and faces: <code>"euclidean"</code> or an internal
-<code>Space3D</code> extension. Spaces define canonical points, chart conversions,
+<dd><p>Geometry of paths and faces: <code>"euclidean"</code> or a public
+<a href="Space3D.html">Space3D</a> extension. Spaces define canonical points, chart conversions,
 distance, geodesics and isometries. See Details.</p></dd>
 
 
@@ -385,7 +385,7 @@ A space reports an error when this budget cannot meet the tolerance.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Space extensions inherit from <code>ggplot3d:::Space3D</code>. They declare <code>charts</code>,
+    <p>Space extensions inherit from <a href="Space3D.html">Space3D</a>. They declare <code>charts</code>,
 <code>models</code> and <code>default_model</code>, and implement <code>to_canonical(data, chart)</code>,
 <code>from_canonical(X, model)</code>, <code>distance(X, Y)</code>, <code>geodesic(X, Y, s)</code> and
 <code>act(g, X)</code>. Canonical points are finite numeric row matrices of any
@@ -416,13 +416,17 @@ supplied by the frame. Visibility is exact for the resulting tessellation.</p>
     <h2 id="theme-elements">Theme elements<a class="anchor" aria-label="anchor" href="#theme-elements"></a></h2>
 
 
-<p>Besides the ggplot2 elements, panels read these theme elements:</p><ul><li><p><code>panel.pane</code>, <code>panel.pane.x</code>, <code>panel.pane.y</code>, <code>panel.pane.z</code>: pane
+<p>Besides the ggplot2 elements, panels read these theme elements:
+Registered elements use the following classes, parents and defaults.
+An inherited default uses its parent's resolved value.</p><table class="table table"><tr><td>Element</td><td>Class</td><td>Parent</td><td>Default</td></tr><tr><td><code>axis.text.z</code></td><td>element_text</td><td><code>axis.text</code></td><td>inherited; margin 2.2 pt</td></tr><tr><td><code>axis.title.z</code></td><td>element_text</td><td><code>axis.title</code></td><td>inherited; margin 2.75 pt</td></tr><tr><td><code>axis.ticks.z</code></td><td>element_line</td><td><code>axis.ticks</code></td><td>inherited</td></tr><tr><td><code>axis.line.z</code></td><td>element_line</td><td><code>axis.line</code></td><td>inherited</td></tr><tr><td><code>axis.ticks.length.z</code></td><td>unit</td><td><code>axis.ticks.length</code></td><td>inherited</td></tr><tr><td><code>axis.minor.ticks.z</code></td><td>element_line</td><td><code>axis.ticks.z</code></td><td>inherited</td></tr><tr><td><code>axis.minor.ticks.length.z</code></td><td>unit</td><td><code>axis.ticks.length.z</code></td><td>1 pt</td></tr><tr><td><code>panel.grid.major.z</code></td><td>element_line</td><td><code>panel.grid.major</code></td><td>inherited</td></tr><tr><td><code>panel.grid.minor.z</code></td><td>element_line</td><td><code>panel.grid.minor</code></td><td>inherited</td></tr><tr><td><code>panel.grid.&lt;level&gt;.&lt;axis&gt;.&lt;plane&gt;</code></td><td>element_line</td><td><code>panel.grid.&lt;level&gt;.&lt;axis&gt;</code></td><td>inherited</td></tr><tr><td><code>panel.pane</code></td><td>element_rect</td><td><code>panel.background</code></td><td>inherited</td></tr><tr><td><code>panel.pane.x</code>, <code>.y</code>, <code>.z</code></td><td>element_rect</td><td><code>panel.pane</code></td><td>inherited</td></tr><tr><td><code>panel.pane.front</code></td><td>element_rect</td><td><code>panel.pane</code></td><td>fill #7F7F7F1A; colour NA</td></tr><tr><td><code>panel.zero</code></td><td>element_rect</td><td><code>rect</code></td><td>fill #7F7F7F40; colour NA; linewidth 0.3</td></tr><tr><td><code>panel.zero.x</code>, <code>.y</code>, <code>.z</code></td><td>element_rect</td><td><code>panel.zero</code></td><td>element_blank</td></tr><tr><td><code>panel.zero.line</code></td><td>element_line</td><td><code>line</code></td><td>element_blank</td></tr><tr><td><code>panel.zero.line.x</code>, <code>.y</code>, <code>.z</code></td><td>element_line</td><td><code>panel.zero.line</code></td><td>inherited</td></tr><tr><td><code>axis.line.origin</code></td><td>element_line</td><td><code>line</code></td><td>inherited</td></tr><tr><td><code>axis.line.origin.x</code>, <code>.y</code>, <code>.z</code></td><td>element_line</td><td><code>axis.line.origin</code></td><td>inherited</td></tr><tr><td><code>panel.box</code></td><td>element_line</td><td><code>line</code></td><td>grey50; linewidth 0.3</td></tr><tr><td><code>panel.box.back</code>, <code>.front</code></td><td>element_line</td><td><code>panel.box</code></td><td>inherited</td></tr><tr><td><code>panel.margin.3d</code></td><td>margin</td><td>none</td><td>8 pt on each side</td></tr></table><p>The grid pattern registers every combination of <code>level</code> = <code>major</code>,
+<code>minor</code>; <code>axis</code> = <code>x</code>, <code>y</code>, <code>z</code>; and <code>plane</code> = <code>xy</code>, <code>xz</code>, <code>yz</code>.
+Line, text and rectangle elements also accept <code><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">ggplot2::element_blank()</a></code>.</p><ul><li><p><code>panel.pane</code>, <code>panel.pane.x</code>, <code>panel.pane.y</code>, <code>panel.pane.z</code>: pane
 fills, by the axis normal to the pane; <code>panel.pane.front</code> styles the
 panes selected with <code>panes = "front"</code>.</p></li>
 <li><p><code>panel.grid.major.x.xy</code>, <code>panel.grid.minor.z.yz</code> and so on: the grid
 lines of one axis on the panes of one plane. Each inherits from the
 grid element of its axis (<code>panel.grid.major.x.xy</code> from
-<code>panel.grid.major.x</code>), so <code><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank()</a></code> removes those lines from
+<code>panel.grid.major.x</code>), so <code>element_blank()</code> removes those lines from
 that plane only. In the default view the floor is the <code>xy</code> plane.</p></li>
 <li><p><code>panel.zero.x</code>, <code>panel.zero.y</code>, <code>panel.zero.z</code>: a plane through the
 panel at transformed value 0 of that axis, when 0 lies inside the range.

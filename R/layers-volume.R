@@ -56,7 +56,7 @@ register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
 #' roots between equal-sign cell endpoints, and use its analytic gradient.
 #' These modes are independent of the absorption sampling count.
 #'
-#' @param mapping,data,...,show.legend,inherit.aes Standard layer arguments.
+#' @param mapping,data,stat,position,...,show.legend,inherit.aes Standard layer arguments.
 #'   Map `x`, `y`, `z` and `value` to the grid coordinates and scalar field.
 #' @param mode `"absorption"`, `"mip"` or `"iso"`.
 #' @param opacity Nonnegative extinction coefficients per transformed data unit,
@@ -90,14 +90,13 @@ register_geom_3d(GeomVolume3D, emit_volume_3d, aesthetics = "value",
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = v)) +
 #'   geom_volume_3d(opacity = c(0, 3), samples = 32) +
 #'   coord_3d(backend = backend_3d("raster", dpi = 60))
-geom_volume_3d <- function(mapping = NULL, data = NULL, ..., mode = c("absorption", "mip", "iso"),
+geom_volume_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ..., mode = c("absorption", "mip", "iso"),
                            opacity = c(0, 1), colours = c("#132B43", "#56B1F7"), samples = 256L,
                            levels = NULL, show.legend = NA, inherit.aes = TRUE, g = 0, material = NULL) {
-  if (!is.numeric(samples) || length(samples) != 1L || !is.finite(samples) || samples < 1 ||
-      samples != trunc(samples) || samples > .Machine$integer.max) stop("samples must be a positive integer.", call. = FALSE)
+  samples <- check_integer_3d(samples, "samples", min = 1)
   if (!is.numeric(g) || length(g) != 1L || !is.finite(g) || abs(g) >= 1) stop("g must lie in (-1, 1).", call. = FALSE)
   material <- material_argument_3d(material)
-  make_layer_3d(GeomVolume3D, mapping, data, "identity", "identity",
+  make_layer_3d(GeomVolume3D, mapping, data, stat, position,
     stats_params_3d(list(mode = match.arg(mode), opacity = opacity, colours = colours,
       samples = as.integer(samples), levels = levels, g = g, material = material), list(...)), show.legend, inherit.aes)
 }

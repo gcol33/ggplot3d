@@ -17,7 +17,7 @@ test_that("signed transfers leave colours unchanged at the neutral angle", {
   colours <- c("#E41A1C", "#377EB8", "#4DAF4A", "#FFFF33", "#101010")
   for (mode in c("lightness", "tone", "overlay", "soft")) {
     for (neutral in c(30, 45, 100)) {
-      light <- light_3d(light_directional(), mode = mode, neutral = neutral)
+      light <- light_3d(light_directional_3d(), mode = mode, neutral = neutral)
       out <- swatch_linear(colours, rep(cospi(neutral / 180), length(colours)), light)
       expect_identical(out, unname(linear_rgb_3d(colours)), info = paste(mode, neutral))
     }
@@ -26,7 +26,7 @@ test_that("signed transfers leave colours unchanged at the neutral angle", {
 
 test_that("lightness moves OKLab lightness by bounded fractions and keeps the hue", {
   colours <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#A6CEE3")
-  light <- light_3d(light_directional(), mode = "lightness", range = c(-0.4, 0.3), neutral = 45)
+  light <- light_3d(light_directional_3d(), mode = "lightness", range = c(-0.4, 0.3), neutral = 45)
   before <- oklab_ref(linear_rgb_3d(colours))
   dark <- oklab_ref(swatch_linear(colours, rep(-1, 5L), light))
   bright <- oklab_ref(swatch_linear(colours, rep(1, 5L), light))
@@ -39,7 +39,7 @@ test_that("lightness moves OKLab lightness by bounded fractions and keeps the hu
 })
 
 test_that("gamut compression reduces chroma at the kept lightness and hue", {
-  light <- light_3d(light_directional(), mode = "lightness", range = c(-1, 0.9))
+  light <- light_3d(light_directional_3d(), mode = "lightness", range = c(-1, 0.9))
   colours <- c("#0000FF", "#FF00FF", "#00FF00")
   out <- swatch_linear(colours, rep(1, 3L), light)
   expect_true(all(out >= 0 & out <= 1))
@@ -53,14 +53,14 @@ test_that("gamut compression reduces chroma at the kept lightness and hue", {
 })
 
 test_that("tone reaches its endpoint colours and overlay and soft follow matplotlib", {
-  light <- light_3d(light_directional(), mode = "tone", range = c(-1, 1), shadow_colour = "#203060", highlight_colour = "#FFF0C0")
+  light <- light_3d(light_directional_3d(), mode = "tone", range = c(-1, 1), shadow_colour = "#203060", highlight_colour = "#FFF0C0")
   expect_equal(swatch_linear(c("#E41A1C", "#4DAF4A"), c(-1, -1), light), unname(linear_rgb_3d(rep("#203060", 2L))), tolerance = 1e-6)
   expect_equal(swatch_linear("#E41A1C", 1, light), unname(linear_rgb_3d("#FFF0C0")), tolerance = 1e-6)
   e <- c(0.2, 0.5, 0.8)
   colour <- grDevices::rgb(e[1L], e[2L], e[3L])
   e <- unname(grDevices::col2rgb(colour)[, 1L]) / 255
   for (mode in c("overlay", "soft")) {
-    light <- light_3d(light_directional(), mode = mode, range = c(-0.8, 0.6))
+    light <- light_3d(light_directional_3d(), mode = mode, range = c(-0.8, 0.6))
     for (x in c(-1, 1)) {
       intensity <- 0.5 + 0.5 * if (x < 0) -0.8 else 0.6
       expected <- if (mode == "overlay") ifelse(e <= 0.5, 2 * intensity * e, 1 - 2 * (1 - intensity) * (1 - e)) else
@@ -75,7 +75,7 @@ test_that("tone reaches its endpoint colours and overlay and soft follow matplot
 })
 
 test_that("faces and swatches use the same transfer; specular stays outside the swatch", {
-  light <- light_3d(light_directional(c(0, 0, 1)), mode = "lightness")
+  light <- light_3d(light_directional_3d(c(0, 0, 1)), mode = "lightness")
   camera <- list(right = c(1, 0, 0), up = c(0, 1, 0), forward = c(0, 0, -1), ray = c(0, 0, -1), model_scale = c(1, 1, 1),
                  eye = c(0, 0, 5), distance = 5)
   angles <- c(0, 30, 60, 89)
@@ -92,7 +92,7 @@ test_that("faces and swatches use the same transfer; specular stays outside the 
 })
 
 test_that("the swatch sampler keeps NA and alpha", {
-  light <- light_3d(light_directional(), mode = "lightness")
+  light <- light_3d(light_directional_3d(), mode = "lightness")
   out <- shade_swatch_3d(c("#FF000080", NA, "#00FF00"), c(-1, 1), light, swatch_camera())
   expect_identical(dim(out), c(3L, 2L))
   expect_true(all(is.na(out[2L, ])))
@@ -125,7 +125,7 @@ guide_grobs <- function(plot, name) {
 
 test_that("a legend-box colourbar shows value by light with the face transfer", {
   skip_on_cran()
-  light <- light_3d(light_directional(), mode = "lightness")
+  light <- light_3d(light_directional_3d(), mode = "lightness")
   for (direction in c("vertical", "horizontal")) {
     bar <- guide_grobs(transfer_surface(light, guide_colourbar_3d(along = NULL, shading_range = TRUE, nbin = 10,
       direction = direction)), "shaded-colourbar-3d")
@@ -154,7 +154,7 @@ test_that("a legend-box colourbar shows value by light with the face transfer", 
 
 test_that("colour steps and bins shade binned scales with uneven intervals", {
   skip_on_cran()
-  light <- light_3d(light_directional(), mode = "lightness")
+  light <- light_3d(light_directional_3d(), mode = "lightness")
   steps <- guide_grobs(transfer_surface(light, guide_coloursteps_3d(even.steps = FALSE),
     function(guide) ggplot2::scale_fill_viridis_b(breaks = c(2, 3, 10), guide = guide)), "shaded-coloursteps-3d")
   expect_length(steps, 1L)
@@ -180,7 +180,7 @@ test_that("colour steps and bins shade binned scales with uneven intervals", {
 })
 
 test_that("the axis colourbar shades across its width", {
-  light <- light_3d(light_directional(), mode = "lightness")
+  light <- light_3d(light_directional_3d(), mode = "lightness")
   p <- transfer_surface(light, guide_colourbar_3d(nbin = 8, shading_range = TRUE), ggplot2::scale_fill_viridis_c)
   panel <- motion_panels_3d(transfer_render(p))[[1L]]
   bar <- panel$furniture$children[["panel-guide-3d-fill"]]
@@ -190,7 +190,7 @@ test_that("the axis colourbar shades across its width", {
 
 test_that("legend keys with a categorical scale get the signed transfer strip", {
   d <- data.frame(x = 1:3, y = 1:3, z = 1:3, g = c("a", "b", "c"))
-  light <- light_3d(light_directional(), mode = "tone")
+  light <- light_3d(light_directional_3d(), mode = "tone")
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = g)) + geom_col_3d() +
     ggplot2::guides(fill = guide_legend_3d(shading_range = c(150, 10))) + coord_3d(light = light)
   keys <- guide_grobs(p, "lit-legend-key-3d")
@@ -204,7 +204,7 @@ test_that("the viewer applies the signed transfers like the kernel", {
   skip_if_not_installed("htmlwidgets")
   d <- data.frame(x = c(0, 1, 0, 1), y = c(0, 0, 1, 1), z = c(0, 0, 0, 0))
   for (mode in c("lightness", "tone", "soft")) {
-    light <- light_3d(light_directional(c(0.6, 0.2, 1)), ambient = 0.2, mode = mode)
+    light <- light_3d(light_directional_3d(c(0.6, 0.2, 1)), ambient = 0.2, mode = mode)
     p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_surface_3d(fill = "#4080C0") +
       coord_3d(light = light, elevation = 90, azimuth = -90, panes = character(), axes = character(), box = "none")
     widget <- view_3d(p, width = 200, height = 200, elementId = paste0("transfer-", mode))
@@ -225,7 +225,7 @@ test_that("the viewer applies the signed transfers like the kernel", {
 
 test_that("raster faces use the signed transfer", {
   skip_on_cran()
-  light <- light_3d(light_directional(), mode = "lightness")
+  light <- light_3d(light_directional_3d(), mode = "lightness")
   raster <- transfer_surface(light, "none", backend = backend_3d("raster"))
   expect_no_error(transfer_render(raster))
 })

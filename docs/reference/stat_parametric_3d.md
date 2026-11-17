@@ -37,6 +37,7 @@ stat_parametric_3d(
 geom_parametric_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatParametric3D,
   position = "identity",
   ...,
   fun,
@@ -108,6 +109,12 @@ geom_parametric_3d(
 - max_depth:
 
   Maximum number of refinement rounds.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

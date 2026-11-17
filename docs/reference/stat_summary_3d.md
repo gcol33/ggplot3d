@@ -41,9 +41,10 @@ stat_summary_3d(
 
 - geom:
 
-  Geometry drawing the summary: `"pointrange"`, `"errorbar"`,
-  `"linerange"`, `"crossbar"`, `"point"`, `"path"`, `"line"`, or a
-  registered geom prototype.
+  Registered geom name or prototype drawing the summary, such as
+  `"pointrange"`, `"errorbar"`, `"linerange"`, `"crossbar"`, `"point"`,
+  `"path"` or `"line"`. Package names also accept the `_3d` suffix. The
+  geom's required aesthetics must be supplied by the summary.
 
 - fun.data:
 

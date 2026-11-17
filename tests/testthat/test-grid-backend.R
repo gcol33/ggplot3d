@@ -113,7 +113,7 @@ test_that("opaque mesh seams are covered by a union underlay, never by outlines"
 
 test_that("lighting changes fill without changing opacity or mapped materials", {
   scene <- grid_test_scene(); saved <- scene$styles
-  fill <- shade_fill_3d("#808080", scene$fragments, 1L, scene$camera, light_3d(light_directional(intensity = 0), ambient = 0.2, mode = "multiply"))
+  fill <- shade_fill_3d("#808080", scene$fragments, 1L, scene$camera, light_3d(light_directional_3d(intensity = 0), ambient = 0.2, mode = "multiply"))
   expect_false(identical(fill, "#808080"))
   expect_identical(scene$styles, saved)
 })
@@ -323,7 +323,7 @@ test_that("adjacent masks of one translucent glyph share one paint operation", {
   })
 })
 test_that("frame selection validates and preserves sphere compatibility", {
-  expect_error(coord_3d(frame = "unknown"), "arg")
+  expect_error(coord_3d(frame = "unknown"), "frame must be one of")
   expect_identical(coord_3d()$config$frame, "view")
   camera <- new_camera_3d()
   viewport <- new_scene_viewport(100, 100, 150)

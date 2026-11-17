@@ -92,7 +92,7 @@ export_3d(
 - print:
 
   A
-  [`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md)
+  [`print_spec_3d()`](https://gillescolling.com/ggplot3d/reference/print_spec_3d.md)
   specification for closed millimetre solids: optional for STL, required
   for 3MF.
 
@@ -142,7 +142,7 @@ triangles only, so it requires `lines = "tube"` and `points = "mesh"`.
 
 Ordinary model exports omit text and write dashed lines solid. Printing
 exports include extruded text according to
-[`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md).
+[`print_spec_3d()`](https://gillescolling.com/ggplot3d/reference/print_spec_3d.md).
 
 SVG output writes the compiled, depth-ordered fragments as SVG geometry.
 Each fragment carries data-layer, data-row and data-primitive

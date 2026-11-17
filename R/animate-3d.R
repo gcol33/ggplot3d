@@ -37,8 +37,11 @@
 #'   `"svg"` write numbered frame sequences; `"apng"` writes one animated PNG.
 #'   When both `file` and `format` are supplied, the extension must agree with
 #'   the format. With both NULL, returns temporary PNG frame paths.
-#' @param backend Scene backend, "raster" (default) or "vector". Use "vector"
-#'   for vector pages in SVG and PDF output.
+#' @param backend A [backend_3d()] configuration, or `"raster"` (default)
+#'   or `"vector"`. The default uses raster settings from `dpi` and
+#'   `antialias`; it is independent of the plot's backend. An explicit
+#'   configuration keeps its rendering settings. Animation supports raster
+#'   and vector backends. Use vector for vector pages in SVG and PDF output.
 #' @param width,height Frame dimensions in pixels, default 640 each.
 #' @param dpi Device resolution, default 96 dots per inch. SVG and PDF pages
 #'   measure `width / dpi` by `height / dpi` inches.
@@ -155,12 +158,17 @@
 #' @export
 animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
                        frames = 60L, fps = 20, file = NULL,
-                       backend = c("raster", "vector"), roll = NULL,
+                       backend = "raster", roll = NULL,
                        width = 640L, height = 640L, dpi = 96,
                        antialias = 1L, progress = interactive(), time = NULL,
                        path = NULL, workers = 1L, tween = NULL, trail = NULL, isometry = NULL, tour = NULL,
                        stable_partition = FALSE, format = NULL, ...) {
-  backend <- match.arg(backend)
+  if (is.character(backend)) backend <- backend_3d(backend, dpi, antialias)
+  backend <- validate_backend_3d(backend)
+  if (!backend$type %in% c("raster", "vector")) {
+    stop("animate_3d() does not support backend '", backend$type,
+      "'. Animation supports the raster and vector backends.", call. = FALSE)
+  }
   scene_assert(is.logical(stable_partition) && length(stable_partition) == 1L && !is.na(stable_partition),
     "stable_partition must be TRUE or FALSE")
   motion_dimensions_3d(width, height, dpi)
@@ -195,14 +203,12 @@ animate_3d <- function(plot, azimuth = NULL, elevation = NULL, zoom = NULL,
       if (is.null(tween)) sprintf("frames must equal the %d distinct values of '%s'", length(values), time)
         else sprintf("frames must equal the %d scheduled data frames", length(values)))
   }
-  scene_assert(is.numeric(frames) && length(frames) == 1L && is.finite(frames) &&
-    frames >= 1 && frames == trunc(frames), "frames must be a positive integer")
+  frames <- check_integer_3d(frames, "frames", min = 1)
   scene_assert(is.numeric(fps) && length(fps) == 1L && is.finite(fps) && fps > 0,
     "fps must be a positive finite number")
   scene_assert(is.logical(progress) && length(progress) == 1L && !is.na(progress),
     "progress must be TRUE or FALSE")
   workers <- motion_workers_3d(workers)
-  backend <- backend_3d(backend, dpi, antialias)
   output <- motion_output_3d(file, format)
   file <- output$file
   scene_assert(!...length() || output$kind == "scene", "Further arguments apply to .glb and .gltf output only")
@@ -324,9 +330,7 @@ motion_frame_mode_3d <- function(steps, frame = NULL) {
 
 motion_workers_3d <- function(workers) {
   if (inherits(workers, "cluster")) return(list(count = length(workers), cluster = workers))
-  scene_assert(is.numeric(workers) && length(workers) == 1L && is.finite(workers) &&
-    workers >= 1 && workers == trunc(workers), "workers must be a positive integer or a cluster")
-  list(count = as.integer(workers), cluster = NULL)
+  list(count = check_integer_3d(workers, "workers", min = 1), cluster = NULL)
 }
 
 motion_path_context_3d <- function(camera, params, ratio) {
@@ -549,9 +553,8 @@ motion_require_3d <- function(package) {
 }
 
 motion_dimensions_3d <- function(width, height, dpi) {
-  scene_assert(all(vapply(list(width, height), function(x) is.numeric(x) &&
-    length(x) == 1L && is.finite(x) && x >= 1 && x == trunc(x), logical(1))),
-    "width and height must be positive integer pixels")
+  check_integer_3d(width, "width", min = 1)
+  check_integer_3d(height, "height", min = 1)
   scene_assert(is.numeric(dpi) && length(dpi) == 1L && is.finite(dpi) && dpi > 0,
     "dpi must be a positive finite number")
 }

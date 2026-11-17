@@ -34,8 +34,8 @@ A ggplot2 layer.
 
 ## Details
 
-Map x/y and zmin/zmax for a vertical wall, or map both x/y/z and
-xend/yend/zend boundaries for a general ruled band. Input order is
+Map `x`, `y`, `zmin` and `zmax` for an interval band, or map both x/y/z
+and xend/yend/zend boundaries for a general ruled band. Input order is
 retained within groups. Missing endpoints break the band.
 
 ## Examples

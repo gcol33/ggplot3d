@@ -1496,14 +1496,14 @@ packages media9 and ocgx2. A PDF reader with PRC support supplies the
 interactive view. For a static PDF or ordinary SVG through an R graphics
 device, use <a href="backends.html">Choosing rendering and image
 formats</a>. ## 3D printing</p>
-<p><code><a href="../reference/print_3d.html">print_3d()</a></code> maps the panel box into a physical bounding
+<p><code><a href="../reference/print_spec_3d.html">print_spec_3d()</a></code> maps the panel box into a physical bounding
 box in millimetres, keeping its aspect. Tube widths, marker sizes, shell
 thicknesses and the base plate are applied in millimetres after scaling.
 Open surfaces can become normal-offset shells or close vertically onto
 the base. Layer overrides use the exported layer names, such as
 <code>c(layer1_surface = "base")</code>.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">settings</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/print_3d.html">print_3d</a></span><span class="op">(</span>size_mm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">60</span><span class="op">)</span>, min_mm <span class="op">=</span> <span class="fl">0.8</span>,</span>
+<code class="sourceCode R"><span><span class="va">settings</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/print_spec_3d.html">print_spec_3d</a></span><span class="op">(</span>size_mm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">60</span><span class="op">)</span>, min_mm <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  shell_mm <span class="op">=</span> <span class="fl">1.2</span>, base_mm <span class="op">=</span> <span class="fl">2</span>, text <span class="op">=</span> <span class="st">"raised"</span>, furniture <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"base"</span>, <span class="st">"axes"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cars.stl"</span>, print <span class="op">=</span> <span class="va">settings</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/export_3d.html">export_3d</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"cars.3mf"</span>, print <span class="op">=</span> <span class="va">settings</span><span class="op">)</span></span></code></pre></div>

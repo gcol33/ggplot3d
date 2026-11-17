@@ -40,6 +40,7 @@ stat_smooth_3d(
 geom_smooth_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSmooth3D,
   position = "identity",
   ...,
   method = "loess",
@@ -123,6 +124,12 @@ geom_smooth_3d(
 
   For a fitted model, a named list holding a value for each other
   predictor.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

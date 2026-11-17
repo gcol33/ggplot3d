@@ -275,6 +275,12 @@ unequal aspect ratios and curved frames. Glyphs remain rigid in the local
 tangent plane. <code>angle</code> rotates within that plane. Camera-facing geometry
 is resolved for each panel at draw time in every static backend and
 follows camera movement in the HTML viewer.</p>
+<p>Fixed aesthetics accept ggplot2 aliases such as <code>color</code>, <code>pch</code>, <code>cex</code>,
+<code>lty</code>, <code>lwd</code>, <code>fg</code> and <code>bg</code>. Supply each aesthetic once: passing both
+<code>color</code> and <code>colour</code> is an error. Geom, stat and position strings accept
+ggplot2 names and package suffixes such as <code>"surface_3d"</code> and
+<code>"nudge_3d"</code>. Fixed-purpose reference annotations <code><a href="geom_refline_3d.html">geom_refline_3d()</a></code>
+and <code><a href="geom_refline_3d.html">geom_abline_3d()</a></code> use identity statistics and positioning.</p>
     </div>
 
     <div class="section level2">

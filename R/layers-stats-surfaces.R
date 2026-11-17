@@ -11,6 +11,9 @@
 #' Parameters can also be mapped to colour or fill, used in facets, or selected
 #' as the `time` column of [animate_3d()].
 #' @param mapping,data,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
+#' @param stat Geom constructors: the statistic to use, as a prototype or
+#'   registered name. The third positional argument is `stat`, followed by
+#'   `position` and `...`.
 #' @param geom Geom prototype for keyed triangle corners.
 #' @param fun Vectorised function of x and y.
 #' @param n Grid resolution, a scalar or two integers.
@@ -265,5 +268,6 @@ stat_ridgeline_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurfa
 }
 
 #' @rdname stat_ridgeline_3d
+#' @inheritParams stat_function_3d
 #' @export
 geom_ridgeline_3d <- geom_from_stat_3d("stat_ridgeline_3d")

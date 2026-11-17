@@ -3,7 +3,7 @@
 Combines light sources with an ambient term and sets how the light
 changes face colours. Without light sources the scene has the lights of
 `preset`; the default preset has one directional light,
-[`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
+[`light_directional_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md),
 from the upper left of the camera. See
 [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md)
 for specular highlights.
@@ -31,12 +31,12 @@ light_3d(
 - ...:
 
   Lights made with
-  [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
-  [`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
-  [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
-  [`light_hemisphere()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+  [`light_directional_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md),
+  [`light_point_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md),
+  [`light_head_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md),
+  [`light_hemisphere_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md)
   or
-  [`light_environment()`](https://gillescolling.com/ggplot3d/reference/light_directional.md).
+  [`light_environment_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md).
   None gives the lights of `preset`.
 
 - ambient:
@@ -110,7 +110,7 @@ lights. Except for the default, each preset reproduces the surface
 lighting of a widely used 3D package, named below.
 
 - `"default"`: one
-  [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
+  [`light_directional_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md),
   ambient 0.35, `mode = "lightness"`, `range = c(-0.45, 0.4)`,
   `neutral = 60`.
 
@@ -208,13 +208,13 @@ Ottosson (2020). A perceptual color space for image processing.
 ## Examples
 
 ``` r
-light_3d(light_head(), light_hemisphere("lightblue", "brown"), ambient = 0.1)
+light_3d(light_head_3d(), light_hemisphere_3d("lightblue", "brown"), ambient = 0.1)
 d <- expand.grid(x = seq(-2, 2, length.out = 25), y = seq(-2, 2, length.out = 25))
 d$z <- with(d, exp(-(x^2 + y^2)))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
   geom_surface_3d(shading = "smooth", colour = NA) +
   ggplot2::scale_fill_distiller(palette = "Spectral") +
-  coord_3d(light = light_3d(light_directional(), mode = "lightness"))
+  coord_3d(light = light_3d(light_directional_3d(), mode = "lightness"))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
   coord_3d(light = light_3d(preset = "studio"))

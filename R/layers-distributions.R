@@ -93,7 +93,7 @@ geom_boxplot_3d <- function(mapping = NULL, data = NULL, stat = StatBoxplot3D, p
   scene_assert(is.numeric(coef) && length(coef) == 1L && is.finite(coef) && coef >= 0, "coef must be nonnegative")
   make_layer_3d(GeomBoxplot3D, mapping, data, stat, position,
     c(list(width = width, depth = depth, coef = coef, outliers = check_flag_3d(outliers, "outliers"),
-      fatten = fatten, shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+      fatten = fatten, shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes, default_stat = StatBoxplot3D)
 }
 
 StatViolin3D <- ggplot2::ggproto("StatViolin3D", ggplot2::Stat,
@@ -160,10 +160,11 @@ geom_violin_3d <- function(mapping = NULL, data = NULL, stat = StatViolin3D, pos
                            shape = c("wall", "revolve"), width = NULL, depth = NULL,
                            bw = "nrd0", adjust = 1, trim = TRUE, n = 80L, sides = 16L,
                            shade = TRUE, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  scene_assert(n >= 3 && n == as.integer(n) && sides >= 3 && sides == as.integer(sides), "n and sides must be integers of at least three")
+  n <- check_integer_3d(n, "n", min = 3)
+  sides <- check_integer_3d(sides, "sides", min = 3)
   make_layer_3d(GeomViolin3D, mapping, data, stat, position,
     c(list(shape = match.arg(shape), width = width, depth = depth, bw = bw, adjust = adjust,
-      trim = trim, n = as.integer(n), sides = as.integer(sides), shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+      trim = trim, n = as.integer(n), sides = as.integer(sides), shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes, default_stat = StatViolin3D)
 }
 
 prepare_area_3d <- function(out, data, plot, params) {
@@ -191,6 +192,8 @@ register_geom_3d(GeomArea3D, emit_areas_3d,
 #' Draws each group as a filled curtain from `base` to z, ordered by x.
 #' The x coordinates shared by stacked groups form their lattice. Groups
 #' with different x coordinates retain their own vertices.
+#' `geom_waterfall_3d()` is a convenience for
+#' `geom_area_3d(position = "identity")`.
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param base Baseline in original z units, overridden by zmin.
 #' @param shade Whether to apply lighting.

@@ -190,6 +190,7 @@ axis values. Numeric aesthetics are averaged over each face.</p>
 <span><span class="fu">geom_revolve_3d</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stat <span class="op">=</span> <span class="va">StatRevolve3D</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  axis <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"z"</span>, <span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span>,</span>
@@ -234,6 +235,12 @@ axis values. Numeric aesthetics are averaged over each face.</p>
 <dt id="arg-centre">centre<a class="anchor" aria-label="anchor" href="#arg-centre"></a></dt>
 <dd><p>Position of the axis in the other two coordinates, in the
 cyclic order (x, y), (y, z) or (z, x).</p></dd>
+
+
+<dt id="arg-stat">stat<a class="anchor" aria-label="anchor" href="#arg-stat"></a></dt>
+<dd><p>Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is <code>stat</code>, followed by
+<code>position</code> and <code>...</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

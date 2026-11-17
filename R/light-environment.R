@@ -1,11 +1,11 @@
 utils::globalVariables("raymarch_hdr_cpp")
 
-#' @rdname light_directional
+#' @rdname light_directional_3d
 #' @param image Linear RGB array with dimensions height by width by 3, or a
 #'   Radiance RGBE `.hdr` or sRGB `.png` path. PNG input needs package png.
 #' @param rotation Environment rotation about the up axis, in degrees.
 #' @export
-light_environment <- function(image, intensity = 1, rotation = 0, space = "data") {
+light_environment_3d <- function(image, intensity = 1, rotation = 0, space = "data") {
   if (is.character(image) && length(image) == 1L && !is.na(image)) {
     if (!file.exists(image)) stop("Environment image does not exist: ", image, call. = FALSE)
     extension <- tolower(tools::file_ext(image))

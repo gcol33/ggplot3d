@@ -2,7 +2,8 @@
 
 Draws each group as a filled curtain from `base` to z, ordered by x. The
 x coordinates shared by stacked groups form their lattice. Groups with
-different x coordinates retain their own vertices.
+different x coordinates retain their own vertices. `geom_waterfall_3d()`
+is a convenience for `geom_area_3d(position = "identity")`.
 
 ## Usage
 

@@ -71,6 +71,6 @@ d <- expand.grid(x = seq(-1, 1, length.out = 25), y = seq(-1, 1, length.out = 25
 d$z <- exp(-2 * (d$x^2 + d$y^2))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "steelblue", colour = NA) +
-  coord_3d(shadow = shadow_3d(light = light_3d(light_directional(c(1, 1, 3), space = "data"))),
+  coord_3d(shadow = shadow_3d(light = light_3d(light_directional_3d(c(1, 1, 3), space = "data"))),
     zlim = c(-1, 1))
 ```

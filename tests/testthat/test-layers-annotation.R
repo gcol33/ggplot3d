@@ -118,7 +118,7 @@ test_that("annotate_3d forwards common and other geom parameters", {
   expect_equal(point$data$z, c(1, 1))
   expect_error(annotate_3d("point", x = 1:2, colour = letters[1:3]), "Unequal parameter lengths")
   expect_error(annotate_3d("point", x = 1, misspelled = TRUE), "Unknown 3D layer arguments")
-  expect_error(annotate_3d("missing"), "No 3D emitter registered")
+  expect_error(annotate_3d("missing"), "Unsupported geom.*missing")
 })
 
 test_that("labs(axis = NULL) removes a 3D axis title", {

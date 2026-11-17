@@ -7,6 +7,8 @@
 geom_volume_3d(
   mapping = NULL,
   data = NULL,
+  stat = "identity",
+  position = "identity",
   ...,
   mode = c("absorption", "mip", "iso"),
   opacity = c(0, 1),
@@ -20,7 +22,7 @@ geom_volume_3d(
 )
 }
 \arguments{
-\item{mapping, data, ..., show.legend, inherit.aes}{Standard layer arguments.
+\item{mapping, data, stat, position, ..., show.legend, inherit.aes}{Standard layer arguments.
 Map \code{x}, \code{y}, \code{z} and \code{value} to the grid coordinates and scalar field.}
 
 \item{mode}{\code{"absorption"}, \code{"mip"} or \code{"iso"}.}

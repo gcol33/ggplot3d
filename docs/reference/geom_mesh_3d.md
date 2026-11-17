@@ -80,8 +80,7 @@ geom_mesh_3d(
 
   Whether to add the computed variables of
   [`mesh_curvature()`](https://gillescolling.com/ggplot3d/reference/mesh_processing.md),
-  for use with
-  [`after_stat()`](https://ggplot2.tidyverse.org/reference/aes_eval.html).
+  for use with `after_stat()`.
 
 - crease:
 

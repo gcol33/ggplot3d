@@ -28,6 +28,7 @@ stat_sweep_3d(
 geom_sweep_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSweep3D,
   position = "identity",
   ...,
   profile,
@@ -59,7 +60,7 @@ geom_sweep_3d(
 \item{cap}{End caps of a tube on an open curve: \code{"round"}, \code{"flat"} or \code{"none"}.}
 
 \item{normal}{Direction the first cross section is oriented towards: the
-ribbon's surface normal, or the profile's first axis in stat_sweep_3d().}
+strip's surface normal, or the profile's first axis in stat_sweep_3d().}
 
 \item{closed}{Whether the path is a closed loop.}
 
@@ -69,6 +70,10 @@ profiles of three or more points as closed.}
 \item{spline}{NULL, or a \code{\link[=stat_spline_3d]{stat_spline_3d()}} type to smooth the path first.}
 
 \item{n}{Number of spline samples.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

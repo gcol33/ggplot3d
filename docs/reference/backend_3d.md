@@ -191,7 +191,11 @@ backend_3d(
 
 ## Value
 
-A backend configuration for coord_3d().
+A `ggplot3d_backend` configuration for
+[`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+and
+[`animate_3d()`](https://gillescolling.com/ggplot3d/reference/animate_3d.md),
+validated at construction and use.
 
 ## Details
 

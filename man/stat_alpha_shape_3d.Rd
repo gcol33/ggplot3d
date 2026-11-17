@@ -20,6 +20,7 @@ stat_alpha_shape_3d(
 geom_alpha_shape_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatAlphaShape3D,
   position = "identity",
   ...,
   radius = NULL,
@@ -37,6 +38,10 @@ geom_alpha_shape_3d(
 units. \code{NULL} uses the smallest radius at which the tetrahedra of the
 complex touch every point. (The argument is not called \code{alpha} because
 that name sets opacity.)}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

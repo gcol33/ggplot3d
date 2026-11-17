@@ -60,7 +60,7 @@ test_that("violin walls and revolved solids retain density and cell widths", {
     expect_true(all(values$density >= 0))
     if (shape == "revolve") expect_equal(length(out$packet$faces$offset), 2L * (11L * 8L + 2L))
   }
-  expect_error(geom_violin_3d(n = 2), "at least three")
+  expect_error(geom_violin_3d(n = 2), "n must be a representable integer between 3")
 })
 
 test_that("areas stack signed walls per lattice vertex and waterfall retains rows", {

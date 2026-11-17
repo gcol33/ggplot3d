@@ -180,6 +180,7 @@ floating-point tolerance. x/y/z positions are already transformed.</p>
 <span><span class="fu">geom_hull_3d</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stat <span class="op">=</span> <span class="va">StatHull3D</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  space <span class="op">=</span> <span class="st">"data"</span>,</span>
@@ -205,6 +206,12 @@ floating-point tolerance. x/y/z positions are already transformed.</p>
 <dd><p><code>"data"</code> takes the hull of the positions. <code>"ilr"</code> takes the
 hull of a composition mapped with <code>a</code>, <code>b</code>, <code>c</code> (and <code>d</code>) in isometric
 log-ratio coordinates and keeps its facets on the original points.</p></dd>
+
+
+<dt id="arg-stat">stat<a class="anchor" aria-label="anchor" href="#arg-stat"></a></dt>
+<dd><p>Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is <code>stat</code>, followed by
+<code>position</code> and <code>...</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

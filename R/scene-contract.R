@@ -491,6 +491,10 @@ new_camera_3d <- function(projection = "orthographic", azimuth = -60,
                           aspect = c(1, 1, 1), near = NULL, far = NULL,
                           clip_data = TRUE, clip = TRUE, up = 3L, shear = c(0, 0),
                           pre = diag(4)) {
+  for (name in c("azimuth", "elevation", "roll", "fov", "zoom", "target", "aspect", "distance", "near", "far")) {
+    value <- get(name)
+    if (!is.null(value) && !is.numeric(value)) stop(name, " must be numeric.", call. = FALSE)
+  }
   camera <- list(projection = projection, azimuth = as.double(azimuth),
                  elevation = as.double(elevation), roll = as.double(roll),
                  distance = if (is.null(distance)) {
@@ -512,30 +516,30 @@ validate_camera_3d <- function(camera) {
     "clip_data", "clip", "up", "shear", "pre")), "invalid camera schema")
   scene_assert(is.double(camera$pre) && length(camera$pre) == 16L && all(is.finite(camera$pre)),
                "camera pre must be 16 finite numbers, a column-major 4 x 4 matrix")
-  scene_assert(length(camera$projection) == 1L &&
-                 camera$projection %in% c("orthographic", "perspective", "oblique"),
-               "invalid camera projection")
+  check_choice_3d(camera$projection, c("orthographic", "perspective", "oblique"), "projection")
   scene_assert(is.double(camera$up) && length(camera$up) == 1L && camera$up %in% 1:3,
                "camera up must be axis 1, 2 or 3")
   scene_assert(is.double(camera$shear) && length(camera$shear) == 2L && all(is.finite(camera$shear)),
                "invalid camera shear")
   scene_assert(camera$projection == "oblique" || all(camera$shear == 0),
                "camera shear requires the oblique projection")
-  for (key in c("azimuth", "elevation", "roll", "fov", "zoom")) {
+  constraints <- c(azimuth = "a finite number in degrees", elevation = "a finite number between -90 and 90 degrees",
+    roll = "a finite number in degrees", fov = "a finite number strictly between 0 and 180 degrees", zoom = "a positive finite number")
+  for (key in names(constraints)) {
+    value <- camera[[key]]
+    valid_range <- switch(key, elevation = abs(value) <= 90, fov = value > 0 & value < 180, zoom = value > 0, TRUE)
     scene_assert(is.double(camera[[key]]) && length(camera[[key]]) == 1L &&
-                   is.finite(camera[[key]]), paste("invalid camera", key))
+                   is.finite(camera[[key]]) && valid_range, paste(key, "must be", constraints[[key]]))
   }
-  scene_assert(abs(camera$elevation) <= 90 && camera$fov > 0 &&
-                 camera$fov < 180 && camera$zoom > 0, "invalid camera angles or zoom")
   for (key in c("target", "aspect")) {
     scene_assert(is.double(camera[[key]]) && length(camera[[key]]) == 3L &&
-                   all(is.finite(camera[[key]])), paste("invalid camera", key))
+                   all(is.finite(camera[[key]])), paste(key, "must contain three finite numbers"))
   }
   scene_assert(all(camera$aspect > 0), "camera aspect must be positive")
   for (key in c("distance", "near", "far")) {
     value <- camera[[key]]
     scene_assert(is.double(value) && length(value) == 1L && !is.nan(value) &&
-                   (is.na(value) || value > 0), paste("invalid camera", key))
+                   (is.na(value) || value > 0), paste(key, "must be a positive number or NULL for automatic selection"))
   }
   if (camera$projection != "perspective") {
     scene_assert(identical(camera$distance, Inf), "orthographic distance must be Inf")
@@ -549,8 +553,7 @@ validate_camera_3d <- function(camera) {
     scene_assert(camera$near < camera$far, "camera near must be less than far")
   }
   for (key in c("clip_data", "clip")) {
-    scene_assert(is.logical(camera[[key]]) && length(camera[[key]]) == 1L &&
-                   !anyNA(camera[[key]]), paste("invalid camera", key))
+    check_flag_3d(camera[[key]], key)
   }
   invisible(camera)
 }

@@ -79,8 +79,8 @@ p + facet_views_3d()
 p + facet_views_3d(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
 p + facet_views_3d(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
 p + facet_views_3d(views = NULL, lights = list(
-  left = light_3d(light_directional(c(-1, 1, 2))),
-  right = light_3d(light_directional(c(1, 1, 2)))))
+  left = light_3d(light_directional_3d(c(-1, 1, 2))),
+  right = light_3d(light_directional_3d(c(1, 1, 2)))))
 }
 \seealso{
 \code{\link[=camera_3d]{camera_3d()}} for the named views, \code{\link[=view_3d]{view_3d()}} with \code{link} to turn

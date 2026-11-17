@@ -95,11 +95,6 @@ Position3D <- ggplot2::ggproto("Position3D", ggplot2::Position,
   extents = NULL
 )
 
-check_flag_3d <- function(value, name) {
-  if (!is.logical(value) || length(value) != 1L || is.na(value)) stop(name, " must be TRUE or FALSE.", call. = FALSE)
-  value
-}
-
 check_amount_3d <- function(value, name) {
   if (!is.null(value) && (!is.numeric(value) || length(value) != 1L || !is.finite(value) || value < 0)) {
     stop(name, " must be NULL or a non-negative number.", call. = FALSE)
@@ -278,7 +273,10 @@ PositionJitter3D <- ggplot2::ggproto("PositionJitter3D", Position3D,
 #'   geom_point_3d(position = position_nudge_3d(z = 0.5)) + coord_3d()
 #' @export
 position_nudge_3d <- function(x = 0, y = 0, z = 0) {
-  stopifnot(all(vapply(list(x, y, z), function(v) is.numeric(v) && length(v) == 1L && is.finite(v), logical(1))))
+  for (name in c("x", "y", "z")) {
+    value <- get(name)
+    if (!is.numeric(value) || length(value) != 1L || !is.finite(value)) stop(name, " must be one finite number.", call. = FALSE)
+  }
   ggplot2::ggproto(NULL, PositionNudge3D, x = x, y = y, z = z)
 }
 

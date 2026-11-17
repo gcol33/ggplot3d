@@ -8,9 +8,8 @@ aspect mapping. Filled cone heads and tube shafts are analytic quadrics
 without a fill are drawn by the edges of a cone mesh of `detail`
 subdivisions. `normalise = TRUE` makes the input vectors unit length
 before applying `scale`. Computed variables `norm`, `xend`, `yend`,
-`zend` are available through
-[`after_stat()`](https://ggplot2.tidyverse.org/reference/aes_eval.html).
-Zero-length vectors draw no geometry.
+`zend` are available through `after_stat()`. Zero-length vectors draw no
+geometry.
 
 ## Usage
 

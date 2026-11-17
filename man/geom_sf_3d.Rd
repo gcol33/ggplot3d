@@ -7,6 +7,7 @@
 geom_sf_3d(
   mapping = NULL,
   data = NULL,
+  stat = "identity",
   position = "identity",
   ...,
   base = 0,
@@ -18,7 +19,7 @@ geom_sf_3d(
 )
 }
 \arguments{
-\item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
+\item{mapping, data, stat, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
 
 \item{base}{Prism baseline in original z units, overridden by zmin.}
 

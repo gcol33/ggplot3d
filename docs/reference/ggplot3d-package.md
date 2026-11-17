@@ -2,22 +2,28 @@
 
 Three-dimensional layers, z position scales and camera controls for
 ggplot2. Panel scenes resolve visibility across layers for vector and
-raster output.
+raster output. When attaching ggcube or ggrgl together with ggplot3d,
+use qualified calls such as
+[`ggplot3d::coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
+for names shared by the packages.
 
 ## Options
 
 - `ggplot3d.threads`:
 
-  Number of threads the scene compiler uses to find which pieces of a
-  panel occlude each other. Defaults to every logical core, or 2 when
+  Number of threads the scene compiler and the raster backend use. The
+  default `0` uses every logical core; at most 2 are used when
   `_R_CHECK_LIMIT_CORES_` is set. The compiled scene is the same for
-  every thread count.
+  every thread count. Accepts representable nonnegative integers; see
+  [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md).
 
 - `ggplot3d.cache_bytes`:
 
   Memory, in bytes, kept for recently compiled scenes, so that redrawing
-  a plot at the same size and view skips the compiler. Defaults to 256
-  MiB; 0 turns the cache off.
+  a plot at the same size and view skips the compiler. Accepts one
+  nonnegative number or `Inf`. Defaults to 256 MiB; 0 turns the cache
+  off. See
+  [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md).
 
 - `ggplot3d.max.overlaps`:
 
@@ -26,7 +32,37 @@ raster output.
   and
   [`geom_label_repel_3d()`](https://gillescolling.com/ggplot3d/reference/geom_label_3d.md):
   a label that overlaps more labels and points than this where it starts
-  is not drawn. Defaults to 10.
+  is not drawn. Accepts one nonnegative number or `Inf`. Defaults to 10.
+
+- `ggplot3d.vector_markers`:
+
+  Maximum markers per vector panel: one nonnegative whole number or
+  `Inf` for unlimited. Default 50000. See
+  [`geom_point_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md).
+
+- `ggplot3d.shading_tolerance`:
+
+  One positive finite number for the encoded sRGB tolerance of vector
+  shading. Default `2 / 255`. See
+  [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md).
+
+- `ggplot3d.smooth_vector`:
+
+  `"auto"` (default) or `"subdivide"` for smooth faces in vector output.
+  See
+  [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md).
+
+- `ggplot3d.smooth_dpi`:
+
+  One positive finite number for the minimum resolution of smooth
+  shading images. Default 150. See
+  [`geom_surface_3d()`](https://gillescolling.com/ggplot3d/reference/geom_surface_3d.md).
+
+- `ggplot3d.quadric_segments`:
+
+  One representable integer of at least 3 for quadric meshes in exports
+  and shadows. Default 32. See
+  [`geom_sphere_3d()`](https://gillescolling.com/ggplot3d/reference/geom_sphere_3d.md).
 
 ## See also
 
@@ -50,16 +86,25 @@ Authors:
 
 Other contributors:
 
-- The Manifold Authors (Bundled Manifold library) \[copyright holder\]
+- The Manifold Authors (Bundled Manifold library) \[contributor,
+  copyright holder\]
 
-- Angus Johnson (Bundled Clipper2 library) \[copyright holder\]
+- Angus Johnson (Bundled Clipper2 library) \[contributor, copyright
+  holder\]
 
-- Jared Hoberock (Manifold utilities) \[copyright holder\]
+- Jared Hoberock (Manifold utilities) \[contributor, copyright holder\]
 
-- Nathan Bell (Manifold utilities) \[copyright holder\]
+- Nathan Bell (Manifold utilities) \[contributor, copyright holder\]
 
-- Wenzel Jakob (Disjoint-set implementation) \[copyright holder\]
+- Wenzel Jakob (Disjoint-set implementation) \[contributor, copyright
+  holder\]
 
-- wi-re (Singular value decomposition) \[copyright holder\]
+- wi-re (Singular value decomposition) \[contributor, copyright holder\]
 
 - Sun Microsystems, Inc. (Mathematical functions) \[copyright holder\]
+
+- Antti Kuukka (Public-domain quickhull adapted in Manifold)
+  \[contributor\]
+
+- Sterling Orsten (Public-domain linalg adapted in Manifold)
+  \[contributor\]

@@ -79,7 +79,7 @@ test_that("lit textures shade alike in raster and vector output", {
   packet$styles$shade <- TRUE
   viewport <- new_scene_viewport(40, 40, dpi = 100 * 25.4 / 40)
   for (mode in c("multiply", "lightness")) {
-    light <- light_3d(light_directional(c(1, 0, 1), space = "data"), mode = mode)
+    light <- light_3d(light_directional_3d(c(1, 0, 1), space = "data"), mode = mode)
     raster <- image_channels(raster_scene_3d(packet, texture_top_camera(), viewport, 1L, light = light)$image)
     path <- tempfile(fileext = ".png")
     ragg::agg_png(path, 100L, 100L, res = viewport$dpi, background = "grey50")

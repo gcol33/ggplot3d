@@ -193,7 +193,7 @@ test_that("stat_summary_3d() summarises one axis per position on the other two",
     stat_summary_3d(axis = "x", fun.data = ggplot2::mean_se, fun.args = list(mult = 2)) + coord_3d())$built$data[[1L]]
   expect_true(all(c("xmin", "xmax") %in% names(sideways)))
   expect_equal(nrow(sideways), 4L)
-  expect_error(stat_summary_3d(geom = "violin"), "geom must be")
+  expect_error(stat_summary_3d(geom = "unknown"), "Unsupported geom.*unknown")
 })
 
 test_that("stat_summary_3d() combines cells with one and with several observations", {

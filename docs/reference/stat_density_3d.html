@@ -201,6 +201,7 @@ Computed level and density contain the resolved density threshold.</p>
 <span><span class="fu">geom_isodensity_3d</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stat <span class="op">=</span> <span class="va">StatDensity3D</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  h <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -283,6 +284,12 @@ sublevel region is also closed on the plane, as with MATLAB's
 interpolant of the field is linear, and the part of that polygon below
 the level is filled, as on the box faces. Plane caps point along the
 plane normal. The plane is in transformed position coordinates.</p></dd>
+
+
+<dt id="arg-stat">stat<a class="anchor" aria-label="anchor" href="#arg-stat"></a></dt>
+<dd><p>Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is <code>stat</code>, followed by
+<code>position</code> and <code>...</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

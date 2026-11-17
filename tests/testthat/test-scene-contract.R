@@ -117,7 +117,7 @@ test_that("native entry validates independently of the R wrapper", {
 test_that("camera values enforce projection and physical viewport conventions", {
   expect_error(ggplot3d:::new_camera_3d(distance = 3), "orthographic")
   expect_error(ggplot3d:::new_camera_3d(projection = "perspective", distance = Inf), "finite")
-  expect_error(ggplot3d:::new_camera_3d(elevation = 91), "angles")
+  expect_error(ggplot3d:::new_camera_3d(elevation = 91), "elevation.*-90.*90")
   expect_error(ggplot3d:::new_camera_3d(near = 2, far = 1), "less than")
   expect_error(ggplot3d:::new_camera_3d(aspect = c(1, 0, 1)), "positive")
   expect_error(ggplot3d:::new_camera_3d(zoom = 0), "zoom")

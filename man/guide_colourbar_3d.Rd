@@ -2,7 +2,9 @@
 % Please edit documentation in R/guides-colour.R
 \name{guide_colourbar_3d}
 \alias{guide_colourbar_3d}
+\alias{guide_colorbar_3d}
 \alias{guide_coloursteps_3d}
+\alias{guide_colorsteps_3d}
 \alias{guide_legend_3d}
 \alias{guide_bins_3d}
 \title{Colour guides that show the scene's shading}
@@ -16,7 +18,18 @@ guide_colourbar_3d(
   ...
 )
 
+guide_colorbar_3d(
+  along = "z",
+  width = grid::unit(2, "mm"),
+  gap = grid::unit(0.5, "mm"),
+  nbin = 128L,
+  shading_range = FALSE,
+  ...
+)
+
 guide_coloursteps_3d(..., shading_range = TRUE)
+
+guide_colorsteps_3d(..., shading_range = TRUE)
 
 guide_legend_3d(..., lit = TRUE, normal = c(0, 0, 1), shading_range = FALSE)
 
@@ -53,6 +66,13 @@ expression in every layer using the colour scale. Scale transformations may
 differ: colours are evaluated at the position axis's original data values.
 With \code{along = NULL} it is an ordinary legend-box colourbar
 (\code{\link[ggplot2:guide_colourbar]{ggplot2::guide_colourbar()}}).
+An axis-mounted bar accepts \code{title}, \code{reverse}, \code{alpha}, \code{theme}, \code{order}
+and \code{available_aes} from \code{\link[ggplot2:guide_colourbar]{ggplot2::guide_colourbar()}}. The default title
+is inherited from the position axis; an explicit title overrides it.
+\code{reverse} reverses colours along the axis, retaining the axis's ticks and
+labels. \code{theme} supplies axis theme overrides. Other arguments require
+\code{along = NULL}. The American spellings \code{guide_colorbar_3d()} and
+\code{guide_colorsteps_3d()} use the same implementations.
 }
 \details{
 \code{guide_coloursteps_3d()} and \code{guide_bins_3d()} are

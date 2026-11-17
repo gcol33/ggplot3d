@@ -77,7 +77,7 @@ test_that("front panes cover the facing panes left undrawn, over the data", {
       geom_point_3d() + coord_cylindrical_3d(panes = c("back", "front"))
     built <- furniture_test_build(cylinder)
     expect_true(any(built$packet$faces$partition == 2L))
-    expect_error(coord_3d(panes = "sides"), "Unknown cube pane")
+    expect_error(coord_3d(panes = "sides"), "panes must be one of")
   })
 })
 
@@ -121,7 +121,7 @@ test_that("the origin is given in data units and moved into the box", {
   expect_equal(check_origin_3d(c(z = 2)), c(x = 0, y = 0, z = 2))
   expect_error(coord_3d(origin = c(w = 1)), "origin must be")
   expect_error(coord_3d(origin = c(1, 2, 3)), "origin must be")
-  expect_error(coord_3d(axis_lines = "centre"), "should be one of")
+  expect_error(coord_3d(axis_lines = "centre"), "axis_lines must be one of")
   logged <- ggplot2::ggplot(data.frame(x = c(1, 10, 100), y = 1:3, z = 1:3), ggplot2::aes(x, y, z = z)) +
     geom_point_3d() + ggplot2::scale_x_log10() + coord_3d(origin = c(x = 10, y = 50))
   params <- ggplot2::ggplot_build(logged)$layout$panel_params[[1L]]

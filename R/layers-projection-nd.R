@@ -229,7 +229,7 @@ stat_project_3d <- function(mapping=NULL,data=NULL,geom="point",position="identi
                              munch_tolerance=1e-3,munch_max_depth=9L,na.rm=FALSE,show.legend=NA,inherit.aes=TRUE) {
   if(!is.character(dimensions)||length(dimensions)<3L||anyNA(dimensions)||anyDuplicated(dimensions)) stop("dimensions must give at least three unique aesthetic names.",call.=FALSE)
   projection <- match.arg(projection)
-  if(is.character(geom)) geom <- switch(geom,point=ggplot2::GeomPoint,path=ggplot2::GeomPath,polygon=ggplot2::GeomPolygon,mesh=GeomMesh3D,stop("Unknown projection geom.",call.=FALSE))
+  geom <- resolve_layer_component_3d(geom, "geom")
   name <- find_emitter_3d(geom)$name
   if(!name%in%c("GeomPoint","GeomPath","GeomLine","GeomPolygon","GeomMesh3D")) stop("Projection supports point, path, polygon and mesh geometry.",call.=FALSE)
   eye <- mesh_number_3d(eye,"eye",function(x) is.finite(x)&&x>0,"positive")

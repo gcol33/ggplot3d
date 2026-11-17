@@ -30,6 +30,7 @@ stat_smooth_3d(
 geom_smooth_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSmooth3D,
   position = "identity",
   ...,
   method = "loess",
@@ -84,6 +85,10 @@ cut along it and the model is evaluated on the cut.}
 
 \item{cond}{For a fitted model, a named list holding a value for each
 other predictor.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

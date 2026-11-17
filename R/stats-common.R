@@ -71,8 +71,9 @@ stats_params_3d <- function(defaults, extra) {
 }
 
 stats_grid_3d <- function(scales, n, axes = c("x", "y")) {
-  if (!(length(n) %in% c(1L, length(axes))) || any(!is.finite(n) | n < 2 | n != trunc(n)))
+  if (!is.numeric(n) || !(length(n) %in% c(1L, length(axes))) || any(!is.finite(n) | n < 2 | n != trunc(n)))
     stop("n must contain integers of at least two, one per grid axis.", call. = FALSE)
+  n <- vapply(n, check_integer_3d, integer(1), name = "n", min = 2)
   n <- rep_len(n, length(axes))
   out <- lapply(seq_along(axes), function(i) {
     scale <- stats_scale_3d(scales, axes[i])

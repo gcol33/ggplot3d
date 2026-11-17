@@ -200,6 +200,7 @@ lie on no grid edge (merged <code>"tetra"</code> clusters, centre vertices of
 <span><span class="fu">geom_isofunction_3d</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stat <span class="op">=</span> <span class="va">StatIsofunction3D</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  <span class="va">fun</span>,</span>
@@ -317,6 +318,12 @@ backend.</p></dd>
 
 <dt id="arg-trace-steps">trace_steps<a class="anchor" aria-label="anchor" href="#arg-trace-steps"></a></dt>
 <dd><p>Maximum sphere-tracing steps per ray.</p></dd>
+
+
+<dt id="arg-stat">stat<a class="anchor" aria-label="anchor" href="#arg-stat"></a></dt>
+<dd><p>Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is <code>stat</code>, followed by
+<code>position</code> and <code>...</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

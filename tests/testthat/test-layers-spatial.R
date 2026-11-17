@@ -98,7 +98,7 @@ test_that("arcs rise above their chord by height times its normalised length", {
   floor <- stats_scene(ggplot2::ggplot(d, ggplot2::aes(x, y, xend = xend, yend = yend)) +
     geom_arc_3d(n = 2) + coord_3d())
   expect_true(all(floor$built$data[[1L]]$z == -Inf))
-  expect_error(geom_arc_3d(n = 0), "positive integer")
+  expect_error(geom_arc_3d(n = 0), "n must be a representable integer")
 })
 
 test_that("lidR point clouds fortify to snake-case point attributes", {

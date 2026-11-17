@@ -68,7 +68,7 @@ test_that("volume layers draw all three modes on small images", {
     expect_no_error(print(p))
     grDevices::dev.off();unlink(path)
   }
-  expect_error(geom_volume_3d(samples=0),"positive integer")
+  expect_error(geom_volume_3d(samples=0),"samples must be a representable integer")
   field <- volume_test_field(function(x,y,z) x)
   expect_error(ggplot3d:::volume_transfer_3d(field,-1,"white"),"nonnegative")
 })

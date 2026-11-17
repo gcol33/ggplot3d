@@ -10,15 +10,15 @@ printing_node <- function(mesh, name = "layer1_mesh") {
 }
 
 test_that("printing settings validate physical sizes and layer methods", {
-  expect_equal(print_3d(min_mm = 2, shell_mm = 1, base_mm = 1)$shell_mm, 2)
-  expect_equal(print_3d(base_mm = 0)$base_mm, 0)
-  expect_error(print_3d(size_mm = c(1, 0, 1)), "size_mm")
-  expect_error(print_3d(min_mm = 0), "min_mm")
-  expect_error(print_3d(layers = c("base")), "layers")
-  expect_error(print_3d(layers = c(foo = "thin")), "layers")
-  expect_error(print_3d(sides = 5), "sides")
+  expect_equal(print_spec_3d(min_mm = 2, shell_mm = 1, base_mm = 1)$shell_mm, 2)
+  expect_equal(print_spec_3d(base_mm = 0)$base_mm, 0)
+  expect_error(print_spec_3d(size_mm = c(1, 0, 1)), "size_mm")
+  expect_error(print_spec_3d(min_mm = 0), "min_mm")
+  expect_error(print_spec_3d(layers = c("base")), "layers")
+  expect_error(print_spec_3d(layers = c(foo = "thin")), "layers")
+  expect_error(print_spec_3d(sides = 5), "sides")
   expect_error(export_3d(NULL, tempfile(fileext = ".3mf")), "requires print")
-  expect_error(export_3d(NULL, tempfile(fileext = ".ply"), print = print_3d()), "print does not apply to PLY")
+  expect_error(export_3d(NULL, tempfile(fileext = ".ply"), print = print_spec_3d()), "print does not apply to PLY")
 })
 
 test_that("native printing checks find boundary, winding, incidence and intersections", {
@@ -43,7 +43,7 @@ test_that("shells use millimetre thickness and base closures fill their footprin
   plane <- rbind(c(0, 0, .5), c(1, 0, .5), c(1, 1, .5), c(0, 1, .5))
   mesh <- export_soup_3d(plane, matrix(c(1L, 2L, 3L, 1L, 3L, 4L), 3L), matrix(1, 4, 4), FALSE)
   scene <- printing_scene(list(printing_node(mesh)))
-  settings <- print_3d(size_mm = c(20, 40, 30), shell_mm = 1.5, furniture = character(), text = "none")
+  settings <- print_spec_3d(size_mm = c(20, 40, 30), shell_mm = 1.5, furniture = character(), text = "none")
   solid <- print_scene_3d(scene, settings)
   checked <- ggplot3d:::print_mesh_cpp(solid$printing_mesh$position, solid$printing_mesh$triangles, TRUE)
   expect_equal(checked$parts[[1]]$volume, 20 * 20 * 1.5)
@@ -56,7 +56,7 @@ test_that("shells use millimetre thickness and base closures fill their footprin
 })
 
 test_that("Boolean union removes interior overlap and preserves cavity boundaries", {
-  settings <- print_3d(size_mm = rep(3, 3), furniture = character(), text = "none")
+  settings <- print_spec_3d(size_mm = rep(3, 3), furniture = character(), text = "none")
   a <- print_box_mesh_3d(c(2, 2, 2), colour = c(1, 0, 0, 1))
   b <- print_box_mesh_3d(c(2, 2, 2), c(1, 0, 0), colour = c(0, 0, 1, 1))
   solid <- print_scene_3d(printing_scene(list(printing_node(a, "red"), printing_node(b, "blue")), rep(3, 3)), settings)
@@ -77,7 +77,7 @@ test_that("Boolean union removes interior overlap and preserves cavity boundarie
 test_that("printing points and paths respect minimum dimensions", {
   node <- list(name = "marks", markers = list(position = matrix(c(.5, .5, .5), 1L),
     colour = matrix(c(1, 0, 0, 1), 1L), radius = .001, shape = 15))
-  settings <- print_3d(size_mm = rep(10, 3), min_mm = 2, furniture = character(), text = "none")
+  settings <- print_spec_3d(size_mm = rep(10, 3), min_mm = 2, furniture = character(), text = "none")
   solid <- print_scene_3d(printing_scene(list(node)), settings)
   expect_equal(apply(solid$printing_mesh$position, 2L, function(x) diff(range(x))), rep(2, 3))
   node$markers <- NULL
@@ -93,7 +93,7 @@ test_that("printing points and paths respect minimum dimensions", {
 test_that("STL and 3MF printing exports carry closed solids and triangle colours", {
   skip_on_cran()
   p <- export_surface_plot(n = 3, colour = NA, fill = "#336699", coord = coord_3d(light = NULL))
-  settings <- print_3d(size_mm = c(30, 30, 15), surface = "base", furniture = "base", text = "none")
+  settings <- print_spec_3d(size_mm = c(30, 30, 15), surface = "base", furniture = "base", text = "none")
   stl <- tempfile(fileext = ".stl"); mf <- tempfile(fileext = ".3mf")
   export_3d(p, stl, print = settings, width = 240, height = 240)
   raw <- readBin(stl, "raw", file.size(stl))
@@ -117,7 +117,7 @@ test_that("raised and engraved text are extruded with counters and axis furnitur
   skip_on_cran()
   skip_if_not_installed("systemfonts")
   for (mode in c("raised", "engraved")) {
-    settings <- print_3d(size_mm = rep(20, 3), text = mode, furniture = character())
+    settings <- print_spec_3d(size_mm = rep(20, 3), text = mode, furniture = character())
     text <- print_text_3d("O", 12, "", "plain", c(0, 0, 0), c(1, 0, 0), c(0, 1, 0),
       c(1, 0, 0, 1), settings, 1, "label")
     solid <- print_union_3d(list(), list(text))
@@ -128,6 +128,6 @@ test_that("raised and engraved text are extruded with counters and axis furnitur
   p <- ggplot2::ggplot(data.frame(x = c(0, 1), y = c(0, 1), z = c(0, 1)), ggplot2::aes(x, y, z = z)) +
     geom_point_3d(size = 2) + coord_3d()
   file <- tempfile(fileext = ".3mf")
-  expect_silent(export_3d(p, file, print = print_3d(size_mm = rep(20, 3)), width = 240, height = 240))
+  expect_silent(export_3d(p, file, print = print_spec_3d(size_mm = rep(20, 3)), width = 240, height = 240))
   expect_gt(file.size(file), 100)
 })

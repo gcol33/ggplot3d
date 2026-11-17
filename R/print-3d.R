@@ -31,10 +31,10 @@
 #' @param sides Number of tube cross-section sides, at least six.
 #' @return A printing specification for `export_3d(..., print = )`.
 #' @examples
-#' settings <- print_3d(size_mm = c(100, 100, 60), text = "none")
+#' settings <- print_spec_3d(size_mm = c(100, 100, 60), text = "none")
 #' settings$min_mm
 #' @export
-print_3d <- function(size_mm = c(100, 100, 60), min_mm = .8, shell_mm = 1.2, base_mm = 2,
+print_spec_3d <- function(size_mm = c(100, 100, 60), min_mm = .8, shell_mm = 1.2, base_mm = 2,
                       text = c("raised", "engraved", "none"), furniture = c("base", "axes"),
                       surface = c("shell", "base"), layers = NULL, sides = 12L) {
   scene_assert(is.numeric(size_mm) && length(size_mm) == 3L && all(is.finite(size_mm) & size_mm > 0), "size_mm must contain three positive dimensions")
@@ -45,7 +45,7 @@ print_3d <- function(size_mm = c(100, 100, 60), min_mm = .8, shell_mm = 1.2, bas
   scene_assert(is.character(furniture) && !anyNA(furniture) && all(furniture %in% c("base", "axes")), "furniture must select base and/or axes")
   if (!is.null(layers)) scene_assert(is.character(layers) && !is.null(names(layers)) &&
     !anyNA(layers) && !anyDuplicated(names(layers)) && all(nzchar(names(layers))) && all(layers %in% c("shell", "base")), "layers must name a shell or base method for each selected layer")
-  scene_assert(is.numeric(sides) && length(sides) == 1L && is.finite(sides) && sides >= 6 && sides == trunc(sides), "sides must be an integer of at least six")
+  sides <- check_integer_3d(sides, "sides", min = 6)
   structure(list(size_mm = as.double(size_mm), min_mm = min_mm, shell_mm = max(min_mm, shell_mm),
     base_mm = if (base_mm > 0) max(min_mm, base_mm) else 0, text = match.arg(text), furniture = unique(furniture),
     surface = match.arg(surface), layers = layers, sides = as.integer(sides)), class = "ggplot3d_print")

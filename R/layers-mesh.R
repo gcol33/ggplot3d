@@ -280,7 +280,7 @@ geom_mesh_3d <- function(mapping = NULL, data = NULL, stat = StatMesh3D, positio
       decimate = decimate, smooth = smooth, curvature = curvature, crease = crease, outline = outline, edges = edges,
       alpha_mode = check_choice_3d(alpha_mode, c("face", "surface"), "alpha_mode"), shading = check_choice_3d(shading, c("flat", "smooth"), "shading"), material = material_argument_3d(material),
       hatch = hatch_argument_3d(hatch), texture = texture, na.rm = na.rm), list(...)),
-    material_legend_3d(material, show.legend), inherit.aes)
+    material_legend_3d(material, show.legend), inherit.aes, default_stat = StatMesh3D)
 }
 
 emit_mesh_3d <- function(data, params, panel_params) {

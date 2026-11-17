@@ -26,6 +26,7 @@ stat_isosurface_3d(
 geom_isosurface_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatIsosurface3D,
   position = "identity",
   ...,
   levels = NULL,
@@ -82,6 +83,12 @@ geom_isosurface_3d(
   linear, and the part of that polygon below the level is filled, as on
   the box faces. Plane caps point along the plane normal. The plane is
   in transformed position coordinates.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

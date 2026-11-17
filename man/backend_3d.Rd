@@ -125,7 +125,8 @@ using independent colour, albedo, normal and depth half buffers.}
 Rec.2020 AgX transform with a polynomial contrast approximation).}
 }
 \value{
-A backend configuration for coord_3d().
+A \code{ggplot3d_backend} configuration for \code{\link[=coord_3d]{coord_3d()}} and
+\code{\link[=animate_3d]{animate_3d()}}, validated at construction and use.
 }
 \description{
 Select a 3D rendering backend

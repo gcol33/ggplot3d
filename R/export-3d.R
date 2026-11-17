@@ -32,7 +32,7 @@
 #'   default 640 each. Tubes and solids keep the size relative to the box that
 #'   lines and points have in a plot of this size.
 #' @param dpi Device resolution, default 96 dots per inch.
-#' @param print A [print_3d()] specification for closed millimetre solids:
+#' @param print A [print_spec_3d()] specification for closed millimetre solids:
 #'   optional for STL, required for 3MF.
 #' @param interactive SVG: whether to include tooltips, keyboard focus and
 #'   linked hover highlighting for fragments of the same source row.
@@ -63,7 +63,7 @@
 #' it requires `lines = "tube"` and `points = "mesh"`.
 #'
 #' Ordinary model exports omit text and write dashed lines solid. Printing
-#' exports include extruded text according to [print_3d()].
+#' exports include extruded text according to [print_spec_3d()].
 #'
 #' SVG output writes the compiled, depth-ordered fragments as SVG geometry.
 #' Each fragment carries data-layer, data-row and data-primitive attributes.
@@ -112,14 +112,14 @@ export_3d <- function(plot, file = NULL, format = NULL, panel = 1L, furniture = 
     return(invisible(file))
   }
   if (!is.null(print)) {
-    scene_assert(inherits(print, "ggplot3d_print"), "print must be a print_3d() specification")
+    scene_assert(inherits(print, "ggplot3d_print"), "print must be a print_spec_3d() specification")
     scene_assert(writer$printing, "This file format does not support printing solids")
     options <- export_options_3d(FALSE, "tube", "mesh", 1)
     scene <- print_scene_3d(export_scene_3d(plot, panel, options, width, height, dpi), print)
     writer$write(list(scene), file, options, fps = NULL)
     return(invisible(file))
   }
-  scene_assert(!writer$print_only, "This file format requires print = print_3d()")
+  scene_assert(!writer$print_only, "This file format requires print = print_spec_3d()")
   options <- export_options_3d(furniture, match.arg(lines), match.arg(points), size)
   scene_assert(!writer$triangles || (options$lines == "tube" && options$points == "mesh"),
     sprintf("%s files hold triangles only; use lines = \"tube\" and points = \"mesh\"", toupper(writer$extension)))

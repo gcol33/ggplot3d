@@ -28,7 +28,7 @@ A ggplot2 layer.
 Draw a three-dimensional ribbon or wall
 }
 \details{
-Map x/y and zmin/zmax for a vertical wall, or map both
+Map \code{x}, \code{y}, \code{zmin} and \code{zmax} for an interval band, or map both
 x/y/z and xend/yend/zend boundaries for a general ruled band.
 Input order is retained within groups. Missing endpoints break the band.
 }

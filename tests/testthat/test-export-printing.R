@@ -6,12 +6,12 @@ printing_volume <- function(mesh) {
 }
 
 test_that("print settings validate physical dimensions and layer keys", {
-  expect_equal(print_3d(min_mm = 1, shell_mm = .5, base_mm = .2)$shell_mm, 1)
-  expect_equal(print_3d(min_mm = 1, base_mm = .2)$base_mm, 1)
-  expect_error(print_3d(size_mm = c(1, 0, 1)), "three positive")
-  expect_error(print_3d(min_mm = 0), "invalid physical")
-  expect_error(print_3d(layers = "base"), "layers must name")
-  expect_error(print_3d(furniture = "panes"), "base and/or axes")
+  expect_equal(print_spec_3d(min_mm = 1, shell_mm = .5, base_mm = .2)$shell_mm, 1)
+  expect_equal(print_spec_3d(min_mm = 1, base_mm = .2)$base_mm, 1)
+  expect_error(print_spec_3d(size_mm = c(1, 0, 1)), "three positive")
+  expect_error(print_spec_3d(min_mm = 0), "invalid physical")
+  expect_error(print_spec_3d(layers = "base"), "layers must name")
+  expect_error(print_spec_3d(furniture = "panes"), "base and/or axes")
 })
 
 test_that("native topology detects manifold edges and inconsistent winding", {
@@ -41,7 +41,7 @@ test_that("self-intersection predicates include coplanar overlap and folded soli
 test_that("open sheets gain true millimetre shells and base closures", {
   p <- rbind(c(0, 0, 2), c(1, 0, 2), c(1, 1, 2), c(0, 1, 2))
   source <- list(position = p, index = rbind(c(1L, 1L), c(2L, 3L), c(3L, 4L)), colour = matrix(1, 4L, 4L))
-  spec <- print_3d(min_mm = .5, shell_mm = .8)
+  spec <- print_spec_3d(min_mm = .5, shell_mm = .8)
   shell <- print_parts_3d(source, "sheet", spec)[[1L]]
   expect_equal(diff(range(shell$position[, 3L])), .8)
   expect_equal(printing_volume(shell), .8, tolerance = 1e-12)
@@ -66,7 +66,7 @@ test_that("mesh keys preserve touching closed objects before union", {
 })
 
 test_that("Manifold unions overlaps and preserves nested cavities", {
-  spec <- print_3d(text = "none", furniture = character())
+  spec <- print_spec_3d(text = "none", furniture = character())
   a <- print_box_mesh_3d(c(2, 2, 2));b <- print_box_mesh_3d(c(2, 2, 2), c(1, 0, 0))
   parts <- c(print_parts_3d(a, "left", spec), print_parts_3d(b, "right", spec))
   joined <- print_union_3d(parts, list())
@@ -83,7 +83,7 @@ test_that("Manifold unions overlaps and preserves nested cavities", {
 
 test_that("print preparation clamps markers and writes closed STL and coloured 3MF", {
   skip_on_cran()
-  spec <- print_3d(size_mm = c(20, 40, 60), min_mm = 1, text = "none", furniture = character())
+  spec <- print_spec_3d(size_mm = c(20, 40, 60), min_mm = 1, text = "none", furniture = character())
   p <- ggplot2::ggplot(data.frame(x = 0, y = 0, z = 0), ggplot2::aes(x, y, z = z)) +
     geom_point_3d(size = .001, shape = 18, colour = "#336699") + coord_3d(aspect = c(1, 2, 3))
   scene <- export_scene_3d(p, 1, export_options_3d(FALSE, "tube", "mesh", 1), 400, 400, 96)
@@ -109,7 +109,7 @@ test_that("raised and engraved font outlines produce closed physical plaques", {
   skip_on_cran()
   skip_if_not_installed("systemfonts")
   for (mode in c("raised", "engraved")) {
-    spec <- print_3d(text = mode, furniture = character())
+    spec <- print_spec_3d(text = mode, furniture = character())
     text <- print_text_3d("BO", 18, "sans", "plain", c(0, 0, 2), c(1, 0, 0), c(0, 1, 0), c(0, 0, 0, 1), spec, 1, "label")
     mesh <- print_union_3d(list(), list(text))
     check <- print_mesh_cpp(mesh$position, mesh$triangles, TRUE)
@@ -120,7 +120,7 @@ test_that("raised and engraved font outlines produce closed physical plaques", {
 })
 
 test_that("invalid layers fail before a model file is written", {
-  spec <- print_3d(text = "none", furniture = character())
+  spec <- print_spec_3d(text = "none", furniture = character())
   v <- rbind(c(0, 0, 0), c(1, 0, 0), c(0, 1, 0), c(0, 0, 1), c(0, -1, 0))
   p <- ggplot2::ggplot() + geom_mesh_3d(vertices = v, faces = rbind(c(1, 2, 3), c(2, 1, 4), c(1, 2, 5))) + coord_3d()
   file <- tempfile(fileext = ".stl")
@@ -129,7 +129,7 @@ test_that("invalid layers fail before a model file is written", {
 })
 
 test_that("double precision and named cavity ownership survive native union", {
-  spec <- print_3d(text = "none", furniture = character())
+  spec <- print_spec_3d(text = "none", furniture = character())
   width <- 1 + 2^-30
   box <- print_box_mesh_3d(c(width, 1, 1), colour = c(.2, .4, .6, .8))
   solid <- print_union_3d(print_parts_3d(box, "precise", spec), list())
@@ -147,7 +147,7 @@ test_that("double precision and named cavity ownership survive native union", {
 })
 
 test_that("cavity union matches the reference mesh dimensions and volume", {
-  spec <- print_3d(text = "none", furniture = character())
+  spec <- print_spec_3d(text = "none", furniture = character())
   outer <- print_box_mesh_3d(c(2, 2, 2), colour = c(1, 0, 0, 1))
   inner <- print_box_mesh_3d(c(1, 1, 1), c(.5, .5, .5))
   inner$index <- inner$index[3:1, , drop = FALSE]
@@ -159,7 +159,7 @@ test_that("cavity union matches the reference mesh dimensions and volume", {
 })
 
 test_that("per-face property seams retain RGBA and errors identify named parts", {
-  spec <- print_3d(text = "none", furniture = character())
+  spec <- print_spec_3d(text = "none", furniture = character())
   part <- print_parts_3d(print_box_mesh_3d(c(2, 2, 2)), "coloured", spec)[[1L]]
   n <- nrow(part$triangles)
   part$colour <- cbind(seq_len(n) / n, 0, 1, .5)

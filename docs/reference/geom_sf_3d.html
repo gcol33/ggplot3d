@@ -171,6 +171,7 @@ set. Polygons must be planar.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">geom_sf_3d</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stat <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  base <span class="op">=</span> <span class="fl">0</span>,</span>
@@ -186,7 +187,7 @@ set. Polygons must be planar.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-mapping-data-position-na-rm-show-legend-inherit-aes">mapping, data, position, ..., na.rm, show.legend, inherit.aes<a class="anchor" aria-label="anchor" href="#arg-mapping-data-position-na-rm-show-legend-inherit-aes"></a></dt>
+<dl><dt id="arg-mapping-data-stat-position-na-rm-show-legend-inherit-aes">mapping, data, stat, position, ..., na.rm, show.legend, inherit.aes<a class="anchor" aria-label="anchor" href="#arg-mapping-data-stat-position-na-rm-show-legend-inherit-aes"></a></dt>
 <dd><p>Standard layer arguments.</p></dd>
 
 
@@ -209,7 +210,7 @@ set. Polygons must be planar.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">ggplot2::geom_sf()</a></code> layers are drawn the same way; add <code><a href="coord_3d.html">coord_3d()</a></code> after
-them, because <code><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf()</a></code> brings its own default coordinate system.
+them, because <code>geom_sf()</code> brings its own default coordinate system.
 Geographic coordinates require a projected target, <code>coord_3d(crs = )</code>,
 which also reprojects data with other coordinate systems.</p>
     </div>

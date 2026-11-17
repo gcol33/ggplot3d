@@ -33,6 +33,11 @@ layer_3d(
   planes that replaces the coordinate system's planes for this layer, or
   `cast_shadow = FALSE`, which keeps the layer out of the shadows of
   [`shadow_3d()`](https://gillescolling.com/ggplot3d/reference/shadow_3d.md).
+  Aesthetic aliases follow
+  [`geom_point_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md);
+  supplying both spellings is an error. Crossbar
+  `middle.color`/`middle.colour` and `box.color`/`box.colour` arguments
+  retain their explicit pairs.
 
 - occlusion:
 

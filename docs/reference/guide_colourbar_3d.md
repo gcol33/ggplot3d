@@ -8,6 +8,15 @@ transformations may differ: colours are evaluated at the position axis's
 original data values. With `along = NULL` it is an ordinary legend-box
 colourbar
 ([`ggplot2::guide_colourbar()`](https://ggplot2.tidyverse.org/reference/guide_colourbar.html)).
+An axis-mounted bar accepts `title`, `reverse`, `alpha`, `theme`,
+`order` and `available_aes` from
+[`ggplot2::guide_colourbar()`](https://ggplot2.tidyverse.org/reference/guide_colourbar.html).
+The default title is inherited from the position axis; an explicit title
+overrides it. `reverse` reverses colours along the axis, retaining the
+axis's ticks and labels. `theme` supplies axis theme overrides. Other
+arguments require `along = NULL`. The American spellings
+`guide_colorbar_3d()` and `guide_colorsteps_3d()` use the same
+implementations.
 
 ## Usage
 
@@ -21,7 +30,18 @@ guide_colourbar_3d(
   ...
 )
 
+guide_colorbar_3d(
+  along = "z",
+  width = grid::unit(2, "mm"),
+  gap = grid::unit(0.5, "mm"),
+  nbin = 128L,
+  shading_range = FALSE,
+  ...
+)
+
 guide_coloursteps_3d(..., shading_range = TRUE)
+
+guide_colorsteps_3d(..., shading_range = TRUE)
 
 guide_legend_3d(..., lit = TRUE, normal = c(0, 0, 1), shading_range = FALSE)
 

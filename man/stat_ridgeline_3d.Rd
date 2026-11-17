@@ -25,6 +25,7 @@ stat_ridgeline_3d(
 geom_ridgeline_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatRidgeline3D,
   position = "identity",
   ...,
   along = "x",
@@ -54,6 +55,10 @@ geom_ridgeline_3d(
 \item{base}{Baseline in transformed z units.}
 
 \item{height}{Density height multiplier in transformed z units.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

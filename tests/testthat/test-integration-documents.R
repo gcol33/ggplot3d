@@ -68,7 +68,7 @@ test_that("HTML chunk dimensions round fractional pixels at the knitr boundary",
   expect_equal(sizes, c(624, 432))
   expect_match(out$text, "ggplot3d_view")
   expect_error(view(document_plot(), width = 624, height = 385.6613102595796),
-    "positive integer pixels")
+    "height must be a representable integer")
 })
 
 test_that("figure alt defaults and overrides are independent within a chunk", {

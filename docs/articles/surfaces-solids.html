@@ -5775,7 +5775,7 @@ data, with width measured in millimetres at the centre of the view.</p>
 </div></p>
 </div>
 <div class="section level2">
-<h2 id="tubes-ribbons-and-sweeps">Tubes, ribbons and sweeps<a class="anchor" aria-label="anchor" href="#tubes-ribbons-and-sweeps"></a>
+<h2 id="tubes-strips-and-sweeps">Tubes, strips and sweeps<a class="anchor" aria-label="anchor" href="#tubes-strips-and-sweeps"></a>
 </h2>
 <p>A tube gives a path thickness in transformed data units. Sample a
 helix in row order and map radius to widen it gradually. Its circular
@@ -6136,15 +6136,15 @@ three times as wide as it is deep.</p>
   </g>
 </svg>
 </div></p>
-<p>A ribbon sweeps a line segment along the same path. Its width and
+<p>A strip sweeps a line segment along the same path. Its width and
 twist can vary at each position; twist is measured in degrees. The
 normal argument sets the initial orientation.</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">curve</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_tube_3d.html">geom_ribbon_3d</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>twist <span class="op">=</span> <span class="va">z</span> <span class="op">*</span> <span class="fl">60</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.35</span>,</span>
+<code class="sourceCode R"><span><span class="va">curve</span> <span class="op">+</span> <span class="fu"><a href="../reference/geom_tube_3d.html">geom_strip_3d</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>twist <span class="op">=</span> <span class="va">z</span> <span class="op">*</span> <span class="fl">60</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">0.35</span>,</span>
 <span>                       normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, fill <span class="op">=</span> <span class="st">"#9E5E0F"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/coord_3d.html">coord_3d</a></span><span class="op">(</span>aspect <span class="op">=</span> <span class="st">"data"</span><span class="op">)</span></span></code></pre></div>
 <p><div class="svg-container"><button type="button" class="btn btn-primary btn-copy-svg" title="Copy SVG to clipboard" aria-label="Copy SVG to clipboard" data-bs-toggle="tooltip" data-bs-placement="left"><i class="fa fa-copy"></i></button><?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="A wide ribbon twisting along the helical path."><title>A wide ribbon twisting along the helical path.</title>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468.00pt" height="324.00pt" viewBox="0 0 468.00 324.00" class="r-plt inline-svg" style="width:100%;height:auto;" role="img" aria-label="A wide strip twisting along the helical path."><title>A wide strip twisting along the helical path.</title>
   <g class="svglite">
     <defs>
       <style type="text/css"><![CDATA[

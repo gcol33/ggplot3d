@@ -58,6 +58,7 @@ parametric_surface_3d <- function(fun, u, v, n, closed, twist, args, adaptive, t
   range_ok <- function(r) is.numeric(r) && length(r) == 2L && all(is.finite(r)) && r[2L] > r[1L]
   if (!range_ok(u) || !range_ok(v)) stop("u and v must be increasing finite ranges.", call. = FALSE)
   n <- parametric_pair_3d(n, "n", function(x) is.numeric(x) && all(is.finite(x) & x >= 2 & x == trunc(x)))
+  n <- vapply(n, check_integer_3d, integer(1), name = "n", min = 2)
   closed <- parametric_pair_3d(closed, "closed", function(x) is.logical(x) && !anyNA(x))
   twist <- parametric_pair_3d(twist, "twist", function(x) is.logical(x) && !anyNA(x))
   if (any(twist & !closed)) stop("A twisted direction must also be closed.", call. = FALSE)

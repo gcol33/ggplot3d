@@ -62,7 +62,7 @@ test_that("white diffuse and rough metal spheres pass the furnace", {
 test_that("MIS, light-only and BSDF-only estimates agree", {
   skip_on_cran()
   environment <- array(1, c(8, 16, 3)); environment[1:4, , 1] <- 3
-  light <- light_3d(light_environment(environment), ambient = 0)
+  light <- light_3d(light_environment_3d(environment), ambient = 0)
   values <- lapply(0:2, function(estimator) {
     backend <- backend_3d("pathtrace", samples = 4096, bounces = 1, seed = 33)
     backend$estimator <- estimator
@@ -88,7 +88,7 @@ test_that("adaptive pixels stop independently across progressive batches", {
 test_that("NFOR reduces error on a lit surface against a reference", {
   skip_on_cran()
   env <- array(.05, c(8, 16, 3)); env[2:3, 4:6, ] <- 6
-  light <- light_3d(light_environment(env), ambient = 0)
+  light <- light_3d(light_environment_3d(env), ambient = 0)
   reference <- pathtrace_test_scene(backend_3d("pathtrace", samples = 4096, bounces = 1), light = light)
   raw <- pathtrace_test_scene(backend_3d("pathtrace", samples = 16, bounces = 1, seed = 37), light = light)
   clean <- pathtrace_test_scene(backend_3d("pathtrace", samples = 16, bounces = 1, seed = 37, denoise = TRUE), light = light)

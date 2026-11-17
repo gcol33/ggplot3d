@@ -25,6 +25,7 @@ stat_residual_3d(
 geom_residual_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatResidual3D,
   position = "identity",
   ...,
   method = "loess",
@@ -57,6 +58,10 @@ geom_residual_3d(
 
 \item{cond}{For a fitted model, a named list holding a value for each
 other predictor.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

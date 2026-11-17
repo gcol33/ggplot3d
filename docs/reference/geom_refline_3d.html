@@ -224,7 +224,9 @@ directions come from the <code>dx</code>, <code>dy</code> and <code>dz</code> ae
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Intercepts given as arguments draw one line per value and stay out of the
 legend; mapped intercepts draw one line per row. As in ggplot2, intercepts
-are positions and expand the axis ranges to include them.</p>
+are positions and expand the axis ranges to include them.
+These fixed-purpose annotations use identity statistics and positioning;
+their constructors have no <code>stat</code> or <code>position</code> argument.</p>
 <p>A line from <code>geom_abline_3d()</code> passes through <code>point</code> along <code>direction</code>.
 Both are in the plot's transformed scale space, so a direction of
 <code>c(1, 0, 2)</code> rises two z units per x unit. The point and direction do not

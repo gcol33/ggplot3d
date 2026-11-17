@@ -97,9 +97,9 @@ over the data without grid lines), or pane names \code{"xmin"} to \code{"zmax"}.
 \item{crs}{Target spatial coordinate reference system.}
 
 \item{light}{Lighting from \code{\link[=light_3d]{light_3d()}}, one light such as
-\code{\link[=light_point]{light_point()}}, or NULL for none.}
+\code{\link[=light_point_3d]{light_point_3d()}}, or NULL for none.}
 
-\item{backend}{Backend configuration.}
+\item{backend}{A configuration created by \code{\link[=backend_3d]{backend_3d()}}.}
 
 \item{default}{Whether this is the default coordinate system.}
 
@@ -131,8 +131,8 @@ that layer.}
 
 \item{stereo}{Stereo output from \code{\link[=stereo_3d]{stereo_3d()}}, or NULL for one view.}
 
-\item{geometry}{Geometry of paths and faces: \code{"euclidean"} or an internal
-\code{Space3D} extension. Spaces define canonical points, chart conversions,
+\item{geometry}{Geometry of paths and faces: \code{"euclidean"} or a public
+\link{Space3D} extension. Spaces define canonical points, chart conversions,
 distance, geodesics and isometries. See Details.}
 
 \item{model}{Display model supplied by the space; NULL uses its default.}
@@ -164,7 +164,7 @@ Set \code{z_scales = "free"} here to train a separate z range per facet.
 ggplot2 facets control x and y scales and have no z scale.
 }
 \details{
-Space extensions inherit from \code{ggplot3d:::Space3D}. They declare \code{charts},
+Space extensions inherit from \link{Space3D}. They declare \code{charts},
 \code{models} and \code{default_model}, and implement \code{to_canonical(data, chart)},
 \code{from_canonical(X, model)}, \code{distance(X, Y)}, \code{geodesic(X, Y, s)} and
 \code{act(g, X)}. Canonical points are finite numeric row matrices of any
@@ -195,6 +195,36 @@ supplied by the frame. Visibility is exact for the resulting tessellation.
 \section{Theme elements}{
 
 Besides the ggplot2 elements, panels read these theme elements:
+Registered elements use the following classes, parents and defaults.
+An inherited default uses its parent's resolved value.
+\tabular{llll}{
+Element \tab Class \tab Parent \tab Default\cr
+\code{axis.text.z} \tab element_text \tab \code{axis.text} \tab inherited; margin 2.2 pt\cr
+\code{axis.title.z} \tab element_text \tab \code{axis.title} \tab inherited; margin 2.75 pt\cr
+\code{axis.ticks.z} \tab element_line \tab \code{axis.ticks} \tab inherited\cr
+\code{axis.line.z} \tab element_line \tab \code{axis.line} \tab inherited\cr
+\code{axis.ticks.length.z} \tab unit \tab \code{axis.ticks.length} \tab inherited\cr
+\code{axis.minor.ticks.z} \tab element_line \tab \code{axis.ticks.z} \tab inherited\cr
+\code{axis.minor.ticks.length.z} \tab unit \tab \code{axis.ticks.length.z} \tab 1 pt\cr
+\code{panel.grid.major.z} \tab element_line \tab \code{panel.grid.major} \tab inherited\cr
+\code{panel.grid.minor.z} \tab element_line \tab \code{panel.grid.minor} \tab inherited\cr
+\verb{panel.grid.<level>.<axis>.<plane>} \tab element_line \tab \verb{panel.grid.<level>.<axis>} \tab inherited\cr
+\code{panel.pane} \tab element_rect \tab \code{panel.background} \tab inherited\cr
+\code{panel.pane.x}, \code{.y}, \code{.z} \tab element_rect \tab \code{panel.pane} \tab inherited\cr
+\code{panel.pane.front} \tab element_rect \tab \code{panel.pane} \tab fill #7F7F7F1A; colour NA\cr
+\code{panel.zero} \tab element_rect \tab \code{rect} \tab fill #7F7F7F40; colour NA; linewidth 0.3\cr
+\code{panel.zero.x}, \code{.y}, \code{.z} \tab element_rect \tab \code{panel.zero} \tab element_blank\cr
+\code{panel.zero.line} \tab element_line \tab \code{line} \tab element_blank\cr
+\code{panel.zero.line.x}, \code{.y}, \code{.z} \tab element_line \tab \code{panel.zero.line} \tab inherited\cr
+\code{axis.line.origin} \tab element_line \tab \code{line} \tab inherited\cr
+\code{axis.line.origin.x}, \code{.y}, \code{.z} \tab element_line \tab \code{axis.line.origin} \tab inherited\cr
+\code{panel.box} \tab element_line \tab \code{line} \tab grey50; linewidth 0.3\cr
+\code{panel.box.back}, \code{.front} \tab element_line \tab \code{panel.box} \tab inherited\cr
+\code{panel.margin.3d} \tab margin \tab none \tab 8 pt on each side
+}
+The grid pattern registers every combination of \code{level} = \code{major},
+\code{minor}; \code{axis} = \code{x}, \code{y}, \code{z}; and \code{plane} = \code{xy}, \code{xz}, \code{yz}.
+Line, text and rectangle elements also accept \code{\link[ggplot2:element_blank]{ggplot2::element_blank()}}.
 \itemize{
 \item \code{panel.pane}, \code{panel.pane.x}, \code{panel.pane.y}, \code{panel.pane.z}: pane
 fills, by the axis normal to the pane; \code{panel.pane.front} styles the

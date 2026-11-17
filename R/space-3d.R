@@ -1,5 +1,15 @@
-# Spaces operate on row matrices of canonical points. A chart supplies input
-# coordinates; a model supplies display coordinates in its own axis units.
+#' Extension prototype for three-dimensional spaces
+#'
+#' Inherit with [ggplot2::ggproto()] to define charts, display models,
+#' canonical coordinates, distances, geodesics and isometries. Points are
+#' finite numeric row matrices. See [coord_3d()] for the method contracts,
+#' homogeneous model output and subdivision controls.
+#' @format A ggproto prototype. Fields `charts`, `models` and `default_model`
+#'   name the supported coordinate representations. Required methods are
+#'   `to_canonical(data, chart)`, `from_canonical(X, model)`, `distance(X, Y)`,
+#'   `geodesic(X, Y, s)` and `act(g, X)`.
+#' @return A prototype for space extensions accepted by [coord_3d()].
+#' @export
 Space3D <- ggplot2::ggproto("Space3D", NULL,
   name = "space",
   charts = character(),

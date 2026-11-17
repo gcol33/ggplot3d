@@ -30,6 +30,7 @@ stat_parametric_3d(
 geom_parametric_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatParametric3D,
   position = "identity",
   ...,
   fun,
@@ -75,6 +76,10 @@ bounding-box diagonal.}
 \item{angle}{Normal angle tolerance in degrees.}
 
 \item{max_depth}{Maximum number of refinement rounds.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

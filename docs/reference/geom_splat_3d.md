@@ -11,6 +11,8 @@ Each row is one Gaussian.
 geom_splat_3d(
   mapping = NULL,
   data = NULL,
+  stat = "identity",
+  position = "identity",
   ...,
   sh_degree = NULL,
   show.legend = NA,
@@ -20,7 +22,7 @@ geom_splat_3d(
 
 ## Arguments
 
-- mapping, data, ..., show.legend, inherit.aes:
+- mapping, data, stat, position, ..., show.legend, inherit.aes:
 
   As in
   [`geom_point_3d()`](https://gillescolling.com/ggplot3d/reference/geom_point_3d.md).
@@ -29,6 +31,10 @@ geom_splat_3d(
 
   Maximum spherical-harmonic degree, from 0 to 3. `NULL` uses all
   available coefficients.
+
+## Value
+
+A ggplot2 layer.
 
 ## Details
 

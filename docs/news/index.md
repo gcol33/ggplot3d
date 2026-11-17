@@ -127,7 +127,7 @@
     `export_code_3d()` are removed.
   - `light_3d(...)` takes light sources and replaces `lights_3d()`; with
     none it uses one
-    [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md).
+    [`light_directional_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md).
     Its tone colours are `shadow_colour` and `highlight_colour`.
   - Plots with
     [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
@@ -565,11 +565,11 @@
 - Lighting has materials and several lights.
   [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
   combines
-  [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
-  `light_point(position, falloff)` (inverse-square at `falloff = 2`,
+  [`light_directional_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md),
+  `light_point_3d(position, falloff)` (inverse-square at `falloff = 2`,
   independent of the other geometry),
-  [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  (MATLAB’s `camlight headlight`) and `light_hemisphere(sky, ground)`
+  [`light_head_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md)
+  (MATLAB’s `camlight headlight`) and `light_hemisphere_3d(sky, ground)`
   (three.js) with an ambient term;
   [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
   stays the one-light shorthand.
@@ -640,9 +640,8 @@
   [`view_3d()`](https://gillescolling.com/ggplot3d/reference/view_3d.md),
   which evaluates the same fog formula.
 
-- `geom_tube_3d(radius.unit = "mm")`,
-  `geom_ribbon_3d(width.unit = "mm")` and
-  `stat_sweep_3d(radius.unit = "mm")` size the cross section in
+- `geom_tube_3d(radius.unit = "mm")`, `geom_strip_3d(width.unit = "mm")`
+  and `stat_sweep_3d(radius.unit = "mm")` size the cross section in
   millimetres on the page. The sweep runs when the plot is drawn, in the
   box the camera sees, so tubes stay round whatever the box proportions,
   in the vector, raster and hybrid backends
@@ -789,10 +788,11 @@
   embed reactive viewers in Shiny applications and modules, with camera
   and selection inputs.
 
-- `export_3d(print = print_3d())` produces checked, closed millimetre
-  solids as binary STL or coloured 3MF. Printing adds physical feature
-  sizes, surface shells or base closures, extruded labels and axes, and
-  Boolean union through the bundled native Manifold library.
+- `export_3d(print = print_spec_3d())` produces checked, closed
+  millimetre solids as binary STL or coloured 3MF. Printing adds
+  physical feature sizes, surface shells or base closures, extruded
+  labels and axes, and Boolean union through the bundled native Manifold
+  library.
 
 - [`annotate_3d()`](https://gillescolling.com/ggplot3d/reference/annotate_3d.md)
   forwards registered drawing parameters through the shared 3D layer

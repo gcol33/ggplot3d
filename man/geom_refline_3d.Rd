@@ -59,6 +59,8 @@ draws lines in any direction through a point, the counterpart of
 Intercepts given as arguments draw one line per value and stay out of the
 legend; mapped intercepts draw one line per row. As in ggplot2, intercepts
 are positions and expand the axis ranges to include them.
+These fixed-purpose annotations use identity statistics and positioning;
+their constructors have no \code{stat} or \code{position} argument.
 
 A line from \code{geom_abline_3d()} passes through \code{point} along \code{direction}.
 Both are in the plot's transformed scale space, so a direction of

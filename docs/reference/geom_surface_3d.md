@@ -64,11 +64,12 @@ stat_surface_3d(
 
 - method:
 
-  Grid connectivity or Delaunay triangulation.
+  `"grid"` connectivity or `"delaunay"` triangulation.
 
 - max_edge:
 
-  Maximum triangle edge length in transformed x/y units.
+  One positive number, allowing `Inf` (default), for the maximum
+  triangle edge length in transformed x/y units.
 
 - shade:
 

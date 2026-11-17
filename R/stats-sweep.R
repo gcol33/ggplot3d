@@ -155,8 +155,8 @@ sweep_surface_3d <- function(data, size, twist, profile, closed, cap, normal) {
 }
 
 # Cross-section sizes in millimetres where neither the aesthetic nor the
-# parameter gives one: tube radius and ribbon width.
-sweep_default_mm_3d <- c(tube = 1, ribbon = 4)
+# parameter gives one: tube radius and strip width.
+sweep_default_mm_3d <- c(tube = 1, strip = 4)
 
 # Centre line of a tube, or of a sweep whose cross section is sized in
 # millimetres: the curve points with their size (.sweep_size, data units or
@@ -198,7 +198,7 @@ StatSweep3D <- ggplot2::ggproto("StatSweep3D", StatGeometry3D,
     }
     shape <- sweep_profile_3d(profile, sides, profile_closed)
     millimetres <- check_choice_3d(radius.unit, c("data", "mm"), "radius.unit") == "mm"
-    default <- if (millimetres) sweep_default_mm_3d[[if (shape$closed) "tube" else "ribbon"]] else
+    default <- if (millimetres) sweep_default_mm_3d[[if (shape$closed) "tube" else "strip"]] else
       (if (shape$closed) 0.02 else 0.08) * sqrt(sum(vapply(c("x", "y", "z"), function(a) diff(stats_scale_3d(scales, a)$dimension())^2, numeric(1))))
     fallback <- radius %or3d% width %or3d% default
     size <- data$radius %or3d% data$width %or3d% rep(fallback, nrow(data))

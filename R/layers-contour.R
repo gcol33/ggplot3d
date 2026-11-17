@@ -188,7 +188,7 @@ geom_contour_3d <- function(mapping = NULL, data = NULL, stat = StatContour3D, p
   plane <- check_plane_3d(plane)
   make_layer_3d(GeomContour3D, mapping, data, stat, plane_position_3d(plane, position),
     c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = FALSE,
-      method = match.arg(method), max_edge = max_edge, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+      method = match.arg(method), max_edge = max_edge, na.rm = na.rm), list(...)), show.legend, inherit.aes, default_stat = StatContour3D)
 }
 
 #' @rdname geom_contour_3d
@@ -198,7 +198,7 @@ geom_contour_filled_3d <- function(mapping = NULL, data = NULL, stat = StatConto
                                    na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   plane <- check_plane_3d(plane)
   make_layer_3d(GeomContourFilled3D, mapping, data, stat, plane_position_3d(plane, position),
-    c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = TRUE, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+    c(list(bins = bins, binwidth = binwidth, breaks = breaks, plane = plane, filled = TRUE, na.rm = na.rm), list(...)), show.legend, inherit.aes, default_stat = StatContourFilled3D)
 }
 
 # Mesh input keeps its face keys for the contour stat.

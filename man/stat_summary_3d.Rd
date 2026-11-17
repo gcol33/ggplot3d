@@ -24,9 +24,10 @@ stat_summary_3d(
 \arguments{
 \item{mapping, data, position, ..., na.rm, show.legend, inherit.aes}{Standard layer arguments.}
 
-\item{geom}{Geometry drawing the summary: \code{"pointrange"}, \code{"errorbar"},
-\code{"linerange"}, \code{"crossbar"}, \code{"point"}, \code{"path"}, \code{"line"}, or a
-registered geom prototype.}
+\item{geom}{Registered geom name or prototype drawing the summary, such
+as \code{"pointrange"}, \code{"errorbar"}, \code{"linerange"}, \code{"crossbar"},
+\code{"point"}, \code{"path"} or \code{"line"}. Package names also accept the \verb{_3d}
+suffix. The geom's required aesthetics must be supplied by the summary.}
 
 \item{fun.data}{Function, or its name, taking a numeric vector and returning
 a data frame with any of \code{y}, \code{ymin} and \code{ymax}. Defaults to

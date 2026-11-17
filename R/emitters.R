@@ -1,3 +1,6 @@
+#' @include utils-3d.R
+NULL
+
 .emitters_3d <- new.env(parent = emptyenv())
 
 solid_defaults_3d <- function() ggplot2::aes(colour = NA, fill = "grey70", linewidth = 0.3, linetype = 1, alpha = 1)
@@ -84,8 +87,11 @@ position_kinds_3d <- c("nudge", "jitter", "dodge", "stack", "planar")
 # Columns holding a geometry's interval along one axis: lower (NA when the
 # interval starts at zero), upper, and the anchor position (NA when absent).
 extent_3d <- function(lower = NA_character_, upper, centre = NA_character_) {
-  stopifnot(is.character(upper), length(upper) == 1L, !is.na(upper),
-            length(lower) == 1L, length(centre) == 1L)
+  if (!is.character(upper) || length(upper) != 1L || is.na(upper)) stop("upper must be one nonmissing column name.", call. = FALSE)
+  for (name in c("lower", "centre")) {
+    value <- get(name)
+    if (!is.character(value) || length(value) != 1L) stop(name, " must be one column name or NA_character_.", call. = FALSE)
+  }
   c(lower = as.character(lower), upper = upper, centre = as.character(centre))
 }
 
@@ -162,14 +168,21 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
                              prepare_data = NULL, prepare_aesthetics = NULL, parameters = list(),
                              default_z = 0, positions = "nudge", extents = list(),
                              tween = c("group", "row", "path", "polygon"), space = NULL) {
-  tween <- match.arg(tween)
-  stopifnot(inherits(geom, "Geom"), is.function(emit), is.list(parameters),
-            is.null(space) || is.function(space),
-            is.character(positions), all(positions %in% position_kinds_3d),
-            is.list(extents), all(names(extents) %in% c("x", "y", "z")),
-            all(vapply(extents, function(e) is.character(e) && setequal(names(e), c("lower", "upper", "centre")), logical(1))),
-            !length(parameters) || !is.null(names(parameters)),
-            is.numeric(default_z), length(default_z) == 1L, !is.na(default_z))
+  tween <- check_choice_3d(if (missing(tween)) "group" else tween, c("group", "row", "path", "polygon"), "tween")
+  if (!inherits(geom, "Geom")) stop("geom must be a ggplot2 Geom prototype.", call. = FALSE)
+  for (name in c("emit", "setup_data", "position_check", "prepare_data", "prepare_aesthetics", "space")) {
+    value <- get(name)
+    if (!is.function(value) && !(name != "emit" && is.null(value))) stop(name, " must be a function", if (name != "emit") " or NULL", ".", call. = FALSE)
+  }
+  if (!is.null(stat_adapter) && !inherits(stat_adapter, "Stat")) stop("stat_adapter must be a Stat prototype or NULL.", call. = FALSE)
+  if (!is.list(parameters) || (length(parameters) && (is.null(names(parameters)) || any(!nzchar(names(parameters)))))) stop("parameters must be a named list.", call. = FALSE)
+  positions <- check_choices_3d(positions, position_kinds_3d, "positions")
+  if (!is.list(extents) || !all(names(extents) %in% c("x", "y", "z")) ||
+      !all(vapply(extents, function(e) is.character(e) && setequal(names(e), c("lower", "upper", "centre")), logical(1)))) {
+    stop("extents must be a list named x, y or z, with lower, upper and centre column names in each entry.", call. = FALSE)
+  }
+  check_flag_3d(replace, "replace")
+  if (!is.numeric(default_z) || length(default_z) != 1L || is.na(default_z)) stop("default_z must be one nonmissing number.", call. = FALSE)
   name <- class(geom)[1L]
   if (exists(name, .emitters_3d, inherits = FALSE) && !replace) stop("Emitter already registered for ", name, ".", call. = FALSE)
   .emitters_3d[[name]] <- list(name = name, geom = geom, emit = emit, aesthetics = aesthetics,
@@ -177,6 +190,9 @@ register_geom_3d <- function(geom, emit, aesthetics = character(), setup_data = 
                               prepare_data = prepare_data, prepare_aesthetics = prepare_aesthetics,
                               parameters = parameters, default_z = default_z,
                               positions = positions, extents = extents, tween = tween, space = space)
+  if (exists(".layer_components_3d", envir = topenv(), inherits = FALSE)) {
+    rm(list = ls(.layer_components_3d), envir = .layer_components_3d)
+  }
   invisible(NULL)
 }
 
@@ -735,17 +751,29 @@ register_geom_3d(ggplot2::GeomBlank, function(data, params, panel_params) {
   new_scene_packet(vertices = list(x = numeric(), y = numeric(), z = numeric()))
 }, positions = mark_positions_3d)
 
-# The geom_*_3d() of a stat_*_3d(): the stat's arguments without `geom`, so
-# the stat's default geom draws the layer. Built from the stat's formals so
-# both functions show the same signature.
+# Geom constructors share their stat constructor's preprocessing and expose
+# the selected stat in the conventional third argument.
 geom_from_stat_3d <- function(stat) {
-  args <- formals(get(stat, mode = "function"))
-  args$geom <- NULL
-  forward <- lapply(names(args), as.name)
-  names(forward) <- ifelse(names(args) == "...", "", names(args))
-  geom <- function() NULL
+  geom <- get(stat, mode = "function")
+  args <- formals(geom)
+  default_geom <- args$geom
+  default_stat <- NULL
+  replace_layer <- function(expr) {
+    if (!is.call(expr)) return(expr)
+    if (identical(expr[[1L]], as.name("make_layer_3d"))) {
+      default_stat <<- expr[[5L]]
+      expr[[2L]] <- default_geom
+      expr[[5L]] <- as.name("stat")
+      expr$default_stat <- default_stat
+      return(expr)
+    }
+    for (i in seq_along(expr)[-1L]) expr[[i]] <- replace_layer(expr[[i]])
+    expr
+  }
+  body(geom) <- replace_layer(body(geom))
+  if (is.null(default_stat)) stop("A geom factory requires a shared layer constructor.", call. = FALSE)
+  names(args)[names(args) == "geom"] <- "stat"
+  args$stat <- default_stat
   formals(geom) <- args
-  body(geom) <- as.call(c(list(as.name(stat)), forward))
-  environment(geom) <- topenv()
   geom
 }

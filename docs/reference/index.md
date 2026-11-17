@@ -252,8 +252,8 @@ densities](https://gillescolling.com/ggplot3d/articles/field-slices.md).
   [`geom_parametric_3d()`](https://gillescolling.com/ggplot3d/reference/stat_parametric_3d.md)
   : Parametric surfaces
 - [`geom_tube_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md)
-  [`geom_ribbon_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md)
-  : Tubes and ribbons along curves
+  [`geom_strip_3d()`](https://gillescolling.com/ggplot3d/reference/geom_tube_3d.md)
+  : Tubes and strips along curves
 - [`stat_sweep_3d()`](https://gillescolling.com/ggplot3d/reference/stat_sweep_3d.md)
   [`geom_sweep_3d()`](https://gillescolling.com/ggplot3d/reference/stat_sweep_3d.md)
   : Sweep a profile along a curve
@@ -338,7 +338,9 @@ guides](https://gillescolling.com/ggplot3d/reference/guide_triad_3d.md).
   [`annotation_north_3d()`](https://gillescolling.com/ggplot3d/reference/guide_triad_3d.md)
   : Camera-aligned orientation guides
 - [`guide_colourbar_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
+  [`guide_colorbar_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
   [`guide_coloursteps_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
+  [`guide_colorsteps_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
   [`guide_legend_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
   [`guide_bins_3d()`](https://gillescolling.com/ggplot3d/reference/guide_colourbar_3d.md)
   : Colour guides that show the scene's shading
@@ -347,11 +349,11 @@ guides](https://gillescolling.com/ggplot3d/reference/guide_triad_3d.md).
 
 - [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md)
   : Lighting for a 3D scene
-- [`light_environment()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  [`light_directional()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  [`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  [`light_head()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
-  [`light_hemisphere()`](https://gillescolling.com/ggplot3d/reference/light_directional.md)
+- [`light_environment_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md)
+  [`light_directional_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md)
+  [`light_point_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md)
+  [`light_head_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md)
+  [`light_hemisphere_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md)
   : Lights for a 3D scene
 - [`material_3d()`](https://gillescolling.com/ggplot3d/reference/material_3d.md)
   : Surface materials
@@ -401,7 +403,7 @@ reports](https://gillescolling.com/ggplot3d/articles/documents.md).
 
 - [`export_3d()`](https://gillescolling.com/ggplot3d/reference/export_3d.md)
   : Export a plot to a 3D model, vector or source-code file
-- [`print_3d()`](https://gillescolling.com/ggplot3d/reference/print_3d.md)
+- [`print_spec_3d()`](https://gillescolling.com/ggplot3d/reference/print_spec_3d.md)
   : Configure physical models for 3D printing
 - [`as.mesh3d(`*`<ggplot3d>`*`)`](https://gillescolling.com/ggplot3d/reference/rgl-bridge-3d.md)
   [`plot3d(`*`<ggplot3d>`*`)`](https://gillescolling.com/ggplot3d/reference/rgl-bridge-3d.md)
@@ -490,6 +492,8 @@ extension](https://gillescolling.com/ggplot3d/articles/extending.md).
   : Adapt a registered ggplot2 layer to three dimensions
 - [`register_geom_3d()`](https://gillescolling.com/ggplot3d/reference/register_geom_3d.md)
   : Register a geometry emitter
+- [`Space3D`](https://gillescolling.com/ggplot3d/reference/Space3D.md) :
+  Extension prototype for three-dimensional spaces
 - [`new_scene_packet()`](https://gillescolling.com/ggplot3d/reference/new_scene_packet.md)
   : Construct a 3D geometry packet
 - [`normalise_homogeneous_3d()`](https://gillescolling.com/ggplot3d/reference/normalise_homogeneous_3d.md)

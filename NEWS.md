@@ -1,5 +1,15 @@
 # ggplot3d 0.0.0.9000
 
+* Geom constructors use `mapping, data, stat, position, ...`. Layer arguments
+  accept ggplot2 aesthetic aliases and resolve geom, stat and position names
+  before validation.
+* The swept ribbon is named `geom_strip_3d()`. Printing settings use
+  `print_spec_3d()`, and individual light constructors use the `_3d` suffix.
+* Backend configurations are classed and validated at construction and use.
+  Animation accepts raster and vector backend configurations.
+* Axis colourbars apply supported guide arguments. American colour-guide
+  spellings and the public `Space3D` extension prototype are available.
+
 * Axis labels clear an axis colourbar (`guide_colourbar_3d(along = )`) when
   the theme hides ticks, as `theme_minimal()` does. They were placed at the
   box edge and drawn over the bar.
@@ -98,7 +108,7 @@
     format registry and accepts `format` without `file`; `save_svg_3d()` and
     `export_code_3d()` are removed.
   - `light_3d(...)` takes light sources and replaces `lights_3d()`; with none
-    it uses one `light_directional()`. Its tone colours are `shadow_colour`
+    it uses one `light_directional_3d()`. Its tone colours are `shadow_colour`
     and `highlight_colour`.
   - Plots with `coord_3d()` have a `ggplot2::get_alt_text()` method, which
     replaces `alt_text_3d()`.
@@ -422,9 +432,9 @@
   vector engine's budget on finer meshes (#61).
 
 * Lighting has materials and several lights. `light_3d()` combines
-  `light_directional()`, `light_point(position, falloff)` (inverse-square at
-  `falloff = 2`, independent of the other geometry), `light_head()` (MATLAB's
-  `camlight headlight`) and `light_hemisphere(sky, ground)` (three.js) with
+  `light_directional_3d()`, `light_point_3d(position, falloff)` (inverse-square at
+  `falloff = 2`, independent of the other geometry), `light_head_3d()` (MATLAB's
+  `camlight headlight`) and `light_hemisphere_3d(sky, ground)` (three.js) with
   an ambient term; `light_3d()` stays the one-light shorthand.
   `material_3d("matte" | "shiny" | "metal", ambient, diffuse, specular,
   shininess, specular_colour, back)` follows MATLAB's `material` presets and
@@ -480,7 +490,7 @@
   2009, as in ParaView and PyVista) from the depth buffer of the raster and
   hybrid backends and of `view_3d()`, which evaluates the same fog formula.
 
-* `geom_tube_3d(radius.unit = "mm")`, `geom_ribbon_3d(width.unit = "mm")` and
+* `geom_tube_3d(radius.unit = "mm")`, `geom_strip_3d(width.unit = "mm")` and
   `stat_sweep_3d(radius.unit = "mm")` size the cross section in millimetres on
   the page. The sweep runs when the plot is drawn, in the box the camera
   sees, so tubes stay round whatever the box proportions, in the vector,
@@ -557,7 +567,7 @@
 * Viewers and model exporters share physical panel measurement independently of the static renderer, so point-cloud widgets bypass the vector marker limit and static visibility compilation.
 * `view3dOutput()` and `renderView3d()` embed reactive viewers in Shiny applications and modules, with camera and selection inputs.
 
-* `export_3d(print = print_3d())` produces checked, closed millimetre solids as binary STL or coloured 3MF. Printing adds physical feature sizes, surface shells or base closures, extruded labels and axes, and Boolean union through the bundled native Manifold library.
+* `export_3d(print = print_spec_3d())` produces checked, closed millimetre solids as binary STL or coloured 3MF. Printing adds physical feature sizes, surface shells or base closures, extruded labels and axes, and Boolean union through the bundled native Manifold library.
 
 * `annotate_3d()` forwards registered drawing parameters through the shared 3D layer constructor, including bracket types, offsets and dimension arrows. Fixed spans in the Layers article use annotation calls.
 

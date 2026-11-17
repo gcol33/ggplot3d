@@ -125,9 +125,7 @@ mesh_run_3d <- function(m, verb, args, rebuild) {
 }
 
 mesh_count_3d <- function(x, name, minimum = 0L) {
-  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < minimum || x != trunc(x))
-    stop(name, " must be an integer of at least ", minimum, ".", call. = FALSE)
-  as.integer(x)
+  check_integer_3d(x, name, min = minimum)
 }
 
 mesh_number_3d <- function(x, name, test = function(x) TRUE, message = "a finite number") {
@@ -284,7 +282,7 @@ mesh_decimate <- function(m, target = 0.5, max_error = Inf, boundary_weight = 10
     counts <- table(paste(m$.mesh %or3d% 1L, m$.face))
     target * sum(pmax(1L, counts - 2L))
   } else target
-  mesh_run_3d(m, "decimate", list(target = as.integer(max(1, round(faces))), max_error = max_error,
+  mesh_run_3d(m, "decimate", list(target = check_integer_3d(max(1, round(faces)), "target", min = 1), max_error = max_error,
     boundary_weight = boundary_weight), rebuild = TRUE)
 }
 

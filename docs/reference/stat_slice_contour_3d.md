@@ -34,6 +34,7 @@ stat_slice_contour_3d(
 geom_slice_contour_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSliceContour3D,
   position = "identity",
   ...,
   xslice = NULL,
@@ -81,6 +82,12 @@ geom_slice_contour_3d(
 
   Level controls in transformed z units. Explicit breaks take
   precedence.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

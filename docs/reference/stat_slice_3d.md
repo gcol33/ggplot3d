@@ -36,6 +36,7 @@ stat_slice_3d(
 geom_slice_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSlice3D,
   position = "identity",
   ...,
   xslice = NULL,
@@ -69,6 +70,7 @@ stat_density_slice_3d(
 geom_density_slice_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatDensitySlice3D,
   position = "identity",
   ...,
   h = NULL,
@@ -110,6 +112,12 @@ geom_density_slice_3d(
   Lattice size per side for oblique planes; NULL uses the largest grid
   dimension. For stat_density_slice_3d() the density grid resolution,
   which also sets the lattice.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 - h:
 

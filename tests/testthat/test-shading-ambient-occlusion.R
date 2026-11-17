@@ -37,7 +37,7 @@ test_that("AO transmission uses the texture sampler and its alpha over the face 
   }
 })
 
-ao_corner_plot <- function(backend = "vector", ao = TRUE, light = light_3d(light_directional(intensity = 0), ambient = 1)) {
+ao_corner_plot <- function(backend = "vector", ao = TRUE, light = light_3d(light_directional_3d(intensity = 0), ambient = 1)) {
   floor <- expand.grid(x = seq(0, 1, length.out = 9), y = seq(0, 1, length.out = 9)); floor$z <- 0
   vertices <- rbind(c(0, 0, 0), c(0, 1, 0), c(0, 1, 1), c(0, 0, 1))
   ggplot2::ggplot(floor, ggplot2::aes(x, y, z = z)) +

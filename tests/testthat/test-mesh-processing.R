@@ -93,7 +93,7 @@ test_that("Loop subdivision quadruples faces and keeps a closed surface closed",
   on_face <- with(mid, x %in% 0:1 | y %in% 0:1 | z %in% 0:1)
   expect_true(all(on_face))
   expect_equal(unique(mid$vertex_colour[mid$x == 1 & mid$y == 0 & mid$z == 0]), "#00FF00")
-  expect_error(mesh_subdivide(cube, -1), "integer of at least 0")
+  expect_error(mesh_subdivide(cube, -1), "n must be a representable integer between 0")
 })
 
 test_that("Taubin smoothing removes noise without shrinking; boundaries stay", {

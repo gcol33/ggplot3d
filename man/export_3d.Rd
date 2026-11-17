@@ -55,7 +55,7 @@ lines and points have in a plot of this size.}
 
 \item{dpi}{Device resolution, default 96 dots per inch.}
 
-\item{print}{A \code{\link[=print_3d]{print_3d()}} specification for closed millimetre solids:
+\item{print}{A \code{\link[=print_spec_3d]{print_spec_3d()}} specification for closed millimetre solids:
 optional for STL, required for 3MF.}
 
 \item{interactive}{SVG: whether to include tooltips, keyboard focus and
@@ -104,7 +104,7 @@ STL keep the vertical axis of the plot as +z. STL holds triangles only, so
 it requires \code{lines = "tube"} and \code{points = "mesh"}.
 
 Ordinary model exports omit text and write dashed lines solid. Printing
-exports include extruded text according to \code{\link[=print_3d]{print_3d()}}.
+exports include extruded text according to \code{\link[=print_spec_3d]{print_spec_3d()}}.
 
 SVG output writes the compiled, depth-ordered fragments as SVG geometry.
 Each fragment carries data-layer, data-row and data-primitive attributes.

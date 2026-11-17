@@ -22,6 +22,7 @@ stat_function_3d(
 geom_function_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatFunction3D,
   position = "identity",
   ...,
   fun,
@@ -43,6 +44,10 @@ geom_function_3d(
 
 \item{args}{List of fixed extra arguments passed to \code{fun}, as in
 \code{\link[ggplot2:geom_function]{ggplot2::geom_function()}}. Names must differ from data parameters.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

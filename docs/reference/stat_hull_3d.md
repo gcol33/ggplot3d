@@ -26,6 +26,7 @@ stat_hull_3d(
 geom_hull_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatHull3D,
   position = "identity",
   ...,
   space = "data",
@@ -50,6 +51,12 @@ geom_hull_3d(
   `"data"` takes the hull of the positions. `"ilr"` takes the hull of a
   composition mapped with `a`, `b`, `c` (and `d`) in isometric log-ratio
   coordinates and keeps its facets on the original points.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

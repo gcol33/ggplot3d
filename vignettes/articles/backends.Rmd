@@ -28,6 +28,8 @@ library(ggplot3d)
 
 The data describe a curved surface on a regular grid. The same layers and camera can be rendered with the vector, raster or hybrid backend.
 
+`backend_3d()` creates a validated backend configuration for `coord_3d()`. `animate_3d()` accepts the same object for raster and vector rendering and retains its settings. Its default is raster rendering with the animation's `dpi` and `antialias` settings; the strings `"raster"` and `"vector"` create configurations through `backend_3d()`.
+
 ```{r}
 d <- expand.grid(x = seq(-2, 2, length.out = 16),
                  y = seq(-2, 2, length.out = 16))

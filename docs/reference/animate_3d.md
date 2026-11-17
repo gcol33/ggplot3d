@@ -15,7 +15,7 @@ animate_3d(
   frames = 60L,
   fps = 20,
   file = NULL,
-  backend = c("raster", "vector"),
+  backend = "raster",
   roll = NULL,
   width = 640L,
   height = 640L,
@@ -77,8 +77,13 @@ animate_3d(
 
 - backend:
 
-  Scene backend, "raster" (default) or "vector". Use "vector" for vector
-  pages in SVG and PDF output.
+  A
+  [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md)
+  configuration, or `"raster"` (default) or `"vector"`. The default uses
+  raster settings from `dpi` and `antialias`; it is independent of the
+  plot's backend. An explicit configuration keeps its rendering
+  settings. Animation supports raster and vector backends. Use vector
+  for vector pages in SVG and PDF output.
 
 - width, height:
 

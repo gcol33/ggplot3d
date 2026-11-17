@@ -139,12 +139,13 @@ coord_3d(
   Lighting from
   [`light_3d()`](https://gillescolling.com/ggplot3d/reference/light_3d.md),
   one light such as
-  [`light_point()`](https://gillescolling.com/ggplot3d/reference/light_directional.md),
+  [`light_point_3d()`](https://gillescolling.com/ggplot3d/reference/light_directional_3d.md),
   or NULL for none.
 
 - backend:
 
-  Backend configuration.
+  A configuration created by
+  [`backend_3d()`](https://gillescolling.com/ggplot3d/reference/backend_3d.md).
 
 - default:
 
@@ -196,7 +197,8 @@ coord_3d(
 
 - geometry:
 
-  Geometry of paths and faces: `"euclidean"` or an internal `Space3D`
+  Geometry of paths and faces: `"euclidean"` or a public
+  [Space3D](https://gillescolling.com/ggplot3d/reference/Space3D.md)
   extension. Spaces define canonical points, chart conversions,
   distance, geodesics and isometries. See Details.
 
@@ -249,8 +251,9 @@ A Coord3D ggproto object.
 
 ## Details
 
-Space extensions inherit from `ggplot3d:::Space3D`. They declare
-`charts`, `models` and `default_model`, and implement
+Space extensions inherit from
+[Space3D](https://gillescolling.com/ggplot3d/reference/Space3D.md). They
+declare `charts`, `models` and `default_model`, and implement
 `to_canonical(data, chart)`, `from_canonical(X, model)`,
 `distance(X, Y)`, `geodesic(X, Y, s)` and `act(g, X)`. Canonical points
 are finite numeric row matrices of any dimension. Geodesic endpoints are
@@ -282,6 +285,39 @@ for the resulting tessellation.
 ## Theme elements
 
 Besides the ggplot2 elements, panels read these theme elements:
+Registered elements use the following classes, parents and defaults. An
+inherited default uses its parent's resolved value.
+
+|  |  |  |  |
+|----|----|----|----|
+| Element | Class | Parent | Default |
+| `axis.text.z` | element_text | `axis.text` | inherited; margin 2.2 pt |
+| `axis.title.z` | element_text | `axis.title` | inherited; margin 2.75 pt |
+| `axis.ticks.z` | element_line | `axis.ticks` | inherited |
+| `axis.line.z` | element_line | `axis.line` | inherited |
+| `axis.ticks.length.z` | unit | `axis.ticks.length` | inherited |
+| `axis.minor.ticks.z` | element_line | `axis.ticks.z` | inherited |
+| `axis.minor.ticks.length.z` | unit | `axis.ticks.length.z` | 1 pt |
+| `panel.grid.major.z` | element_line | `panel.grid.major` | inherited |
+| `panel.grid.minor.z` | element_line | `panel.grid.minor` | inherited |
+| `panel.grid.<level>.<axis>.<plane>` | element_line | `panel.grid.<level>.<axis>` | inherited |
+| `panel.pane` | element_rect | `panel.background` | inherited |
+| `panel.pane.x`, `.y`, `.z` | element_rect | `panel.pane` | inherited |
+| `panel.pane.front` | element_rect | `panel.pane` | fill \#7F7F7F1A; colour NA |
+| `panel.zero` | element_rect | `rect` | fill \#7F7F7F40; colour NA; linewidth 0.3 |
+| `panel.zero.x`, `.y`, `.z` | element_rect | `panel.zero` | element_blank |
+| `panel.zero.line` | element_line | `line` | element_blank |
+| `panel.zero.line.x`, `.y`, `.z` | element_line | `panel.zero.line` | inherited |
+| `axis.line.origin` | element_line | `line` | inherited |
+| `axis.line.origin.x`, `.y`, `.z` | element_line | `axis.line.origin` | inherited |
+| `panel.box` | element_line | `line` | grey50; linewidth 0.3 |
+| `panel.box.back`, `.front` | element_line | `panel.box` | inherited |
+| `panel.margin.3d` | margin | none | 8 pt on each side |
+
+The grid pattern registers every combination of `level` = `major`,
+`minor`; `axis` = `x`, `y`, `z`; and `plane` = `xy`, `xz`, `yz`. Line,
+text and rectangle elements also accept
+[`ggplot2::element_blank()`](https://ggplot2.tidyverse.org/reference/element.html).
 
 - `panel.pane`, `panel.pane.x`, `panel.pane.y`, `panel.pane.z`: pane
   fills, by the axis normal to the pane; `panel.pane.front` styles the
@@ -290,10 +326,8 @@ Besides the ggplot2 elements, panels read these theme elements:
 - `panel.grid.major.x.xy`, `panel.grid.minor.z.yz` and so on: the grid
   lines of one axis on the panes of one plane. Each inherits from the
   grid element of its axis (`panel.grid.major.x.xy` from
-  `panel.grid.major.x`), so
-  [`element_blank()`](https://ggplot2.tidyverse.org/reference/element.html)
-  removes those lines from that plane only. In the default view the
-  floor is the `xy` plane.
+  `panel.grid.major.x`), so `element_blank()` removes those lines from
+  that plane only. In the default view the floor is the `xy` plane.
 
 - `panel.zero.x`, `panel.zero.y`, `panel.zero.z`: a plane through the
   panel at transformed value 0 of that axis, when 0 lies inside the

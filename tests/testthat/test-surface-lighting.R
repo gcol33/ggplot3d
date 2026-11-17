@@ -14,7 +14,7 @@ test_that("surface materials carry averaged vertex normals through panel scaling
   expect_equal(as.matrix(styles[c("normal_x", "normal_y", "normal_z")]),
     matrix(rep(expected, each = nrow(styles)), ncol = 3), ignore_attr = TRUE)
   camera <- list(model_scale = c(1, 0.5, 1.5), forward = c(0, 0, -1))
-  light <- light_3d(light_directional(c(0, 0, 1), space = "data", intensity = 1), ambient = 0)
+  light <- light_3d(light_directional_3d(c(0, 0, 1), space = "data", intensity = 1), ambient = 0)
   normal <- expected / camera$model_scale
   normal <- normal / sqrt(sum(normal^2))
   f <- list(normal_x = 1, normal_y = 0, normal_z = 0)

@@ -124,7 +124,7 @@ coord_globe_3d <- function(radius = 1, exaggeration = 1, graticule = c(30, 30),
   space <- ggplot2::ggproto(NULL, SpaceGlobe, radius = radius, exaggeration = exaggeration)
   args <- stats_params_3d(list(geometry = space, input = "lonlat", azimuth = centre[1L], elevation = centre[2L],
     xlim = c(-180, 180), ylim = c(-90, 90), expand = FALSE, clip_data = FALSE,
-    axes = "z", panes = character(), box = "none", light = light_3d(light_directional(space = "data"))), list(...))
+    axes = "z", panes = character(), box = "none", light = light_3d(light_directional_3d(space = "data"))), list(...))
   coord <- do.call(coord_3d, args)
   coord$frame <- ggplot2::ggproto(NULL, FrameGlobe, radius = radius, exaggeration = exaggeration,
     space = space, graticule = graticule, inner = inner)

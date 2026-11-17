@@ -161,9 +161,10 @@ check_point_3d <- function(x, name) {
   as.double(x)
 }
 
-check_positive_3d <- function(x, name, zero = FALSE) {
-  if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < 0 || (!zero && x == 0))
-    stop(name, " must be a ", if (zero) "non-negative" else "positive", " number.", call. = FALSE)
+check_positive_3d <- function(x, name, zero = FALSE, infinite = FALSE) {
+  if (!is.numeric(x) || length(x) != 1L || is.na(x) || (!infinite && !is.finite(x)) || x < 0 || (!zero && x == 0))
+    stop(name, " must be one ", if (zero) "nonnegative" else "positive", " number",
+      if (infinite) " (Inf allowed)" else " that is finite", ".", call. = FALSE)
   as.double(x)
 }
 

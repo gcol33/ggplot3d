@@ -478,12 +478,6 @@ StatSummary3D <- ggplot2::ggproto("StatSummary3D", ggplot2::Stat,
   }
 )
 
-summary_geoms_3d <- function() {
-  list(pointrange = GeomPointrange3D, errorbar = GeomErrorbar3D, linerange = GeomLinerange3D,
-       crossbar = GeomCrossbar3D, point = ggplot2::GeomPoint, path = ggplot2::GeomPath,
-       line = ggplot2::GeomLine)
-}
-
 #' Summarise one axis at each position on the other two
 #'
 #' For every group and every distinct pair of positions on the two other axes,
@@ -494,9 +488,10 @@ summary_geoms_3d <- function() {
 #' and `zmax`, or the matching columns of `axis`. Summaries are computed on
 #' the transformed scale.
 #' @param mapping,data,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
-#' @param geom Geometry drawing the summary: `"pointrange"`, `"errorbar"`,
-#'   `"linerange"`, `"crossbar"`, `"point"`, `"path"`, `"line"`, or a
-#'   registered geom prototype.
+#' @param geom Registered geom name or prototype drawing the summary, such
+#'   as `"pointrange"`, `"errorbar"`, `"linerange"`, `"crossbar"`,
+#'   `"point"`, `"path"` or `"line"`. Package names also accept the `_3d`
+#'   suffix. The geom's required aesthetics must be supplied by the summary.
 #' @param fun.data Function, or its name, taking a numeric vector and returning
 #'   a data frame with any of `y`, `ymin` and `ymax`. Defaults to
 #'   [ggplot2::mean_se()] when no summary function is given.
@@ -521,12 +516,6 @@ stat_summary_3d <- function(mapping = NULL, data = NULL, geom = "pointrange", po
                             fun.data = NULL, fun = NULL, fun.max = NULL, fun.min = NULL,
                             fun.args = list(), axis = "z",
                             na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  if (is.character(geom)) {
-    geoms <- summary_geoms_3d()
-    check_choice_3d(geom, names(geoms), "geom", c(paste0('"', names(geoms), '"'), "a geom prototype"))
-    geom <- geoms[[geom]]
-  }
-  if (!inherits(geom, "Geom")) stop("geom must be a geometry name or prototype.", call. = FALSE)
   make_layer_3d(geom, mapping, data, StatSummary3D, position,
     c(list(fun.data = fun.data, fun = fun, fun.max = fun.max, fun.min = fun.min, fun.args = fun.args,
       axis = check_choice_3d(axis, axes_3d, "axis"), na.rm = na.rm), list(...)),

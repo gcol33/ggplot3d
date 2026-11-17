@@ -17,6 +17,8 @@ its opacity.
 geom_volume_3d(
   mapping = NULL,
   data = NULL,
+  stat = "identity",
+  position = "identity",
   ...,
   mode = c("absorption", "mip", "iso"),
   opacity = c(0, 1),
@@ -32,7 +34,7 @@ geom_volume_3d(
 
 ## Arguments
 
-- mapping, data, ..., show.legend, inherit.aes:
+- mapping, data, stat, position, ..., show.legend, inherit.aes:
 
   Standard layer arguments. Map `x`, `y`, `z` and `value` to the grid
   coordinates and scalar field.

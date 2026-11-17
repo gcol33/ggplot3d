@@ -118,9 +118,10 @@
 <url><loc>https://gillescolling.com/ggplot3d/reference/hatch_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/hyperbolic_focus_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/index.html</loc></url>
+<url><loc>https://gillescolling.com/ggplot3d/reference/Space3D.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/layer_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/light_3d.html</loc></url>
-<url><loc>https://gillescolling.com/ggplot3d/reference/light_directional.html</loc></url>
+<url><loc>https://gillescolling.com/ggplot3d/reference/light_directional_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/lorentz_boost_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/material_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/mesh_3d.html</loc></url>
@@ -135,7 +136,7 @@
 <url><loc>https://gillescolling.com/ggplot3d/reference/position_nudge_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/position_project_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/position_stack_3d.html</loc></url>
-<url><loc>https://gillescolling.com/ggplot3d/reference/print_3d.html</loc></url>
+<url><loc>https://gillescolling.com/ggplot3d/reference/print_spec_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/read_mesh_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/read_points_3d.html</loc></url>
 <url><loc>https://gillescolling.com/ggplot3d/reference/reexports.html</loc></url>

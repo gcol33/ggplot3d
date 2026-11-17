@@ -110,7 +110,8 @@
 #'
 #'   Three.js AgX tone-mapping implementation, adapted from Filament.
 #'   \url{https://github.com/mrdoob/three.js/blob/dev/src/renderers/shaders/ShaderChunk/tonemapping_pars_fragment.glsl.js}
-#' @return A backend configuration for coord_3d().
+#' @return A `ggplot3d_backend` configuration for [coord_3d()] and
+#'   [animate_3d()], validated at construction and use.
 #' @examples
 #' backend_3d("vector")
 #' backend_3d("raster", dpi = 144, antialias = 2)
@@ -134,17 +135,35 @@ backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "line
                        max_distance = 10, tolerance = 1e-5, max_steps = 2048L,
                        quotient = NULL, light_size = 0.1, rasterise = "marked", noise_threshold = 0,
                        min_samples = 16L, denoise = FALSE, exposure = 0, tone = "clip") {
-  stopifnot(length(dpi) == 1L, is.finite(dpi), dpi > 0, length(antialias) == 1L,
-            is.finite(antialias), antialias >= 1, antialias == trunc(antialias))
-  result <- list(type = match.arg(type, c("vector", "raster", "hybrid", "pathtrace", "raymarch", "plotter")), dpi = dpi, antialias = as.integer(antialias),
-       blend = match.arg(blend, c("linear", "srgb")))
-  if (result$type == "hybrid") result$rasterise <- match.arg(rasterise, c("marked", "surfaces", "all"))
-  if (result$type == "pathtrace") result <- c(result,
+  result <- list(type = type, dpi = dpi, antialias = antialias, blend = blend)
+  if (identical(type, "hybrid")) result$rasterise <- rasterise
+  if (identical(result$type, "pathtrace")) result <- c(result,
     pathtrace_settings_3d(samples, bounces, seed, aperture, focus, light_radius, progressive, batch_size,
       noise_threshold, min_samples, denoise, exposure, tone))
-  if (result$type == "raymarch") result <- c(result,
+  if (identical(result$type, "raymarch")) result <- c(result,
     thurston_settings_3d(geometry, observer, facing, fov, max_distance, tolerance, max_steps, quotient, light_size))
-  result
+  validate_backend_3d(structure(result, class = "ggplot3d_backend"))
+}
+
+validate_backend_3d <- function(backend) {
+  if (!inherits(backend, "ggplot3d_backend") || !is.list(backend)) {
+    stop("backend must be a configuration created by backend_3d().", call. = FALSE)
+  }
+  backend$type <- check_choice_3d(backend$type, c("vector", "raster", "hybrid", "pathtrace", "raymarch", "plotter"), "backend type")
+  backend$dpi <- check_positive_3d(backend$dpi, "dpi")
+  backend$antialias <- check_integer_3d(backend$antialias, "antialias", min = 1)
+  backend$blend <- check_choice_3d(backend$blend, c("linear", "srgb"), "blend")
+  if (backend$type == "hybrid") backend$rasterise <- check_choice_3d(backend$rasterise, c("marked", "surfaces", "all"), "rasterise")
+  if (backend$type %in% c("pathtrace", "raymarch")) {
+    validate <- if (backend$type == "pathtrace") pathtrace_settings_3d else thurston_settings_3d
+    fields <- names(formals(validate))
+    settings <- do.call(validate, backend[fields])
+    for (name in setdiff(names(settings), "state")) backend[name] <- settings[name]
+    if (backend$type == "pathtrace" && !is.environment(backend$state)) {
+      stop("backend state must be an environment created by backend_3d().", call. = FALSE)
+    }
+  }
+  backend
 }
 
 # A copy of a plot whose coord_3d() draws with another backend.
@@ -205,22 +224,22 @@ plot_backend_3d <- function(plot, backend) {
 #' @param z_scales Fixed or free z scales across panels.
 #' @param crs Target spatial coordinate reference system.
 #' @param light Lighting from [light_3d()], one light such as
-#'   [light_point()], or NULL for none.
+#'   [light_point_3d()], or NULL for none.
 #' @param shadow Planar cast shadows from [shadow_3d()], or NULL for none.
 #' @param depth_cue Fog, depth-thinned strokes and eye-dome lighting from
 #'   [depth_cue_3d()], or NULL for none.
 #' @param edges,outline Mesh lines from [edges_3d()] and feature lines from
 #'   [outline_3d()] for every surface and mesh layer whose own `edges` or
 #'   `outline` is NULL; a layer that sets `FALSE` draws none. NULL for none.
-#' @param backend Backend configuration.
+#' @param backend A configuration created by [backend_3d()].
 #' @param stereo Stereo output from [stereo_3d()], or NULL for one view.
 #' @param transform Optional coordinate transformations applied after
 #'   statistics, as a named list with entries `x`, `y` or `z`, each a
 #'   transformation name such as `"log10"` or a scales transformation. Lines
 #'   and faces are subdivided so their images bend with the transformation.
 #' @param default Whether this is the default coordinate system.
-#' @param geometry Geometry of paths and faces: `"euclidean"` or an internal
-#'   `Space3D` extension. Spaces define canonical points, chart conversions,
+#' @param geometry Geometry of paths and faces: `"euclidean"` or a public
+#'   [Space3D] extension. Spaces define canonical points, chart conversions,
 #'   distance, geodesics and isometries. See Details.
 #' @param model Display model supplied by the space; NULL uses its default.
 #' @param input Input chart supplied by the space; NULL uses `model`.
@@ -230,7 +249,7 @@ plot_backend_3d <- function(plot, backend) {
 #' @param munch_max_depth Maximum binary subdivision depth, from 0 to 12.
 #'   A space reports an error when this budget cannot meet the tolerance.
 #' @details
-#' Space extensions inherit from `ggplot3d:::Space3D`. They declare `charts`,
+#' Space extensions inherit from [Space3D]. They declare `charts`,
 #' `models` and `default_model`, and implement `to_canonical(data, chart)`,
 #' `from_canonical(X, model)`, `distance(X, Y)`, `geodesic(X, Y, s)` and
 #' `act(g, X)`. Canonical points are finite numeric row matrices of any
@@ -259,6 +278,36 @@ plot_backend_3d <- function(plot, backend) {
 #' supplied by the frame. Visibility is exact for the resulting tessellation.
 #' @section Theme elements:
 #' Besides the ggplot2 elements, panels read these theme elements:
+#' Registered elements use the following classes, parents and defaults.
+#' An inherited default uses its parent's resolved value.
+#' \tabular{llll}{
+#' Element \tab Class \tab Parent \tab Default\cr
+#' `axis.text.z` \tab element_text \tab `axis.text` \tab inherited; margin 2.2 pt\cr
+#' `axis.title.z` \tab element_text \tab `axis.title` \tab inherited; margin 2.75 pt\cr
+#' `axis.ticks.z` \tab element_line \tab `axis.ticks` \tab inherited\cr
+#' `axis.line.z` \tab element_line \tab `axis.line` \tab inherited\cr
+#' `axis.ticks.length.z` \tab unit \tab `axis.ticks.length` \tab inherited\cr
+#' `axis.minor.ticks.z` \tab element_line \tab `axis.ticks.z` \tab inherited\cr
+#' `axis.minor.ticks.length.z` \tab unit \tab `axis.ticks.length.z` \tab 1 pt\cr
+#' `panel.grid.major.z` \tab element_line \tab `panel.grid.major` \tab inherited\cr
+#' `panel.grid.minor.z` \tab element_line \tab `panel.grid.minor` \tab inherited\cr
+#' `panel.grid.<level>.<axis>.<plane>` \tab element_line \tab `panel.grid.<level>.<axis>` \tab inherited\cr
+#' `panel.pane` \tab element_rect \tab `panel.background` \tab inherited\cr
+#' `panel.pane.x`, `.y`, `.z` \tab element_rect \tab `panel.pane` \tab inherited\cr
+#' `panel.pane.front` \tab element_rect \tab `panel.pane` \tab fill #7F7F7F1A; colour NA\cr
+#' `panel.zero` \tab element_rect \tab `rect` \tab fill #7F7F7F40; colour NA; linewidth 0.3\cr
+#' `panel.zero.x`, `.y`, `.z` \tab element_rect \tab `panel.zero` \tab element_blank\cr
+#' `panel.zero.line` \tab element_line \tab `line` \tab element_blank\cr
+#' `panel.zero.line.x`, `.y`, `.z` \tab element_line \tab `panel.zero.line` \tab inherited\cr
+#' `axis.line.origin` \tab element_line \tab `line` \tab inherited\cr
+#' `axis.line.origin.x`, `.y`, `.z` \tab element_line \tab `axis.line.origin` \tab inherited\cr
+#' `panel.box` \tab element_line \tab `line` \tab grey50; linewidth 0.3\cr
+#' `panel.box.back`, `.front` \tab element_line \tab `panel.box` \tab inherited\cr
+#' `panel.margin.3d` \tab margin \tab none \tab 8 pt on each side
+#' }
+#' The grid pattern registers every combination of `level` = `major`,
+#' `minor`; `axis` = `x`, `y`, `z`; and `plane` = `xy`, `xz`, `yz`.
+#' Line, text and rectangle elements also accept [ggplot2::element_blank()].
 #' \itemize{
 #'   \item `panel.pane`, `panel.pane.x`, `panel.pane.y`, `panel.pane.z`: pane
 #'     fills, by the axis normal to the pane; `panel.pane.front` styles the
@@ -318,40 +367,34 @@ coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30,
                      input = NULL, isometry = NULL, munch_tolerance = 1e-3, munch_max_depth = 9L,
                      shadow = NULL, depth_cue = NULL, edges = NULL, outline = NULL) {
   space_spec <- space_spec_3d(geometry, model, input, isometry, munch_tolerance, munch_max_depth)
-  clip <- match.arg(clip, c("on", "off"))
+  backend <- validate_backend_3d(backend)
+  clip <- check_choice_3d(clip, c("on", "off"), "clip")
   clip_planes <- check_clip_planes_3d(clip_planes)
   if (!is.logical(expand) || anyNA(expand) || !length(expand) ||
       !(length(expand) == 1L || (length(expand) == 3L && setequal(names(expand), c("x", "y", "z"))))) stop("expand must be logical scalar or named x/y/z vector.", call. = FALSE)
   expand_axes <- if (length(expand) == 1L) structure(rep(expand, 3L), names = c("x", "y", "z")) else expand[c("x", "y", "z")]
-  if (!all(axes %in% c("x", "y", "z"))) stop("Unknown 3D axis.", call. = FALSE)
-  if (!all(panes %in% c("back", "floor", "front", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"))) stop("Unknown cube pane.", call. = FALSE)
+  axes <- check_choices_3d(axes, c("x", "y", "z"), "axes")
+  panes <- check_choices_3d(panes, c("back", "floor", "front", "xmin", "xmax", "ymin", "ymax", "zmin", "zmax"), "panes")
   if (!is.null(stereo) && !inherits(stereo, "ggplot3d_stereo")) stop("stereo must be NULL or a stereo_3d() configuration.", call. = FALSE)
   if (!is.null(shadow) && !inherits(shadow, "ggplot3d_shadow")) stop("shadow must be NULL or a shadow_3d() configuration.", call. = FALSE)
   if (!is.null(depth_cue) && !inherits(depth_cue, "ggplot3d_depth_cue")) stop("depth_cue must be NULL or a depth_cue_3d() configuration.", call. = FALSE)
   if (!is.null(edges) && !inherits(edges, "ggplot3d_edges")) stop("edges must be NULL or created by edges_3d().", call. = FALSE)
   if (!is.null(outline) && !inherits(outline, "ggplot3d_outline")) stop("outline must be NULL or created by outline_3d().", call. = FALSE)
-  views <- list(azimuth = azimuth, elevation = elevation, roll = roll, distance = distance, fov = fov, zoom = zoom)
-  sizes <- lengths(views)
-  count <- max(1L, sizes)
-  if (any(sizes > 1L & sizes != count)) stop("Camera arguments must have one value or the same number of values, one per panel.", call. = FALSE)
   base <- list(projection = projection, azimuth = azimuth, elevation = elevation, roll = roll, distance = distance,
     fov = fov, zoom = zoom, target = target, oblique = oblique, up = up,
     aspect = if (identical(aspect, "data")) c(1, 1, 1) else aspect,
     near = near, far = far, clip_data = clip_data, clip = clip == "on")
-  panel_args <- lapply(seq_len(count), function(i) {
-    view <- lapply(views, function(v) if (length(v) > 1L) v[[i]] else v)
-    camera_args_update_3d(base, view)
-  })
+  panel_args <- camera_panel_args_3d(base)
   cameras <- lapply(panel_args, camera_from_args_3d)
   ggplot2::ggproto(NULL, Coord3D, camera = cameras[[1L]], cameras = cameras, camera_args = panel_args[[1L]], model_aspect = aspect, frame = frame_box_3d(transform),
     space = space_spec$space, model = space_spec$model, input = space_spec$input,
     isometry = isometry, munch_tolerance = munch_tolerance, munch_max_depth = munch_max_depth,
     limits = list(x = xlim, y = ylim, z = zlim), expand_axes = expand_axes,
-    clip = clip, default = default, z_scales = match.arg(z_scales, c("fixed", "free")),
-    config = list(axes = unique(axes), panes = unique(panes), box = match.arg(box, c("back", "all", "none")),
-                  axis_lines = match.arg(axis_lines, c("box", "origin", "none")), origin = check_origin_3d(origin),
+    clip = clip, default = check_flag_3d(default, "default"), z_scales = check_choice_3d(z_scales, c("fixed", "free"), "z_scales"),
+    config = list(axes = axes, panes = panes, box = check_choice_3d(box, c("back", "all", "none"), "box"),
+                  axis_lines = check_choice_3d(axis_lines, c("box", "origin", "none"), "axis_lines"), origin = check_origin_3d(origin),
                   light = as_lights_3d(light), shadow = shadow, depth_cue = depth_cue, edges = edges, outline = outline, backend = backend, crs = crs, clip_planes = clip_planes, stereo = stereo,
-                  frame = match.arg(frame, c("view", "azimuth", "sphere")), frame_registry = new.env(parent = emptyenv())))
+                  frame = check_choice_3d(frame, c("view", "azimuth", "sphere"), "frame"), frame_registry = new.env(parent = emptyenv())))
 }
 
 check_origin_3d <- function(origin) {
@@ -379,14 +422,25 @@ oblique_shear_3d <- function(projection, oblique) {
 # Camera from coord_3d() camera arguments: the projection, angles, framing
 # values, oblique receding direction and vertical axis by name.
 camera_from_args_3d <- function(args) {
-  projection <- match.arg(args$projection, c("orthographic", "perspective", "oblique"))
-  up <- match(match.arg(args$up, c("x", "y", "z")), c("x", "y", "z"))
+  projection <- check_choice_3d(args$projection, c("orthographic", "perspective", "oblique"), "projection")
+  up <- match(check_choice_3d(args$up, c("x", "y", "z"), "up"), c("x", "y", "z"))
   new_camera_3d(projection, args$azimuth, args$elevation, args$roll, args$distance, args$fov, args$zoom,
     args$target, args$aspect, args$near, args$far, args$clip_data, args$clip, up = up,
     shear = oblique_shear_3d(projection, args$oblique))
 }
 
 camera_view_names_3d <- c("projection", "azimuth", "elevation", "roll", "distance", "fov", "zoom", "target", "oblique", "up")
+
+camera_panel_args_3d <- function(base) {
+  views <- base[c("azimuth", "elevation", "roll", "distance", "fov", "zoom")]
+  sizes <- lengths(views)
+  count <- max(1L, sizes)
+  if (any(sizes > 1L & sizes != count)) stop("Camera arguments must have one value or the same number of values, one per panel.", call. = FALSE)
+  lapply(seq_len(count), function(i) {
+    view <- lapply(views, function(v) if (length(v) > 1L) v[[i]] else v)
+    camera_args_update_3d(base, view)
+  })
+}
 
 # Camera arguments with the entries of a view replacing their base values; a
 # NULL entry, such as distance = NULL, is kept as an automatic value.
@@ -446,6 +500,10 @@ camera_3d <- function(preset = c("default", "isometric", "dimetric", "trimetric"
   overrides <- list(projection = projection, azimuth = azimuth, elevation = elevation, roll = roll,
     distance = distance, fov = fov, zoom = zoom, target = target, oblique = oblique, up = up)
   for (name in names(overrides)) if (!is.null(overrides[[name]])) values[[name]] <- overrides[[name]]
+  defaults <- formals(coord_3d)[c(camera_view_names_3d, "aspect", "near", "far", "clip_data")]
+  defaults <- lapply(defaults, eval, envir = environment(coord_3d))
+  defaults$clip <- TRUE
+  lapply(camera_panel_args_3d(utils::modifyList(defaults, values)), camera_from_args_3d)
   values
 }
 

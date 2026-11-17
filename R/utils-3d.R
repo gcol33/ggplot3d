@@ -53,3 +53,22 @@ check_choice_3d <- function(value, choices, name, shown = paste0('"', choices, '
   }
   value
 }
+
+check_flag_3d <- function(value, name) {
+  if (!is.logical(value) || length(value) != 1L || is.na(value)) stop(name, " must be TRUE or FALSE.", call. = FALSE)
+  value
+}
+
+check_integer_3d <- function(value, name, min = 0, max = .Machine$integer.max) {
+  if (!is.numeric(value) || length(value) != 1L || !is.finite(value) ||
+      value != trunc(value) || value < min || value > max) {
+    stop(name, " must be a representable integer between ", min, " and ", max, ".", call. = FALSE)
+  }
+  as.integer(value)
+}
+
+check_choices_3d <- function(value, choices, name) {
+  if (!is.character(value) || anyNA(value)) check_choice_3d(value, choices, name)
+  for (item in value) check_choice_3d(item, choices, name)
+  unique(value)
+}

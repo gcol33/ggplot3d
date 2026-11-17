@@ -120,7 +120,7 @@ test_that("hybrid panels with rasterise = \"surfaces\" draw unmarked surface lay
   }
   expect_identical(backend_3d("hybrid")$rasterise, "marked")
   expect_null(backend_3d("raster")$rasterise)
-  expect_error(backend_3d("hybrid", rasterise = "every"), "should be one of")
+  expect_error(backend_3d("hybrid", rasterise = "every"), "rasterise must be one of")
   expect_length(panel(backend_3d("hybrid", dpi = 50))$capabilities$image_layers, 0L)
   surfaces <- panel(backend_3d("hybrid", dpi = 50, rasterise = "surfaces"))
   expect_identical(surfaces$capabilities$image_layers, 1L)

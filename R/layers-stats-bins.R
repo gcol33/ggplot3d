@@ -6,6 +6,7 @@ check_bin_args_3d <- function(bins, binwidth, axes) {
   n <- length(axes)
   if (!length(bins) %in% c(1L, n) || any(!is.finite(bins) | bins < 1 | bins != trunc(bins)))
     stop("bins must be positive integers, one value or one per axis.", call. = FALSE)
+  bins <- vapply(bins, check_integer_3d, integer(1), name = "bins", min = 1)
   if (!is.null(binwidth) && (!length(binwidth) %in% c(1L, n) || any(!is.finite(binwidth) | binwidth <= 0)))
     stop("binwidth must be positive, one value or one per axis.", call. = FALSE)
   list(bins = rep_len(as.integer(bins), n), binwidth = if (!is.null(binwidth)) rep_len(binwidth, n))
@@ -324,7 +325,7 @@ geom_histogram_3d <- function(mapping = NULL, data = NULL, stat = StatBin2d3D, p
                               base = 0, shade = TRUE, na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   make_layer_3d(GeomCol3D, mapping, data, stat, position,
     c(list(bins = bins, binwidth = binwidth, breaks = breaks, boundary = boundary, drop = drop,
-         base = base, shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes)
+         base = base, shade = shade, na.rm = na.rm), list(...)), show.legend, inherit.aes, default_stat = StatBin2d3D)
 }
 
 #' @rdname stat_bin_2d_3d

@@ -15,8 +15,9 @@
 #' transformations place the breaks in the variable's original units.
 #' Each piece has one band colour, with normals interpolated across its edges.
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard ggplot2 layer arguments.
-#' @param method Grid connectivity or Delaunay triangulation.
-#' @param max_edge Maximum triangle edge length in transformed x/y units.
+#' @param method `"grid"` connectivity or `"delaunay"` triangulation.
+#' @param max_edge One positive number, allowing `Inf` (default), for the
+#'   maximum triangle edge length in transformed x/y units.
 #' @param shade Whether to apply lighting.
 #' @param wireframe Whether to draw the cell edges (the grid lines of a grid
 #'   surface, the triangle edges of a Delaunay surface) without the faces. A
@@ -145,9 +146,8 @@ StatSurface3D <- ggplot2::ggproto("StatSurface3D", ggplot2::Stat,
   extra_params = c("na.rm", "method", "max_edge"),
   setup_params = function(data, params) {
     if (is.null(data$z)) stop("A surface requires a z aesthetic.", call. = FALSE)
-    params$method <- match.arg(params$method %or3d% "grid", c("grid", "delaunay"))
-    params$max_edge <- params$max_edge %or3d% Inf
-    if (length(params$max_edge) != 1L || is.na(params$max_edge) || params$max_edge <= 0) stop("max_edge must be positive.", call. = FALSE)
+    params$method <- check_choice_3d(params$method %or3d% "grid", c("grid", "delaunay"), "method")
+    params$max_edge <- check_positive_3d(params$max_edge %or3d% Inf, "max_edge", infinite = TRUE)
     params
   },
   compute_group = function(data, scales, method = "grid", max_edge = Inf, shading = "flat") {

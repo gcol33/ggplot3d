@@ -41,6 +41,7 @@ edges_3d <- function(type = c("cells", "triangles"), every = 1L, colour = "white
                      linetype = 1, alpha = 0.6, hidden = c("hide", "dashed", "show")) {
   if (!is.numeric(every) || !length(every) %in% 1:2 || any(!is.finite(every) | every < 1 | every != trunc(every)))
     stop("every must be one or two positive integers.", call. = FALSE)
+  every <- vapply(every, check_integer_3d, integer(1), name = "every", min = 1)
   linewidth <- mesh_number_3d(linewidth, "linewidth", function(x) is.finite(x) && x >= 0, "nonnegative")
   alpha <- mesh_number_3d(alpha, "alpha", function(x) is.finite(x) && x >= 0 && x <= 1, "between 0 and 1")
   if (length(colour) != 1L) stop("colour must be a single colour.", call. = FALSE)

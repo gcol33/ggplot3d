@@ -218,9 +218,9 @@ register_geom_3d(GeomEdge3D, emit_edges_3d,
 check_edge_params_3d <- function(shape, curvature, n, radius, sides, arrow) {
   shape <- match.arg(shape, c("line", "arc", "tube"))
   if (!is.null(curvature) && (!is.numeric(curvature) || length(curvature) != 1L || !is.finite(curvature))) stop("curvature must be a finite number.", call. = FALSE)
-  if (!is.numeric(n) || length(n) != 1L || !is.finite(n) || n < 3) stop("n must be a number of at least 3.", call. = FALSE)
+  n <- check_integer_3d(n, "n", min = 3)
   if (!is.numeric(radius) || length(radius) != 1L || !is.finite(radius) || radius <= 0) stop("radius must be a positive number.", call. = FALSE)
-  if (!is.numeric(sides) || length(sides) != 1L || !is.finite(sides) || sides < 3) stop("sides must be a number of at least 3.", call. = FALSE)
+  sides <- check_integer_3d(sides, "sides", min = 3)
   if (shape == "tube" && !is.null(arrow)) stop("Arrows require shape = \"line\" or \"arc\".", call. = FALSE)
   list(shape = shape, curvature = curvature, n = as.integer(n), radius = radius, sides = as.integer(sides))
 }

@@ -45,6 +45,8 @@ A ggplot2 layer.
 Draws each group as a filled curtain from \code{base} to z, ordered by x.
 The x coordinates shared by stacked groups form their lattice. Groups
 with different x coordinates retain their own vertices.
+\code{geom_waterfall_3d()} is a convenience for
+\code{geom_area_3d(position = "identity")}.
 }
 \examples{
 d <- expand.grid(x = 0:8, y = 1:3)

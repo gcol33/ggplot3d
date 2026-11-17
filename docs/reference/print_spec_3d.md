@@ -12,7 +12,7 @@ export_3d().
 ## Usage
 
 ``` r
-print_3d(
+print_spec_3d(
   size_mm = c(100, 100, 60),
   min_mm = 0.8,
   shell_mm = 1.2,
@@ -85,6 +85,6 @@ Disconnected solid components are stored in one model object.
 ## Examples
 
 ``` r
-settings <- print_3d(size_mm = c(100, 100, 60), text = "none")
+settings <- print_spec_3d(size_mm = c(100, 100, 60), text = "none")
 settings$min_mm
 ```

@@ -32,6 +32,7 @@ stat_function_3d(
 geom_function_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatFunction3D,
   position = "identity",
   ...,
   fun,
@@ -66,6 +67,12 @@ geom_function_3d(
   List of fixed extra arguments passed to `fun`, as in
   [`ggplot2::geom_function()`](https://ggplot2.tidyverse.org/reference/geom_function.html).
   Names must differ from data parameters.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

@@ -61,7 +61,7 @@ and `"overlay"` and `"soft"` are the blend modes of matplotlib's
 
 ```{r tone, fig.alt="A height surface shaded toward blue shadows and warm highlights, with a stepped colour guide."}
 hill + scale_fill_viridis_b(guide = guide_coloursteps_3d()) +
-  coord_3d(light = light_3d(light_directional(), mode = "tone",
+  coord_3d(light = light_3d(light_directional_3d(), mode = "tone",
     shadow_colour = "#22305a", highlight_colour = "#fff3d0"))
 ```
 
@@ -168,20 +168,20 @@ ggplot(d, aes(x, y, z = z)) +
 
 ## Light sources, shadows and depth
 
-`light_3d()` combines one or more lights. `light_directional()` shines from a direction, `light_point()` from a position in the data with intensity falling off with distance, `light_head()` from the camera, and `light_hemisphere()` blends a sky colour from above with a ground colour from below. A point light just above one corner brightens the faces near it.
+`light_3d()` combines one or more lights. `light_directional_3d()` shines from a direction, `light_point_3d()` from a position in the data with intensity falling off with distance, `light_head_3d()` from the camera, and `light_hemisphere_3d()` blends a sky colour from above with a ground colour from below. A point light just above one corner brightens the faces near it.
 
 ```{r point-light, fig.alt="A grey surface lit by a point light above one corner, brightest on the nearby slope."}
 plain <- ggplot(d, aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", colour = NA, shading = "smooth")
-plain + coord_3d(light = light_3d(light_point(c(-2, -2, 1.5), falloff = 1),
-                                  light_hemisphere(sky = "white", ground = "grey40")))
+plain + coord_3d(light = light_3d(light_point_3d(c(-2, -2, 1.5), falloff = 1),
+                                  light_hemisphere_3d(sky = "white", ground = "grey40")))
 ```
 
 `shadow_3d()` casts the shadow of the scene onto the floor of the box from a directional light. Raising the lower z limit leaves room for the shadow below the surface.
 
 ```{r shadow, fig.alt="A surface with two peaks casting a dark shadow onto the floor of the box."}
 plain + coord_3d(zlim = c(-0.5, 1.2),
-  shadow = shadow_3d(light = light_3d(light_directional(c(1, 1, 3), space = "data"))))
+  shadow = shadow_3d(light = light_3d(light_directional_3d(c(1, 1, 3), space = "data"))))
 ```
 
 `depth_cue_3d()` makes depth readable without lighting: fog fades distant marks toward the background, `linewidth = TRUE` thins distant lines, and eye-dome lighting (`edl`) darkens the edges where depth jumps, which helps point clouds.

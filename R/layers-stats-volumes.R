@@ -457,8 +457,7 @@ stat_isocurve_3d <- function(mapping = NULL, data = NULL, geom = ggplot2::GeomPa
                              na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
   if (!is.function(fun1) || !is.function(fun2)) stop("fun1 and fun2 must be functions.", call. = FALSE)
   if (!is.numeric(levels) || length(levels) != 2L || any(!is.finite(levels))) stop("levels must be two finite numbers.", call. = FALSE)
-  if (!is.numeric(refine) || length(refine) != 1L || !is.finite(refine) || refine < 0 || refine != trunc(refine))
-    stop("refine must be a non-negative integer.", call. = FALSE)
+  refine <- check_integer_3d(refine, "refine")
   make_layer_3d(geom, mapping, stats_seed_data_3d(data), StatIsocurve3D, position,
     stats_params_3d(list(fun1 = fun1, fun2 = fun2, n = n, args = args, levels = as.double(levels), refine = as.integer(refine),
       na.rm = na.rm), list(...)), show.legend, inherit.aes)

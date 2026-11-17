@@ -86,6 +86,8 @@ reference_intercepts_3d <- c(x = "xintercept", y = "yintercept", z = "zintercept
 #' Intercepts given as arguments draw one line per value and stay out of the
 #' legend; mapped intercepts draw one line per row. As in ggplot2, intercepts
 #' are positions and expand the axis ranges to include them.
+#' These fixed-purpose annotations use identity statistics and positioning;
+#' their constructors have no `stat` or `position` argument.
 #'
 #' A line from `geom_abline_3d()` passes through `point` along `direction`.
 #' Both are in the plot's transformed scale space, so a direction of

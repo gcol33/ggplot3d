@@ -4,6 +4,21 @@ motion_test_plot <- function(...) {
     ggplot2::theme_minimal(base_size = 10)
 }
 
+test_that("animation retains explicit backend settings", {
+  skip_on_cran()
+  seen <- NULL
+  render <- ggplot3d:::motion_render_3d
+  testthat::local_mocked_bindings(motion_render_3d = function(job, ...) {
+    seen <<- job$backend
+    render(job, ...)
+  })
+  backend <- backend_3d("raster", dpi = 72, antialias = 1, blend = "srgb")
+  a <- animate_3d(motion_test_plot(), backend = backend, frames = 1, width = 240, height = 240,
+    dpi = 96, antialias = 2, progress = FALSE)
+  on.exit(unlink(dirname(a$frames[[1L]]), recursive = TRUE), add = TRUE)
+  expect_identical(seen, backend)
+})
+
 test_that("camera animation builds geometry once and retains every frame", {
   skip_on_cran()
   calls <- 0L
@@ -246,11 +261,11 @@ test_that("MP4 output is written", {
 
 test_that("invalid paths and cameras fail before drawing", {
   p <- motion_test_plot()
-  expect_error(animate_3d(p, frames = 0), "positive integer")
+  expect_error(animate_3d(p, frames = 0), "frames must be a representable integer")
   expect_error(animate_3d(p, frames = 2, azimuth = 1:3), "one or frames")
-  expect_error(animate_3d(p, elevation = 91), "invalid camera")
-  expect_error(animate_3d(p, zoom = 0), "invalid camera")
+  expect_error(animate_3d(p, elevation = 91), "elevation.*-90.*90")
+  expect_error(animate_3d(p, zoom = 0), "zoom.*positive")
   expect_error(animate_3d(p, file = "movie.avi"), "file must end in", fixed = TRUE)
-  expect_error(animate_3d(p, width = NA), "positive integer")
+  expect_error(animate_3d(p, width = NA), "width must be a representable integer")
   expect_error(animate_3d(ggplot2::ggplot()), "coord_3d")
 })

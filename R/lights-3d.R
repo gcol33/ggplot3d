@@ -38,17 +38,17 @@ new_light_3d <- function(kind, vector = c(0, 0, 1), space = "camera", colour = "
 #' rgl (`light3d()`), plotly (`lightposition`) and three.js
 #' (`DirectionalLight`, `PointLight`, `HemisphereLight`).
 #'
-#' `light_directional()` shines along a fixed direction from infinitely far
-#' away. `light_point()` sits at a position and its contribution falls off as
+#' `light_directional_3d()` shines along a fixed direction from infinitely far
+#' away. `light_point_3d()` sits at a position and its contribution falls off as
 #' `intensity / d^falloff`, with `d` the distance in panel units (the box
 #' side is one, stretched by the camera aspect) and at least 0.001;
 #' `falloff = 2` is the inverse-square law, `falloff = 0` a constant. The
 #' falloff never depends on the other geometry in the panel.
-#' `light_head()` is a directional light that shines from the eye, like
-#' MATLAB's `camlight headlight`. `light_hemisphere()` adds an ambient term
+#' `light_head_3d()` is a directional light that shines from the eye, like
+#' MATLAB's `camlight headlight`. `light_hemisphere_3d()` adds an ambient term
 #' that blends from `ground` to `sky` as the normal turns from `-direction` to
 #' `direction` (three.js `HemisphereLight`).
-#' `light_environment()` supplies an equirectangular radiance map. The first
+#' `light_environment_3d()` supplies an equirectangular radiance map. The first
 #' row is the north pole; columns run around the up axis from positive x
 #' toward positive y. Rotation is in degrees about that axis. The path tracer
 #' samples the map by luminance and solid angle. Other backends use its
@@ -63,6 +63,8 @@ new_light_3d <- function(kind, vector = c(0, 0, 1), space = "camera", colour = "
 #' @param position Position of a point light.
 #' @param space `"camera"` or `"data"`.
 #' @param colour,sky,ground Light colours.
+#' @param color American spelling of `colour`; for a hemisphere light,
+#'   an alias for `sky`. Supply one spelling per colour.
 #' @param intensity Nonnegative multiplier of the light colour.
 #' @param falloff Nonnegative exponent of the distance falloff.
 #' @return A light for [light_3d()].
@@ -72,38 +74,47 @@ new_light_3d <- function(kind, vector = c(0, 0, 1), space = "camera", colour = "
 #'   Blinn (1977). Models of light reflection for computer synthesized
 #'   pictures. SIGGRAPH '77, 192-198. \doi{10.1145/563858.563893}
 #' @examples
-#' light_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
+#' light_3d(light_directional_3d(c(1, 1, 2)), light_point_3d(c(0, 0, 3), falloff = 2))
 #' @export
-light_directional <- function(direction = c(-1, 1, 2), space = "camera", colour = "white", intensity = 0.65) {
+light_directional_3d <- function(direction = c(-1, 1, 2), space = "camera", colour = "white", intensity = 0.65, color = colour) {
+  colour <- light_colour_alias_3d(colour, color, !missing(colour), !missing(color))
   new_light_3d(light_kinds_3d[["directional"]], check_light_vector_3d(direction, "direction"),
     match.arg(space, c("camera", "data")), colour, intensity)
 }
 
-#' @rdname light_directional
+#' @rdname light_directional_3d
 #' @export
-light_point <- function(position, space = "data", colour = "white", intensity = 1, falloff = 2) {
+light_point_3d <- function(position, space = "data", colour = "white", intensity = 1, falloff = 2, color = colour) {
+  colour <- light_colour_alias_3d(colour, color, !missing(colour), !missing(color))
   new_light_3d(light_kinds_3d[["point"]], check_light_vector_3d(position, "position", direction = FALSE),
     match.arg(space, c("camera", "data")), colour, intensity, check_light_number_3d(falloff, "falloff"))
 }
 
-#' @rdname light_directional
+#' @rdname light_directional_3d
 #' @export
-light_head <- function(colour = "white", intensity = 0.65) {
+light_head_3d <- function(colour = "white", intensity = 0.65, color = colour) {
+  colour <- light_colour_alias_3d(colour, color, !missing(colour), !missing(color))
   new_light_3d(light_kinds_3d[["head"]], colour = colour, intensity = intensity)
 }
 
-#' @rdname light_directional
+#' @rdname light_directional_3d
 #' @export
-light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 0, 1), space = "data", intensity = 0.35) {
+light_hemisphere_3d <- function(sky = "white", ground = "grey30", direction = c(0, 0, 1), space = "data", intensity = 0.35, color = sky) {
+  sky <- light_colour_alias_3d(sky, color, !missing(sky), !missing(color))
   new_light_3d(light_kinds_3d[["hemisphere"]], check_light_vector_3d(direction, "direction"),
     match.arg(space, c("camera", "data")), sky, intensity, ground = ground)
+}
+
+light_colour_alias_3d <- function(colour, color, colour_given, color_given) {
+  if (colour_given && color_given) stop("Supply one of colour (sky for hemisphere lights) and color.", call. = FALSE)
+  if (color_given) color else colour
 }
 
 #' Lighting for a 3D scene
 #'
 #' Combines light sources with an ambient term and sets how the light changes
 #' face colours. Without light sources the scene has the lights of `preset`;
-#' the default preset has one directional light, `light_directional()`, from
+#' the default preset has one directional light, `light_directional_3d()`, from
 #' the upper left of the camera. See [material_3d()] for specular highlights.
 #'
 #' `preset` picks a starting lighting; every argument given explicitly
@@ -111,7 +122,7 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' Except for the default, each preset reproduces the surface lighting of a
 #' widely used 3D package, named below.
 #'
-#' - `"default"`: one `light_directional()`, ambient 0.35, `mode =
+#' - `"default"`: one `light_directional_3d()`, ambient 0.35, `mode =
 #'   "lightness"`, `range = c(-0.45, 0.4)`, `neutral = 60`.
 #' - `"contrast"`: the full range from black to white with a light from the
 #'   side: a light along `c(-0.5, 0, 1)` in the data axes, `mode = "value"`,
@@ -176,8 +187,8 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #' isoluminant or diverging palettes combine best with relief shading.
 #' [guide_colourbar_3d()], [guide_coloursteps_3d()], [guide_bins_3d()] and
 #' [guide_legend_3d()] show the shaded colours of a key.
-#' @param ... Lights made with [light_directional()], [light_point()],
-#'   [light_head()], [light_hemisphere()] or [light_environment()]. None gives the lights of
+#' @param ... Lights made with [light_directional_3d()], [light_point_3d()],
+#'   [light_head_3d()], [light_hemisphere_3d()] or [light_environment_3d()]. None gives the lights of
 #'   `preset`.
 #' @param ambient Uniform ambient light: a nonnegative strength (a grey) or
 #'   one colour. NULL takes the preset's.
@@ -219,13 +230,13 @@ light_hemisphere <- function(sky = "white", ground = "grey30", direction = c(0, 
 #'   Ottosson (2020). A perceptual color space for image processing.
 #'   \url{https://bottosson.github.io/posts/oklab/}
 #' @examples
-#' light_3d(light_head(), light_hemisphere("lightblue", "brown"), ambient = 0.1)
+#' light_3d(light_head_3d(), light_hemisphere_3d("lightblue", "brown"), ambient = 0.1)
 #' d <- expand.grid(x = seq(-2, 2, length.out = 25), y = seq(-2, 2, length.out = 25))
 #' d$z <- with(d, exp(-(x^2 + y^2)))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, fill = z)) +
 #'   geom_surface_3d(shading = "smooth", colour = NA) +
 #'   ggplot2::scale_fill_distiller(palette = "Spectral") +
-#'   coord_3d(light = light_3d(light_directional(), mode = "lightness"))
+#'   coord_3d(light = light_3d(light_directional_3d(), mode = "lightness"))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "grey85", shading = "smooth", colour = NA) +
 #'   coord_3d(light = light_3d(preset = "studio"))
@@ -291,23 +302,23 @@ image_scaled_direction_3d <- function(point) point - 0.5
 # Lighting presets of light_3d(): each returns the lights, ambient, mode,
 # range, neutral angle, arithmetic and default material it sets.
 light_presets_3d <- list(
-  default = function() list(lights = list(light_directional()), ambient = 0.35, mode = "lightness",
+  default = function() list(lights = list(light_directional_3d()), ambient = 0.35, mode = "lightness",
     range = c(-0.45, 0.4), neutral = 60),
-  contrast = function() list(lights = list(light_directional(c(-0.5, 0, 1), space = "data", intensity = 1)),
+  contrast = function() list(lights = list(light_directional_3d(c(-0.5, 0, 1), space = "data", intensity = 1)),
     ambient = 0, mode = "value", range = c(-1, 1), neutral = 90),
   shade = function() {
     azimuth <- (90 - 225) * pi / 180; altitude <- 19.4712 * pi / 180
-    list(lights = list(light_directional(c(cos(azimuth) * cos(altitude), sin(azimuth) * cos(altitude), sin(altitude)),
+    list(lights = list(light_directional_3d(c(cos(azimuth) * cos(altitude), sin(azimuth) * cos(altitude), sin(altitude)),
       space = "data", intensity = 1)), ambient = 0, mode = "value", range = c(-0.7, 0), neutral = 0)
   },
-  headlight = function() list(lights = list(light_directional(c(0, 0, 1), intensity = 1)),
+  headlight = function() list(lights = list(light_directional_3d(c(0, 0, 1), intensity = 1)),
     ambient = 0, mode = "multiply", linear = FALSE, viewer = 1 / sinpi(15 / 180),
     material = material_3d(ambient = 0, diffuse = 1, specular = 1, shininess = 50, specular_colour = 1, lighting = "vertex")),
-  soft = function() list(lights = list(light_directional(c(10, 10000, 0), intensity = 0.8)),
+  soft = function() list(lights = list(light_directional_3d(c(10, 10000, 0), intensity = 0.8)),
     ambient = 0.8, mode = "multiply", linear = FALSE,
     material = material_3d(ambient = 1, diffuse = 1, specular = 0.05, shininess = 6, specular_colour = 1)),
   studio = function() {
-    light <- function(point, r, g, b) light_directional(image_scaled_direction_3d(point), colour = grDevices::rgb(r, g, b), intensity = 1)
+    light <- function(point, r, g, b) light_directional_3d(image_scaled_direction_3d(point), colour = grDevices::rgb(r, g, b), intensity = 1)
     list(lights = list(light(c(2, 0, 2), 0, 0.18, 0.5), light(c(2, 2, 3), 0.18, 0.5, 0.18),
       light(c(0, 2, 2), 0.5, 0.18, 0), light(c(0, 0, 2), 0, 0, 0.18)),
       ambient = grDevices::rgb(0.4, 0.2, 0.2), mode = "multiply", linear = FALSE)

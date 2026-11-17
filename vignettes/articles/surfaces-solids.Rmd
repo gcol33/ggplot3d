@@ -276,7 +276,7 @@ ggplot(mtcars, aes(wt, mpg, z = qsec, size = hp)) +
   geom_glyph_3d(glyph = "cube", fill = "#9E5E0F") + coord_3d()
 ```
 
-## Tubes, ribbons and sweeps
+## Tubes, strips and sweeps
 
 A tube gives a path thickness in transformed data units. Sample a helix in row order and map radius to widen it gradually. Its circular cross-section follows the curve with a rotation-minimising frame, which controls its orientation along the path.
 
@@ -296,10 +296,10 @@ curve + geom_tube_3d(radius = 1.5, radius.unit = "mm", fill = "#2E6F9E") +
   coord_3d(aspect = c(3, 1, 1.6))
 ```
 
-A ribbon sweeps a line segment along the same path. Its width and twist can vary at each position; twist is measured in degrees. The normal argument sets the initial orientation.
+A strip sweeps a line segment along the same path. Its width and twist can vary at each position; twist is measured in degrees. The normal argument sets the initial orientation.
 
-```{r ribbon, fig.alt="A wide ribbon twisting along the helical path."}
-curve + geom_ribbon_3d(aes(twist = z * 60), width = 0.35,
+```{r strip, fig.alt="A wide strip twisting along the helical path."}
+curve + geom_strip_3d(aes(twist = z * 60), width = 0.35,
                        normal = c(0, 0, 1), fill = "#9E5E0F") +
   coord_3d(aspect = "data")
 ```

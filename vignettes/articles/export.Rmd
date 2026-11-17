@@ -251,14 +251,14 @@ For a static PDF or ordinary SVG through an R graphics device, use
 [Choosing rendering and image formats](backends.html).
 ## 3D printing
 
-`print_3d()` maps the panel box into a physical bounding box in millimetres,
+`print_spec_3d()` maps the panel box into a physical bounding box in millimetres,
 keeping its aspect. Tube widths, marker sizes, shell thicknesses and the base
 plate are applied in millimetres after scaling. Open surfaces can become
 normal-offset shells or close vertically onto the base. Layer overrides use
 the exported layer names, such as `c(layer1_surface = "base")`.
 
 ```{r printing, eval=FALSE}
-settings <- print_3d(size_mm = c(100, 100, 60), min_mm = 0.8,
+settings <- print_spec_3d(size_mm = c(100, 100, 60), min_mm = 0.8,
   shell_mm = 1.2, base_mm = 2, text = "raised", furniture = c("base", "axes"))
 export_3d(p, "cars.stl", print = settings)
 export_3d(p, "cars.3mf", print = settings)

@@ -38,6 +38,7 @@ stat_isocurve_3d(
 geom_isocurve_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatIsocurve3D,
   position = "identity",
   ...,
   fun1,
@@ -85,6 +86,12 @@ geom_isocurve_3d(
 
   Number of Newton steps per curve point; 0 keeps the intersection of
   the linear interpolants.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

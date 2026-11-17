@@ -4,7 +4,7 @@ utils::globalVariables(c("splat_covariance_cpp", "splat_resolve_cpp", "splat_pro
 #'
 #' Draw point clouds with Gaussian footprints, or render Gaussian captures
 #' read by [read_points_3d()]. Each row is one Gaussian.
-#' @param mapping,data,...,show.legend,inherit.aes As in [geom_point_3d()].
+#' @param mapping,data,stat,position,...,show.legend,inherit.aes As in [geom_point_3d()].
 #' @param sh_degree Maximum spherical-harmonic degree, from 0 to 3. `NULL`
 #'   uses all available coefficients.
 #' @details
@@ -43,12 +43,12 @@ utils::globalVariables(c("splat_covariance_cpp", "splat_resolve_cpp", "splat_pro
 #'   geom_splat_3d(size = 0.12) + coord_3d()
 #' @return A ggplot2 layer.
 #' @export
-geom_splat_3d <- function(mapping = NULL, data = NULL, ..., sh_degree = NULL,
+geom_splat_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ..., sh_degree = NULL,
                           show.legend = NA, inherit.aes = TRUE) {
   if (!is.null(sh_degree) && (!is.numeric(sh_degree) || length(sh_degree) != 1L ||
       !is.finite(sh_degree) || !sh_degree %in% 0:3))
     stop("sh_degree must be NULL or an integer from 0 to 3.", call. = FALSE)
-  make_layer_3d(GeomSplat3D, mapping, data, "identity", "identity",
+  make_layer_3d(GeomSplat3D, mapping, data, stat, position,
     c(list(sh_degree = sh_degree), list(...)), show.legend, inherit.aes)
 }
 

@@ -136,6 +136,10 @@ device_text_metrics_3d <- function(packet) {
 # at 3e4, 7.8 s at 5e4 and 31 s at 1e5, against 0.3 to 0.5 s raster.
 vector_marker_limit_3d <- function(packet) {
   limit <- getOption("ggplot3d.vector_markers", 50000)
+  if (!is.numeric(limit) || length(limit) != 1L || is.na(limit) || limit < 0 ||
+      (is.finite(limit) && limit != trunc(limit))) {
+    stop("option ggplot3d.vector_markers must be a nonnegative whole number or Inf.", call. = FALSE)
+  }
   n <- length(packet$markers$offset)
   if (n > limit) stop(sprintf(paste0(
     "The vector backend draws at most %s markers per panel and this panel has %s. ",

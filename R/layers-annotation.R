@@ -124,14 +124,8 @@ annotate_3d <- function(geom, x = NULL, y = NULL, z = NULL, xmin = NULL, xmax = 
 }
 
 annotation_geom_3d <- function(geom) {
-  if (is.character(geom) && length(geom) == 1L && !is.na(geom)) {
-    classes <- ls(.emitters_3d)
-    names <- tolower(sub("3D$", "", sub("^Geom", "", classes)))
-    index <- match(tolower(gsub("_", "", geom, fixed = TRUE)), names)
-    if (is.na(index)) stop("No 3D emitter registered for geom '", geom, "'.", call. = FALSE)
-    geom <- .emitters_3d[[classes[[index]]]]$geom
-  }
-  if (!inherits(geom, "Geom") || is.null(find_emitter_3d(geom))) {
+  geom <- resolve_layer_component_3d(geom, "geom")
+  if (is.null(find_emitter_3d(geom))) {
     stop("geom must be a registered geom name or prototype.", call. = FALSE)
   }
   geom

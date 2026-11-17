@@ -133,15 +133,15 @@ test_that("tube radius, fill and twist follow the points", {
   expect_error(sweep_data(ggplot2::ggplot(path, ggplot2::aes(x, y, z = z, radius = r)) + geom_tube_3d()), "nonnegative")
 })
 
-test_that("ribbons lie along their normal and twist about the curve", {
+test_that("strips lie along their normal and twist about the curve", {
   u <- seq(0, 2 * pi, length.out = 49)[-49]
   circle <- data.frame(x = cos(u), y = sin(u), z = 0)
-  flat <- sweep_data(ggplot2::ggplot(circle, ggplot2::aes(x, y, z = z)) + geom_ribbon_3d(width = 0.4, closed = TRUE))
+  flat <- sweep_data(ggplot2::ggplot(circle, ggplot2::aes(x, y, z = z)) + geom_strip_3d(width = 0.4, closed = TRUE))
   expect_equal(unique(flat$z), 0)
   expect_equal(range(sqrt(flat$x^2 + flat$y^2)), c(0.8, 1.2), tolerance = 1e-9)
   expect_true(all(abs(flat$nz) > 1 - 1e-9))
   line <- data.frame(x = 0:4, y = 0, z = 0, a = c(0, 0, 0, 0, 90))
-  twisted <- sweep_data(ggplot2::ggplot(line, ggplot2::aes(x, y, z = z, twist = a)) + geom_ribbon_3d(width = 2))
+  twisted <- sweep_data(ggplot2::ggplot(line, ggplot2::aes(x, y, z = z, twist = a)) + geom_strip_3d(width = 2))
   last <- twisted[twisted$x == 4, ]
   expect_equal(sort(unique(round(abs(last$y), 9))), 0)
   expect_equal(sort(unique(round(abs(last$z), 9))), 1)
@@ -248,10 +248,10 @@ test_that("millimetre tubes are swept at draw time with their on-screen radius",
   expect_identical(again$vertices, small$resolved$vertices)
 })
 
-test_that("millimetre ribbons take their width on the page", {
+test_that("millimetre strips take their width on the page", {
   d <- data.frame(x = c(0.1, 0.5, 0.9), y = c(0.3, 0.5, 0.3), z = 0.5)
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
-    geom_ribbon_3d(width = 4, width.unit = "mm") +
+    geom_strip_3d(width = 4, width.unit = "mm") +
     ggplot2::lims(x = c(0, 1), y = c(0, 1)) + zlim(0, 1) +
     coord_3d(expand = FALSE, elevation = 90, azimuth = -90, aspect = c(1, 3, 1))
   s <- integration_packets(p)

@@ -97,10 +97,7 @@ raster_colours_3d <- function(packet, prepared, light, edl = 0) {
 # Worker threads of the tiled rasteriser: option `ggplot3d.threads`, 0 for one
 # per hardware thread, at most two under R CMD check's core limit.
 raster_threads_3d <- function() {
-  threads <- getOption("ggplot3d.threads", 0L)
-  scene_assert(is.numeric(threads) && length(threads) == 1L && is.finite(threads) &&
-                 threads >= 0 && threads == trunc(threads),
-               "option ggplot3d.threads must be a nonnegative integer")
+  threads <- check_integer_3d(getOption("ggplot3d.threads", 0L), "option ggplot3d.threads")
   limit <- tolower(Sys.getenv("_R_CHECK_LIMIT_CORES_", ""))
   if (nzchar(limit) && limit != "false") threads <- if (threads == 0) 2L else min(threads, 2L)
   as.integer(threads)

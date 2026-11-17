@@ -7,6 +7,8 @@
 geom_splat_3d(
   mapping = NULL,
   data = NULL,
+  stat = "identity",
+  position = "identity",
   ...,
   sh_degree = NULL,
   show.legend = NA,
@@ -14,7 +16,7 @@ geom_splat_3d(
 )
 }
 \arguments{
-\item{mapping, data, ..., show.legend, inherit.aes}{As in \code{\link[=geom_point_3d]{geom_point_3d()}}.}
+\item{mapping, data, stat, position, ..., show.legend, inherit.aes}{As in \code{\link[=geom_point_3d]{geom_point_3d()}}.}
 
 \item{sh_degree}{Maximum spherical-harmonic degree, from 0 to 3. \code{NULL}
 uses all available coefficients.}

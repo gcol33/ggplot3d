@@ -15,7 +15,7 @@ GeomBand3D <- ggplot2::ggproto("GeomBand3D", ggplot2::Geom,
 #' Draw a three-dimensional ribbon or wall
 #' @param mapping,data,stat,position,...,na.rm,show.legend,inherit.aes Standard layer arguments.
 #' @param shade Whether to apply lighting.
-#' @details Map x/y and zmin/zmax for a vertical wall, or map both
+#' @details Map `x`, `y`, `zmin` and `zmax` for an interval band, or map both
 #'   x/y/z and xend/yend/zend boundaries for a general ruled band.
 #'   Input order is retained within groups. Missing endpoints break the band.
 #' @return A ggplot2 layer.

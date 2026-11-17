@@ -51,7 +51,7 @@ objects <- ggplot() +
     y = .5, z = c(-.4, -.4, .4, .4)), aes(x, y, z = z), fill = "#607D8B", colour = NA) +
   xlim(-1.4, 1.4) + ylim(-.6, .6) + scale_z_continuous(limits = c(-.6, .6))
 objects + coord_3d(azimuth = -70, elevation = 20, zoom = 1.5, clip = "off", aspect = c(2.8, 1.2, 1.2),
-  light = light_3d(light_directional(intensity = 1), ambient = .3),
+  light = light_3d(light_directional_3d(intensity = 1), ambient = .3),
   backend = backend_3d("pathtrace", dpi = 96, samples = 64, bounces = 8))
 ```
 
@@ -72,7 +72,7 @@ environment <- array(.15, c(8, 16, 3))
 environment[2:4, 4:6, 1] <- 4
 environment[2:4, 4:6, 2] <- 3
 environment[2:4, 4:6, 3] <- 2
-lighting <- light_3d(light_environment(environment, rotation = 30), ambient = 0)
+lighting <- light_3d(light_environment_3d(environment, rotation = 30), ambient = 0)
 objects + coord_3d(azimuth = -70, elevation = 20, zoom = 1.5, clip = "off", aspect = c(2.8, 1.2, 1.2), light = lighting,
   backend = backend_3d("pathtrace", dpi = 96, samples = 64, bounces = 8,
     exposure = .5, tone = "agx"))
@@ -114,7 +114,7 @@ field <- expand.grid(x = axis, y = axis, z = axis)
 field$value <- with(field, exp(-3 * (x^2 + y^2 + z^2)))
 ggplot(field, aes(x, y, z = z, value = value)) +
   geom_volume_3d(opacity = c(0, 2), colours = c("#88AABB", "#DDEEFF"), g = .2) +
-  coord_3d(light = light_3d(light_directional(intensity = 1), ambient = .2),
+  coord_3d(light = light_3d(light_directional_3d(intensity = 1), ambient = .2),
     backend = backend_3d("pathtrace", dpi = 48, samples = 16, bounces = 4))
 ```
 

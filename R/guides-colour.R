@@ -7,6 +7,13 @@
 #' differ: colours are evaluated at the position axis's original data values.
 #' With `along = NULL` it is an ordinary legend-box colourbar
 #' ([ggplot2::guide_colourbar()]).
+#' An axis-mounted bar accepts `title`, `reverse`, `alpha`, `theme`, `order`
+#' and `available_aes` from [ggplot2::guide_colourbar()]. The default title
+#' is inherited from the position axis; an explicit title overrides it.
+#' `reverse` reverses colours along the axis, retaining the axis's ticks and
+#' labels. `theme` supplies axis theme overrides. Other arguments require
+#' `along = NULL`. The American spellings `guide_colorbar_3d()` and
+#' `guide_colorsteps_3d()` use the same implementations.
 #'
 #' `guide_coloursteps_3d()` and `guide_bins_3d()` are
 #' [ggplot2::guide_coloursteps()] and [ggplot2::guide_bins()] with shading;
@@ -57,22 +64,41 @@
 guide_colourbar_3d <- function(along = "z", width = grid::unit(2, "mm"),
                                 gap = grid::unit(0.5, "mm"), nbin = 128L, shading_range = FALSE, ...) {
   shading_range <- shading_range_spec_3d(shading_range)
+  nbin <- check_integer_3d(nbin, "nbin", min = 2)
   if (is.null(along)) {
     base <- ggplot2::guide_colourbar(nbin = nbin, ...)
     return(ggplot2::ggproto(NULL, GuideColourbarShaded3D,
       params = c(base$params, list(shading_range = shading_range, .key_context = NULL, .material = NULL))))
   }
-  along <- match.arg(along, c("x", "y", "z"))
+  along <- check_choice_3d(along, c("x", "y", "z"), "along")
+  dots <- list(...)
+  supported <- c("title", "reverse", "alpha", "theme", "order", "available_aes")
+  unknown <- setdiff(names(dots), supported)
+  if (length(unknown) || (length(dots) && (is.null(names(dots)) || any(!nzchar(names(dots)))))) {
+    stop("Unsupported axis-mounted guide_colourbar_3d arguments: ", paste(unknown, collapse = ", "),
+      ". Supported arguments are ", paste(supported, collapse = ", "), "; use along = NULL for a legend-box colourbar.", call. = FALSE)
+  }
+  base <- ggplot2::guide_colourbar(nbin = nbin, ...)
+  base$params$reverse <- check_flag_3d(base$params$reverse, "reverse")
+  if (!(is.numeric(base$params$alpha) || identical(base$params$alpha, NA)) || length(base$params$alpha) != 1L ||
+      (!is.na(base$params$alpha) && (!is.finite(base$params$alpha) || base$params$alpha < 0 || base$params$alpha > 1))) {
+    stop("alpha must be NA or a number between 0 and 1.", call. = FALSE)
+  }
+  base$params$order <- check_integer_3d(base$params$order, "order")
   for (value in list(width, gap)) {
     if (!grid::is.unit(value) || length(value) != 1L ||
         !grid::unitType(value) %in% c("mm", "cm", "inches", "points", "bigpts", "picas") ||
         !is.finite(as.numeric(value)) || as.numeric(value) < 0) stop("width and gap must be nonnegative physical grid units.", call. = FALSE)
   }
   if (as.numeric(width) == 0) stop("width must be positive.", call. = FALSE)
-  if (!is.numeric(nbin) || length(nbin) != 1L || !is.finite(nbin) || nbin < 2 || nbin != trunc(nbin)) stop("nbin must be an integer of at least two.", call. = FALSE)
   ggplot2::new_guide(along = along, width = width, gap = gap, nbin = as.integer(nbin), shading_range = shading_range,
-    available_aes = c("fill", "colour"), super = GuideColourbar3D)
+    title = base$params$title, reverse = base$params$reverse, alpha = base$params$alpha, theme = base$params$theme,
+    order = base$params$order, available_aes = base$available_aes, super = GuideColourbar3D)
 }
+
+#' @rdname guide_colourbar_3d
+#' @export
+guide_colorbar_3d <- guide_colourbar_3d
 
 # A shading_range argument as NULL (none) or the angles in degrees of the span
 # (NA for the default of the light's mode).
@@ -153,6 +179,10 @@ guide_coloursteps_3d <- function(..., shading_range = TRUE) {
     params = c(base$params, list(shading_range = shading_range_spec_3d(shading_range), .key_context = NULL, .material = NULL)))
 }
 
+#' @rdname guide_colourbar_3d
+#' @export
+guide_colorsteps_3d <- guide_coloursteps_3d
+
 GuideColoursteps3D <- ggplot2::ggproto("GuideColoursteps3D", ggplot2::GuideColoursteps,
   params = c(ggplot2::GuideColoursteps$params, list(shading_range = NULL, .key_context = NULL, .material = NULL)),
   get_layer_key = GuideColourbarShaded3D$get_layer_key,
@@ -182,7 +212,7 @@ mapping_expression_3d <- function(mapping) {
 
 GuideColourbar3D <- ggplot2::ggproto("GuideColourbar3D", ggplot2::Guide,
   params = c(ggplot2::Guide$params, list(along = "z", width = grid::unit(2, "mm"), gap = grid::unit(0.5, "mm"), nbin = 128L,
-    shading_range = NULL)),
+    shading_range = NULL, reverse = FALSE, alpha = NA_real_)),
   train = function(...) NULL,
   setup_panel_3d = function(self, panel_params, scale, aesthetic, mappings) {
     along <- self$params$along
@@ -218,8 +248,10 @@ GuideColourbar3D <- ggplot2::ggproto("GuideColourbar3D", ggplot2::Guide,
     x <- as.vector(t(cbind(inner[i, 1L], inner[j, 1L], outer[j, 1L], outer[i, 1L])))
     y <- as.vector(t(cbind(inner[i, 2L], inner[j, 2L], outer[j, 2L], outer[i, 2L])))
     middle <- (values[i] + values[j]) / 2
-    raw <- params[[along]]$get_transformation()$inverse(params$ranges[[along]][1L] + middle * diff(params$ranges[[along]]))
+    colour_middle <- if (self$params$reverse) sum(range(values)) - middle else middle
+    raw <- params[[along]]$get_transformation()$inverse(params$ranges[[along]][1L] + colour_middle * diff(params$ranges[[along]]))
     colours <- self$scale$map(self$scale$transform(raw))
+    if (!is.na(self$params$alpha)) colours <- scales::alpha(colours, self$params$alpha)
     light <- params$coord_params$light
     if (!is.null(self$params$shading_range) && !is.null(light)) {
       light <- panel_lights_3d(light, params)

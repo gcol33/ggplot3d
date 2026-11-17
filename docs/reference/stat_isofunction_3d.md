@@ -42,6 +42,7 @@ stat_isofunction_3d(
 geom_isofunction_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatIsofunction3D,
   position = "identity",
   ...,
   fun,
@@ -164,6 +165,12 @@ geom_isofunction_3d(
 - trace_steps:
 
   Maximum sphere-tracing steps per ray.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

@@ -92,7 +92,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/ggplot3d.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
@@ -661,6 +661,14 @@ through <code><a href="https://ggplot2.tidyverse.org/reference/labs.html" class=
 <p>When fill and height map the same expression, <a href="../reference/guide_colourbar_3d.html">guide_colourbar_3d()</a> can
 place the colourbar beside the z axis. The axis supplies the breaks,
 labels and title. Both mappings below use the column z.</p>
+<p>An explicit <code>title</code> overrides the axis title.
+<code>reverse = TRUE</code> reverses the colours along the axis while
+retaining its ticks and labels. Axis-mounted bars also accept
+<code>alpha</code>, axis <code>theme</code> overrides,
+<code>order</code> and <code>available_aes</code>; other ggplot2 guide
+settings require <code>along = NULL</code>. The American spellings
+<code><a href="../reference/guide_colourbar_3d.html">guide_colorbar_3d()</a></code> and <code><a href="../reference/guide_colourbar_3d.html">guide_colorsteps_3d()</a></code>
+are available.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"#DCEAF3"</span>, high <span class="op">=</span> <span class="st">"#2E6F9E"</span>,</span>
 <span>      guide <span class="op">=</span> <span class="fu"><a href="../reference/guide_colourbar_3d.html">guide_colourbar_3d</a></span><span class="op">(</span>along <span class="op">=</span> <span class="st">"z"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>

@@ -92,7 +92,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/ggplot3d.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="active nav-item dropdown">
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
@@ -202,6 +202,13 @@ covered in <a href="ggplot3d.html">Get started</a>. Continue with <a href="docum
 <p>The data describe a curved surface on a regular grid. The same layers
 and camera can be rendered with the vector, raster or hybrid
 backend.</p>
+<p><code><a href="../reference/backend_3d.html">backend_3d()</a></code> creates a validated backend configuration
+for <code><a href="../reference/coord_3d.html">coord_3d()</a></code>. <code><a href="../reference/animate_3d.html">animate_3d()</a></code> accepts the same
+object for raster and vector rendering and retains its settings. Its
+default is raster rendering with the animation’s <code>dpi</code> and
+<code>antialias</code> settings; the strings <code>"raster"</code> and
+<code>"vector"</code> create configurations through
+<code><a href="../reference/backend_3d.html">backend_3d()</a></code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span>, length.out <span class="op">=</span> <span class="fl">16</span><span class="op">)</span>,</span>
 <span>                 y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2</span>, <span class="fl">2</span>, length.out <span class="op">=</span> <span class="fl">16</span><span class="op">)</span><span class="op">)</span></span>

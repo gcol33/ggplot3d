@@ -25,6 +25,7 @@ stat_isocurve_3d(
 geom_isocurve_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatIsocurve3D,
   position = "identity",
   ...,
   fun1,
@@ -55,6 +56,10 @@ differ from data parameters; see \code{\link[=stat_function_3d]{stat_function_3d
 
 \item{refine}{Number of Newton steps per curve point; 0 keeps the
 intersection of the linear interpolants.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

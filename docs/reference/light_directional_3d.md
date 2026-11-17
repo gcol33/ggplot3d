@@ -17,31 +17,34 @@ three.js (`DirectionalLight`, `PointLight`, `HemisphereLight`).
 ## Usage
 
 ``` r
-light_environment(image, intensity = 1, rotation = 0, space = "data")
+light_environment_3d(image, intensity = 1, rotation = 0, space = "data")
 
-light_directional(
+light_directional_3d(
   direction = c(-1, 1, 2),
   space = "camera",
   colour = "white",
-  intensity = 0.65
+  intensity = 0.65,
+  color = colour
 )
 
-light_point(
+light_point_3d(
   position,
   space = "data",
   colour = "white",
   intensity = 1,
-  falloff = 2
+  falloff = 2,
+  color = colour
 )
 
-light_head(colour = "white", intensity = 0.65)
+light_head_3d(colour = "white", intensity = 0.65, color = colour)
 
-light_hemisphere(
+light_hemisphere_3d(
   sky = "white",
   ground = "grey30",
   direction = c(0, 0, 1),
   space = "data",
-  intensity = 0.35
+  intensity = 0.35,
+  color = sky
 )
 ```
 
@@ -73,6 +76,11 @@ light_hemisphere(
 
   Light colours.
 
+- color:
+
+  American spelling of `colour`; for a hemisphere light, an alias for
+  `sky`. Supply one spelling per colour.
+
 - position:
 
   Position of a point light.
@@ -88,21 +96,21 @@ A light for
 
 ## Details
 
-`light_directional()` shines along a fixed direction from infinitely far
-away. `light_point()` sits at a position and its contribution falls off
-as `intensity / d^falloff`, with `d` the distance in panel units (the
-box side is one, stretched by the camera aspect) and at least 0.001;
-`falloff = 2` is the inverse-square law, `falloff = 0` a constant. The
-falloff never depends on the other geometry in the panel. `light_head()`
-is a directional light that shines from the eye, like MATLAB's
-`camlight headlight`. `light_hemisphere()` adds an ambient term that
-blends from `ground` to `sky` as the normal turns from `-direction` to
-`direction` (three.js `HemisphereLight`). `light_environment()` supplies
-an equirectangular radiance map. The first row is the north pole;
-columns run around the up axis from positive x toward positive y.
-Rotation is in degrees about that axis. The path tracer samples the map
-by luminance and solid angle. Other backends use its
-solid-angle-weighted mean as ambient illumination.
+`light_directional_3d()` shines along a fixed direction from infinitely
+far away. `light_point_3d()` sits at a position and its contribution
+falls off as `intensity / d^falloff`, with `d` the distance in panel
+units (the box side is one, stretched by the camera aspect) and at least
+0.001; `falloff = 2` is the inverse-square law, `falloff = 0` a
+constant. The falloff never depends on the other geometry in the panel.
+`light_head_3d()` is a directional light that shines from the eye, like
+MATLAB's `camlight headlight`. `light_hemisphere_3d()` adds an ambient
+term that blends from `ground` to `sky` as the normal turns from
+`-direction` to `direction` (three.js `HemisphereLight`).
+`light_environment_3d()` supplies an equirectangular radiance map. The
+first row is the north pole; columns run around the up axis from
+positive x toward positive y. Rotation is in degrees about that axis.
+The path tracer samples the map by luminance and solid angle. Other
+backends use its solid-angle-weighted mean as ambient illumination.
 
 In `space = "camera"`, x points right, y up and z toward the viewer, and
 positions are relative to the camera target in panel units. In
@@ -122,5 +130,5 @@ pictures. SIGGRAPH '77, 192-198.
 ## Examples
 
 ``` r
-light_3d(light_directional(c(1, 1, 2)), light_point(c(0, 0, 3), falloff = 2))
+light_3d(light_directional_3d(c(1, 1, 2)), light_point_3d(c(0, 0, 3), falloff = 2))
 ```

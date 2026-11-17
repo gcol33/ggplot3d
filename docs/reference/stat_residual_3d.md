@@ -33,6 +33,7 @@ stat_residual_3d(
 geom_residual_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatResidual3D,
   position = "identity",
   ...,
   method = "loess",
@@ -84,6 +85,12 @@ geom_residual_3d(
 
   For a fitted model, a named list holding a value for each other
   predictor.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

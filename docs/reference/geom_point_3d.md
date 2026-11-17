@@ -134,6 +134,16 @@ local tangent plane. `angle` rotates within that plane. Camera-facing
 geometry is resolved for each panel at draw time in every static backend
 and follows camera movement in the HTML viewer.
 
+Fixed aesthetics accept ggplot2 aliases such as `color`, `pch`, `cex`,
+`lty`, `lwd`, `fg` and `bg`. Supply each aesthetic once: passing both
+`color` and `colour` is an error. Geom, stat and position strings accept
+ggplot2 names and package suffixes such as `"surface_3d"` and
+`"nudge_3d"`. Fixed-purpose reference annotations
+[`geom_refline_3d()`](https://gillescolling.com/ggplot3d/reference/geom_refline_3d.md)
+and
+[`geom_abline_3d()`](https://gillescolling.com/ggplot3d/reference/geom_refline_3d.md)
+use identity statistics and positioning.
+
 ## Examples
 
 ``` r

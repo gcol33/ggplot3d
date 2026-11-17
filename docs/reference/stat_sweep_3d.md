@@ -37,6 +37,7 @@ stat_sweep_3d(
 geom_sweep_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSweep3D,
   position = "identity",
   ...,
   profile,
@@ -83,7 +84,7 @@ geom_sweep_3d(
 
 - normal:
 
-  Direction the first cross section is oriented towards: the ribbon's
+  Direction the first cross section is oriented towards: the strip's
   surface normal, or the profile's first axis in stat_sweep_3d().
 
 - closed:
@@ -104,6 +105,12 @@ geom_sweep_3d(
 - n:
 
   Number of spline samples.
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

@@ -27,6 +27,7 @@ stat_slice_contour_3d(
 geom_slice_contour_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatSliceContour3D,
   position = "identity",
   ...,
   xslice = NULL,
@@ -58,6 +59,10 @@ grid dimension. For stat_density_slice_3d() the density grid resolution,
 which also sets the lattice.}
 
 \item{bins, binwidth, breaks}{Level controls in transformed z units. Explicit breaks take precedence.}
+
+\item{stat}{Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is \code{stat}, followed by
+\code{position} and \code{...}.}
 }
 \value{
 A ggplot2 layer.

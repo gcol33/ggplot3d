@@ -187,6 +187,7 @@ and <code>slice</code>.</p>
 <span><span class="fu">geom_slice_contour_3d</span><span class="op">(</span></span>
 <span>  mapping <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stat <span class="op">=</span> <span class="va">StatSliceContour3D</span>,</span>
 <span>  position <span class="op">=</span> <span class="st">"identity"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  xslice <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -233,6 +234,12 @@ which also sets the lattice.</p></dd>
 
 <dt id="arg-bins-binwidth-breaks">bins, binwidth, breaks<a class="anchor" aria-label="anchor" href="#arg-bins-binwidth-breaks"></a></dt>
 <dd><p>Level controls in transformed z units. Explicit breaks take precedence.</p></dd>
+
+
+<dt id="arg-stat">stat<a class="anchor" aria-label="anchor" href="#arg-stat"></a></dt>
+<dd><p>Geom constructors: the statistic to use, as a prototype or
+registered name. The third positional argument is <code>stat</code>, followed by
+<code>position</code> and <code>...</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

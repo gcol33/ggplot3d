@@ -1,12 +1,14 @@
 make_layer_3d <- function(geom, mapping, data, stat, position, params, show.legend, inherit.aes,
-                          constructor = ggplot2::layer) {
+                          constructor = ggplot2::layer, default_stat = NULL) {
+  geom <- resolve_layer_component_3d(geom, "geom")
+  stat <- resolve_layer_component_3d(stat, "stat")
+  position <- resolve_layer_component_3d(position, "position")
   entry <- find_emitter_3d(geom)
-  known <- c(scene_geom_3d(geom, entry)$aesthetics(), scene_geom_3d(geom, entry)$parameters(TRUE),
-             scene_geom_3d(geom, entry)$extra_params,
-             if (inherits(stat, "Stat")) stat$parameters(TRUE))
-  unknown <- setdiff(names(params), known)
-  if (length(unknown)) stop("Unknown 3D layer arguments: ", paste(unknown, collapse = ", "), call. = FALSE)
-  parent <- constructor(geom = scene_geom_3d(geom, entry), mapping = mapping, data = data,
+  if (is.null(entry)) stop("No 3D emitter registered for geom ", class(geom)[1L], ".", call. = FALSE)
+  entry$stat_adapter <- NULL
+  geom <- scene_geom_3d(geom, entry)
+  params <- layer_params_3d(params, geom, stat, default_stat)
+  parent <- constructor(geom = geom, mapping = mapping, data = data,
               stat = stat, position = position, params = params,
               show.legend = show.legend, inherit.aes = inherit.aes)
   ggplot2::ggproto(NULL, parent,
@@ -54,6 +56,13 @@ make_layer_3d <- function(geom, mapping, data, stat, position, params, show.lege
 #'   tangent plane. `angle` rotates within that plane. Camera-facing geometry
 #'   is resolved for each panel at draw time in every static backend and
 #'   follows camera movement in the HTML viewer.
+#'
+#'   Fixed aesthetics accept ggplot2 aliases such as `color`, `pch`, `cex`,
+#'   `lty`, `lwd`, `fg` and `bg`. Supply each aesthetic once: passing both
+#'   `color` and `colour` is an error. Geom, stat and position strings accept
+#'   ggplot2 names and package suffixes such as `"surface_3d"` and
+#'   `"nudge_3d"`. Fixed-purpose reference annotations [geom_refline_3d()]
+#'   and [geom_abline_3d()] use identity statistics and positioning.
 #' @return A ggplot2 layer emitting unprojected scene geometry.
 #' @examples
 #' d <- data.frame(x = 1:3, y = c(1, 3, 2), z = c(1, 2, 4),
@@ -120,6 +129,9 @@ geom_polygon_3d <- function(mapping = NULL, data = NULL, stat = "identity", posi
 #'   `clip_planes`, a list of [clip_plane_3d()] planes that replaces the
 #'   coordinate system's planes for this layer, or `cast_shadow = FALSE`,
 #'   which keeps the layer out of the shadows of [shadow_3d()].
+#'   Aesthetic aliases follow [geom_point_3d()]; supplying both spellings is
+#'   an error. Crossbar `middle.color`/`middle.colour` and
+#'   `box.color`/`box.colour` arguments retain their explicit pairs.
 #' @param occlusion `"depth"` (default) sorts the layer into the scene by
 #'   depth; `"overlay"` draws it over the scene.
 #' @param shade Whether to shade faces.
@@ -138,15 +150,14 @@ layer_3d <- function(layer, mapping = NULL, ..., occlusion = "depth", shade = FA
   result$mapping <- layer$mapping %or3d% ggplot2::aes()
   for (name in names(mapping)) result$mapping[[name]] <- mapping[[name]]
   params <- list(...)
-  known <- c(result$geom$aesthetics(), result$geom$parameters(TRUE), layer$stat$parameters(TRUE))
-  unknown <- setdiff(names(params), known)
-  if (length(unknown)) stop("Unknown layer_3d arguments: ", paste(unknown, collapse = ", "), call. = FALSE)
+  params <- layer_params_3d(c(params, list(occlusion = occlusion, shade = shade, hidden = hidden)),
+    result$geom, result$stat)
   for (name in names(params)) {
     if (name %in% result$geom$aesthetics()) result$aes_params[[name]] <- params[[name]]
-    else result$geom_params[[name]] <- params[[name]]
+    else {
+      if (name %in% result$stat$parameters(TRUE)) result$stat_params[[name]] <- params[[name]]
+      if (name %in% c(result$geom$parameters(TRUE), result$geom$extra_params)) result$geom_params[[name]] <- params[[name]]
+    }
   }
-  result$geom_params$occlusion <- match.arg(occlusion, c("depth", "overlay"))
-  result$geom_params$shade <- shade
-  result$geom_params$hidden <- match.arg(hidden, c("hide", "dashed", "show"))
   result
 }

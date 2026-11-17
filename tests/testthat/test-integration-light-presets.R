@@ -17,17 +17,17 @@ test_that("the shade and contrast presets reproduce matplotlib's and ggcube's sh
 
 test_that("multiply works on encoded values with linear = FALSE, capped at full light", {
   fill <- "#2E6F9E"
-  light <- light_3d(light_directional(intensity = 0.8), ambient = 0.8, mode = "multiply", linear = FALSE)
+  light <- light_3d(light_directional_3d(intensity = 0.8), ambient = 0.8, mode = "multiply", linear = FALSE)
   lit <- shade_swatch_3d(fill, c(0, 0.5, 1), light, preset_camera())
   expect_channels(encoded_channels(lit[1L, 1L]), encoded_channels(fill) * 0.8)
   expect_channels(encoded_channels(lit[1L, 2L]), encoded_channels(fill))
   expect_equal(lit[1L, 3L], lit[1L, 2L])
-  linear <- shade_swatch_3d(fill, 0, light_3d(light_directional(intensity = 0.8), ambient = 0.8, mode = "multiply"), preset_camera())
+  linear <- shade_swatch_3d(fill, 0, light_3d(light_directional_3d(intensity = 0.8), ambient = 0.8, mode = "multiply"), preset_camera())
   expect_gt(sum(encoded_channels(linear[1L, 1L])), sum(encoded_channels(lit[1L, 1L])))
 })
 
 test_that("a coloured ambient light tints in its own channels", {
-  light <- light_3d(light_directional(intensity = 0), ambient = "red", mode = "multiply")
+  light <- light_3d(light_directional_3d(intensity = 0), ambient = "red", mode = "multiply")
   expect_equal(light$ambient, c(1, 0, 0))
   lit <- shade_swatch_3d("white", 0, light, preset_camera())
   expect_equal(lit[1L, 1L], "#FF0000")
@@ -51,7 +51,7 @@ test_that("presets set their lighting and explicit arguments replace it", {
   expect_false(rgl$linear)
   expect_identical(rgl$material$lighting, "vertex")
   expect_equal(rgl$material$shininess, 50)
-  own <- light_3d(light_head(), preset = "headlight", ambient = 0.1, material = material_3d("satin"))
+  own <- light_3d(light_head_3d(), preset = "headlight", ambient = 0.1, material = material_3d("satin"))
   expect_equal(own$lights[[1L]]$kind, light_kinds_3d[["head"]])
   expect_equal(own$ambient, rep(0.1, 3L))
   expect_identical(own$material$lighting, "pixel")
@@ -84,7 +84,7 @@ test_that("vertex lighting bakes the lit corner colours into the packet", {
       material = material_3d(specular = 1, shininess = 50, lighting = "vertex")) + coord_3d())$packet
   viewport <- new_scene_viewport(80, 80, dpi = 100)
   camera <- scene_compile(new_scene_packet(), new_camera_3d(), viewport)$camera
-  light <- light_3d(light_directional(c(0, sinpi(15 / 180), cospi(15 / 180)), intensity = 1), ambient = 0, mode = "multiply")
+  light <- light_3d(light_directional_3d(c(0, sinpi(15 / 180), cospi(15 / 180)), intensity = 1), ambient = 0, mode = "multiply")
   lit <- vertex_lit_packet_3d(packet, camera, light)
   expect_false(any(lit$styles$shade %in% TRUE))
   rgb <- cbind(lit$corners$red, lit$corners$green, lit$corners$blue)

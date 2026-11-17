@@ -96,7 +96,7 @@ test_that("lit smooth faces vary across a face in raster and vector output", {
   packet <- smooth_triangle_packet(rgb = NULL, normals = normals)
   packet$styles$shade <- TRUE
   viewport <- new_scene_viewport(40, 40, dpi = 40 * 25.4 / 40)
-  light <- light_3d(light_directional(c(1, 0, 1), space = "data"), mode = "multiply")
+  light <- light_3d(light_directional_3d(c(1, 0, 1), space = "data"), mode = "multiply")
   result <- raster_scene_3d(packet, top_camera(), viewport, 1L, light = light)
   values <- unique(as.integer(result$image))
   expect_gt(length(values), 20L)

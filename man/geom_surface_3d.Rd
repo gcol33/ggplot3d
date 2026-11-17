@@ -44,9 +44,10 @@ stat_surface_3d(
 \arguments{
 \item{mapping, data, stat, position, ..., na.rm, show.legend, inherit.aes}{Standard ggplot2 layer arguments.}
 
-\item{method}{Grid connectivity or Delaunay triangulation.}
+\item{method}{\code{"grid"} connectivity or \code{"delaunay"} triangulation.}
 
-\item{max_edge}{Maximum triangle edge length in transformed x/y units.}
+\item{max_edge}{One positive number, allowing \code{Inf} (default), for the
+maximum triangle edge length in transformed x/y units.}
 
 \item{shade}{Whether to apply lighting.}
 

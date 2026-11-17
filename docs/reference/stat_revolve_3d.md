@@ -32,6 +32,7 @@ stat_revolve_3d(
 geom_revolve_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatRevolve3D,
   position = "identity",
   ...,
   axis = c("z", "x", "y"),
@@ -75,6 +76,12 @@ geom_revolve_3d(
 
   Position of the axis in the other two coordinates, in the cyclic order
   (x, y), (y, z) or (z, x).
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

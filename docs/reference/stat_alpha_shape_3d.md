@@ -29,6 +29,7 @@ stat_alpha_shape_3d(
 geom_alpha_shape_3d(
   mapping = NULL,
   data = NULL,
+  stat = StatAlphaShape3D,
   position = "identity",
   ...,
   radius = NULL,
@@ -54,6 +55,12 @@ geom_alpha_shape_3d(
   uses the smallest radius at which the tetrahedra of the complex touch
   every point. (The argument is not called `alpha` because that name
   sets opacity.)
+
+- stat:
+
+  Geom constructors: the statistic to use, as a prototype or registered
+  name. The third positional argument is `stat`, followed by `position`
+  and `...`.
 
 ## Value
 

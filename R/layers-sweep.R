@@ -1,6 +1,6 @@
-#' Tubes and ribbons along curves
+#' Tubes and strips along curves
 #'
-#' Sweeps a circle (tubes) or a line segment (ribbons) along each group's
+#' Sweeps a circle (tubes) or a line segment (strips) along each group's
 #' path in the order of the rows, in transformed position units. The cross
 #' section lies in the plane of a rotation-minimising frame, computed by the
 #' double reflection method of Wang et al. (2008), so it does not spin about
@@ -17,12 +17,12 @@
 #' A segment takes the colour of its first point. Translucent tubes, and tubes
 #' with edges, are swept meshes with `sides` points on each cross section.
 #'
-#' The `radius` (tubes) or `width` (ribbons) aesthetic varies the cross section
+#' The `radius` (tubes) or `width` (strips) aesthetic varies the cross section
 #' per point, and `twist` turns it about the curve by that many degrees.
 #' Without either, the size is the `radius` or `width` parameter, by default
-#' 2% (tubes) or 8% (ribbons) of the diagonal of the position ranges. Tube
+#' 2% (tubes) or 8% (strips) of the diagonal of the position ranges. Tube
 #' ends are closed with hemispheres (`cap = "round"`) or disks (`"flat"`), or
-#' left open (`"none"`). A ribbon starts with its surface normal as close to
+#' left open (`"none"`). A strip starts with its surface normal as close to
 #' `normal` as the curve allows.
 #'
 #' Numeric aesthetics such as a continuous fill are taken at every point; on
@@ -34,23 +34,23 @@
 #' `z_mean`, the height of the curve point for tubes and the mean height of a
 #' face for other sweeps.
 #'
-#' With `radius.unit = "mm"` (`width.unit` for ribbons) the size is measured
+#' With `radius.unit = "mm"` (`width.unit` for strips) the size is measured
 #' on the page, like a line width: the cross section is swept when the plot is
 #' drawn, in the box the camera sees, so a tube is round on screen whatever
 #' the box proportions and has its radius in millimetres at the centre of the
 #' view, shrinking with distance under a perspective camera, as millimetre
 #' spheres of [geom_sphere_3d()] do. Sizes then default to 1 mm (tube radius)
-#' and 4 mm (ribbon width), and `z_mean` is the height of the curve point.
+#' and 4 mm (strip width), and `z_mean` is the height of the curve point.
 #' Millimetre sizes need the Euclidean coordinates of [coord_3d()].
 #' @inheritParams stat_function_3d
 #' @param sides Number of points on the tube's circle.
 #' @param radius,width Cross-section size where the aesthetic is not mapped.
 #' @param radius.unit Unit of the cross-section size: `"data"`
 #'   (transformed position units) or `"mm"` (millimetres on the page).
-#' @param width.unit Unit of ribbon width, with the same choices as `radius.unit`.
+#' @param width.unit Unit of strip width, with the same choices as `radius.unit`.
 #' @param cap End caps of a tube on an open curve: `"round"`, `"flat"` or `"none"`.
 #' @param normal Direction the first cross section is oriented towards: the
-#'   ribbon's surface normal, or the profile's first axis in stat_sweep_3d().
+#'   strip's surface normal, or the profile's first axis in stat_sweep_3d().
 #' @param closed Whether the path is a closed loop.
 #' @param spline NULL, or a [stat_spline_3d()] type to smooth the path first.
 #' @param n Number of spline samples.
@@ -72,25 +72,25 @@
 #' ggplot2::ggplot(knot, ggplot2::aes(x, y, z = z)) +
 #'   geom_tube_3d(radius = 0.3, closed = TRUE, spline = "catmull-rom", n = 100) + coord_3d()
 #' ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, twist = t * 20)) +
-#'   geom_ribbon_3d(width = 0.4) + coord_3d()
-geom_tube_3d <- function(mapping = NULL, data = NULL, position = "identity", ..., sides = 16L, radius = NULL,
+#'   geom_strip_3d(width = 0.4) + coord_3d()
+geom_tube_3d <- function(mapping = NULL, data = NULL, stat = StatSweep3D, position = "identity", ..., sides = 16L, radius = NULL,
                          radius.unit = "data", cap = c("round", "flat", "none"), closed = FALSE, spline = NULL, n = 100L,
                          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  make_layer_3d(GeomSweep3D, mapping, data, StatSweep3D, position,
+  make_layer_3d(GeomSweep3D, mapping, data, stat, position,
     stats_params_3d(list(sides = sides, radius = radius, radius.unit = check_choice_3d(radius.unit, c("data", "mm"), "radius.unit"),
       cap = match.arg(cap), closed = closed, spline = spline, n = n, na.rm = na.rm, shade = TRUE), list(...)),
-    show.legend, inherit.aes)
+    show.legend, inherit.aes, default_stat = StatSweep3D)
 }
 
 #' @rdname geom_tube_3d
 #' @export
-geom_ribbon_3d <- function(mapping = NULL, data = NULL, position = "identity", ..., width = NULL,
+geom_strip_3d <- function(mapping = NULL, data = NULL, stat = StatSweep3D, position = "identity", ..., width = NULL,
                            width.unit = "data", normal = c(0, 0, 1), closed = FALSE, spline = NULL, n = 100L,
                            na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
-  make_layer_3d(GeomSweep3D, mapping, data, StatSweep3D, position,
+  make_layer_3d(GeomSweep3D, mapping, data, stat, position,
     stats_params_3d(list(profile = rbind(c(0, -0.5), c(0, 0.5)), width = width,
       radius.unit = check_choice_3d(width.unit, c("data", "mm"), "width.unit"), normal = normal, closed = closed,
-      spline = spline, n = n, cap = "none", na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes)
+      spline = spline, n = n, cap = "none", na.rm = na.rm, shade = TRUE), list(...)), show.legend, inherit.aes, default_stat = StatSweep3D)
 }
 
 #' Sweep a profile along a curve

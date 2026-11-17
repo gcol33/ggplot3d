@@ -5,9 +5,9 @@ panel_light_surface <- function() {
 }
 
 panel_light_conditions <- function() list(
-  left = light_3d(light_directional(c(-1, 1, 2), space = "camera"),
-    light_hemisphere(intensity = 0.1), ambient = 0.2),
-  right = light_3d(light_point(c(2, 2, 7), space = "data", falloff = 0), ambient = 0.3),
+  left = light_3d(light_directional_3d(c(-1, 1, 2), space = "camera"),
+    light_hemisphere_3d(intensity = 0.1), ambient = 0.2),
+  right = light_3d(light_point_3d(c(2, 2, 7), space = "data", falloff = 0), ambient = 0.3),
   unlit = NULL)
 
 test_that("crossed camera and lighting conditions retain stable keys and shared data", {
@@ -79,7 +79,7 @@ test_that("each panel matches its standalone vector and raster shading", {
 })
 
 test_that("the guide reference binds data-space point lights to its panel ranges", {
-  point <- light_3d(light_point(c(2, 2, 7), space = "data", falloff = 2))
+  point <- light_3d(light_point_3d(c(2, 2, 7), space = "data", falloff = 2))
   p <- panel_light_surface() + coord_3d() + facet_views_3d(NULL, lights = list(point = point))
   layout <- ggplot2::ggplot_build(p)$layout
   panel <- layout$panel_params[[1L]]

@@ -51,9 +51,9 @@ test_that("pathtrace composes a panel with vector furniture and text", {
   grid::grid.force()
   expect_equal(grid::grid.get("scene-pathtrace-3d")$raster_result$samples,2L)
   grDevices::dev.off();unlink(path)
-  expect_error(backend_3d("pathtrace",samples=0),"positive")
-  expect_error(backend_3d("pathtrace",seed=-1),"nonnegative")
-  expect_error(backend_3d("pathtrace",aperture=-1),"non-negative")
+  expect_error(backend_3d("pathtrace",samples=0),"samples.*representable integer")
+  expect_error(backend_3d("pathtrace",seed=-1),"seed.*representable integer")
+  expect_error(backend_3d("pathtrace",aperture=-1),"aperture.*nonnegative")
 })
 
 test_that("diffuse paths transfer colour between surfaces", {

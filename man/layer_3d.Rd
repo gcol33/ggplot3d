@@ -21,7 +21,10 @@ layer_3d(
 \item{...}{Fixed aesthetics and rendering parameters, such as
 \code{clip_planes}, a list of \code{\link[=clip_plane_3d]{clip_plane_3d()}} planes that replaces the
 coordinate system's planes for this layer, or \code{cast_shadow = FALSE},
-which keeps the layer out of the shadows of \code{\link[=shadow_3d]{shadow_3d()}}.}
+which keeps the layer out of the shadows of \code{\link[=shadow_3d]{shadow_3d()}}.
+Aesthetic aliases follow \code{\link[=geom_point_3d]{geom_point_3d()}}; supplying both spellings is
+an error. Crossbar \code{middle.color}/\code{middle.colour} and
+\code{box.color}/\code{box.colour} arguments retain their explicit pairs.}
 
 \item{occlusion}{\code{"depth"} (default) sorts the layer into the scene by
 depth; \code{"overlay"} draws it over the scene.}
