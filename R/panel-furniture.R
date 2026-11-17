@@ -127,10 +127,18 @@ frame_in_front_3d <- function(frame, camera, basis) {
   all(eye[, 3L] > 0)
 }
 
-frame_coordinates_3d <- function(xyz, camera, basis) {
+# A parallel projection has no eye plane. Under perspective, points at or
+# behind the eye either stop the drawing or, with behind = "na", get NA
+# screen positions.
+frame_coordinates_3d <- function(xyz, camera, basis, behind = c("error", "na")) {
   coordinates <- frame_eye_coordinates_3d(xyz, camera, basis)
-  if (any(coordinates[, 3L] <= 0)) stop("The projected box crosses the eye plane; use a greater camera distance.", call. = FALSE)
-  if (basis$perspective) coordinates[, 1:2] <- coordinates[, 1:2] / coordinates[, 3L]
+  if (!basis$perspective) return(coordinates)
+  behind_eye <- coordinates[, 3L] <= 0
+  if (any(behind_eye)) {
+    if (match.arg(behind) == "error") stop("The projected box crosses the eye plane; use a greater camera distance.", call. = FALSE)
+    coordinates[behind_eye, 1:2] <- NA_real_
+  }
+  coordinates[, 1:2] <- coordinates[, 1:2] / coordinates[, 3L]
   coordinates
 }
 
@@ -143,8 +151,8 @@ sight_ray_line_3d <- function(xyz, camera, basis) {
   max(spread) <= 64 * .Machine$double.eps * max(1, abs(eye))^2
 }
 
-frame_positions_3d <- function(xyz, camera, basis) {
-  coordinates <- frame_coordinates_3d(xyz, camera, basis)
+frame_positions_3d <- function(xyz, camera, basis, behind = "error") {
+  coordinates <- frame_coordinates_3d(xyz, camera, basis, behind)
   coordinates[, 1L] <- 0.5 + coordinates[, 1L] * basis$base * camera$zoom / (2 * basis$ratio)
   coordinates[, 2L] <- 0.5 + coordinates[, 2L] * basis$base * camera$zoom / 2
   coordinates
@@ -1296,11 +1304,11 @@ axis_label_priority_3d <- function(n) {
 thin_labels_of_3d <- function(guide) !isTRUE(guide$discrete) || isTRUE(guide$params$check.overlap)
 
 # Model points to millimetres in the outer panel viewport, and depth.
-furniture_projector_3d <- function(furniture) {
+furniture_projector_3d <- function(furniture, behind = "error") {
   fit <- furniture$overlay$fit
   basis <- frame_basis_3d(furniture$camera, fit$viewport)
   function(xyz) {
-    points <- frame_positions_3d(xyz, furniture$camera, basis)
+    points <- frame_positions_3d(xyz, furniture$camera, basis, behind)
     cbind(points[, 1L] * fit$viewport$width_mm + fit$origin[1L],
           points[, 2L] * fit$viewport$height_mm + fit$origin[2L], points[, 3L])
   }

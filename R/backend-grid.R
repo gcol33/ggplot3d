@@ -57,7 +57,7 @@ makeContent.scene_panel_grob <- function(x) {
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
   visible_frame <- frame_in_front_3d(furniture$overlay$frame %or3d% FrameBox, furniture$camera,
     frame_basis_3d(furniture$camera, furniture$viewport))
-  obstacles <- if (visible_frame) guide_obstacles_3d(x$packets, furniture_projector_3d(furniture)) else matrix(numeric(), 0L, 4L)
+  obstacles <- if (visible_frame) guide_obstacles_3d(x$packets, furniture_projector_3d(furniture, behind = "na")) else matrix(numeric(), 0L, 4L)
   furniture$packet <- clear_guide_text_3d(furniture$packet, furniture_projector_3d(furniture), obstacles)
   if (!is.null(furniture$split)) furniture$split <- lapply(furniture$split,
     clear_guide_text_3d, project = furniture_projector_3d(furniture), obstacles = obstacles)

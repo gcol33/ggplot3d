@@ -373,6 +373,25 @@ test_that("view framing reports a box intersecting the eye plane", {
   expect_error(frame_camera_3d(camera, new_scene_viewport(100, 100), "azimuth"), "eye plane")
 })
 
+test_that("geometry beyond the box projects in parallel views and drops behind a perspective eye", {
+  basis <- list(perspective = FALSE, scale = c(1, 1, 1), basis = diag(3)[, 1:2],
+    forward = c(0, 0, 1), radius = sqrt(3) / 2)
+  camera <- list(target = c(0.5, 0.5, 0.5))
+  far <- rbind(c(0.5, 0.5, -5), c(5, 5, 3))
+  expect_true(all(is.finite(frame_coordinates_3d(far, camera, basis))))
+  basis$perspective <- TRUE; basis$distance <- 2
+  expect_error(frame_coordinates_3d(far, camera, basis), "eye plane")
+  eye <- frame_coordinates_3d(far, camera, basis, behind = "na")
+  expect_true(all(is.na(eye[1L, 1:2])))
+  expect_true(all(is.finite(eye[2L, ])))
+  p <- ggplot2::ggplot() + stat_tiling_3d(schlafli = c(7, 3), radius = 2) +
+    coord_3d(axes = character(), panes = character(), box = "none")
+  path <- withr::local_tempfile(fileext = ".png")
+  grDevices::png(path)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_no_error(suppressMessages(print(p)))
+})
+
 test_that("thinned label rectangles are disjoint and unthinned labels are all kept", {
   locations <- cbind(seq(10, 50, length.out = 9), rep(20, 9))
   size <- cbind(rep(12, 9), rep(3, 9))
