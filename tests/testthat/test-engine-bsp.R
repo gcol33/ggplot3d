@@ -364,7 +364,9 @@ test_that("the compiled scene does not depend on the thread count", {
   options(ggplot3d.threads = 3L)
   expect_identical(engine_compile(packet, camera), serial)
   options(ggplot3d.threads = 0)
-  expect_error(engine_compile(packet, camera), "positive whole number")
+  expect_identical(engine_compile(packet, camera), serial)
+  options(ggplot3d.threads = -1)
+  expect_error(engine_compile(packet, camera), "nonnegative integer")
   view <- ggplot3d:::new_scene_viewport(100,100)
   attr(view,"engine_threads") <- 1.5
   expect_error(ggplot3d:::scene_compile_cpp(packet[names(packet)!="styles"], camera, view),

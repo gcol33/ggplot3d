@@ -212,7 +212,7 @@ reproducible example, the rendering backend, and `sessionInfo()`.
 
 ## Contributing
 
-See [Contributing](CONTRIBUTING.md) for development setup and
+See [Contributing](https://github.com/gcol33/ggplot3d/blob/main/CONTRIBUTING.md) for development setup and
 documentation checks.
 
 ## Support
@@ -234,7 +234,7 @@ R’s grid graphics system.
 
 ## License
 
-MIT, see [LICENSE.md](LICENSE.md).
+MIT, see [LICENSE.md](https://github.com/gcol33/ggplot3d/blob/main/LICENSE.md).
 
 ## Citation
 

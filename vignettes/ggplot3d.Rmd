@@ -47,7 +47,7 @@ p <- ggplot(observations, aes(east, north, z = height)) +
 p
 ```
 
-The z axis labels the height column. The camera projects these three positions onto the plotting page. Change its angles in [Choosing camera views](camera.html).
+The z axis labels the height column. The camera projects these three positions onto the plotting page. Change its angles in [Choosing camera views](https://gillescolling.com/ggplot3d/articles/camera.html).
 
 ## Adding a surface
 
@@ -64,7 +64,7 @@ p <- ggplot(surface, aes(east, north, z = height)) +
 p
 ```
 
-Grid neighbours form triangles. Surface pieces cover observations wherever they lie in front of them. [Choosing layers for observations and grids](layers.html) also shows columns and contours, and [Building surfaces and solids](surfaces-solids.html) shows meshes and statistical surfaces.
+Grid neighbours form triangles. Surface pieces cover observations wherever they lie in front of them. [Choosing layers for observations and grids](https://gillescolling.com/ggplot3d/articles/layers.html) also shows columns and contours, and [Building surfaces and solids](https://gillescolling.com/ggplot3d/articles/surfaces-solids.html) shows meshes and statistical surfaces.
 
 ## Reading another table
 
@@ -95,7 +95,7 @@ ggplot(surface, aes(east, north, z = height)) +
 
 ## Saving the plot
 
-The default backend draws vector geometry. The file extension selects the graphics device. Use the raster backend for a scene rendered into pixels; [Choosing rendering and image formats](backends.html) explains resolution and device requirements.
+The default backend draws vector geometry. The file extension selects the graphics device. Use the raster backend for a scene rendered into pixels; [Choosing rendering and image formats](https://gillescolling.com/ggplot3d/articles/backends.html) explains resolution and device requirements.
 
 ```{r save}
 path <- tempfile(fileext = ".pdf")
@@ -104,18 +104,18 @@ ggsave(path, p, width = 5, height = 4.5)
 
 ## Where next
 
-* [Preparing data for 3D layers](data-preparation.html): read coordinate tables, join attributes and check surface grids.
+* [Preparing data for 3D layers](https://gillescolling.com/ggplot3d/articles/data-preparation.html): read coordinate tables, join attributes and check surface grids.
 
-* [Choosing layers for observations and grids](layers.html): select geometry for your measurements.
+* [Choosing layers for observations and grids](https://gillescolling.com/ggplot3d/articles/layers.html): select geometry for your measurements.
 
-* [Scaling heights and facet ranges](z-scale.html): transform heights and control ranges across facets.
+* [Scaling heights and facet ranges](https://gillescolling.com/ggplot3d/articles/z-scale.html): transform heights and control ranges across facets.
 
-* [Styling axes, legends and panes](guides-themes.html): label the plot and adjust its panes.
+* [Styling axes, legends and panes](https://gillescolling.com/ggplot3d/articles/guides-themes.html): label the plot and adjust its panes.
 
-* [Choosing camera views](camera.html): set the view and keep its bounds stable.
+* [Choosing camera views](https://gillescolling.com/ggplot3d/articles/camera.html): set the view and keep its bounds stable.
 
-* [Choosing rendering and image formats](backends.html): choose rendering and save an image.
+* [Choosing rendering and image formats](https://gillescolling.com/ggplot3d/articles/backends.html): choose rendering and save an image.
 
-* [How overlapping geometry is drawn](visibility.html): understand overlapping geometry.
+* [How overlapping geometry is drawn](https://gillescolling.com/ggplot3d/articles/visibility.html): understand overlapping geometry.
 
-The [article index](index.html) groups further guides by building plots, data types, appearance, output and sharing, scientific examples, mathematical examples, and internals and extensions.
+The [article index](https://gillescolling.com/ggplot3d/articles/index.html) groups further guides by building plots, data types, appearance, output and sharing, scientific examples, mathematical examples, and internals and extensions.

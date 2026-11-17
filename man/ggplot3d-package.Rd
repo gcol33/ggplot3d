@@ -12,10 +12,10 @@ Panel scenes resolve visibility across layers for vector and raster output.
 \section{Options}{
 
 \describe{
-\item{\code{ggplot3d.threads}}{Number of threads the scene compiler uses to
-find which pieces of a panel occlude each other. Defaults to every
-logical core, or 2 when \verb{_R_CHECK_LIMIT_CORES_} is set. The compiled
-scene is the same for every thread count.}
+\item{\code{ggplot3d.threads}}{Number of threads the scene compiler and the
+raster backend use. The default \code{0} uses every logical core; at most 2
+are used when \verb{_R_CHECK_LIMIT_CORES_} is set. The compiled scene is the
+same for every thread count.}
 \item{\code{ggplot3d.cache_bytes}}{Memory, in bytes, kept for recently compiled
 scenes, so that redrawing a plot at the same size and view skips the
 compiler. Defaults to 256 MiB; 0 turns the cache off.}
@@ -45,13 +45,15 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item The Manifold Authors (Bundled Manifold library) [copyright holder]
-  \item Angus Johnson (Bundled Clipper2 library) [copyright holder]
-  \item Jared Hoberock (Manifold utilities) [copyright holder]
-  \item Nathan Bell (Manifold utilities) [copyright holder]
-  \item Wenzel Jakob (Disjoint-set implementation) [copyright holder]
-  \item wi-re (Singular value decomposition) [copyright holder]
+  \item The Manifold Authors (Bundled Manifold library) [contributor, copyright holder]
+  \item Angus Johnson (Bundled Clipper2 library) [contributor, copyright holder]
+  \item Jared Hoberock (Manifold utilities) [contributor, copyright holder]
+  \item Nathan Bell (Manifold utilities) [contributor, copyright holder]
+  \item Wenzel Jakob (Disjoint-set implementation) [contributor, copyright holder]
+  \item wi-re (Singular value decomposition) [contributor, copyright holder]
   \item Sun Microsystems, Inc. (Mathematical functions) [copyright holder]
+  \item Antti Kuukka (Public-domain quickhull adapted in Manifold) [contributor]
+  \item Sterling Orsten (Public-domain linalg adapted in Manifold) [contributor]
 }
 
 }

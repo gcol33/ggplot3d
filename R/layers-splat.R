@@ -41,6 +41,7 @@ utils::globalVariables(c("splat_covariance_cpp", "splat_resolve_cpp", "splat_pro
 #' d$z <- with(d, 0.2 * cos(3 * x) * sin(3 * y))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, colour = z)) +
 #'   geom_splat_3d(size = 0.12) + coord_3d()
+#' @return A ggplot2 layer.
 #' @export
 geom_splat_3d <- function(mapping = NULL, data = NULL, ..., sh_degree = NULL,
                           show.legend = NA, inherit.aes = TRUE) {

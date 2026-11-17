@@ -5,10 +5,10 @@
 #'
 #' @section Options:
 #' \describe{
-#'   \item{`ggplot3d.threads`}{Number of threads the scene compiler uses to
-#'     find which pieces of a panel occlude each other. Defaults to every
-#'     logical core, or 2 when `_R_CHECK_LIMIT_CORES_` is set. The compiled
-#'     scene is the same for every thread count.}
+#'   \item{`ggplot3d.threads`}{Number of threads the scene compiler and the
+#'     raster backend use. The default `0` uses every logical core; at most 2
+#'     are used when `_R_CHECK_LIMIT_CORES_` is set. The compiled scene is the
+#'     same for every thread count.}
 #'   \item{`ggplot3d.cache_bytes`}{Memory, in bytes, kept for recently compiled
 #'     scenes, so that redrawing a plot at the same size and view skips the
 #'     compiler. Defaults to 256 MiB; 0 turns the cache off.}

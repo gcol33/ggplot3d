@@ -575,15 +575,8 @@ scene_layer_grob <- function(packet) {
 }
 
 engine_threads <- function() {
-  threads <- getOption("ggplot3d.threads")
-  if (!is.null(threads)) {
-    scene_assert(is.numeric(threads) && length(threads) == 1L && is.finite(threads) &&
-                   threads >= 1 && threads == round(threads),
-                 "option ggplot3d.threads must be a positive whole number")
-    return(as.integer(threads))
-  }
-  limit <- tolower(Sys.getenv("_R_CHECK_LIMIT_CORES_", ""))
-  if (nzchar(limit) && limit != "false") 2L else NULL
+  threads <- raster_threads_3d()
+  if (threads == 0L) NULL else threads
 }
 
 # With stable_partition = TRUE, cyclic overlaps are cut on planes chosen from

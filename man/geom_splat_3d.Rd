@@ -19,6 +19,9 @@ geom_splat_3d(
 \item{sh_degree}{Maximum spherical-harmonic degree, from 0 to 3. \code{NULL}
 uses all available coefficients.}
 }
+\value{
+A ggplot2 layer.
+}
 \description{
 Draw point clouds with Gaussian footprints, or render Gaussian captures
 read by \code{\link[=read_points_3d]{read_points_3d()}}. Each row is one Gaussian.
