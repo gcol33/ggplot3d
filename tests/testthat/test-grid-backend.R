@@ -63,11 +63,11 @@ test_that("sparse style tables receive transparent colour defaults", {
 test_that("masks use even-odd clipping and unsupported devices error", {
   grid_test_device({
     scene <- grid_test_scene()
-    scene$fragments$mask_offset[2] <- 1L
-    scene$fragments$mask_count[2] <- 4L
+    scene$fragments$mask_offset[1] <- 1L
+    scene$fragments$mask_count[1] <- 4L
     scene$masks <- list(x_npc = c(0, 1, 1, 0), y_npc = c(0, 0, 1, 1), ring = rep(1L, 4))
     result <- render_scene_grid(scene, scene$viewport)
-    expect_s3_class(result$children[[2]]$vp$clip, "GridClipPath")
+    expect_s3_class(result$children[[1]]$vp$clip, "GridClipPath")
     expect_true(result$capabilities$clipping_paths)
     testthat::local_mocked_bindings(grid_capabilities_3d = function() list(clipping_paths = FALSE))
     expect_error(render_scene_grid(scene, scene$viewport), "device does not support clipping paths")
@@ -138,8 +138,9 @@ test_that("intersecting surfaces paint in few single-layer runs, each underlaid"
     expect_true(all(vapply(surface_runs, function(run) length(unique(f$layer_id[run])) == 1L, logical(1))))
     expect_lt(length(surface_runs), sum(lengths(surface_runs)) / 4)
     children <- rendered$children[match(surface_runs, rendered$fragment_runs)]
+    has_faces <- function(g) inherits(g, "polygon") || any(vapply(as.list(g$children), has_faces, logical(1)))
     expect_true(all(vapply(children[lengths(surface_runs) > 1L], function(g)
-      inherits(g, "gTree") && inherits(g$children[[1L]], "pathgrob") && inherits(g$children[[2L]], "polygon"), logical(1))))
+      inherits(g, "gTree") && inherits(g$children[[1L]], "pathgrob") && has_faces(g), logical(1))))
   })
 })
 
@@ -569,4 +570,14 @@ test_that("fragments of one contour line paint as one stroke", {
     contour <- Filter(function(run) all(f$kind[run] == 2L & f$layer_id[run] > 0L), rendered$fragment_runs)
     expect_lte(length(contour), 2L * length(unique(lines$group)))
   })
+})
+
+test_that("opaque surface underlays precede intervening strokes", {
+  fragments <- list(kind = c(1L, 2L, 1L, 1L), parent_primitive_id = 1:4)
+  result <- split_underlays_3d(fragments, as.list(1:4), fragments$kind == 1L, c(-1L, 2L, -1L, -1L))
+  expect_equal(result, list(c(3L, 4L), NULL, NULL, NULL))
+  transparent <- split_underlays_3d(fragments, as.list(1:4), rep(FALSE, 4))
+  expect_true(all(lengths(transparent) == 0L))
+  layers <- split_underlays_3d(fragments, as.list(1:4), rep(TRUE, 4), c(-1L, -2L, -1L, -2L))
+  expect_equal(layers, list(3L, 4L, NULL, NULL))
 })

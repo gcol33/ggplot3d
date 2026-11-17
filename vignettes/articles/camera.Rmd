@@ -82,7 +82,7 @@ ggplot(block, aes(x, y, z = z)) +
 
 When the axes are left out, `guides(orientation = guide_triad_3d())` draws a small set of x, y and z arrows that turn with the camera, and `annotation_north_3d()` draws a north arrow along a given direction.
 
-```{r triad, fig.alt="Three points without axes, with a small x, y and z orientation triad in the corner."}
+```{r triad, fig.alt="Nine points without axes, with a small x, y and z orientation triad in the corner."}
 ggplot(d, aes(x, y, z = z)) + geom_point_3d(size = 3) +
   coord_3d(axes = character()) + guides(orientation = guide_triad_3d())
 ```

@@ -67,3 +67,17 @@ test_that("diffuse paths transfer colour between surfaces", {
   expect_equal(direct$sum[41,1],direct$sum[41,2])
   expect_gt(indirect$sum[41,1],indirect$sum[41,2]+1)
 })
+
+test_that("unclipped path-traced canvases include the projected mesh", {
+  packet <- ref_packet(faces = list(ref_quad(.3)))
+  packet$styles$fill <- "white"
+  camera <- new_camera_3d(azimuth = -90, elevation = 90, zoom = 4, clip = FALSE)
+  viewport <- new_scene_viewport(25.4, 25.4, 12)
+  raster <- raster_scene_3d(packet, camera, viewport, antialias = 1L)
+  traced <- pathtrace_scene_3d(packet, list(), camera, viewport,
+    backend_3d("pathtrace", samples = 1, bounces = 1), NULL)
+  expect_equal(traced$extent, raster$extent)
+  expect_gt(traced$width, 12)
+  expect_equal(dim(traced$image), c(traced$height, traced$width))
+  expect_gt(sum(traced$counts), 0)
+})

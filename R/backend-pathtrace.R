@@ -42,6 +42,12 @@ pathtrace_scene_3d <- function(packet, specs, camera, viewport, backend, light) 
   empty <- new_scene_packet()
   for (kind in c("faces", "polylines", "markers", "quadrics")) text_packet[[kind]] <- empty[[kind]]
   result <- raster_scene_3d(text_packet, camera, viewport, 1L, NULL)
+  setup <- raster_setup_3d(packet, camera, viewport)
+  canvas <- raster_canvas_cpp(setup$prepared$pointer, setup$colours, setup$dashes,
+    as.integer(setup$pixels[1L]), as.integer(setup$pixels[2L]), 1L)
+  result[c("width", "height", "extent")] <- canvas[c("width", "height", "extent")]
+  result$image <- matrix(0L, result$height, result$width)
+  class(result$image) <- "nativeRaster"
   settings <- backend[intersect(c("bounces", "seed", "aperture", "light_radius", "noise_threshold", "min_samples", "estimator"), names(backend))]
   settings$focus <- backend$focus %or3d% resolved$distance
   settings$epsilon <- 1e-6 * max(scale)

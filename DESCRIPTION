@@ -132,6 +132,7 @@ Collate:
     'guides-orientation.R'
     'hatch-3d.R'
     'knitr-3d.R'
+    'label-clearance.R'
     'layer-api.R'
     'layers-annotation.R'
     'layers-arc.R'

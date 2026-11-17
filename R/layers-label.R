@@ -248,8 +248,19 @@ place_overlay_3d.scene_repel_grob <- function(grob, context) {
     c(if (is.na(range[1L])) 0 else range[1L], if (is.na(range[2L])) size else range[2L])
   }
   bounds <- c(limits(settings$xlim, context$width_mm), limits(settings$ylim, context$height_mm))
+  if (!is.null(context$bounds)) {
+    automatic <- is.na(c(settings$xlim, settings$ylim))
+    bounds[automatic] <- context$bounds[automatic]
+  }
+  anchors <- xy[points, , drop = FALSE]
+  radius <- grob$radius[points]
+  obstacles <- context$obstacles
+  if (!is.null(obstacles) && nrow(obstacles)) {
+    anchors <- rbind(anchors, (obstacles[, 1:2, drop = FALSE] + obstacles[, 3:4, drop = FALSE]) / 2)
+    radius <- c(radius, sqrt(rowSums((obstacles[, 3:4, drop = FALSE] - obstacles[, 1:2, drop = FALSE])^2)) / 2)
+  }
   seed <- if (is.na(settings$seed)) sample.int(.Machine$integer.max, 1L) else settings$seed
-  fit <- repel_labels_cpp(xy[points, , drop = FALSE], grob$radius[points],
+  fit <- repel_labels_cpp(anchors, radius,
     match(grob$labelled[keep], points), start$start, half_box + grob$box_padding[keep],
     bounds, settings$force, settings$force_pull, as.integer(min(settings$max.iter, .Machine$integer.max)),
     settings$max.time, as.integer(min(settings$max.overlaps, .Machine$integer.max)),

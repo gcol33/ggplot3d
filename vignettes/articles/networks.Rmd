@@ -92,7 +92,7 @@ cells <- data.frame(
 
 `plane = "xz"` stands the tree on the back wall above the car axis, `height` sets its range in z, and `k = 3` cuts it into three clusters that `after_stat(cluster)` colours (de Vries and Ripley [2024](https://CRAN.R-project.org/package=ggdendro)).
 
-```{r dendrogram, fig.alt = "A heat map of twelve cars by five measurements lying flat, with the clustering tree standing upright behind it, coloured by three clusters."}
+```{r dendrogram, fig.width=8, fig.height=5.5, fig.alt = "A heat map of twelve cars by five measurements lying flat, with the clustering tree standing upright behind it, coloured by three clusters."}
 ggplot(cells, aes(car, variable)) +
   geom_tile(aes(fill = value)) +
   stat_dendrogram_3d(aes(colour = after_stat(cluster)), hclust = rows,
@@ -100,7 +100,9 @@ ggplot(cells, aes(car, variable)) +
   scale_fill_gradient2(low = "#2E6F9E", mid = "#F2EFE6", high = "#B5342B") +
   scale_colour_manual(values = c("#3F7A3D", "#7A4F9E", "#9E5E0F")) +
   labs(x = NULL, y = NULL) +
-  coord_3d(elevation = 30)
+  scale_x_discrete(guide = guide_axis_3d(angle = 60)) +
+  coord_3d(elevation = 30) +
+  theme(axis.text.x = element_text(angle = 60, size = 11))
 ```
 
 `geom_tile()` is the ggplot2 layer; inside `coord_3d()` it lies on the floor of the box.

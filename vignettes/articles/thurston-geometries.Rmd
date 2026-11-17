@@ -47,7 +47,7 @@ inside <- function(geometry) {
   })
   ggplot() + balls + theme_void() +
     coord_3d(backend = backend_3d("raymarch", geometry = geometry,
-      dpi = 52, antialias = 1, max_distance = 3.5, max_steps = 256))
+      dpi = 120, antialias = 2, max_distance = 3.5, max_steps = 256))
 }
 ```
 
@@ -162,7 +162,7 @@ facing <- matrix(c(cos(angle), 0, -sin(angle), 0, 1, 0,
   sin(angle), 0, cos(angle)), 3, 3)
 inside("nil") + coord_3d(backend = backend_3d("raymarch", geometry = "nil",
   observer = c(0.05, 0, 0), facing = facing, fov = 90,
-  dpi = 52, antialias = 1, max_distance = 3.5, max_steps = 256))
+  dpi = 120, antialias = 2, max_distance = 3.5, max_steps = 256))
 ```
 
 The light is located at the observer. Its diffuse intensity depends on the
@@ -213,5 +213,5 @@ For other geometries, supply isometries in the embeddings documented by
 ggplot() + annotation_thurston_3d(centre = c(-0.5, 0, 1.5), radius = 0.3,
   fill = "#9E5E0F") + theme_void() +
   coord_3d(backend = backend_3d("raymarch", quotient = faces,
-    fov = 110, max_distance = 5, dpi = 52, antialias = 1))
+    fov = 110, max_distance = 5, dpi = 120, antialias = 2))
 ```

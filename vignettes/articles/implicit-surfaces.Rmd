@@ -98,7 +98,7 @@ drill <- sdf_capsule(c(-2, 0, 0), c(2, 0, 0), 0.5) |
   sdf_capsule(c(0, 0, -2), c(0, 0, 2), 0.5)
 part - drill
 ggplot() +
-  geom_isofunction_3d(fun = part - drill, n = 40, fill = "#3F7A3D") +
+  geom_isofunction_3d(fun = part - drill, n = 56, method = "dual", fill = "#3F7A3D") +
   cube(1.2) + coord_3d()
 ```
 
@@ -112,7 +112,7 @@ blob <- sdf_blend(sdf_sphere(c(-0.6, 0, 0), 0.6),
   sdf_torus(c(0.5, 0, 0), major = 0.6, minor = 0.2), k = 0.15)
 sheet <- sdf_shell(sdf_gyroid(period = 1.2), 0.08) & sdf_sphere(radius = 1.2)
 ggplot() +
-  geom_isofunction_3d(fun = sheet, n = 56, fill = "#B5342B") +
+  geom_isofunction_3d(fun = sheet, n = 96, method = "dual", fill = "#B5342B") +
   cube(1.25) + coord_3d()
 ```
 

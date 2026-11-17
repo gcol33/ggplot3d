@@ -1306,7 +1306,7 @@ furniture_projector_3d <- function(furniture) {
   }
 }
 
-furniture_overlay_3d <- function(furniture, scene, theme) {
+furniture_overlay_3d <- function(furniture, scene, theme, obstacles = matrix(numeric(), 0L, 4L)) {
   meta <- furniture$overlay; fit <- meta$fit; params <- meta$params
   frame <- meta$frame %or3d% FrameBox
   panel_guides <- lapply(names(params$panel_guides), function(name) {
@@ -1342,6 +1342,11 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
     if (is.null(layout)) next
     typography <- guide_typography_3d(ctx, guide, m, layout)
     n <- length(guide$position)
+    if (!is.null(typography$labels) && typography$labels$kind == "text") {
+      directions <- rows_of_3d(layout$normals_at(guide$position), n)
+      for (i in seq_len(n)) typography$labels$location[i, ] <- clear_label_location_3d(
+        typography$labels$location[i, ], typography$labels$size[i, ], obstacles, directions[i, ])
+    }
     a <- layout$a; b <- layout$b
     lo <- if (guide$params$cap %in% c("lower", "both") && n) min(guide$position) else 0
     hi <- if (guide$params$cap %in% c("upper", "both") && n) max(guide$position) else 1
@@ -1375,6 +1380,14 @@ furniture_overlay_3d <- function(furniture, scene, theme) {
     }
     title <- typography$title
     if (!is.null(title)) {
+      if (title$kind == "text") {
+        size <- title$bounds[3:4] - title$bounds[1:2]
+        location <- clear_label_location_3d(title$location, size, rbind(obstacles, occupied), layout$title$normal)
+        within_page <- function(bounds) all(bounds[1:2] >= 0 & bounds[3:4] <= c(page$width_mm, page$height_mm))
+        if (within_page(title$bounds) && !within_page(c(location - size / 2, location + size / 2))) location <- title$location
+        title$bounds <- title$bounds + rep(location - title$location, 2L)
+        title$location <- location
+      }
       bounds[[length(bounds) + 1L]] <- title$bounds
       if (title$kind == "text") add(grid::textGrob(guide$title, title$location[1L], title$location[2L], default.units = "mm", rot = title$angle, gp = text_gp_3d(m$title)))
     }

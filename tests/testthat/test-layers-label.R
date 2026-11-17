@@ -151,3 +151,26 @@ test_that("animate_3d carries label offsets from frame to frame", {
   expect_length(calls, 2L)
   expect_lt(calls[[2L]]$iterations, calls[[1L]]$iterations)
 })
+
+test_that("label boxes can extend beyond the geometry viewport", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off())
+  styles <- data.frame(style_id = 1L, label = "edge", size = 5, label_padding = 1,
+    fill = "white", colour = "black", linewidth = 0.3)
+  g <- text_grob_3d(styles, 0.98, 0.5, 0, 0.5, 0, 1)
+  expect_identical(g$children[[1]]$vp$clip, NA)
+  plain <- text_grob_3d(transform(styles, label_padding = NA_real_), 0.98, 0.5, 0, 0.5, 0, 1)
+  expect_identical(plain$vp$clip, NA)
+})
+
+test_that("repelled labels stay within the scene above guide labels", {
+  d <- data.frame(x = c(1, 1.1, 1.2, 2, 3), y = c(1, 1.1, 1, 2, 1),
+    z = c(1, 1.2, 1.1, 2, 3), label = c("alpha", "beta", "gamma", "delta", "epsilon"))
+  panel <- label_panel_3d(ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, label = label)) +
+    geom_point_3d() + geom_label_repel_3d(seed = 1) + coord_3d())
+  labels <- repel_children_3d(panel)$children[["scene-repel-labels"]]
+  expect_length(labels$children, 5)
+  for (label in labels$children) {
+    expect_gte(as.numeric(label$vp$y) - as.numeric(label$vp$height) / 2, 0)
+  }
+})

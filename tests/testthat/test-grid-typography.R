@@ -179,3 +179,13 @@ test_that("origin axes draw plane labels as scene faces and in-plane ticks in mo
   m <- furniture$overlay$fit$metrics$x
   expect_true(any(abs(lengths - m$tick_length * k) < 1e-6))
 })
+
+test_that("guide clearance moves text past data without shifting clear labels", {
+  obstacles <- rbind(c(8, 8, 12, 12), c(8, 14, 12, 18))
+  p <- clear_label_location_3d(c(10, 10), c(4, 2), obstacles, c(0, 1))
+  expect_equal(p[1], 10)
+  expect_gt(p[2] - 1, 18)
+  expect_identical(clear_label_location_3d(c(2, 2), c(1, 1), obstacles, c(0, 1)), c(2, 2))
+  below <- clear_label_location_3d(c(10, 10), c(4, 2), obstacles, c(0, -1))
+  expect_lt(below[2] + 1, 8)
+})

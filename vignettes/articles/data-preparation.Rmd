@@ -113,7 +113,7 @@ The explicit lookup associates every height with its matrix cell. Check the sour
 ```{r surface, fig.alt="A sloping surface sampled at twelve grid positions, with black points marking the input heights."}
 ggplot(grid, aes(east, north, z = height)) +
   geom_surface_3d(fill = "#2E6F9E") +
-  geom_point_3d(size = 2) +
+  geom_point_3d(size = 2, occlusion = "overlay") +
   coord_3d()
 ```
 

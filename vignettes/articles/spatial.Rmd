@@ -129,7 +129,7 @@ flows <- data.frame(x = centres[hub, 1], y = centres[hub, 2],
                     xend = centres[targets, 1], yend = centres[targets, 2],
                     volume = c(2, 6, 3, 2, 4, 1))
 ggplot() +
-  geom_sf_3d(data = nc_m, fill = "grey92", colour = "grey60", linewidth = 0.1) +
+  geom_sf_3d(data = nc_m, fill = "grey88", colour = "grey40", linewidth = 0.25) +
   geom_arc_3d(aes(x, y, xend = xend, yend = yend, linewidth = volume),
               data = flows, colour = "#B5342B", height = 0.25) +
   scale_linewidth(range = c(0.4, 1.6)) +
@@ -172,7 +172,7 @@ legs <- lapply(1:3, function(i) {
 track <- do.call(rbind, Map(function(leg, i) transform(leg, hours = hours + 12 * (i - 1)), legs, 1:3))
 track$time <- start + track$hours * 3600
 ggplot(track, aes(x, y, z = time)) +
-  geom_sf_3d(data = nc_m, inherit.aes = FALSE, fill = "grey92", colour = "grey60", linewidth = 0.1) +
+  geom_sf_3d(data = nc_m, inherit.aes = FALSE, fill = "grey88", colour = "grey40", linewidth = 0.25) +
   geom_dropline_3d(data = track[c(TRUE, FALSE), ], colour = "grey70", linewidth = 0.2) +
   geom_path_3d(colour = "#7A4F9E", linewidth = 1) +
   scale_z_datetime(date_labels = "%a %H:%M") +

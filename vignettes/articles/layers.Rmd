@@ -53,7 +53,7 @@ model. `angle` rotates within the plane.
 
 ```{r tilted-text, fig.alt="Font outlines lying on tilted planes through three anchors."}
 p + geom_text_3d(aes(label = label), orientation = "plane",
-  normal = c(1, 1, 1), up = c(0, 0, 1), size = 8) + coord_3d()
+  normal = c(0, -1, 1), up = c(0, 0, 1), size = 8) + coord_3d()
 ```
 
 `facing = "camera_plane"` gives the outlines a shared view-facing direction.
@@ -259,7 +259,7 @@ ggplot(profiles, aes(x, y, z = z, group = y, fill = factor(y))) +
 
 An area wall stacks groups that share an x lattice and a y position. The built-in US personal expenditure table records spending in billions of dollars. Place its five spending categories on one wall, with year along x and expenditure along z. Positive and negative values stack separately from zero.
 
-```{r stacked-area, fig.alt="Five spending categories stacked in a single wall over the five years of the US personal expenditure table."}
+```{r stacked-area, fig.height=5.5, fig.alt="Five spending categories stacked in a single wall over the five years of the US personal expenditure table."}
 spending <- as.data.frame(as.table(USPersonalExpenditure))
 names(spending) <- c("category", "year", "expenditure")
 spending$year <- as.numeric(as.character(spending$year))
@@ -267,7 +267,7 @@ ggplot(spending, aes(year, y = 0, z = expenditure,
                      group = category, fill = category)) +
   geom_area_3d() + scale_fill_manual(values = c("#2E6F9E", "#B5342B", "#3F7A3D", "#9E5E0F", "#7A4F9E"),
     labels = c("Food & tobacco", "Household", "Medical", "Personal care", "Education")) +
-  guides(fill = guide_legend(nrow = 3)) +
+  guides(fill = guide_legend(nrow = 2)) +
   coord_3d() + theme(legend.position = "bottom")
 ```
 
@@ -275,12 +275,12 @@ The default area position is [position_stack_3d()](../reference/position_stack_3
 
 ## Intervals and summaries
 
-An interval layer accepts lower and upper bounds on any combination of x, y and z. Summarise iris petal length at each species position with a mean and an interval extending one standard error on either side.
+An interval layer accepts lower and upper bounds on any combination of x, y and z. Summarise iris petal length in a panel for each species with a mean and an interval extending one standard error on either side. Each panel has its own height scale.
 
-```{r summary-intervals, fig.alt="Mean petal length with one-standard-error point ranges for each iris species."}
-ggplot(iris, aes(Species, y = 0, z = Petal.Length)) +
-  stat_summary_3d(fun.data = mean_se, colour = "#2E6F9E", linewidth = 0.8) +
-  coord_3d()
+```{r summary-intervals, fig.width=8, fig.alt="Mean petal length with one-standard-error point ranges for each iris species."}
+ggplot(iris, aes(x = 0, y = 0, z = Petal.Length)) +
+  stat_summary_3d(fun.data = mean_se, colour = "#2E6F9E", linewidth = 0.6, size = 0.8) +
+  facet_wrap(~Species) + coord_3d(z_scales = "free", axes = "z")
 ```
 
 A cell with a single observation contributes its mean as a point with no

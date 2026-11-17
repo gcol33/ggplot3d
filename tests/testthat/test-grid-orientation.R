@@ -85,3 +85,15 @@ test_that("orientation guides and plane scale bars draw in each backend", {
       ggplot2::guides(orientation = guide_triad_3d()) + annotation_scale_3d(length = 100) + annotation_north_3d()))
   }
 })
+
+test_that("scale bar labels clear the projected stroke at drawing time", {
+  for (elevation in c(10, 35, 70)) {
+    p <- orientation_plot(elevation = elevation) + annotation_scale_3d(length = 100, size = 5)
+    panel <- orientation_panels(p)[[1L]]
+    tab <- panel$scene$source$text
+    styles <- panel$scene$styles
+    row <- which(styles$label[match(tab$style_id, styles$style_id)] == "100")
+    expect_length(row, 1)
+    expect_true(any(abs(c(tab$hjust[row], tab$vjust[row]) - 0.5) > 0.5))
+  }
+})

@@ -33,7 +33,7 @@ grid_lines <- rbind(
 grid_lines$z <- 0
 ggplot(grid_lines, aes(x, y, z = z, group = id)) +
   geom_path_3d(colour = "#2E6F9E", linewidth = 0.8) +
-  coord_spherical_geometry_3d(isometry = rotate_4d("xw", 0.6), extent = 2)
+  coord_spherical_geometry_3d(isometry = rotate_4d("xw", 0.6), extent = 2, zoom = 2)
 ```
 
 ## The Hopf fibration
@@ -46,7 +46,7 @@ ggplot(base, aes(lon = lon, lat = lat, fill = id)) +
   stat_hopf_fibre_3d(n = 48) +
   scale_fill_manual(values = c("#2E6F9E", "#B5342B", "#3F7A3D",
                                "#9E5E0F", "#7A4F9E", "#2A7A7A"), guide = "none") +
-  coord_spherical_geometry_3d()
+  coord_spherical_geometry_3d(zoom = 1.6)
 ```
 
 `what = "base"` draws the base points on the two-sphere, and `what = "torus"` draws the torus formed by all the fibres over one circle of latitude.

@@ -4,12 +4,14 @@ NULL
 utils::globalVariables(c("geometry_isosurface_cpp", "geometry_isosurface_methods_cpp", "geometry_hull_cpp", "geometry_kde_cpp", "density"))
 
 GeomStatsSurface3D <- ggplot2::ggproto("GeomStatsSurface3D", GeomSurface3D,
-  optional_aes = c(".opacity", "nx", "ny", "nz", "level", "density", "surface", "se", ".texture_u", ".texture_v"),
+  optional_aes = c(".opacity", "nx", "ny", "nz", ".flat_nx", ".flat_ny", ".flat_nz", "level", "density", "surface", "se", ".texture_u", ".texture_v"),
   default_aes = solid_defaults_3d()
 )
 
 emit_stats_surface_3d <- function(data, params, panel_params) {
   if (!is.null(data$.opacity)) data$alpha <- data$alpha * data$.opacity
+  if (!identical(params$shading, "smooth") && all(c(".flat_nx", ".flat_ny", ".flat_nz") %in% names(data)))
+    data[c("nx", "ny", "nz")] <- data[c(".flat_nx", ".flat_ny", ".flat_nz")]
   emit_surface_3d(data, params, panel_params)
 }
 
@@ -423,6 +425,19 @@ isosurface_simplify_3d <- function(out, target, gradient = NULL) {
     rows <- which(surface)[good]
     out[rows, c("nx", "ny", "nz")] <- g[good, , drop = FALSE] / size[good]
   }
+  out
+}
+
+# Flat shading samples the field gradient within each face, away from shared creases.
+isosurface_face_normals_3d <- function(out, gradient) {
+  face <- match(out$.face, unique(out$.face))
+  centre <- rowsum(cbind(out$x, out$y, out$z), face, reorder = FALSE) / tabulate(face)
+  normal <- gradient(centre)
+  size <- sqrt(rowSums(normal^2))
+  normal <- normal / ifelse(is.finite(size) & size > 0, size, 1)
+  rows <- which(out$cap == 0L & is.finite(size[face]) & size[face] > 0)
+  out[c(".flat_nx", ".flat_ny", ".flat_nz")] <- out[c("nx", "ny", "nz")]
+  out[rows, c(".flat_nx", ".flat_ny", ".flat_nz")] <- normal[face[rows], , drop = FALSE]
   out
 }
 

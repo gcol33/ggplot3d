@@ -74,7 +74,17 @@ scale_z_datetime <- function(..., position = "auto") {
 #' @rdname scale_z_continuous
 #' @export
 scale_z_time <- function(..., position = "auto") {
-  as_z_scale(ggplot2::scale_x_time(...), position)
+  args <- list(...)
+  for (name in intersect(names(args), c("limits", "breaks", "minor_breaks"))) {
+    if (inherits(args[[name]], "difftime")) args[[name]] <- as.difftime(as.numeric(args[[name]], units = "secs"), units = "secs")
+  }
+  scale <- do.call(ggplot2::scale_x_time, args)
+  transform <- scale$trans$transform
+  scale$trans$transform <- function(x) {
+    if (inherits(x, "difftime")) x <- as.numeric(x, units = "secs")
+    transform(x)
+  }
+  as_z_scale(scale, position)
 }
 
 infer_z_scale <- function(data) {

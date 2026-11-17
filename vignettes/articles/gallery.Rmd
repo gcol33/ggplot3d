@@ -189,6 +189,7 @@ Both factors map to position directly, and the median price maps to z. The x axi
 ```{r grouped, fig.alt="Columns of median diamond price by cut grade along x and colour grade along y; for the Very Good, Premium and Ideal cuts the price rises from colour D to colour J."}
 ggplot(prices, aes(cut, color, z = price, fill = cut)) +
   geom_col_3d() +
+  scale_x_discrete(breaks = c("Fair", "Very Good", "Ideal")) +
   scale_fill_manual(values = c("#2E6F9E", "#B5342B", "#3F7A3D", "#9E5E0F", "#7A4F9E")) +
   coord_3d() +
   theme(legend.position = "right")

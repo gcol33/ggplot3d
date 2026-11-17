@@ -28,7 +28,7 @@ library(ggplot3d)
 fit <- prcomp(iris[1:4], scale. = TRUE)
 groups <- setNames(iris$Species, rownames(iris))
 ggplot() + biplot_3d(fit, groups = groups, region = "ellipsoid",
-                        loading_scale = 2, label_size = 5) + coord_3d()
+                        loading_scale = 4, label_size = 4) + coord_3d()
 ```
 
 For `prcomp`, sites use `fit$x` and arrows use `fit$rotation`. `loading_scale` explicitly multiplies the arrow vectors for display. The chosen multiplier therefore belongs in a figure's methods or caption. `choices` selects the three axes.
@@ -39,7 +39,7 @@ Site identifiers are the score matrix's row names, or sequential character ident
 membership <- data.frame(id = names(groups), group = unname(groups))
 membership <- membership[rev(seq_len(nrow(membership))), ]
 ggplot() + biplot_3d(fit, groups = membership, region = "hull",
-                        loading_scale = 2, label_size = 5) + coord_3d()
+                        loading_scale = 4, label_size = 4) + coord_3d()
 ```
 
 ## Vegan scores

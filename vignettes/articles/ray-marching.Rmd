@@ -46,7 +46,7 @@ surface <- ggplot() +
   geom_isofunction_3d(fun = shape, render = "trace", fill = "#2E6F9E") +
   xlim(-1, 1) + ylim(-1, 1) + scale_z_continuous(limits = c(-1, 1))
 surface + coord_3d(azimuth = -65, elevation = 25,
-  backend = backend_3d("raster", dpi = 60, antialias = 1))
+  backend = backend_3d("raster", dpi = 120, antialias = 2))
 ```
 
 Trace mode requires an SDF object and an opaque fill. It uses transformed
@@ -117,7 +117,7 @@ intersection along each ray supplies the visible surface and its normal.
 ```{r volume-iso, fig.alt="Two shaded isosurface lobes at scalar value 0.3."}
 volume + geom_volume_3d(mode = "iso", levels = 0.3,
   colours = c("#2E6F9E", "#2E6F9E")) +
-  coord_3d(backend = backend_3d("raster", dpi = 60, antialias = 1))
+  coord_3d(backend = backend_3d("raster", dpi = 120, antialias = 2))
 ```
 
 Root finding uses the cubic restriction of the trilinear field within each
@@ -143,7 +143,7 @@ mixed <- volume + geom_volume_3d(opacity = c(0, 2), samples = 48) +
     render = "trace", fill = "#9E5E0F", inherit.aes = FALSE) +
   geom_path_3d(aes(x, y, z = z), data = line, inherit.aes = FALSE,
     colour = "#B5342B", linewidth = 1, raster = TRUE)
-mixed + coord_3d(backend = backend_3d("raster", dpi = 60, antialias = 1))
+mixed + coord_3d(backend = backend_3d("raster", dpi = 120, antialias = 2))
 ```
 
 Vector and hybrid panels place the traced fields as an image. Ordinary vector
@@ -157,8 +157,8 @@ vector_line <- volume + geom_volume_3d(opacity = c(0, 2), samples = 48) +
     render = "trace", fill = "#9E5E0F", inherit.aes = FALSE) +
   geom_path_3d(aes(x, y, z = z), data = line, inherit.aes = FALSE,
     colour = "#B5342B", linewidth = 1)
-vector_line + coord_3d(backend = backend_3d("vector", dpi = 60,
-  antialias = 1))
+vector_line + coord_3d(backend = backend_3d("vector", dpi = 120,
+  antialias = 2))
 ```
 
 Select hybrid rendering to rasterize marked geometry and keep the remaining
@@ -167,8 +167,8 @@ test. Hidden strokes behind traced surfaces currently support solid hiding;
 `hidden = "dashed"` does not produce dashed strokes there.
 
 ```{r mixed-hybrid, fig.alt="The same volume and orange sphere in a hybrid panel with a red vector line."}
-vector_line + coord_3d(backend = backend_3d("hybrid", dpi = 60,
-  antialias = 1))
+vector_line + coord_3d(backend = backend_3d("hybrid", dpi = 120,
+  antialias = 2))
 ```
 
 ## Diffuse path tracing

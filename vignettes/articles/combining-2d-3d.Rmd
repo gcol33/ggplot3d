@@ -116,7 +116,7 @@ See [annotation_plot_3d()](../reference/annotation_plot_3d.html) for all plane o
 
 `facet_slices_3d()` splits the data like `facet_wrap()` and stacks the subsets on parallel planes of one panel. The cloud is split by the sign of x; each half gets its own density, computed within its slice.
 
-```{r slices, fig.alt="Two translucent planes one behind the other, labelled negative and positive, each with a filled density curve; the curve on the front plane lies further left."}
+```{r slices, fig.alt="Two translucent planes one behind the other, labelled negative and positive, each with a filled density curve; the curve on the front plane lies further right."}
 cloud$side <- ifelse(cloud$x < 0, "negative", "positive")
 ggplot(cloud, aes(z)) +
   geom_density(fill = "#2E6F9E", alpha = 0.6) +

@@ -151,6 +151,20 @@ raster_traced_input_3d <- function(specs, camera, viewport, canvas, resolved, li
   input
 }
 
+raster_setup_3d <- function(packet, camera, viewport, light = NULL, edl = 0) {
+  prepared <- raster_prepare_cpp(scene_engine_packet_3d(packet), camera, viewport)
+  if (!is.null(light$occlusion)) raster_ambient_cpp(prepared$pointer, light$occlusion)
+  colours <- raster_colours_3d(packet, prepared, light, edl)
+  line <- packet$polylines
+  styles <- packet$styles[match(line$style_id, packet$styles$style_id), , drop = FALSE]
+  lty <- style_value_3d(styles, "linetype", 1)
+  dashes <- lapply(seq_along(lty), function(i) dash_pattern_3d(lty[i], line$width_mm[i]))
+  attr(dashes, "hidden") <- lapply(line$width_mm, function(width) dash_pattern_3d("dashed", width))
+  pixels <- ceiling(c(viewport$width_mm, viewport$height_mm) * viewport$dpi / 25.4)
+  scene_assert(all(is.finite(pixels)) && all(pixels <= .Machine$integer.max), "Unrepresentable raster dimensions.")
+  list(prepared = prepared, colours = colours, dashes = dashes, pixels = pixels)
+}
+
 raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NULL,
                            id_pass = FALSE, buffers = FALSE, blend = "linear", traced = list(), edl = 0) {
   blend <- match.arg(blend, c("linear", "srgb"))
@@ -162,16 +176,8 @@ raster_scene_3d <- function(packet, camera, viewport, antialias = 2L, light = NU
     columns <- scene_table_columns(packet$corners, scene_schemas()$corners, scene_optional_schemas()$corners, "corners")
     packet$corners <- packet$corners[names(columns)]
   }
-  prepared <- raster_prepare_cpp(scene_engine_packet_3d(packet), camera, viewport)
-  if (!is.null(light$occlusion)) raster_ambient_cpp(prepared$pointer, light$occlusion)
-  colours <- raster_colours_3d(packet, prepared, light, edl)
-  line <- packet$polylines
-  styles <- packet$styles[match(line$style_id, packet$styles$style_id), , drop = FALSE]
-  lty <- style_value_3d(styles, "linetype", 1)
-  dashes <- lapply(seq_along(lty), function(i) dash_pattern_3d(lty[i], line$width_mm[i]))
-  attr(dashes, "hidden") <- lapply(line$width_mm, function(width) dash_pattern_3d("dashed", width))
-  pixels <- ceiling(c(viewport$width_mm, viewport$height_mm) * viewport$dpi / 25.4)
-  scene_assert(all(is.finite(pixels)) && all(pixels <= .Machine$integer.max), "Unrepresentable raster dimensions.")
+  setup <- raster_setup_3d(packet, camera, viewport, light, edl)
+  prepared <- setup$prepared; colours <- setup$colours; dashes <- setup$dashes; pixels <- setup$pixels
   input <- list()
   if (length(traced)) {
     canvas <- raster_canvas_cpp(prepared$pointer, colours, dashes,

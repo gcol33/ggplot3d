@@ -55,6 +55,12 @@ makeContent.scene_panel_grob <- function(x) {
     fit_cache = attr(x$frame_group, "fit_cache"))
   x$packets <- resolve_draw_packets_3d(x$packets, furniture$camera, furniture$viewport)
   x$packets <- resolve_glyph_packets_3d(x$packets, furniture$camera, furniture$viewport)
+  visible_frame <- frame_in_front_3d(furniture$overlay$frame %or3d% FrameBox, furniture$camera,
+    frame_basis_3d(furniture$camera, furniture$viewport))
+  obstacles <- if (visible_frame) guide_obstacles_3d(x$packets, furniture_projector_3d(furniture)) else matrix(numeric(), 0L, 4L)
+  furniture$packet <- clear_guide_text_3d(furniture$packet, furniture_projector_3d(furniture), obstacles)
+  if (!is.null(furniture$split)) furniture$split <- lapply(furniture$split,
+    clear_guide_text_3d, project = furniture_projector_3d(furniture), obstacles = obstacles)
   furniture <- shadow_furniture_3d(furniture, x$packets, x$panel_params)
   x$packets <- depth_cue_packets_3d(x$packets, x$panel_params, furniture$camera, furniture$viewport, x$theme)
   if (!is.null(x$panel_params$coord_params$light$ao) && !backend$type %in% c("pathtrace", "plotter")) {
@@ -98,11 +104,14 @@ makeContent.scene_panel_grob <- function(x) {
   rendered$vp <- grid::viewport(x = grid::unit(fit$origin[1L], "mm"), y = grid::unit(fit$origin[2L], "mm"),
     width = grid::unit(furniture$viewport$width_mm, "mm"), height = grid::unit(furniture$viewport$height_mm, "mm"),
     just = c("left", "bottom"), clip = if (x$panel_params$camera$clip) "on" else "off", name = "scene-inner-3d")
-  decorations <- furniture_overlay_3d(furniture, scene, x$theme)
+  decorations <- furniture_overlay_3d(furniture, scene, x$theme, obstacles)
   background <- ggplot2::element_render(x$theme, "panel.background")
   border <- ggplot2::element_render(x$theme, "panel.border", fill = NA)
   context <- list(project = furniture_projector_3d(furniture), width_mm = outer$width_mm,
-    height_mm = outer$height_mm, state = x$panel_params$coord_params$label_state)
+    height_mm = outer$height_mm,
+    bounds = c(fit$origin[1L], fit$origin[1L] + furniture$viewport$width_mm,
+      fit$origin[2L], fit$origin[2L] + furniture$viewport$height_mm),
+    obstacles = if (length(decorations$bounds)) do.call(rbind, decorations$bounds) else matrix(numeric(), 0, 4), state = x$panel_params$coord_params$label_state)
   overlay <- lapply(x$overlay, place_overlay_3d, context)
   children <- c(list(background), x$underlay, list(rendered, decorations, border), overlay)
   if (!is.null(x$ink)) children <- lapply(children, ink_grob_3d, filter = x$ink)
@@ -190,7 +199,7 @@ text_grob_3d <- function(styles, x, y, hjust, vjust, rot, opacity) {
   gp <- material_gp_3d(styles, opacity, 4L)
   label <- text_label_3d(styles)
   boxed <- is.finite(style_value_3d(styles, "label_padding", NA_real_))
-  if (!any(boxed)) return(grid::textGrob(label, x, y, hjust = hjust, vjust = vjust, rot = rot, gp = gp))
+  if (!any(boxed)) return(grid::textGrob(label, x, y, hjust = hjust, vjust = vjust, rot = rot, gp = gp, vp = grid::viewport(clip = "off")))
   n <- length(x)
   hjust <- rep_len(hjust, n); vjust <- rep_len(vjust, n); rot <- rep_len(rot, n); opacity <- rep_len(opacity, n)
   extent <- text_extent_mm_3d(styles)
@@ -201,7 +210,8 @@ text_grob_3d <- function(styles, x, y, hjust, vjust, rot, opacity) {
   children <- lapply(seq_len(n), function(i) {
     s <- styles[i, , drop = FALSE]
     text_gp <- material_gp_3d(s, opacity[i], 4L)
-    if (!boxed[i]) return(grid::textGrob(label[i], x[i], y[i], hjust = hjust[i], vjust = vjust[i], rot = rot[i], gp = text_gp))
+    if (!boxed[i]) return(grid::textGrob(label[i], x[i], y[i], hjust = hjust[i], vjust = vjust[i], rot = rot[i], gp = text_gp,
+      vp = grid::viewport(clip = "off")))
     box <- grid::roundrectGrob(r = grid::unit(radius[i], "mm"), gp = grid::gpar(fill = s$fill, col = if (linewidth[i] > 0) border[i] else NA,
       lwd = linewidth[i] * 72.27 / 25.4, lty = text_gp$lty, alpha = opacity[i]))
     inner <- extent[i, ] - 2 * padding[i]
@@ -209,7 +219,7 @@ text_grob_3d <- function(styles, x, y, hjust, vjust, rot, opacity) {
       grid::unit(padding[i] + vjust[i] * inner[2L], "mm"), hjust = hjust[i], vjust = vjust[i], gp = text_gp)
     grid::gTree(children = grid::gList(box, text), vp = grid::viewport(x[i], y[i],
       width = grid::unit(extent[i, 1L], "mm"), height = grid::unit(extent[i, 2L], "mm"),
-      just = c(hjust[i], vjust[i]), angle = rot[i]))
+      just = c(hjust[i], vjust[i]), angle = rot[i], clip = "off"))
   })
   grid::gTree(children = do.call(grid::gList, children))
 }
@@ -535,7 +545,7 @@ split_underlays_3d <- function(f, runs, eligible, key = f$kind * 1e9 + f$parent_
   run <- rep.int(seq_along(runs), lengths(runs))[eligible[rows]]
   rows <- rows[eligible[rows]]
   if (!length(rows)) return(out)
-  # Rows come in run order, so a key's first row lies in its first run.
+  # Underlays precede every later piece and its boundary strokes.
   first <- run[match(key[rows], key[rows])]
   later <- run > first
   groups <- split(rows[later], first[later])
@@ -904,7 +914,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   path_cache <- new.env(parent = emptyenv())
-  underlay_key <- ifelse(smooth_run, -f$layer_id, f$kind * 1e9 + f$parent_primitive_id)
+  underlay_key <- ifelse(seam & f$layer_id > 0L, -f$layer_id, f$kind * 1e9 + f$parent_primitive_id)
   underlay <- split_underlays_3d(f, runs, (f$kind == 5L & f$opacity >= 1) | (seam & !surface & f$opacity >= 1), underlay_key)
   geometry <- function(masks) {
     rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
@@ -929,6 +939,7 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       s <- slice_rows_3d(styles, rows)
       gp <- material_gp_3d(s, f$opacity[rows], kind)
       if (f$mask_count[rows[1L]] > 0L) clip <- strokes$clips[[run]] %or3d% mask_path_3d(scene, masks)
+      if (kind == 4L) clip <- NULL
     }
     if (strokes_only && kind %in% c(1L, 3L, 5L)) {
       g <- grid::nullGrob()
@@ -983,10 +994,12 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
       hatched <- hatch_face_grob_3d(scene, rows, styles, light, x, y, id)
       if (!is.null(hatched)) g <- grid::grobTree(g, hatched)
       if (length(later)) {
-        n <- f$count[later]
-        at <- rep(f$offset[later], n) + sequence(n) - 1L
-        g <- grid::grobTree(grid::polygonGrob(scene$vertices$x_npc[at], scene$vertices$y_npc[at], id = rep(seq_along(later), n),
-          gp = grid::gpar(fill = face_fill[later], col = NA)), g)
+        paint_rows <- c(rows, later)
+        n <- f$count[paint_rows]
+        at <- rep(f$offset[paint_rows], n) + sequence(n) - 1L
+        paths <- seam_underlay_3d(scene$vertices$x_npc[at], scene$vertices$y_npc[at],
+          rep(seq_along(paint_rows), n), face_fill[paint_rows])
+        g <- grid::grobTree(children = do.call(grid::gList, c(as.list(paths), list(g))))
       }
     } else if (kind == 2L) {
       tab <- scene$source$polylines; source <- f$source_index[rows]

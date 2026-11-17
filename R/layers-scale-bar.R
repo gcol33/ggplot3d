@@ -65,9 +65,22 @@ emit_scale_bar_3d <- function(data, params, panel_params) {
   line <- packet_from_primitives_3d(rows, 1:6, rep("polylines", 3L), params, panel_params$panel_id, rep.int(2L, 3L))
   text <- data[1L, , drop = FALSE]
   text[axes] <- as.list((start + end) / 2)
-  text[[axes[b]]] <- text[[axes[b]]] + if (start[b] > 0.9) -0.025 else 0.025
   text$label <- params$label; text$angle <- 0; text$hjust <- 0.5; text$vjust <- 0.5
-  merge_scene_packets(list(line, emit_text_3d(text, params, panel_params)), panel_params$panel_id)
+  camera <- panel_params$camera
+  viewport <- panel_params$viewport %or3d% new_scene_viewport(100, 100)
+  frame <- frame_of_3d(panel_params)
+  projected <- frame_positions_3d(frame$map(rbind(start, end)), camera, frame_basis_3d(camera, viewport))
+  direction <- (projected[2L, 1:2] - projected[1L, 1:2]) * c(viewport$width_mm, viewport$height_mm)
+  normal <- c(-direction[2L], direction[1L])
+  if (sum(normal^2) < 1e-12) normal <- c(0, 1)
+  if (normal[2L] < 0) normal <- -normal
+  material <- styles_3d(text, 1L, "text", params)
+  size <- text_extent_mm_3d(material$styles)[1L, ]
+  placement <- origin_text_3d(params$label, normal, size, 1.5, 0)
+  text$hjust <- placement$hjust; text$vjust <- placement$vjust
+  packet <- merge_scene_packets(list(line, emit_text_3d(text, params, panel_params)), panel_params$panel_id)
+  attr(packet, "draw_time") <- TRUE
+  packet
 }
 
 register_geom_3d(GeomScaleBar3D, emit_scale_bar_3d, default_z = -Inf,

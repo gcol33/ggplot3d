@@ -175,3 +175,18 @@ test_that("a z title for a stat-computed z builds without an unknown-label messa
   expect_no_message(b <- ggplot2::ggplot_build(p))
   expect_identical(b$layout$panel_params[[1]]$axis_titles$z, "u")
 })
+
+test_that("elapsed z durations retain their physical units", {
+  for (unit in c("secs", "mins", "hours", "days", "weeks")) {
+    value <- as.difftime(1:3, units = unit)
+    seconds <- as.numeric(value, units = "secs")
+    scale <- scale_z_time(limits = value[c(1, 3)], breaks = value)
+    expect_equal(scale$transform(value), seconds)
+    expect_equal(scale$get_limits(), seconds[c(1, 3)])
+    p <- ggplot2::ggplot(data.frame(x = 1:3, y = 1, z = value), ggplot2::aes(x, y, z = z)) +
+      geom_point_3d() + scale + coord_3d()
+    built <- ggplot2::ggplot_build(p)
+    expect_equal(built$data[[1]]$z, seconds)
+    expect_equal(built$layout$get_scales(1)$z$get_breaks(), seconds)
+  }
+})
