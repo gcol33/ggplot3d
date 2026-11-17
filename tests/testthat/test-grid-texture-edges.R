@@ -4,8 +4,8 @@ test_that("nearest texture samples agree with texel-clipped volcano geometry", {
   geometry <- geometric_texture_packet(packet, checker_colours())
   for (dpi in c(110, 300)) {
     viewport <- new_scene_viewport(6.5 * 25.4, 4.5 * 25.4, dpi)
-    actual <- texture_channels_3d(raster_scene_3d(packet, new_camera_3d(), viewport, 2L)$image)
-    reference <- texture_channels_3d(raster_scene_3d(geometry, new_camera_3d(), viewport, 2L)$image)
+    actual <- native_channels_3d(raster_scene_3d(packet, new_camera_3d(), viewport, 2L)$image)
+    reference <- native_channels_3d(raster_scene_3d(geometry, new_camera_3d(), viewport, 2L)$image)
     inside <- actual[4L, ] == 255L & reference[4L, ] == 255L
     expect_true(identical(actual[, inside], reference[, inside]), info = paste("dpi", dpi))
   }

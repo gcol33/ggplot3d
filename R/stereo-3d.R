@@ -196,13 +196,7 @@ capture_grob_rgba_3d <- function(grob, pixels, dpi) {
   }, add = TRUE)
   grid::grid.newpage()
   grid::grid.draw(grob)
-  packed <- as.vector(capture(native = TRUE))
-  missing <- is.na(packed)
-  packed[missing] <- 0L
-  rgba <- rbind(bitwAnd(packed, 255L), bitwAnd(bitwShiftR(packed, 8L), 255L),
-                bitwAnd(bitwShiftR(packed, 16L), 255L), bitwShiftR(packed, 24L))
-  rgba[4L, missing] <- 128L
-  rgba / 255
+  native_channels_3d(as.vector(capture(native = TRUE))) / 255
 }
 
 # Colours seen through a filter: the grey level of each colour tinted from
@@ -220,14 +214,9 @@ ink_colours_3d <- function(colour, filter) {
 
 # nativeRaster pixels (packed non-premultiplied RGBA) seen through a filter.
 ink_native_raster_3d <- function(raster, filter) {
-  values <- as.double(raster)
-  values[values < 0] <- values[values < 0] + 2^32
-  channel <- function(k) (values %/% 256^k) %% 256
-  rgba <- rbind(channel(0), channel(1), channel(2)) / 255
-  ink <- round(255 * (1 - outer(filter, 1 - grey_level_3d(rgba))))
-  packed <- ink[1L, ] + 256 * ink[2L, ] + 65536 * ink[3L, ] + 16777216 * channel(3)
-  packed[packed >= 2^31] <- packed[packed >= 2^31] - 2^32
-  raster[] <- as.integer(packed)
+  channels <- native_channels_3d(raster)
+  ink <- round(255 * (1 - outer(filter, 1 - grey_level_3d(channels[1:3, , drop = FALSE] / 255))))
+  raster[] <- native_pack_3d(rbind(ink, channels[4L, ]))
   raster
 }
 

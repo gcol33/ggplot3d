@@ -46,7 +46,7 @@ test_that("pathtrace composes a panel with vector furniture and text", {
   p <- ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_point_3d(size=3,colour="steelblue")+
     coord_3d(backend=backend_3d("pathtrace",dpi=15,samples=2,bounces=2))
   path <- tempfile(fileext=".png")
-  grDevices::png(path,width=100,height=100)
+  grDevices::png(path,width=200,height=200)
   expect_no_error(print(p))
   grid::grid.force()
   expect_equal(grid::grid.get("scene-pathtrace-3d")$raster_result$samples,2L)

@@ -37,7 +37,7 @@ checker_colours <- function(n = 8L) {
 # result's nativeRaster or a PNG file.
 image_channels <- function(x) {
   if (is.character(x)) return(round(png::readPNG(x)[, , 1:3] * 255))
-  ch <- texture_channels_3d(x)
+  ch <- native_channels_3d(x)
   out <- array(0, c(nrow(x), ncol(x), 3L))
   for (k in 1:3) out[, , k] <- matrix(ch[k, ], nrow(x), ncol(x), byrow = TRUE)
   out

@@ -134,31 +134,42 @@ texture_decode_3d <- function(bytes) {
 }
 
 # 4 x n matrix of 0-255 channels (pixels row by row from the top) packed into
-# a nativeRaster. The pattern of a packed pixel with alpha >= 128 lies above
-# the integer range and is wrapped to its two's-complement bits.
+# a nativeRaster.
 texture_pack_3d <- function(rgba, height, width) {
   if (height < 1L || width < 1L) stop("A texture image needs at least one pixel.", call. = FALSE)
-  packed <- rgba[1L, ] + 256 * rgba[2L, ] + 65536 * rgba[3L, ] + 16777216 * rgba[4L, ]
-  packed <- ifelse(packed >= 2^31, packed - 2^32, packed)
-  structure(suppressWarnings(as.integer(packed)), dim = c(as.integer(height), as.integer(width)),
+  structure(native_pack_3d(rgba), dim = c(as.integer(height), as.integer(width)),
     class = "nativeRaster", channels = 4L)
 }
 
-# 4 x n matrix of the 0-255 channels of a nativeRaster, pixels row by row.
-texture_channels_3d <- function(native) {
+# nativeRaster pixels of a 4 x n matrix of 0-255 channels, bytes R, G, B, A
+# from the lowest. A pixel with alpha >= 128 lies above the integer range and
+# is stored as its two's-complement bits; the pixel 0x80000000 has the bits of
+# R's NA integer.
+native_pack_3d <- function(rgba) {
+  packed <- rgba[1L, ] + 256 * rgba[2L, ] + 65536 * rgba[3L, ] + 16777216 * rgba[4L, ]
+  wrap <- packed >= 2^31
+  packed[wrap] <- packed[wrap] - 2^32
+  bits <- rep(NA_integer_, length(packed))
+  keep <- packed != -2^31
+  bits[keep] <- as.integer(packed[keep])
+  bits
+}
+
+# 4 x n matrix of the 0-255 channels of nativeRaster pixels, in their order.
+native_channels_3d <- function(native) {
   bits <- unclass(native)
   value <- as.double(bits)
   value[is.na(bits)] <- -2^31
-  value <- ifelse(value < 0, value + 2^32, value)
+  value[value < 0] <- value[value < 0] + 2^32
   rbind(value %% 256, (value %/% 256) %% 256, (value %/% 65536) %% 256, value %/% 16777216)
 }
 
-texture_alpha_3d <- function(native) as.integer(texture_channels_3d(native)[4L, ])
+texture_alpha_3d <- function(native) as.integer(native_channels_3d(native)[4L, ])
 
 # Uncompressed-filter PNG (colour type 6, 8-bit RGBA) of a nativeRaster.
 texture_png_3d <- function(native) {
   h <- nrow(native); w <- ncol(native)
-  rows <- matrix(as.raw(texture_channels_3d(native)), 4L * w, h)
+  rows <- matrix(as.raw(native_channels_3d(native)), 4L * w, h)
   body <- as.vector(rbind(as.raw(0L), rows))
   header <- c(png_uint32_3d(w), png_uint32_3d(h), as.raw(c(8L, 6L, 0L, 0L, 0L)))
   c(as.raw(c(137, 80, 78, 71, 13, 10, 26, 10)), png_chunk_3d("IHDR", header),

@@ -62,7 +62,7 @@ test_that("textures paint over the fill, and outside the image only the fill sho
   expect_equal(over[50, 35, ], c(255, 0, 0))
   expect_equal(over[50, 65, ], c(0, 0, 255))
   bare <- raster_scene_3d(texture_square_packet(texture_3d(holed, interpolate = FALSE)), texture_top_camera(), viewport, 1L)$image
-  alpha <- matrix(texture_channels_3d(bare)[4L, ], nrow(bare), byrow = TRUE)
+  alpha <- matrix(native_channels_3d(bare)[4L, ], nrow(bare), byrow = TRUE)
   expect_equal(alpha[50, 35], 255)
   expect_equal(alpha[50, 65], 0)
   shifted <- texture_square_packet(texture_3d(matrix("red")), fill = "#00FF00")

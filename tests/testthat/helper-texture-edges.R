@@ -86,7 +86,7 @@ texture_gray_image <- function(image) {
     value <- rgb[, , 1L]
     alpha <- matrix(1, nrow(value), ncol(value))
   } else {
-    channels <- texture_channels_3d(image)
+    channels <- native_channels_3d(image)
     value <- matrix(channels[1L, ] / 255, nrow(image), ncol(image), byrow = TRUE)
     alpha <- matrix(channels[4L, ] / 255, nrow(image), ncol(image), byrow = TRUE)
   }
