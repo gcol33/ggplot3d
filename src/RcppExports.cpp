@@ -211,6 +211,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// grid_coalesce_paths_cpp
+Rcpp::List grid_coalesce_paths_cpp(Rcpp::List paths, Rcpp::IntegerVector style);
+RcppExport SEXP _ggplot3d_grid_coalesce_paths_cpp(SEXP pathsSEXP, SEXP styleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type paths(pathsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type style(styleSEXP);
+    rcpp_result_gen = Rcpp::wrap(grid_coalesce_paths_cpp(paths, style));
+    return rcpp_result_gen;
+END_RCPP
+}
 // smooth_faces_raster_cpp
 Rcpp::IntegerMatrix smooth_faces_raster_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector id, Rcpp::NumericMatrix linear, Rcpp::NumericVector alpha, int width, int height, double reach, Rcpp::Nullable<Rcpp::List> shading);
 RcppExport SEXP _ggplot3d_smooth_faces_raster_cpp(SEXP xSEXP, SEXP ySEXP, SEXP idSEXP, SEXP linearSEXP, SEXP alphaSEXP, SEXP widthSEXP, SEXP heightSEXP, SEXP reachSEXP, SEXP shadingSEXP) {
@@ -1024,6 +1035,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ggplot3d_gif_encode_cpp", (DL_FUNC) &_ggplot3d_gif_encode_cpp, 5},
     {"_ggplot3d_grid_clip_paths_cpp", (DL_FUNC) &_ggplot3d_grid_clip_paths_cpp, 15},
     {"_ggplot3d_grid_union_paths_cpp", (DL_FUNC) &_ggplot3d_grid_union_paths_cpp, 3},
+    {"_ggplot3d_grid_coalesce_paths_cpp", (DL_FUNC) &_ggplot3d_grid_coalesce_paths_cpp, 2},
     {"_ggplot3d_smooth_faces_raster_cpp", (DL_FUNC) &_ggplot3d_smooth_faces_raster_cpp, 9},
     {"_ggplot3d_grid_stroke_intervals_cpp", (DL_FUNC) &_ggplot3d_grid_stroke_intervals_cpp, 12},
     {"_ggplot3d_geometry_intersections_cpp", (DL_FUNC) &_ggplot3d_geometry_intersections_cpp, 4},

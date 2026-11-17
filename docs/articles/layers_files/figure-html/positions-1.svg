@@ -121,21 +121,21 @@
 <polyline points='206.18,168.33 357.57,212.03 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='118.78,244.03 206.18,168.33 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='206.18,168.33 206.18,16.94 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<path d='M 129.63 153.11 L 267.26 192.84 L 346.72 124.03 L 209.09 84.30 ZM 267.26 275.42 L 346.72 206.61 L 346.72 124.03 L 267.26 192.84 ZM 129.63 235.69 L 267.26 275.42 L 267.26 192.84 L 129.63 153.11 ZM 129.63 98.06 L 267.26 137.79 L 346.72 68.98 L 209.09 29.25 ZM 267.26 192.84 L 346.72 124.03 L 346.72 68.98 L 267.26 137.79 ZM 129.63 153.11 L 267.26 192.84 L 267.26 137.79 L 129.63 98.06 Z' style='fill-rule: nonzero; fill: #696C61; stroke-width: 0.75; stroke: none;' />
+<path d='M 346.72 206.61 L 346.72 124.03 L 346.72 68.98 L 209.09 29.25 L 129.63 98.06 L 129.63 153.11 L 129.63 235.69 L 267.26 275.42 Z' style='fill-rule: nonzero; fill: #696C61; stroke-width: 0.75; stroke: none;' />
 <path d='M 129.63 153.11 L 267.26 192.84 L 346.72 124.03 L 209.09 84.30 Z' style='fill-rule: nonzero; fill: #BD7B35; stroke-width: 0.75; stroke: none;' />
 <path d='M 267.26 275.42 L 346.72 206.61 L 346.72 124.03 L 267.26 192.84 Z' style='fill-rule: nonzero; fill: #7A4500; stroke-width: 0.75; stroke: none;' />
 <path d='M 129.63 235.69 L 267.26 275.42 L 267.26 192.84 L 129.63 153.11 Z' style='fill-rule: nonzero; fill: #AE6D26; stroke-width: 0.75; stroke: none;' />
 <path d='M 129.63 98.06 L 267.26 137.79 L 346.72 68.98 L 209.09 29.25 Z' style='fill-rule: nonzero; fill: #4D8DBE; stroke-width: 0.75; stroke: none;' />
 <path d='M 267.26 192.84 L 346.72 124.03 L 346.72 68.98 L 267.26 137.79 Z' style='fill-rule: nonzero; fill: #0A5481; stroke-width: 0.75; stroke: none;' />
 <path d='M 129.63 153.11 L 267.26 192.84 L 267.26 137.79 L 129.63 98.06 Z' style='fill-rule: nonzero; fill: #3F7FAF; stroke-width: 0.75; stroke: none;' />
-<path d='M 129.63 153.11 L 267.26 192.84 L 346.72 124.03 L 209.09 84.30 ZM 267.26 275.42 L 346.72 206.61 L 346.72 124.03 L 267.26 192.84 ZM 129.63 235.69 L 267.26 275.42 L 267.26 192.84 L 129.63 153.11 Z' style='fill-rule: nonzero; fill: #A1641E; stroke-width: 0.75; stroke: none;' />
+<path d='M 346.72 206.61 L 346.72 124.03 L 209.09 84.30 L 129.63 153.11 L 129.63 235.69 L 267.26 275.42 Z' style='fill-rule: nonzero; fill: #A1641E; stroke-width: 0.75; stroke: none;' />
 <path d='M 129.63 153.11 L 267.26 192.84 L 346.72 124.03 L 209.09 84.30 Z' style='fill-rule: nonzero; fill: #BD7B35; stroke-width: 0.75; stroke: none;' />
 <path d='M 267.26 275.42 L 346.72 206.61 L 346.72 124.03 L 267.26 192.84 Z' style='fill-rule: nonzero; fill: #7A4500; stroke-width: 0.75; stroke: none;' />
 <path d='M 129.63 235.69 L 267.26 275.42 L 267.26 192.84 L 129.63 153.11 Z' style='fill-rule: nonzero; fill: #AE6D26; stroke-width: 0.75; stroke: none;' />
 <polygon points='129.63,153.11 267.26,192.84 346.72,124.03 209.09,84.30 ' style='stroke-width: 0.64; stroke: none; fill: #BD7B35;' />
 <polygon points='267.26,275.42 346.72,206.61 346.72,124.03 267.26,192.84 ' style='stroke-width: 0.64; stroke: none; fill: #7A4500;' />
 <polygon points='129.63,235.69 267.26,275.42 267.26,192.84 129.63,153.11 ' style='stroke-width: 0.64; stroke: none; fill: #AE6D26;' />
-<path d='M 129.63 98.06 L 267.26 137.79 L 346.72 68.98 L 209.09 29.25 ZM 267.26 192.84 L 346.72 124.03 L 346.72 68.98 L 267.26 137.79 ZM 129.63 153.11 L 267.26 192.84 L 267.26 137.79 L 129.63 98.06 Z' style='fill-rule: nonzero; fill: #3275A4; stroke-width: 0.75; stroke: none;' />
+<path d='M 346.72 124.03 L 346.72 68.98 L 209.09 29.25 L 129.63 98.06 L 129.63 153.11 L 267.26 192.84 Z' style='fill-rule: nonzero; fill: #3275A4; stroke-width: 0.75; stroke: none;' />
 <path d='M 129.63 98.06 L 267.26 137.79 L 346.72 68.98 L 209.09 29.25 Z' style='fill-rule: nonzero; fill: #4D8DBE; stroke-width: 0.75; stroke: none;' />
 <path d='M 267.26 192.84 L 346.72 124.03 L 346.72 68.98 L 267.26 137.79 Z' style='fill-rule: nonzero; fill: #0A5481; stroke-width: 0.75; stroke: none;' />
 <path d='M 129.63 153.11 L 267.26 192.84 L 267.26 137.79 L 129.63 98.06 Z' style='fill-rule: nonzero; fill: #3F7FAF; stroke-width: 0.75; stroke: none;' />

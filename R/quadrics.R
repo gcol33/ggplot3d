@@ -103,6 +103,7 @@ emit_quadric_instances_3d <- function(data, origin, maps, space, kind, params, p
   }
   packet <- packet_from_quadrics_3d(data, seq_len(n), kind, quadric_transforms_3d(linear, translation), params,
     panel_params, radius_ratio, cap_0, cap_1)
+  if (length(mm_rows)) packet$quadrics$clip_data <- space != "mm"
   attr(packet, "model_space") <- TRUE
   if (length(mm_rows)) attr(packet, "quadric_mm") <- list(rows = mm_rows,
     unit = maps[, , mm_rows, drop = FALSE], fixed = fixed[, , mm_rows, drop = FALSE],

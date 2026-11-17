@@ -1,4 +1,4 @@
-utils::globalVariables(c("grid_clip_paths_cpp", "grid_stroke_intervals_cpp"))
+utils::globalVariables(c("grid_clip_paths_cpp", "grid_stroke_intervals_cpp", "grid_coalesce_paths_cpp"))
 
 # `large_definitions`: whether a group or mask can hold scene-sized content.
 # R's own pdf() device writes at most about 16 kB of the content of a group or
@@ -239,9 +239,9 @@ material_gp_3d <- function(styles, opacity, kind, fill = NULL) {
     fontfamily = style_value_3d(styles, "family", ""), fontface = style_value_3d(styles, "fontface", 1))
 }
 
-# Antialiasing is computed per path, so faces that share an edge inside one
-# compound path leave no seam along it. A run of opaque, unoutlined faces of
-# which no two overlap on screen (one seam group) is underlaid by the union of
+# Antialiasing is computed per path, so equal-colour unoutlined faces of a run
+# share one compound path. Differently coloured opaque faces of which no two
+# overlap on screen (one seam group) are underlaid by the union of
 # its faces as one compound path in their mean colour, then, when the faces
 # differ in colour, by one compound path per colour. Every face is wound
 # counter-clockwise so overlapping rings never cancel. The faces cover the
@@ -251,7 +251,9 @@ seam_underlay_3d <- function(x, y, id, fill) {
   ring <- counter_clockwise_3d(x, y, id); x <- ring$x; y <- ring$y
   colours <- unique(fill)
   mean_fill <- grDevices::rgb(t(rowMeans(grDevices::col2rgb(fill))), maxColorValue = 255)
-  union <- grid::pathGrob(x, y, id = id, rule = "winding", gp = grid::gpar(fill = mean_fill, col = NA))
+  boundary <- grid_union_paths_cpp(x, y, as.integer(id))
+  if (!length(boundary$x)) return(grid::gList(grid::nullGrob()))
+  union <- grid::pathGrob(boundary$x, boundary$y, id = boundary$id, rule = "winding", gp = grid::gpar(fill = mean_fill, col = NA))
   if (length(colours) == 1L) {
     union$gp$fill <- colours
     return(grid::gList(union))
@@ -284,12 +286,17 @@ select_faces_3d <- function(x, y, id, k) {
   list(x = x[keep], y = y[keep], id = match(id[keep], k))
 }
 
-# One seam group of a face run: opaque faces over their two-tier underlay, or
-# a translucent group from its compound paths alone.
+# Equal-colour faces share one compound path. Differently coloured opaque
+# faces cover their run's union underlay; translucent groups composite once.
 seam_group_grob_3d <- function(x, y, id, fill, gp, opacity, caps) {
-  faces <- grid::polygonGrob(x, y, id = id, gp = gp)
-  if (max(id) < 2L) return(faces)
+  if (!is.character(gp$fill)) return(grid::polygonGrob(x, y, id = id, gp = gp))
   paths <- seam_underlay_3d(x, y, id, fill)
+  if (inherits(paths[[1L]], "null")) return(paths[[1L]])
+  if (length(unique(fill)) == 1L) {
+    paths[[1L]]$gp$alpha <- opacity
+    return(paths[[1L]])
+  }
+  faces <- grid::polygonGrob(x, y, id = id, gp = gp)
   if (opacity == 1) grid::grobTree(children = grid::gList(paths, faces)) else translucent_seam_3d(paths, opacity, caps)
 }
 
@@ -726,20 +733,47 @@ stroke_intervals_grob_3d <- function(intervals, gp, viewport) {
     default.units = "npc", id = intervals$id, gp = gp)
 }
 
-# Consecutive opaque paths of one paint form a single winding-rule operation.
+# Within an uninterrupted block of opaque paths, equal styles share one
+# paint. Later coverage is removed from intervening styles before coalescing.
 compact_painted_grobs_3d <- function(grobs) {
   out <- list()
   eligible <- function(g) inherits(g, "pathgrob") && is.null(g$vp) &&
-    identical(g$rule, "winding") && isTRUE(g$gp$alpha == 1) && all(is.na(g$gp$col))
-  for (g in grobs) {
-    previous <- if (length(out)) out[[length(out)]] else NULL
-    if (eligible(g) && eligible(previous) && identical(g$gp, previous$gp)) {
-      g$x <- grid::unit.c(previous$x, g$x); g$y <- grid::unit.c(previous$y, g$y)
-      g$id <- c(previous$id, g$id + max(previous$id))
-      g$pathId <- rep(1L, length(g$id))
-      out[[length(out)]] <- g
-    } else out[[length(out) + 1L]] <- g
+    identical(g$rule, "winding") && isTRUE(g$gp$alpha == 1) && all(is.na(g$gp$col)) &&
+    is.character(g$gp$fill) && length(g$gp$fill) == 1L && !is.na(g$gp$fill) &&
+    all(grid::unitType(g$x) == "npc") && all(grid::unitType(g$y) == "npc") &&
+    grDevices::col2rgb(g$gp$fill, alpha = TRUE)[4L, 1L] == 255
+  block <- list()
+  flush <- function() {
+    if (!length(block)) return()
+    if (length(block) == 1L) {
+      out[[length(out) + 1L]] <<- block[[1L]]
+      block <<- list()
+      return()
+    }
+    styles <- list(); key <- integer(length(block))
+    for (i in seq_along(block)) {
+      same <- which(vapply(styles, identical, logical(1), block[[i]]$gp))
+      if (!length(same)) { styles[[length(styles) + 1L]] <- block[[i]]$gp; same <- length(styles) }
+      key[i] <- same[1L]
+    }
+    paths <- lapply(block, function(g) list(x = as.numeric(g$x), y = as.numeric(g$y),
+      id = as.integer(g$id %or3d% rep(1L, length(g$x)))))
+    merged <- grid_coalesce_paths_cpp(paths, key)
+    for (path in merged) if (length(path$x)) {
+      g <- block[[match(path$style, key)]]
+      g$x <- grid::unit(path$x, "npc"); g$y <- grid::unit(path$y, "npc")
+      g$id <- path$id; g$pathId <- NULL
+      out[[length(out) + 1L]] <<- g
+    }
+    block <<- list()
   }
+  for (g in grobs) {
+    if (eligible(g)) block[[length(block) + 1L]] <- g else {
+      flush()
+      out[[length(out) + 1L]] <- g
+    }
+  }
+  flush()
   out
 }
 
@@ -914,8 +948,14 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
   run_id <- cumsum(c(TRUE, key[order][-1L] != head(key[order], -1L)))
   runs <- unname(split(order, run_id))
   path_cache <- new.env(parent = emptyenv())
+  face_rows <- which(face)
+  face_fill <- character(length(f$kind))
+  if (length(face_rows)) face_fill[face_rows] <- face_fill_3d(scene, face_rows, styles, light)
+  varied <- logical(length(f$kind))
+  for (rows in split(which(seam), f$layer_id[seam]))
+    varied[rows] <- length(unique(face_fill[rows])) > 1L
   underlay_key <- ifelse(seam & f$layer_id > 0L, -f$layer_id, f$kind * 1e9 + f$parent_primitive_id)
-  underlay <- split_underlays_3d(f, runs, (f$kind == 5L & f$opacity >= 1) | (seam & !surface & f$opacity >= 1), underlay_key)
+  underlay <- split_underlays_3d(f, runs, (f$kind == 5L & f$opacity >= 1) | (seam & (smooth | varied) & !surface & f$opacity >= 1), underlay_key)
   geometry <- function(masks) {
     rows <- if (f$kind[masks[1L]] %in% 2:4 && f$mask_count[masks[1L]] > 0L) masks[1L] else masks
     counts <- f$count[rows]
@@ -924,9 +964,6 @@ render_scene_grid <- function(scene, viewport, light = NULL, regions = NULL, str
          x = scene$vertices$x_npc[indices], y = scene$vertices$y_npc[indices])
   }
   strokes <- masked_stroke_runs_3d(scene, runs, styles, viewport, geometry, centreline = strokes_only)
-  face_rows <- which(f$kind == 1L)
-  face_fill <- character(length(f$kind))
-  if (length(face_rows)) face_fill[face_rows] <- face_fill_3d(scene, face_rows, styles, light)
   grobs <- lapply(seq_along(runs), function(run) {
     masks <- runs[[run]]
     rows <- masks

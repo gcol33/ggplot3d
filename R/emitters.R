@@ -685,14 +685,14 @@ merge_scene_packets <- function(packets, panel_id) {
     if (!is.null(packet$styles$texture_id)) packet$styles$texture_id <- as.integer(packet$styles$texture_id + texture_shift[j])
     packets[[j]] <- packet
   }
-  # Missing coverage guarantees default to TRUE; corner attributes to NA.
+  # Coverage and data clipping default to TRUE; corner attributes to NA.
   optional <- scene_optional_schemas()
   tables <- lapply(names(schema), function(kind) {
     extra <- names(optional[[kind]])
     extra <- extra[extra %in% unlist(lapply(packets, function(p) names(p[[kind]])))]
     columns <- lapply(c(names(schema[[kind]]), extra), function(column)
       unlist(lapply(packets, function(p) p[[kind]][[column]] %or3d%
-        rep(if (column == "coverage_opaque") TRUE else NA_real_, length(p[[kind]][[1L]]))), use.names = FALSE))
+        rep(if (column %in% c("coverage_opaque", "clip_data")) TRUE else NA_real_, length(p[[kind]][[1L]]))), use.names = FALSE))
     names(columns) <- c(names(schema[[kind]]), extra)
     columns
   })

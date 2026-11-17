@@ -845,7 +845,7 @@
     };
     prims.forEach((p, i) => {
       p.index = i; p.colour = baseColour(p);
-      const id = p.furniture ? 0 : i+1, clip = p.furniture ? 0 : 1, V = vertices[p.kind], E = elements[p.kind];
+      const id = p.furniture ? 0 : i+1, clip = p.furniture || (p.kind === QUADRIC && p.table.clip_data && !p.table.clip_data[p.row]) ? 0 : 1, V = vertices[p.kind], E = elements[p.kind];
       p.vertexStart = V.count; p.elementStart = E.length;
       if (p.colour[3] <= 0 && p.kind !== TEXT) { p.skip = true; }
       else if (p.kind === FACE && p.points.length >= 3) {

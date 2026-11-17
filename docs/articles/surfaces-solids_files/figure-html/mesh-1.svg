@@ -131,9 +131,7 @@
 <polyline points='206.90,171.71 358.52,215.47 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='119.37,247.52 206.90,171.71 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='206.90,171.71 206.90,20.09 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<path d='M 347.65 72.20 L 209.82 32.41 L 130.24 239.17 ZM 130.24 239.17 L 268.07 278.96 L 347.65 72.20 Z' style='fill-rule: nonzero; fill: #68A8DB; stroke-width: 0.75; stroke: none;' />
-<polygon points='347.65,72.20 209.82,32.41 130.24,239.17 ' style='stroke-width: 0.64; stroke: none; fill: #68A8DB;' />
-<polygon points='130.24,239.17 268.07,278.96 347.65,72.20 ' style='stroke-width: 0.64; stroke: none; fill: #68A8DB;' />
+<path d='M 347.65 72.20 L 209.82 32.41 L 130.24 239.17 L 268.07 278.96 Z' style='fill-rule: nonzero; fill: #68A8DB; stroke-width: 0.75; stroke: none;' />
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 <text x='122.37' y='267.82' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='26.47px' lengthAdjust='spacingAndGlyphs'>0.00</text>

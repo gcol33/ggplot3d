@@ -131,7 +131,7 @@
 <polyline points='213.66,174.67 358.34,216.43 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='130.12,247.01 213.66,174.67 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='213.66,174.67 213.66,29.98 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<path d='M 272.03 277.01 L 347.97 211.25 L 347.97 79.71 L 272.03 145.48 ZM 140.49 107.51 L 272.03 145.48 L 347.97 79.71 L 216.43 41.74 ZM 140.49 239.04 L 272.03 277.01 L 272.03 145.48 L 140.49 107.51 Z' style='fill-rule: nonzero; fill: #3275A4; stroke-width: 0.75; stroke: none;' />
+<path d='M 347.97 211.25 L 347.97 79.71 L 216.43 41.74 L 140.49 107.51 L 140.49 239.04 L 272.03 277.01 Z' style='fill-rule: nonzero; fill: #3275A4; stroke-width: 0.75; stroke: none;' />
 <path d='M 272.03 277.01 L 347.97 211.25 L 347.97 79.71 L 272.03 145.48 Z' style='fill-rule: nonzero; fill: #0A5481; stroke-width: 0.75; stroke: none;' />
 <path d='M 140.49 107.51 L 272.03 145.48 L 347.97 79.71 L 216.43 41.74 Z' style='fill-rule: nonzero; fill: #4D8DBE; stroke-width: 0.75; stroke: none;' />
 <path d='M 140.49 239.04 L 272.03 277.01 L 272.03 145.48 L 140.49 107.51 Z' style='fill-rule: nonzero; fill: #3F7FAF; stroke-width: 0.75; stroke: none;' />

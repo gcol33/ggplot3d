@@ -37,7 +37,8 @@ scene_optional_schemas <- function() {
   list(corners = c(normal_x = "double", normal_y = "double", normal_z = "double",
                    red = "double", green = "double", blue = "double",
                    alpha = "double", u = "double", v = "double"),
-       faces = c(coverage_opaque = "logical"))
+       faces = c(coverage_opaque = "logical"),
+       quadrics = c(clip_data = "logical"))
 }
 
 scene_table_columns <- function(x, schema, optional, name) {
@@ -124,7 +125,9 @@ scene_table <- function(x, schema, defaults, name, optional = character()) {
 #'   et al. 2006). The unit sphere is the ball of radius 1 about the origin;
 #'   unit cylinders and cones lie along the local z axis for z in \[0, 1\],
 #'   with radius 1 at z = 0 and `radius_ratio` (default 1, exactly 1 for
-#'   cylinders) at z = 1. `cap_0` and `cap_1` close the ends at z = 0 and z = 1
+#'   cylinders) at z = 1. The optional logical `clip_data` (default TRUE)
+#'   controls clipping to the data box; FALSE preserves physical-size thickness
+#'   outside it. `cap_0` and `cap_1` close the ends at z = 0 and z = 1
 #'   with flat disks (1, the default) or leave them open (0). Common columns are
 #'   primitive_id, layer_id, source_row, style_id, partition and opacity.
 #' @param footprints Marker shapes: kind (1 for ellipse, 2 for polygon), offset,

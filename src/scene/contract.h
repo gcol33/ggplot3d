@@ -68,6 +68,7 @@ struct Quadrics {
   std::vector<double> opacity, radius_ratio;
   std::vector<std::array<double, 16>> transform;
   std::vector<Index> cap_0, cap_1;
+  std::vector<bool> clip_data;
 };
 
 // Polygon rings use the even-odd rule; ellipses use radii and angle only.

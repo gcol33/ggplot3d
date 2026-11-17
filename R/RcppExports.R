@@ -57,6 +57,10 @@ grid_union_paths_cpp <- function(x, y, id) {
     .Call(`_ggplot3d_grid_union_paths_cpp`, x, y, id)
 }
 
+grid_coalesce_paths_cpp <- function(paths, style) {
+    .Call(`_ggplot3d_grid_coalesce_paths_cpp`, paths, style)
+}
+
 smooth_faces_raster_cpp <- function(x, y, id, linear, alpha, width, height, reach, shading = NULL) {
     .Call(`_ggplot3d_smooth_faces_raster_cpp`, x, y, id, linear, alpha, width, height, reach, shading)
 }

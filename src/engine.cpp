@@ -186,7 +186,7 @@ ScenePacket read_packet(const Rcpp::List& x) {
              "kind", "transform_1", "transform_2", "transform_3", "transform_4", "transform_5",
              "transform_6", "transform_7", "transform_8", "transform_9", "transform_10",
              "transform_11", "transform_12", "transform_13", "transform_14", "transform_15",
-             "transform_16", "radius_ratio", "cap_0", "cap_1"});
+             "transform_16", "radius_ratio", "cap_0", "cap_1"}, {"clip_data"});
   auto& quadric = p.quadrics;
   quadric.primitive_id = integers(q, "primitive_id");
   int nq = quadric.primitive_id.size();
@@ -199,6 +199,7 @@ ScenePacket read_packet(const Rcpp::List& x) {
   quadric.radius_ratio = doubles(q, "radius_ratio", nq);
   quadric.cap_0 = integers(q, "cap_0", nq);
   quadric.cap_1 = integers(q, "cap_1", nq);
+  quadric.clip_data = q.containsElementNamed("clip_data") ? logicals(q, "clip_data", nq) : std::vector<bool>(nq, true);
   quadric.transform.resize(nq);
   for (int k = 0; k < 16; ++k) {
     const std::string name = "transform_" + std::to_string(k+1);

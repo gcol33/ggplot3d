@@ -48,7 +48,8 @@ test_that("native SVG writes glyph masks and compound surface seam paths", {
   doc <- xml2::read_xml(native_svg_3d(p, 400, 400, FALSE))
   expect_gt(length(xml2::xml_find_all(doc, ".//*[local-name()='mask']")), 0L)
   paths <- xml2::xml_attr(xml2::xml_find_all(doc, ".//*[local-name()='mask']/*[local-name()='path']"), "d")
-  expect_true(any(vapply(strsplit(paths, "M", fixed = TRUE), length, integer(1)) > 2L))
+  expect_gt(length(paths), 0L)
+  expect_true(all(grepl("[Zz]", paths)))
   if (requireNamespace("png", quietly = TRUE)) {
     code <- read_code_3d(export_3d(p, format = "tex", standalone = FALSE, width = 400, height = 400))
     expect_match(code, "fill opacity=", fixed = TRUE)

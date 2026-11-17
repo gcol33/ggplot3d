@@ -204,6 +204,42 @@ Rcpp::List grid_union_paths_cpp(Rcpp::NumericVector x, Rcpp::NumericVector y, Rc
   return Rcpp::List::create(Rcpp::Named("x") = xx, Rcpp::Named("y") = yy, Rcpp::Named("id") = ring_id);
 }
 
+// Coalesce opaque paints of the same style without changing their visible
+// coverage. Moving a later paint into its first run subtracts that paint
+// from every intervening style. Ring orientation carries holes.
+// [[Rcpp::export(rng = false)]]
+Rcpp::List grid_coalesce_paths_cpp(Rcpp::List paths, Rcpp::IntegerVector style) {
+  using namespace Clipper2Lib;
+  if (paths.size() != style.size()) Rcpp::stop("Invalid path style count.");
+  std::vector<PathsD> paints;
+  std::vector<int> styles;
+  for (R_xlen_t i = 0; i < paths.size(); ++i) {
+    Rcpp::List path = paths[i];
+    PathsD added = Union(grid_paths(path["x"], path["y"], path["id"]), FillRule::NonZero, 8);
+    auto found = std::find(styles.begin(), styles.end(), style[i]);
+    if (found == styles.end()) {
+      styles.push_back(style[i]); paints.push_back(std::move(added));
+    } else {
+      const std::size_t at = found-styles.begin();
+      for (std::size_t j = at+1; j < paints.size(); ++j)
+        paints[j] = Difference(paints[j], added, FillRule::NonZero, 8);
+      paints[at].insert(paints[at].end(), added.begin(), added.end());
+      paints[at] = Union(paints[at], FillRule::NonZero, 8);
+    }
+  }
+  Rcpp::List out(paints.size());
+  for (std::size_t k = 0; k < paints.size(); ++k) {
+    std::vector<double> x, y;
+    std::vector<int> id;
+    for (std::size_t j = 0; j < paints[k].size(); ++j) for (const auto& p : paints[k][j]) {
+      x.push_back(p.x); y.push_back(p.y); id.push_back(j+1);
+    }
+    out[k] = Rcpp::List::create(Rcpp::Named("x")=x, Rcpp::Named("y")=y,
+      Rcpp::Named("id")=id, Rcpp::Named("style")=styles[k]);
+  }
+  return out;
+}
+
 namespace {
 inline double srgb_encode_unit(double v) {
   v = std::min(1.0, std::max(0.0, v));

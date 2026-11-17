@@ -28,7 +28,7 @@ test_that("backend preserves consecutive draw runs and keyed styles", {
     expect_identical(unlist(result$fragment_runs, use.names = FALSE), scene$draw_order)
     expect_length(result$children, 3L)
     expect_s3_class(result$children[[1]], "text")
-    expect_s3_class(result$children[[2]], "polygon")
+    expect_s3_class(result$children[[2]], "pathgrob")
     expect_identical(result$children[[2]]$gp$fill, "red")
     scene$draw_order <- c(1L, 2L, 3L)
     result <- render_scene_grid(scene, scene$viewport)
@@ -84,7 +84,7 @@ test_that("dash arclength advances across hidden or clipped sections", {
   expect_identical(dash_pattern_3d("blank", 1), numeric())
 })
 
-test_that("opaque mesh seams are covered by a union underlay, never by outlines", {
+test_that("equal-colour opaque faces paint one union path", {
   packet <- new_scene_packet(
     vertices = list(x = c(0, 1, 0, 1), y = c(0, 0, 1, 1), z = c(0, 0, 0, 0)),
     corners = list(vertex = c(1L, 2L, 3L, 3L, 4L, 2L)), faces = list(offset = c(1L, 4L), style_id = c(1L, 1L)),
@@ -94,17 +94,13 @@ test_that("opaque mesh seams are covered by a union underlay, never by outlines"
     result <- render_scene_grid(scene, scene$viewport)
     expect_length(result$children, 1L)
     run <- result$children[[1L]]
-    expect_s3_class(run, "gTree")
-    underlay <- run$children[[1L]]; faces <- run$children[[2L]]
-    expect_identical(underlay$gp$fill, "red")
-    expect_s3_class(underlay, "pathgrob")
-    expect_identical(underlay$rule, "winding")
-    expect_true(is.na(underlay$gp$col))
-    expect_s3_class(faces, "polygon")
-    expect_true(all(is.na(faces$gp$col)))
-    expect_equal(sort(as.numeric(underlay$x)), sort(as.numeric(faces$x)))
-    signed <- vapply(split(seq_along(underlay$id), underlay$id), function(i) {
-      x <- as.numeric(underlay$x)[i]; y <- as.numeric(underlay$y)[i]
+    expect_s3_class(run, "pathgrob")
+    expect_identical(run$gp$fill, "red")
+    expect_identical(run$rule, "winding")
+    expect_true(is.na(run$gp$col))
+    expect_null(run$children)
+    signed <- vapply(split(seq_along(run$id), run$id), function(i) {
+      x <- as.numeric(run$x)[i]; y <- as.numeric(run$y)[i]
       sum(x * c(y[-1L], y[1L]) - c(x[-1L], x[1L]) * y)
     }, numeric(1))
     expect_true(all(signed > 0))
@@ -137,10 +133,9 @@ test_that("intersecting surfaces paint in few single-layer runs, each underlaid"
     surface_runs <- Filter(function(run) all(f$kind[run] == 1L & f$layer_id[run] > 0L), rendered$fragment_runs)
     expect_true(all(vapply(surface_runs, function(run) length(unique(f$layer_id[run])) == 1L, logical(1))))
     expect_lt(length(surface_runs), sum(lengths(surface_runs)) / 4)
-    children <- rendered$children[match(surface_runs, rendered$fragment_runs)]
-    has_faces <- function(g) inherits(g, "polygon") || any(vapply(as.list(g$children), has_faces, logical(1)))
-    expect_true(all(vapply(children[lengths(surface_runs) > 1L], function(g)
-      inherits(g, "gTree") && inherits(g$children[[1L]], "pathgrob") && has_faces(g), logical(1))))
+    children <- Filter(function(g) inherits(g, "pathgrob"), as.list(rendered$children))
+    expect_gt(length(children), 0L)
+    expect_true(all(vapply(children, function(g) length(g$gp$fill) == 1L && is.null(g$children), logical(1))))
   })
 })
 

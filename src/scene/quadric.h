@@ -60,6 +60,7 @@ struct QuadricShape {
   // Radius at local z = 1 relative to z = 0; 1 for spheres and cylinders.
   double ratio = 1;
   bool cap[2] = {false, false};
+  bool clip_data = true;
   Mat4 to_box, to_local;
 };
 
@@ -67,6 +68,7 @@ static inline QuadricShape quadric_shape(const Quadrics& q, Index row, const Mat
   QuadricShape s;
   s.kind = static_cast<QuadricKind>(q.kind[row]);
   s.ratio = s.kind == QuadricKind::cone ? q.radius_ratio[row] : 1;
+  s.clip_data = q.clip_data.empty() || q.clip_data[row];
   if (s.kind != QuadricKind::sphere) {
     s.cap[0] = q.cap_0[row] == 1;
     s.cap[1] = q.cap_1[row] == 1 && s.ratio > 0;
@@ -118,9 +120,10 @@ static inline Point4 quadric_centre(const QuadricShape& s) {
 static inline Vertex box_vertex(const Point4& x) { return {{x[0], x[1], x[2]}, {}, x[3]}; }
 
 // Box and depth planes only: the screen planes do not bound a closed body.
-static inline std::vector<Plane> quadric_clipping_planes(const Projection& p) {
+static inline std::vector<Plane> quadric_clipping_planes(const QuadricShape& s, const Projection& p, bool screen = false) {
   auto planes = clipping_planes(p);
-  if (p.camera.clip) planes.resize(planes.size()-4);
+  if (!screen && p.camera.clip) planes.resize(planes.size()-4);
+  if (!s.clip_data && p.camera.clip_data) planes.erase(planes.begin(), planes.begin()+6);
   return planes;
 }
 
@@ -139,7 +142,7 @@ static inline bool quadric_contains_eye(const QuadricShape& s, const Projection&
 // an open end, a cut by the clipping planes, or from an eye inside it.
 static inline bool quadric_shows_back(const QuadricShape& s, const Projection& p, double opacity) {
   if (opacity < 1 || quadric_open(s) || quadric_contains_eye(s, p)) return true;
-  const auto planes = quadric_clipping_planes(p);
+  const auto planes = quadric_clipping_planes(s, p);
   for (const auto& corner : quadric_corners(s)) {
     Vertex v = box_vertex(transform_point(s.to_box, corner));
     for (const auto& plane : planes) if (signed_distance(plane, v) < 0) return true;
@@ -293,9 +296,9 @@ static inline int quadric_facet_part(const QuadricShape& s, const Projection& p,
 }
 
 // Box-plane, near and far clipping of a hit, as for every other primitive.
-static inline bool quadric_hit_kept(const Projection& p, const Vec3& box, double t) {
+static inline bool quadric_hit_kept(const QuadricShape& s, const Projection& p, const Vec3& box, double t) {
   if (!(t >= p.resolved.near && t <= p.resolved.far)) return false;
-  if (p.camera.clip_data)
+  if (s.clip_data && p.camera.clip_data)
     for (double v : box) if (v < 0 || v > 1) return false;
   return true;
 }
@@ -307,7 +310,7 @@ static inline QuadricHit quadric_visible_hit(const QuadricShape& s, const Projec
   QuadricHit hit = back ? span.exit : span.enter;
   if (!hit.valid) return QuadricHit{};
   if (hit.part != quadric_surface && !s.cap[hit.part-1]) return QuadricHit{};
-  if (!quadric_hit_kept(p, ray_point(ray, hit.t), hit.t)) return QuadricHit{};
+  if (!quadric_hit_kept(s, p, ray_point(ray, hit.t), hit.t)) return QuadricHit{};
   return hit;
 }
 

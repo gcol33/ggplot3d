@@ -131,7 +131,7 @@
 <polyline points='218.40,175.79 358.21,216.15 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='137.68,245.70 218.40,175.79 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='218.40,175.79 218.40,35.98 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<polygon points='274.81,147.59 147.71,238.00 221.09,47.35 ' style='stroke-width: 1.65; stroke: none; fill: #2E6F9E;' />
+<path d='M 274.81 147.59 L 221.09 47.35 L 147.71 238.00 Z' style='fill-rule: nonzero; fill: #2E6F9E; stroke-width: 0.75; stroke: none;' />
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 <text x='140.15' y='265.85' text-anchor='middle' style='font-size: 13.60px;fill: #4D4D4D; font-family: "Arial";' textLength='26.47px' lengthAdjust='spacingAndGlyphs'>0.00</text>

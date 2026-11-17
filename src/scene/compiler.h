@@ -98,6 +98,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
   for(std::size_t row=0;row<packet.quadrics.kind.size();++row) {
     if(packet.quadrics.opacity[row]<=0) continue;
     const QuadricShape shape=quadric_shape(packet.quadrics,row,projection.camera.pre);
+    const auto quadric_planes=quadric_clipping_planes(shape,projection,true);
     const bool back=quadric_shows_back(shape,projection,packet.quadrics.opacity[row]);
     const Point4 centre=transform_point(shape.to_box,quadric_centre(shape));
     const bool oriented=centre[3]>0;
@@ -111,7 +112,7 @@ static inline CompiledScene compile(const ScenePacket& packet, const Projection&
       Polygon polygon;
       for(const auto& x:facet.points) polygon.push_back(box_vertex(transform_point(shape.to_box,x)));
       bool clipped=false;
-      polygon=clip_polygon(std::move(polygon),planes,clipped);
+      polygon=clip_polygon(std::move(polygon),quadric_planes,clipped);
       if(polygon.size()<3) continue;
       dehomogenise(polygon);
       bool degenerate=false;

@@ -409,7 +409,7 @@ view_packet_3d <- function(packet, pre = diag(4)) {
   quadrics <- NULL
   if (length(cast$rows)) {
     quadrics <- lapply(packet$quadrics[c("layer_id", "source_row", "style_id", "partition", "opacity", "kind",
-      "radius_ratio", "cap_0", "cap_1")], `[`, cast$rows)
+      "radius_ratio", "cap_0", "cap_1", intersect("clip_data", names(packet$quadrics)))], `[`, cast$rows)
     packet <- subset_quadrics_3d(packet, setdiff(seq_along(packet$quadrics$kind), cast$rows))
   }
   packet <- scene_finite_packet_3d(packet, pre)
