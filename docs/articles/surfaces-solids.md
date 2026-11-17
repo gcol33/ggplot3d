@@ -487,6 +487,20 @@ curve + geom_tube_3d(aes(radius = radius), sides = 8, cap = "flat",
 ![A helical tube whose radius grows with
 height.](surfaces-solids_files/figure-html/tube-1.svg)
 
+A radius in data units stretches with the panel box. With
+`radius.unit = "mm"` the radius is measured on the page instead, like a
+line width, so the tube stays round on screen in a box three times as
+wide as it is deep.
+
+``` r
+
+curve + geom_tube_3d(radius = 1.5, radius.unit = "mm", fill = "#2E6F9E") +
+  coord_3d(aspect = c(3, 1, 1))
+```
+
+![A helical tube of constant round cross-section in a wide, shallow
+panel box.](surfaces-solids_files/figure-html/tube-mm-1.svg)
+
 A ribbon sweeps a line segment along the same path. Its width and twist
 can vary at each position; twist is measured in degrees. The normal
 argument sets the initial orientation.

@@ -2,6 +2,14 @@
 
 ## ggplot3d 0.0.0.9000
 
+- Axis labels clear an axis colourbar (`guide_colourbar_3d(along = )`)
+  when the theme hides ticks, as
+  [`theme_minimal()`](https://ggplot2.tidyverse.org/reference/ggtheme.html)
+  does. They were placed at the box edge and drawn over the bar.
+
+- Origin axis lines (`axis.line.origin`) take the theme’s line colour
+  instead of a fixed grey20, so they follow a dark or custom theme.
+
 - [`stat_hopf_fibre_3d()`](https://gillescolling.com/ggplot3d/reference/stat_hopf_fibre_3d.md)
   tubes and tori have no edge colour by default, like other solids;
   fibre paths (`radius = 0`) and base points stay grey25. The default

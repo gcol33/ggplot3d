@@ -70,7 +70,4 @@ ggplot2::ggplot(d,ggplot2::aes(lon=lon,lat=lat,colour=id))+
   geom_sphere_3d(data=data.frame(x=0,y=0,z=0),
     mapping=ggplot2::aes(x,y,z=z),inherit.aes=FALSE,
     radius=.98,fill="grey90",colour=NA)+coord_3d()
-ggplot2::ggplot(data.frame(lon=0,lat=0),ggplot2::aes(lon=lon,lat=lat))+
-  stat_hopf_fibre_3d(what="torus",n=12,fill="steelblue")+
-  coord_spherical_geometry_3d()
 ```

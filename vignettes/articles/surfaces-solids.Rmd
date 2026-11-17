@@ -293,7 +293,7 @@ A radius in data units stretches with the panel box. With `radius.unit = "mm"` t
 
 ```{r tube-mm, fig.alt="A helical tube of constant round cross-section in a wide, shallow panel box."}
 curve + geom_tube_3d(radius = 1.5, radius.unit = "mm", fill = "#2E6F9E") +
-  coord_3d(aspect = c(3, 1, 1))
+  coord_3d(aspect = c(3, 1, 1.6))
 ```
 
 A ribbon sweeps a line segment along the same path. Its width and twist can vary at each position; twist is measured in degrees. The normal argument sets the initial orientation.

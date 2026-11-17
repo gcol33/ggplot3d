@@ -134,15 +134,17 @@ blue.](guides-themes_files/figure-html/panes-1.svg)
 ### Drawing axes through a data point
 
 An origin axis passes through a supplied data position. Its lines and
-ticks participate in scene visibility, so surfaces can cover them. The
-following point plot places all axes through zero and removes the
-surrounding box.
+ticks participate in scene visibility, so data can pass in front of them
+or behind them. The following helix winds twice around the z axis; all
+three axes pass through zero and the surrounding box is removed.
 
 ``` r
 
-points <- surface[c(1, 12, 66, 79, 133, 144), ]
-ggplot(points, aes(x, y, z = z)) +
-  geom_point_3d(size = 3, colour = "#2E6F9E") +
+turns <- seq(-1, 1, length.out = 120)
+helix <- data.frame(x = cos(2 * pi * turns), y = sin(2 * pi * turns),
+                    z = turns)
+ggplot(helix, aes(x, y, z = z)) +
+  geom_path_3d(colour = "#2E6F9E", linewidth = 0.9) +
   scale_x_continuous(breaks = c(-1, 1), labels = c("-1", "x = 1")) +
   scale_y_continuous(breaks = c(-1, 1), labels = c("-1", "y = 1")) +
   scale_z_continuous(breaks = c(-1, 1), labels = c("-1", "z = 1")) +
@@ -151,8 +153,8 @@ ggplot(points, aes(x, y, z = z)) +
            panes = character(), box = "none")
 ```
 
-![Points on a sloping plane with three axes crossing at the
-origin.](guides-themes_files/figure-html/origin-1.svg)
+![A helix winding twice around the z axis, with three axes crossing at
+the origin inside it.](guides-themes_files/figure-html/origin-1.svg)
 
 Use `guide_axis_3d(position = "origin")` on an individual axis to move
 only that guide. [Scaling heights and facet

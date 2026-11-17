@@ -73,7 +73,8 @@ units.](positions_files/figure-html/nudge-1.svg)
 Each x/y cell in the next table contains values for groups A and B.
 [position_dodge_3d()](https://gillescolling.com/ggplot3d/reference/position_dodge_3d.md)
 places those groups beside each other along x or y. An explicit shared
-width keeps the column and text layers aligned.
+width keeps the column and text layers aligned; the text layer maps half
+of each column’s height, so its value sits inside the column.
 
 ``` r
 
@@ -85,13 +86,15 @@ grouped <- ggplot(values, aes(x, y, z = z, group = part))
 grouped +
   geom_col_3d(aes(fill = part), width = 0.7, depth = 0.55,
               position = dodge) +
-  geom_text_3d(aes(label = part), position = dodge, vjust = -0.5) +
+  geom_text_3d(aes(z = z / 2, label = z), colour = "white",
+               position = dodge) +
   scale_fill_manual(name = NULL, values = c(A = "#2E6F9E", B = "#9E5E0F")) +
   coord_3d()
 ```
 
-![Two labelled columns at each x/y cell, with group A and group B
-separated along x.](positions_files/figure-html/dodge-1.svg)
+![Two columns at each x/y cell, with group A and group B separated along
+x and each column's height printed on
+it.](positions_files/figure-html/dodge-1.svg)
 
 The default `preserve = "total"` divides each cell among its present
 groups. Choose `preserve = "single"` to retain the group width set by
@@ -110,7 +113,7 @@ uses the same ordering, with its anchor halfway through each interval.
 grouped +
   geom_col_3d(aes(fill = part), position = position_stack_3d(),
               width = 0.6, depth = 0.6) +
-  geom_text_3d(aes(label = part),
+  geom_text_3d(aes(label = part), colour = "white",
     position = position_stack_3d(vjust = 0.5)) +
   scale_fill_manual(name = NULL, values = c(A = "#2E6F9E", B = "#9E5E0F")) +
   coord_3d()

@@ -808,8 +808,8 @@ extension](https://gillescolling.com/ggplot3d/articles/extending.md).
 - [Displaying intervals and
   summaries](https://gillescolling.com/ggplot3d/articles/intervals.md):
 
-  Plot supplied bounds on three axes and compute grouped means, standard
-  errors and quantile ranges.
+  Plot supplied bounds on three axes and compute means, standard errors
+  and quantile ranges for each cell of a grid.
 
 - [Combining 2D and 3D
   graphics](https://gillescolling.com/ggplot3d/articles/combining-2d-3d.md):

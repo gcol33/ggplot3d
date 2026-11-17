@@ -92,5 +92,4 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", colour = "grey30", linewidth = 0.2)
 p + coord_3d(stereo = stereo_3d("pair"))
 p + coord_3d(stereo = stereo_3d("cross", separation = 5))
-p + coord_3d(stereo = stereo_3d("anaglyph", colours = c("red", "cyan")))
 ```

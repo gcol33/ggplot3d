@@ -263,11 +263,6 @@ if (requireNamespace("ragg", quietly = TRUE)) {
                       file = tempfile(fileext = ".gif"))
   movie$timings
 }
-if (requireNamespace("ragg", quietly = TRUE)) {
-  turn <- animate_3d(p, path = orbit_3d(degrees = 90, duration = 1), fps = 3,
-                     width = 240, height = 240, file = tempfile(fileext = ".apng"))
-  turn$camera$azimuth
-}
 waves <- expand.grid(x = seq(0, 1, length.out = 20), y = seq(0, 1, length.out = 20),
                      t = seq(0, 0.75, by = 0.25))
 waves$z <- sin(pi * waves$x) * sin(pi * waves$y) * cos(2 * pi * waves$t)
@@ -277,14 +272,5 @@ if (requireNamespace("ragg", quietly = TRUE)) {
   movie <- animate_3d(wave, time = "t", width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$camera$value
-}
-track <- data.frame(x = c(0, 1, 2), y = c(0, 1, 0), z = c(0, 0.5, 1), t = 1:3)
-moving <- ggplot2::ggplot(track, ggplot2::aes(x, y, z = z, group = 1)) +
-  geom_point_3d(colour = "steelblue", size = 3) + coord_3d()
-if (requireNamespace("ragg", quietly = TRUE)) {
-  wake <- animate_3d(moving, time = "t", tween = tween_3d(n = 1),
-    trail = list(length = 3, radius = 0.04, taper = TRUE),
-    width = 240, height = 240, progress = FALSE)
-  unlink(wake$frames)
 }
 ```

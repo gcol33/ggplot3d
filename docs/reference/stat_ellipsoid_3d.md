@@ -262,11 +262,6 @@ p <- ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, Sepal.Width,
 p + geom_point_3d(ggplot2::aes(colour = Species)) +
   stat_ellipsoid_3d(alpha = 0.3) + coord_3d()
 
-# Confidence regions of the three species means, with their principal axes.
-p + geom_point_3d(ggplot2::aes(colour = Species), size = 0.6) +
-  stat_ellipsoid_3d(kind = "se", type = "norm", alpha = 0.4, axes = TRUE) +
-  coord_3d()
-
 # The smallest ellipsoid around each species.
 p + geom_point_3d(ggplot2::aes(colour = Species)) +
   stat_ellipsoid_3d(kind = "ehull", alpha = 0.2, detail = 3) + coord_3d()

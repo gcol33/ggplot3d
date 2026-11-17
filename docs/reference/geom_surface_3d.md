@@ -188,6 +188,4 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 p + geom_surface_3d(fill = "steelblue") + coord_3d()
 p + stat_surface_3d() + coord_3d()
 p + geom_surface_3d(ggplot2::aes(fill = z), shading = "smooth") + coord_3d()
-stripes <- matrix(rep(c("navy", "gold"), each = 4), 1)
-p + geom_surface_3d(texture = texture_3d(stripes, interpolate = FALSE)) + coord_3d()
 ```

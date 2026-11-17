@@ -77,10 +77,6 @@ if (requireNamespace("terra", quietly = TRUE)) {
   ggplot2::ggplot() + geom_spatraster_3d(data = r, maxcell = 2000) +
     ggplot2::scale_fill_viridis_c() + coord_3d(aspect = c(610, 870, 300))
 }
-if (requireNamespace("stars", quietly = TRUE)) {
-  s <- stars::st_as_stars(volcano)
-  ggplot2::ggplot() + geom_spatraster_3d(data = s, maxcell = 1500) + coord_3d()
-}
 if (requireNamespace("lidR", quietly = TRUE)) {
   las <- lidR::readLAS(system.file("extdata", "MixedConifer.laz", package = "lidR"),
     filter = "-keep_random_fraction 0.05")

@@ -64,11 +64,11 @@ write y-up coordinates; draw those with `coord_3d(up = "y")`.
 
 ## References
 
-LAS Specification 1.4 R15 (ASPRS, 2019):
-<https://www.asprs.org/wp-content/uploads/2019/07/LAS_1_4_r15.pdf>. PLY
-(Turk): <https://paulbourke.net/dataformats/ply/>. Kerbl, Kopanas,
-Leimkuehler, Drettakis (2023). 3D Gaussian splatting for real-time
-radiance field rendering. ACM Transactions on Graphics 42(4), 139.
+LAS Specification 1.4 (ASPRS), maintained at
+<https://github.com/ASPRSorg/LAS>. PLY (Turk):
+<https://paulbourke.net/dataformats/ply/>. Kerbl, Kopanas, Leimkuehler,
+Drettakis (2023). 3D Gaussian splatting for real-time radiance field
+rendering. ACM Transactions on Graphics 42(4), 139.
 [doi:10.1145/3592433](https://doi.org/10.1145/3592433)
 
 ## See also
