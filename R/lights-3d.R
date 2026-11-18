@@ -452,12 +452,14 @@ as_lights_3d <- function(light) {
 #' d$z <- with(d, x^2 - y^2)
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 #' p + geom_surface_3d(shading = "smooth", material = material_3d("shiny")) + coord_3d()
+#' \donttest{
 #' p + geom_surface_3d(fill = "grey60", colour = NA,
 #'                     material = material_3d(style = "gooch")) + coord_3d()
 #' p + geom_surface_3d(fill = "tomato", colour = NA,
 #'                     material = material_3d(style = "toon", bands = 4)) + coord_3d()
 #' p + geom_surface_3d(colour = NA, shading = "smooth",
 #'                     material = material_3d(style = "normals")) + coord_3d()
+#' }
 #' @export
 material_3d <- function(type = "matte", ambient = NULL, diffuse = NULL, specular = NULL, shininess = NULL,
                         specular_colour = NULL, back = NULL, style = "standard", bands = 3L, breaks = NULL,

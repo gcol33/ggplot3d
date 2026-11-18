@@ -51,11 +51,13 @@
 #'   geom_voxel_3d(fill = "grey80", colour = "grey20") +
 #'   coord_3d()
 #' p + facet_views_3d()
+#' \donttest{
 #' p + facet_views_3d(c("front", "top", "right", iso = "isometric"), layout = "third_angle")
 #' p + facet_views_3d(list(a = list(azimuth = -30), b = list(azimuth = 60, zoom = 0.8)))
 #' p + facet_views_3d(views = NULL, lights = list(
 #'   left = light_3d(light_directional_3d(c(-1, 1, 2))),
 #'   right = light_3d(light_directional_3d(c(1, 1, 2)))))
+#' }
 #' @export
 facet_views_3d <- function(views = c("front", "top", "right", "isometric"),
                         layout = c("wrap", "third_angle", "first_angle"),

@@ -118,6 +118,7 @@
 #' backend_3d("raster", blend = "srgb")
 #' backend_3d("pathtrace", samples = 8, seed = 1)
 #' backend_3d("pathtrace", samples = 16, noise_threshold = 0.05, denoise = TRUE, tone = "agx")
+#' \donttest{
 #' d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
 #' d$z <- sin(pi * d$x) * cos(pi * d$y)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
@@ -127,6 +128,7 @@
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "grey80", colour = NA) +
 #'   coord_3d(backend = backend_3d("hybrid", dpi = 150, rasterise = "surfaces"))
+#' }
 #' @export
 backend_3d <- function(type = "vector", dpi = 144, antialias = 2L, blend = "linear",
                        samples = 64L, bounces = 8L, seed = 1L, aperture = 0,
@@ -336,6 +338,7 @@ plot_backend_3d <- function(plot, backend) {
 #' d$site <- c("a", "a", "b")
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
 #'   ggplot2::facet_wrap(~site) + coord_3d(z_scales = "free")
+#' \donttest{
 #' views <- rbind(transform(d, view = "front"), transform(d, view = "side"))
 #' ggplot2::ggplot(views, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
 #'   ggplot2::facet_wrap(~view) + coord_3d(azimuth = c(-60, 30))
@@ -354,6 +357,7 @@ plot_backend_3d <- function(plot, backend) {
 #'   coord_3d(isometry = rotation, xlim = c(-4, 4), ylim = c(-4, 4))
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 4) +
 #'   coord_3d(shadow = shadow_3d(), depth_cue = depth_cue_3d())
+#' }
 #' @export
 coord_3d <- function(projection = "orthographic", azimuth = -60, elevation = 30, roll = 0,
                      oblique = c(angle = 45, ratio = 0.5), up = "z",

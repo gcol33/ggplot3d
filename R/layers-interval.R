@@ -311,6 +311,7 @@ crossbar_gp_3d <- function(colour, linetype, linewidth) {
 #' d$se <- c(0.4, 0.6, 0.5, 0.8, 0.3, 0.7)
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, zmin = z - se, zmax = z + se))
 #' p + geom_errorbar_3d(width = 0.2) + geom_point_3d() + coord_3d()
+#' \donttest{
 #' p + geom_pointrange_3d(colour = "steelblue") + coord_3d()
 #' p + geom_crossbar_3d(width = 0.3, fill = "grey85", cap_plane = "cross") + coord_3d()
 #'
@@ -324,6 +325,7 @@ crossbar_gp_3d <- function(colour, linetype, linewidth) {
 #' # Ranges on the floor, from x/y alone
 #' ggplot2::ggplot(e, ggplot2::aes(x, y, ymin = y - 1, ymax = y + 1)) +
 #'   geom_linerange_3d(linewidth = 1) + coord_3d()
+#' }
 #' @export
 geom_errorbar_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
                              width = NULL, cap_plane = "auto",
@@ -506,11 +508,13 @@ StatSummary3D <- ggplot2::ggproto("StatSummary3D", ggplot2::Stat,
 #' d$z <- d$x + d$y + rnorm(nrow(d), sd = 0.5)
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 #' p + stat_summary_3d() + coord_3d()
+#' \donttest{
 #' p + stat_summary_3d(geom = "errorbar", fun = median,
 #'   fun.min = function(z) quantile(z, 0.25), fun.max = function(z) quantile(z, 0.75),
 #'   width = 0.2) + coord_3d()
 #' p + stat_summary_3d(geom = "crossbar", fun.data = ggplot2::mean_se,
 #'   fun.args = list(mult = 2), width = 0.3, cap_plane = "cross", fill = "grey90") + coord_3d()
+#' }
 #' @export
 stat_summary_3d <- function(mapping = NULL, data = NULL, geom = "pointrange", position = "identity", ...,
                             fun.data = NULL, fun = NULL, fun.max = NULL, fun.min = NULL,

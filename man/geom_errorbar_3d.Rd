@@ -113,6 +113,7 @@ d$z <- c(2, 3, 5, 4, 6, 5)
 d$se <- c(0.4, 0.6, 0.5, 0.8, 0.3, 0.7)
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, zmin = z - se, zmax = z + se))
 p + geom_errorbar_3d(width = 0.2) + geom_point_3d() + coord_3d()
+\donttest{
 p + geom_pointrange_3d(colour = "steelblue") + coord_3d()
 p + geom_crossbar_3d(width = 0.3, fill = "grey85", cap_plane = "cross") + coord_3d()
 
@@ -126,6 +127,7 @@ ggplot2::ggplot(e, ggplot2::aes(x, y, z = z,
 # Ranges on the floor, from x/y alone
 ggplot2::ggplot(e, ggplot2::aes(x, y, ymin = y - 1, ymax = y + 1)) +
   geom_linerange_3d(linewidth = 1) + coord_3d()
+}
 }
 \seealso{
 \code{\link[=stat_summary_3d]{stat_summary_3d()}} computes intervals from data, \code{\link[=geom_stem_3d]{geom_stem_3d()}}

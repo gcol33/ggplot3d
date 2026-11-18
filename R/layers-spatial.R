@@ -162,8 +162,12 @@ register_geom_3d(ggplot2::GeomSf, emit_sf_3d, aesthetics = c("height", "subgroup
 #'   ggplot2::ggplot(nc) +
 #'     geom_sf_3d(ggplot2::aes(height = BIR74 / 1000, fill = BIR74), colour = "grey30") +
 #'     coord_3d(crs = 32119, aspect = c(4, 1.6, 1), elevation = 40)
+#' }
+#' \donttest{
+#' if (requireNamespace("sf", quietly = TRUE)) {
 #'   ggplot2::ggplot(nc[1:20, ]) + ggplot2::geom_sf(fill = "grey90") +
 #'     coord_3d(crs = 32119, aspect = c(2, 1, 0.3))
+#' }
 #' }
 #' @export
 geom_sf_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,

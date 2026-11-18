@@ -68,9 +68,11 @@
 #' p + geom_point_3d(ggplot2::aes(colour = Species)) +
 #'   stat_ellipsoid_3d(alpha = 0.3) + coord_3d()
 #'
+#' \donttest{
 #' # The smallest ellipsoid around each species.
 #' p + geom_point_3d(ggplot2::aes(colour = Species)) +
 #'   stat_ellipsoid_3d(kind = "ehull", alpha = 0.2, detail = 3) + coord_3d()
+#' }
 stat_ellipsoid_3d <- function(mapping = NULL, data = NULL, geom = GeomEllipsoid3D,
                               position = "identity", ..., type = "t", level = 0.95,
                               kind = "data", detail = 2L, axes = FALSE, shade = TRUE,

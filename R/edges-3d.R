@@ -32,10 +32,12 @@
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "#2E6F9E", shading = "smooth", edges = edges_3d()) +
 #'   coord_3d()
+#' \donttest{
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "grey90", shading = "smooth") +
 #'   coord_3d(edges = edges_3d(every = 5, colour = "grey20", alpha = 1),
 #'            outline = outline_3d(silhouette = FALSE, crease = NULL))
+#' }
 #' @export
 edges_3d <- function(type = c("cells", "triangles"), every = 1L, colour = "white", linewidth = 0.2,
                      linetype = 1, alpha = 0.6, hidden = c("hide", "dashed", "show")) {

@@ -69,7 +69,9 @@ d$z <- exp(-3 * (d$x^2 + d$y^2))
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey85", colour = "grey30", linewidth = 0.2)
 p + coord_3d(stereo = stereo_3d("pair"))
+\donttest{
 p + coord_3d(stereo = stereo_3d("cross", separation = 5))
+}
 }
 \seealso{
 \code{\link[=coord_3d]{coord_3d()}}, \code{\link[=facet_views_3d]{facet_views_3d()}}, whose views each become a stereo

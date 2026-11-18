@@ -67,12 +67,14 @@
 #' helix <- data.frame(x = cos(t), y = sin(t), z = t / 4, t = t)
 #' ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, fill = t)) +
 #'   geom_tube_3d(radius = 0.12) + coord_3d()
-#' knot <- data.frame(u = seq(0, 2 * pi, length.out = 13)[-13])
+#' \donttest{
+#' knot <-data.frame(u = seq(0, 2 * pi, length.out = 13)[-13])
 #' knot <- transform(knot, x = sin(u) + 2 * sin(2 * u), y = cos(u) - 2 * cos(2 * u), z = -sin(3 * u))
 #' ggplot2::ggplot(knot, ggplot2::aes(x, y, z = z)) +
 #'   geom_tube_3d(radius = 0.3, closed = TRUE, spline = "catmull-rom", n = 100) + coord_3d()
 #' ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, twist = t * 20)) +
 #'   geom_strip_3d(width = 0.4) + coord_3d()
+#' }
 geom_tube_3d <- function(mapping = NULL, data = NULL, stat = StatSweep3D, position = "identity", ..., sides = 16L, radius = NULL,
                          radius.unit = "data", cap = c("round", "flat", "none"), closed = FALSE, spline = NULL, n = 100L,
                          na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {

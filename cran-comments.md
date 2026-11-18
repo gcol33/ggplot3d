@@ -11,13 +11,15 @@ This is the first CRAN release of ggplot3d.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 2 notes
+0 errors | 0 warnings | 1 note
 
 * New submission.
-* Installed size: the compiled scene engine includes the bundled Manifold
-  (Apache License 2.0) and Clipper2 (Boost Software License 1.0) geometry
-  libraries, which make up most of the `libs` directory. Their authors are
-  listed in `Authors@R` and their notices in `inst/COPYRIGHTS`.
+
+On Linux the check may also report the installed size. The compiled scene
+engine includes the bundled Manifold (Apache License 2.0) and Clipper2 (Boost
+Software License 1.0) geometry libraries, which make up most of the `libs`
+directory. Their authors are listed in `Authors@R` and their notices in
+`inst/COPYRIGHTS`.
 
 ## Notes for the reviewer
 

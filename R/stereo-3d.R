@@ -52,7 +52,9 @@
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "grey85", colour = "grey30", linewidth = 0.2)
 #' p + coord_3d(stereo = stereo_3d("pair"))
+#' \donttest{
 #' p + coord_3d(stereo = stereo_3d("cross", separation = 5))
+#' }
 #' @export
 stereo_3d <- function(mode = c("pair", "cross", "anaglyph"), separation = 3, colours = c("red", "cyan")) {
   mode <- match.arg(mode)

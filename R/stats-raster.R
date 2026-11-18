@@ -119,11 +119,13 @@ register_geom_3d(GeomSpatRaster3D, emit_stats_surface_3d, parameters = surface_p
 #'   ggplot2::ggplot() + geom_spatraster_3d(data = r, maxcell = 2000) +
 #'     ggplot2::scale_fill_viridis_c() + coord_3d(aspect = c(610, 870, 300))
 #' }
+#' \donttest{
 #' if (requireNamespace("lidR", quietly = TRUE)) {
 #'   las <- lidR::readLAS(system.file("extdata", "MixedConifer.laz", package = "lidR"),
 #'     filter = "-keep_random_fraction 0.05")
 #'   ggplot2::ggplot(ggplot2::fortify(las), ggplot2::aes(x, y, z = z, colour = z)) +
 #'     geom_point_3d(size = 0.3) + coord_3d(aspect = c(1, 1, 0.4))
+#' }
 #' }
 #' @export
 geom_spatraster_3d <- function(mapping = NULL, data, position = "identity", ..., maxcell = 50000,

@@ -72,8 +72,10 @@ GeomLabelRepel3D <- ggplot2::ggproto("GeomLabelRepel3D", ggplot2::GeomLabel)
 #'                 z = c(1, 1.2, 1.1, 2, 3), name = c("alpha", "beta", "gamma", "delta", "epsilon"))
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, label = name)) + geom_point_3d()
 #' p + geom_label_3d(fill = "white") + coord_3d()
+#' \donttest{
 #' p + geom_text_repel_3d(seed = 1) + coord_3d()
 #' p + geom_label_repel_3d(seed = 1, segment.colour = "grey40") + coord_3d()
+#' }
 #' @export
 geom_label_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
                           parse = FALSE, label.padding = grid::unit(0.25, "lines"),

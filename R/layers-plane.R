@@ -37,6 +37,7 @@ GeomPlane3D <- ggplot2::ggproto("GeomPlane3D", ggplot2::Geom,
 #' d$z <- exp(-(d$x^2 + d$y^2))
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_surface_3d(fill = "grey85")
 #' p + geom_plane_3d(zintercept = 0.5, fill = "steelblue") + coord_3d()
+#' \donttest{
 #' p + geom_plane_3d(xintercept = c(-1, 1), colour = "grey20") + coord_3d()
 #'
 #' fit <- stats::lm(mpg ~ wt + hp, data = mtcars)
@@ -45,6 +46,7 @@ GeomPlane3D <- ggplot2::ggproto("GeomPlane3D", ggplot2::Geom,
 #'   geom_point_3d() +
 #'   geom_plane_3d(normal = c(-b[["wt"]], -b[["hp"]], 1), point = c(0, 0, b[[1]])) +
 #'   coord_3d()
+#' }
 #' @export
 geom_plane_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
                           xintercept, yintercept, zintercept, normal = NULL, point = NULL,

@@ -103,6 +103,7 @@ geom_function_3d <- geom_from_stat_3d("stat_function_3d")
 #' d$z <- with(d, x + y + sin(3*x*y) / 5)
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_smooth_3d(method = "lm", n = 12) + coord_3d()
+#' \donttest{
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   stat_smooth_3d(method = "lm", se = FALSE, n = 8) + coord_3d()
 #'
@@ -117,6 +118,7 @@ geom_function_3d <- geom_from_stat_3d("stat_function_3d")
 #' ggplot2::ggplot(mtcars, ggplot2::aes(wt, hp, z = mpg)) +
 #'   geom_smooth_3d(method = fit, domain = "hull", se = "fill", n = 20) +
 #'   geom_point_3d() + coord_3d()
+#' }
 stat_smooth_3d <- function(mapping = NULL, data = NULL, geom = GeomStatsSurface3D,
                             position = "identity", ..., method = "loess", formula = NULL,
                             n = 30L, se = TRUE, level = 0.95, span = 0.75,

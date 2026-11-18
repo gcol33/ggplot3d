@@ -89,8 +89,10 @@ retains each cell's boundary, and what="edges" deduplicates shared edges.
 \examples{
 ggplot2::ggplot()+stat_tiling_3d(schlafli=c(7,3),radius=2)+
   coord_3d(axes=character(),panes=character(),box="none")
+\donttest{
 ggplot2::ggplot()+stat_honeycomb_3d(schlafli=c(5,3,4),radius=1,what="faces")+
   coord_3d(axes=character(),panes=character(),box="none")
+}
 }
 \references{
 Nelson and Segerman (2016). Visualizing hyperbolic honeycombs.

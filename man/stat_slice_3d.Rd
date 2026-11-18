@@ -133,12 +133,14 @@ d <- expand.grid(x = seq(-1, 1, length.out = 12),
 d$value <- with(d, exp(-(x^2 + 2 * y^2 + z^2)))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
   geom_slice_3d() + coord_3d()
+\donttest{
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z, value = value)) +
   stat_slice_3d(slice = sdf_plane(c(1, -1, 1)), n = 30) + coord_3d()
 set.seed(1)
 p <- data.frame(x = rnorm(200), y = rnorm(200), z = rnorm(200))
 ggplot2::ggplot(p, ggplot2::aes(x, y, z = z)) +
   geom_density_slice_3d(zslice = 0, n = 24) + coord_3d()
+}
 }
 \references{
 MathWorks. slice: Volume slice planes.

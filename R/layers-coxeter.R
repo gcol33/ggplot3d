@@ -404,8 +404,10 @@ register_geom_3d(GeomCoxeter3D,emit_coxeter_3d,positions=character(),parameters=
 #' @examples
 #' ggplot2::ggplot()+stat_tiling_3d(schlafli=c(7,3),radius=2)+
 #'   coord_3d(axes=character(),panes=character(),box="none")
+#' \donttest{
 #' ggplot2::ggplot()+stat_honeycomb_3d(schlafli=c(5,3,4),radius=1,what="faces")+
 #'   coord_3d(axes=character(),panes=character(),box="none")
+#' }
 #' @export
 stat_tiling_3d <- function(mapping=NULL,data=NULL,position="identity",...,schlafli=c(7,3),radius=2,
                            what=c("edges","faces","cells"),max_cells=10000L,model=NULL,

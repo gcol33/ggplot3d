@@ -243,11 +243,13 @@ FrameHyperbolicFinite <- ggplot2::ggproto("FrameHyperbolicFinite",FrameBox,
 #' @examples
 #' d <- data.frame(x=c(-.7,.7),y=c(.2,.2),z=0)
 #' ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+coord_hyperbolic_3d()
+#' \donttest{
 #' ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_path_3d()+
 #'   coord_hyperbolic_3d(model="poincare",curvature=-4,distance_breaks=c(0,.5,1))
 #' d <- data.frame(x=.5,y=c(-.2,.2,.2,-.2),z=c(-.2,-.2,.2,.2))
 #' ggplot2::ggplot(d,ggplot2::aes(x,y,z=z))+geom_polygon_3d(fill="steelblue")+
 #'   coord_hyperbolic_3d(inside=TRUE,observer=c(.1,0,0),azimuth=180,elevation=0)
+#' }
 #' @export
 coord_hyperbolic_3d <- function(model="klein",input=model,
                                extent=3,references=character(),curvature=-1,centre=NULL,distance_breaks=NULL,

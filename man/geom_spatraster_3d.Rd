@@ -57,11 +57,13 @@ if (requireNamespace("terra", quietly = TRUE)) {
   ggplot2::ggplot() + geom_spatraster_3d(data = r, maxcell = 2000) +
     ggplot2::scale_fill_viridis_c() + coord_3d(aspect = c(610, 870, 300))
 }
+\donttest{
 if (requireNamespace("lidR", quietly = TRUE)) {
   las <- lidR::readLAS(system.file("extdata", "MixedConifer.laz", package = "lidR"),
     filter = "-keep_random_fraction 0.05")
   ggplot2::ggplot(ggplot2::fortify(las), ggplot2::aes(x, y, z = z, colour = z)) +
     geom_point_3d(size = 0.3) + coord_3d(aspect = c(1, 1, 0.4))
+}
 }
 }
 \seealso{

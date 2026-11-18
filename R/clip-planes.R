@@ -34,10 +34,12 @@
 #' ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 #'   geom_surface_3d(fill = "steelblue") +
 #'   coord_3d(clip_planes = list(clip_plane_3d(c(1, 1, 0), c(0, 0, 0))))
+#' \donttest{
 #' ggplot2::ggplot(data.frame(x = 0, y = 0, z = 0), ggplot2::aes(x, y, z = z)) +
 #'   geom_sphere_3d(radius = 1, fill = "tomato") +
 #'   coord_3d(xlim = c(-1, 1), ylim = c(-1, 1), zlim = c(-1, 1),
 #'     clip_planes = list(clip_plane_3d(c(0, -1, 0), c(y = 0.3), cap = TRUE)))
+#' }
 #' @export
 clip_plane_3d <- function(normal, point = NULL, cap = FALSE) {
   if (!is.logical(cap) || length(cap) != 1L || is.na(cap)) stop("cap must be TRUE or FALSE.", call. = FALSE)

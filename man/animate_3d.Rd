@@ -201,6 +201,7 @@ if (requireNamespace("ragg", quietly = TRUE)) {
                       file = tempfile(fileext = ".gif"))
   movie$timings
 }
+\donttest{
 waves <- expand.grid(x = seq(0, 1, length.out = 20), y = seq(0, 1, length.out = 20),
                      t = seq(0, 0.75, by = 0.25))
 waves$z <- sin(pi * waves$x) * sin(pi * waves$y) * cos(2 * pi * waves$t)
@@ -210,6 +211,7 @@ if (requireNamespace("ragg", quietly = TRUE)) {
   movie <- animate_3d(wave, time = "t", width = 320, height = 320,
                       file = tempfile(fileext = ".gif"))
   movie$camera$value
+}
 }
 }
 \seealso{

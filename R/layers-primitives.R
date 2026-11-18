@@ -69,11 +69,12 @@ make_layer_3d <- function(geom, mapping, data, stat, position, params, show.lege
 #'                 label = letters[1:3])
 #' p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z))
 #' p + geom_point_3d(size = 3) + coord_3d()
-#' cloud <- data.frame(x = rnorm(2000), y = rnorm(2000), z = rnorm(2000))
+#' p + geom_path_3d() + coord_3d()
+#' \donttest{
+#' cloud <-data.frame(x = rnorm(2000), y = rnorm(2000), z = rnorm(2000))
 #' ggplot2::ggplot(cloud, ggplot2::aes(x, y, z = z)) +
 #'   geom_point_3d(render = "splat", size = 1) +
 #'   coord_3d(backend = backend_3d("raster", dpi = 96))
-#' p + geom_path_3d() + coord_3d()
 #' p + geom_segment_3d(ggplot2::aes(xend = x, yend = y, zend = 0)) + coord_3d()
 #' p + geom_text_3d(ggplot2::aes(label = label)) + coord_3d()
 #' if (requireNamespace("systemfonts", quietly = TRUE)) {
@@ -85,6 +86,7 @@ make_layer_3d <- function(geom, mapping, data, stat, position, params, show.lege
 #'     facing = "camera_point") + coord_3d(projection = "perspective")
 #' }
 #' p + geom_polygon_3d(fill = "steelblue", alpha = 0.5) + coord_3d()
+#' }
 #' @export
 geom_point_3d <- function(mapping = NULL, data = NULL, stat = "identity", position = "identity", ...,
                            na.rm = FALSE, show.legend = NA, inherit.aes = TRUE) {
