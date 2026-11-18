@@ -5,6 +5,11 @@ docs_setup <- function(legend = "none", ...) {
     fig.ext = "svg", dev.args = list(pointsize = 14)
   )
   knitr::opts_chunk$set(...)
+  # The site draws figure text up to 1.05 times its authored size (the phone
+  # breakpoint of the pkgdown text scale) and in Roboto, whose labels run up
+  # to 1.07 times the width of the Arial they are measured in here; layout
+  # reserves room for both.
+  options(ggplot3d.text_scale = 1.05 * 1.07)
   clear <- ggplot2::element_rect(fill = "transparent", colour = NA)
   ggplot2::theme_set(ggplot2::theme_minimal(base_size = 17) + ggplot2::theme(
     plot.background = clear, panel.background = clear,

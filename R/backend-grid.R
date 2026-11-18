@@ -133,7 +133,7 @@ device_text_metrics_3d <- function(packet) {
   rows <- match(packet$text$style_id, packet$styles$style_id)
   measured <- which(!(packet$styles$.anchor[rows] %in% TRUE))
   if (length(measured)) {
-    extent <- text_extent_mm_3d(packet$styles[rows[measured], , drop = FALSE])
+    extent <- text_room_3d(text_extent_mm_3d(packet$styles[rows[measured], , drop = FALSE]))
     packet$text$width_mm[measured] <- extent[, 1L]
     packet$text$height_mm[measured] <- extent[, 2L]
   }
@@ -179,6 +179,13 @@ text_label_3d <- function(styles) {
 label_padding_3d <- function(styles) {
   padding <- style_value_3d(styles, "label_padding", NA_real_)
   ifelse(is.finite(padding), padding, 0)
+}
+
+# Room that layout reserves for text of the given measured extent: the extent
+# times option ggplot3d.text_scale, for output whose text is later drawn
+# larger than the device measured it.
+text_room_3d <- function(extent) {
+  extent * check_positive_3d(getOption("ggplot3d.text_scale", 1), "option ggplot3d.text_scale")
 }
 
 # Measured width and height in mm of each text style, label box included.

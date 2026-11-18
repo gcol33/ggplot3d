@@ -13,7 +13,7 @@ text_metrics_3d <- function(labels, element, angle = 0) {
     g <- grid::textGrob(labels[i], gp = text_gp_3d(element))
     c(grid::convertWidth(grid::grobWidth(g), "mm", TRUE), grid::convertHeight(grid::grobHeight(g), "mm", TRUE))
   }, numeric(2)))
-  rotated_extent_3d(metrics, angle)
+  rotated_extent_3d(text_room_3d(metrics), angle)
 }
 
 # Width and height of the bounding rectangle of each n x 2 text box turned

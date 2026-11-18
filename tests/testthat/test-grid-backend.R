@@ -429,6 +429,33 @@ test_that("label thinning leaves a font-substitution margin and keeps both ends"
   expect_equal(axis_label_priority_3d(1L), 1L)
 })
 
+test_that("option ggplot3d.text_scale reserves room for larger text without resizing drawn boxes", {
+  extent <- cbind(c(4, 10), c(3, 3))
+  withr::local_options(ggplot3d.text_scale = 1.2)
+  expect_equal(text_room_3d(extent), 1.2 * extent)
+  d <- data.frame(x = c(-0.4, 0, 0.96), y = c(0, 0.93, 0), z = c(-0.25, 0, 0.25))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
+    coord_3d(aspect = "data") + ggplot2::theme_minimal(base_size = 17) + ggplot2::theme(aspect.ratio = 1)
+  kept <- function(scale) {
+    withr::local_options(ggplot3d.text_scale = scale)
+    grDevices::pdf(NULL, width = 6, height = 5)
+    on.exit(grDevices::dev.off())
+    panel <- motion_panels_3d(grid::grid.force(ggplot2::ggplotGrob(p)))[[1L]]
+    layout <- panel$furniture$label_layout$z
+    c(kept = sum(layout$keep), height = max(layout$boxes[, 4L] - layout$boxes[, 2L], na.rm = TRUE))
+  }
+  plain <- kept(1); roomy <- kept(1.6)
+  expect_lte(roomy[["kept"]], plain[["kept"]])
+  expect_equal(roomy[["height"]] / plain[["height"]], 1.6, tolerance = 1e-6)
+  styles <- styles_3d(data.frame(label = "z", size = 4), 1L, "text", list())$styles
+  grDevices::pdf(NULL)
+  measured <- withr::with_options(list(ggplot3d.text_scale = 1), text_extent_mm_3d(styles))
+  expect_equal(withr::with_options(list(ggplot3d.text_scale = 3), text_extent_mm_3d(styles)), measured)
+  grDevices::dev.off()
+  withr::local_options(ggplot3d.text_scale = 0)
+  expect_error(text_room_3d(extent), "ggplot3d.text_scale")
+})
+
 test_that("a short axis under aspect = 'data' keeps label rectangles apart with margin", {
   d <- data.frame(x = c(-0.4, 0, 0.96), y = c(0, 0.93, 0), z = c(-0.25, 0, 0.25))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +

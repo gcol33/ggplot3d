@@ -70,7 +70,7 @@ GuideOrientation3D <- ggplot2::ggproto("GuideOrientation3D", ggplot2::Guide,
     size <- grid::convertUnit(p$size, "mm", valueOnly = TRUE)
     text <- element_3d("axis.text", theme + (p$theme %or3d% ggplot2::theme()))
     fontsize <- text$size %or3d% 9
-    extent <- max(grid::convertWidth(grid::stringWidth(p$labels), "mm", TRUE), fontsize * 25.4 / 72)
+    extent <- text_room_3d(max(grid::convertWidth(grid::stringWidth(p$labels), "mm", TRUE), fontsize * 25.4 / 72))
     side <- max(size, 2 * extent + 4)
     arm <- max(0, (side - 2 * extent) / 2)
     ends <- direction * arm / max(1, sqrt(rowSums(direction^2)))

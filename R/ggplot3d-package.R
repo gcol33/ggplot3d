@@ -33,6 +33,13 @@
 #'   \item{`ggplot3d.quadric_segments`}{One representable integer of at least
 #'     3 for quadric meshes in exports and shadows. Default 32.
 #'     See [geom_sphere_3d()].}
+#'   \item{`ggplot3d.text_scale`}{One positive finite number. Layout (axis
+#'     label thinning, axis title placement, label repulsion and guide text
+#'     clearance) reserves this many times the measured size of each text,
+#'     for output whose text is later drawn larger than the device measured
+#'     it, such as an SVG whose stylesheet enlarges text on small screens or
+#'     renders it in a wider font. Drawn text and label boxes keep their
+#'     measured size. Default 1.}
 #' }
 #' @useDynLib ggplot3d, .registration = TRUE
 #' @importFrom Rcpp sourceCpp

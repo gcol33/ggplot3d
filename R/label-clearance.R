@@ -56,7 +56,7 @@ clear_guide_text_3d <- function(packet, project, obstacles) {
   tab <- packet$text
   if (!length(tab$offset) || !nrow(obstacles)) return(packet)
   styles <- packet$styles[match(tab$style_id, packet$styles$style_id), , drop = FALSE]
-  extent <- text_extent_mm_3d(styles)
+  extent <- text_room_3d(text_extent_mm_3d(styles))
   anchors <- project(cbind(packet$vertices$x, packet$vertices$y, packet$vertices$z))[, 1:2, drop = FALSE]
   for (i in seq_along(tab$offset)) {
     a <- tab$angle[i] * pi / 180

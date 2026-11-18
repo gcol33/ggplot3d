@@ -537,7 +537,7 @@ packet_from_primitives_3d <- function(data, primitives, kinds, params, panel_id,
     if (kind == "text") {
       for (key in c("hjust", "vjust", "angle")) tables[[kind]][[key]] <- material$styles[[key]][style]
       measured <- unique(style)
-      extent <- text_extent_mm_3d(material$styles[measured, , drop = FALSE])
+      extent <- text_room_3d(text_extent_mm_3d(material$styles[measured, , drop = FALSE]))
       tables[[kind]]$width_mm <- extent[match(style, measured), 1L]
       tables[[kind]]$height_mm <- extent[match(style, measured), 2L]
     }

@@ -240,7 +240,7 @@ place_overlay_3d.scene_repel_grob <- function(grob, context) {
   settings <- grob$settings
   styles <- grob$styles[grob$style[keep], , drop = FALSE]
   measured <- unique(grob$style[keep])
-  extent <- text_extent_mm_3d(grob$styles[measured, , drop = FALSE])[match(grob$style[keep], measured), , drop = FALSE]
+  extent <- text_room_3d(text_extent_mm_3d(grob$styles[measured, , drop = FALSE]))[match(grob$style[keep], measured), , drop = FALSE]
   angle <- as.numeric(style_value_3d(styles, "angle", 0))
   half_box <- rotated_extent_3d(extent, angle) / 2
   anchor <- xy[grob$labelled[keep], , drop = FALSE]
