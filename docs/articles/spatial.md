@@ -259,7 +259,7 @@ ggplot(track, aes(x, y, z = time)) +
   geom_path_3d(colour = "#7A4F9E", linewidth = 1) +
   scale_z_datetime(date_labels = "%a %H:%M") +
   labs(x = NULL, y = NULL, z = NULL) +
-  coord_3d(aspect = c(4, 1.6, 2), elevation = 20, axes = "z", panes = c("back", "floor"))
+  coord_3d(aspect = c(3, 1.4, 2), elevation = 30, azimuth = -60, axes = "z", panes = c("back", "floor"))
 ```
 
 ![A path rising through time above a map of North Carolina, vertical

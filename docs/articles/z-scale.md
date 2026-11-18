@@ -131,15 +131,13 @@ x and y.
 
 faceted <- data.frame(x = rep(1:3, 2), y = rep(c(1, 2, 1), 2),
   z = c(1, 2, 3, 20, 40, 60), site = rep(c("a", "b"), each = 3))
-overhead <- light_3d(light_directional_3d(c(0, 0, 1), space = "data"))
 ggplot(faceted, aes(x, y, z = z)) + geom_point_3d(size = 3) +
   facet_wrap(~site, labeller = label_both) +
-  coord_3d(z_scales = "free", shadow = shadow_3d(light = overhead, alpha = 0.5))
+  coord_3d(z_scales = "free")
 ```
 
 ![Two side-by-side panels with separate z ranges, 1 to 3 for site a and
-20 to 60 for site b, each point casting a shadow straight down onto the
-floor.](z-scale_files/figure-html/facets-1.svg)
+20 to 60 for site b.](z-scale_files/figure-html/facets-1.svg)
 
 Free x and y ranges remain controlled by ggplot2’s facet arguments. Use
 fixed z ranges when equal heights should occupy equal positions across

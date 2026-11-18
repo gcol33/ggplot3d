@@ -35,24 +35,15 @@
   </clipPath>
 </defs>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
+<rect x='0.00' y='0.00' width='468.00' height='324.00' style='stroke-width: 1.65; stroke: none;' />
+<rect x='8.47' y='8.47' width='451.06' height='307.06' style='stroke-width: 1.65; stroke: none;' />
 </g>
 <defs>
-  <clipPath id='cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw'>
-    <rect x='72.00' y='0.00' width='324.00' height='324.00' />
+  <clipPath id='cpMTYuNDR8NDUxLjU2fDE2LjQ0fDMwNy41Ng=='>
+    <rect x='16.44' y='16.44' width='435.12' height='291.12' />
   </clipPath>
 </defs>
-<g clip-path='url(#cpNzIuMDB8Mzk2LjAwfDAuMDB8MzI0LjAw)'>
-<rect x='72.00' y='0.00' width='324.00' height='324.00' style='stroke-width: 1.65; stroke: none;' />
-</g>
-<g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
-<rect x='80.47' y='8.47' width='307.06' height='307.06' style='stroke-width: 1.65; stroke: none;' />
-</g>
-<defs>
-  <clipPath id='cpODguNDR8Mzc5LjU2fDE2LjQ0fDMwNy41Ng=='>
-    <rect x='88.44' y='16.44' width='291.12' height='291.12' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpODguNDR8Mzc5LjU2fDE2LjQ0fDMwNy41Ng==)'>
+<g clip-path='url(#cpMTYuNDR8NDUxLjU2fDE2LjQ0fDMwNy41Ng==)'>
 <polyline points='250.37,171.64 241.47,169.77 232.49,168.38 223.52,167.45 214.67,167.00 206.04,167.01 197.72,167.47 189.80,168.35 182.37,169.65 175.52,171.32 169.32,173.33 163.85,175.65 159.15,178.24 155.29,181.06 152.30,184.06 150.22,187.19 149.08,190.41 148.88,193.66 149.63,196.90 151.32,200.08 153.93,203.14 157.44,206.04 161.79,208.73 166.95,211.17 172.86,213.31 179.45,215.13 186.65,216.59 194.37,217.64 202.53,218.28 211.05,218.48 219.82,218.22 228.75,217.50 ' style='stroke-width: 1.92; stroke: #2E6F9E; stroke-linecap: butt;' />
 <polyline points='307.73,257.01 311.80,251.77 315.01,246.33 317.32,240.75 318.70,235.07 319.13,229.34 318.62,223.62 317.16,217.94 314.78,212.37 311.49,206.95 307.35,201.72 302.38,196.74 296.66,192.04 290.23,187.66 283.18,183.63 275.58,179.99 267.52,176.77 259.08,173.98 250.37,171.64 ' style='stroke-width: 1.92; stroke: #2E6F9E; stroke-linecap: butt;' />
 <polyline points='237.74,216.30 246.68,214.62 255.48,212.48 264.05,209.88 272.28,206.84 280.08,203.37 287.37,199.50 294.06,195.26 300.09,190.69 305.38,185.82 309.87,180.69 313.52,175.34 316.28,169.83 318.13,164.19 319.03,158.48 318.99,152.75 318.01,147.04 316.08,141.42 313.25,135.91 309.53,130.58 304.96,125.47 299.61,120.62 293.53,116.08 286.78,111.87 279.44,108.03 271.60,104.60 263.34,101.59 254.75,99.03 245.93,96.92 236.98,95.29 227.99,94.13 219.08,93.44 210.32,93.22 201.83,93.46 193.70,94.13 186.02,95.22 178.87,96.71 172.34,98.55 166.49,100.73 161.40,103.19 157.11,105.90 153.68,108.81 151.15,111.89 149.53,115.07 148.86,118.31 149.14,121.56 150.36,124.77 152.52,127.90 155.58,130.88 159.51,133.68 164.28,136.25 169.82,138.55 176.08,140.54 182.98,142.18 190.45,143.44 198.40,144.29 206.75,144.71 215.41,144.68 224.27,144.19 233.24,143.23 ' style='stroke-width: 1.92; stroke: #2E6F9E; stroke-linecap: butt;' />
@@ -73,7 +64,7 @@
 <text x='226.06' y='89.99' text-anchor='end' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>z = 1</text>
 <text x='196.85' y='206.70' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>-1</text>
 </g>
-<g clip-path='url(#cpODguNDR8Mzc5LjU2fDE2LjQ0fDMwNy41Ng==)'>
+<g clip-path='url(#cpMTYuNDR8NDUxLjU2fDE2LjQ0fDMwNy41Ng==)'>
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 </g>
