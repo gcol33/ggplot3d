@@ -52,7 +52,9 @@ template:
         html body main pre.sourceCode,
         html body main .sourceCode pre { overflow-x: auto !important; }
       }
-      .docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+      .docs-animation { display: block; margin: 0 0 1rem; border: 1px solid #DFD7CA; border-radius: 0.375rem; background: #F5F6F8; overflow: hidden; }
+      .docs-animation-dark { border-color: #495057; background: #343739; }
+      .docs-animation > img, .docs-animation > video { display: block; margin: 0 auto; border: 0; border-radius: 0; }
       .docs-animation-dark { display: none !important; }
       [data-bs-theme="dark"] .docs-animation-light { display: none !important; }
       [data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
@@ -329,6 +331,7 @@ reference:
   - coord_spacetime_3d
   - stat_light_cone_3d
   - stat_embedding_3d
+  - stat_gravity_lattice_3d
   - stat_geodesic_ode_3d
   - lorentz_boost_3d
 - title: Complex functions, knots and immersed surfaces

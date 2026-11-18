@@ -38,6 +38,29 @@ test_that("Flamm embedding has the Schwarzschild spatial metric", {
   expect_error(stat_embedding_3d(rs=2,r=c(1,4)),"outside")
 })
 
+test_that("gravity lattice draws radial lengths at their proper Schwarzschild length", {
+  rs <- .3
+  expect_equal(schwarzschild_proper_3d(1.4,rs)-schwarzschild_proper_3d(.5,rs),
+    integrate(function(r) 1/sqrt(1-rs/r),.5,1.4,rel.tol=1e-12)$value,tolerance=1e-9)
+  flat <- gravity_lattice_3d(0,1,4,6,"lines")
+  expect_equal(flat$r,sqrt(flat$x^2+flat$y^2+flat$z^2),tolerance=1e-12)
+  expect_equal(flat$lapse,rep(1,nrow(flat)))
+  nodes <- gravity_lattice_3d(rs,1,4,6,"nodes")
+  drawn <- sqrt(nodes$x^2+nodes$y^2+nodes$z^2)
+  expect_true(all(nodes$r>rs&drawn>0&drawn<=nodes$r+1e-12))
+  corner <- nodes$r==max(nodes$r)
+  expect_equal(drawn[corner],nodes$r[corner],tolerance=1e-12)
+  expect_equal(max(nodes$r)-drawn,schwarzschild_proper_3d(max(nodes$r),rs)-schwarzschild_proper_3d(nodes$r,rs),tolerance=1e-12)
+  expect_equal(nodes$lapse,sqrt(1-rs/nodes$r),tolerance=1e-12)
+  p <- ggplot2::ggplot(data.frame(rs=c(0,rs),k=1:2),ggplot2::aes(rs=rs))+
+    stat_gravity_lattice_3d(breaks=3,n=4)+ggplot2::facet_wrap(~k)+coord_3d()
+  d <- ggplot2::layer_data(p)
+  expect_equal(range(d$lapse[d$PANEL==1]),c(1,1))
+  expect_lt(min(d$lapse[d$PANEL==2]),1)
+  expect_silent(validate_scene_packet(stats_scene(ggplot2::ggplot()+stat_gravity_lattice_3d(breaks=3,n=4)+coord_3d())$packet))
+  expect_error(stat_gravity_lattice_3d(rs=-1),"nonnegative")
+})
+
 test_that("Schwarzschild orbits recover circular and null solutions", {
   circular <- schwarzschild_orbit_3d(1,sqrt(100/7),FALSE,.1,0,c(0,20*pi),400,c(2,100),FALSE)
   expect_equal(circular$r,rep(10,nrow(circular)),tolerance=1e-10)

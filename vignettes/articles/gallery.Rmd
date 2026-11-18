@@ -136,7 +136,9 @@ The fill maps `z_mean`, the mean height of each triangle, so the ripples are dis
 
 ## Bézier curves
 
-A cubic Bézier curve is defined by four control points P0 to P3. For a parameter s from 0 to 1, the curve passes through (1 - s)^3 P0 + 3s(1 - s)^2 P1 + 3s^2(1 - s) P2 + s^3 P3. It starts at P0 and ends at P3; P1 and P2 pull it towards them without lying on it. Write the four weights as columns of a matrix and multiply by the control points to get the sampled curve.
+A cubic Bézier curve is defined by four control points $P_0$ to $P_3$. For a parameter $s$ from 0 to 1, the curve passes through
+$$B(s) = (1 - s)^3 P_0 + 3s(1 - s)^2 P_1 + 3s^2(1 - s) P_2 + s^3 P_3.$$
+It starts at $P_0$ and ends at $P_3$; $P_1$ and $P_2$ pull it towards them without lying on it. Write the four weights as columns of a matrix and multiply by the control points to get the sampled curve.
 
 ```{r bezier-data}
 ctrl <- data.frame(x = c(0, 1, 3, 4), y = c(0, 3, -1, 2),

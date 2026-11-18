@@ -36,7 +36,8 @@ docs_animation <- function(chunk) {
       plot.background = ggplot2::element_rect(fill = colours[["paper"]], colour = NA)
     ))
     out <- knitr::knit_print(eval(code, envir = env))
-    sub("<(img|video) ", sprintf('<\\1 class="docs-animation docs-animation-%s" loading="lazy" ', mode), out)
+    sprintf('<div class="docs-animation docs-animation-%s">%s</div>', mode,
+      sub("<(img|video) ", '<\\1 loading="lazy" ', trimws(out)))
   }, character(1))
   knitr::asis_output(paste(html, collapse = ""))
 }

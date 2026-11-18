@@ -123,6 +123,92 @@ stat_embedding_3d <- function(mapping=NULL,data=NULL,...,rs=1,r=c(rs,4*rs),both=
   if(both) layers else layers[[1L]]
 }
 
+# Proper radial distance in the Schwarzschild spatial slice, up to a constant:
+# the integral of dr/sqrt(1-rs/r) from rs.
+schwarzschild_proper_3d <- function(r,rs) {
+  if(rs==0) return(r)
+  sqrt(r*(r-rs))+rs*log((sqrt(r)+sqrt(r-rs))/sqrt(rs))
+}
+
+# Cubic lattice lines in [-extent,extent]^3, each node moved along its ray
+# from the mass so that its drawn distance from the outer sphere through the
+# corners equals the proper radial distance to that sphere.
+gravity_lattice_3d <- function(rs,extent,breaks,n,what) {
+  ticks <- seq(-extent,extent,length.out=breaks)
+  along <- seq(-extent,extent,length.out=(breaks-1L)*n+1L)
+  pairs <- expand.grid(a=ticks,b=ticks)
+  lines <- do.call(rbind,lapply(1:3,function(axis) do.call(rbind,lapply(seq_len(nrow(pairs)),function(i) {
+    X <- matrix(0,length(along),3L); X[,axis] <- along; X[,-axis] <- rep(c(pairs$a[i],pairs$b[i]),each=length(along))
+    data.frame(X1=X[,1L],X2=X[,2L],X3=X[,3L],line=(axis-1L)*nrow(pairs)+i,node=(seq_along(along)-1L)%%n==0L)
+  }))))
+  if(what=="nodes") lines <- unique(lines[lines$node,c("X1","X2","X3","node")])
+  R <- sqrt(lines$X1^2+lines$X2^2+lines$X3^2); Rref <- extent*sqrt(3)
+  drawn <- rep(NA_real_,length(R)); outside <- R>rs
+  drawn[outside] <- Rref-(schwarzschild_proper_3d(Rref,rs)-schwarzschild_proper_3d(R[outside],rs))
+  keep <- !is.na(drawn)&drawn>0
+  scale <- drawn/R
+  out <- data.frame(x=lines$X1*scale,y=lines$X2*scale,z=lines$X3*scale,r=R,lapse=sqrt(pmax(0,1-rs/R)),rs=rs)
+  if(what=="nodes") return(out[keep,,drop=FALSE])
+  run <- cumsum(c(TRUE,diff(keep)!=0|diff(lines$line)!=0))
+  out$piece <- run; out <- out[keep,,drop=FALSE]
+  sizes <- table(out$piece); out <- out[out$piece%in%as.integer(names(sizes)[sizes>1L]),,drop=FALSE]
+  out$group <- match(out$piece,unique(out$piece)); out$piece <- NULL
+  out
+}
+
+StatGravityLattice3D <- ggplot2::ggproto("StatGravityLattice3D",StatGeometry3D,
+  required_aes=character(),optional_aes=c("x","y","z","rs"),
+  dropped_aes=c(StatGeometry3D$dropped_aes,"rs"),
+  compute_group=function(data,scales,rs=.3,extent=1,breaks=5L,n=16L,what="lines") {
+    if("rs"%in%names(data)) {
+      rs <- unique(data$rs)
+      if(length(rs)!=1L||!is.finite(rs)||rs<0) stop("Mapped rs must be one finite nonnegative value per group.",call.=FALSE)
+    }
+    out <- gravity_lattice_3d(rs,extent,breaks,n,what)
+    if(what=="lines"&&"group"%in%names(data)) out$group <- out$group+1000L*data$group[1L]
+    out
+  }
+)
+
+#' Cubic lattice around a Schwarzschild mass
+#'
+#' Draws the lines of a cubic lattice around a mass at the origin of the
+#' Schwarzschild spatial slice t=constant, with Schwarzschild radius rs=2M in
+#' G=c=1 units. Each point at coordinate radius r is moved along its ray from
+#' the mass to the drawn radius D(r)=R0-(s(R0)-s(r)), where
+#' s(r)=sqrt(r(r-rs))+rs log((sqrt(r)+sqrt(r-rs))/sqrt(rs)) is the proper
+#' radial distance from the horizon and R0 the radius of the lattice corners.
+#' Radial lengths measured inward from the corner sphere are therefore drawn
+#' true; tangential lengths are not, since the curved slice has no
+#' distance-preserving map into flat space. Points inside rs, or whose drawn
+#' radius would be negative, are dropped. rs=0 gives the flat lattice; map rs
+#' and facet on it to compare.
+#' @inheritParams stat_parametric_3d
+#' @param geom Geom for the layer; NULL uses paths for lines and points for
+#'   nodes.
+#' @param rs Nonnegative Schwarzschild radius, used when rs is not mapped.
+#' @param extent Positive half-width of the lattice cube.
+#' @param breaks Number of lattice lines along each axis.
+#' @param n Samples per lattice cell along each line.
+#' @param what "lines" for the lattice lines, "nodes" for the lattice points.
+#' @return A path layer, or a point layer for nodes, with computed variables
+#'   r (coordinate radius) and lapse sqrt(1-rs/r), the rate of a static clock
+#'   relative to one far from the mass.
+#' @examples
+#' ggplot2::ggplot()+stat_gravity_lattice_3d(rs=.3,breaks=4,n=8)+coord_3d()
+#' @export
+stat_gravity_lattice_3d <- function(mapping=NULL,data=NULL,geom=NULL,position="identity",...,
+                                    rs=.3,extent=1,breaks=5L,n=16L,what=c("lines","nodes"),
+                                    na.rm=FALSE,show.legend=NA,inherit.aes=TRUE) {
+  rs <- mesh_number_3d(rs,"rs",function(x) is.finite(x)&&x>=0,"nonnegative")
+  extent <- mesh_number_3d(extent,"extent",function(x) is.finite(x)&&x>0,"positive")
+  what <- match.arg(what)
+  if(is.null(geom)) geom <- if(what=="lines") ggplot2::GeomPath else ggplot2::GeomPoint
+  make_layer_3d(geom,mapping,stats_seed_data_3d(data),StatGravityLattice3D,position,
+    stats_params_3d(list(rs=rs,extent=extent,breaks=mesh_count_3d(breaks,"breaks",2L),n=mesh_count_3d(n,"n",1L),
+      what=what,na.rm=na.rm),list(...)),show.legend,inherit.aes)
+}
+
 schwarzschild_orbit_3d <- function(M,L,null,u0,du0,phi,n,r_range,embedding) {
   h <- diff(phi)/n; state <- c(u0,du0)
   force <- function(y) c(y[2L],if(null) 3*M*y[1L]^2-y[1L] else M/L^2+3*M*y[1L]^2-y[1L])
