@@ -141,6 +141,23 @@ Summaries use scale-transformed values, so applying a logarithmic scale
 changes the quantity being averaged. Compute summaries in original units
 before plotting when that is the intended quantity.
 
+[geom_boxplot_3d()](https://gillescolling.com/ggplot3d/reference/geom_boxplot_3d.md)
+draws the same quartile box and adds whiskers, which reach the most
+extreme observation within 1.5 interquartile ranges of the box. An
+observation beyond the whiskers would be drawn as a separate point; none
+of these cells has one.
+
+``` r
+
+fuel + geom_boxplot_3d(width = 0.35, depth = 0.35, fill = "#2E6F9E") +
+  coord_3d()
+```
+
+![Boxes from the first to the third quartile of fuel economy for each
+combination of cylinders and gears, with a median face and whiskers; the
+single-car cells are flat
+slabs.](intervals_files/figure-html/boxplots-1.svg)
+
 ### Preparing a summary table
 
 A precomputed table makes the bounds available for checking and reuse.
