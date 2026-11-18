@@ -66,7 +66,9 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
-.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation { display: block; margin: 0 0 1rem; border: 1px solid #DFD7CA; border-radius: 0.375rem; background: #F5F6F8; overflow: hidden; }
+.docs-animation-dark { border-color: #495057; background: #343739; }
+.docs-animation > img, .docs-animation > video { display: block; margin: 0 auto; border: 0; border-radius: 0; }
 .docs-animation-dark { display: none !important; }
 [data-bs-theme="dark"] .docs-animation-light { display: none !important; }
 [data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
@@ -1224,11 +1226,23 @@ so the ripples are distinguished by shade as well as by position.</p>
 <div class="section level2">
 <h2 id="bézier-curves">Bézier curves<a class="anchor" aria-label="anchor" href="#b%C3%A9zier-curves"></a>
 </h2>
-<p>A cubic Bézier curve is defined by four control points P0 to P3. For
-a parameter s from 0 to 1, the curve passes through (1 - s)^3 P0 + 3s(1
-- s)^2 P1 + 3s^2(1 - s) P2 + s^3 P3. It starts at P0 and ends at P3; P1
-and P2 pull it towards them without lying on it. Write the four weights
-as columns of a matrix and multiply by the control points to get the
+<p>A cubic Bézier curve is defined by four control points
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_0</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>3</mn></msub><annotation encoding="application/x-tex">P_3</annotation></semantics></math>.
+For a parameter
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>
+from 0 to 1, the curve passes through
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo stretchy="false" form="prefix">(</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>s</mi><msup><mo stretchy="false" form="postfix">)</mo><mn>3</mn></msup><msub><mi>P</mi><mn>0</mn></msub><mo>+</mo><mn>3</mn><mi>s</mi><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>s</mi><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup><msub><mi>P</mi><mn>1</mn></msub><mo>+</mo><mn>3</mn><msup><mi>s</mi><mn>2</mn></msup><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>s</mi><mo stretchy="false" form="postfix">)</mo><msub><mi>P</mi><mn>2</mn></msub><mo>+</mo><msup><mi>s</mi><mn>3</mn></msup><msub><mi>P</mi><mn>3</mn></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">B(s) = (1 - s)^3 P_0 + 3s(1 - s)^2 P_1 + 3s^2(1 - s) P_2 + s^3 P_3.</annotation></semantics></math>
+It starts at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>0</mn></msub><annotation encoding="application/x-tex">P_0</annotation></semantics></math>
+and ends at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>3</mn></msub><annotation encoding="application/x-tex">P_3</annotation></semantics></math>;
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>1</mn></msub><annotation encoding="application/x-tex">P_1</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mn>2</mn></msub><annotation encoding="application/x-tex">P_2</annotation></semantics></math>
+pull it towards them without lying on it. Write the four weights as
+columns of a matrix and multiply by the control points to get the
 sampled curve.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ctrl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span>, y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>

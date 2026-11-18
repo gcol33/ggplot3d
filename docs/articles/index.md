@@ -211,8 +211,8 @@
   spacetime](https://gillescolling.com/ggplot3d/articles/curved-spaces.md):
 
   Draw data in spherical and hyperbolic geometry, the Hopf fibration,
-  hyperbolic tree layouts, light cones, Lorentz boosts and Schwarzschild
-  geodesics.
+  hyperbolic tree layouts, light cones and hyperboloids, Lorentz boosts,
+  and the space and orbits around a Schwarzschild mass.
 
 - [Drawing complex functions, knots and
   surfaces](https://gillescolling.com/ggplot3d/articles/complex-knots.md):

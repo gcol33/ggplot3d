@@ -1,0 +1,75 @@
+# Cubic lattice around a Schwarzschild mass
+
+Draws the lines of a cubic lattice around a mass at the origin of the
+Schwarzschild spatial slice t=constant, with Schwarzschild radius rs=2M
+in G=c=1 units. Each point at coordinate radius r is moved along its ray
+from the mass to the drawn radius D(r)=R0-(s(R0)-s(r)), where
+s(r)=sqrt(r(r-rs))+rs log((sqrt(r)+sqrt(r-rs))/sqrt(rs)) is the proper
+radial distance from the horizon and R0 the radius of the lattice
+corners. Radial lengths measured inward from the corner sphere are
+therefore drawn true; tangential lengths are not, since the curved slice
+has no distance-preserving map into flat space. Points inside rs, or
+whose drawn radius would be negative, are dropped. rs=0 gives the flat
+lattice; map rs and facet on it to compare.
+
+## Usage
+
+``` r
+stat_gravity_lattice_3d(
+  mapping = NULL,
+  data = NULL,
+  geom = NULL,
+  position = "identity",
+  ...,
+  rs = 0.3,
+  extent = 1,
+  breaks = 5L,
+  n = 16L,
+  what = c("lines", "nodes"),
+  na.rm = FALSE,
+  show.legend = NA,
+  inherit.aes = TRUE
+)
+```
+
+## Arguments
+
+- mapping, data, position, ..., na.rm, show.legend, inherit.aes:
+
+  Standard layer arguments.
+
+- geom:
+
+  Geom for the layer; NULL uses paths for lines and points for nodes.
+
+- rs:
+
+  Nonnegative Schwarzschild radius, used when rs is not mapped.
+
+- extent:
+
+  Positive half-width of the lattice cube.
+
+- breaks:
+
+  Number of lattice lines along each axis.
+
+- n:
+
+  Samples per lattice cell along each line.
+
+- what:
+
+  "lines" for the lattice lines, "nodes" for the lattice points.
+
+## Value
+
+A path layer, or a point layer for nodes, with computed variables r
+(coordinate radius) and lapse sqrt(1-rs/r), the rate of a static clock
+relative to one far from the mass.
+
+## Examples
+
+``` r
+ggplot2::ggplot()+stat_gravity_lattice_3d(rs=.3,breaks=4,n=8)+coord_3d()
+```

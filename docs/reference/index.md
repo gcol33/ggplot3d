@@ -450,6 +450,8 @@ coordinates are listed under angles and geographic coordinates.
   : Light cones and surfaces of constant spacetime interval
 - [`stat_embedding_3d()`](https://gillescolling.com/ggplot3d/reference/stat_embedding_3d.md)
   : Schwarzschild spatial embedding diagram
+- [`stat_gravity_lattice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_gravity_lattice_3d.md)
+  : Cubic lattice around a Schwarzschild mass
 - [`stat_geodesic_ode_3d()`](https://gillescolling.com/ggplot3d/reference/stat_geodesic_ode_3d.md)
   : Equatorial Schwarzschild spacetime geodesics
 - [`lorentz_boost_3d()`](https://gillescolling.com/ggplot3d/reference/lorentz_boost_3d.md)

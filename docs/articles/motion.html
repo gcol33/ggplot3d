@@ -66,7 +66,9 @@
   html body main pre.sourceCode,
   html body main .sourceCode pre { overflow-x: auto !important; }
 }
-.docs-animation { display: block; margin: 0 auto 1rem; border-radius: 0.375rem; }
+.docs-animation { display: block; margin: 0 0 1rem; border: 1px solid #DFD7CA; border-radius: 0.375rem; background: #F5F6F8; overflow: hidden; }
+.docs-animation-dark { border-color: #495057; background: #343739; }
+.docs-animation > img, .docs-animation > video { display: block; margin: 0 auto; border: 0; border-radius: 0; }
 .docs-animation-dark { display: none !important; }
 [data-bs-theme="dark"] .docs-animation-light { display: none !important; }
 [data-bs-theme="dark"] .docs-animation-dark { display: block !important; }
@@ -398,8 +400,12 @@ your choice instead. Width and height are in pixels.</p>
 <code class="sourceCode R"><span><span class="va">orbit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">p</span>, frames <span class="op">=</span> <span class="fl">24</span>, fps <span class="op">=</span> <span class="fl">8</span>, format <span class="op">=</span> <span class="st">"gif"</span>,</span>
 <span>                    width <span class="op">=</span> <span class="fl">600</span>, height <span class="op">=</span> <span class="fl">480</span>, dpi <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">orbit</span></span></code></pre></div>
-<p><img class="docs-animation docs-animation-light" loading="lazy" src="motion_files/figure-html/orbit-show-1.gif" alt="The blue surface turning a full circle about its vertical axis." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
-<p><img class="docs-animation docs-animation-dark" loading="lazy" src="motion_files/figure-html/orbit-show-2.gif" alt="The blue surface turning a full circle about its vertical axis." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
+<div class="docs-animation docs-animation-light">
+<img loading="lazy" src="motion_files/figure-html/orbit-show-1.gif" alt="The blue surface turning a full circle about its vertical axis." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
+<div class="docs-animation docs-animation-dark">
+<img loading="lazy" src="motion_files/figure-html/orbit-show-2.gif" alt="The blue surface turning a full circle about its vertical axis." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
 <p>Printing the result in a document embeds the movie. Its path is in
 <code>orbit$file</code>. The camera table contains one row per frame
 with its time and camera angles.</p>
@@ -495,13 +501,19 @@ the box as a sphere. <code>format = "mp4"</code> writes a video.</p>
 <span>  elevation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">50</span>, length.out <span class="op">=</span> <span class="fl">36</span><span class="op">)</span>,</span>
 <span>  width <span class="op">=</span> <span class="fl">600</span>, height <span class="op">=</span> <span class="fl">480</span>, dpi <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">rising</span></span></code></pre></div>
-<video class="docs-animation docs-animation-light" loading="lazy" src="motion_files/figure-html/rising-show-1.mp4" autoplay loop muted playsinline aria-label="The blue surface turning a quarter circle while the camera rises from a low view to a view from above." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+<div class="docs-animation docs-animation-light">
+<video loading="lazy" src="motion_files/figure-html/rising-show-1.mp4" autoplay loop muted playsinline aria-label="The blue surface turning a quarter circle while the camera rises from a low view to a view from above." style="width: 100%; max-width: min(100%, 600px); height: auto;">
 The blue surface turning a quarter circle while the camera rises from a
 low view to a view from above.
-</video><video class="docs-animation docs-animation-dark" loading="lazy" src="motion_files/figure-html/rising-show-2.mp4" autoplay loop muted playsinline aria-label="The blue surface turning a quarter circle while the camera rises from a low view to a view from above." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</video>
+</div>
+<div class="docs-animation docs-animation-dark">
+<video loading="lazy" src="motion_files/figure-html/rising-show-2.mp4" autoplay loop muted playsinline aria-label="The blue surface turning a quarter circle while the camera rises from a low view to a view from above." style="width: 100%; max-width: min(100%, 600px); height: auto;">
 The blue surface turning a quarter circle while the camera rises from a
 low view to a view from above.
-</video><p>Frames use the raster backend by default.
+</video>
+</div>
+<p>Frames use the raster backend by default.
 <code>backend = "vector"</code> draws each frame with the exact vector
 scene backend described in <a href="visibility.html">How overlapping
 geometry is drawn</a>, at a higher cost per frame.</p>
@@ -524,8 +536,12 @@ perspective view into a parallel one.</p>
 <span><span class="va">travel</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">lens</span>, path <span class="op">=</span> <span class="va">tour</span>, fps <span class="op">=</span> <span class="fl">12</span>, format <span class="op">=</span> <span class="st">"gif"</span>,</span>
 <span>                     width <span class="op">=</span> <span class="fl">600</span>, height <span class="op">=</span> <span class="fl">480</span>, dpi <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">travel</span></span></code></pre></div>
-<p><img class="docs-animation docs-animation-light" loading="lazy" src="motion_files/figure-html/tour-show-1.gif" alt="The surface in perspective turning a quarter circle, then flattening into a parallel view at constant size." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
-<p><img class="docs-animation docs-animation-dark" loading="lazy" src="motion_files/figure-html/tour-show-2.gif" alt="The surface in perspective turning a quarter circle, then flattening into a parallel view at constant size." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
+<div class="docs-animation docs-animation-light">
+<img loading="lazy" src="motion_files/figure-html/tour-show-1.gif" alt="The surface in perspective turning a quarter circle, then flattening into a parallel view at constant size." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
+<div class="docs-animation docs-animation-dark">
+<img loading="lazy" src="motion_files/figure-html/tour-show-2.gif" alt="The surface in perspective turning a quarter circle, then flattening into a parallel view at constant size." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
 <p><code><a href="../reference/camera_path_3d.html">camera_path_3d()</a></code> interpolates a list of keyframes, each
 a <code><a href="../reference/camera_3d.html">camera_3d()</a></code> view, at the times given in <code>at</code>.
 Orientations are interpolated as rotations, so a path can pass straight
@@ -568,8 +584,12 @@ fixed while the cars move.</p>
 <code class="sourceCode R"><span><span class="va">movement</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">moving</span>, time <span class="op">=</span> <span class="st">"state"</span>, tween <span class="op">=</span> <span class="fu"><a href="../reference/tween_3d.html">tween_3d</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span>
 <span>  fps <span class="op">=</span> <span class="fl">8</span>, format <span class="op">=</span> <span class="st">"gif"</span>, width <span class="op">=</span> <span class="fl">600</span>, height <span class="op">=</span> <span class="fl">480</span>, dpi <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">movement</span></span></code></pre></div>
-<p><img class="docs-animation docs-animation-light" loading="lazy" src="motion_files/figure-html/tween-points-show-1.gif" alt="Three cars moving from their observed weights and fuel consumption to lower weights and higher fuel consumption, against fixed axes." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
-<p><img class="docs-animation docs-animation-dark" loading="lazy" src="motion_files/figure-html/tween-points-show-2.gif" alt="Three cars moving from their observed weights and fuel consumption to lower weights and higher fuel consumption, against fixed axes." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
+<div class="docs-animation docs-animation-light">
+<img loading="lazy" src="motion_files/figure-html/tween-points-show-1.gif" alt="Three cars moving from their observed weights and fuel consumption to lower weights and higher fuel consumption, against fixed axes." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
+<div class="docs-animation docs-animation-dark">
+<img loading="lazy" src="motion_files/figure-html/tween-points-show-2.gif" alt="Three cars moving from their observed weights and fuel consumption to lower weights and higher fuel consumption, against fixed axes." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
 <p><code>movement$transition</code> lists, for every frame, the two
 states it lies between and the fraction of the way from one to the
 other. Group matching pairs occurrences within each persistent group, so
@@ -593,8 +613,12 @@ gap in an object’s observations breaks its trail.</p>
 <span>  trail <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>length <span class="op">=</span> <span class="fl">6</span>, radius <span class="op">=</span> <span class="fl">0.05</span>, taper <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
 <span>  fps <span class="op">=</span> <span class="fl">8</span>, format <span class="op">=</span> <span class="st">"gif"</span>, width <span class="op">=</span> <span class="fl">600</span>, height <span class="op">=</span> <span class="fl">480</span>, dpi <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">wake</span></span></code></pre></div>
-<p><img class="docs-animation docs-animation-light" loading="lazy" src="motion_files/figure-html/motion-trails-show-1.gif" alt="The three cars moving to their new positions, each followed by a tapered trail that fades behind it." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
-<p><img class="docs-animation docs-animation-dark" loading="lazy" src="motion_files/figure-html/motion-trails-show-2.gif" alt="The three cars moving to their new positions, each followed by a tapered trail that fades behind it." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
+<div class="docs-animation docs-animation-light">
+<img loading="lazy" src="motion_files/figure-html/motion-trails-show-1.gif" alt="The three cars moving to their new positions, each followed by a tapered trail that fades behind it." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
+<div class="docs-animation docs-animation-dark">
+<img loading="lazy" src="motion_files/figure-html/motion-trails-show-2.gif" alt="The three cars moving to their new positions, each followed by a tapered trail that fades behind it." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
 <p><code>trail = 4</code> uses a default tube radius of 0.5% of the
 diagonal of the panel ranges. Setting <code>width</code> in the list
 draws a ribbon instead, and <code>normal</code> sets its initial
@@ -629,8 +653,12 @@ is flat.</p>
 <code class="sourceCode R"><span><span class="va">morph</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/animate_3d.html">animate_3d</a></span><span class="op">(</span><span class="va">wave</span>, time <span class="op">=</span> <span class="st">"state"</span>, tween <span class="op">=</span> <span class="fu"><a href="../reference/tween_3d.html">tween_3d</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">11</span><span class="op">)</span>,</span>
 <span>  fps <span class="op">=</span> <span class="fl">12</span>, format <span class="op">=</span> <span class="st">"gif"</span>, width <span class="op">=</span> <span class="fl">600</span>, height <span class="op">=</span> <span class="fl">480</span>, dpi <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="va">morph</span></span></code></pre></div>
-<p><img class="docs-animation docs-animation-light" loading="lazy" src="motion_files/figure-html/morph-show-1.gif" alt="A wave surface coloured by height that flattens, inverts and returns to its first shape." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
-<p><img class="docs-animation docs-animation-dark" loading="lazy" src="motion_files/figure-html/morph-show-2.gif" alt="A wave surface coloured by height that flattens, inverts and returns to its first shape." style="width: 100%; max-width: min(100%, 600px); height: auto;"></p>
+<div class="docs-animation docs-animation-light">
+<img loading="lazy" src="motion_files/figure-html/morph-show-1.gif" alt="A wave surface coloured by height that flattens, inverts and returns to its first shape." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
+<div class="docs-animation docs-animation-dark">
+<img loading="lazy" src="motion_files/figure-html/morph-show-2.gif" alt="A wave surface coloured by height that flattens, inverts and returns to its first shape." style="width: 100%; max-width: min(100%, 600px); height: auto;">
+</div>
 <p>Positions interpolate in transformed scale units and colours in
 linear light. Paths with different vertex counts are resampled along
 their length, polygon rings are aligned before interpolation, and meshes

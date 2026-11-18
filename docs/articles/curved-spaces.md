@@ -41,7 +41,8 @@ grid_lines <- rbind(
 grid_lines$z <- 0
 ggplot(grid_lines, aes(x, y, z = z, group = id)) +
   geom_path_3d(colour = "#2E6F9E", linewidth = 0.8) +
-  coord_spherical_geometry_3d(isometry = rotate_4d("xw", 0.6), extent = 2, zoom = 2)
+  coord_spherical_geometry_3d(isometry = rotate_4d("xw", 0.6), extent = 2, zoom = 2,
+                              target = c(0.62, 0.5, 0.5), elevation = 60)
 ```
 
 ![A square grid of segments in the stereographic chart of the
@@ -97,7 +98,7 @@ chords <- data.frame(x = 0.7 * cos(ends), y = 0.7 * sin(ends),
 ggplot(chords, aes(x, y, z = z, group = id)) +
   geom_path_3d(colour = "#2E6F9E", linewidth = 1) +
   coord_hyperbolic_3d(model = "poincare", extent = 1,
-                      distance_breaks = c(0.5, 1, 1.5))
+                      distance_breaks = c(0.5, 1, 1.5), elevation = 60, zoom = 1.4)
 ```
 
 ![Six hyperbolic geodesics drawn as arcs inside the Poincare ball, with
@@ -140,9 +141,9 @@ move the focus through the tree while every distance stays the same.
 
 ## Spacetime and light cones
 
-In Minkowski spacetime the squared interval between two events is
-$`s^2 = -t^2 + x^2 + y^2`$ in units where the speed of light is 1.
-Events with $`s^2 = 0`$ form the light cone of the origin.
+In Minkowski spacetime the squared interval between the origin and an
+event is $`s^2 = t^2 - x^2 - y^2`$ in units where the speed of light
+is 1. Events with $`s^2 = 0`$ form the light cone of the origin.
 [`coord_spacetime_3d()`](https://gillescolling.com/ggplot3d/reference/coord_spacetime_3d.md)
 draws two space axes and time upward, and
 [`stat_light_cone_3d()`](https://gillescolling.com/ggplot3d/reference/stat_light_cone_3d.md)
@@ -159,8 +160,31 @@ ggplot() +
 cones meeting at a
 point.](curved-spaces_files/figure-html/light-cone-1.svg)
 
-`interval = 1` with `sheet = "future"` draws the hyperboloid of events
-at proper time 1 after the origin, which is a model of hyperbolic space.
+Each value of `interval` gives one surface of events at the same
+interval from the origin. A positive value, such as `interval = 1`,
+gives two bowls inside the cone, one in the future and one in the past:
+the events reached after proper time 1 by clocks leaving the origin at
+any speed. A negative value gives a single surface outside the cone, the
+events at proper distance 1 from the origin that no signal from the
+origin can reach. In a diagram with one space axis these surfaces are
+the two families of hyperbolas on either side of the light cone.
+
+``` r
+
+ggplot() +
+  stat_light_cone_3d(extent = 2, n = 24, alpha = 0.25, fill = "grey50") +
+  stat_light_cone_3d(extent = 2, n = 24, interval = 1, alpha = 0.5, fill = "#B5342B") +
+  stat_light_cone_3d(extent = 2, n = 24, interval = -1, alpha = 0.5, fill = "#2A7A7A") +
+  coord_spacetime_3d()
+```
+
+![The light cone of the origin between two hyperboloids: a two-sheeted
+one inside the cone at positive interval and a one-sheeted one around it
+at negative
+interval.](curved-spaces_files/figure-html/hyperboloids-1.svg)
+
+`interval = 1` with `sheet = "future"` draws only the future bowl, which
+is a model of hyperbolic space.
 [`lorentz_boost_3d()`](https://gillescolling.com/ggplot3d/reference/lorentz_boost_3d.md)
 takes rapidity, the inverse hyperbolic tangent of speed divided by the
 speed of light. For a speed of 0.5 along x in these units, the event at
@@ -198,6 +222,38 @@ ggplot() +
 
 ![Flamm's paraboloid, a funnel-shaped surface that narrows toward the
 Schwarzschild radius.](curved-spaces_files/figure-html/embedding-1.svg)
+
+The paraboloid shows one plane through the mass.
+[`stat_gravity_lattice_3d()`](https://gillescolling.com/ggplot3d/reference/stat_gravity_lattice_3d.md)
+shows the whole space around it as a cubic lattice. A ruler laid from
+the corners of the cube toward the mass measures more length than the
+flat lattice has room for, so each lattice point is drawn at its true
+radial distance from the corners and moves toward the mass. Sideways
+lengths cannot be drawn true as well, because no flat picture holds the
+curved space without stretching it somewhere. Mapping `rs` and faceting
+on it puts the flat lattice beside the curved one, and the computed
+`lapse` colours each point by how fast a clock held there runs compared
+with a clock far away.
+
+``` r
+
+spaces <- data.frame(rs = c(0, 0.3), space = c("Flat space", "Schwarzschild, rs = 0.3"))
+ggplot(spaces, aes(rs = rs, colour = after_stat(lapse))) +
+  stat_gravity_lattice_3d(breaks = 4, linewidth = 0.6) +
+  stat_gravity_lattice_3d(breaks = 4, what = "nodes", size = 1.2) +
+  annotate("point", x = 0, y = 0, z = 0, colour = "#9E5E0F", size = 4) +
+  scale_colour_gradient(low = "#B5342B", high = "#2E6F9E", limits = c(0, 1),
+                        name = "Clock rate") +
+  facet_wrap(~space) +
+  coord_3d(axes = character(), panes = character(), box = "none")
+#> Warning in annotate("point", x = 0, y = 0, z = 0, colour = "#9E5E0F", size =
+#> 4): Ignoring unknown parameters: `z`
+```
+
+![Two cubic lattices around a central mass: on the left flat space with
+straight lines, on the right Schwarzschild space with lines pulled
+toward the mass and coloured red where clocks run
+slow.](curved-spaces_files/figure-html/gravity-lattice-1.svg)
 
 [`stat_geodesic_ode_3d()`](https://gillescolling.com/ggplot3d/reference/stat_geodesic_ode_3d.md)
 integrates the orbit of a test particle in the equatorial plane for a
