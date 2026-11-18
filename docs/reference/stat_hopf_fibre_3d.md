@@ -65,9 +65,11 @@ Johnson (2011). Hopf fibration production notes.
 d <- data.frame(lon=seq(0,300,by=60),lat=0,id=factor(1:6))
 ggplot2::ggplot(d,ggplot2::aes(lon=lon,lat=lat,fill=id))+
   stat_hopf_fibre_3d(n=24)+coord_spherical_geometry_3d()
+# \donttest{
 ggplot2::ggplot(d,ggplot2::aes(lon=lon,lat=lat,colour=id))+
   stat_hopf_fibre_3d(what="base",size=3)+
   geom_sphere_3d(data=data.frame(x=0,y=0,z=0),
     mapping=ggplot2::aes(x,y,z=z),inherit.aes=FALSE,
     radius=.98,fill="grey90",colour=NA)+coord_3d()
+# }
 ```

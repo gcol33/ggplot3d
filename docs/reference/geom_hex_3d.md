@@ -174,6 +174,7 @@ for rectangular bins.
 ``` r
 p <- ggplot2::ggplot(faithful, ggplot2::aes(eruptions, waiting))
 p + geom_hex_3d(bins = 12) + coord_3d()
+# \donttest{
 p + geom_hex_3d(ggplot2::aes(fill = ggplot2::after_stat(count)),
   binwidth = c(0.4, 5), colour = "grey20") + coord_3d()
 set.seed(1)
@@ -181,4 +182,5 @@ d <- data.frame(x = rnorm(500), y = rnorm(500))
 d$z <- d$x^2 + d$y^2
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   stat_summary_hex_3d(bins = 10, fill = "darkorange") + coord_3d()
+# }
 ```

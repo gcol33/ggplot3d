@@ -118,6 +118,7 @@ Kitware. Eye-Dome Lighting: a non-photorealistic shading technique.
 d <- expand.grid(x = 1:6, y = 1:6, z = 1:6)
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 2)
 p + coord_3d(depth_cue = depth_cue_3d())
+# \donttest{
 p + coord_3d(depth_cue = depth_cue_3d(fog = "grey90", amount = 0.8, linewidth = TRUE))
 v <- expand.grid(x = seq(-1, 1, length.out = 30), y = seq(-1, 1, length.out = 30))
 v$z <- sin(3 * v$x) * cos(3 * v$y)
@@ -130,4 +131,5 @@ a$z <- with(a, abs(x - 0.5) + abs(y - 0.5))
 ggplot2::ggplot(a, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey70", colour = NA) +
   coord_3d(depth_cue = depth_cue_3d(fog = NA, ao = TRUE, ao_radius = 0.5))
+# }
 ```

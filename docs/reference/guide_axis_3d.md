@@ -148,6 +148,7 @@ for scale breaks, colourbars and panel theme elements.
 d <- data.frame(x = 1:3, y = c(1, 2, 1), z = 1:3)
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d()
 p + scale_z_continuous(guide = guide_axis_3d()) + coord_3d()
+# \donttest{
 p + scale_z_continuous(guide = guide_axis_3d(position = "origin")) +
   coord_3d(origin = c(x = 2, y = 1.5))
 p + ggplot2::guides(x = guide_axis_3d(label_orientation = "edge"),
@@ -160,4 +161,5 @@ if (requireNamespace("systemfonts", quietly = TRUE)) {
 }
 p + ggplot2::guides(z = guide_axis_3d(title_position = "near", depth_scale = TRUE)) +
   coord_3d(projection = "perspective")
+# }
 ```

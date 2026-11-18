@@ -173,6 +173,7 @@ d <- expand.grid(x = seq(-1, 1, length.out = 8), y = seq(-1, 1, length.out = 8))
 d$z <- with(d, x + y + sin(3*x*y) / 5)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_smooth_3d(method = "lm", n = 12) + coord_3d()
+# \donttest{
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   stat_smooth_3d(method = "lm", se = FALSE, n = 8) + coord_3d()
 
@@ -187,4 +188,5 @@ fit <- lm(mpg ~ poly(wt, 2) + hp, data = mtcars)
 ggplot2::ggplot(mtcars, ggplot2::aes(wt, hp, z = mpg)) +
   geom_smooth_3d(method = fit, domain = "hull", se = "fill", n = 20) +
   geom_point_3d() + coord_3d()
+# }
 ```

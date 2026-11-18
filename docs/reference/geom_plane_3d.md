@@ -82,6 +82,7 @@ d <- expand.grid(x = seq(-2, 2, length.out = 30), y = seq(-2, 2, length.out = 30
 d$z <- exp(-(d$x^2 + d$y^2))
 p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_surface_3d(fill = "grey85")
 p + geom_plane_3d(zintercept = 0.5, fill = "steelblue") + coord_3d()
+# \donttest{
 p + geom_plane_3d(xintercept = c(-1, 1), colour = "grey20") + coord_3d()
 
 fit <- stats::lm(mpg ~ wt + hp, data = mtcars)
@@ -90,4 +91,5 @@ ggplot2::ggplot(mtcars, ggplot2::aes(wt, hp, z = mpg)) +
   geom_point_3d() +
   geom_plane_3d(normal = c(-b[["wt"]], -b[["hp"]], 1), point = c(0, 0, b[[1]])) +
   coord_3d()
+# }
 ```

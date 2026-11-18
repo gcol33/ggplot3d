@@ -166,6 +166,7 @@ if (requireNamespace("htmlwidgets", quietly = TRUE) &&
     geom_point_3d(size = 3) + coord_3d() + ggplot2::facet_wrap(~am)
   view_3d(p, width = 720, height = 400)
 }
+# \donttest{
 if (requireNamespace("htmlwidgets", quietly = TRUE)) {
   p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg, z = hp)) +
     geom_point_3d(size = 3) + coord_3d()
@@ -174,4 +175,5 @@ if (requireNamespace("htmlwidgets", quietly = TRUE)) {
   iso <- view_3d(views, panel = 2, width = 320, height = 320, link = "cars")
   view_3d(p, panel = 1, path = orbit_3d(degrees = 360, duration = 6))
 }
+# }
 ```

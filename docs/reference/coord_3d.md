@@ -357,6 +357,7 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 d$site <- c("a", "a", "b")
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
   ggplot2::facet_wrap(~site) + coord_3d(z_scales = "free")
+# \donttest{
 views <- rbind(transform(d, view = "front"), transform(d, view = "side"))
 ggplot2::ggplot(views, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
   ggplot2::facet_wrap(~view) + coord_3d(azimuth = c(-60, 30))
@@ -375,4 +376,5 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_path_3d() +
   coord_3d(isometry = rotation, xlim = c(-4, 4), ylim = c(-4, 4))
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d(size = 4) +
   coord_3d(shadow = shadow_3d(), depth_cue = depth_cue_3d())
+# }
 ```

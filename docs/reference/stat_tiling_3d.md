@@ -116,6 +116,8 @@ Nelson and Segerman (2016). Visualizing hyperbolic honeycombs.
 ``` r
 ggplot2::ggplot()+stat_tiling_3d(schlafli=c(7,3),radius=2)+
   coord_3d(axes=character(),panes=character(),box="none")
+# \donttest{
 ggplot2::ggplot()+stat_honeycomb_3d(schlafli=c(5,3,4),radius=1,what="faces")+
   coord_3d(axes=character(),panes=character(),box="none")
+# }
 ```

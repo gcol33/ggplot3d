@@ -176,10 +176,12 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(ggplot2::aes(fill = z)) + coord_3d()
 glb <- export_3d(p, tempfile(fileext = ".glb"))
 file.size(glb)
+# \donttest{
 export_3d(p, tempfile(fileext = ".stl"), size = 50)
 asy <- export_3d(p, format = "asy")
 if (requireNamespace("svglite", quietly = TRUE) && requireNamespace("xml2", quietly = TRUE)) {
   export_3d(p, format = "svg")
   export_3d(p, format = "tex", standalone = FALSE)
 }
+# }
 ```

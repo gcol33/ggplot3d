@@ -98,9 +98,11 @@ d <- expand.grid(x = seq(-2, 2, length.out = 12), y = seq(-2, 2, length.out = 12
 d$z <- exp(-d$x^2 - d$y^2)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d() + geom_contour_3d(bins = 4, colour = "navy") + coord_3d()
+# \donttest{
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d() +
   geom_contour_3d(ggplot2::aes(value = x + y), bins = 6, colour = "navy") + coord_3d()
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_contour_filled_3d(bins = 4, plane = "floor") + coord_3d()
+# }
 ```

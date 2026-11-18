@@ -161,10 +161,12 @@ t <- seq(0, 4 * pi, length.out = 60)
 helix <- data.frame(x = cos(t), y = sin(t), z = t / 4, t = t)
 ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, fill = t)) +
   geom_tube_3d(radius = 0.12) + coord_3d()
-knot <- data.frame(u = seq(0, 2 * pi, length.out = 13)[-13])
+# \donttest{
+knot <-data.frame(u = seq(0, 2 * pi, length.out = 13)[-13])
 knot <- transform(knot, x = sin(u) + 2 * sin(2 * u), y = cos(u) - 2 * cos(2 * u), z = -sin(3 * u))
 ggplot2::ggplot(knot, ggplot2::aes(x, y, z = z)) +
   geom_tube_3d(radius = 0.3, closed = TRUE, spline = "catmull-rom", n = 100) + coord_3d()
 ggplot2::ggplot(helix, ggplot2::aes(x, y, z = z, twist = t * 20)) +
   geom_strip_3d(width = 0.4) + coord_3d()
+# }
 ```

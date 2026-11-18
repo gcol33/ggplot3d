@@ -274,6 +274,7 @@ backend_3d("raster", dpi = 144, antialias = 2)
 backend_3d("raster", blend = "srgb")
 backend_3d("pathtrace", samples = 8, seed = 1)
 backend_3d("pathtrace", samples = 16, noise_threshold = 0.05, denoise = TRUE, tone = "agx")
+# \donttest{
 d <- expand.grid(x = seq(-1, 1, length.out = 40), y = seq(-1, 1, length.out = 40))
 d$z <- sin(pi * d$x) * cos(pi * d$y)
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
@@ -283,4 +284,5 @@ ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_surface_3d(fill = "grey80", colour = NA) +
   coord_3d(backend = backend_3d("hybrid", dpi = 150, rasterise = "surfaces"))
+# }
 ```

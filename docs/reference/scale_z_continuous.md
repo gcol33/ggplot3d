@@ -47,6 +47,7 @@ p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) +
   geom_point_3d() + coord_3d()
 p + scale_z_continuous(name = "Height")
 p + scale_z_log10()
+# \donttest{
 p + scale_z_sqrt()
 p + scale_z_reverse()
 ggplot2::ggplot(d, ggplot2::aes(x, y, z = factor(z))) +
@@ -62,4 +63,5 @@ if (requireNamespace("hms", quietly = TRUE)) {
   ggplot2::ggplot(d, ggplot2::aes(x, y, z = elapsed)) +
     geom_point_3d() + scale_z_time() + coord_3d()
 }
+# }
 ```
