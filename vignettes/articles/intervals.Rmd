@@ -88,6 +88,13 @@ fuel + stat_summary_3d(fun.data = quartiles, geom = "crossbar",
 
 The box for a single car collapses to its median line, because all three quartiles equal its value. An explicit group mapping separates summaries that share a position. Discrete colour and fill mappings also define groups. Mapping a different group to every observation prevents pooling; a standard error then cannot be estimated from within-cell variation. Summaries use scale-transformed values, so applying a logarithmic scale changes the quantity being averaged. Compute summaries in original units before plotting when that is the intended quantity.
 
+[geom_boxplot_3d()](../reference/geom_boxplot_3d.html) draws the same quartile box and adds whiskers, which reach the most extreme observation within 1.5 interquartile ranges of the box. An observation beyond the whiskers would be drawn as a separate point; none of these cells has one.
+
+```{r boxplots, fig.alt="Boxes from the first to the third quartile of fuel economy for each combination of cylinders and gears, with a median face and whiskers; the single-car cells are flat slabs."}
+fuel + geom_boxplot_3d(width = 0.35, depth = 0.35, fill = "#2E6F9E") +
+  coord_3d()
+```
+
 ### Preparing a summary table
 
 A precomputed table makes the bounds available for checking and reuse. The following table contains one row per combination of cylinders and gears, with the number of cars, the mean and the one-standard-error bounds in miles per gallon. The single-car cells have missing bounds. Its named columns feed directly into the point-range layer.
