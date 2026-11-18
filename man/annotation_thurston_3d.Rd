@@ -44,5 +44,5 @@ General chart-defined CSG surfaces use \code{\link[=geom_isofunction_3d]{geom_is
 }
 \examples{
 ggplot2::ggplot() + annotation_thurston_3d(centre = c(0, 0, 2), fill = "steelblue") +
-  coord_3d(backend = backend_3d("raymarch", geometry = "nil", dpi = 40))
+  coord_3d(backend = backend_3d("raymarch", geometry = "nil", dpi = 28))
 }

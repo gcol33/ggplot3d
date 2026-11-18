@@ -1,7 +1,9 @@
 # Read a point cloud file
 
 Reads LiDAR and photogrammetry point clouds into a data frame with one
-row per point, ready for `geom_point()` with `aes(z = z)` in
+row per point, ready for
+[`geom_point()`](https://ggplot2.tidyverse.org/reference/geom_point.html)
+with `aes(z = z)` in
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md),
 or for surface reconstruction with
 [`stat_implicit_fit_3d()`](https://gillescolling.com/ggplot3d/reference/stat_implicit_fit_3d.md)

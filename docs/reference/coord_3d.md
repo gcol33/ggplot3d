@@ -326,8 +326,10 @@ text and rectangle elements also accept
 - `panel.grid.major.x.xy`, `panel.grid.minor.z.yz` and so on: the grid
   lines of one axis on the panes of one plane. Each inherits from the
   grid element of its axis (`panel.grid.major.x.xy` from
-  `panel.grid.major.x`), so `element_blank()` removes those lines from
-  that plane only. In the default view the floor is the `xy` plane.
+  `panel.grid.major.x`), so
+  [`element_blank()`](https://ggplot2.tidyverse.org/reference/element.html)
+  removes those lines from that plane only. In the default view the
+  floor is the `xy` plane.
 
 - `panel.zero.x`, `panel.zero.y`, `panel.zero.z`: a plane through the
   panel at transformed value 0 of that axis, when 0 lies inside the

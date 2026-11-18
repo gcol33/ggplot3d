@@ -229,7 +229,8 @@ and
 [`sdf_blend()`](https://gillescolling.com/ggplot3d/reference/sdf_blend.md).
 levels then defaults to 0, and vertex normals (with the crossing normals
 of `"dual"`) come from the exact gradient of its expression tree in
-place of central differences.
+place of central differences. Flat shading uses the gradient at each
+face centre. Smooth shading uses the gradients at its vertices.
 
 For mesh extraction, each data row supplies one set of constant named
 parameters and produces its own isosurface. Columns and grouping follow

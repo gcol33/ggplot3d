@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: If you use this software, please cite it as below.
 type: software
 title: 'ggplot3d: 3D Plots in the Grammar of Graphics'
-version: 0.0.0.9000
+version: 0.1.0
 authors:
 - family-names: Colling
   given-names: Gilles
@@ -19,4 +19,4 @@ preferred-citation:
     orcid: https://orcid.org/0000-0003-3070-6066
   year: 2026
   url: https://github.com/gcol33/ggplot3d
-  notes: R package version 0.0.0.9000
+  notes: R package version 0.1.0

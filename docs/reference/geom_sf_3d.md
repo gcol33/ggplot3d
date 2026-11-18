@@ -55,10 +55,11 @@ A ggplot2 layer.
 [`ggplot2::geom_sf()`](https://ggplot2.tidyverse.org/reference/ggsf.html)
 layers are drawn the same way; add
 [`coord_3d()`](https://gillescolling.com/ggplot3d/reference/coord_3d.md)
-after them, because `geom_sf()` brings its own default coordinate
-system. Geographic coordinates require a projected target,
-`coord_3d(crs = )`, which also reprojects data with other coordinate
-systems.
+after them, because
+[`geom_sf()`](https://ggplot2.tidyverse.org/reference/ggsf.html) brings
+its own default coordinate system. Geographic coordinates require a
+projected target, `coord_3d(crs = )`, which also reprojects data with
+other coordinate systems.
 
 ## See also
 

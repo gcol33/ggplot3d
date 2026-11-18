@@ -140,10 +140,12 @@
 <polyline points='205.21,170.87 359.14,215.30 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='116.34,247.83 205.21,170.87 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='205.21,170.87 205.21,16.94 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<polygon points='217.54,172.10 257.93,137.11 237.74,84.64 ' style='stroke-width: 0.75; stroke: none; fill: #9C9C9C;' />
-<polygon points='217.54,172.10 197.34,259.56 278.13,189.59 257.93,137.11 ' style='stroke-width: 0.64; stroke: none; fill: #9C9C9C;' />
-<polygon points='127.37,169.39 267.31,209.79 278.13,119.62 ' style='stroke-width: 0.64; stroke: none; fill: #D7D7D7;' />
-<polygon class='preserve-color' points='217.54,172.10 257.93,137.11 237.74,84.64 ' style='stroke-width: 0.64; stroke: none; fill: #9C9C9C;' />
+<path d='M 257.93 207.08 L 267.31 209.79 L 268.76 197.71 L 278.13 189.59 L 271.73 172.95 L 278.13 119.62 L 254.24 127.51 L 237.74 84.64 L 225.66 136.94 L 127.37 169.39 L 212.49 193.96 L 197.34 259.56 Z' style='fill-rule: nonzero; fill: #AFAFAF; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 217.54 172.10 L 197.34 259.56 L 278.13 189.59 L 257.93 137.11 ZM 217.54 172.10 L 257.93 137.11 L 237.74 84.64 Z' style='fill-rule: nonzero; fill: #9C9C9C; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 127.37 169.39 L 267.31 209.79 L 278.13 119.62 Z' style='fill-rule: nonzero; fill: #D7D7D7; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 278.13 189.59 L 257.93 137.11 L 217.54 172.10 L 197.34 259.56 Z' style='fill-rule: nonzero; fill: #9C9C9C; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 278.13 119.62 L 127.37 169.39 L 267.31 209.79 Z' style='fill-rule: nonzero; fill: #D7D7D7; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 257.93 137.11 L 237.74 84.64 L 217.54 172.10 Z' style='fill-rule: nonzero; fill: #9C9C9C; stroke-width: 0.75; stroke: none;' />
 <polyline class='preserve-color' points='217.54,172.10 257.93,137.11 ' style='stroke-width: 2.13; stroke: #B5342B; stroke-linecap: butt;' />
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>

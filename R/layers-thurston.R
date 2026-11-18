@@ -18,7 +18,7 @@
 #' @return A three-dimensional ggplot layer.
 #' @examples
 #' ggplot2::ggplot() + annotation_thurston_3d(centre = c(0, 0, 2), fill = "steelblue") +
-#'   coord_3d(backend = backend_3d("raymarch", geometry = "nil", dpi = 40))
+#'   coord_3d(backend = backend_3d("raymarch", geometry = "nil", dpi = 28))
 #' @export
 annotation_thurston_3d <- function(shape = "ball", centre = c(0, 0, 2), radius = 0.5, direction = c(0, 0, 1), ...) {
   shape <- match.arg(shape, c("ball", "cylinder", "halfspace"))

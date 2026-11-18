@@ -140,9 +140,7 @@
 <polyline points='214.50,177.20 358.32,218.71 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='131.46,249.11 214.50,177.20 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='214.50,177.20 214.50,33.37 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<path d='M 348.01 148.18 L 217.26 110.44 L 141.77 175.82 ZM 141.77 175.82 L 272.52 213.56 L 348.01 148.18 Z' style='fill-rule: nonzero; fill: #4D8DBE; stroke-width: 0.75; stroke: none;' />
-<polygon class='preserve-color' points='348.01,148.18 217.26,110.44 141.77,175.82 ' style='stroke-width: 0.64; stroke: none; fill: #4D8DBE;' />
-<polygon class='preserve-color' points='141.77,175.82 272.52,213.56 348.01,148.18 ' style='stroke-width: 0.64; stroke: none; fill: #4D8DBE;' />
+<path d='M 348.01 148.18 L 217.26 110.44 L 141.77 175.82 L 272.52 213.56 Z' style='fill-rule: nonzero; fill: #4D8DBE; stroke-width: 0.75; stroke: none;' />
 </g>
 <g clip-path='url(#cpMC4wMHw0NjguMDB8MC4wMHwzMjQuMDA=)'>
 <text x='134.11' y='269.31' text-anchor='middle' style='font-size: 1.36em;fill: #4D4D4D; font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>0.00</text>

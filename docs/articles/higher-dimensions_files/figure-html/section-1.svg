@@ -128,12 +128,17 @@
 <polyline points='222.75,169.58 375.33,213.62 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='134.65,245.87 222.75,169.58 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
 <polyline points='222.75,169.58 222.75,16.99 ' style='stroke-width: 0.85; stroke: #7F7F7F; stroke-linecap: butt;' />
-<path d='M 145.59 98.75 L 145.59 237.47 L 225.68 29.39 ZM 145.59 237.47 L 284.31 138.80 L 225.68 29.39 Z' style='fill-rule: nonzero; fill: #468144; stroke-width: 0.75; stroke: none;' />
+<path d='M 284.31 138.80 L 225.68 29.39 L 145.59 98.75 L 145.59 237.47 Z' style='fill-rule: nonzero; fill: #4D894B; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 145.59 98.75 L 145.59 237.47 L 225.68 29.39 Z' style='fill-rule: nonzero; fill: #235E22; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 145.59 237.47 L 284.31 138.80 L 225.68 29.39 Z' style='fill-rule: nonzero; fill: #69A566; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 145.59 98.75 L 284.31 138.80 L 225.68 29.39 Z' style='fill-rule: nonzero; fill: #5C985A; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 145.59 98.75 L 145.59 237.47 L 284.31 138.80 Z' style='fill-rule: nonzero; fill: #4F8A4C; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 284.31 138.80 L 225.68 29.39 L 145.59 98.75 L 145.59 237.47 Z' style='fill-rule: nonzero; fill: #468144; stroke-width: 0.75; stroke: none;' />
 <path class='preserve-color' d='M 145.59 98.75 L 145.59 237.47 L 225.68 29.39 Z' style='fill-rule: nonzero; fill: #235E22; stroke-width: 0.75; stroke: none;' />
 <path class='preserve-color' d='M 145.59 237.47 L 284.31 138.80 L 225.68 29.39 Z' style='fill-rule: nonzero; fill: #69A566; stroke-width: 0.75; stroke: none;' />
 <polygon class='preserve-color' points='145.59,98.75 145.59,237.47 225.68,29.39 ' style='stroke-width: 0.64; stroke: none; fill: #235E22;' />
 <polygon class='preserve-color' points='145.59,237.47 284.31,138.80 225.68,29.39 ' style='stroke-width: 0.64; stroke: none; fill: #69A566;' />
-<path class='preserve-color' d='M 145.59 98.75 L 284.31 138.80 L 225.68 29.39 ZM 145.59 98.75 L 145.59 237.47 L 284.31 138.80 Z' style='fill-rule: nonzero; fill: #559153; stroke-width: 0.75; stroke: none;' />
+<path class='preserve-color' d='M 284.31 138.80 L 225.68 29.39 L 145.59 98.75 L 145.59 237.47 Z' style='fill-rule: nonzero; fill: #559153; stroke-width: 0.75; stroke: none;' />
 <path class='preserve-color' d='M 145.59 98.75 L 284.31 138.80 L 225.68 29.39 Z' style='fill-rule: nonzero; fill: #5C985A; stroke-width: 0.75; stroke: none;' />
 <path class='preserve-color' d='M 145.59 98.75 L 145.59 237.47 L 284.31 138.80 Z' style='fill-rule: nonzero; fill: #4F8A4C; stroke-width: 0.75; stroke: none;' />
 <polygon class='preserve-color' points='145.59,98.75 284.31,138.80 225.68,29.39 ' style='stroke-width: 0.64; stroke: none; fill: #5C985A;' />

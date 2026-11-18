@@ -72,7 +72,7 @@ math[display="block"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
 
     <a class="navbar-brand me-2" href="../index.html">ggplot3d</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -360,7 +360,9 @@ with an error that names the call.</p>
 <p>fun may be a signed distance function built with <code><a href="sdf_sphere.html">sdf_sphere()</a></code> and
 <code><a href="sdf_blend.html">sdf_blend()</a></code>. levels then defaults to 0, and vertex normals (with the
 crossing normals of <code>"dual"</code>) come from the exact gradient of its
-expression tree in place of central differences.</p>
+expression tree in place of central differences.
+Flat shading uses the gradient at each face centre. Smooth shading uses
+the gradients at its vertices.</p>
 <p>For mesh extraction, each data row supplies one set of constant named
 parameters and produces its own isosurface. Columns and grouping follow
 <code><a href="stat_function_3d.html">stat_function_3d()</a></code>, including facets and <code><a href="animate_3d.html">animate_3d()</a></code>'s time column.</p>
