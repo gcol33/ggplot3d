@@ -432,7 +432,8 @@ test_that("label thinning leaves a font-substitution margin and keeps both ends"
 test_that("a short axis under aspect = 'data' keeps label rectangles apart with margin", {
   d <- data.frame(x = c(-0.4, 0, 0.96), y = c(0, 0.93, 0), z = c(-0.25, 0, 0.25))
   p <- ggplot2::ggplot(d, ggplot2::aes(x, y, z = z)) + geom_point_3d() +
-    coord_3d(aspect = "data") + ggplot2::theme_minimal(base_size = 17)
+    coord_3d(aspect = "data") + ggplot2::theme_minimal(base_size = 17) +
+    ggplot2::theme(aspect.ratio = 1)
   grDevices::pdf(tempfile(fileext = ".pdf"), width = 6, height = 5)
   panel <- motion_panels_3d(grid::grid.force(ggplot2::ggplotGrob(p)))[[1L]]
   grDevices::dev.off()

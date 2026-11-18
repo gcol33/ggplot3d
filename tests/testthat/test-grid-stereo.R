@@ -74,8 +74,8 @@ test_that("pair and cross modes place the eye images side by side in a 2:1 panel
   skip_on_cran()
   coord <- coord_3d(stereo = stereo_3d("pair"))
   expect_equal(coord$aspect(list()), 0.5)
-  expect_equal(coord_3d(stereo = stereo_3d("anaglyph"))$aspect(list()), 1)
-  expect_equal(coord_3d()$aspect(list()), 1)
+  expect_null(coord_3d(stereo = stereo_3d("anaglyph"))$aspect(list()))
+  expect_null(coord_3d()$aspect(list()))
   for (mode in c("pair", "cross")) {
     panel <- stereo_drawn(stereo_plot(stereo_3d(mode, separation = 6)))[[1L]]
     eyes <- as.list(panel$children)

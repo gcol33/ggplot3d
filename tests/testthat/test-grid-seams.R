@@ -20,7 +20,8 @@ seam_article_panel <- function(tube = FALSE) {
   on.exit(grDevices::dev.off())
   p <- seam_article_plot(tube) + ggplot2::theme_minimal(base_size = 17) +
     ggplot2::theme(plot.background = ggplot2::element_rect(fill = "transparent", colour = NA),
-      panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), legend.position = "none")
+      panel.background = ggplot2::element_rect(fill = "transparent", colour = NA), legend.position = "none",
+      aspect.ratio = 1)
   g <- grid::grid.force(ggplot2::ggplotGrob(p))
   grid::grid.draw(g)
   list(panel = motion_panels_3d(g)[[1L]], pixels = capture())

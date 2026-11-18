@@ -546,7 +546,12 @@ Coord3D <- ggplot2::ggproto("Coord3D", ggplot2::Coord,
   is_free = function() TRUE,
   is_linear = function() FALSE,
   # A side-by-side stereo panel holds two square eye images.
-  aspect = function(self, ranges) if (stereo_side_by_side_3d(self$config$stereo)) 0.5 else 1,
+  # The projection is fitted to the panel's shorter side at draw time, so the
+  # panel takes the shape the layout gives it; a raymarched view fills it
+  # whole. Side-by-side stereo puts two square views in one panel.
+  aspect = function(self, ranges) {
+    if (stereo_side_by_side_3d(self$config$stereo)) 0.5 else NULL
+  },
   setup_params = function(self, data) list(),
   setup_layout = function(self, layout, params) {
     # Views of one scene (facet_views_3d()) share its z scale.
